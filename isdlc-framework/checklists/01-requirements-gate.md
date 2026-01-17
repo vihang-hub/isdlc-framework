@@ -80,5 +80,5 @@
 
 Upon passing this gate:
 - Advance to Phase 2: Architecture & Blueprint
-- Primary Agent: Architecture Agent
-- Command: `/sdlc-architecture design`
+- Primary Agent: Solution Architect (Agent 02)
+- Next Phase Handler: solution-architect

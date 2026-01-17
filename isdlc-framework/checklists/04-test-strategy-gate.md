@@ -81,5 +81,5 @@
 
 Upon passing this gate:
 - Advance to Phase 5: Implementation
-- Primary Agent: Developer Agent
-- Command: `/sdlc-developer implement <module>`
+- Primary Agent: Software Developer (Agent 05)
+- Next Phase Handler: software-developer

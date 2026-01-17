@@ -47,7 +47,7 @@
 - [ ] Authorization model defined (RBAC/ABAC)
 - [ ] Encryption strategy documented (at-rest, in-transit)
 - [ ] Secret management approach defined
-- [ ] Security reviewed by Security Agent
+- [ ] Security reviewed by Security & Compliance Auditor
 
 ### 5. Infrastructure
 - [ ] Environment strategy defined (dev/staging/prod)
@@ -91,5 +91,5 @@
 
 Upon passing this gate:
 - Advance to Phase 3: Design & API Contracts
-- Primary Agent: Design Agent
-- Command: `/sdlc-design api` and `/sdlc-design modules`
+- Primary Agent: System Designer (Agent 03)
+- Next Phase Handler: system-designer

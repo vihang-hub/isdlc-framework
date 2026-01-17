@@ -94,5 +94,5 @@
 
 Upon passing this gate:
 - Advance to Phase 7: Code Review & Quality Assurance
-- Primary Agent: Developer Agent
-- Command: `/sdlc-developer review`
+- Primary Agent: QA Engineer (Agent 07)
+- Next Phase Handler: qa-engineer

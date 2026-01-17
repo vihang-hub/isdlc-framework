@@ -98,5 +98,5 @@
 
 Upon passing this gate:
 - Advance to Phase 12: Production Deployment
-- Primary Agent: DevOps Agent
-- Command: `/sdlc-devops deploy production`
+- Primary Agent: Release Manager (Agent 12)
+- Next Phase Handler: release-manager

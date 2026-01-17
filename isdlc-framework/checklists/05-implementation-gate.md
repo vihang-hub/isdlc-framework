@@ -88,5 +88,5 @@
 
 Upon passing this gate:
 - Advance to Phase 6: Integration & Testing
-- Primary Agent: Test Manager Agent
-- Command: `/sdlc-test-manager coverage`
+- Primary Agent: Integration Tester (Agent 06)
+- Next Phase Handler: integration-tester

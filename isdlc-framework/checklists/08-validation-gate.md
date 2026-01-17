@@ -1,7 +1,7 @@
 # Phase 8: Validation Gate Checklist
 
 **Phase**: Independent Validation
-**Primary Agent**: Test Manager Agent, Security Agent
+**Primary Agent**: Security & Compliance Auditor (Agent 08)
 
 ---
 
@@ -93,5 +93,5 @@
 
 Upon passing this gate:
 - Advance to Phase 9: Version Control & CI/CD
-- Primary Agent: DevOps Agent
-- Command: `/sdlc-devops ci` and `/sdlc-devops cd`
+- Primary Agent: CI/CD Engineer (Agent 09)
+- Next Phase Handler: cicd-engineer

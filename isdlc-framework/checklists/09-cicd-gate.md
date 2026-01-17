@@ -98,5 +98,5 @@
 
 Upon passing this gate:
 - Advance to Phase 10: Local Development & Manual Testing
-- Primary Agent: Developer Agent
-- Manual testing and verification
+- Primary Agent: Dev Environment Engineer (Agent 10)
+- Next Phase Handler: dev-environment-engineer

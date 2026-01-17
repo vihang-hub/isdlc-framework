@@ -132,5 +132,5 @@
 
 Upon passing this gate:
 - Advance to Phase 13: Production Operations & Monitoring
-- Primary Agent: Operations Agent
-- Command: `/sdlc-operations monitoring`
+- Primary Agent: Site Reliability Engineer (Agent 13)
+- Next Phase Handler: site-reliability-engineer

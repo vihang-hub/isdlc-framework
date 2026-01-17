@@ -105,5 +105,5 @@
 
 Upon passing this gate:
 - Advance to Phase 8: Independent Validation
-- Primary Agent: Test Manager Agent
-- Command: `/sdlc-test-manager coverage` and `/sdlc-security sign-off`
+- Primary Agent: Security & Compliance Auditor (Agent 08)
+- Next Phase Handler: security-compliance-auditor

@@ -96,5 +96,5 @@
 
 Upon passing this gate:
 - Advance to Phase 11: Test Environment Deployment
-- Primary Agent: DevOps Agent
-- Command: `/sdlc-devops deploy staging`
+- Primary Agent: Deployment Engineer - Staging (Agent 11)
+- Next Phase Handler: deployment-engineer-staging
