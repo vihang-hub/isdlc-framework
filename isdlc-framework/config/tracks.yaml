@@ -1,0 +1,497 @@
+# iSDLC Framework: Workflow Tracks Configuration
+# Defines three workflow tracks based on project complexity
+# Version: 1.0.0
+# Last Updated: 2026-01-17
+
+---
+
+# Track Definitions
+# Each track specifies which phases are required, optional, or skipped
+
+tracks:
+  # ============================================================
+  # QUICK FLOW: For trivial changes and simple features
+  # Complexity Levels: 0-1
+  # Timeline: 30 minutes - 2 hours
+  # ============================================================
+  quick:
+    name: "Quick Flow"
+    description: "Streamlined workflow for bug fixes, trivial changes, and simple features"
+    complexity_levels: [0, 1]
+    estimated_timeline: "30 minutes - 2 hours"
+
+    phases:
+      required: [1, 5, 6]
+      optional: [4, 7]
+      skipped: [2, 3, 8, 9, 10, 11, 12, 13]
+
+    gates:
+      enforced: [5, 6]
+      optional: [1, 4, 7]
+      skipped: [2, 3, 8, 9, 10, 11, 12, 13]
+
+    phase_modifications:
+      "01":
+        name: "Brief Requirements"
+        artifacts:
+          required:
+            - "requirements-brief.md"  # Simplified, 1-2 paragraphs
+          optional:
+            - "acceptance-criteria.md"  # Just the test criteria
+          skipped:
+            - "user-stories.json"
+            - "nfr-matrix.md"
+            - "traceability-matrix.csv"
+
+      "05":
+        name: "Implementation"
+        artifacts:
+          required:
+            - "source-code/"
+            - "unit-tests/"
+          optional:
+            - "coverage-report.html"
+          skipped: []
+
+      "06":
+        name: "Testing"
+        artifacts:
+          required:
+            - "test-results.json"
+          optional:
+            - "integration-tests/"
+          skipped:
+            - "e2e-tests/"
+            - "coverage-report.md"
+
+    use_cases:
+      - "Fix typos in documentation"
+      - "Update configuration values"
+      - "Fix obvious bugs (< 10 lines)"
+      - "Add logging statements"
+      - "Simple validation rules"
+      - "Minor UI text changes"
+
+    warnings:
+      - "⚠️ No architecture review - ensure change fits existing patterns"
+      - "⚠️ No formal design - only for well-understood solutions"
+      - "⚠️ No security audit - not suitable for security-sensitive changes"
+      - "⚠️ No deployment automation - manual deployment only"
+
+  # ============================================================
+  # STANDARD FLOW: For features and services
+  # Complexity Levels: 2-3
+  # Timeline: 4 hours - 3 days
+  # ============================================================
+  standard:
+    name: "Standard Flow"
+    description: "Balanced workflow for features, services, and integrations"
+    complexity_levels: [2, 3]
+    estimated_timeline: "4 hours - 3 days"
+
+    phases:
+      required: [1, 2, 3, 4, 5, 6, 7, 9]
+      optional: [8, 10]
+      skipped: [11, 12, 13]
+
+    gates:
+      enforced: [1, 2, 3, 4, 5, 6, 7, 9]
+      optional: [8, 10]
+      skipped: [11, 12, 13]
+
+    phase_modifications:
+      "01":
+        name: "Requirements Capture"
+        artifacts:
+          required:
+            - "requirements-spec.md"
+            - "user-stories.json"
+            - "acceptance-criteria.md"
+          optional:
+            - "nfr-matrix.md"
+            - "traceability-matrix.csv"
+          skipped: []
+
+      "02":
+        name: "Architecture & Blueprint"
+        artifacts:
+          required:
+            - "architecture-overview.md"
+            - "tech-stack-decision.md"
+          optional:
+            - "database-design.md"
+            - "adrs/"
+          skipped:
+            - "security-architecture.md"  # Unless Phase 08 is added
+
+      "03":
+        name: "Design & API Contracts"
+        artifacts:
+          required:
+            - "openapi.yaml"  # Or equivalent API spec
+            - "module-designs/"
+          optional:
+            - "wireframes/"
+            - "data-flows.mermaid"
+          skipped: []
+
+      "04":
+        name: "Test Strategy & Design"
+        artifacts:
+          required:
+            - "test-strategy.md"
+            - "test-cases/"
+          optional:
+            - "traceability-matrix.csv"
+            - "test-data-plan.md"
+          skipped: []
+
+      "05":
+        name: "Implementation"
+        artifacts:
+          required:
+            - "source-code/"
+            - "unit-tests/"
+            - "coverage-report.html"
+          optional:
+            - "migration-scripts/"
+          skipped: []
+
+      "06":
+        name: "Integration & Testing"
+        artifacts:
+          required:
+            - "integration-tests/"
+            - "test-results.json"
+          optional:
+            - "e2e-tests/"
+            - "coverage-report.md"
+          skipped: []
+
+      "07":
+        name: "Code Review & QA"
+        artifacts:
+          required:
+            - "code-review-report.md"
+            - "qa-sign-off.md"
+          optional:
+            - "quality-metrics.md"
+            - "refactoring-log.md"
+          skipped: []
+
+      "09":
+        name: "CI/CD Setup"
+        artifacts:
+          required:
+            - "ci-config.yaml"
+          optional:
+            - "cd-config.yaml"
+            - "Dockerfile"
+            - "pipeline-validation.md"
+          skipped: []
+
+    use_cases:
+      - "New REST API endpoint with validation"
+      - "Database schema changes with migrations"
+      - "New UI feature with backend integration"
+      - "Refactoring a module or component"
+      - "Third-party API integration"
+      - "Authentication/authorization feature"
+      - "New microservice (non-production)"
+
+    warnings:
+      - "⚠️ No security audit - add Phase 08 if handling sensitive data"
+      - "⚠️ No formal deployment process - suitable for dev/staging only"
+      - "⚠️ No operations setup - not for production-critical systems"
+
+    optional_phase_triggers:
+      "08":
+        when: "Handling sensitive data, authentication, or authorization"
+        reason: "Security audit required for security-sensitive features"
+      "10":
+        when: "Multiple developers or complex local setup"
+        reason: "Local dev environment documentation helps onboarding"
+
+  # ============================================================
+  # ENTERPRISE FLOW: For platforms and compliance systems
+  # Complexity Level: 4
+  # Timeline: Weeks to months
+  # ============================================================
+  enterprise:
+    name: "Enterprise Flow"
+    description: "Full SDLC rigor for platforms, compliance systems, and mission-critical applications"
+    complexity_levels: [4]
+    estimated_timeline: "Weeks to months"
+
+    phases:
+      required: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+      optional: []
+      skipped: []
+
+    gates:
+      enforced: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+      optional: []
+      skipped: []
+
+    phase_modifications: {}  # No modifications - full workflow
+
+    use_cases:
+      - "Multi-tenant SaaS platform"
+      - "Compliance-heavy systems (HIPAA, PCI-DSS, SOC2)"
+      - "High-availability production systems"
+      - "Large-scale platform refactoring"
+      - "Mission-critical applications"
+      - "Multi-region distributed systems"
+      - "Systems requiring formal security audit"
+      - "Systems with strict SLA requirements"
+
+    warnings:
+      - "⚠️ Full SDLC process - significant time investment required"
+      - "⚠️ All 13 gates must pass - no shortcuts"
+      - "⚠️ Suitable for production-critical, compliance-driven projects only"
+
+# ============================================================
+# Complexity Level Definitions
+# Used by assess-complexity skill to determine track
+# ============================================================
+
+complexity_levels:
+  "0":
+    name: "Trivial Changes"
+    description: "Documentation fixes, config updates, obvious bug fixes"
+    characteristics:
+      - "No architecture impact"
+      - "No new features"
+      - "Minimal testing required"
+      - "< 30 minutes work"
+    recommended_track: "quick"
+    examples:
+      - "Fix typos in documentation"
+      - "Update configuration values"
+      - "Fix obvious bugs (< 10 lines of code)"
+      - "Change UI text/labels"
+
+  "1":
+    name: "Simple Features"
+    description: "Single-component changes with well-understood solutions"
+    characteristics:
+      - "Single module/component impact"
+      - "Well-understood solution"
+      - "Minimal dependencies"
+      - "< 2 hours work"
+    recommended_track: "quick"
+    examples:
+      - "Add logging to existing functions"
+      - "Simple validation rules"
+      - "Basic UI component updates"
+      - "Minor bug fixes with tests"
+
+  "2":
+    name: "Standard Features"
+    description: "Multi-component features requiring some architectural decisions"
+    characteristics:
+      - "Multiple components involved"
+      - "Some architectural decisions needed"
+      - "Integration testing required"
+      - "4-8 hours work"
+    recommended_track: "standard"
+    examples:
+      - "New API endpoint with validation"
+      - "Database schema changes"
+      - "New UI feature with backend integration"
+      - "Refactoring a module"
+
+  "3":
+    name: "Significant Features"
+    description: "Cross-cutting features with security and performance considerations"
+    characteristics:
+      - "Cross-cutting concerns"
+      - "Security considerations"
+      - "Performance requirements"
+      - "Multiple teams/stakeholders"
+      - "1-3 days work"
+    recommended_track: "standard"
+    examples:
+      - "New microservice"
+      - "Authentication/authorization system"
+      - "Third-party API integration"
+      - "Multi-component feature"
+
+  "4":
+    name: "Enterprise Platforms"
+    description: "Complex platforms requiring full SDLC rigor"
+    characteristics:
+      - "Complex architecture"
+      - "Regulatory compliance required"
+      - "High security requirements"
+      - "Multi-week timeline"
+      - "Production deployment risk"
+    recommended_track: "enterprise"
+    examples:
+      - "Multi-service architecture"
+      - "Compliance-heavy systems (HIPAA, SOC2)"
+      - "High-availability platforms"
+      - "Large-scale refactoring"
+
+# ============================================================
+# Assessment Dimensions
+# Used to score projects and determine complexity level
+# ============================================================
+
+assessment_dimensions:
+  architectural_impact:
+    weight: 1.5  # Higher weight = more important
+    levels:
+      low: "Single file/component changes"
+      medium: "Multiple components, existing patterns"
+      high: "New patterns, cross-cutting concerns"
+      critical: "Platform-wide architectural changes"
+
+  security_requirements:
+    weight: 2.0  # Highest weight - security is critical
+    levels:
+      none: "No sensitive data, internal tools"
+      low: "Basic authentication"
+      medium: "Authorization, data encryption"
+      high: "Compliance (HIPAA, PCI-DSS, SOC2)"
+
+  testing_complexity:
+    weight: 1.0
+    levels:
+      low: "Unit tests sufficient"
+      medium: "Integration tests needed"
+      high: "E2E, performance, security testing"
+      critical: "Compliance testing, penetration testing"
+
+  deployment_risk:
+    weight: 1.5
+    levels:
+      low: "No deployment (or dev environment only)"
+      medium: "Staging deployment"
+      high: "Production deployment with rollback"
+      critical: "Zero-downtime, multi-region deployment"
+
+  team_involvement:
+    weight: 0.5  # Lower weight - less technical
+    levels:
+      low: "Single developer"
+      medium: "Small team (2-3 people)"
+      high: "Multiple teams"
+      critical: "Cross-org, regulatory approval"
+
+  timeline_constraints:
+    weight: 0.5  # Lower weight - constraint, not complexity
+    levels:
+      immediate: "< 1 day"
+      short: "1-3 days"
+      medium: "1-2 weeks"
+      long: "Weeks to months"
+
+# ============================================================
+# Track Override Rules
+# Governs when users can change recommended track
+# ============================================================
+
+override_rules:
+  upgrade:
+    allowed: true
+    reason: "Adding more rigor is always acceptable"
+    confirmation_required: false
+
+  downgrade:
+    allowed: true
+    reason: "User takes responsibility for skipped phases"
+    confirmation_required: true
+    warning_message: |
+      ⚠️ WARNING: You are downgrading from {recommended_track} to {selected_track}.
+
+      This means you will skip the following phases:
+      {skipped_phases}
+
+      Risks:
+      - No architecture review
+      - No security audit
+      - No formal testing strategy
+      - No deployment automation
+
+      Are you sure you want to proceed? [Yes/No]
+
+# ============================================================
+# Track Transition Rules
+# Governs upgrading track mid-project
+# ============================================================
+
+track_transitions:
+  allowed_transitions:
+    - from: "quick"
+      to: "standard"
+      trigger: "Scope increased, more rigor needed"
+      action: "Add missing phases (02, 03, 04, 07, 09)"
+
+    - from: "quick"
+      to: "enterprise"
+      trigger: "Major scope change, compliance requirements"
+      action: "Add all missing phases"
+
+    - from: "standard"
+      to: "enterprise"
+      trigger: "Production deployment, compliance requirements"
+      action: "Add missing phases (08, 10, 11, 12, 13)"
+
+  forbidden_transitions:
+    - from: "standard"
+      to: "quick"
+      reason: "Cannot reduce rigor once architecture/design complete"
+
+    - from: "enterprise"
+      to: "quick"
+      reason: "Cannot reduce rigor for enterprise projects"
+
+    - from: "enterprise"
+      to: "standard"
+      reason: "Cannot skip security/ops for enterprise projects"
+
+# ============================================================
+# Quality Thresholds by Track
+# Minimum quality requirements for each track
+# ============================================================
+
+quality_thresholds:
+  quick:
+    unit_test_coverage: 60  # Percentage
+    integration_test_coverage: 0  # Not required
+    code_review: "optional"
+    security_scan: "none"
+    documentation: "minimal"  # Just comments in code
+
+  standard:
+    unit_test_coverage: 80
+    integration_test_coverage: 70
+    code_review: "required"
+    security_scan: "basic"  # Dependency scan only
+    documentation: "standard"  # README + API docs
+
+  enterprise:
+    unit_test_coverage: 90
+    integration_test_coverage: 80
+    code_review: "required"
+    security_scan: "comprehensive"  # SAST, DAST, pen testing
+    documentation: "comprehensive"  # Full documentation suite
+
+# ============================================================
+# Configuration Metadata
+# ============================================================
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2026-01-17"
+  author: "iSDLC Framework"
+  schema_version: "1.0"
+
+notes: |
+  This configuration file is read by:
+  - SDLC Orchestrator (Agent 00) - To enforce track requirements
+  - assess-complexity skill - To recommend tracks
+  - init-project.sh script - To initialize project with correct track
+
+  Track selection is stored in .isdlc/state.json and enforced throughout the workflow.

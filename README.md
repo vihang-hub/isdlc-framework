@@ -12,6 +12,8 @@ This framework implements a **1-to-1 mapping** between 13 SDLC phases and 13 spe
 - **1-to-1 Phase Mapping** - Each agent owns exactly one phase
 - **13 Quality Gates** with validation checklists
 - **116 Skills** distributed across 10 categories
+- **Scale-Adaptive Tracks** - Quick/Standard/Enterprise workflows based on complexity
+- **Project Constitution** - Customizable governance principles enforced by agents
 - **Standardized Artifacts** - Templates for each phase's deliverables
 - **Linear Workflow** with clear handoff points
 - **Monorepo Ready** - Share framework across multiple projects
@@ -233,6 +235,88 @@ Each phase has a quality gate with specific validation criteria. Gate checklists
 - `11-test-deploy-gate.md` - Staging deployment verified
 - `12-production-gate.md` - Production deployment complete
 - `13-operations-gate.md` - Operations stable and monitored
+
+## Project Constitution
+
+**NEW**: The framework now supports project-specific constitutional principles that all agents must follow.
+
+### What is a Constitution?
+
+A project constitution is a set of immutable principles (like "Test-First Development" or "Security by Design") that govern all development activities. The orchestrator and all 13 phase agents read and enforce these principles at quality gates.
+
+### How to Use
+
+1. **Copy the template** to your project:
+   ```bash
+   cp isdlc-framework/templates/constitution.md .isdlc/constitution.md
+   ```
+   (Or use `init-project.sh` which does this automatically)
+
+2. **Customize** the articles for your project:
+   - Keep relevant articles (Specification Primacy, Test-First, Security by Design, etc.)
+   - Remove articles that don't apply
+   - Add custom articles (HIPAA Compliance, Performance SLAs, etc.)
+
+3. **Get team agreement** on the principles
+
+4. **Agents enforce** constitutional compliance at each quality gate
+
+### Example Constitution Articles
+
+- **Specification Primacy**: Code serves specifications (source of truth)
+- **Test-First Development**: Tests MUST be written before implementation
+- **Library-First Design**: Prefer libraries over custom implementations
+- **Security by Design**: Security considerations precede implementation
+- **Explicit Over Implicit**: No assumptions, mark uncertainties
+- **Simplicity First**: YAGNI, avoid over-engineering
+- **Artifact Traceability**: Requirements → Design → Code → Tests
+- **Documentation Currency**: Docs updated with code changes
+- **Quality Gate Integrity**: Gates cannot be skipped
+- **Fail-Safe Defaults**: Secure and safe by default
+
+### Resources
+
+- **Template**: [isdlc-framework/templates/constitution.md](isdlc-framework/templates/constitution.md)
+- **Guide**: [docs/CONSTITUTION-GUIDE.md](docs/CONSTITUTION-GUIDE.md)
+- **Analysis**: [docs/FRAMEWORK-COMPARISON-ANALYSIS.md](docs/FRAMEWORK-COMPARISON-ANALYSIS.md)
+
+## Scale-Adaptive Workflow Tracks
+
+**NEW**: The framework now supports three workflow tracks that adapt to project complexity, ensuring the right level of rigor without unnecessary overhead.
+
+### The Three Tracks
+
+**Quick Flow** (30 mins - 2 hours)
+- **For**: Bug fixes, config changes, simple features
+- **Phases**: 01 (brief), 05, 06
+- **Example**: Fix typo, add logging, simple validation
+- **Quality**: 60% unit test coverage, optional code review
+
+**Standard Flow** (4 hours - 3 days)
+- **For**: Features, API endpoints, integrations, refactoring
+- **Phases**: 01, 02, 03, 04, 05, 06, 07, 09
+- **Example**: New REST endpoint, database migration, auth feature
+- **Quality**: 80% unit coverage, 70% integration coverage, code review required
+
+**Enterprise Flow** (weeks - months)
+- **For**: Platforms, compliance systems, mission-critical apps
+- **Phases**: All 13 phases
+- **Example**: Multi-tenant SaaS, HIPAA-compliant system, HA platform
+- **Quality**: 90% unit coverage, 80% integration coverage, full security audit
+
+### How It Works
+
+1. **During project init**, select track manually or let orchestrator assess
+2. **Orchestrator evaluates** 6 dimensions (architecture, security, testing, deployment, team, timeline)
+3. **Determines complexity** level (0-4) and recommends track
+4. **Enforces track** throughout workflow - only executes required phases
+5. **Can upgrade** track mid-project if scope increases (cannot downgrade)
+
+### Resources
+
+- **Documentation**: [docs/SCALE-ADAPTIVE-TRACKS.md](docs/SCALE-ADAPTIVE-TRACKS.md)
+- **Assessment Skill**: [.claude/skills/orchestration/assess-complexity.md](.claude/skills/orchestration/assess-complexity.md)
+- **Track Config**: [isdlc-framework/config/tracks.yaml](isdlc-framework/config/tracks.yaml)
 
 ## Configuration
 
