@@ -1,7 +1,7 @@
 # Phase 4: Test Strategy Gate Checklist
 
 **Phase**: Test Strategy & Design
-**Primary Agent**: Test Manager Agent
+**Primary Agent**: Test Design Engineer (Agent 04)
 
 ---
 

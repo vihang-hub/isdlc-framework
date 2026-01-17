@@ -1,7 +1,7 @@
 # Phase 1: Requirements Gate Checklist
 
 **Phase**: Requirements Capture & Clarification
-**Primary Agent**: Requirements Agent
+**Primary Agent**: Requirements Analyst (Agent 01)
 
 ---
 

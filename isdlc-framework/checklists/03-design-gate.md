@@ -1,7 +1,7 @@
 # Phase 3: Design Gate Checklist
 
 **Phase**: Design & API Contracts
-**Primary Agent**: Design Agent
+**Primary Agent**: System Designer (Agent 03)
 
 ---
 
@@ -94,5 +94,5 @@
 
 Upon passing this gate:
 - Advance to Phase 4: Test Strategy & Design
-- Primary Agent: Test Manager Agent
-- Command: `/sdlc-test-manager strategy`
+- Primary Agent: Test Design Engineer (Agent 04)
+- Next Phase Handler: test-design-engineer

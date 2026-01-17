@@ -1,7 +1,7 @@
 # Phase 2: Architecture Gate Checklist
 
 **Phase**: Architecture & Blueprint
-**Primary Agent**: Architecture Agent
+**Primary Agent**: Solution Architect (Agent 02)
 
 ---
 

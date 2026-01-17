@@ -1,7 +1,7 @@
 # Phase 6: Testing Gate Checklist
 
 **Phase**: Integration & Testing
-**Primary Agent**: Test Manager Agent
+**Primary Agent**: Integration Tester (Agent 06)
 
 ---
 

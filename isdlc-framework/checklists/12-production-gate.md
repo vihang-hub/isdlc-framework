@@ -1,7 +1,7 @@
 # Phase 12: Production Deployment Gate Checklist
 
 **Phase**: Production Deployment
-**Primary Agent**: DevOps Agent
+**Primary Agent**: Release Manager (Agent 12)
 
 ---
 

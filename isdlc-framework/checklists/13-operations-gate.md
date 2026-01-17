@@ -1,7 +1,7 @@
 # Phase 13: Operations Gate Checklist
 
 **Phase**: Production Operations & Monitoring
-**Primary Agent**: Operations Agent
+**Primary Agent**: Site Reliability Engineer (Agent 13)
 
 ---
 

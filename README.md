@@ -4,16 +4,17 @@ An integrated Software Development Lifecycle (iSDLC) framework designed for Clau
 
 ## Overview
 
-This framework implements a 13-phase SDLC with 10 skill categories and 116 total skills. Clone this repo and you're ready to start building projects.
+This framework implements a **1-to-1 mapping** between 13 SDLC phases and 13 specialized AI agents. Each phase has exactly ONE dedicated agent, creating clear ownership and simplified workflows.
 
 ### Key Features
 
-- **116 Skills** across 10 categories
-- **13 Phases** from requirements to operations
-- **Phase Gates** with validation checklists
-- **Monorepo Ready** - shared skills, per-project state
+- **14 Specialized Agents** (1 Orchestrator + 13 Phase Agents)
+- **1-to-1 Phase Mapping** - Each agent owns exactly one phase
+- **13 Quality Gates** with validation checklists
+- **116+ Skills** distributed across agents
+- **Monorepo Ready** - shared agents and skills, per-project state
 - **Templates** for standardized artifacts
-- **Configuration** for coding, testing, and operations standards
+- **Linear Workflow** with clear handoff points
 
 ## Structure
 
@@ -60,7 +61,7 @@ git clone <repo-url> my-monorepo
 cd my-monorepo
 ```
 
-You now have the complete structure with 116 skills ready to use.
+You now have the complete structure with 14 specialized agents ready to use.
 
 ### 2. Initialize a Project
 
@@ -79,7 +80,7 @@ cd packages/my-app
 claude  # Open Claude Code
 ```
 
-Claude will have access to all 116 skills from the root `.claude/skills/` directory.
+The SDLC Orchestrator will coordinate all 13 phase-specific agents from the root `.claude/agents/` directory.
 
 ## Utility Scripts
 
@@ -93,38 +94,56 @@ Run from project directory:
 ../../isdlc-framework/scripts/generate-report.sh
 ```
 
-## Skills by Category
+## The 14 Specialized Agents
 
-| Category | Skills | Purpose |
-|----------|--------|---------|
-| orchestration | 8 | Workflow management, phase gates, task delegation |
-| requirements | 10 | Requirements capture, user stories, traceability |
-| architecture | 12 | System design, tech stack, database, security |
-| design | 10 | API contracts, UI/UX, modules, error handling |
-| testing | 13 | Test strategy, coverage, test data, reporting |
-| development | 14 | Implementation, unit tests, code review |
-| security | 13 | Threat modeling, vulnerability scanning, compliance |
-| devops | 14 | CI/CD, infrastructure, deployment, containers |
-| documentation | 10 | Technical docs, API docs, runbooks |
-| operations | 12 | Monitoring, alerting, incident response |
+| Phase | Agent | Responsibility |
+|-------|-------|----------------|
+| **00** | **SDLC Orchestrator** | Workflow coordination, phase gates, conflict resolution |
+| **01** | **Requirements Analyst** | Requirements capture, user stories, NFRs |
+| **02** | **Solution Architect** | System architecture, tech stack, database design |
+| **03** | **System Designer** | API contracts, module design, UI/UX |
+| **04** | **Test Design Engineer** | Test strategy, test cases, traceability |
+| **05** | **Software Developer** | Implementation (TDD), unit tests |
+| **06** | **Integration Tester** | Integration testing, E2E testing |
+| **07** | **QA Engineer** | Code review, quality metrics, QA sign-off |
+| **08** | **Security & Compliance Auditor** | Security scanning, penetration testing, compliance |
+| **09** | **CI/CD Engineer** | Pipeline automation, build configuration |
+| **10** | **Dev Environment Engineer** | Local dev setup, developer experience |
+| **11** | **Deployment Engineer (Staging)** | Staging deployment, smoke tests, rollback |
+| **12** | **Release Manager** | Production deployment, release coordination |
+| **13** | **Site Reliability Engineer** | Operations, monitoring, incident response |
 
-## SDLC Phases
+## SDLC Phase Flow
 
-| Phase | Name | Primary Skills |
-|-------|------|----------------|
-| 01 | Requirements Capture | requirements/* |
-| 02 | Architecture & Blueprint | architecture/* |
-| 03 | Design & API Contracts | design/* |
-| 04 | Test Strategy & Design | testing/* |
-| 05 | Implementation | development/* |
-| 06 | Integration & Testing | testing/* |
-| 07 | Code Review & QA | development/code-review |
-| 08 | Independent Validation | testing/* |
-| 09 | Version Control & CI/CD | devops/* |
-| 10 | Local Development & Testing | development/*, testing/* |
-| 11 | Test Environment Deployment | devops/* |
-| 12 | Production Deployment | devops/* |
-| 13 | Production Operations | operations/* |
+```
+Phase 01: Requirements → Requirements Analyst → GATE-01
+    ↓
+Phase 02: Architecture → Solution Architect → GATE-02
+    ↓
+Phase 03: Design → System Designer → GATE-03
+    ↓
+Phase 04: Test Strategy → Test Design Engineer → GATE-04
+    ↓
+Phase 05: Implementation → Software Developer → GATE-05
+    ↓
+Phase 06: Integration Testing → Integration Tester → GATE-06
+    ↓
+Phase 07: Code Review & QA → QA Engineer → GATE-07
+    ↓
+Phase 08: Security Validation → Security & Compliance Auditor → GATE-08
+    ↓
+Phase 09: CI/CD Setup → CI/CD Engineer → GATE-09
+    ↓
+Phase 10: Local Dev Setup → Dev Environment Engineer → GATE-10
+    ↓
+Phase 11: Staging Deployment → Deployment Engineer (Staging) → GATE-11
+    ↓
+Phase 12: Production Release → Release Manager → GATE-12
+    ↓
+Phase 13: Operations → Site Reliability Engineer → GATE-13
+```
+
+**1-to-1 Mapping**: Each phase has exactly ONE dedicated agent.
 
 ## Project State
 
