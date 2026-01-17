@@ -1,0 +1,219 @@
+# Coding Standards Configuration
+# Default coding standards for projects using the SDLC Framework
+
+# General Principles
+principles:
+  - name: "Single Responsibility"
+    description: "Each module/function should have one reason to change"
+  - name: "Don't Repeat Yourself (DRY)"
+    description: "Avoid code duplication"
+  - name: "Keep It Simple (KISS)"
+    description: "Prefer simple solutions over complex ones"
+  - name: "You Aren't Gonna Need It (YAGNI)"
+    description: "Don't add functionality until necessary"
+
+# Naming Conventions
+naming:
+  # General
+  variables: "camelCase"
+  constants: "SCREAMING_SNAKE_CASE"
+  functions: "camelCase"
+  classes: "PascalCase"
+  interfaces: "PascalCase"  # No 'I' prefix
+  types: "PascalCase"
+  enums: "PascalCase"
+  enum_members: "PascalCase"  # or SCREAMING_SNAKE_CASE
+
+  # Files
+  component_files: "PascalCase"  # e.g., UserProfile.tsx
+  utility_files: "camelCase"     # e.g., formatDate.ts
+  test_files: "{name}.test.{ext}"
+  style_files: "{name}.module.css"
+
+  # Folders
+  folders: "kebab-case"
+
+  # Specific patterns
+  boolean_prefix: ["is", "has", "can", "should", "will"]
+  handler_prefix: "handle"
+  async_suffix: []  # Some prefer 'Async' suffix
+
+# Code Structure
+structure:
+  max_file_lines: 300
+  max_function_lines: 50
+  max_function_params: 4
+  max_nesting_depth: 4
+  max_cyclomatic_complexity: 10
+
+# Import Organization
+imports:
+  order:
+    - "builtin"      # Node.js built-ins
+    - "external"     # npm packages
+    - "internal"     # Project modules (aliases)
+    - "parent"       # Parent directory
+    - "sibling"      # Same directory
+    - "index"        # Index files
+
+  group_separation: true
+  sort_alphabetically: true
+  no_default_export: false  # true for some projects
+
+# Comments and Documentation
+documentation:
+  require_jsdoc: false  # For public APIs
+  jsdoc_tags:
+    required:
+      - "@param"
+      - "@returns"
+    optional:
+      - "@throws"
+      - "@example"
+      - "@deprecated"
+
+  comment_style:
+    single_line: "//"
+    multi_line: "/* */"
+    documentation: "/** */"
+
+  # When to add comments
+  comment_guidelines:
+    - "Explain WHY, not WHAT"
+    - "Document complex algorithms"
+    - "Note non-obvious side effects"
+    - "Mark TODO/FIXME with ticket numbers"
+
+# Error Handling
+error_handling:
+  use_typed_errors: true
+  always_handle_promises: true
+  no_empty_catch: true
+  log_errors: true
+
+  patterns:
+    # Prefer
+    - name: "Result type"
+      description: "Return Result<T, E> instead of throwing"
+    - name: "Error boundaries"
+      description: "Catch errors at boundaries, not everywhere"
+
+    # Avoid
+    - name: "Silent failures"
+      avoid: true
+      description: "Never swallow errors without logging"
+
+# Testing Standards
+testing:
+  patterns:
+    - name: "AAA"
+      description: "Arrange, Act, Assert"
+    - name: "Given-When-Then"
+      description: "For BDD-style tests"
+
+  naming:
+    describe: "Unit or feature being tested"
+    it: "should {expected behavior}"
+    test: "describes what is being tested"
+
+  guidelines:
+    - "One assertion per test (generally)"
+    - "Test behavior, not implementation"
+    - "Use descriptive test names"
+    - "Keep tests independent"
+    - "Mock external dependencies"
+    - "Don't test private methods directly"
+
+# Git Conventions
+git:
+  commit_message:
+    format: "conventional"
+    types:
+      feat: "New feature"
+      fix: "Bug fix"
+      docs: "Documentation only"
+      style: "Formatting, no code change"
+      refactor: "Code change, no feature/fix"
+      test: "Adding/updating tests"
+      chore: "Maintenance tasks"
+
+    subject:
+      max_length: 72
+      capitalization: "lowercase"
+      no_period: true
+      imperative_mood: true
+
+    body:
+      wrap_at: 72
+      explain_what_and_why: true
+
+    examples:
+      - "feat(auth): add OAuth2 login support"
+      - "fix(cart): resolve race condition on checkout"
+      - "docs: update API documentation"
+      - "refactor(user): extract validation logic"
+
+  branch_naming:
+    format: "{type}/{ticket-id}-{short-description}"
+    types:
+      - feature
+      - bugfix
+      - hotfix
+      - release
+    examples:
+      - "feature/PROJ-123-add-user-auth"
+      - "bugfix/PROJ-456-fix-login-error"
+
+# Language-Specific (TypeScript/JavaScript)
+typescript:
+  strict_mode: true
+  no_any: true
+  explicit_return_types: true  # For public functions
+  prefer_const: true
+  prefer_template_literals: true
+  no_var: true
+
+  null_handling:
+    strict_null_checks: true
+    prefer_undefined: true  # Over null
+    use_optional_chaining: true
+    use_nullish_coalescing: true
+
+# React Specific (if applicable)
+react:
+  component_style: "functional"  # Over class components
+  hooks_rules: true
+  prop_types: false  # Use TypeScript instead
+
+  patterns:
+    - name: "Custom hooks"
+      description: "Extract logic into custom hooks"
+    - name: "Composition"
+      description: "Prefer composition over inheritance"
+    - name: "Controlled components"
+      description: "For form inputs"
+
+# API Design
+api:
+  rest:
+    versioning: "url"  # /v1/resource
+    resource_naming: "plural"  # /users not /user
+    pagination: "cursor"  # or offset
+    filtering: "query_params"
+    error_format: "json_api"  # or custom
+
+  status_codes:
+    success:
+      - 200  # OK
+      - 201  # Created
+      - 204  # No Content
+    client_error:
+      - 400  # Bad Request
+      - 401  # Unauthorized
+      - 403  # Forbidden
+      - 404  # Not Found
+      - 409  # Conflict
+      - 422  # Unprocessable Entity
+    server_error:
+      - 500  # Internal Server Error
+      - 503  # Service Unavailable

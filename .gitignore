@@ -1,0 +1,19 @@
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Editor files
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+
+# Project-specific state (each project tracks its own)
+packages/*/.isdlc/
+
+# Local skill state
+.claude/*.local.md

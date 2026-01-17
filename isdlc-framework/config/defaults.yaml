@@ -1,0 +1,280 @@
+# SDLC Framework Default Configuration
+# Projects can override these settings in .sdlc/config.yaml
+
+version: "1.0.0"
+
+# Phase Configuration
+phases:
+  01-requirements:
+    name: "Requirements Capture"
+    primary_agent: "requirements"
+    required_artifacts:
+      - requirements-spec.md
+      - user-stories.json
+    optional_artifacts:
+      - nfr-matrix.md
+      - traceability-matrix.csv
+      - glossary.md
+
+  02-architecture:
+    name: "Architecture & Blueprint"
+    primary_agent: "architecture"
+    required_artifacts:
+      - architecture-overview.md
+      - tech-stack-decision.md
+      - database-design.md
+      - security-architecture.md
+    optional_artifacts:
+      - cost-estimate.md
+      - infrastructure-design.md
+
+  03-design:
+    name: "Design & API Contracts"
+    primary_agent: "design"
+    required_artifacts:
+      - openapi.yaml
+    optional_artifacts:
+      - modules/
+      - wireframes/
+      - error-taxonomy.md
+      - validation-rules.json
+
+  04-test-strategy:
+    name: "Test Strategy & Design"
+    primary_agent: "test-manager"
+    required_artifacts:
+      - test-strategy.md
+      - traceability-matrix.csv
+    optional_artifacts:
+      - test-cases/
+      - test-data/
+
+  05-implementation:
+    name: "Implementation"
+    primary_agent: "developer"
+    required_artifacts: []  # Actual code in src/
+    optional_artifacts:
+      - implementation-log.md
+
+  06-testing:
+    name: "Integration & Testing"
+    primary_agent: "test-manager"
+    required_artifacts:
+      - coverage-report.md
+    optional_artifacts:
+      - test-results/
+      - security-scan-report.md
+      - performance-test-results.md
+      - accessibility-report.md
+
+  07-code-review:
+    name: "Code Review & QA"
+    primary_agent: "developer"
+    required_artifacts: []  # PR approvals
+    optional_artifacts:
+      - quality-metrics.md
+      - technical-debt.md
+
+  08-validation:
+    name: "Independent Validation"
+    primary_agent: "test-manager"
+    required_artifacts:
+      - validation-report.md
+      - security-sign-off.md
+    optional_artifacts:
+      - traceability-verification.md
+      - architecture-compliance.md
+
+  09-cicd:
+    name: "Version Control & CI/CD"
+    primary_agent: "devops"
+    required_artifacts: []  # CI/CD configs in repo root
+    optional_artifacts:
+      - infrastructure/
+
+  10-local-testing:
+    name: "Local Development & Manual Testing"
+    primary_agent: "developer"
+    required_artifacts:
+      - manual-test-results.md
+    optional_artifacts:
+      - bugs/
+
+  11-test-deploy:
+    name: "Test Environment Deployment"
+    primary_agent: "devops"
+    required_artifacts:
+      - deployment-log-staging.md
+      - smoke-test-results.md
+    optional_artifacts:
+      - uat-sign-off.md
+      - issue-resolution.md
+
+  12-production:
+    name: "Production Deployment"
+    primary_agent: "devops"
+    required_artifacts:
+      - deployment-log-production.md
+      - release-notes.md
+    optional_artifacts:
+      - post-deployment-verification.md
+
+  13-operations:
+    name: "Production Operations"
+    primary_agent: "operations"
+    required_artifacts: []
+    optional_artifacts:
+      - monitoring/
+      - alert-rules.yaml
+      - dashboards/
+      - runbooks/
+      - sla-report.md
+
+# Testing Standards
+testing:
+  unit:
+    coverage_target: 80
+    framework: "jest"  # or pytest, go test
+    naming_pattern: "*.test.ts"
+    co_locate_with_source: true
+
+  integration:
+    coverage_target: 70
+    framework: "supertest"  # or pytest
+
+  e2e:
+    coverage_target: 100  # critical paths only
+    framework: "playwright"
+
+  security:
+    scanner: "semgrep"
+    dependency_scanner: "npm audit"
+    severity_threshold: "high"
+
+  performance:
+    tool: "k6"
+    response_time_p95_target_ms: 200
+    throughput_target_rps: 100
+
+  accessibility:
+    tool: "axe"
+    compliance_level: "WCAG 2.1 AA"
+
+# Coding Standards
+coding:
+  style_guide: "airbnb"  # or google, standard
+  commit_format: "conventional"
+  commit_types:
+    - feat
+    - fix
+    - docs
+    - style
+    - refactor
+    - test
+    - chore
+  max_commit_subject_length: 72
+
+  linting:
+    enabled: true
+    fail_on_warning: false
+    fail_on_error: true
+
+  type_checking:
+    enabled: true
+    strict_mode: true
+
+  formatting:
+    tool: "prettier"  # or black, gofmt
+    on_save: true
+
+# Code Review
+code_review:
+  required_approvers: 1
+  require_passing_ci: true
+  checklist:
+    - logic_correctness
+    - error_handling
+    - security_considerations
+    - performance_implications
+    - test_coverage
+    - documentation
+    - naming_clarity
+
+# Security
+security:
+  scanning:
+    sast_enabled: true
+    dast_enabled: false
+    dependency_scanning_enabled: true
+    secret_scanning_enabled: true
+
+  compliance_frameworks: []  # e.g., gdpr, pci-dss, hipaa
+
+  severity_thresholds:
+    block_deployment: "high"
+    require_review: "medium"
+
+# CI/CD
+cicd:
+  ci_triggers:
+    - push
+    - pull_request
+
+  cd_environments:
+    development:
+      auto_deploy: true
+      approval_required: false
+    staging:
+      auto_deploy: true
+      approval_required: false
+    production:
+      auto_deploy: false
+      approval_required: true
+
+  deployment_strategy: "blue-green"  # or canary, rolling
+
+# Monitoring & Operations
+operations:
+  alert_severities:
+    critical:
+      response_time: "immediate"
+      channels:
+        - pagerduty
+        - slack
+    high:
+      response_time: "1 hour"
+      channels:
+        - slack
+        - email
+    medium:
+      response_time: "4 hours"
+      channels:
+        - slack
+    low:
+      response_time: "next business day"
+      channels:
+        - email
+
+  sla:
+    availability_target: 99.9
+    response_time_p95_target_ms: 200
+
+# Documentation
+documentation:
+  readme_required_sections:
+    - project_overview
+    - prerequisites
+    - installation
+    - configuration
+    - usage
+    - development_setup
+    - testing
+    - deployment
+    - contributing
+    - license
+
+  changelog_format: "keep-a-changelog"
+
+  api_docs:
+    generator: "redoc"  # or swagger-ui
+    auto_generate: true

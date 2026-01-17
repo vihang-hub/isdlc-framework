@@ -1,0 +1,352 @@
+# Testing Standards Configuration
+# Default testing standards for projects using the SDLC Framework
+
+# Testing Philosophy
+philosophy:
+  - "Tests are documentation"
+  - "Test behavior, not implementation"
+  - "Fast feedback is essential"
+  - "Tests should be deterministic"
+  - "Isolate tests from each other"
+
+# Testing Pyramid
+pyramid:
+  unit:
+    percentage: 70
+    description: "Individual functions, components, modules"
+    characteristics:
+      - "Fast (< 10ms per test)"
+      - "No external dependencies"
+      - "Isolated"
+      - "Deterministic"
+
+  integration:
+    percentage: 20
+    description: "Component interactions, API contracts"
+    characteristics:
+      - "Tests real integrations"
+      - "May use test database"
+      - "May use mocked external services"
+      - "Slower than unit tests"
+
+  e2e:
+    percentage: 10
+    description: "User journeys, critical paths"
+    characteristics:
+      - "Full system test"
+      - "Real browser (for web)"
+      - "Slowest tests"
+      - "Most brittle"
+
+# Coverage Targets
+coverage:
+  unit:
+    line: 80
+    branch: 75
+    function: 90
+    statement: 80
+
+  integration:
+    api_endpoints: 100
+    critical_paths: 100
+
+  e2e:
+    critical_user_journeys: 100
+    happy_paths: 100
+
+# Test File Organization
+organization:
+  unit:
+    location: "co-located"  # or "separate"
+    pattern: "{name}.test.{ext}"
+    example: "userService.test.ts"
+
+  integration:
+    location: "tests/integration/"
+    pattern: "{feature}.integration.test.{ext}"
+    example: "auth.integration.test.ts"
+
+  e2e:
+    location: "tests/e2e/"
+    pattern: "{journey}.e2e.test.{ext}"
+    example: "checkout.e2e.test.ts"
+
+# Test Naming
+naming:
+  describe_block:
+    format: "{UnitName}"
+    examples:
+      - "UserService"
+      - "AuthController"
+      - "formatDate"
+
+  nested_describe:
+    format: "{methodName} or {scenario}"
+    examples:
+      - "createUser"
+      - "when user is authenticated"
+
+  it_block:
+    format: "should {expected behavior}"
+    examples:
+      - "should return user when valid ID provided"
+      - "should throw error when user not found"
+      - "should hash password before saving"
+
+# Test Structure (AAA Pattern)
+structure:
+  arrange:
+    description: "Set up test data and conditions"
+    guidelines:
+      - "Use factories or fixtures"
+      - "Keep setup minimal"
+      - "Use beforeEach for common setup"
+
+  act:
+    description: "Execute the code under test"
+    guidelines:
+      - "Single action per test"
+      - "Call the function/method being tested"
+
+  assert:
+    description: "Verify the expected outcome"
+    guidelines:
+      - "One logical assertion per test"
+      - "Use specific matchers"
+      - "Assert on behavior, not implementation"
+
+# Mocking Strategy
+mocking:
+  when_to_mock:
+    - "External APIs"
+    - "Database (for unit tests)"
+    - "Time-dependent code"
+    - "Random number generation"
+    - "File system (usually)"
+    - "Network requests"
+
+  when_not_to_mock:
+    - "Internal dependencies (usually)"
+    - "Simple utility functions"
+    - "Value objects"
+
+  guidelines:
+    - "Mock at the boundary"
+    - "Don't mock what you don't own (wrap first)"
+    - "Verify mock interactions sparingly"
+    - "Reset mocks between tests"
+
+# Test Data
+test_data:
+  strategies:
+    factories:
+      description: "Functions that create test objects"
+      when: "Need variations of objects"
+      example: "createUser({ role: 'admin' })"
+
+    fixtures:
+      description: "Static test data files"
+      when: "Complex, rarely changing data"
+      location: "tests/fixtures/"
+
+    builders:
+      description: "Fluent API for building objects"
+      when: "Complex object construction"
+      example: "new UserBuilder().withRole('admin').build()"
+
+  guidelines:
+    - "Use realistic but fake data"
+    - "Never use production data"
+    - "Use libraries like Faker for generation"
+    - "Keep test data close to tests"
+
+# Assertions
+assertions:
+  guidelines:
+    - "Use specific matchers (toEqual vs toBe)"
+    - "Include helpful error messages"
+    - "Avoid negation when possible"
+    - "Test one thing per assertion"
+
+  common_matchers:
+    equality:
+      - "toBe"       # Strict equality
+      - "toEqual"    # Deep equality
+      - "toStrictEqual"  # Deep + undefined checks
+
+    truthiness:
+      - "toBeTruthy"
+      - "toBeFalsy"
+      - "toBeNull"
+      - "toBeUndefined"
+      - "toBeDefined"
+
+    numbers:
+      - "toBeGreaterThan"
+      - "toBeLessThan"
+      - "toBeCloseTo"
+
+    strings:
+      - "toMatch"    # Regex
+      - "toContain"
+
+    arrays:
+      - "toContain"
+      - "toHaveLength"
+      - "toContainEqual"
+
+    objects:
+      - "toHaveProperty"
+      - "toMatchObject"
+
+    functions:
+      - "toThrow"
+      - "toHaveBeenCalled"
+      - "toHaveBeenCalledWith"
+
+# Async Testing
+async:
+  patterns:
+    async_await:
+      preferred: true
+      example: "it('should...', async () => { await expect(...) })"
+
+    done_callback:
+      preferred: false
+      when: "Legacy code or specific scenarios"
+
+    promises:
+      use_return: true
+      example: "return expect(promise).resolves.toEqual(...)"
+
+  guidelines:
+    - "Always await async operations"
+    - "Use proper timeouts"
+    - "Test both resolve and reject paths"
+    - "Clean up async resources"
+
+# Integration Test Guidelines
+integration:
+  database:
+    strategy: "transaction_rollback"  # or "truncate", "reset"
+    use_test_database: true
+    seed_data: true
+
+  api:
+    use_supertest: true
+    test_contracts: true
+    mock_external_services: true
+
+  guidelines:
+    - "Test real database queries"
+    - "Test authentication/authorization"
+    - "Test error responses"
+    - "Test validation"
+
+# E2E Test Guidelines
+e2e:
+  browser:
+    default: "chromium"
+    cross_browser:
+      - "chromium"
+      - "firefox"
+      - "webkit"
+
+  selectors:
+    preferred: "data-testid"
+    fallback: "role"
+    avoid: "css_class"
+
+  guidelines:
+    - "Test user journeys, not features"
+    - "Use page object pattern"
+    - "Keep tests independent"
+    - "Handle flakiness with retries"
+    - "Take screenshots on failure"
+
+# Performance Test Guidelines
+performance:
+  types:
+    load:
+      description: "Expected traffic"
+      duration: "5-10 minutes"
+
+    stress:
+      description: "Beyond expected traffic"
+      find: "Breaking point"
+
+    spike:
+      description: "Sudden traffic increase"
+      pattern: "Ramp up quickly"
+
+    endurance:
+      description: "Sustained load"
+      duration: "1+ hours"
+
+  metrics:
+    - "Response time (p50, p95, p99)"
+    - "Throughput (requests/second)"
+    - "Error rate"
+    - "Resource utilization"
+
+# Security Test Guidelines
+security:
+  automated:
+    - "SAST (Static Analysis)"
+    - "Dependency scanning"
+    - "Secret detection"
+
+  manual:
+    - "Authentication bypass attempts"
+    - "Authorization boundary testing"
+    - "Input validation testing"
+
+  owasp_top_10:
+    - "A01: Broken Access Control"
+    - "A02: Cryptographic Failures"
+    - "A03: Injection"
+    - "A04: Insecure Design"
+    - "A05: Security Misconfiguration"
+    - "A06: Vulnerable Components"
+    - "A07: Auth Failures"
+    - "A08: Data Integrity Failures"
+    - "A09: Logging Failures"
+    - "A10: SSRF"
+
+# Flaky Test Management
+flaky_tests:
+  identification:
+    - "Track test stability over time"
+    - "Flag tests that fail intermittently"
+
+  handling:
+    - "Fix root cause (preferred)"
+    - "Add retries (temporary)"
+    - "Quarantine persistent flakes"
+
+  common_causes:
+    - "Timing/race conditions"
+    - "Shared state"
+    - "External dependencies"
+    - "Non-deterministic data"
+
+# CI Integration
+ci:
+  unit:
+    run_on: "every push"
+    fail_fast: true
+    parallel: true
+
+  integration:
+    run_on: "pull request"
+    fail_fast: false
+    parallel: true
+
+  e2e:
+    run_on: "merge to main"
+    fail_fast: false
+    parallel: false  # Usually
+
+  performance:
+    run_on: "scheduled or manual"
+    compare_to_baseline: true
