@@ -479,6 +479,78 @@ quality_thresholds:
     documentation: "comprehensive"  # Full documentation suite
 
 # ============================================================
+# AUTONOMOUS ITERATION CONFIGURATION
+# Controls self-correcting behavior for agents in phases 05 and 06
+# ============================================================
+
+autonomous_iteration:
+  quick:
+    enabled: true
+    max_iterations: 5
+    timeout_per_iteration_minutes: 5
+    phases:
+      "05":  # Implementation
+        enabled: true
+        max_iterations: 5
+        exit_criteria:
+          - "all_unit_tests_passing"
+          - "coverage_target_met"
+          - "linting_passes"
+      "06":  # Integration & Testing
+        enabled: true
+        max_iterations: 5
+        exit_criteria:
+          - "all_integration_tests_passing"
+          - "no_critical_defects"
+
+  standard:
+    enabled: true
+    max_iterations: 10
+    timeout_per_iteration_minutes: 5
+    phases:
+      "05":  # Implementation
+        enabled: true
+        max_iterations: 10
+        exit_criteria:
+          - "all_unit_tests_passing"
+          - "coverage_target_met"
+          - "linting_passes"
+          - "type_checking_passes"
+      "06":  # Integration & Testing
+        enabled: true
+        max_iterations: 10
+        exit_criteria:
+          - "all_integration_tests_passing"
+          - "all_e2e_tests_passing"
+          - "api_contract_tests_passing"
+          - "no_critical_defects"
+
+  enterprise:
+    enabled: true
+    max_iterations: 15
+    timeout_per_iteration_minutes: 10
+    phases:
+      "05":  # Implementation
+        enabled: true
+        max_iterations: 15
+        exit_criteria:
+          - "all_unit_tests_passing"
+          - "coverage_target_met"
+          - "linting_passes"
+          - "type_checking_passes"
+          - "security_scan_passes"
+      "06":  # Integration & Testing
+        enabled: true
+        max_iterations: 15
+        exit_criteria:
+          - "all_integration_tests_passing"
+          - "all_e2e_tests_passing"
+          - "api_contract_tests_passing"
+          - "performance_tests_passing"
+          - "no_critical_defects"
+          - "no_high_defects"
+
+# ============================================================
 # Configuration Metadata
 # ============================================================
 

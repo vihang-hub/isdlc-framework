@@ -64,6 +64,15 @@
 - [ ] Review comments addressed
 - [ ] Approval obtained
 
+### 8. Autonomous Iteration (NEW)
+- [ ] Iteration count logged in state.json
+- [ ] All iterations documented with actions and results
+- [ ] Final status recorded (success/escalated)
+- [ ] Iterations within limit (Quick: 5, Standard: 10, Enterprise: 15)
+- [ ] If escalated: failure report attached with recommendations
+- [ ] Iteration history shows learning and progress
+- [ ] No repeated failures (same error 3+ times)
+
 ---
 
 ## Gate Decision
@@ -76,6 +85,7 @@
 | Unit tests passing | [ ] Pass / [ ] Fail | |
 | Coverage >= 80% | [ ] Pass / [ ] Fail | |
 | Code review approved | [ ] Pass / [ ] Fail | |
+| Autonomous iteration documented | [ ] Pass / [ ] Fail | |
 
 **Gate Status**: [ ] PASS / [ ] FAIL
 

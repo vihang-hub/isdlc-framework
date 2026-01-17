@@ -69,6 +69,16 @@
 - [ ] Medium defects triaged
 - [ ] All regression tests passing
 
+### 8. Autonomous Iteration (NEW)
+- [ ] Test execution iteration count logged in state.json
+- [ ] All test run iterations documented with results
+- [ ] Final status recorded (success/escalated)
+- [ ] Iterations within limit (Quick: 5, Standard: 10, Enterprise: 15)
+- [ ] If escalated: detailed failure report with test logs attached
+- [ ] Defects properly categorized and logged in defect-log.json
+- [ ] Iteration history shows failure analysis and fixes
+- [ ] No test failures repeated without progress (3+ times)
+
 ---
 
 ## Gate Decision
@@ -82,6 +92,7 @@
 | Performance targets met | [ ] Pass / [ ] Fail | |
 | Accessibility compliant | [ ] Pass / [ ] Fail | |
 | No critical/high defects | [ ] Pass / [ ] Fail | |
+| Autonomous iteration documented | [ ] Pass / [ ] Fail | |
 
 **Gate Status**: [ ] PASS / [ ] FAIL
 
