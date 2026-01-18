@@ -1,8 +1,8 @@
 ---
 name: sla-management
 description: Monitor and report on SLA compliance
-skill_id: MON-005
-owner: operations
+skill_id: SRE-008
+owner: site-reliability-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

@@ -2,7 +2,7 @@
 name: backup-and-recovery
 description: Implement backup strategies and disaster recovery
 skill_id: OPS-012
-owner: devops
+owner: release-manager
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

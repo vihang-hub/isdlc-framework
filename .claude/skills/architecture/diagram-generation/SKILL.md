@@ -2,7 +2,7 @@
 name: diagram-generation
 description: Create C4, sequence, and ER diagrams
 skill_id: ARCH-011
-owner: architecture
+owner: solution-architect
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

@@ -2,7 +2,7 @@
 name: authentication-implementation
 description: Implement authentication flows including OAuth2
 skill_id: DEV-006
-owner: developer
+owner: software-developer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

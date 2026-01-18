@@ -1,8 +1,8 @@
 ---
 name: code-documentation
 description: Write inline code documentation and JSDoc comments
-skill_id: DEV-012
-owner: developer
+skill_id: DEV-011
+owner: software-developer
 collaborators: [documentation]
 project: sdlc-framework
 version: 1.0.0

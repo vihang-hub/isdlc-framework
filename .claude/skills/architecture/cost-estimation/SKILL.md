@@ -2,7 +2,7 @@
 name: cost-estimation
 description: Estimate infrastructure and operational costs
 skill_id: ARCH-009
-owner: architecture
+owner: solution-architect
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

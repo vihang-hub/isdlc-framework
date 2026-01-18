@@ -2,7 +2,7 @@
 name: api-architecture
 description: Design API structure, versioning, and contracts
 skill_id: ARCH-004
-owner: architecture
+owner: solution-architect
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

@@ -1,8 +1,8 @@
 ---
 name: code-review
 description: Review code for quality, security, and standards compliance
-skill_id: DEV-011
-owner: developer
+skill_id: DEV-015
+owner: qa-engineer
 collaborators: [security, architecture]
 project: sdlc-framework
 version: 1.0.0

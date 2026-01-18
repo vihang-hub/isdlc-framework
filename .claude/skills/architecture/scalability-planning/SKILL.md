@@ -2,7 +2,7 @@
 name: scalability-planning
 description: Design system for growth in users, data, and traffic
 skill_id: ARCH-007
-owner: architecture
+owner: solution-architect
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

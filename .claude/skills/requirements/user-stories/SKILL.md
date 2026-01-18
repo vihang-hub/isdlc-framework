@@ -2,7 +2,7 @@
 name: user-story-writing
 description: Create user stories with clear acceptance criteria
 skill_id: REQ-002
-owner: requirements
+owner: requirements-analyst
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

@@ -1,8 +1,8 @@
 ---
 name: impact-analysis
 description: Identify tests affected by changes for regression management
-skill_id: TEST-006
-owner: test-manager
+skill_id: TEST-011
+owner: integration-tester
 collaborators: [requirements, developer]
 project: sdlc-framework
 version: 1.0.0

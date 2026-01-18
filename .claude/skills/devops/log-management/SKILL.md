@@ -1,8 +1,8 @@
 ---
 name: log-management
 description: Implement centralized logging and analysis
-skill_id: OPS-008
-owner: devops
+skill_id: OPS-004
+owner: cicd-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

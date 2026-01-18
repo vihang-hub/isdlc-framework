@@ -2,7 +2,7 @@
 name: integration-architecture
 description: Design external service integration patterns
 skill_id: ARCH-008
-owner: architecture
+owner: solution-architect
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

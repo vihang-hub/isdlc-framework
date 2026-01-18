@@ -2,7 +2,7 @@
 name: authorization-testing
 description: Test authorization controls and access policies
 skill_id: SEC-007
-owner: security
+owner: security-compliance-auditor
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

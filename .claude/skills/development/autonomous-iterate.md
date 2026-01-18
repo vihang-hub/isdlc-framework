@@ -1,3 +1,15 @@
+---
+name: autonomous-iterate
+description: Enable agents to autonomously retry tasks until success or max iterations reached
+skill_id: DEV-014
+owner: software-developer
+collaborators: []
+project: sdlc-framework
+version: 1.0.0
+when_to_use: Implementation phase, TDD workflow, bug fixes
+dependencies: []
+---
+
 # Autonomous Iteration
 
 **Category**: Development

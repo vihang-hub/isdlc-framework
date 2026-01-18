@@ -1,8 +1,8 @@
 ---
 name: deployment-strategy
 description: Implement blue-green and canary deployment strategies
-skill_id: OPS-004
-owner: devops
+skill_id: OPS-009
+owner: deployment-engineer-staging
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

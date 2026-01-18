@@ -2,7 +2,7 @@
 name: requirements-prioritization
 description: Apply MoSCoW or other prioritization frameworks
 skill_id: REQ-005
-owner: requirements
+owner: requirements-analyst
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

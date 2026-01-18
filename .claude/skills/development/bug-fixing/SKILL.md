@@ -2,7 +2,7 @@
 name: bug-fixing
 description: Diagnose and fix software defects
 skill_id: DEV-010
-owner: developer
+owner: software-developer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

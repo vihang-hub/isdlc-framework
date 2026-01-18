@@ -2,7 +2,7 @@
 name: environment-design
 description: Define development, test, staging, and production environments
 skill_id: ARCH-012
-owner: architecture
+owner: solution-architect
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

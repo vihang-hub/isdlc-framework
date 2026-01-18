@@ -1,8 +1,8 @@
 ---
 name: test-environment-management
 description: Manage test environment setup and data
-skill_id: TEST-011
-owner: test-manager
+skill_id: TEST-010
+owner: integration-tester
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

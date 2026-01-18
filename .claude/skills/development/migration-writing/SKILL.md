@@ -1,8 +1,8 @@
 ---
 name: migration-writing
 description: Create database migrations for schema changes
-skill_id: DEV-013
-owner: developer
+skill_id: DEV-012
+owner: software-developer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

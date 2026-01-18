@@ -2,7 +2,7 @@
 name: ambiguity-detection
 description: Identify vague, incomplete, or conflicting requirements
 skill_id: REQ-004
-owner: requirements
+owner: requirements-analyst
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

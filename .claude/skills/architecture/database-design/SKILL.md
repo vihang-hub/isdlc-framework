@@ -2,7 +2,7 @@
 name: database-design
 description: Design database schemas and select appropriate database types
 skill_id: ARCH-003
-owner: architecture
+owner: solution-architect
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

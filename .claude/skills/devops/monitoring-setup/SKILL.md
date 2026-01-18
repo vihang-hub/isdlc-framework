@@ -1,8 +1,8 @@
 ---
 name: monitoring-setup
 description: Configure comprehensive application and infrastructure monitoring
-skill_id: OPS-007
-owner: devops
+skill_id: OPS-005
+owner: cicd-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

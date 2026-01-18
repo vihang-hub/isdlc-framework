@@ -2,7 +2,7 @@
 name: test-case-design
 description: Write test cases from requirements and acceptance criteria
 skill_id: TEST-002
-owner: test-manager
+owner: test-design-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

@@ -2,7 +2,7 @@
 name: test-reporting
 description: Generate test status and quality reports
 skill_id: TEST-009
-owner: test-manager
+owner: integration-tester
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

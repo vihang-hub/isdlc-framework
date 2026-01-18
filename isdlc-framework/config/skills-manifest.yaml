@@ -1,0 +1,841 @@
+# Skills Ownership Manifest
+# Maps each skill to its exclusive owner agent
+# Used for skill enforcement and audit tracking
+#
+# IMPORTANT: Each skill has EXACTLY ONE owner. No sharing allowed.
+# If an agent needs functionality from another agent's skill, it must
+# delegate to that agent via the orchestrator.
+
+version: "2.0.0"
+generated: "2026-01-17"
+total_skills: 119
+enforcement_mode: strict  # strict | warn | audit
+
+# =============================================================================
+# SKILL OWNERSHIP BY AGENT
+# =============================================================================
+
+ownership:
+
+  # ---------------------------------------------------------------------------
+  # Agent 00: SDLC Orchestrator
+  # Phase: ALL (Cross-phase coordination)
+  # Category: orchestration/
+  # ---------------------------------------------------------------------------
+  sdlc-orchestrator:
+    agent_id: "00"
+    phase: "all"
+    skill_count: 10
+    skills:
+      - id: ORCH-001
+        name: workflow-management
+        path: orchestration/workflow-management
+      - id: ORCH-002
+        name: task-decomposition
+        path: orchestration/task-decomposition
+      - id: ORCH-003
+        name: progress-tracking
+        path: orchestration/progress-tracking
+      - id: ORCH-004
+        name: gate-validation
+        path: orchestration/gate-validation
+      - id: ORCH-005
+        name: conflict-resolution
+        path: orchestration/conflict-resolution
+      - id: ORCH-006
+        name: priority-management
+        path: orchestration/priority-management
+      - id: ORCH-007
+        name: communication-routing
+        path: orchestration/communication-routing
+      - id: ORCH-008
+        name: risk-assessment
+        path: orchestration/risk-assessment
+      - id: ORCH-009
+        name: assess-complexity
+        path: orchestration/assess-complexity.md
+      - id: ORCH-010
+        name: skill-validation
+        path: orchestration/skill-validation
+
+  # ---------------------------------------------------------------------------
+  # Agent 01: Requirements Analyst
+  # Phase: 01 - Requirements Capture & Clarification
+  # Category: requirements/
+  # ---------------------------------------------------------------------------
+  requirements-analyst:
+    agent_id: "01"
+    phase: "01-requirements"
+    skill_count: 10
+    skills:
+      - id: REQ-001
+        name: elicitation
+        path: requirements/elicitation
+      - id: REQ-002
+        name: user-stories
+        path: requirements/user-stories
+      - id: REQ-003
+        name: classification
+        path: requirements/classification
+      - id: REQ-004
+        name: ambiguity-detection
+        path: requirements/ambiguity-detection
+      - id: REQ-005
+        name: prioritization
+        path: requirements/prioritization
+      - id: REQ-006
+        name: dependency-mapping
+        path: requirements/dependency-mapping
+      - id: REQ-007
+        name: change-impact
+        path: requirements/change-impact
+      - id: REQ-008
+        name: traceability
+        path: requirements/traceability
+      - id: REQ-009
+        name: acceptance-criteria
+        path: requirements/acceptance-criteria
+      - id: REQ-010
+        name: nfr-quantification
+        path: requirements/nfr-quantification
+
+  # ---------------------------------------------------------------------------
+  # Agent 02: Solution Architect
+  # Phase: 02 - Architecture & Blueprint
+  # Category: architecture/
+  # ---------------------------------------------------------------------------
+  solution-architect:
+    agent_id: "02"
+    phase: "02-architecture"
+    skill_count: 12
+    skills:
+      - id: ARCH-001
+        name: architecture-pattern-selection
+        path: architecture/architecture-pattern-selection
+      - id: ARCH-002
+        name: technology-evaluation
+        path: architecture/technology-evaluation
+      - id: ARCH-003
+        name: database-design
+        path: architecture/database-design
+      - id: ARCH-004
+        name: api-architecture
+        path: architecture/api-architecture
+      - id: ARCH-005
+        name: infrastructure-design
+        path: architecture/infrastructure-design
+      - id: ARCH-006
+        name: security-architecture
+        path: architecture/security-architecture
+      - id: ARCH-007
+        name: scalability-planning
+        path: architecture/scalability-planning
+      - id: ARCH-008
+        name: integration-architecture
+        path: architecture/integration-architecture
+      - id: ARCH-009
+        name: cost-estimation
+        path: architecture/cost-estimation
+      - id: ARCH-010
+        name: adr-writing
+        path: architecture/adr-writing
+      - id: ARCH-011
+        name: diagram-generation
+        path: architecture/diagram-generation
+      - id: ARCH-012
+        name: environment-design
+        path: architecture/environment-design
+
+  # ---------------------------------------------------------------------------
+  # Agent 03: System Designer
+  # Phase: 03 - Design & API Contracts
+  # Category: design/
+  # ---------------------------------------------------------------------------
+  system-designer:
+    agent_id: "03"
+    phase: "03-design"
+    skill_count: 10
+    skills:
+      - id: DES-001
+        name: module-design
+        path: design/module-design
+      - id: DES-002
+        name: api-contracts
+        path: design/api-contracts
+      - id: DES-003
+        name: ui-ux
+        path: design/ui-ux
+      - id: DES-004
+        name: components
+        path: design/components
+      - id: DES-005
+        name: data-flow
+        path: design/data-flow
+      - id: DES-006
+        name: error-handling
+        path: design/error-handling
+      - id: DES-007
+        name: state-management
+        path: design/state-management
+      - id: DES-008
+        name: integration-design
+        path: design/integration-design
+      - id: DES-009
+        name: validation
+        path: design/validation
+      - id: DES-010
+        name: wireframing
+        path: design/wireframing
+
+  # ---------------------------------------------------------------------------
+  # Agent 04: Test Design Engineer
+  # Phase: 04 - Test Strategy & Design
+  # Category: testing/ (planning subset)
+  # ---------------------------------------------------------------------------
+  test-design-engineer:
+    agent_id: "04"
+    phase: "04-test-strategy"
+    skill_count: 5
+    skills:
+      - id: TEST-001
+        name: test-strategy
+        path: testing/test-strategy
+      - id: TEST-002
+        name: test-case-design
+        path: testing/test-case-design
+      - id: TEST-003
+        name: test-data
+        path: testing/test-data
+      - id: TEST-004
+        name: traceability-management
+        path: testing/traceability-management
+      - id: TEST-005
+        name: prioritization
+        path: testing/prioritization
+
+  # ---------------------------------------------------------------------------
+  # Agent 05: Software Developer
+  # Phase: 05 - Implementation
+  # Category: development/
+  # ---------------------------------------------------------------------------
+  software-developer:
+    agent_id: "05"
+    phase: "05-implementation"
+    skill_count: 14
+    skills:
+      - id: DEV-001
+        name: code-implementation
+        path: development/code-implementation
+      - id: DEV-002
+        name: unit-testing
+        path: development/unit-testing
+      - id: DEV-003
+        name: api-implementation
+        path: development/api-implementation
+      - id: DEV-004
+        name: database-integration
+        path: development/database-integration
+      - id: DEV-005
+        name: frontend-development
+        path: development/frontend-development
+      - id: DEV-006
+        name: authentication
+        path: development/authentication
+      - id: DEV-007
+        name: integration-implementation
+        path: development/integration-implementation
+      - id: DEV-008
+        name: error-handling
+        path: development/error-handling
+      - id: DEV-009
+        name: refactoring
+        path: development/refactoring
+      - id: DEV-010
+        name: bug-fixing
+        path: development/bug-fixing
+      - id: DEV-011
+        name: code-documentation
+        path: development/code-documentation
+      - id: DEV-012
+        name: migration-writing
+        path: development/migration-writing
+      - id: DEV-013
+        name: performance-optimization
+        path: development/performance-optimization
+      - id: DEV-014
+        name: autonomous-iterate
+        path: development/autonomous-iterate.md
+
+  # ---------------------------------------------------------------------------
+  # Agent 06: Integration Tester
+  # Phase: 06 - Integration & Testing
+  # Category: testing/ (execution subset)
+  # ---------------------------------------------------------------------------
+  integration-tester:
+    agent_id: "06"
+    phase: "06-testing"
+    skill_count: 8
+    skills:
+      - id: TEST-006
+        name: coverage-analysis
+        path: testing/coverage-analysis
+      - id: TEST-007
+        name: defect-analysis
+        path: testing/defect-analysis
+      - id: TEST-008
+        name: regression-management
+        path: testing/regression-management
+      - id: TEST-009
+        name: reporting
+        path: testing/reporting
+      - id: TEST-010
+        name: environment-management
+        path: testing/environment-management
+      - id: TEST-011
+        name: impact-analysis
+        path: testing/impact-analysis
+      - id: TEST-012
+        name: performance-test
+        path: testing/performance-test
+      - id: TEST-013
+        name: security-test
+        path: testing/security-test
+
+  # ---------------------------------------------------------------------------
+  # Agent 07: QA Engineer
+  # Phase: 07 - Code Review & QA
+  # Category: development/ (quality subset)
+  # ---------------------------------------------------------------------------
+  qa-engineer:
+    agent_id: "07"
+    phase: "07-code-review"
+    skill_count: 1
+    skills:
+      - id: DEV-015
+        name: code-review
+        path: development/code-review
+
+  # ---------------------------------------------------------------------------
+  # Agent 08: Security & Compliance Auditor
+  # Phase: 08 - Independent Validation
+  # Category: security/
+  # ---------------------------------------------------------------------------
+  security-compliance-auditor:
+    agent_id: "08"
+    phase: "08-validation"
+    skill_count: 13
+    skills:
+      - id: SEC-001
+        name: security-architecture-review
+        path: security/security-architecture-review
+      - id: SEC-002
+        name: threat-modeling
+        path: security/threat-modeling
+      - id: SEC-003
+        name: vulnerability-scanning
+        path: security/vulnerability-scanning
+      - id: SEC-004
+        name: dependency-auditing
+        path: security/dependency-auditing
+      - id: SEC-005
+        name: code-security-review
+        path: security/code-security-review
+      - id: SEC-006
+        name: authentication-testing
+        path: security/authentication-testing
+      - id: SEC-007
+        name: authorization-testing
+        path: security/authorization-testing
+      - id: SEC-008
+        name: input-validation-testing
+        path: security/input-validation-testing
+      - id: SEC-009
+        name: security-configuration
+        path: security/security-configuration
+      - id: SEC-010
+        name: compliance-checking
+        path: security/compliance-checking
+      - id: SEC-011
+        name: penetration-testing
+        path: security/penetration-testing
+      - id: SEC-012
+        name: security-reporting
+        path: security/security-reporting
+      - id: SEC-013
+        name: incident-analysis
+        path: security/incident-analysis
+
+  # ---------------------------------------------------------------------------
+  # Agent 09: CI/CD Engineer
+  # Phase: 09 - Version Control & CI/CD
+  # Category: devops/ (pipeline subset)
+  # ---------------------------------------------------------------------------
+  cicd-engineer:
+    agent_id: "09"
+    phase: "09-cicd"
+    skill_count: 6
+    skills:
+      - id: OPS-001
+        name: cicd-pipeline
+        path: devops/cicd-pipeline
+      - id: OPS-002
+        name: containerization
+        path: devops/containerization
+      - id: OPS-003
+        name: infrastructure-as-code
+        path: devops/infrastructure-as-code
+      - id: OPS-004
+        name: log-management
+        path: devops/log-management
+      - id: OPS-005
+        name: monitoring-setup
+        path: devops/monitoring-setup
+      - id: OPS-006
+        name: cost-optimization
+        path: devops/cost-optimization
+
+  # ---------------------------------------------------------------------------
+  # Agent 10: Dev Environment Engineer
+  # Phase: 10 - Local Development & Testing
+  # Category: devops/ (local) + documentation/
+  # ---------------------------------------------------------------------------
+  dev-environment-engineer:
+    agent_id: "10"
+    phase: "10-local-testing"
+    skill_count: 5
+    skills:
+      - id: OPS-007
+        name: environment-configuration
+        path: devops/environment-configuration
+      - id: OPS-008
+        name: database-operations
+        path: devops/database-operations
+      - id: DOC-001
+        name: technical-writing
+        path: documentation/technical-writing
+      - id: DOC-002
+        name: onboarding-documentation
+        path: documentation/onboarding-documentation
+      - id: DOC-003
+        name: code-documentation
+        path: documentation/code-documentation
+
+  # ---------------------------------------------------------------------------
+  # Agent 11: Deployment Engineer (Staging)
+  # Phase: 11 - Test Environment Deployment
+  # Category: devops/ (staging subset)
+  # ---------------------------------------------------------------------------
+  deployment-engineer-staging:
+    agent_id: "11"
+    phase: "11-test-deploy"
+    skill_count: 4
+    skills:
+      - id: OPS-009
+        name: deployment-strategy
+        path: devops/deployment-strategy
+      - id: OPS-010
+        name: load-balancing
+        path: devops/load-balancing
+      - id: OPS-011
+        name: ssl-management
+        path: devops/ssl-management
+      - id: DOC-004
+        name: diagram-creation
+        path: documentation/diagram-creation
+
+  # ---------------------------------------------------------------------------
+  # Agent 12: Release Manager
+  # Phase: 12 - Production Deployment
+  # Category: devops/ (production) + documentation/
+  # ---------------------------------------------------------------------------
+  release-manager:
+    agent_id: "12"
+    phase: "12-production"
+    skill_count: 5
+    skills:
+      - id: OPS-012
+        name: backup-recovery
+        path: devops/backup-recovery
+      - id: OPS-013
+        name: auto-scaling
+        path: devops/auto-scaling
+      - id: OPS-014
+        name: performance-tuning
+        path: devops/performance-tuning
+      - id: DOC-005
+        name: changelog-management
+        path: documentation/changelog-management
+      - id: DOC-006
+        name: api-documentation
+        path: documentation/api-documentation
+
+  # ---------------------------------------------------------------------------
+  # Agent 13: Site Reliability Engineer
+  # Phase: 13 - Production Operations
+  # Category: operations/ + documentation/
+  # ---------------------------------------------------------------------------
+  site-reliability-engineer:
+    agent_id: "13"
+    phase: "13-operations"
+    skill_count: 14
+    skills:
+      - id: SRE-001
+        name: system-monitoring
+        path: operations/system-monitoring
+      - id: SRE-002
+        name: performance-monitoring
+        path: operations/performance-monitoring
+      - id: SRE-003
+        name: security-monitoring
+        path: operations/security-monitoring
+      - id: SRE-004
+        name: log-analysis
+        path: operations/log-analysis
+      - id: SRE-005
+        name: alerting-management
+        path: operations/alerting-management
+      - id: SRE-006
+        name: incident-response
+        path: operations/incident-response
+      - id: SRE-007
+        name: capacity-planning
+        path: operations/capacity-planning
+      - id: SRE-008
+        name: sla-management
+        path: operations/sla-management
+      - id: SRE-009
+        name: availability-management
+        path: operations/availability-management
+      - id: SRE-010
+        name: disaster-recovery
+        path: operations/disaster-recovery
+      - id: SRE-011
+        name: change-management
+        path: operations/change-management
+      - id: SRE-012
+        name: reporting
+        path: operations/reporting
+      - id: DOC-007
+        name: runbook-writing
+        path: documentation/runbook-writing
+      - id: DOC-008
+        name: compliance-documentation
+        path: documentation/compliance-documentation
+
+  # ---------------------------------------------------------------------------
+  # Unassigned Documentation Skills (Agent 02 for architecture docs, Agent 03 for user guides)
+  # ---------------------------------------------------------------------------
+  # Note: These 2 remaining documentation skills are assigned based on domain expertise
+
+# =============================================================================
+# UNASSIGNED SKILLS - Assigned to most relevant agent
+# =============================================================================
+
+# documentation/architecture-documentation -> solution-architect (Agent 02)
+# documentation/user-guides -> system-designer (Agent 03)
+
+# Adding these to the appropriate agents above would change their skill counts.
+# For now, they remain documented here as needing assignment.
+
+# CORRECTION: Adding remaining skills to appropriate agents:
+
+additional_assignments:
+  solution-architect:
+    additional_skills:
+      - id: DOC-009
+        name: architecture-documentation
+        path: documentation/architecture-documentation
+
+  system-designer:
+    additional_skills:
+      - id: DOC-010
+        name: user-guides
+        path: documentation/user-guides
+
+# =============================================================================
+# SKILL ID LOOKUP TABLE
+# =============================================================================
+# Quick reference: skill_id -> agent
+skill_lookup:
+  # Orchestration
+  ORCH-001: sdlc-orchestrator
+  ORCH-002: sdlc-orchestrator
+  ORCH-003: sdlc-orchestrator
+  ORCH-004: sdlc-orchestrator
+  ORCH-005: sdlc-orchestrator
+  ORCH-006: sdlc-orchestrator
+  ORCH-007: sdlc-orchestrator
+  ORCH-008: sdlc-orchestrator
+  ORCH-009: sdlc-orchestrator
+  ORCH-010: sdlc-orchestrator
+
+  # Requirements
+  REQ-001: requirements-analyst
+  REQ-002: requirements-analyst
+  REQ-003: requirements-analyst
+  REQ-004: requirements-analyst
+  REQ-005: requirements-analyst
+  REQ-006: requirements-analyst
+  REQ-007: requirements-analyst
+  REQ-008: requirements-analyst
+  REQ-009: requirements-analyst
+  REQ-010: requirements-analyst
+
+  # Architecture
+  ARCH-001: solution-architect
+  ARCH-002: solution-architect
+  ARCH-003: solution-architect
+  ARCH-004: solution-architect
+  ARCH-005: solution-architect
+  ARCH-006: solution-architect
+  ARCH-007: solution-architect
+  ARCH-008: solution-architect
+  ARCH-009: solution-architect
+  ARCH-010: solution-architect
+  ARCH-011: solution-architect
+  ARCH-012: solution-architect
+
+  # Design
+  DES-001: system-designer
+  DES-002: system-designer
+  DES-003: system-designer
+  DES-004: system-designer
+  DES-005: system-designer
+  DES-006: system-designer
+  DES-007: system-designer
+  DES-008: system-designer
+  DES-009: system-designer
+  DES-010: system-designer
+
+  # Testing
+  TEST-001: test-design-engineer
+  TEST-002: test-design-engineer
+  TEST-003: test-design-engineer
+  TEST-004: test-design-engineer
+  TEST-005: test-design-engineer
+  TEST-006: integration-tester
+  TEST-007: integration-tester
+  TEST-008: integration-tester
+  TEST-009: integration-tester
+  TEST-010: integration-tester
+  TEST-011: integration-tester
+  TEST-012: integration-tester
+  TEST-013: integration-tester
+
+  # Development
+  DEV-001: software-developer
+  DEV-002: software-developer
+  DEV-003: software-developer
+  DEV-004: software-developer
+  DEV-005: software-developer
+  DEV-006: software-developer
+  DEV-007: software-developer
+  DEV-008: software-developer
+  DEV-009: software-developer
+  DEV-010: software-developer
+  DEV-011: software-developer
+  DEV-012: software-developer
+  DEV-013: software-developer
+  DEV-014: software-developer
+  DEV-015: qa-engineer
+
+  # Security
+  SEC-001: security-compliance-auditor
+  SEC-002: security-compliance-auditor
+  SEC-003: security-compliance-auditor
+  SEC-004: security-compliance-auditor
+  SEC-005: security-compliance-auditor
+  SEC-006: security-compliance-auditor
+  SEC-007: security-compliance-auditor
+  SEC-008: security-compliance-auditor
+  SEC-009: security-compliance-auditor
+  SEC-010: security-compliance-auditor
+  SEC-011: security-compliance-auditor
+  SEC-012: security-compliance-auditor
+  SEC-013: security-compliance-auditor
+
+  # DevOps
+  OPS-001: cicd-engineer
+  OPS-002: cicd-engineer
+  OPS-003: cicd-engineer
+  OPS-004: cicd-engineer
+  OPS-005: cicd-engineer
+  OPS-006: cicd-engineer
+  OPS-007: dev-environment-engineer
+  OPS-008: dev-environment-engineer
+  OPS-009: deployment-engineer-staging
+  OPS-010: deployment-engineer-staging
+  OPS-011: deployment-engineer-staging
+  OPS-012: release-manager
+  OPS-013: release-manager
+  OPS-014: release-manager
+
+  # Documentation
+  DOC-001: dev-environment-engineer
+  DOC-002: dev-environment-engineer
+  DOC-003: dev-environment-engineer
+  DOC-004: deployment-engineer-staging
+  DOC-005: release-manager
+  DOC-006: release-manager
+  DOC-007: site-reliability-engineer
+  DOC-008: site-reliability-engineer
+  DOC-009: solution-architect
+  DOC-010: system-designer
+
+  # SRE/Operations
+  SRE-001: site-reliability-engineer
+  SRE-002: site-reliability-engineer
+  SRE-003: site-reliability-engineer
+  SRE-004: site-reliability-engineer
+  SRE-005: site-reliability-engineer
+  SRE-006: site-reliability-engineer
+  SRE-007: site-reliability-engineer
+  SRE-008: site-reliability-engineer
+  SRE-009: site-reliability-engineer
+  SRE-010: site-reliability-engineer
+  SRE-011: site-reliability-engineer
+  SRE-012: site-reliability-engineer
+
+# =============================================================================
+# PATH LOOKUP TABLE
+# =============================================================================
+# Quick reference: path -> agent
+path_lookup:
+  # Orchestration
+  orchestration/workflow-management: sdlc-orchestrator
+  orchestration/task-decomposition: sdlc-orchestrator
+  orchestration/progress-tracking: sdlc-orchestrator
+  orchestration/gate-validation: sdlc-orchestrator
+  orchestration/conflict-resolution: sdlc-orchestrator
+  orchestration/priority-management: sdlc-orchestrator
+  orchestration/communication-routing: sdlc-orchestrator
+  orchestration/risk-assessment: sdlc-orchestrator
+  orchestration/assess-complexity.md: sdlc-orchestrator
+  orchestration/skill-validation: sdlc-orchestrator
+
+  # Requirements
+  requirements/elicitation: requirements-analyst
+  requirements/user-stories: requirements-analyst
+  requirements/classification: requirements-analyst
+  requirements/ambiguity-detection: requirements-analyst
+  requirements/prioritization: requirements-analyst
+  requirements/dependency-mapping: requirements-analyst
+  requirements/change-impact: requirements-analyst
+  requirements/traceability: requirements-analyst
+  requirements/acceptance-criteria: requirements-analyst
+  requirements/nfr-quantification: requirements-analyst
+
+  # Architecture
+  architecture/architecture-pattern-selection: solution-architect
+  architecture/technology-evaluation: solution-architect
+  architecture/database-design: solution-architect
+  architecture/api-architecture: solution-architect
+  architecture/infrastructure-design: solution-architect
+  architecture/security-architecture: solution-architect
+  architecture/scalability-planning: solution-architect
+  architecture/integration-architecture: solution-architect
+  architecture/cost-estimation: solution-architect
+  architecture/adr-writing: solution-architect
+  architecture/diagram-generation: solution-architect
+  architecture/environment-design: solution-architect
+
+  # Design
+  design/module-design: system-designer
+  design/api-contracts: system-designer
+  design/ui-ux: system-designer
+  design/components: system-designer
+  design/data-flow: system-designer
+  design/error-handling: system-designer
+  design/state-management: system-designer
+  design/integration-design: system-designer
+  design/validation: system-designer
+  design/wireframing: system-designer
+
+  # Testing
+  testing/test-strategy: test-design-engineer
+  testing/test-case-design: test-design-engineer
+  testing/test-data: test-design-engineer
+  testing/traceability-management: test-design-engineer
+  testing/prioritization: test-design-engineer
+  testing/coverage-analysis: integration-tester
+  testing/defect-analysis: integration-tester
+  testing/regression-management: integration-tester
+  testing/reporting: integration-tester
+  testing/environment-management: integration-tester
+  testing/impact-analysis: integration-tester
+  testing/performance-test: integration-tester
+  testing/security-test: integration-tester
+
+  # Development
+  development/code-implementation: software-developer
+  development/unit-testing: software-developer
+  development/api-implementation: software-developer
+  development/database-integration: software-developer
+  development/frontend-development: software-developer
+  development/authentication: software-developer
+  development/integration-implementation: software-developer
+  development/error-handling: software-developer
+  development/refactoring: software-developer
+  development/bug-fixing: software-developer
+  development/code-documentation: software-developer
+  development/migration-writing: software-developer
+  development/performance-optimization: software-developer
+  development/autonomous-iterate.md: software-developer
+  development/code-review: qa-engineer
+
+  # Security
+  security/security-architecture-review: security-compliance-auditor
+  security/threat-modeling: security-compliance-auditor
+  security/vulnerability-scanning: security-compliance-auditor
+  security/dependency-auditing: security-compliance-auditor
+  security/code-security-review: security-compliance-auditor
+  security/authentication-testing: security-compliance-auditor
+  security/authorization-testing: security-compliance-auditor
+  security/input-validation-testing: security-compliance-auditor
+  security/security-configuration: security-compliance-auditor
+  security/compliance-checking: security-compliance-auditor
+  security/penetration-testing: security-compliance-auditor
+  security/security-reporting: security-compliance-auditor
+  security/incident-analysis: security-compliance-auditor
+
+  # DevOps
+  devops/cicd-pipeline: cicd-engineer
+  devops/containerization: cicd-engineer
+  devops/infrastructure-as-code: cicd-engineer
+  devops/log-management: cicd-engineer
+  devops/monitoring-setup: cicd-engineer
+  devops/cost-optimization: cicd-engineer
+  devops/environment-configuration: dev-environment-engineer
+  devops/database-operations: dev-environment-engineer
+  devops/deployment-strategy: deployment-engineer-staging
+  devops/load-balancing: deployment-engineer-staging
+  devops/ssl-management: deployment-engineer-staging
+  devops/backup-recovery: release-manager
+  devops/auto-scaling: release-manager
+  devops/performance-tuning: release-manager
+
+  # Documentation
+  documentation/technical-writing: dev-environment-engineer
+  documentation/onboarding-documentation: dev-environment-engineer
+  documentation/code-documentation: dev-environment-engineer
+  documentation/diagram-creation: deployment-engineer-staging
+  documentation/changelog-management: release-manager
+  documentation/api-documentation: release-manager
+  documentation/runbook-writing: site-reliability-engineer
+  documentation/compliance-documentation: site-reliability-engineer
+  documentation/architecture-documentation: solution-architect
+  documentation/user-guides: system-designer
+
+  # Operations
+  operations/system-monitoring: site-reliability-engineer
+  operations/performance-monitoring: site-reliability-engineer
+  operations/security-monitoring: site-reliability-engineer
+  operations/log-analysis: site-reliability-engineer
+  operations/alerting-management: site-reliability-engineer
+  operations/incident-response: site-reliability-engineer
+  operations/capacity-planning: site-reliability-engineer
+  operations/sla-management: site-reliability-engineer
+  operations/availability-management: site-reliability-engineer
+  operations/disaster-recovery: site-reliability-engineer
+  operations/change-management: site-reliability-engineer
+  operations/reporting: site-reliability-engineer

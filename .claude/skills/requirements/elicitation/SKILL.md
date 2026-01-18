@@ -2,7 +2,7 @@
 name: requirements-elicitation
 description: Extract requirements from stakeholders and project descriptions
 skill_id: REQ-001
-owner: requirements
+owner: requirements-analyst
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

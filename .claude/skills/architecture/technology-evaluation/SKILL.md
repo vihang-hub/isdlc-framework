@@ -2,7 +2,7 @@
 name: technology-evaluation
 description: Assess and compare technology options for the stack
 skill_id: ARCH-002
-owner: architecture
+owner: solution-architect
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

@@ -2,7 +2,7 @@
 name: api-implementation
 description: Implement REST/GraphQL API endpoints
 skill_id: DEV-003
-owner: developer
+owner: software-developer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

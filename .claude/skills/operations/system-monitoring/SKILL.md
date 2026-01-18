@@ -1,8 +1,8 @@
 ---
 name: system-monitoring
 description: Monitor system health and performance metrics
-skill_id: MON-001
-owner: operations
+skill_id: SRE-001
+owner: site-reliability-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

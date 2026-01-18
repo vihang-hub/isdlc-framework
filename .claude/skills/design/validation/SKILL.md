@@ -2,7 +2,7 @@
 name: validation-design
 description: Design validation strategy across application layers
 skill_id: DES-009
-owner: design
+owner: system-designer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

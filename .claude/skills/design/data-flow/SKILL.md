@@ -2,7 +2,7 @@
 name: data-flow-design
 description: Design data flow patterns including state management and caching
 skill_id: DES-005
-owner: design
+owner: system-designer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

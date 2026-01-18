@@ -1,8 +1,8 @@
 ---
 name: security-monitoring
 description: Monitor for security threats and anomalies
-skill_id: MON-006
-owner: operations
+skill_id: SRE-003
+owner: site-reliability-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

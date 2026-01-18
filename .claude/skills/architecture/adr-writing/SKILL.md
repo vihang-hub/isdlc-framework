@@ -2,7 +2,7 @@
 name: adr-writing
 description: Document architecture decisions using ADR format
 skill_id: ARCH-010
-owner: architecture
+owner: solution-architect
 collaborators: [developer, security]
 project: sdlc-framework
 version: 1.0.0

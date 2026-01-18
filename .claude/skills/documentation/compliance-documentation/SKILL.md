@@ -1,8 +1,8 @@
 ---
 name: compliance-documentation
 description: Document compliance requirements and procedures
-skill_id: DOC-009
-owner: documentation
+skill_id: DOC-008
+owner: site-reliability-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

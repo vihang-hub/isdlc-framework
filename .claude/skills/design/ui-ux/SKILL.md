@@ -2,7 +2,7 @@
 name: ui-ux-design
 description: Design user interfaces and user experience flows
 skill_id: DES-003
-owner: design
+owner: system-designer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

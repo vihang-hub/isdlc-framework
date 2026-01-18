@@ -2,7 +2,7 @@
 name: communication-routing
 description: Route information and requests between agents efficiently
 skill_id: ORCH-007
-owner: orchestrator
+owner: sdlc-orchestrator
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

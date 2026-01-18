@@ -2,7 +2,7 @@
 name: security-reporting
 description: Generate security status and vulnerability reports
 skill_id: SEC-012
-owner: security
+owner: security-compliance-auditor
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

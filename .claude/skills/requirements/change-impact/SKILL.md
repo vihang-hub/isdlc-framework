@@ -2,7 +2,7 @@
 name: change-impact-analysis
 description: Assess impact of requirement changes on project
 skill_id: REQ-007
-owner: requirements
+owner: requirements-analyst
 collaborators: [test-manager, developer]
 project: sdlc-framework
 version: 1.0.0

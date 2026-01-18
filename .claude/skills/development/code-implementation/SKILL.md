@@ -2,7 +2,7 @@
 name: code-implementation
 description: Write production code following designs and best practices
 skill_id: DEV-001
-owner: developer
+owner: software-developer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

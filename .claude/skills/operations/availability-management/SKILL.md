@@ -1,8 +1,8 @@
 ---
 name: availability-management
 description: Ensure system availability and uptime
-skill_id: MON-009
-owner: operations
+skill_id: SRE-009
+owner: site-reliability-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

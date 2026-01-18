@@ -2,7 +2,7 @@
 name: test-data-generation
 description: Create appropriate test data for various scenarios
 skill_id: TEST-003
-owner: test-manager
+owner: test-design-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

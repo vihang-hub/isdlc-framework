@@ -1,8 +1,8 @@
 ---
 name: incident-response
 description: Handle production incidents and outages
-skill_id: MON-003
-owner: operations
+skill_id: SRE-006
+owner: site-reliability-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

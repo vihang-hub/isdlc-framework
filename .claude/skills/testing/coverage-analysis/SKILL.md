@@ -1,8 +1,8 @@
 ---
 name: coverage-analysis
 description: Analyze test coverage against requirements and code
-skill_id: TEST-004
-owner: test-manager
+skill_id: TEST-006
+owner: integration-tester
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

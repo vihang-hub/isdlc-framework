@@ -1,8 +1,8 @@
 ---
 name: changelog-management
 description: Maintain changelogs and release notes
-skill_id: DOC-007
-owner: documentation
+skill_id: DOC-005
+owner: release-manager
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

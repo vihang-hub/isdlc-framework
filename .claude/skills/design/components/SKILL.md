@@ -2,7 +2,7 @@
 name: component-design
 description: Design reusable UI components with variants and states
 skill_id: DES-004
-owner: design
+owner: system-designer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

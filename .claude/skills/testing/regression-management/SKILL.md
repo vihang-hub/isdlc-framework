@@ -1,8 +1,8 @@
 ---
 name: regression-management
 description: Maintain and optimize regression test suites
-skill_id: TEST-010
-owner: test-manager
+skill_id: TEST-008
+owner: integration-tester
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

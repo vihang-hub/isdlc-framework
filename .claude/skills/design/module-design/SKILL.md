@@ -2,7 +2,7 @@
 name: module-design
 description: Break architecture into implementable modules with clear interfaces
 skill_id: DES-001
-owner: design
+owner: system-designer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

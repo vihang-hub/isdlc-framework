@@ -2,7 +2,7 @@
 name: database-integration
 description: Implement data access layer and database operations
 skill_id: DEV-004
-owner: developer
+owner: software-developer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

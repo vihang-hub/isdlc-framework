@@ -2,7 +2,7 @@
 name: risk-assessment
 description: Identify project risks and define mitigation strategies
 skill_id: ORCH-008
-owner: orchestrator
+owner: sdlc-orchestrator
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

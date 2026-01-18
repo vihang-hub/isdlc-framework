@@ -1,8 +1,8 @@
 ---
 name: runbook-writing
 description: Create operational runbooks for incident response
-skill_id: DOC-006
-owner: documentation
+skill_id: DOC-007
+owner: site-reliability-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

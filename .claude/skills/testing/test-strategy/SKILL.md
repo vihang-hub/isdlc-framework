@@ -2,7 +2,7 @@
 name: test-strategy-design
 description: Create comprehensive test strategies aligned with requirements
 skill_id: TEST-001
-owner: test-manager
+owner: test-design-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

@@ -2,7 +2,7 @@
 name: infrastructure-as-code
 description: Define infrastructure using Terraform for reproducible deployments
 skill_id: OPS-003
-owner: devops
+owner: cicd-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

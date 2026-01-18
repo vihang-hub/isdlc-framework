@@ -2,7 +2,7 @@
 name: security-architecture-review
 description: Review system architecture for security concerns
 skill_id: SEC-001
-owner: security
+owner: security-compliance-auditor
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

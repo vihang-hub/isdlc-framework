@@ -48,6 +48,8 @@ case $TRACK_CHOICE in
         PHASES_REQUIRED="[1, 5, 6]"
         PHASES_OPTIONAL="[4, 7]"
         PHASES_SKIPPED="[2, 3, 8, 9, 10, 11, 12, 13]"
+        MAX_ITERATIONS=5
+        ITERATION_TIMEOUT=5
         ;;
     2)
         TRACK="standard"
@@ -56,6 +58,8 @@ case $TRACK_CHOICE in
         PHASES_REQUIRED="[1, 2, 3, 4, 5, 6, 7, 9]"
         PHASES_OPTIONAL="[8, 10]"
         PHASES_SKIPPED="[11, 12, 13]"
+        MAX_ITERATIONS=10
+        ITERATION_TIMEOUT=5
         ;;
     3)
         TRACK="enterprise"
@@ -64,6 +68,8 @@ case $TRACK_CHOICE in
         PHASES_REQUIRED="[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]"
         PHASES_OPTIONAL="[]"
         PHASES_SKIPPED="[]"
+        MAX_ITERATIONS=15
+        ITERATION_TIMEOUT=10
         ;;
     4)
         TRACK="auto"
@@ -72,6 +78,8 @@ case $TRACK_CHOICE in
         PHASES_REQUIRED="null"
         PHASES_OPTIONAL="null"
         PHASES_SKIPPED="null"
+        MAX_ITERATIONS=null
+        ITERATION_TIMEOUT=null
         echo -e "${YELLOW}Orchestrator will assess complexity at project start${NC}"
         ;;
     *)
@@ -82,6 +90,8 @@ case $TRACK_CHOICE in
         PHASES_REQUIRED="[1, 2, 3, 4, 5, 6, 7, 9]"
         PHASES_OPTIONAL="[8, 10]"
         PHASES_SKIPPED="[11, 12, 13]"
+        MAX_ITERATIONS=10
+        ITERATION_TIMEOUT=5
         ;;
 esac
 
@@ -129,7 +139,7 @@ echo -e "${YELLOW}Creating initial state.json...${NC}"
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 cat > .isdlc/state.json << EOF
 {
-  "framework_version": "1.0.0",
+  "framework_version": "2.0.0",
   "project": {
     "name": "$PROJECT_NAME",
     "created": "$TIMESTAMP",
@@ -156,6 +166,23 @@ cat > .isdlc/state.json << EOF
     "phases_optional": $PHASES_OPTIONAL,
     "phases_skipped": $PHASES_SKIPPED
   },
+  "constitution": {
+    "enforced": true,
+    "path": ".isdlc/constitution.md",
+    "validated_at": null
+  },
+  "autonomous_iteration": {
+    "enabled": true,
+    "max_iterations": $MAX_ITERATIONS,
+    "timeout_per_iteration_minutes": $ITERATION_TIMEOUT,
+    "circuit_breaker_threshold": 3
+  },
+  "skill_enforcement": {
+    "enabled": true,
+    "mode": "strict",
+    "manifest_version": "2.0.0"
+  },
+  "skill_usage_log": [],
   "current_phase": "01-requirements",
   "phases": {
     "01-requirements": {
@@ -196,7 +223,13 @@ cat > .isdlc/state.json << EOF
       "completed": null,
       "gate_passed": null,
       "artifacts": [],
-      "notes": null
+      "notes": null,
+      "iteration_tracking": {
+        "current": 0,
+        "max": null,
+        "history": [],
+        "final_status": null
+      }
     },
     "06-testing": {
       "status": "pending",
@@ -204,7 +237,13 @@ cat > .isdlc/state.json << EOF
       "completed": null,
       "gate_passed": null,
       "artifacts": [],
-      "notes": null
+      "notes": null,
+      "iteration_tracking": {
+        "current": 0,
+        "max": null,
+        "history": [],
+        "final_status": null
+      }
     },
     "07-code-review": {
       "status": "pending",
@@ -323,7 +362,7 @@ if [ "$STANDALONE" = true ]; then
     RESOURCES_NOTE="Resources: Install from iSDLC framework"
 else
     REL_PATH=$(python3 -c "import os.path; print(os.path.relpath('$MONOREPO_ROOT', '$PWD'))" 2>/dev/null || echo "$MONOREPO_ROOT")
-    SKILLS_NOTE="Skills: $REL_PATH/.claude/skills/ (116 skills)"
+    SKILLS_NOTE="Skills: $REL_PATH/.claude/skills/ (118 skills)"
     RESOURCES_NOTE="Resources: $REL_PATH/isdlc-framework/"
 fi
 
@@ -338,7 +377,7 @@ This project uses the iSDLC Framework.
 - $RESOURCES_NOTE
 - State: .isdlc/state.json
 
-## Skills (116 across 10 categories)
+## Skills (118 across 10 categories)
 
 | Category | Skills | Purpose |
 |----------|--------|---------|

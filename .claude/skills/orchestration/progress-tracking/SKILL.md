@@ -2,7 +2,7 @@
 name: progress-tracking
 description: Monitor task completion, blockers, and overall project health
 skill_id: ORCH-003
-owner: orchestrator
+owner: sdlc-orchestrator
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

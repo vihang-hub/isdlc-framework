@@ -2,7 +2,7 @@
 name: integration-implementation
 description: Implement external service integrations
 skill_id: DEV-007
-owner: developer
+owner: software-developer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

@@ -1,8 +1,8 @@
 ---
 name: onboarding-documentation
 description: Create developer onboarding materials
-skill_id: DOC-008
-owner: documentation
+skill_id: DOC-002
+owner: dev-environment-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

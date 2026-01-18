@@ -1,8 +1,8 @@
 ---
 name: environment-configuration
 description: Manage environment variables and secrets securely
-skill_id: OPS-005
-owner: devops
+skill_id: OPS-007
+owner: dev-environment-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

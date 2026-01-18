@@ -2,7 +2,7 @@
 name: load-balancing
 description: Configure load balancers and traffic distribution
 skill_id: OPS-010
-owner: devops
+owner: deployment-engineer-staging
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

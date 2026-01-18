@@ -1,3 +1,15 @@
+---
+name: assess-complexity
+description: Analyze project requirements and recommend appropriate workflow track
+skill_id: ORCH-009
+owner: sdlc-orchestrator
+collaborators: []
+project: sdlc-framework
+version: 1.0.0
+when_to_use: Project initialization, scope changes, re-assessment
+dependencies: []
+---
+
 # Assess Project Complexity
 
 **Category**: Orchestration

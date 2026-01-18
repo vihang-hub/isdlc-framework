@@ -2,7 +2,7 @@
 name: code-refactoring
 description: Improve code quality through refactoring
 skill_id: DEV-009
-owner: developer
+owner: software-developer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

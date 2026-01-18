@@ -1,8 +1,8 @@
 ---
 name: defect-analysis
 description: Analyze test failures and defect patterns
-skill_id: TEST-008
-owner: test-manager
+skill_id: TEST-007
+owner: integration-tester
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

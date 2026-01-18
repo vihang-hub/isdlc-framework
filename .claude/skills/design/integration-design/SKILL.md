@@ -2,7 +2,7 @@
 name: integration-design
 description: Design external API integration patterns
 skill_id: DES-008
-owner: design
+owner: system-designer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

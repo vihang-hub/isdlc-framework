@@ -1,8 +1,8 @@
 ---
 name: api-documentation
 description: Generate and maintain API documentation
-skill_id: DOC-002
-owner: documentation
+skill_id: DOC-006
+owner: release-manager
 collaborators: [developer, design]
 project: sdlc-framework
 version: 1.0.0

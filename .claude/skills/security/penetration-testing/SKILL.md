@@ -2,7 +2,7 @@
 name: penetration-testing
 description: Conduct security penetration testing
 skill_id: SEC-011
-owner: security
+owner: security-compliance-auditor
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

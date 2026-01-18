@@ -2,7 +2,7 @@
 name: cicd-pipeline-design
 description: Design and implement CI/CD pipelines for automated testing and deployment
 skill_id: OPS-001
-owner: devops
+owner: cicd-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

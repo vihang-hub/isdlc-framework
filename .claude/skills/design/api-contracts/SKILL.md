@@ -2,7 +2,7 @@
 name: api-contract-design
 description: Design API contracts using OpenAPI specification
 skill_id: DES-002
-owner: design
+owner: system-designer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

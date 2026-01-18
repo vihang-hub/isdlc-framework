@@ -1,8 +1,8 @@
 ---
 name: cost-optimization
 description: Optimize cloud infrastructure costs
-skill_id: OPS-014
-owner: devops
+skill_id: OPS-006
+owner: cicd-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

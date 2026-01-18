@@ -2,7 +2,7 @@
 name: architecture-pattern-selection
 description: Choose appropriate architectural patterns for the system
 skill_id: ARCH-001
-owner: architecture
+owner: solution-architect
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

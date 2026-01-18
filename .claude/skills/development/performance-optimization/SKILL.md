@@ -1,8 +1,8 @@
 ---
 name: performance-optimization
 description: Optimize code and queries for better performance
-skill_id: DEV-014
-owner: developer
+skill_id: DEV-013
+owner: software-developer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

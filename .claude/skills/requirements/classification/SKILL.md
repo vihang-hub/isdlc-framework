@@ -2,7 +2,7 @@
 name: requirements-classification
 description: Categorize requirements as functional, non-functional, or constraints
 skill_id: REQ-003
-owner: requirements
+owner: requirements-analyst
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

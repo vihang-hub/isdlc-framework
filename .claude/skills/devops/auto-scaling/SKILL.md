@@ -1,8 +1,8 @@
 ---
 name: auto-scaling-configuration
 description: Configure auto-scaling for compute resources
-skill_id: OPS-009
-owner: devops
+skill_id: OPS-013
+owner: release-manager
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

@@ -1,8 +1,8 @@
 ---
 name: diagram-creation
 description: Create technical diagrams and visualizations
-skill_id: DOC-010
-owner: documentation
+skill_id: DOC-004
+owner: deployment-engineer-staging
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

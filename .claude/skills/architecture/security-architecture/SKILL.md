@@ -2,7 +2,7 @@
 name: security-architecture
 description: Design authentication, authorization, and encryption architecture
 skill_id: ARCH-006
-owner: architecture
+owner: solution-architect
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

@@ -2,7 +2,7 @@
 name: gate-validation
 description: Verify phase completion criteria before allowing transition
 skill_id: ORCH-004
-owner: orchestrator
+owner: sdlc-orchestrator
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

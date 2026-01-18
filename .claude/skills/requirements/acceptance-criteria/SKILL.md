@@ -2,7 +2,7 @@
 name: acceptance-criteria-writing
 description: Define testable acceptance criteria for user stories
 skill_id: REQ-009
-owner: requirements
+owner: requirements-analyst
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

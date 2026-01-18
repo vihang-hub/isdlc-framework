@@ -2,7 +2,7 @@
 name: unit-test-writing
 description: Write comprehensive unit tests with good coverage
 skill_id: DEV-002
-owner: developer
+owner: software-developer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

@@ -2,7 +2,7 @@
 name: infrastructure-design
 description: Design cloud architecture and containerization strategy
 skill_id: ARCH-005
-owner: architecture
+owner: solution-architect
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

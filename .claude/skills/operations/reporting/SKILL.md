@@ -1,8 +1,8 @@
 ---
 name: operations-reporting
 description: Generate operational reports and metrics
-skill_id: MON-012
-owner: operations
+skill_id: SRE-012
+owner: site-reliability-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

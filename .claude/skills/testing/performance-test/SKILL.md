@@ -2,7 +2,7 @@
 name: performance-test-design
 description: Design load and performance test scenarios
 skill_id: TEST-012
-owner: test-manager
+owner: integration-tester
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

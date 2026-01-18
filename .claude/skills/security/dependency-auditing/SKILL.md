@@ -2,7 +2,7 @@
 name: dependency-auditing
 description: Audit third-party dependencies for vulnerabilities
 skill_id: SEC-004
-owner: security
+owner: security-compliance-auditor
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

@@ -2,7 +2,7 @@
 name: error-handling
 description: Implement consistent error handling patterns
 skill_id: DEV-008
-owner: developer
+owner: software-developer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

@@ -2,7 +2,7 @@
 name: nfr-quantification
 description: Convert non-functional requirements to measurable metrics
 skill_id: REQ-010
-owner: requirements
+owner: requirements-analyst
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

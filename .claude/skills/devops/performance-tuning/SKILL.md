@@ -1,8 +1,8 @@
 ---
 name: performance-tuning
 description: Optimize infrastructure and application performance
-skill_id: OPS-013
-owner: devops
+skill_id: OPS-014
+owner: release-manager
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

@@ -2,7 +2,7 @@
 name: traceability-management
 description: Maintain requirement IDs and relationships to downstream artifacts
 skill_id: REQ-008
-owner: requirements
+owner: requirements-analyst
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

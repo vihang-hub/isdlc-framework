@@ -2,7 +2,7 @@
 name: threat-modeling
 description: Identify security threats using STRIDE methodology
 skill_id: SEC-002
-owner: security
+owner: security-compliance-auditor
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

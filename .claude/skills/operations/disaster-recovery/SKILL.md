@@ -1,8 +1,8 @@
 ---
 name: disaster-recovery
 description: Plan and execute disaster recovery procedures
-skill_id: MON-011
-owner: operations
+skill_id: SRE-010
+owner: site-reliability-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

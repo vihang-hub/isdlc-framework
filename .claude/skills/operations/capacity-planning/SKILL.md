@@ -1,8 +1,8 @@
 ---
 name: capacity-planning
 description: Plan infrastructure capacity for growth
-skill_id: MON-004
-owner: operations
+skill_id: SRE-007
+owner: site-reliability-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

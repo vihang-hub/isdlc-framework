@@ -1,8 +1,8 @@
 ---
 name: test-prioritization
 description: Prioritize tests based on risk and impact
-skill_id: TEST-007
-owner: test-manager
+skill_id: TEST-005
+owner: test-design-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

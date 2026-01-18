@@ -2,7 +2,7 @@
 name: ssl-tls-management
 description: Manage SSL certificates and TLS configuration
 skill_id: OPS-011
-owner: devops
+owner: deployment-engineer-staging
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

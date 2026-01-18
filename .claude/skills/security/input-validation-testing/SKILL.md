@@ -2,7 +2,7 @@
 name: input-validation-testing
 description: Test input validation for injection vulnerabilities
 skill_id: SEC-008
-owner: security
+owner: security-compliance-auditor
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

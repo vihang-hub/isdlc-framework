@@ -2,7 +2,7 @@
 name: containerization
 description: Create optimized Docker images and container configurations
 skill_id: OPS-002
-owner: devops
+owner: cicd-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

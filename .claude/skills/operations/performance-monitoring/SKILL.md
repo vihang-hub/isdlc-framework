@@ -1,8 +1,8 @@
 ---
 name: performance-monitoring
 description: Track application and infrastructure performance
-skill_id: MON-007
-owner: operations
+skill_id: SRE-002
+owner: site-reliability-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

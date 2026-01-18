@@ -2,7 +2,7 @@
 name: code-security-review
 description: Manual security review of code for vulnerabilities
 skill_id: SEC-005
-owner: security
+owner: security-compliance-auditor
 collaborators: [developer]
 project: sdlc-framework
 version: 1.0.0

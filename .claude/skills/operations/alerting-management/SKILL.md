@@ -1,8 +1,8 @@
 ---
 name: alerting-management
 description: Configure and manage alerting rules
-skill_id: MON-002
-owner: operations
+skill_id: SRE-005
+owner: site-reliability-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

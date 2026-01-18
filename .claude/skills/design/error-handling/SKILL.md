@@ -2,7 +2,7 @@
 name: error-handling-design
 description: Design error taxonomy and handling patterns
 skill_id: DES-006
-owner: design
+owner: system-designer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

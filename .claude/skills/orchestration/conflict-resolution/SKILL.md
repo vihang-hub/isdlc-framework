@@ -2,7 +2,7 @@
 name: conflict-resolution
 description: Handle conflicting outputs or recommendations from agents
 skill_id: ORCH-005
-owner: orchestrator
+owner: sdlc-orchestrator
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

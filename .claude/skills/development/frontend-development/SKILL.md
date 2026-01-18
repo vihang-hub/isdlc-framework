@@ -2,7 +2,7 @@
 name: frontend-development
 description: Implement React UI components and pages
 skill_id: DEV-005
-owner: developer
+owner: software-developer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

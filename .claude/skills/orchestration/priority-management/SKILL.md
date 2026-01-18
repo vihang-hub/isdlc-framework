@@ -2,7 +2,7 @@
 name: priority-management
 description: Determine task urgency and optimal sequencing
 skill_id: ORCH-006
-owner: orchestrator
+owner: sdlc-orchestrator
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

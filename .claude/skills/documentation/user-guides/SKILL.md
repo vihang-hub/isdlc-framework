@@ -1,8 +1,8 @@
 ---
 name: user-guide-writing
 description: Create end-user documentation and guides
-skill_id: DOC-004
-owner: documentation
+skill_id: DOC-010
+owner: system-designer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

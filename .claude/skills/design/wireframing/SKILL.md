@@ -2,7 +2,7 @@
 name: wireframing
 description: Create UI wireframes at various fidelity levels
 skill_id: DES-010
-owner: design
+owner: system-designer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

@@ -1,8 +1,8 @@
 ---
 name: log-analysis
 description: Analyze logs for troubleshooting and insights
-skill_id: MON-008
-owner: operations
+skill_id: SRE-004
+owner: site-reliability-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

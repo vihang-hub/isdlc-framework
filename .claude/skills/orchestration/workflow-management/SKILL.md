@@ -2,7 +2,7 @@
 name: workflow-management
 description: Manage SDLC workflow phases, transitions, and agent coordination
 skill_id: ORCH-001
-owner: orchestrator
+owner: sdlc-orchestrator
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

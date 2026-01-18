@@ -1,8 +1,8 @@
 ---
 name: change-management
 description: Manage production changes safely
-skill_id: MON-010
-owner: operations
+skill_id: SRE-011
+owner: site-reliability-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

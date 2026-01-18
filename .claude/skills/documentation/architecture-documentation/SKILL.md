@@ -1,8 +1,8 @@
 ---
 name: architecture-documentation
 description: Document system architecture and design decisions
-skill_id: DOC-005
-owner: documentation
+skill_id: DOC-009
+owner: solution-architect
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

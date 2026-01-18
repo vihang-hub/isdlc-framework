@@ -2,7 +2,7 @@
 name: state-management-design
 description: Design application state management architecture
 skill_id: DES-007
-owner: design
+owner: system-designer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

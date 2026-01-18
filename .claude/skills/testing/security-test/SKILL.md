@@ -2,7 +2,7 @@
 name: security-test-design
 description: Design security test scenarios and validation
 skill_id: TEST-013
-owner: test-manager
+owner: integration-tester
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

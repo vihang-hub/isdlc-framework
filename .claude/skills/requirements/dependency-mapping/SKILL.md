@@ -2,7 +2,7 @@
 name: dependency-mapping
 description: Identify dependencies between requirements
 skill_id: REQ-006
-owner: requirements
+owner: requirements-analyst
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

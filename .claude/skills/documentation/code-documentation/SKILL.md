@@ -2,7 +2,7 @@
 name: code-documentation
 description: Write inline code documentation and comments
 skill_id: DOC-003
-owner: documentation
+owner: dev-environment-engineer
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

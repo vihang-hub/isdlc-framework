@@ -1,8 +1,8 @@
 ---
 name: traceability-management
 description: Maintain links between requirements, tests, and code
-skill_id: TEST-005
-owner: test-manager
+skill_id: TEST-004
+owner: test-design-engineer
 collaborators: [requirements]
 project: sdlc-framework
 version: 1.0.0

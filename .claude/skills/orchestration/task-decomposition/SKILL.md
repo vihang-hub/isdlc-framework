@@ -2,7 +2,7 @@
 name: task-decomposition
 description: Break down requirements into agent-assignable tasks
 skill_id: ORCH-002
-owner: orchestrator
+owner: sdlc-orchestrator
 collaborators: []
 project: sdlc-framework
 version: 1.0.0
