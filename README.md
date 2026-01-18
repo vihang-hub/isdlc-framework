@@ -11,9 +11,12 @@ This framework implements a **1-to-1 mapping** between 13 SDLC phases and 13 spe
 - **14 Specialized Agents** (1 Orchestrator + 13 Phase Agents)
 - **1-to-1 Phase Mapping** - Each agent owns exactly one phase
 - **13 Quality Gates** with validation checklists
-- **116 Skills** distributed across 10 categories
+- **119 Skills** distributed across 10 categories
+- **Exclusive Skill Ownership** - Each skill belongs to exactly one agent with enforcement
+- **Skill Usage Audit Trail** - All skill executions logged for compliance tracking
 - **Scale-Adaptive Tracks** - Quick/Standard/Enterprise workflows based on complexity
 - **Project Constitution** - Customizable governance principles enforced by agents
+- **Autonomous Iteration** - Self-correcting agents that iterate until tests pass
 - **Standardized Artifacts** - Templates for each phase's deliverables
 - **Linear Workflow** with clear handoff points
 - **Monorepo Ready** - Share framework across multiple projects
@@ -38,13 +41,13 @@ integrated-sdls-framework-v0.1/
 │   │   ├── 11-deployment-engineer-staging.md
 │   │   ├── 12-release-manager.md
 │   │   └── 13-site-reliability-engineer.md
-│   ├── skills/                    # 116 Skills across 10 categories
-│   │   ├── orchestration/         # 8 skills
+│   ├── skills/                    # 119 Skills across 10 categories
+│   │   ├── orchestration/         # 10 skills
 │   │   ├── requirements/          # 10 skills
 │   │   ├── architecture/          # 12 skills
 │   │   ├── design/                # 10 skills
 │   │   ├── testing/               # 13 skills
-│   │   ├── development/           # 14 skills
+│   │   ├── development/           # 15 skills
 │   │   ├── devops/                # 14 skills
 │   │   ├── security/              # 13 skills
 │   │   ├── operations/            # 12 skills
@@ -201,16 +204,16 @@ Each phase produces specific artifacts in `.isdlc/<phase-name>/` directories.
 
 ## Skills System
 
-The framework includes **116 specialized skills** distributed across 10 categories:
+The framework includes **119 specialized skills** distributed across 10 categories:
 
 | Category | Skills | Primary Agents |
 |----------|--------|----------------|
-| **Orchestration** | 8 | Agent 00 (Orchestrator) |
+| **Orchestration** | 10 | Agent 00 (Orchestrator) |
 | **Requirements** | 10 | Agent 01 (Requirements Analyst) |
 | **Architecture** | 12 | Agent 02 (Solution Architect) |
 | **Design** | 10 | Agent 03 (System Designer) |
 | **Testing** | 13 | Agent 04 (Test Design), Agent 06 (Integration Tester) |
-| **Development** | 14 | Agent 05 (Software Developer), Agent 07 (QA Engineer) |
+| **Development** | 15 | Agent 05 (Software Developer), Agent 07 (QA Engineer) |
 | **DevOps** | 14 | Agent 09, 10, 11, 12 (CI/CD, Dev Env, Deployment, Release) |
 | **Security** | 13 | Agent 08 (Security & Compliance Auditor) |
 | **Operations** | 12 | Agent 13 (Site Reliability Engineer) |
@@ -317,6 +320,71 @@ A project constitution is a set of immutable principles (like "Test-First Develo
 - **Documentation**: [docs/SCALE-ADAPTIVE-TRACKS.md](docs/SCALE-ADAPTIVE-TRACKS.md)
 - **Assessment Skill**: [.claude/skills/orchestration/assess-complexity.md](.claude/skills/orchestration/assess-complexity.md)
 - **Track Config**: [isdlc-framework/config/tracks.yaml](isdlc-framework/config/tracks.yaml)
+
+## Skill Enforcement
+
+**NEW**: The framework now implements exclusive skill ownership where each skill belongs to exactly one agent, with runtime validation and audit logging.
+
+### How It Works
+
+1. **Exclusive Ownership**: Each of the 119 skills has exactly ONE owner agent
+2. **Pre-Execution Validation**: Before using a skill, the agent validates ownership
+3. **Audit Trail**: All skill usage (authorized and unauthorized) is logged to state.json
+4. **Gate Integration**: Skill compliance is reviewed at each quality gate
+
+### Enforcement Modes
+
+| Mode | Behavior | Use Case |
+|------|----------|----------|
+| **Strict** | Block unauthorized access | Production, compliance-critical |
+| **Warn** | Allow with warning | Migration, testing |
+| **Audit** | Log only, no enforcement | Initial rollout, analysis |
+
+### Cross-Agent Delegation
+
+When an agent needs functionality from a skill it doesn't own:
+1. Agent requests orchestrator to delegate
+2. Orchestrator delegates to owning agent
+3. Owning agent executes skill and logs usage
+4. Results returned to requesting agent
+
+### Resources
+
+- **Documentation**: [docs/SKILL-ENFORCEMENT.md](docs/SKILL-ENFORCEMENT.md)
+- **Skills Manifest**: [isdlc-framework/config/skills-manifest.yaml](isdlc-framework/config/skills-manifest.yaml)
+- **Validation Skill**: [.claude/skills/orchestration/skill-validation/SKILL.md](.claude/skills/orchestration/skill-validation/SKILL.md)
+
+## Autonomous Iteration
+
+**NEW**: Agents now autonomously iterate when tests fail, rather than stopping at first failure.
+
+### How It Works
+
+1. Agent implements code/tests
+2. Runs test suite
+3. If tests fail: analyzes errors, applies fixes, retries
+4. Continues until success OR max iterations reached
+5. Escalates to human only when stuck
+
+### Iteration Limits by Track
+
+| Track | Max Iterations | Timeout |
+|-------|----------------|---------|
+| Quick | 5 | 5 min |
+| Standard | 10 | 10 min |
+| Enterprise | 15 | 15 min |
+
+### Failure Escalation
+
+Escalation triggers:
+- Max iterations exceeded
+- Same error repeats 3+ times (stuck in loop)
+- External dependency/environmental issue detected
+
+### Resources
+
+- **Documentation**: [docs/AUTONOMOUS-ITERATION.md](docs/AUTONOMOUS-ITERATION.md)
+- **Iteration Skill**: [.claude/skills/development/autonomous-iterate.md](.claude/skills/development/autonomous-iterate.md)
 
 ## Configuration
 
@@ -429,16 +497,19 @@ Additional documentation in [docs/](docs/):
 
 ### Completed
 - ✅ 14 agent definitions created
-- ✅ 116 skills organized into 10 categories
+- ✅ 119 skills organized into 10 categories
 - ✅ 13 phase gate checklists defined
 - ✅ 7 document templates created
 - ✅ Configuration system implemented
 - ✅ Utility scripts created
+- ✅ Project Constitution system (Enhancement #1)
+- ✅ Scale-Adaptive Workflow Tracks (Enhancement #2)
+- ✅ Autonomous Iteration for self-correcting agents (Enhancement #3)
+- ✅ Exclusive Skill Ownership & Enforcement (Enhancement #4)
 
 ### In Progress
-- ⏳ Project initialization automation
-- ⏳ State management system
 - ⏳ Integration testing across all phases
+- ⏳ Real project validation
 
 ### Planned
 - 📋 Agent performance metrics
@@ -455,8 +526,9 @@ MIT License
 
 ---
 
-**Framework Version**: 1.0.0
-**Last Updated**: 2026-01-17
+**Framework Version**: 2.0.0
+**Last Updated**: 2026-01-18
 **Agents**: 14 (1 Orchestrator + 13 Phase Agents)
-**Skills**: 116 across 10 categories
+**Skills**: 119 across 10 categories
 **Quality Gates**: 13
+**Enhancements**: 4 (Constitution, Scale-Adaptive, Autonomous Iteration, Skill Enforcement)
