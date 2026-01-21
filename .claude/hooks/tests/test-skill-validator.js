@@ -59,13 +59,13 @@ let testDir = null;
 function setupTestEnv() {
     testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'isdlc-test-'));
     fs.mkdirSync(path.join(testDir, '.isdlc'), { recursive: true });
-    fs.mkdirSync(path.join(testDir, 'config'), { recursive: true });
+    fs.mkdirSync(path.join(testDir, '.claude', 'hooks', 'config'), { recursive: true });
 
-    // Copy manifest
+    // Copy manifest to .claude/hooks/config/ (where hooks expect it)
     const projectRoot = path.resolve(__dirname, '../../..');
-    const manifestSrc = path.join(projectRoot, 'config', 'skills-manifest.json');
+    const manifestSrc = path.join(projectRoot, '.claude', 'hooks', 'config', 'skills-manifest.json');
     if (fs.existsSync(manifestSrc)) {
-        fs.copyFileSync(manifestSrc, path.join(testDir, 'config', 'skills-manifest.json'));
+        fs.copyFileSync(manifestSrc, path.join(testDir, '.claude', 'hooks', 'config', 'skills-manifest.json'));
     }
 
     // Create test state.json

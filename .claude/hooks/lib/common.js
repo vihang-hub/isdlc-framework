@@ -136,13 +136,13 @@ function getTimestamp() {
 function getManifestPath() {
     const projectRoot = getProjectRoot();
 
-    // Check for JSON manifest in config/
-    const configPath = path.join(projectRoot, 'config', 'skills-manifest.json');
-    if (fs.existsSync(configPath)) {
-        return configPath;
+    // Primary location: .claude/hooks/config/ (hooks config lives with hooks)
+    const hooksConfigPath = path.join(projectRoot, '.claude', 'hooks', 'config', 'skills-manifest.json');
+    if (fs.existsSync(hooksConfigPath)) {
+        return hooksConfigPath;
     }
 
-    // Fallback to .isdlc location
+    // Fallback to .isdlc location (framework config)
     const isdlcPath = path.join(projectRoot, '.isdlc', 'config', 'skills-manifest.json');
     if (fs.existsSync(isdlcPath)) {
         return isdlcPath;
