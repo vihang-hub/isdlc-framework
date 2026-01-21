@@ -25,12 +25,12 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-# Get the directory where this script is located (repo root, cloned as isdlc-framework/)
+# Get the directory where this script is located (the cloned isdlc-framework folder)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # The project root is the parent of the cloned framework folder
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-# Framework resources are in isdlc-framework/ subdirectory
-FRAMEWORK_DIR="$SCRIPT_DIR/isdlc-framework"
+# Framework resources are at the root of the cloned folder (not in a subdirectory)
+FRAMEWORK_DIR="$SCRIPT_DIR"
 
 # ============================================================================
 # Remove framework development files (not needed by end users)
@@ -270,7 +270,7 @@ fi
 # ============================================================================
 # Step 2: Create docs folder
 # ============================================================================
-echo -e "${BLUE}[2/6]${NC} Setting up docs folder...
+echo -e "${BLUE}[2/6]${NC} Setting up docs folder..."
 
 if [ -d "docs" ]; then
     echo -e "${YELLOW}  docs/ folder already exists${NC}"
@@ -378,10 +378,11 @@ if [ -d "$FRAMEWORK_DIR/config" ]; then
     echo -e "${GREEN}  ✓ Copied config files${NC}"
 fi
 
-# Also copy config to project root for hooks access
+# Also copy config to project root for hooks access (skills-manifest.json needed by hooks)
 mkdir -p "config"
 if [ -d "$FRAMEWORK_DIR/config" ]; then
     cp -r "$FRAMEWORK_DIR/config/"* "config/"
+    echo -e "${GREEN}  ✓ Copied config to project root (for hooks)${NC}"
 fi
 
 # Convert skills manifest from YAML to JSON for runtime hooks
@@ -402,6 +403,7 @@ with open('config/skills-manifest.json', 'w') as f:
         echo -e "${GREEN}  ✓ Converted skills manifest to JSON (Python)${NC}"
     # Use scripts/convert-manifest.sh if available
     elif [ -f "$FRAMEWORK_DIR/scripts/convert-manifest.sh" ]; then
+        mkdir -p "scripts"
         cp "$FRAMEWORK_DIR/scripts/convert-manifest.sh" "scripts/"
         chmod +x "scripts/convert-manifest.sh"
         "./scripts/convert-manifest.sh" --input "config/skills-manifest.yaml" --output "config/skills-manifest.json" >/dev/null 2>&1
