@@ -14,6 +14,7 @@
 
 # Project-specific state (each project tracks its own)
 packages/*/.isdlc/
+.isdlc/state.json
 
 # Local skill state
 .claude/*.local.md
