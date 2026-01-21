@@ -1,0 +1,881 @@
+# Tech Stack to Skill Mapping Configuration
+# This file maps detected technologies to relevant skills and research queries
+# Used by /sdlc discover Phase 4: Tech-Stack Skill Customization
+
+version: "1.0"
+description: |
+  Maps technologies to their relevant skills and research queries.
+  Tier 1 (Static) mappings are defined here.
+  For Tier 2 (Dynamic), see the tech_type_defaults section.
+
+# Tier 1: Static Mappings for Known Technologies
+mappings:
+  # Languages/Runtimes
+  nodejs:
+    display_name: "Node.js"
+    type: language_runtime
+    skills:
+      - development/code-implementation
+      - development/unit-testing
+      - development/error-handling
+      - security/dependency-auditing
+      - devops/cicd-pipeline
+    research_queries:
+      - "Node.js best practices {YEAR}"
+      - "Node.js security vulnerabilities {YEAR}"
+      - "Node.js performance optimization tips"
+
+  typescript:
+    display_name: "TypeScript"
+    type: language_runtime
+    skills:
+      - development/code-implementation
+      - development/unit-testing
+      - development/code-documentation
+      - devops/cicd-pipeline
+    research_queries:
+      - "TypeScript best practices {YEAR}"
+      - "TypeScript strict mode configuration"
+      - "TypeScript security patterns"
+
+  python:
+    display_name: "Python"
+    type: language_runtime
+    skills:
+      - development/code-implementation
+      - development/unit-testing
+      - development/error-handling
+      - security/dependency-auditing
+      - devops/cicd-pipeline
+    research_queries:
+      - "Python best practices {YEAR}"
+      - "Python security vulnerabilities {YEAR}"
+      - "Python performance optimization"
+
+  go:
+    display_name: "Go"
+    type: language_runtime
+    skills:
+      - development/code-implementation
+      - development/unit-testing
+      - development/error-handling
+      - development/performance-optimization
+      - devops/cicd-pipeline
+    research_queries:
+      - "Go best practices {YEAR}"
+      - "Go security guidelines"
+      - "Go concurrency patterns"
+
+  rust:
+    display_name: "Rust"
+    type: language_runtime
+    skills:
+      - development/code-implementation
+      - development/unit-testing
+      - development/performance-optimization
+      - security/code-security-review
+      - devops/cicd-pipeline
+    research_queries:
+      - "Rust best practices {YEAR}"
+      - "Rust memory safety patterns"
+      - "Rust async programming"
+
+  java:
+    display_name: "Java"
+    type: language_runtime
+    skills:
+      - development/code-implementation
+      - development/unit-testing
+      - development/error-handling
+      - security/dependency-auditing
+      - devops/cicd-pipeline
+    research_queries:
+      - "Java best practices {YEAR}"
+      - "Java security vulnerabilities {YEAR}"
+      - "Java performance tuning"
+
+  # Frontend Frameworks
+  react:
+    display_name: "React"
+    type: frontend_framework
+    skills:
+      - development/frontend-development
+      - development/unit-testing
+      - design/ui-ux
+      - design/state-management
+      - design/components
+      - testing/test-case-design
+    research_queries:
+      - "React best practices {YEAR}"
+      - "React performance optimization {YEAR}"
+      - "React testing library patterns"
+      - "React security considerations"
+
+  nextjs:
+    display_name: "Next.js"
+    type: frontend_framework
+    skills:
+      - development/frontend-development
+      - development/unit-testing
+      - design/ui-ux
+      - design/state-management
+      - devops/deployment-strategy
+      - development/performance-optimization
+    research_queries:
+      - "Next.js best practices {YEAR}"
+      - "Next.js performance optimization"
+      - "Next.js security headers configuration"
+      - "Next.js SEO patterns"
+
+  vue:
+    display_name: "Vue.js"
+    type: frontend_framework
+    skills:
+      - development/frontend-development
+      - development/unit-testing
+      - design/ui-ux
+      - design/state-management
+      - design/components
+    research_queries:
+      - "Vue.js best practices {YEAR}"
+      - "Vue 3 composition API patterns"
+      - "Vue testing patterns"
+
+  angular:
+    display_name: "Angular"
+    type: frontend_framework
+    skills:
+      - development/frontend-development
+      - development/unit-testing
+      - design/ui-ux
+      - design/state-management
+      - design/module-design
+    research_queries:
+      - "Angular best practices {YEAR}"
+      - "Angular performance optimization"
+      - "Angular security guidelines"
+
+  svelte:
+    display_name: "Svelte"
+    type: frontend_framework
+    skills:
+      - development/frontend-development
+      - development/unit-testing
+      - design/ui-ux
+      - design/components
+    research_queries:
+      - "Svelte best practices {YEAR}"
+      - "SvelteKit performance optimization"
+      - "Svelte testing patterns"
+
+  # Backend Frameworks
+  express:
+    display_name: "Express.js"
+    type: backend_framework
+    skills:
+      - development/code-implementation
+      - development/authentication
+      - development/error-handling
+      - security/security-configuration
+      - security/input-validation-testing
+    research_queries:
+      - "Express.js best practices {YEAR}"
+      - "Express.js security middleware"
+      - "Express.js performance optimization"
+      - "Express.js rate limiting"
+
+  nestjs:
+    display_name: "NestJS"
+    type: backend_framework
+    skills:
+      - development/code-implementation
+      - development/authentication
+      - development/error-handling
+      - design/module-design
+      - architecture/api-architecture
+      - security/security-configuration
+    research_queries:
+      - "NestJS best practices {YEAR}"
+      - "NestJS security patterns"
+      - "NestJS testing strategies"
+      - "NestJS microservices patterns"
+
+  fastapi:
+    display_name: "FastAPI"
+    type: backend_framework
+    skills:
+      - development/code-implementation
+      - development/authentication
+      - development/error-handling
+      - architecture/api-architecture
+      - security/security-configuration
+    research_queries:
+      - "FastAPI best practices {YEAR}"
+      - "FastAPI security patterns"
+      - "FastAPI performance optimization"
+      - "FastAPI testing strategies"
+
+  django:
+    display_name: "Django"
+    type: backend_framework
+    skills:
+      - development/code-implementation
+      - development/authentication
+      - development/database-integration
+      - security/security-configuration
+      - design/module-design
+    research_queries:
+      - "Django best practices {YEAR}"
+      - "Django security checklist"
+      - "Django performance optimization"
+      - "Django REST framework patterns"
+
+  flask:
+    display_name: "Flask"
+    type: backend_framework
+    skills:
+      - development/code-implementation
+      - development/authentication
+      - development/error-handling
+      - security/security-configuration
+    research_queries:
+      - "Flask best practices {YEAR}"
+      - "Flask security patterns"
+      - "Flask application factory pattern"
+
+  spring:
+    display_name: "Spring Boot"
+    type: backend_framework
+    skills:
+      - development/code-implementation
+      - development/authentication
+      - development/error-handling
+      - security/security-configuration
+      - architecture/api-architecture
+    research_queries:
+      - "Spring Boot best practices {YEAR}"
+      - "Spring Security configuration"
+      - "Spring Boot performance tuning"
+
+  gin:
+    display_name: "Gin"
+    type: backend_framework
+    skills:
+      - development/code-implementation
+      - development/authentication
+      - development/error-handling
+      - security/security-configuration
+    research_queries:
+      - "Gin Go framework best practices"
+      - "Gin middleware patterns"
+      - "Gin security configuration"
+
+  # Databases
+  postgresql:
+    display_name: "PostgreSQL"
+    type: database
+    skills:
+      - development/database-integration
+      - development/migration-writing
+      - development/performance-optimization
+      - architecture/database-design
+      - devops/backup-recovery
+    research_queries:
+      - "PostgreSQL best practices {YEAR}"
+      - "PostgreSQL performance tuning"
+      - "PostgreSQL security hardening"
+      - "PostgreSQL indexing strategies"
+
+  mysql:
+    display_name: "MySQL"
+    type: database
+    skills:
+      - development/database-integration
+      - development/migration-writing
+      - development/performance-optimization
+      - architecture/database-design
+    research_queries:
+      - "MySQL best practices {YEAR}"
+      - "MySQL performance optimization"
+      - "MySQL security configuration"
+
+  mongodb:
+    display_name: "MongoDB"
+    type: database
+    skills:
+      - development/database-integration
+      - development/migration-writing
+      - architecture/database-design
+      - security/security-configuration
+    research_queries:
+      - "MongoDB best practices {YEAR}"
+      - "MongoDB security hardening"
+      - "MongoDB indexing strategies"
+      - "MongoDB schema design patterns"
+
+  redis:
+    display_name: "Redis"
+    type: database
+    skills:
+      - development/database-integration
+      - development/performance-optimization
+      - architecture/scalability-planning
+      - devops/deployment-strategy
+    research_queries:
+      - "Redis best practices {YEAR}"
+      - "Redis caching patterns"
+      - "Redis security configuration"
+
+  # ORMs
+  prisma:
+    display_name: "Prisma"
+    type: orm
+    skills:
+      - development/database-integration
+      - development/migration-writing
+      - development/code-implementation
+      - architecture/database-design
+    research_queries:
+      - "Prisma best practices {YEAR}"
+      - "Prisma performance optimization"
+      - "Prisma migration strategies"
+
+  typeorm:
+    display_name: "TypeORM"
+    type: orm
+    skills:
+      - development/database-integration
+      - development/migration-writing
+      - development/code-implementation
+    research_queries:
+      - "TypeORM best practices"
+      - "TypeORM migration patterns"
+      - "TypeORM performance optimization"
+
+  sqlalchemy:
+    display_name: "SQLAlchemy"
+    type: orm
+    skills:
+      - development/database-integration
+      - development/migration-writing
+      - development/code-implementation
+    research_queries:
+      - "SQLAlchemy best practices {YEAR}"
+      - "SQLAlchemy 2.0 patterns"
+      - "Alembic migration strategies"
+
+  # DevOps/Infrastructure
+  docker:
+    display_name: "Docker"
+    type: devops_infra
+    skills:
+      - devops/containerization
+      - devops/cicd-pipeline
+      - devops/deployment-strategy
+      - security/security-configuration
+      - devops/environment-configuration
+    research_queries:
+      - "Docker best practices {YEAR}"
+      - "Docker security hardening"
+      - "Docker multi-stage builds optimization"
+      - "Docker Compose patterns"
+
+  kubernetes:
+    display_name: "Kubernetes"
+    type: devops_infra
+    skills:
+      - devops/containerization
+      - devops/deployment-strategy
+      - devops/infrastructure-as-code
+      - devops/auto-scaling
+      - security/security-configuration
+      - operations/incident-response
+    research_queries:
+      - "Kubernetes best practices {YEAR}"
+      - "Kubernetes security policies"
+      - "Kubernetes deployment strategies"
+      - "Kubernetes resource management"
+
+  terraform:
+    display_name: "Terraform"
+    type: devops_infra
+    skills:
+      - devops/infrastructure-as-code
+      - devops/environment-configuration
+      - security/security-configuration
+      - architecture/infrastructure-design
+    research_queries:
+      - "Terraform best practices {YEAR}"
+      - "Terraform security patterns"
+      - "Terraform state management"
+
+  aws:
+    display_name: "AWS"
+    type: cloud_provider
+    skills:
+      - devops/infrastructure-as-code
+      - devops/deployment-strategy
+      - security/security-configuration
+      - architecture/infrastructure-design
+      - devops/monitoring-setup
+    research_queries:
+      - "AWS best practices {YEAR}"
+      - "AWS security well-architected"
+      - "AWS cost optimization strategies"
+
+  gcp:
+    display_name: "Google Cloud Platform"
+    type: cloud_provider
+    skills:
+      - devops/infrastructure-as-code
+      - devops/deployment-strategy
+      - security/security-configuration
+      - architecture/infrastructure-design
+    research_queries:
+      - "GCP best practices {YEAR}"
+      - "Google Cloud security guidelines"
+      - "GCP cost optimization"
+
+  azure:
+    display_name: "Azure"
+    type: cloud_provider
+    skills:
+      - devops/infrastructure-as-code
+      - devops/deployment-strategy
+      - security/security-configuration
+      - architecture/infrastructure-design
+    research_queries:
+      - "Azure best practices {YEAR}"
+      - "Azure security guidelines"
+      - "Azure cost management"
+
+  # Testing Frameworks
+  jest:
+    display_name: "Jest"
+    type: testing_tool
+    skills:
+      - development/unit-testing
+      - testing/test-case-design
+      - testing/coverage-analysis
+    research_queries:
+      - "Jest best practices {YEAR}"
+      - "Jest performance optimization"
+      - "Jest mocking patterns"
+
+  pytest:
+    display_name: "Pytest"
+    type: testing_tool
+    skills:
+      - development/unit-testing
+      - testing/test-case-design
+      - testing/coverage-analysis
+    research_queries:
+      - "Pytest best practices {YEAR}"
+      - "Pytest fixtures patterns"
+      - "Pytest plugin recommendations"
+
+  cypress:
+    display_name: "Cypress"
+    type: testing_tool
+    skills:
+      - testing/test-case-design
+      - testing/integration-testing
+      - development/frontend-development
+    research_queries:
+      - "Cypress best practices {YEAR}"
+      - "Cypress E2E testing patterns"
+      - "Cypress component testing"
+
+  playwright:
+    display_name: "Playwright"
+    type: testing_tool
+    skills:
+      - testing/test-case-design
+      - testing/integration-testing
+      - development/frontend-development
+    research_queries:
+      - "Playwright best practices {YEAR}"
+      - "Playwright E2E testing patterns"
+      - "Playwright performance testing"
+
+  # CI/CD Tools
+  github_actions:
+    display_name: "GitHub Actions"
+    type: cicd_tool
+    skills:
+      - devops/cicd-pipeline
+      - devops/deployment-strategy
+      - security/dependency-auditing
+    research_queries:
+      - "GitHub Actions best practices {YEAR}"
+      - "GitHub Actions security hardening"
+      - "GitHub Actions workflow optimization"
+
+  gitlab_ci:
+    display_name: "GitLab CI"
+    type: cicd_tool
+    skills:
+      - devops/cicd-pipeline
+      - devops/deployment-strategy
+    research_queries:
+      - "GitLab CI best practices {YEAR}"
+      - "GitLab CI security scanning"
+      - "GitLab CI pipeline optimization"
+
+  # Authentication/Security
+  auth0:
+    display_name: "Auth0"
+    type: security_tool
+    skills:
+      - development/authentication
+      - security/security-configuration
+      - security/authentication-testing
+    research_queries:
+      - "Auth0 best practices {YEAR}"
+      - "Auth0 security configuration"
+      - "Auth0 multi-tenancy patterns"
+
+  passport:
+    display_name: "Passport.js"
+    type: security_tool
+    skills:
+      - development/authentication
+      - security/security-configuration
+      - security/authentication-testing
+    research_queries:
+      - "Passport.js best practices"
+      - "Passport.js security patterns"
+      - "Passport.js session management"
+
+  jwt:
+    display_name: "JWT"
+    type: security_tool
+    skills:
+      - development/authentication
+      - security/security-configuration
+      - security/authentication-testing
+    research_queries:
+      - "JWT best practices {YEAR}"
+      - "JWT security vulnerabilities"
+      - "JWT token management patterns"
+
+  # Monitoring/Observability
+  prometheus:
+    display_name: "Prometheus"
+    type: monitoring
+    skills:
+      - devops/monitoring-setup
+      - operations/alerting-management
+      - operations/performance-monitoring
+    research_queries:
+      - "Prometheus best practices {YEAR}"
+      - "Prometheus alerting rules"
+      - "PromQL query optimization"
+
+  grafana:
+    display_name: "Grafana"
+    type: monitoring
+    skills:
+      - devops/monitoring-setup
+      - operations/alerting-management
+      - operations/reporting
+    research_queries:
+      - "Grafana best practices {YEAR}"
+      - "Grafana dashboard design"
+      - "Grafana alerting configuration"
+
+  datadog:
+    display_name: "Datadog"
+    type: monitoring
+    skills:
+      - devops/monitoring-setup
+      - operations/alerting-management
+      - operations/log-analysis
+      - devops/log-management
+    research_queries:
+      - "Datadog best practices {YEAR}"
+      - "Datadog APM configuration"
+      - "Datadog security monitoring"
+
+  sentry:
+    display_name: "Sentry"
+    type: monitoring
+    skills:
+      - devops/monitoring-setup
+      - operations/incident-response
+      - development/error-handling
+    research_queries:
+      - "Sentry best practices {YEAR}"
+      - "Sentry performance monitoring"
+      - "Sentry release tracking"
+
+# Tier 2: Default Skills by Technology Type
+# Used when a technology is not in the static mapping above
+tech_type_defaults:
+  language_runtime:
+    description: "Programming language or runtime environment"
+    classification_queries:
+      - "{technology} what is it used for"
+      - "{technology} programming language or runtime"
+    default_skills:
+      - development/code-implementation
+      - development/unit-testing
+      - devops/cicd-pipeline
+    research_queries:
+      - "{technology} best practices {YEAR}"
+      - "{technology} security considerations"
+      - "{technology} testing patterns"
+
+  frontend_framework:
+    description: "Frontend UI framework or library"
+    classification_queries:
+      - "{technology} frontend framework"
+      - "{technology} UI library"
+    default_skills:
+      - development/frontend-development
+      - design/ui-ux
+      - design/state-management
+      - testing/test-case-design
+    research_queries:
+      - "{technology} best practices {YEAR}"
+      - "{technology} performance optimization"
+      - "{technology} testing patterns"
+      - "{technology} accessibility guidelines"
+
+  backend_framework:
+    description: "Backend web framework"
+    classification_queries:
+      - "{technology} backend framework"
+      - "{technology} web framework"
+    default_skills:
+      - development/code-implementation
+      - development/authentication
+      - development/error-handling
+      - security/security-configuration
+    research_queries:
+      - "{technology} best practices {YEAR}"
+      - "{technology} security middleware"
+      - "{technology} API design patterns"
+      - "{technology} performance optimization"
+
+  database:
+    description: "Database management system"
+    classification_queries:
+      - "{technology} database"
+      - "{technology} data store"
+    default_skills:
+      - development/database-integration
+      - development/migration-writing
+      - development/performance-optimization
+      - architecture/database-design
+    research_queries:
+      - "{technology} best practices {YEAR}"
+      - "{technology} performance tuning"
+      - "{technology} security hardening"
+      - "{technology} backup strategies"
+
+  orm:
+    description: "Object-Relational Mapping tool"
+    classification_queries:
+      - "{technology} ORM"
+      - "{technology} database abstraction"
+    default_skills:
+      - development/database-integration
+      - development/migration-writing
+      - development/code-implementation
+    research_queries:
+      - "{technology} best practices {YEAR}"
+      - "{technology} migration patterns"
+      - "{technology} query optimization"
+
+  devops_infra:
+    description: "DevOps or infrastructure tool"
+    classification_queries:
+      - "{technology} devops tool"
+      - "{technology} infrastructure"
+    default_skills:
+      - devops/cicd-pipeline
+      - devops/containerization
+      - devops/deployment-strategy
+      - devops/infrastructure-as-code
+    research_queries:
+      - "{technology} best practices {YEAR}"
+      - "{technology} security configuration"
+      - "{technology} optimization tips"
+
+  cloud_provider:
+    description: "Cloud service provider"
+    classification_queries:
+      - "{technology} cloud provider"
+      - "{technology} cloud platform"
+    default_skills:
+      - devops/infrastructure-as-code
+      - devops/deployment-strategy
+      - security/security-configuration
+      - architecture/infrastructure-design
+    research_queries:
+      - "{technology} best practices {YEAR}"
+      - "{technology} security well-architected"
+      - "{technology} cost optimization"
+
+  testing_tool:
+    description: "Testing framework or tool"
+    classification_queries:
+      - "{technology} testing framework"
+      - "{technology} test runner"
+    default_skills:
+      - development/unit-testing
+      - testing/test-case-design
+      - testing/coverage-analysis
+    research_queries:
+      - "{technology} best practices {YEAR}"
+      - "{technology} testing patterns"
+      - "{technology} configuration optimization"
+
+  cicd_tool:
+    description: "CI/CD pipeline tool"
+    classification_queries:
+      - "{technology} CI CD"
+      - "{technology} continuous integration"
+    default_skills:
+      - devops/cicd-pipeline
+      - devops/deployment-strategy
+      - security/dependency-auditing
+    research_queries:
+      - "{technology} best practices {YEAR}"
+      - "{technology} pipeline optimization"
+      - "{technology} security scanning"
+
+  security_tool:
+    description: "Security or authentication tool"
+    classification_queries:
+      - "{technology} security tool"
+      - "{technology} authentication"
+    default_skills:
+      - development/authentication
+      - security/security-configuration
+      - security/authentication-testing
+    research_queries:
+      - "{technology} best practices {YEAR}"
+      - "{technology} security configuration"
+      - "{technology} vulnerability prevention"
+
+  monitoring:
+    description: "Monitoring or observability tool"
+    classification_queries:
+      - "{technology} monitoring"
+      - "{technology} observability"
+    default_skills:
+      - devops/monitoring-setup
+      - operations/alerting-management
+      - devops/log-management
+    research_queries:
+      - "{technology} best practices {YEAR}"
+      - "{technology} alerting configuration"
+      - "{technology} dashboard patterns"
+
+# Detection patterns for identifying technologies in codebases
+detection_patterns:
+  nodejs:
+    files: ["package.json"]
+    content_patterns:
+      - '"node"'
+      - '"engines".*"node"'
+  typescript:
+    files: ["tsconfig.json", "*.ts", "*.tsx"]
+    content_patterns: []
+  python:
+    files: ["requirements.txt", "pyproject.toml", "setup.py", "Pipfile"]
+    content_patterns: []
+  go:
+    files: ["go.mod", "go.sum"]
+    content_patterns: []
+  rust:
+    files: ["Cargo.toml"]
+    content_patterns: []
+  java:
+    files: ["pom.xml", "build.gradle", "build.gradle.kts"]
+    content_patterns: []
+  react:
+    files: ["package.json"]
+    content_patterns:
+      - '"react"'
+      - '"@types/react"'
+  nextjs:
+    files: ["next.config.js", "next.config.mjs", "next.config.ts"]
+    content_patterns:
+      - '"next"'
+  vue:
+    files: ["package.json"]
+    content_patterns:
+      - '"vue"'
+  angular:
+    files: ["angular.json"]
+    content_patterns:
+      - '"@angular/core"'
+  express:
+    files: ["package.json"]
+    content_patterns:
+      - '"express"'
+  nestjs:
+    files: ["package.json"]
+    content_patterns:
+      - '"@nestjs/core"'
+  fastapi:
+    files: ["requirements.txt", "pyproject.toml"]
+    content_patterns:
+      - "fastapi"
+  django:
+    files: ["requirements.txt", "pyproject.toml", "manage.py"]
+    content_patterns:
+      - "django"
+  postgresql:
+    files: ["docker-compose.yml", "docker-compose.yaml"]
+    content_patterns:
+      - "postgres"
+      - "postgresql"
+  mongodb:
+    files: ["docker-compose.yml", "package.json"]
+    content_patterns:
+      - "mongodb"
+      - "mongoose"
+  redis:
+    files: ["docker-compose.yml", "package.json"]
+    content_patterns:
+      - "redis"
+      - "ioredis"
+  prisma:
+    files: ["prisma/schema.prisma", "package.json"]
+    content_patterns:
+      - "@prisma/client"
+      - "prisma"
+  docker:
+    files: ["Dockerfile", "docker-compose.yml", "docker-compose.yaml"]
+    content_patterns: []
+  kubernetes:
+    files: ["*.yaml", "*.yml"]
+    content_patterns:
+      - "kind: Deployment"
+      - "apiVersion: apps/"
+  terraform:
+    files: ["*.tf", "terraform.tfvars"]
+    content_patterns: []
+  github_actions:
+    files: [".github/workflows/*.yml", ".github/workflows/*.yaml"]
+    content_patterns: []
+  jest:
+    files: ["package.json", "jest.config.js", "jest.config.ts"]
+    content_patterns:
+      - '"jest"'
+  pytest:
+    files: ["pytest.ini", "pyproject.toml", "conftest.py"]
+    content_patterns:
+      - "pytest"
+  cypress:
+    files: ["cypress.config.js", "cypress.config.ts", "cypress.json"]
+    content_patterns:
+      - "cypress"
+  playwright:
+    files: ["playwright.config.ts", "playwright.config.js"]
+    content_patterns:
+      - "@playwright/test"

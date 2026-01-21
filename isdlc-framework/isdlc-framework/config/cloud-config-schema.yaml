@@ -1,0 +1,228 @@
+# iSDLC Framework: Cloud Provider Configuration Schema
+# Defines cloud provider settings for deployment phases (11-13)
+# Version: 1.0.0
+# Last Updated: 2026-01-18
+
+---
+
+# Cloud Configuration Schema
+# This schema defines the structure for cloud_configuration in state.json
+
+cloud_configuration:
+  # Primary provider selection
+  provider:
+    type: enum
+    values:
+      - aws       # Amazon Web Services
+      - gcp       # Google Cloud Platform
+      - azure     # Microsoft Azure
+      - none      # Local only (no cloud deployment)
+      - undecided # User hasn't decided yet
+    default: undecided
+    description: "Cloud provider for deployment"
+
+  # AWS-specific configuration
+  aws:
+    profile:
+      type: string
+      description: "AWS profile from ~/.aws/credentials"
+      example: "default"
+    region:
+      type: string
+      description: "AWS region for deployment"
+      example: "us-east-1"
+      common_values:
+        - us-east-1
+        - us-west-2
+        - eu-west-1
+        - ap-southeast-1
+    account_id:
+      type: string
+      optional: true
+      description: "AWS account ID (optional, for verification)"
+
+  # GCP-specific configuration
+  gcp:
+    project_id:
+      type: string
+      description: "GCP project ID"
+      example: "my-project-123456"
+    region:
+      type: string
+      description: "GCP region for deployment"
+      example: "us-central1"
+      common_values:
+        - us-central1
+        - us-east1
+        - europe-west1
+        - asia-east1
+
+  # Azure-specific configuration
+  azure:
+    subscription_id:
+      type: string
+      description: "Azure subscription ID"
+      example: "12345678-1234-1234-1234-123456789012"
+    resource_group:
+      type: string
+      description: "Azure resource group name"
+      example: "my-resource-group"
+    region:
+      type: string
+      description: "Azure region for deployment"
+      example: "eastus"
+      common_values:
+        - eastus
+        - westus2
+        - westeurope
+        - southeastasia
+
+  # Deployment capability flags (computed from provider)
+  deployment:
+    staging_enabled:
+      type: boolean
+      computed: true
+      description: "Whether staging deployment is available"
+      rules:
+        - "true if provider in [aws, gcp, azure]"
+        - "false if provider in [none, undecided]"
+
+    production_enabled:
+      type: boolean
+      computed: true
+      description: "Whether production deployment is available"
+      rules:
+        - "true if provider in [aws, gcp, azure]"
+        - "false if provider in [none, undecided]"
+
+    workflow_endpoint:
+      type: enum
+      values:
+        - "10-local-testing"   # Workflow ends after local testing
+        - "11-test-deploy"     # Workflow ends after staging
+        - "12-production"      # Workflow ends after production deploy
+        - "13-operations"      # Full workflow including operations
+      computed: true
+      description: "The final phase of the workflow based on cloud config"
+      rules:
+        - "10-local-testing if provider in [none, undecided]"
+        - "13-operations if provider in [aws, gcp, azure] and production_enabled"
+        - "11-test-deploy if provider in [aws, gcp, azure] and staging_enabled and not production_enabled"
+
+  # Timestamps and validation
+  configured_at:
+    type: datetime
+    optional: true
+    description: "When cloud configuration was set"
+
+  credentials_validated:
+    type: boolean
+    default: false
+    description: "Whether credentials have been validated"
+
+  last_validated_at:
+    type: datetime
+    optional: true
+    description: "When credentials were last validated"
+
+---
+
+# State.json Template for cloud_configuration
+# Copy this structure into state.json during project initialization
+
+state_template:
+  cloud_configuration:
+    provider: "undecided"
+    configured_at: null
+    credentials_validated: false
+    aws: null
+    gcp: null
+    azure: null
+    deployment:
+      staging_enabled: false
+      production_enabled: false
+      workflow_endpoint: "10-local-testing"
+
+---
+
+# Validation Rules
+
+validation:
+  # Provider-specific validation
+  when_aws:
+    required_fields:
+      - aws.profile
+      - aws.region
+    validation_command: "aws sts get-caller-identity --profile {profile}"
+
+  when_gcp:
+    required_fields:
+      - gcp.project_id
+      - gcp.region
+    validation_command: "gcloud projects describe {project_id}"
+
+  when_azure:
+    required_fields:
+      - azure.subscription_id
+      - azure.resource_group
+      - azure.region
+    validation_command: "az account show --subscription {subscription_id}"
+
+---
+
+# Workflow Endpoint Mapping
+# Determines which phases are executed based on cloud configuration
+
+workflow_mapping:
+  none:
+    description: "Local-only development, no cloud deployment"
+    workflow_endpoint: "10-local-testing"
+    phases_executed: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    phases_skipped: [11, 12, 13]
+
+  undecided:
+    description: "Cloud decision deferred, workflow pauses at Phase 10"
+    workflow_endpoint: "10-local-testing"
+    phases_executed: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    phases_skipped: [11, 12, 13]
+    note: "Run /sdlc configure-cloud to continue workflow after Phase 10"
+
+  aws:
+    description: "Full AWS deployment workflow"
+    workflow_endpoint: "13-operations"
+    phases_executed: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+    phases_skipped: []
+
+  gcp:
+    description: "Full GCP deployment workflow"
+    workflow_endpoint: "13-operations"
+    phases_executed: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+    phases_skipped: []
+
+  azure:
+    description: "Full Azure deployment workflow"
+    workflow_endpoint: "13-operations"
+    phases_executed: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+    phases_skipped: []
+
+---
+
+# Metadata
+
+metadata:
+  version: "1.0.0"
+  last_updated: "2026-01-18"
+  author: "iSDLC Framework"
+  schema_version: "1.0"
+
+notes: |
+  This configuration schema is used by:
+  - /sdlc discover command - To collect cloud provider info during discovery
+  - /sdlc configure-cloud command - To configure cloud provider after discovery
+  - SDLC Orchestrator - To determine workflow endpoint and phase transitions
+  - init-project.sh - To initialize state.json with cloud_configuration template
+
+  Cloud configuration is stored in .isdlc/state.json and affects:
+  - Whether phases 11, 12, 13 are executed
+  - Automatic workflow pausing at Phase 10 for undecided providers
+  - Gate prerequisites for deployment phases
