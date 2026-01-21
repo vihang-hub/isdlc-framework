@@ -2,31 +2,100 @@
 
 **Status**: Complete
 **Date Implemented**: 2026-01-18
-**Version**: 1.0
+**Version**: 2.0.0 (with Runtime Hooks)
 
 ---
 
 ## Overview
 
-Skill Enforcement implements exclusive skill ownership where each of the 119 skills belongs to exactly one agent. Before any skill execution, the owning agent is validated, and all skill usage is logged for audit trails.
+Skill Enforcement implements exclusive skill ownership where each of the 119 skills belongs to exactly one agent. This is now enforced at **runtime** using Claude Code hooks that intercept Task tool calls and validate agent authorization before execution.
 
 ---
 
 ## What Problem Does This Solve?
 
-### Before Skill Enforcement
+### Before Skill Enforcement (v1.0)
 - Skills were documented but not enforced
 - Any agent could theoretically use any skill
 - No audit trail of skill usage
 - No accountability for skill misuse
 - Unclear ownership for troubleshooting
+- Enforcement was purely prompt-based (honor system)
 
-### After Skill Enforcement
+### After Skill Enforcement (v2.0)
 - Each skill has exactly ONE owner agent
+- **Runtime enforcement via Claude Code hooks**
 - Ownership is validated before execution
-- All usage is logged to state.json
-- Violations are detected and handled
+- All usage is logged to state.json automatically
+- Violations are blocked (strict mode) or flagged (warn/audit modes)
 - Clear accountability and traceability
+
+---
+
+## Runtime Hook Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    ENFORCEMENT FLOW                          │
+├─────────────────────────────────────────────────────────────┤
+│  1. Agent invokes Task tool to delegate to another agent     │
+│  2. PreToolUse hook (skill-validator.sh) intercepts          │
+│  3. Hook script validates:                                   │
+│     - Which agent is being invoked                           │
+│     - Which phase is active                                  │
+│     - Whether agent owns skills for that phase               │
+│  4. If unauthorized (strict): Block with JSON response       │
+│  5. If authorized: Allow and proceed                         │
+│  6. PostToolUse hook (log-skill-usage.sh) logs all calls     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Hook Files (Node.js - Cross-Platform)
+
+| File | Purpose |
+|------|---------|
+| `.claude/hooks/skill-validator.js` | PreToolUse hook - validates agent authorization |
+| `.claude/hooks/log-skill-usage.js` | PostToolUse hook - logs all Task tool usage |
+| `.claude/hooks/lib/common.js` | Shared utilities (JSON parsing, manifest lookup) |
+| `.claude/settings.json` | Hook configuration (matchers, timeouts) |
+| `config/skills-manifest.json` | JSON manifest for runtime lookup |
+
+**Note:** Hooks are written in Node.js for cross-platform compatibility (Windows, macOS, Linux).
+
+### Hook Configuration
+
+The hooks are configured in `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/skill-validator.js",
+            "timeout": 10000
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/log-skill-usage.js",
+            "timeout": 5000
+          }
+        ]
+      }
+    ]
+  }
+}
+```
 
 ---
 
@@ -131,10 +200,22 @@ Configure in `.isdlc/state.json`:
   "skill_enforcement": {
     "enabled": true,
     "mode": "strict",
+    "fail_behavior": "allow",
     "manifest_version": "2.0.0"
   }
 }
 ```
+
+### Fail Behavior Configuration
+
+The `fail_behavior` setting controls what happens when the hook encounters errors:
+
+| Value | Behavior |
+|-------|----------|
+| **allow** | If hook errors or times out, allow the operation (prioritize workflow) |
+| **block** | If hook errors or times out, block the operation (prioritize security) |
+
+Default is `allow` to ensure workflow continuity.
 
 ---
 
@@ -196,8 +277,22 @@ At each phase gate, skill enforcement is validated:
 
 ## Files Changed
 
-### New Files (2)
-- `isdlc-framework/config/skills-manifest.yaml` (~800 lines)
+### New Files (v2.0 - Runtime Hooks, Node.js)
+
+| File | Purpose | Lines |
+|------|---------|-------|
+| `.claude/hooks/skill-validator.js` | PreToolUse validation hook (Node.js) | ~170 |
+| `.claude/hooks/log-skill-usage.js` | PostToolUse logging hook (Node.js) | ~130 |
+| `.claude/hooks/lib/common.js` | Shared utilities (Node.js) | ~250 |
+| `.claude/settings.json` | Hook configuration | ~25 |
+| `config/skills-manifest.json` | JSON manifest for runtime | ~250 |
+| `scripts/convert-manifest.sh` | YAML→JSON converter | ~250 |
+| `.claude/hooks/tests/test-skill-validator.js` | Test suite (Node.js) | ~350 |
+| `.claude/hooks/tests/test-scenarios/*.json` | Test scenarios | ~50 |
+
+### Original Files (v1.0)
+
+- `config/skills-manifest.yaml` (~800 lines)
   - Central ownership manifest with skill_lookup and path_lookup
 - `.claude/skills/orchestration/skill-validation/SKILL.md` (~300 lines)
   - Validation skill for orchestrator
@@ -214,9 +309,11 @@ All `.claude/skills/**/SKILL.md` files updated with:
 - `owner` field set to actual agent name
 
 **init-project.sh**
-Added to state.json template:
-- `skill_enforcement` configuration
-- `skill_usage_log` array
+Added:
+- Hook setup and copying
+- Manifest JSON conversion
+- `skill_enforcement.fail_behavior` configuration
+- `skill_usage_log` array in state.json
 
 ---
 
@@ -316,12 +413,117 @@ Warning: manifest_version mismatch (2.0.0 vs 1.0.0)
 
 ---
 
+## Testing
+
+### Running Tests
+
+```bash
+# Run the test suite (Node.js - cross-platform)
+node .claude/hooks/tests/test-skill-validator.js
+
+# Run with verbose output
+node .claude/hooks/tests/test-skill-validator.js --verbose
+```
+
+### Test Coverage
+
+| Test Area | Tests |
+|-----------|-------|
+| common.js utilities | 7 |
+| skill-validator.js | 7 |
+| log-skill-usage.js | 4 |
+| Integration | 1 |
+| **Total** | **19** |
+
+### Manual Testing
+
+Test strict mode blocking:
+```bash
+# Set current phase to 05-implementation in state.json
+# Then try to invoke requirements-analyst
+# Should see: SKILL ENFORCEMENT: Agent 'requirements-analyst' not authorized...
+```
+
+Test warn mode:
+```bash
+# Update state.json: "mode": "warn"
+# Unauthorized agents will be allowed but logged with status: "warned"
+```
+
+Test audit mode:
+```bash
+# Update state.json: "mode": "audit"
+# All agents allowed, all usage logged with status: "audited"
+```
+
+---
+
 ## Related Resources
 
-- **Skills Manifest**: `isdlc-framework/config/skills-manifest.yaml`
+- **Skills Manifest (YAML)**: `config/skills-manifest.yaml`
+- **Skills Manifest (JSON)**: `config/skills-manifest.json`
+- **Hook Scripts**: `.claude/hooks/`
+- **Hook Tests**: `.claude/hooks/tests/`
 - **Validation Skill**: `.claude/skills/orchestration/skill-validation/SKILL.md`
 - **Orchestrator**: `.claude/agents/00-sdlc-orchestrator.md`
-- **Init Script**: `isdlc-framework/scripts/init-project.sh`
+- **Init Script**: `init-project.sh`
+
+---
+
+## Dependencies
+
+| Dependency | Required | Purpose |
+|------------|----------|---------|
+| `Node.js` | Yes | Hook script execution (cross-platform) |
+| `jq` | No | Used in init-project.sh for settings merge |
+| `yq` or Python+PyYAML | No | YAML→JSON conversion (has fallback) |
+
+### Platform Support
+
+| Platform | Status |
+|----------|--------|
+| macOS | ✓ Full support |
+| Linux | ✓ Full support |
+| Windows | ✓ Full support (with Node.js) |
+| WSL | ✓ Full support |
+
+---
+
+## Troubleshooting
+
+### Hook Not Executing
+
+1. Check `.claude/settings.json` exists and has correct hook configuration
+2. Verify hook scripts are executable: `chmod +x .claude/hooks/*.sh`
+3. Check `$CLAUDE_PROJECT_DIR` is set correctly
+
+### Node.js Not Found
+
+The hooks require Node.js. Install from https://nodejs.org/ or:
+
+```bash
+# macOS (via Homebrew)
+brew install node
+
+# Ubuntu/Debian
+apt-get install nodejs
+
+# Windows (via Chocolatey)
+choco install nodejs
+```
+
+### Manifest Not Found
+
+Run the converter script:
+```bash
+./scripts/convert-manifest.sh
+```
+
+### Unexpected Blocking
+
+1. Check enforcement mode in `.isdlc/state.json`
+2. Verify current phase matches agent's designated phase
+3. Check `skill_usage_log` for recent entries
 
 ---
 
@@ -332,10 +534,11 @@ Warning: manifest_version mismatch (2.0.0 vs 1.0.0)
 | #1 | Project Constitution | Complete |
 | #2 | Scale-Adaptive Tracks | Complete |
 | #3 | Autonomous Iteration | Complete |
-| **#4** | **Skill Enforcement** | **Complete** |
+| #4 | Skill Enforcement (Prompt-based) | Complete |
+| **#4b** | **Skill Enforcement (Runtime Hooks)** | **Complete** |
 
 ---
 
-**Version**: 1.0
-**Last Updated**: 2026-01-18
+**Version**: 2.0.0
+**Last Updated**: 2026-01-21
 **Author**: iSDLC Framework

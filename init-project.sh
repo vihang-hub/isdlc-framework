@@ -228,9 +228,49 @@ else
 fi
 
 # ============================================================================
+# Step 1b: Setup skill enforcement hooks (Node.js - Cross-Platform)
+# ============================================================================
+echo -e "${BLUE}[1b/6]${NC} Setting up skill enforcement hooks..."
+
+# Check for Node.js (required for hooks)
+if ! command -v node &> /dev/null; then
+    echo -e "${YELLOW}  Warning: Node.js not found. Hooks require Node.js to run.${NC}"
+    echo -e "${YELLOW}  Install Node.js from https://nodejs.org/${NC}"
+fi
+
+# Create hooks directory structure
+mkdir -p ".claude/hooks/lib"
+mkdir -p ".claude/hooks/tests/test-scenarios"
+
+# Copy hook scripts from framework (Node.js files)
+if [ -d "$FRAMEWORK_CLAUDE/hooks" ]; then
+    cp -r "$FRAMEWORK_CLAUDE/hooks/"* ".claude/hooks/"
+    echo -e "${GREEN}  ✓ Copied skill enforcement hooks (Node.js)${NC}"
+fi
+
+# Merge settings.json (hooks configuration)
+if [ -f "$FRAMEWORK_CLAUDE/settings.json" ]; then
+    if [ -f ".claude/settings.json" ]; then
+        # Merge hooks into existing settings
+        if command -v jq &> /dev/null; then
+            tmp_file=$(mktemp)
+            jq -s '.[0] * .[1]' ".claude/settings.json" "$FRAMEWORK_CLAUDE/settings.json" > "$tmp_file"
+            mv "$tmp_file" ".claude/settings.json"
+            echo -e "${GREEN}  ✓ Merged hooks into existing settings.json${NC}"
+        else
+            echo -e "${YELLOW}  Warning: jq not found, settings.json may need manual merge${NC}"
+            cp "$FRAMEWORK_CLAUDE/settings.json" ".claude/settings.json.hooks"
+        fi
+    else
+        cp "$FRAMEWORK_CLAUDE/settings.json" ".claude/settings.json"
+        echo -e "${GREEN}  ✓ Created settings.json with hooks${NC}"
+    fi
+fi
+
+# ============================================================================
 # Step 2: Create docs folder
 # ============================================================================
-echo -e "${BLUE}[2/6]${NC} Setting up docs folder..."
+echo -e "${BLUE}[2/6]${NC} Setting up docs folder...
 
 if [ -d "docs" ]; then
     echo -e "${YELLOW}  docs/ folder already exists${NC}"
@@ -338,6 +378,39 @@ if [ -d "$FRAMEWORK_DIR/config" ]; then
     echo -e "${GREEN}  ✓ Copied config files${NC}"
 fi
 
+# Also copy config to project root for hooks access
+mkdir -p "config"
+if [ -d "$FRAMEWORK_DIR/config" ]; then
+    cp -r "$FRAMEWORK_DIR/config/"* "config/"
+fi
+
+# Convert skills manifest from YAML to JSON for runtime hooks
+if [ -f "config/skills-manifest.yaml" ]; then
+    # Check for yq
+    if command -v yq &> /dev/null; then
+        yq -o=json "config/skills-manifest.yaml" > "config/skills-manifest.json"
+        echo -e "${GREEN}  ✓ Converted skills manifest to JSON${NC}"
+    # Check for Python with PyYAML
+    elif command -v python3 &> /dev/null && python3 -c "import yaml, json" 2>/dev/null; then
+        python3 -c "
+import yaml, json
+with open('config/skills-manifest.yaml') as f:
+    data = yaml.safe_load(f)
+with open('config/skills-manifest.json', 'w') as f:
+    json.dump(data, f, indent=2)
+" 2>/dev/null
+        echo -e "${GREEN}  ✓ Converted skills manifest to JSON (Python)${NC}"
+    # Use scripts/convert-manifest.sh if available
+    elif [ -f "$FRAMEWORK_DIR/scripts/convert-manifest.sh" ]; then
+        cp "$FRAMEWORK_DIR/scripts/convert-manifest.sh" "scripts/"
+        chmod +x "scripts/convert-manifest.sh"
+        "./scripts/convert-manifest.sh" --input "config/skills-manifest.yaml" --output "config/skills-manifest.json" >/dev/null 2>&1
+        echo -e "${GREEN}  ✓ Converted skills manifest to JSON (embedded)${NC}"
+    else
+        echo -e "${YELLOW}  Warning: Could not convert manifest. Install yq or Python+PyYAML.${NC}"
+    fi
+fi
+
 # Copy checklists
 if [ -d "$FRAMEWORK_DIR/checklists" ]; then
     cp -r "$FRAMEWORK_DIR/checklists" ".isdlc/"
@@ -407,6 +480,7 @@ cat > .isdlc/state.json << EOF
   "skill_enforcement": {
     "enabled": true,
     "mode": "strict",
+    "fail_behavior": "allow",
     "manifest_version": "2.0.0"
   },
   "cloud_configuration": {

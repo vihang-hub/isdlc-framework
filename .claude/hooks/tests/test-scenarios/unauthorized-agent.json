@@ -1,0 +1,12 @@
+{
+  "description": "requirements-analyst invoked during 05-implementation phase",
+  "tool_name": "Task",
+  "tool_input": {
+    "subagent_type": "requirements-analyst",
+    "description": "Clarify requirements",
+    "prompt": "Review the requirements for feature X"
+  },
+  "expected_result": "block",
+  "current_phase": "05-implementation",
+  "reason": "Agent phase (01-requirements) does not match current phase (05-implementation)"
+}
