@@ -54,6 +54,16 @@ integrated-sdls-framework-v0.1/
 │   │   ├── security/              # 13 skills
 │   │   ├── operations/            # 12 skills
 │   │   └── documentation/         # 10 skills
+│   ├── hooks/                     # Runtime enforcement hooks
+│   │   ├── config/
+│   │   │   ├── skills-manifest.json
+│   │   │   └── iteration-requirements.json
+│   │   ├── skill-validator.js
+│   │   ├── gate-blocker.js
+│   │   ├── test-watcher.js
+│   │   ├── constitution-validator.js
+│   │   └── menu-tracker.js
+│   ├── settings.json              # Hook configuration
 │   └── settings.local.json        # Claude Code configuration
 ├── init-project.sh                # Installation script (run this!)
 ├── isdlc-framework/               # Shared framework resources
@@ -439,6 +449,109 @@ Escalation triggers:
 - **Documentation**: [docs/AUTONOMOUS-ITERATION.md](docs/AUTONOMOUS-ITERATION.md)
 - **Iteration Skill**: [.claude/skills/development/autonomous-iterate.md](.claude/skills/development/autonomous-iterate.md)
 
+## Deterministic Iteration Enforcement
+
+**NEW**: The framework now uses Claude Code hooks to **deterministically enforce** iteration requirements, rather than relying on agent judgment.
+
+### Problem Solved
+
+Previously, iteration protocols (test iteration, constitutional validation, interactive elicitation) were defined in skill files but relied on agents "remembering" to follow them. This created a risk of agents skipping critical iterations.
+
+### Solution: Hook-Based Enforcement
+
+Four hooks intercept tool calls and enforce iteration requirements:
+
+| Hook | Type | Trigger | Action |
+|------|------|---------|--------|
+| `gate-blocker.js` | PreToolUse | Gate advancement attempt | **BLOCKS** unless all iteration requirements satisfied |
+| `test-watcher.js` | PostToolUse | Bash test command | Tracks iterations, outputs guidance, triggers circuit breaker |
+| `constitution-validator.js` | PreToolUse | Phase completion attempt | **BLOCKS** unless constitutional validation complete |
+| `menu-tracker.js` | PostToolUse | A/R/C menu interaction | Tracks elicitation progress for Phase 01 |
+
+### Enforcement Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ENFORCEMENT FLOW                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Agent runs "npm test"                                           │
+│       ↓                                                          │
+│  test-watcher.js (PostToolUse)                                   │
+│       ├── Detects test command                                   │
+│       ├── Parses PASS/FAIL                                       │
+│       ├── Updates iteration count in state.json                  │
+│       └── Outputs: "❌ TESTS FAILED - ITERATE REQUIRED"          │
+│       ↓                                                          │
+│  Agent attempts gate advancement                                 │
+│       ↓                                                          │
+│  gate-blocker.js (PreToolUse)                                    │
+│       ├── Checks test_iteration.completed                        │
+│       ├── Checks constitutional_validation.status                │
+│       └── BLOCKS if requirements not met                         │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Per-Phase Requirements
+
+Configured in `.claude/hooks/config/iteration-requirements.json`:
+
+| Phase | Test Iteration | Constitutional | Interactive Elicitation |
+|-------|---------------|----------------|------------------------|
+| 01-requirements | ❌ | ✅ | ✅ (A/R/C menus) |
+| 05-implementation | ✅ (max 10) | ✅ | ❌ |
+| 06-testing | ✅ (max 10) | ✅ | ❌ |
+| 09-cicd | ✅ (max 5) | ✅ | ❌ |
+| Others | ❌ | ✅ | ❌ |
+
+### Circuit Breaker
+
+The `test-watcher.js` hook implements a circuit breaker:
+- **Trigger**: 3 identical consecutive failures
+- **Action**: Marks iteration as `escalated`, requires human approval
+- **Purpose**: Prevents infinite loops on unsolvable issues
+
+### State Tracking
+
+All iteration state is tracked in `.isdlc/state.json`:
+
+```json
+{
+  "phases": {
+    "05-implementation": {
+      "iteration_requirements": {
+        "test_iteration": {
+          "completed": false,
+          "current_iteration": 3,
+          "max_iterations": 10,
+          "status": "in_progress",
+          "history": [...]
+        }
+      },
+      "constitutional_validation": {
+        "completed": true,
+        "status": "compliant",
+        "iterations_used": 2
+      }
+    }
+  }
+}
+```
+
+### Escalation Handling
+
+When iterations exceed max or circuit breaker triggers:
+1. Hook marks status as `escalated`
+2. Gate blocker blocks advancement
+3. Human must set `escalation_approved: true` in state.json
+4. Gate blocker then allows advancement
+
+### Resources
+
+- **Config**: [.claude/hooks/config/iteration-requirements.json](.claude/hooks/config/iteration-requirements.json)
+- **Hooks**: `.claude/hooks/gate-blocker.js`, `test-watcher.js`, `constitution-validator.js`, `menu-tracker.js`
+
 ## Configuration
 
 ### Framework Defaults
@@ -566,6 +679,7 @@ Additional documentation in [docs/](docs/):
 - ✅ Adaptive Workflow - Orchestrator-managed phase selection (Enhancement #2)
 - ✅ Autonomous Iteration for self-correcting agents (Enhancement #3)
 - ✅ Exclusive Skill Ownership & Enforcement (Enhancement #4)
+- ✅ Deterministic Iteration Enforcement via Hooks (Enhancement #5)
 
 ### In Progress
 - ⏳ Integration testing across all phases
@@ -586,9 +700,10 @@ MIT License
 
 ---
 
-**Framework Version**: 2.0.0
-**Last Updated**: 2026-01-19
+**Framework Version**: 2.1.0
+**Last Updated**: 2026-01-21
 **Agents**: 14 (1 Orchestrator + 13 Phase Agents)
 **Skills**: 119 across 10 categories
 **Quality Gates**: 13
-**Enhancements**: 4 (Constitution, Scale-Adaptive, Autonomous Iteration, Skill Enforcement)
+**Enforcement Hooks**: 5 (skill-validator, gate-blocker, test-watcher, constitution-validator, menu-tracker)
+**Enhancements**: 5 (Constitution, Scale-Adaptive, Autonomous Iteration, Skill Enforcement, Deterministic Iteration Enforcement)
