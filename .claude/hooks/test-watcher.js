@@ -1,0 +1,428 @@
+#!/usr/bin/env node
+/**
+ * iSDLC Test Watcher - PostToolUse Hook
+ * ======================================
+ * Monitors Bash tool executions for test commands and tracks iteration state.
+ *
+ * When a test command is detected:
+ * 1. Parses the result for pass/fail
+ * 2. Updates iteration counter in state.json
+ * 3. Checks for circuit breaker (identical failures)
+ * 4. Outputs iteration guidance to the agent
+ *
+ * Version: 1.0.0
+ */
+
+const {
+    readState,
+    writeState,
+    readStdin,
+    debugLog,
+    getProjectRoot,
+    getTimestamp
+} = require('./lib/common.js');
+
+const fs = require('fs');
+const path = require('path');
+
+/**
+ * Test command patterns
+ */
+const TEST_COMMAND_PATTERNS = [
+    /npm\s+test/i,
+    /npm\s+run\s+test/i,
+    /yarn\s+test/i,
+    /pnpm\s+test/i,
+    /pytest/i,
+    /python\s+-m\s+pytest/i,
+    /go\s+test/i,
+    /cargo\s+test/i,
+    /mvn\s+test/i,
+    /gradle\s+test/i,
+    /dotnet\s+test/i,
+    /jest/i,
+    /mocha/i,
+    /vitest/i,
+    /phpunit/i,
+    /rspec/i,
+    /bundle\s+exec\s+rspec/i,
+    /npm\s+run\s+test:unit/i,
+    /npm\s+run\s+test:integration/i,
+    /npm\s+run\s+test:e2e/i,
+    /npm\s+run\s+e2e/i,
+    /cypress\s+run/i,
+    /playwright\s+test/i
+];
+
+/**
+ * Failure patterns in test output
+ */
+const FAILURE_PATTERNS = [
+    /(\d+)\s+fail(ed|ing|ure)?/i,
+    /FAIL\b/,
+    /FAILED\b/,
+    /Error:/i,
+    /AssertionError/i,
+    /TypeError:/i,
+    /ReferenceError:/i,
+    /SyntaxError:/i,
+    /Tests:\s+\d+\s+failed/i,
+    /FAILURES!/,
+    /pytest.*(\d+)\s+failed/i,
+    /FAIL\s+\[/,
+    /--- FAIL:/,
+    /✖|✗/,
+    /npm ERR!/i,
+    /error Command failed/i,
+    /exited with code [1-9]/i
+];
+
+/**
+ * Success patterns in test output
+ */
+const SUCCESS_PATTERNS = [
+    /All tests passed/i,
+    /Tests:\s+\d+\s+passed,\s+\d+\s+total/,
+    /(\d+)\s+passing/i,
+    /OK \(\d+ tests?\)/i,
+    /\bPASSED\b/,
+    /0 failures/i,
+    /pytest.*(\d+)\s+passed.*0 failed/i,
+    /ok\s+\d+\s+tests/i,
+    /BUILD SUCCESS/i,
+    /✓|✔/,
+    /Test Suites:.*passed.*0 failed/i,
+    /Tests:.*passed.*0 failed/i
+];
+
+/**
+ * Detect if command is a test command
+ */
+function isTestCommand(command) {
+    if (!command) return false;
+    return TEST_COMMAND_PATTERNS.some(pattern => pattern.test(command));
+}
+
+/**
+ * Parse test result from output
+ */
+function parseTestResult(output, exitCode) {
+    if (!output) {
+        return { passed: exitCode === 0, error: exitCode === 0 ? null : 'No output, non-zero exit' };
+    }
+
+    // Check for explicit success patterns first
+    for (const pattern of SUCCESS_PATTERNS) {
+        if (pattern.test(output)) {
+            // But also verify no failure patterns
+            let hasFailure = false;
+            for (const failPattern of FAILURE_PATTERNS) {
+                if (failPattern.test(output)) {
+                    // Check if failure count is 0
+                    const failMatch = output.match(/(\d+)\s+fail/i);
+                    if (failMatch && parseInt(failMatch[1]) > 0) {
+                        hasFailure = true;
+                        break;
+                    }
+                }
+            }
+            if (!hasFailure) {
+                return { passed: true };
+            }
+        }
+    }
+
+    // Check for failures
+    for (const pattern of FAILURE_PATTERNS) {
+        if (pattern.test(output)) {
+            const match = output.match(/(\d+)\s+fail/i);
+            return {
+                passed: false,
+                failures: match ? parseInt(match[1]) : 1,
+                error: extractErrorMessage(output)
+            };
+        }
+    }
+
+    // If no patterns matched, use exit code
+    if (exitCode !== undefined && exitCode !== null) {
+        return {
+            passed: exitCode === 0,
+            error: exitCode === 0 ? null : `Exit code: ${exitCode}`
+        };
+    }
+
+    // Default to failure if uncertain
+    return { passed: false, error: 'Unable to determine test result' };
+}
+
+/**
+ * Extract error message from output
+ */
+function extractErrorMessage(output) {
+    const lines = output.split('\n');
+
+    // Try to find first meaningful error line
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.length > 10 && trimmed.length < 300) {
+            if (/error:|fail|assert|exception|TypeError|ReferenceError/i.test(trimmed)) {
+                return trimmed;
+            }
+        }
+    }
+
+    // Try to find any line with FAIL
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (/FAIL|✖|✗/.test(trimmed) && trimmed.length < 200) {
+            return trimmed;
+        }
+    }
+
+    return 'Test failure (check output for details)';
+}
+
+/**
+ * Load iteration requirements
+ */
+function loadIterationRequirements() {
+    const projectRoot = getProjectRoot();
+    const configPaths = [
+        path.join(projectRoot, '.claude', 'hooks', 'config', 'iteration-requirements.json'),
+        path.join(projectRoot, '.isdlc', 'config', 'iteration-requirements.json')
+    ];
+
+    for (const configPath of configPaths) {
+        if (fs.existsSync(configPath)) {
+            try {
+                return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            } catch (e) {
+                return null;
+            }
+        }
+    }
+    return null;
+}
+
+/**
+ * Check for identical failure (circuit breaker)
+ */
+function isIdenticalFailure(currentError, history) {
+    if (!history || history.length === 0) return false;
+
+    // Get last 2 errors
+    const recentErrors = history.slice(-2).map(h => h.error).filter(e => e);
+
+    if (recentErrors.length < 2) return false;
+
+    // Check if all recent errors match current
+    return recentErrors.every(e => e === currentError);
+}
+
+/**
+ * Extract exit code from tool result if available
+ */
+function extractExitCode(toolResult) {
+    if (typeof toolResult === 'object' && toolResult !== null) {
+        if ('exitCode' in toolResult) return toolResult.exitCode;
+        if ('exit_code' in toolResult) return toolResult.exit_code;
+        if ('code' in toolResult) return toolResult.code;
+    }
+
+    // Try to extract from string output
+    if (typeof toolResult === 'string') {
+        const match = toolResult.match(/exit(?:ed)?\s+(?:with\s+)?(?:code\s+)?(\d+)/i);
+        if (match) return parseInt(match[1]);
+    }
+
+    return undefined;
+}
+
+async function main() {
+    try {
+        const inputStr = await readStdin();
+
+        if (!inputStr || !inputStr.trim()) {
+            process.exit(0);
+        }
+
+        let input;
+        try {
+            input = JSON.parse(inputStr);
+        } catch (e) {
+            process.exit(0);
+        }
+
+        // Only process Bash tool results
+        if (input.tool_name !== 'Bash') {
+            process.exit(0);
+        }
+
+        const command = input.tool_input?.command;
+        const result = typeof input.tool_result === 'string'
+            ? input.tool_result
+            : JSON.stringify(input.tool_result || '');
+        const exitCode = extractExitCode(input.tool_result);
+
+        // Check if this is a test command
+        if (!isTestCommand(command)) {
+            process.exit(0);
+        }
+
+        debugLog('Test command detected:', command);
+
+        // Load state
+        let state = readState();
+        if (!state) {
+            debugLog('No state.json, skipping');
+            process.exit(0);
+        }
+
+        // Check if iteration enforcement is enabled
+        if (state.iteration_enforcement?.enabled === false) {
+            process.exit(0);
+        }
+
+        const currentPhase = state.current_phase;
+        if (!currentPhase) {
+            process.exit(0);
+        }
+
+        // Load requirements
+        const requirements = loadIterationRequirements();
+        const phaseReq = requirements?.phase_requirements?.[currentPhase];
+        if (!phaseReq?.test_iteration?.enabled) {
+            debugLog('Test iteration not enabled for phase:', currentPhase);
+            process.exit(0);
+        }
+
+        // Parse test result
+        const testResult = parseTestResult(result, exitCode);
+        debugLog('Test result:', testResult);
+
+        // Initialize phase state if needed
+        if (!state.phases) state.phases = {};
+        if (!state.phases[currentPhase]) state.phases[currentPhase] = { status: 'in_progress' };
+        if (!state.phases[currentPhase].iteration_requirements) {
+            state.phases[currentPhase].iteration_requirements = {};
+        }
+
+        // Get or initialize test iteration state
+        let iterState = state.phases[currentPhase].iteration_requirements.test_iteration;
+        if (!iterState) {
+            iterState = {
+                required: true,
+                completed: false,
+                current_iteration: 0,
+                max_iterations: phaseReq.test_iteration.max_iterations || 10,
+                failures_count: 0,
+                identical_failure_count: 0,
+                history: [],
+                started_at: getTimestamp()
+            };
+        }
+
+        // Create history entry
+        const historyEntry = {
+            iteration: iterState.current_iteration + 1,
+            timestamp: getTimestamp(),
+            command: command,
+            result: testResult.passed ? 'PASSED' : 'FAILED',
+            failures: testResult.failures || 0,
+            error: testResult.error || null
+        };
+
+        // Update iteration state
+        iterState.current_iteration += 1;
+        iterState.last_test_result = testResult.passed ? 'passed' : 'failed';
+        iterState.last_test_command = command;
+        iterState.last_test_at = getTimestamp();
+        iterState.history.push(historyEntry);
+
+        let outputMessage = '';
+
+        if (testResult.passed) {
+            // SUCCESS
+            iterState.completed = true;
+            iterState.status = 'success';
+            iterState.completed_at = getTimestamp();
+            iterState.identical_failure_count = 0;
+
+            debugLog('Tests PASSED - iteration complete');
+
+            outputMessage = `\n\n✅ TESTS PASSED (iteration ${iterState.current_iteration})\n` +
+                `Test iteration requirement: SATISFIED\n` +
+                `You may now proceed with constitutional validation.`;
+
+        } else {
+            // FAILURE
+            iterState.failures_count = (iterState.failures_count || 0) + 1;
+
+            // Check circuit breaker
+            const circuitBreakerThreshold = phaseReq.test_iteration.circuit_breaker_threshold || 3;
+            if (isIdenticalFailure(testResult.error, iterState.history)) {
+                iterState.identical_failure_count = (iterState.identical_failure_count || 0) + 1;
+            } else {
+                iterState.identical_failure_count = 1;
+            }
+
+            if (iterState.identical_failure_count >= circuitBreakerThreshold) {
+                // Circuit breaker triggered
+                iterState.completed = true;
+                iterState.status = 'escalated';
+                iterState.escalation_reason = 'circuit_breaker';
+                iterState.escalation_details = `Same error repeated ${circuitBreakerThreshold} times`;
+
+                outputMessage = `\n\n🚨 CIRCUIT BREAKER TRIGGERED\n` +
+                    `Same error repeated ${circuitBreakerThreshold} times.\n` +
+                    `Error: ${testResult.error}\n\n` +
+                    `ACTION REQUIRED: Escalate to human review.\n` +
+                    `The autonomous iteration loop cannot resolve this issue.`;
+
+            } else if (iterState.current_iteration >= iterState.max_iterations) {
+                // Max iterations exceeded
+                iterState.completed = true;
+                iterState.status = 'escalated';
+                iterState.escalation_reason = 'max_iterations';
+                iterState.escalation_details = `Exceeded ${iterState.max_iterations} iterations without success`;
+
+                outputMessage = `\n\n🚨 MAX ITERATIONS EXCEEDED (${iterState.max_iterations})\n` +
+                    `Last error: ${testResult.error}\n\n` +
+                    `ACTION REQUIRED: Escalate to human review.\n` +
+                    `The autonomous iteration loop has exhausted all attempts.`;
+
+            } else {
+                // Continue iteration
+                const remaining = iterState.max_iterations - iterState.current_iteration;
+
+                outputMessage = `\n\n❌ TESTS FAILED (iteration ${iterState.current_iteration}/${iterState.max_iterations})\n` +
+                    `Remaining iterations: ${remaining}\n` +
+                    `Error: ${testResult.error}\n\n` +
+                    `⚠️ AUTONOMOUS ITERATION REQUIRED:\n` +
+                    `1. Analyze the error above\n` +
+                    `2. Identify the root cause\n` +
+                    `3. Fix the code\n` +
+                    `4. Run tests again\n\n` +
+                    `Do NOT proceed to gate validation until tests pass.`;
+            }
+        }
+
+        // Save updated state
+        state.phases[currentPhase].iteration_requirements.test_iteration = iterState;
+        writeState(state);
+
+        // Output message to agent (this will be visible in the conversation)
+        if (outputMessage) {
+            console.log(outputMessage);
+        }
+
+        process.exit(0);
+
+    } catch (error) {
+        debugLog('Error in test-watcher:', error.message);
+        process.exit(0);
+    }
+}
+
+main();

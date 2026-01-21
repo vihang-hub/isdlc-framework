@@ -8,6 +8,26 @@
             "type": "command",
             "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/skill-validator.js",
             "timeout": 10000
+          },
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/gate-blocker.js",
+            "timeout": 10000
+          },
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/constitution-validator.js",
+            "timeout": 10000
+          }
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/gate-blocker.js",
+            "timeout": 10000
           }
         ]
       }
@@ -20,6 +40,21 @@
             "type": "command",
             "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/log-skill-usage.js",
             "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/menu-tracker.js",
+            "timeout": 5000
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/test-watcher.js",
+            "timeout": 10000
           }
         ]
       }

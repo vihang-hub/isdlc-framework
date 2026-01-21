@@ -1,0 +1,225 @@
+{
+  "version": "1.0.0",
+  "description": "Deterministic iteration requirements per phase - enforced by hooks",
+
+  "phase_requirements": {
+    "01-requirements": {
+      "interactive_elicitation": {
+        "enabled": true,
+        "min_menu_interactions": 3,
+        "required_final_selection": ["save", "continue"],
+        "timeout_minutes": 60
+      },
+      "test_iteration": {
+        "enabled": false
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 5,
+        "articles": ["I", "V", "VII", "XI", "XII"]
+      }
+    },
+
+    "02-architecture": {
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": false
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 5,
+        "articles": ["III", "IV", "V", "VI", "VII", "X", "XI"]
+      }
+    },
+
+    "03-design": {
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": false
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 5,
+        "articles": ["I", "V", "VI", "VII", "XI"]
+      }
+    },
+
+    "04-test-strategy": {
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": false
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 5,
+        "articles": ["II", "VII", "XI"]
+      }
+    },
+
+    "05-implementation": {
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": true,
+        "max_iterations": 10,
+        "circuit_breaker_threshold": 3,
+        "test_commands": ["npm test", "npm run test", "yarn test", "pnpm test", "pytest", "python -m pytest", "go test", "cargo test", "mvn test", "gradle test", "dotnet test", "jest", "mocha", "vitest"],
+        "success_criteria": {
+          "all_tests_passing": true,
+          "min_coverage_percent": 80
+        }
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 5,
+        "articles": ["I", "II", "III", "VI", "VII", "VIII", "X", "XI"]
+      }
+    },
+
+    "06-testing": {
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": true,
+        "max_iterations": 10,
+        "circuit_breaker_threshold": 3,
+        "test_commands": ["npm run test:integration", "npm run test:e2e", "npm run e2e", "cypress run", "playwright test"],
+        "success_criteria": {
+          "all_tests_passing": true,
+          "min_coverage_percent": 70
+        }
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 5,
+        "articles": ["II", "VII", "XI"]
+      }
+    },
+
+    "07-code-review": {
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": false
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 5,
+        "articles": ["VI", "VII", "VIII", "XI"]
+      }
+    },
+
+    "08-validation": {
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": false
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 5,
+        "articles": ["IV", "X", "XI", "XII"]
+      }
+    },
+
+    "09-cicd": {
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": true,
+        "max_iterations": 5,
+        "circuit_breaker_threshold": 3,
+        "test_commands": ["npm run build", "npm run lint", "docker build"],
+        "success_criteria": {
+          "all_tests_passing": true
+        }
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 5,
+        "articles": ["II", "IX", "XI"]
+      }
+    },
+
+    "10-local-dev": {
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": false
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 5,
+        "articles": ["VIII", "XI"]
+      }
+    },
+
+    "11-staging": {
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": false
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 5,
+        "articles": ["IX", "X", "XI"]
+      }
+    },
+
+    "12-production": {
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": false
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 5,
+        "articles": ["IX", "X", "XI"]
+      }
+    },
+
+    "13-operations": {
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": false
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 5,
+        "articles": ["VIII", "XI", "XII"]
+      }
+    }
+  },
+
+  "gate_blocking_rules": {
+    "block_on_incomplete_test_iteration": true,
+    "block_on_incomplete_constitutional": true,
+    "block_on_incomplete_elicitation": true,
+    "allow_escalation_override": true
+  },
+
+  "escalation_rules": {
+    "test_iteration_max_exceeded": "human_review",
+    "constitutional_max_exceeded": "human_decision",
+    "circuit_breaker_triggered": "human_review",
+    "timeout_exceeded": "human_notification"
+  }
+}
