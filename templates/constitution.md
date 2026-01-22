@@ -193,19 +193,62 @@ These 10 articles are mandatory for all projects. They represent industry best p
 
 ---
 
+### Article XI: Integration Testing Integrity
+
+**Principle**: Integration tests MUST validate real system behavior, not mocked assumptions.
+
+**Requirements**:
+
+1. **Mutation Testing Required**
+   - All test suites MUST include mutation testing to validate test quality
+   - Mutation score threshold: ≥80%
+   - Tests that don't catch mutations are ineffective tests
+
+2. **Real URLs Only (No Stubs in Integration Tests)**
+   - Integration tests MUST call actual service endpoints
+   - Mocking/stubbing of external services is FORBIDDEN in integration tests
+   - Use test environments, not mocked responses
+   - Stubs are only permitted in unit tests
+
+3. **No Assertions in Integration Tests**
+   - Integration tests validate behavior through execution success/failure
+   - Tests MUST verify system state changes, not assert intermediate values
+   - Use contract validation and schema verification instead of assertions
+   - Test outcomes are determined by actual system responses
+
+4. **Adversarial Testing Required**
+   - Property-based testing MUST be used for input validation
+   - Fuzz testing MUST be applied to all public interfaces
+   - Edge cases MUST be generated dynamically, not hardcoded
+   - Boundary conditions MUST be tested with generated data
+
+5. **Execution-Based Reporting**
+   - Test reports MUST reflect actual execution results
+   - No assertion-count-based metrics
+   - Report: executed, passed, failed, skipped, mutation score
+   - Include actual response data in failure reports
+
+**Validation**:
+- GATE-06: Mutation testing configured and passing (≥80% score)
+- GATE-06: Integration tests use real URLs (no stub detection)
+- GATE-06: Adversarial testing tools installed and executed
+- Agent 06 enforces these rules during test execution
+
+---
+
 ## Domain-Specific Articles (Customize Based on Project)
 
 Add articles below based on your project's specific needs. These are optional but recommended for their respective domains.
 
 ---
 
-### Article XI: [DOMAIN SPECIFIC - CUSTOMIZE OR REMOVE]
+### Article XII: [DOMAIN SPECIFIC - CUSTOMIZE OR REMOVE]
 
 **Examples to consider:**
 
 **For Web Applications:**
 ```markdown
-### Article XI: Performance Requirements
+### Article XII: Performance Requirements
 1. API response time p95 < 200ms
 2. Page load LCP < 2.5s
 3. Load testing required before production
@@ -213,7 +256,7 @@ Add articles below based on your project's specific needs. These are optional bu
 
 **For SaaS Products:**
 ```markdown
-### Article XI: Multi-Tenancy Isolation
+### Article XII: Multi-Tenancy Isolation
 1. Row-level security enforced in database
 2. No cross-tenant queries permitted
 3. Tenant ID required in all API requests
@@ -221,7 +264,7 @@ Add articles below based on your project's specific needs. These are optional bu
 
 **For Healthcare (HIPAA):**
 ```markdown
-### Article XI: HIPAA Compliance
+### Article XII: HIPAA Compliance
 1. All PHI encrypted at rest and in transit
 2. Audit logging for all PHI access
 3. Role-based access control enforced
@@ -229,7 +272,7 @@ Add articles below based on your project's specific needs. These are optional bu
 
 **For Finance (PCI-DSS):**
 ```markdown
-### Article XI: PCI-DSS Compliance
+### Article XII: PCI-DSS Compliance
 1. No credit card data stored unencrypted
 2. Tokenization for all payment data
 3. Security scans before each deployment
@@ -237,7 +280,7 @@ Add articles below based on your project's specific needs. These are optional bu
 
 **For Accessibility:**
 ```markdown
-### Article XI: Accessibility Requirements
+### Article XII: Accessibility Requirements
 1. All UI components MUST meet WCAG 2.1 AA standards
 2. Screen reader compatibility required
 3. Keyboard navigation fully supported

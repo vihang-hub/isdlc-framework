@@ -15,6 +15,8 @@
 | Performance Test Results | `test-results/performance/` | Yes |
 | Accessibility Report | `accessibility-report.md` | Yes |
 | Coverage Report | `coverage-report.md` | Yes |
+| Mutation Test Report | `test-results/mutation/` | Yes |
+| Adversarial Test Results | `test-results/property/` | Yes |
 
 ---
 
@@ -79,7 +81,7 @@
 - [ ] Iteration history shows failure analysis and fixes
 - [ ] No test failures repeated without progress (3+ times)
 
-### 9. Constitutional Compliance Iteration (NEW)
+### 9. Constitutional Compliance Iteration
 - [ ] Constitutional self-validation performed
 - [ ] Articles II, VII, XI validated
 - [ ] Iteration count logged in state.json → `constitutional_validation`
@@ -87,6 +89,41 @@
 - [ ] Final status is "compliant" (not "escalated" or "iterating")
 - [ ] Iterations within limit (Quick: 3, Standard: 5, Enterprise: 7)
 - [ ] If escalated: unresolved violations documented with recommendations
+
+### 10. Article XI - Integration Testing Integrity (MANDATORY)
+
+**Rule 1: Mutation Testing**
+- [ ] Mutation testing tool configured (check `.isdlc/state.json` → `testing_infrastructure.tools.mutation`)
+- [ ] Mutation tests executed
+- [ ] Mutation score ≥ 80%
+- [ ] Low-scoring tests improved or justified
+
+**Rule 2: Real URLs Only (No Stubs)**
+- [ ] Integration tests use `TEST_API_URL` or equivalent real endpoint
+- [ ] NO mocks, stubs, or fakes in integration test files
+- [ ] Grep verification: no `jest.mock`, `sinon.stub`, `unittest.mock` in integration tests
+- [ ] If stub detected → FAIL gate, require removal
+
+**Rule 3: No Assertions in Integration Tests**
+- [ ] Integration tests do NOT use `expect()`, `assert()`, `should()`
+- [ ] Tests validate via schema validation (zod, joi, JSON Schema)
+- [ ] Tests validate via HTTP status codes
+- [ ] Tests validate via state verification (database checks)
+- [ ] Grep verification: no assertion libraries imported in integration tests
+
+**Rule 4: Adversarial Testing**
+- [ ] Property-based testing tool configured (check `.isdlc/state.json` → `testing_infrastructure.tools.adversarial`)
+- [ ] Property-based tests written for input validation
+- [ ] Fuzz testing executed on public interfaces
+- [ ] Edge cases generated dynamically (not hardcoded)
+- [ ] At least 100 generated test cases per property
+
+**Rule 5: Execution-Based Reporting**
+- [ ] Test reports show execution counts (not assertion counts)
+- [ ] Reports include: executed, passed, failed, skipped, mutation score
+- [ ] Failure reports include actual response data
+- [ ] HTML reports generated for human review
+- [ ] NO "X assertions passed" metrics in reports
 
 ---
 
@@ -102,8 +139,15 @@
 | Accessibility compliant | [ ] Pass / [ ] Fail | |
 | No critical/high defects | [ ] Pass / [ ] Fail | |
 | Autonomous iteration documented | [ ] Pass / [ ] Fail | |
+| **Article XI: Mutation score ≥80%** | [ ] Pass / [ ] Fail | |
+| **Article XI: No stubs in integration** | [ ] Pass / [ ] Fail | |
+| **Article XI: No assertions in integration** | [ ] Pass / [ ] Fail | |
+| **Article XI: Adversarial tests executed** | [ ] Pass / [ ] Fail | |
+| **Article XI: Execution-based reporting** | [ ] Pass / [ ] Fail | |
 
 **Gate Status**: [ ] PASS / [ ] FAIL
+
+**Article XI Compliance**: [ ] COMPLIANT / [ ] NON-COMPLIANT
 
 **Reviewer**: _______________
 **Date**: _______________
