@@ -292,7 +292,7 @@ See [docs/SKILL-DISTRIBUTION.md](docs/SKILL-DISTRIBUTION.md) for detailed skill 
 
 ## Quality Gates
 
-Each phase has a quality gate with specific validation criteria. Gate checklists are located in `isdlc-framework/checklists/`:
+Each phase has a quality gate with specific validation criteria. Gate checklists are located in `checklists/`:
 
 - `01-requirements-gate.md` - Requirements completeness and quality
 - `02-architecture-gate.md` - Architecture review and tech stack approval

@@ -70,4 +70,4 @@ Analyst                    Architect                  Designer
 
 ---
 
-For complete documentation, see the individual agent files in `.claude/agents/` and phase gate checklists in `isdlc-framework/checklists/`.
+For complete documentation, see the individual agent files in `.claude/agents/` and phase gate checklists in `checklists/`.

@@ -262,8 +262,8 @@ To avoid clutter while gaining critical capabilities, add **only these 3 enhance
 - `.claude/skills/development/autonomous-iterate.md` (NEW)
 - `.claude/agents/05-software-developer.md` (MODIFY - add iteration protocol)
 - `.claude/agents/06-integration-tester.md` (MODIFY - add iteration protocol)
-- `isdlc-framework/checklists/05-implementation-gate.md` (MODIFY - add iteration fields)
-- `isdlc-framework/checklists/06-testing-gate.md` (MODIFY - add iteration fields)
+- `checklists/05-implementation-gate.md` (MODIFY - add iteration fields)
+- `checklists/06-testing-gate.md` (MODIFY - add iteration fields)
 
 **Size**: ~300 lines total
 

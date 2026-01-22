@@ -17,19 +17,19 @@ This document confirms the alignment of workflows, artifacts, and phase gates wi
 | Phase | Agent | Agent File | Gate Checklist |
 |-------|-------|------------|----------------|
 | **00** | SDLC Orchestrator | [00-sdlc-orchestrator.md](../.claude/agents/00-sdlc-orchestrator.md) | N/A (coordinates all gates) |
-| **01** | Requirements Analyst | [01-requirements-analyst.md](../.claude/agents/01-requirements-analyst.md) | [01-requirements-gate.md](../isdlc-framework/checklists/01-requirements-gate.md) |
-| **02** | Solution Architect | [02-solution-architect.md](../.claude/agents/02-solution-architect.md) | [02-architecture-gate.md](../isdlc-framework/checklists/02-architecture-gate.md) |
-| **03** | System Designer | [03-system-designer.md](../.claude/agents/03-system-designer.md) | [03-design-gate.md](../isdlc-framework/checklists/03-design-gate.md) |
-| **04** | Test Design Engineer | [04-test-design-engineer.md](../.claude/agents/04-test-design-engineer.md) | [04-test-strategy-gate.md](../isdlc-framework/checklists/04-test-strategy-gate.md) |
-| **05** | Software Developer | [05-software-developer.md](../.claude/agents/05-software-developer.md) | [05-implementation-gate.md](../isdlc-framework/checklists/05-implementation-gate.md) |
-| **06** | Integration Tester | [06-integration-tester.md](../.claude/agents/06-integration-tester.md) | [06-testing-gate.md](../isdlc-framework/checklists/06-testing-gate.md) |
-| **07** | QA Engineer | [07-qa-engineer.md](../.claude/agents/07-qa-engineer.md) | [07-code-review-gate.md](../isdlc-framework/checklists/07-code-review-gate.md) |
-| **08** | Security & Compliance Auditor | [08-security-compliance-auditor.md](../.claude/agents/08-security-compliance-auditor.md) | [08-validation-gate.md](../isdlc-framework/checklists/08-validation-gate.md) |
-| **09** | CI/CD Engineer | [09-cicd-engineer.md](../.claude/agents/09-cicd-engineer.md) | [09-cicd-gate.md](../isdlc-framework/checklists/09-cicd-gate.md) |
-| **10** | Dev Environment Engineer | [10-dev-environment-engineer.md](../.claude/agents/10-dev-environment-engineer.md) | [10-local-testing-gate.md](../isdlc-framework/checklists/10-local-testing-gate.md) |
-| **11** | Deployment Engineer (Staging) | [11-deployment-engineer-staging.md](../.claude/agents/11-deployment-engineer-staging.md) | [11-test-deploy-gate.md](../isdlc-framework/checklists/11-test-deploy-gate.md) |
-| **12** | Release Manager | [12-release-manager.md](../.claude/agents/12-release-manager.md) | [12-production-gate.md](../isdlc-framework/checklists/12-production-gate.md) |
-| **13** | Site Reliability Engineer | [13-site-reliability-engineer.md](../.claude/agents/13-site-reliability-engineer.md) | [13-operations-gate.md](../isdlc-framework/checklists/13-operations-gate.md) |
+| **01** | Requirements Analyst | [01-requirements-analyst.md](../.claude/agents/01-requirements-analyst.md) | [01-requirements-gate.md](../checklists/01-requirements-gate.md) |
+| **02** | Solution Architect | [02-solution-architect.md](../.claude/agents/02-solution-architect.md) | [02-architecture-gate.md](../checklists/02-architecture-gate.md) |
+| **03** | System Designer | [03-system-designer.md](../.claude/agents/03-system-designer.md) | [03-design-gate.md](../checklists/03-design-gate.md) |
+| **04** | Test Design Engineer | [04-test-design-engineer.md](../.claude/agents/04-test-design-engineer.md) | [04-test-strategy-gate.md](../checklists/04-test-strategy-gate.md) |
+| **05** | Software Developer | [05-software-developer.md](../.claude/agents/05-software-developer.md) | [05-implementation-gate.md](../checklists/05-implementation-gate.md) |
+| **06** | Integration Tester | [06-integration-tester.md](../.claude/agents/06-integration-tester.md) | [06-testing-gate.md](../checklists/06-testing-gate.md) |
+| **07** | QA Engineer | [07-qa-engineer.md](../.claude/agents/07-qa-engineer.md) | [07-code-review-gate.md](../checklists/07-code-review-gate.md) |
+| **08** | Security & Compliance Auditor | [08-security-compliance-auditor.md](../.claude/agents/08-security-compliance-auditor.md) | [08-validation-gate.md](../checklists/08-validation-gate.md) |
+| **09** | CI/CD Engineer | [09-cicd-engineer.md](../.claude/agents/09-cicd-engineer.md) | [09-cicd-gate.md](../checklists/09-cicd-gate.md) |
+| **10** | Dev Environment Engineer | [10-dev-environment-engineer.md](../.claude/agents/10-dev-environment-engineer.md) | [10-local-testing-gate.md](../checklists/10-local-testing-gate.md) |
+| **11** | Deployment Engineer (Staging) | [11-deployment-engineer-staging.md](../.claude/agents/11-deployment-engineer-staging.md) | [11-test-deploy-gate.md](../checklists/11-test-deploy-gate.md) |
+| **12** | Release Manager | [12-release-manager.md](../.claude/agents/12-release-manager.md) | [12-production-gate.md](../checklists/12-production-gate.md) |
+| **13** | Site Reliability Engineer | [13-site-reliability-engineer.md](../.claude/agents/13-site-reliability-engineer.md) | [13-operations-gate.md](../checklists/13-operations-gate.md) |
 
 ---
 

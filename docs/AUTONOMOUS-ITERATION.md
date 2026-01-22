@@ -118,11 +118,11 @@ Autonomous Iteration enables AI agents to automatically retry tasks when tests f
    - Added "AUTONOMOUS ITERATION PROTOCOL" section
    - Added test failure categorization and fix strategies
 
-3. `isdlc-framework/checklists/05-implementation-gate.md` (+8 checklist items)
+3. `checklists/05-implementation-gate.md` (+8 checklist items)
    - Added "Autonomous Iteration" validation section
    - Added iteration tracking to gate criteria
 
-4. `isdlc-framework/checklists/06-testing-gate.md` (+9 checklist items)
+4. `checklists/06-testing-gate.md` (+9 checklist items)
    - Added "Autonomous Iteration" validation section
    - Added test iteration tracking to gate criteria
 
@@ -337,8 +337,8 @@ Track these metrics to measure effectiveness:
   - [.claude/agents/05-software-developer.md](../.claude/agents/05-software-developer.md)
   - [.claude/agents/06-integration-tester.md](../.claude/agents/06-integration-tester.md)
 - **Gates**:
-  - [isdlc-framework/checklists/05-implementation-gate.md](../isdlc-framework/checklists/05-implementation-gate.md)
-  - [isdlc-framework/checklists/06-testing-gate.md](../isdlc-framework/checklists/06-testing-gate.md)
+  - [checklists/05-implementation-gate.md](../checklists/05-implementation-gate.md)
+  - [checklists/06-testing-gate.md](../checklists/06-testing-gate.md)
 
 ---
 

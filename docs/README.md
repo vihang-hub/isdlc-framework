@@ -117,10 +117,9 @@ All agent definitions are in [../.claude/agents/](../.claude/agents/):
 
 ### Framework Resources
 
-- **Phase Gate Checklists**: [../isdlc-framework/checklists/](../isdlc-framework/checklists/)
-- **Document Templates**: [../isdlc-framework/templates/](../isdlc-framework/templates/)
-- **Configuration Files**: [../isdlc-framework/config/](../isdlc-framework/config/)
-- **Utility Scripts**: [../isdlc-framework/scripts/](../isdlc-framework/scripts/)
+- **Phase Gate Checklists**: [../checklists/](../checklists/)
+- **Document Templates**: [../.isdlc/templates/](../.isdlc/templates/)
+- **Configuration Files**: [../.claude/hooks/config/](../.claude/hooks/config/)
 - **Skills**: [../.claude/skills/](../.claude/skills/)
 
 ---
