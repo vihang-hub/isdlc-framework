@@ -347,37 +347,12 @@ Based on discovered architecture, generate a tailored constitution:
 
 12. **Save constitution**: Write final constitution to `.isdlc/constitution.md`
 
-**Phase 3: Cloud Provider Configuration**
-
-13. **Ask deployment target**: Present cloud provider options
-    ```
-    Where will this project be deployed?
-    [1] AWS
-    [2] GCP
-    [3] Azure
-    [4] Local only (no cloud deployment)
-    [5] Not decided yet
-    ```
-
-14. **Collect provider-specific config** (if 1-3 selected):
-    - AWS: Ask for profile name and region
-    - GCP: Ask for project ID and region
-    - Azure: Ask for subscription ID, resource group, and region
-
-15. **Update state.json** with cloud_configuration:
-    - If provider selected (AWS/GCP/Azure):
-      - Set `staging_enabled: true`
-      - Set `production_enabled: true`
-      - Set `workflow_endpoint: "13-operations"`
-    - If "Local only" (4):
-      - Set `provider: "none"`
-      - Set `staging_enabled: false`
-      - Set `production_enabled: false`
-      - Set `workflow_endpoint: "10-local-testing"`
-    - If "Not decided yet" (5):
-      - Set `provider: "undecided"`
-      - Set `workflow_endpoint: "10-local-testing"`
-      - Inform: "Workflow will complete after local testing. Run /sdlc configure-cloud later to enable deployment."
+13. **Initialize state.json** with default cloud configuration:
+    - Set `provider: "undecided"`
+    - Set `staging_enabled: false`
+    - Set `production_enabled: false`
+    - Set `workflow_endpoint: "10-local-testing"` (default until cloud configured)
+    - Cloud configuration will be prompted after testing completes (Phase 5)
 
 **What discover analyzes:**
 - **Package files**: package.json, requirements.txt, go.mod, Cargo.toml, pom.xml, build.gradle, Gemfile
@@ -401,226 +376,239 @@ Based on discovered architecture, generate a tailored constitution:
 | Healthcare keywords in code | HIPAA Compliance |
 | GDPR-related code patterns | Data Privacy |
 
-**Phase 4: Tech-Stack Skill Customization (PARALLEL RESEARCH)**
+**Phase 3: Tech-Stack Skill Customization (skills.sh Integration)**
 
-After constitution creation and cloud configuration, enhance relevant skills with current best practices for the detected tech stack.
+After constitution creation, discover and install relevant skills from **https://skills.sh/** for the detected tech stack.
 
-**CRITICAL: Use parallel research to minimize wait time.**
+**PRIMARY SOURCE: skills.sh**
 
-16. **Group technologies and launch parallel research agents**:
+skills.sh is a centralized directory of reusable AI agent skills. Skills are installed via:
+```bash
+npx skills add <owner/skill-name>
+```
 
-For each detected technology, launch a research agent. Launch ALL agents IN PARALLEL using a single message with multiple Task tool calls (max 5-6 concurrent for optimal performance).
+**CRITICAL: Always check skills.sh FIRST before falling back to web research.**
+
+14. **Search skills.sh for each detected technology**:
+
+For each detected technology, search skills.sh to find matching skills.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  PHASE 4: Tech-Stack Skill Customization                     │
+│  PHASE 3: Tech-Stack Skill Customization                     │
 ├──────────────────────────────────────────────────────────────┤
 │  Detected: Node.js, TypeScript, React, Express, PostgreSQL   │
-│  Launching: 5 parallel research agents                       │
+│  Source: https://skills.sh/                                  │
+│  Searching for matching skills...                            │
 └──────────────────────────────────────────────────────────────┘
-
-  ◐ Agent 1: Node.js best practices 2026...
-  ◐ Agent 2: TypeScript best practices 2026...
-  ◐ Agent 3: React best practices 2026...
-  ◐ Agent 4: Express.js best practices 2026...
-  ◐ Agent 5: PostgreSQL best practices 2026...
 ```
 
-Each research agent (using Task tool with subagent_type=Explore or haiku model):
-- Performs 2-3 focused WebSearches for that specific technology
-- Extracts actionable guidance (security, testing, performance)
-- Returns structured recommendations
+**Step 1: Fetch skills.sh directory**
 
-**Batching Strategy** (if >6 technologies detected):
-- Batch 1: First 5-6 technologies (parallel)
-- Wait for completion
-- Batch 2: Next 5-6 technologies (parallel)
-- Continue until all researched
+Use WebFetch to search skills.sh for each technology:
+```
+WebFetch: https://skills.sh/
+Prompt: "Find all skills related to {technology}. Return skill names, owners, install commands, and descriptions."
+```
 
-17. **Collect results and update skills**:
-Once all agents complete, sequentially update each skill file:
+Alternatively, search the skills.sh leaderboard and category pages:
+```
+WebFetch: https://skills.sh/search?q={technology}
+WebFetch: https://skills.sh/category/{category}
+```
+
+**Step 2: Match technologies to available skills**
+
+For each detected technology, identify matching skills from skills.sh:
+
+| Detected Tech | Search Query | Example Matches |
+|--------------|--------------|-----------------|
+| React | "react" | `anthropics/react`, `vercel/react-best-practices` |
+| TypeScript | "typescript" | `anthropics/typescript`, community TS skills |
+| Node.js | "nodejs" OR "node" | `anthropics/nodejs`, Express-related skills |
+| PostgreSQL | "postgresql" OR "postgres" | Database skills, ORM skills |
+| Tailwind | "tailwind" | `tailwindlabs/tailwindcss` |
+
+15. **Present skill recommendations to user**:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  SKILLS.SH RECOMMENDATIONS                                   │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  React (34K installs)                                        │
+│    Skill: anthropics/react                                   │
+│    Install: npx skills add anthropics/react                  │
+│    Description: React best practices and patterns            │
+│                                                              │
+│  TypeScript                                                  │
+│    Skill: anthropics/typescript                              │
+│    Install: npx skills add anthropics/typescript             │
+│    Description: TypeScript coding standards                  │
+│                                                              │
+│  Tailwind CSS (25.8K installs)                               │
+│    Skill: tailwindlabs/tailwindcss                           │
+│    Install: npx skills add tailwindlabs/tailwindcss          │
+│    Description: Tailwind utility-first CSS patterns          │
+│                                                              │
+│  No skill found for: PostgreSQL                              │
+│    → Will use web research fallback                          │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+
+Install recommended skills? [Y/n/select]
+```
+
+**User Options:**
+- **Y**: Install all recommended skills
+- **n**: Skip skill installation
+- **select**: Choose which skills to install interactively
+
+16. **Install selected skills**:
+
+For each selected skill, run the install command:
+```bash
+npx skills add anthropics/react
+npx skills add anthropics/typescript
+npx skills add tailwindlabs/tailwindcss
+```
+
+Track installed skills in `.isdlc/state.json`:
+```json
+{
+  "skill_customization": {
+    "skills_sh_installed": [
+      {
+        "name": "anthropics/react",
+        "installed_at": "2026-01-23T...",
+        "version": "latest"
+      },
+      {
+        "name": "anthropics/typescript",
+        "installed_at": "2026-01-23T...",
+        "version": "latest"
+      }
+    ]
+  }
+}
+```
+
+17. **Fallback: Web research for unmatched technologies**:
+
+For technologies WITHOUT a matching skill on skills.sh, fall back to web research:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  FALLBACK: Web Research                                      │
+├──────────────────────────────────────────────────────────────┤
+│  Technology: PostgreSQL                                      │
+│  Reason: No matching skill found on skills.sh                │
+│  Action: Researching best practices via WebSearch            │
+└──────────────────────────────────────────────────────────────┘
+
+  → Searching: "PostgreSQL best practices 2026"
+  → Searching: "PostgreSQL security configuration 2026"
+  → Extracting actionable guidance...
+```
+
+For fallback research, update local skill files:
 - Read the skill's current content
 - Append researched guidance to "Project-Specific Considerations"
-- Use dated headers: `### {Technology} (Auto-researched {DATE})`
+- Use dated headers: `### {Technology} (Web-researched {DATE})`
 
 18. **Generate customization report**: Create `.isdlc/skill-customization-report.md`
 
-19. **User confirmation**: Display summary of skills updated
-
-**Two-Tier Skill Mapping Strategy:**
-
-*Tier 1: Static Mapping (Known Tech Stacks)*
-
-Use `.claude/config/tech-stack-skill-mapping.yaml` for common technologies. This maps known technologies to their relevant skills and research queries.
-
-*Tier 2: Dynamic Discovery (Unknown Tech Stacks)*
-
-For technologies NOT in the static mapping:
-
-1. **Classify the technology** by type:
-   - Language/Runtime → affects: code-implementation, unit-testing
-   - Frontend Framework → affects: frontend-development, ui-ux, state-management
-   - Backend Framework → affects: api-implementation, authentication, error-handling
-   - Database/ORM → affects: database-integration, migration-writing
-   - DevOps Tool → affects: cicd-pipeline, containerization, deployment-strategy
-   - Testing Tool → affects: test-strategy, test-case-design, coverage-analysis
-
-2. **Research and determine relevant skills** dynamically:
-   ```
-   WebSearch: "{technology} SDLC best practices categories"
-   WebSearch: "{technology} development workflow phases"
-
-   From results, identify which skill categories apply:
-   - Does it affect how code is written? → code-implementation
-   - Does it have security implications? → security-configuration
-   - Does it change testing approach? → test-strategy
-   - Does it affect deployment? → deployment-strategy
-   ```
-
-3. **Update determined skills** with researched guidance
-
-**Technology Type to Skill Category Mapping:**
-
-| Tech Type | Default Skills to Update |
-|-----------|-------------------------|
-| Language/Runtime | code-implementation, unit-testing, cicd-pipeline |
-| Frontend Framework | frontend-development, ui-ux, state-management, test-case-design |
-| Backend Framework | api-implementation, authentication, error-handling, security-configuration |
-| Database/ORM | database-integration, migration-writing, performance-optimization |
-| DevOps/Infra | cicd-pipeline, containerization, deployment-strategy, infrastructure-as-code |
-| Testing Tool | test-strategy, test-case-design, coverage-analysis |
-| Security Tool | security-configuration, dependency-auditing, code-security-review |
-| Monitoring/Observability | monitoring-setup, log-management, alerting-management |
-
-**Skill Update Format:**
-
-Append to existing "Project-Specific Considerations" section:
-
 ```markdown
-## Project-Specific Considerations
-- TypeScript strict mode      ← Existing content preserved
-- NestJS/React patterns
+# Skill Customization Report
 
-### Node.js 20.x (Auto-researched 2025-01-19)
-- Use native fetch API instead of axios
-- Enable structured logging with pino
-- Run npm audit in CI with --audit-level=high
+**Generated**: {DATE}
+**Tech Stack**: Node.js, TypeScript, React, Express, PostgreSQL
 
-### Express.js (Auto-researched 2025-01-19)
-- Use helmet.js for security headers
-- Implement rate limiting with express-rate-limit
-- Validate inputs with zod at route level
+## Skills Installed from skills.sh
+
+| Skill | Install Command | Status |
+|-------|-----------------|--------|
+| anthropics/react | `npx skills add anthropics/react` | ✓ Installed |
+| anthropics/typescript | `npx skills add anthropics/typescript` | ✓ Installed |
+| tailwindlabs/tailwindcss | `npx skills add tailwindlabs/tailwindcss` | ✓ Installed |
+
+## Web Research Fallback
+
+| Technology | Reason | Skills Updated |
+|------------|--------|----------------|
+| PostgreSQL | No skills.sh match | database-integration, security-configuration |
+| Express.js | No skills.sh match | api-implementation, error-handling |
+
+## Recommendations Applied
+[Details of each skill/research result]
 ```
 
-**Explicit Step Announcements:**
+19. **User confirmation**: Display summary
 
-Every action must be announced before execution:
+**Explicit Step Announcements:**
 
 *Phase Start Announcement:*
 ```
 ════════════════════════════════════════════════════════════════
-  PHASE 4: Tech-Stack Skill Customization
+  PHASE 3: Tech-Stack Skill Customization
 ════════════════════════════════════════════════════════════════
   Detected: Node.js, TypeScript, React 18, Express.js, PostgreSQL
-  Skills to customize: 8 (estimated)
+  Primary Source: https://skills.sh/
+  Fallback: Web research for unmatched technologies
 ════════════════════════════════════════════════════════════════
 ```
 
-*Step 1: Technology Classification*
+*Step 1: skills.sh Lookup*
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  STEP 1: Classifying Technologies                            │
+│  STEP 1: Searching skills.sh                                 │
 ├──────────────────────────────────────────────────────────────┤
-│  Technology:  Node.js                                        │
-│  Type:        Language/Runtime                               │
-│  Mapping:     Static (from config)                           │
-│  Skills:      code-implementation, unit-testing, cicd-pipeline│
+│  URL: https://skills.sh/                                     │
+│  Searching for: React, TypeScript, Node.js, Express, Postgres│
+└──────────────────────────────────────────────────────────────┘
+
+  → Found: anthropics/react (34K installs)
+  → Found: anthropics/typescript
+  → Found: tailwindlabs/tailwindcss (25.8K installs)
+  → Not found: PostgreSQL
+  → Not found: Express.js
+```
+
+*Step 2: Skill Installation*
+```
+┌──────────────────────────────────────────────────────────────┐
+│  STEP 2: Installing Skills                                   │
+├──────────────────────────────────────────────────────────────┤
+│  Command: npx skills add anthropics/react                    │
+│  Status: ✓ Installed                                         │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-*Step 2: Web Research (per technology)*
+*Step 3: Web Research Fallback*
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  STEP 2: Researching Best Practices                          │
+│  STEP 3: Web Research Fallback                               │
 ├──────────────────────────────────────────────────────────────┤
-│  Technology:  Node.js                                        │
-│  Query:       "Node.js best practices 2025"                  │
-│  Focus:       Security, Testing, Performance                 │
-└──────────────────────────────────────────────────────────────┘
-
-  → Searching: "Node.js best practices 2025"
-  → Searching: "Node.js security vulnerabilities 2025"
-  → Extracting actionable guidance...
-```
-
-*Step 3: Skill Update (per skill)*
-```
-┌──────────────────────────────────────────────────────────────┐
-│  STEP 3: Updating Skill                                      │
-├──────────────────────────────────────────────────────────────┤
-│  Skill:       code-implementation (DEV-001)                  │
-│  Path:        .claude/skills/development/code-implementation │
-│  Section:     Project-Specific Considerations                │
-│  Adding:      Node.js 20.x guidance (5 recommendations)      │
-└──────────────────────────────────────────────────────────────┘
-```
-
-*For Unknown Technologies (Tier 2 Dynamic):*
-```
-┌──────────────────────────────────────────────────────────────┐
-│  STEP 1: Classifying Unknown Technology                      │
-├──────────────────────────────────────────────────────────────┤
-│  Technology:  Bun.js                                         │
-│  Status:      NOT in static mapping                          │
-│  Action:      Dynamic classification via research            │
-└──────────────────────────────────────────────────────────────┘
-
-  → Searching: "What is Bun.js used for"
-  → Result: JavaScript runtime (alternative to Node.js)
-  → Classification: Language/Runtime
-  → Default skills: code-implementation, unit-testing, cicd-pipeline
-
-┌──────────────────────────────────────────────────────────────┐
-│  STEP 1b: Identifying Additional Skills                      │
-├──────────────────────────────────────────────────────────────┤
-│  Technology:  Bun.js                                         │
-│  Query:       "Bun.js development workflow best practices"   │
-│  Finding:     Performance-critical → adding performance-opt  │
-└──────────────────────────────────────────────────────────────┘
-```
-
-*Step 4: Generate Report*
-```
-┌──────────────────────────────────────────────────────────────┐
-│  STEP 4: Generating Customization Report                     │
-├──────────────────────────────────────────────────────────────┤
-│  Output:      .isdlc/skill-customization-report.md           │
-│  Skills:      8 customized                                   │
-│  Techs:       5 researched                                   │
+│  Technology: PostgreSQL                                      │
+│  Query: "PostgreSQL best practices 2026"                     │
+│  Updating: .claude/skills/development/database-integration   │
 └──────────────────────────────────────────────────────────────┘
 ```
 
 *Phase Complete Summary:*
 ```
 ════════════════════════════════════════════════════════════════
-  PHASE 4 COMPLETE
+  PHASE 3 COMPLETE
 ════════════════════════════════════════════════════════════════
-  Technologies researched: 5
-    ✓ Node.js (static mapping)
-    ✓ TypeScript (static mapping)
-    ✓ React 18 (static mapping)
-    ✓ Express.js (static mapping)
-    ✓ PostgreSQL (static mapping)
 
-  Skills customized: 8
-    ✓ development/code-implementation
-    ✓ development/frontend-development
-    ✓ development/api-implementation
-    ✓ development/database-integration
-    ✓ development/unit-testing
-    ✓ security/security-configuration
-    ✓ testing/test-case-design
-    ✓ devops/cicd-pipeline
+  Skills from skills.sh: 3 installed
+    ✓ anthropics/react
+    ✓ anthropics/typescript
+    ✓ tailwindlabs/tailwindcss
+
+  Web research fallback: 2 technologies
+    ✓ PostgreSQL → database-integration updated
+    ✓ Express.js → api-implementation updated
 
   Report: .isdlc/skill-customization-report.md
 ════════════════════════════════════════════════════════════════
@@ -630,23 +618,39 @@ View full customization report? [Y/n]
 
 **Idempotency:**
 
-- Track last customization in `.isdlc/state.json` under `skill_customization`
-- If re-running within 7 days, prompt user:
-  - [1] Skip (keep existing)
-  - [2] Re-research all
-  - [3] Research only new technologies
-- Use dated section headers to identify auto-generated content
+- Track installed skills in `.isdlc/state.json` under `skill_customization.skills_sh_installed`
+- If re-running, check which skills are already installed:
+  - [1] Skip already installed skills
+  - [2] Reinstall all (update to latest)
+  - [3] Install only new technologies
+- For web research fallback, use dated section headers to identify auto-generated content
 
-**Phase 5: Testing Infrastructure Setup (DYNAMIC TOOLING)**
+**skills.sh Search Strategy:**
+
+When searching skills.sh, try multiple query variations:
+1. Exact technology name: "react", "typescript"
+2. Framework variations: "reactjs", "react.js"
+3. Category browsing: frontend, backend, database, devops
+4. Popular/trending skills that match the tech stack
+
+**Fallback Trigger Conditions:**
+
+Use web research fallback when:
+- No matching skill exists on skills.sh
+- User declines to install a skill
+- skills.sh is unavailable (network error)
+- Skill is too generic (need project-specific guidance)
+
+**Phase 4: Testing Infrastructure Setup (DYNAMIC TOOLING)**
 
 After skill customization, set up the testing infrastructure based on Article XI (Integration Testing Integrity) requirements. This phase is FULLY DYNAMIC - no hardcoded tool mappings.
 
 **CRITICAL: All tooling decisions are made via web research based on detected tech stack.**
 
-20. **Announce Phase 5**:
+20. **Announce Phase 4**:
 ```
 ════════════════════════════════════════════════════════════════
-  PHASE 5: Testing Infrastructure Setup
+  PHASE 4: Testing Infrastructure Setup
 ════════════════════════════════════════════════════════════════
   Detected Stack: {primary_language}, {framework}
   Setting up: Mutation Testing, Adversarial Testing, Integration Testing
@@ -917,10 +921,10 @@ Create `.isdlc/testing-infrastructure-report.md`:
 }
 ```
 
-*Phase 5 Complete Announcement:*
+*Phase 4 Complete Announcement:*
 ```
 ════════════════════════════════════════════════════════════════
-  PHASE 5 COMPLETE: Testing Infrastructure Setup
+  PHASE 4 COMPLETE: Testing Infrastructure Setup
 ════════════════════════════════════════════════════════════════
 
   Installed:
@@ -966,6 +970,111 @@ The agent extracts from search results:
 3. Installation command
 4. Configuration format
 5. Basic setup example
+
+**Phase 5: Cloud Provider Configuration (OPTIONAL - Post-Testing)**
+
+This phase is **triggered automatically** when GATE-06 (Integration Testing) passes, or can be run manually via `/sdlc configure-cloud` at any time.
+
+**TRIGGER CONDITIONS:**
+- Automatic: GATE-06 passes AND `cloud_configuration.provider === "undecided"`
+- Manual: User runs `/sdlc configure-cloud`
+
+29. **Prompt for cloud configuration** (after testing completes):
+```
+════════════════════════════════════════════════════════════════
+  PHASE 5: Cloud Provider Configuration (Optional)
+════════════════════════════════════════════════════════════════
+  Testing Status: GATE-06 PASSED ✓
+  Current Cloud Config: Not configured
+
+  Your tests are passing! Ready to configure deployment?
+════════════════════════════════════════════════════════════════
+
+Where will this project be deployed?
+[1] AWS
+[2] GCP
+[3] Azure
+[4] Local only (no cloud deployment)
+[5] Skip for now (can configure later with /sdlc configure-cloud)
+```
+
+30. **Collect provider-specific config** (if 1-3 selected):
+    - AWS: Ask for profile name and region
+    - GCP: Ask for project ID and region
+    - Azure: Ask for subscription ID, resource group, and region
+
+31. **Update state.json** with cloud_configuration:
+    - If provider selected (AWS/GCP/Azure):
+      - Set `cloud_configuration.provider` to selected provider
+      - Set `cloud_configuration.configured_at` to timestamp
+      - Set `staging_enabled: true`
+      - Set `production_enabled: true`
+      - Set `workflow_endpoint: "13-operations"`
+    - If "Local only" (4):
+      - Set `provider: "none"`
+      - Set `staging_enabled: false`
+      - Set `production_enabled: false`
+      - Set `workflow_endpoint: "10-local-testing"`
+    - If "Skip for now" (5):
+      - Keep `provider: "undecided"`
+      - Set `workflow_endpoint: "10-local-testing"`
+      - Inform: "Workflow will complete after local testing. Run /sdlc configure-cloud later to enable deployment."
+
+*Phase 5 Complete Announcement:*
+```
+════════════════════════════════════════════════════════════════
+  PHASE 5 COMPLETE: Cloud Configuration
+════════════════════════════════════════════════════════════════
+
+  Provider: AWS
+  Region: us-east-1
+  Profile: default
+
+  Deployment Enabled:
+    ✓ Staging (Phase 11)
+    ✓ Production (Phase 12)
+
+  Workflow Endpoint: Phase 13 (Operations)
+════════════════════════════════════════════════════════════════
+
+Ready to start the SDLC workflow? Run /sdlc start
+```
+
+**DISCOVER COMPLETE - Summary:**
+
+After all phases complete, display final summary:
+```
+════════════════════════════════════════════════════════════════
+  /sdlc discover COMPLETE
+════════════════════════════════════════════════════════════════
+
+  Phase 1: Architecture Discovery ✓
+    → docs/architecture/architecture-overview.md
+
+  Phase 2: Constitution Generation ✓
+    → .isdlc/constitution.md
+
+  Phase 3: Tech-Stack Skill Customization ✓
+    → Skills installed from skills.sh
+    → .isdlc/skill-customization-report.md
+
+  Phase 4: Testing Infrastructure Setup ✓
+    → Mutation, adversarial, integration testing configured
+    → .isdlc/testing-infrastructure-report.md
+
+  Phase 5: Cloud Configuration ✓ (or "Skipped")
+    → Cloud provider: {provider or "undecided"}
+    → Workflow endpoint: Phase {10 or 13}
+
+════════════════════════════════════════════════════════════════
+
+  Next Steps:
+    1. Review constitution: cat .isdlc/constitution.md
+    2. Run tests: npm run test:all
+    3. Start workflow: /sdlc start "Your project description"
+
+════════════════════════════════════════════════════════════════
+```
 
 **configure-cloud** - Configure or reconfigure cloud provider for deployment
 ```

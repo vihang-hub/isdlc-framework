@@ -101,6 +101,14 @@
         "enabled": true,
         "max_iterations": 5,
         "articles": ["II", "VII", "XI"]
+      },
+      "on_gate_pass": {
+        "trigger_cloud_config": {
+          "enabled": true,
+          "condition": "cloud_configuration.provider === 'undecided'",
+          "action": "prompt_cloud_configuration",
+          "skip_option": true
+        }
       }
     },
 

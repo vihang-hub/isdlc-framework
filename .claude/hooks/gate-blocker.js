@@ -334,6 +334,32 @@ async function main() {
         // If all checks pass, allow gate advancement
         if (checks.length === 0) {
             debugLog('All iteration requirements satisfied, allowing gate advancement');
+
+            // Check for post-gate triggers (e.g., cloud config after GATE-06)
+            const onGatePass = phaseReq.on_gate_pass;
+            if (onGatePass?.trigger_cloud_config?.enabled) {
+                const cloudConfig = state.cloud_configuration || {};
+                if (cloudConfig.provider === 'undecided' || !cloudConfig.provider) {
+                    // Output notification about cloud config prompt
+                    const notification = {
+                        type: 'gate_pass_trigger',
+                        phase: currentPhase,
+                        trigger: 'cloud_configuration',
+                        message: `GATE-${currentPhase.split('-')[0]} passed. Cloud configuration is pending. Prompt user for cloud provider configuration.`,
+                        action: 'prompt_cloud_configuration'
+                    };
+                    debugLog('Cloud config trigger:', notification);
+                    // Write trigger to state for orchestrator to pick up
+                    if (!state.pending_triggers) state.pending_triggers = [];
+                    state.pending_triggers.push({
+                        trigger: 'cloud_configuration',
+                        triggered_at: getTimestamp(),
+                        phase: currentPhase
+                    });
+                    writeState(state);
+                }
+            }
+
             process.exit(0);
         }
 
