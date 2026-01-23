@@ -314,23 +314,391 @@ This command analyzes an existing codebase and interactively creates a constitut
    - Directory structure documentation
 8. Report findings to the user
 
+**Phase 1b: Test Automation Evaluation**
+
+Analyze existing test infrastructure to understand current testing maturity, patterns, and gaps.
+
+**CRITICAL: This evaluation informs Phase 4 (Testing Infrastructure Setup) - identifying what already exists vs what needs to be added.**
+
+9. **Detect existing test infrastructure**:
+
+Scan for test-related files and directories:
+```
+Test Directories:
+  - tests/, test/, __tests__/, spec/, specs/
+  - src/**/*.test.*, src/**/*.spec.*
+  - e2e/, integration/, unit/, functional/
+  - cypress/, playwright/, puppeteer/
+
+Test Configuration Files:
+  - jest.config.js, jest.config.ts, jest.setup.js
+  - vitest.config.ts, vitest.config.js
+  - mocha.opts, .mocharc.js, .mocharc.json
+  - pytest.ini, pyproject.toml [tool.pytest], conftest.py
+  - karma.conf.js, protractor.conf.js
+  - cypress.config.js, playwright.config.ts
+  - .nycrc, .c8rc, coverage config
+  - stryker.conf.js (mutation testing)
+
+Test Scripts in package.json/pyproject.toml:
+  - test, test:unit, test:integration, test:e2e
+  - test:coverage, test:watch, test:ci
+```
+
+10. **Evaluate Scope and Coverage**:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  TEST AUTOMATION EVALUATION: Scope & Coverage                │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Test Types Detected:                                        │
+│    ✓ Unit Tests: 47 files in tests/unit/                     │
+│    ✓ Integration Tests: 12 files in tests/integration/       │
+│    ✗ E2E Tests: Not found                                    │
+│    ✗ Property-Based Tests: Not found                         │
+│    ✗ Mutation Tests: Not configured                          │
+│                                                              │
+│  Coverage Analysis:                                          │
+│    - Coverage tool: Istanbul/nyc                             │
+│    - Last reported coverage: 67% (from coverage/lcov.info)   │
+│    - Coverage thresholds configured: No                      │
+│                                                              │
+│  Test-to-Source Ratio:                                       │
+│    - Source files: 124                                       │
+│    - Test files: 59                                          │
+│    - Ratio: 0.48 tests per source file                       │
+│                                                              │
+│  Modules Without Tests:                                      │
+│    - src/services/payment/ (0 tests)                         │
+│    - src/utils/validation/ (0 tests)                         │
+│    - src/middleware/auth/ (1 test, 5 source files)           │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Analysis includes:
+- **Test type inventory**: Unit, integration, E2E, performance, security, property-based, mutation
+- **Coverage metrics**: Parse existing coverage reports (lcov, cobertura, clover)
+- **Coverage thresholds**: Check if thresholds are configured and enforced
+- **Test-to-source ratio**: Calculate testing density
+- **Untested modules**: Identify source directories/files with no corresponding tests
+- **Test file distribution**: How tests are organized across the codebase
+
+11. **Analyze Testing Patterns**:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  TEST AUTOMATION EVALUATION: Patterns                        │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  Testing Framework: Jest 29.x                                │
+│  Assertion Library: Jest built-in (expect)                   │
+│  Mocking Strategy: jest.mock(), manual mocks in __mocks__/   │
+│                                                              │
+│  Patterns Detected:                                          │
+│    ✓ AAA Pattern (Arrange-Act-Assert): Consistent            │
+│    ✓ Test fixtures: tests/fixtures/                          │
+│    ✓ Factory functions: tests/factories/                     │
+│    ✓ Shared test utilities: tests/helpers/                   │
+│    ⚠ Mocking external services: Inconsistent                 │
+│    ✗ Contract testing: Not found                             │
+│    ✗ Snapshot testing: Not used                              │
+│                                                              │
+│  Test Data Management:                                       │
+│    - Fixtures: JSON files in tests/fixtures/                 │
+│    - Factories: Custom factory functions                     │
+│    - Database seeding: Not detected                          │
+│                                                              │
+│  CI Integration:                                             │
+│    - GitHub Actions: .github/workflows/test.yml              │
+│    - Test command in CI: npm test                            │
+│    - Coverage upload: Codecov                                │
+│                                                              │
+│  Code Quality:                                               │
+│    - Test linting: ESLint with jest plugin                   │
+│    - Test naming convention: describe/it blocks              │
+│    - Async handling: async/await consistent                  │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Pattern analysis includes:
+- **Framework & tools**: Testing framework, assertion library, mocking library
+- **Test structure**: AAA pattern, BDD style, test organization
+- **Data management**: Fixtures, factories, builders, database seeding
+- **Mocking patterns**: How external dependencies are mocked
+- **CI/CD integration**: How tests run in pipelines
+- **Code quality**: Linting, naming conventions, async patterns
+
+12. **Identify Testing Gaps**:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  TEST AUTOMATION EVALUATION: Gaps & Recommendations          │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  CRITICAL GAPS:                                              │
+│  ══════════════                                              │
+│  1. No E2E Tests                                             │
+│     Impact: User journeys not validated                      │
+│     Recommendation: Add Playwright/Cypress for critical flows│
+│                                                              │
+│  2. No Mutation Testing                                      │
+│     Impact: Test quality not verified                        │
+│     Recommendation: Configure Stryker for mutation analysis  │
+│     Article XI Compliance: REQUIRED                          │
+│                                                              │
+│  3. Payment Module Untested (src/services/payment/)          │
+│     Impact: High-risk code without test coverage             │
+│     Recommendation: Priority unit + integration tests        │
+│                                                              │
+│  MODERATE GAPS:                                              │
+│  ═══════════════                                             │
+│  4. Coverage Below Threshold (67% < 80% target)              │
+│     Impact: Significant code paths untested                  │
+│     Recommendation: Focus on src/utils/, src/middleware/     │
+│                                                              │
+│  5. Inconsistent Mocking Strategy                            │
+│     Impact: Flaky tests, maintenance burden                  │
+│     Recommendation: Standardize on MSW for API mocking       │
+│                                                              │
+│  6. No Property-Based Testing                                │
+│     Impact: Edge cases may be missed                         │
+│     Recommendation: Add fast-check for input validation      │
+│     Article XI Compliance: RECOMMENDED                       │
+│                                                              │
+│  MINOR GAPS:                                                 │
+│  ════════════                                                │
+│  7. No Snapshot Tests for UI Components                      │
+│     Impact: UI regressions harder to catch                   │
+│     Recommendation: Add snapshot tests for stable components │
+│                                                              │
+│  8. Missing Test Documentation                               │
+│     Impact: Onboarding difficulty                            │
+│     Recommendation: Add tests/README.md with conventions     │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Gap analysis includes:
+- **Missing test types**: E2E, performance, security, contract, mutation, property-based
+- **Coverage gaps**: Modules/files with low or no coverage
+- **Pattern inconsistencies**: Inconsistent mocking, assertions, organization
+- **Article XI compliance**: Check against Integration Testing Integrity requirements
+- **Best practice gaps**: Missing fixtures, factories, test utilities
+- **Documentation gaps**: Missing test documentation, conventions
+
+13. **Generate Test Evaluation Report**:
+
+Create `.isdlc/test-evaluation-report.md`:
+```markdown
+# Test Automation Evaluation Report
+
+**Generated**: {DATE}
+**Project**: {project_name}
+**Tech Stack**: {language}, {framework}
+
+## Executive Summary
+
+| Metric | Value | Status |
+|--------|-------|--------|
+| Test Types | 2 of 6 | ⚠️ Incomplete |
+| Coverage | 67% | ⚠️ Below target (80%) |
+| Test-to-Source Ratio | 0.48 | ⚠️ Low |
+| Article XI Compliance | 1 of 5 | ❌ Non-compliant |
+| Mutation Testing | Not configured | ❌ Missing |
+
+## Scope & Coverage
+
+### Test Types Inventory
+| Type | Status | Files | Location |
+|------|--------|-------|----------|
+| Unit | ✓ | 47 | tests/unit/ |
+| Integration | ✓ | 12 | tests/integration/ |
+| E2E | ✗ | 0 | - |
+| Property-Based | ✗ | 0 | - |
+| Mutation | ✗ | 0 | - |
+| Performance | ✗ | 0 | - |
+
+### Coverage Analysis
+- **Current Coverage**: 67%
+- **Target Coverage**: 80%
+- **Coverage Tool**: Istanbul/nyc
+- **Thresholds Configured**: No
+
+### Untested Modules
+| Module | Source Files | Test Files | Risk |
+|--------|--------------|------------|------|
+| src/services/payment/ | 8 | 0 | HIGH |
+| src/utils/validation/ | 5 | 0 | MEDIUM |
+| src/middleware/auth/ | 5 | 1 | HIGH |
+
+## Patterns Analysis
+
+### Testing Stack
+- **Framework**: Jest 29.x
+- **Assertions**: Jest expect
+- **Mocking**: jest.mock(), __mocks__/
+- **Coverage**: Istanbul/nyc
+
+### Detected Patterns
+- ✓ AAA Pattern (Arrange-Act-Assert)
+- ✓ Test fixtures (tests/fixtures/)
+- ✓ Factory functions (tests/factories/)
+- ⚠️ Inconsistent API mocking
+- ✗ Contract testing
+- ✗ Snapshot testing
+
+### CI/CD Integration
+- **Platform**: GitHub Actions
+- **Test Script**: npm test
+- **Coverage Upload**: Codecov
+- **Blocking on Failure**: Yes
+
+## Gaps & Recommendations
+
+### Critical (Must Fix)
+1. **Add E2E Tests** - User journeys not validated
+2. **Configure Mutation Testing** - Required for Article XI
+3. **Test Payment Module** - High-risk code untested
+
+### Moderate (Should Fix)
+4. **Increase Coverage to 80%** - Focus on utils/, middleware/
+5. **Standardize Mocking** - Use MSW for API mocking
+6. **Add Property-Based Tests** - Recommended for Article XI
+
+### Minor (Nice to Have)
+7. **Add Snapshot Tests** - For stable UI components
+8. **Document Test Conventions** - Create tests/README.md
+
+## Article XI Compliance
+
+| Requirement | Status | Notes |
+|-------------|--------|-------|
+| Mutation Testing | ❌ | Not configured |
+| No Stubs in Integration | ⚠️ | Some tests use mocks |
+| No Assertions | ❌ | Traditional assertions used |
+| Adversarial Testing | ❌ | No property-based tests |
+| Execution-Based Reporting | ⚠️ | Coverage only |
+
+## Recommendations for Phase 4
+
+Based on this evaluation, Phase 4 (Testing Infrastructure Setup) should:
+1. Skip: Unit test framework (already configured)
+2. Skip: Coverage tooling (already configured)
+3. Add: Mutation testing (Stryker)
+4. Add: E2E testing (Playwright)
+5. Add: Property-based testing (fast-check)
+6. Configure: Coverage thresholds enforcement
+7. Enhance: Integration test patterns per Article XI
+```
+
+14. **Update state.json with evaluation results**:
+
+```json
+{
+  "test_evaluation": {
+    "evaluated_at": "2026-01-23T...",
+    "summary": {
+      "test_types_found": ["unit", "integration"],
+      "test_types_missing": ["e2e", "mutation", "property-based", "performance"],
+      "coverage_percent": 67,
+      "coverage_target": 80,
+      "test_to_source_ratio": 0.48,
+      "article_xi_compliance": false
+    },
+    "existing_infrastructure": {
+      "framework": "jest",
+      "version": "29.x",
+      "coverage_tool": "istanbul",
+      "ci_integration": "github-actions"
+    },
+    "gaps": {
+      "critical": ["e2e_tests", "mutation_testing", "payment_module_tests"],
+      "moderate": ["coverage_below_target", "inconsistent_mocking", "property_tests"],
+      "minor": ["snapshot_tests", "test_documentation"]
+    },
+    "phase4_recommendations": {
+      "skip": ["unit_framework", "coverage_tool"],
+      "add": ["mutation_testing", "e2e_testing", "property_testing"],
+      "configure": ["coverage_thresholds"],
+      "enhance": ["integration_patterns"]
+    }
+  }
+}
+```
+
+15. **Present evaluation summary to user**:
+
+```
+════════════════════════════════════════════════════════════════
+  PHASE 1b COMPLETE: Test Automation Evaluation
+════════════════════════════════════════════════════════════════
+
+  Existing Infrastructure:
+    ✓ Jest 29.x (unit testing)
+    ✓ Istanbul (coverage)
+    ✓ GitHub Actions CI
+
+  Coverage: 67% (target: 80%)
+
+  Gaps Identified:
+    ❌ No E2E tests
+    ❌ No mutation testing (Article XI required)
+    ❌ Payment module untested (HIGH RISK)
+    ⚠️ Property-based testing missing
+
+  Report: .isdlc/test-evaluation-report.md
+
+  This evaluation will inform Phase 4 (Testing Infrastructure Setup).
+  Existing tools will be preserved; only gaps will be addressed.
+════════════════════════════════════════════════════════════════
+
+Continue to Phase 2 (Constitution Generation)? [Y/n]
+```
+
+**Test Detection Patterns:**
+
+| Language | Test Patterns |
+|----------|---------------|
+| JavaScript/TypeScript | `*.test.js`, `*.spec.ts`, `__tests__/`, jest, vitest, mocha |
+| Python | `test_*.py`, `*_test.py`, `tests/`, pytest, unittest |
+| Go | `*_test.go`, `go test` |
+| Java | `*Test.java`, `*Tests.java`, `src/test/`, JUnit, TestNG |
+| Rust | `#[test]`, `tests/`, `cargo test` |
+| Ruby | `*_spec.rb`, `spec/`, RSpec, minitest |
+| C# | `*Tests.cs`, `*.Tests/`, xUnit, NUnit, MSTest |
+
+**Coverage Report Parsing:**
+
+| Format | Files |
+|--------|-------|
+| LCOV | `coverage/lcov.info`, `lcov.info` |
+| Cobertura | `coverage.xml`, `cobertura.xml` |
+| Clover | `clover.xml` |
+| Istanbul JSON | `coverage/coverage-final.json` |
+| JaCoCo | `jacoco.xml`, `target/site/jacoco/` |
+| Go | `coverage.out`, `cover.out` |
+
 **Phase 2: Constitution Generation**
-Based on discovered architecture, generate a tailored constitution:
+Based on discovered architecture and test evaluation, generate a tailored constitution:
 
-9. **Infer domain-specific articles** from discovered stack:
-   - Payment libraries (Stripe, PayPal) → Suggest PCI-DSS article
-   - Auth libraries (Auth0, Passport) → Suggest authentication article
-   - Database ORMs → Suggest data integrity article
-   - Docker/K8s configs → Suggest deployment article
-   - Frontend frameworks → Suggest accessibility/performance articles
+16. **Infer domain-specific articles** from discovered stack:
+    - Payment libraries (Stripe, PayPal) → Suggest PCI-DSS article
+    - Auth libraries (Auth0, Passport) → Suggest authentication article
+    - Database ORMs → Suggest data integrity article
+    - Docker/K8s configs → Suggest deployment article
+    - Frontend frameworks → Suggest accessibility/performance articles
+    - Test evaluation gaps → Suggest testing-related articles
 
-10. **Identify gaps** that can't be inferred from code:
+17. **Identify gaps** that can't be inferred from code:
     - Non-functional requirements (NFRs) like performance SLAs
     - Compliance requirements (HIPAA, GDPR)
     - Business-specific constraints
     - Team conventions
 
-11. **Interactive article walkthrough**:
+18. **Interactive article walkthrough**:
     For each article (universal + suggested domain-specific):
     - Display the article with context from discovered code
     - Ask: "This article applies to your project. Keep, modify, or skip?"
@@ -345,9 +713,9 @@ Based on discovered architecture, generate a tailored constitution:
       > [5] Skip this article
       ```
 
-12. **Save constitution**: Write final constitution to `.isdlc/constitution.md`
+19. **Save constitution**: Write final constitution to `.isdlc/constitution.md`
 
-13. **Initialize state.json** with default cloud configuration:
+20. **Initialize state.json** with default cloud configuration:
     - Set `provider: "undecided"`
     - Set `staging_enabled: false`
     - Set `production_enabled: false`
@@ -389,7 +757,7 @@ npx skills add <owner/skill-name>
 
 **CRITICAL: Always check skills.sh FIRST before falling back to web research.**
 
-14. **Search skills.sh for each detected technology**:
+21. **Search skills.sh for each detected technology**:
 
 For each detected technology, search skills.sh to find matching skills.
 
@@ -429,7 +797,7 @@ For each detected technology, identify matching skills from skills.sh:
 | PostgreSQL | "postgresql" OR "postgres" | Database skills, ORM skills |
 | Tailwind | "tailwind" | `tailwindlabs/tailwindcss` |
 
-15. **Present skill recommendations to user**:
+22. **Present skill recommendations to user**:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -464,7 +832,7 @@ Install recommended skills? [Y/n/select]
 - **n**: Skip skill installation
 - **select**: Choose which skills to install interactively
 
-16. **Install selected skills**:
+23. **Install selected skills**:
 
 For each selected skill, run the install command:
 ```bash
@@ -493,7 +861,7 @@ Track installed skills in `.isdlc/state.json`:
 }
 ```
 
-17. **Fallback: Web research for unmatched technologies**:
+24. **Fallback: Web research for unmatched technologies**:
 
 For technologies WITHOUT a matching skill on skills.sh, fall back to web research:
 
@@ -516,7 +884,7 @@ For fallback research, update local skill files:
 - Append researched guidance to "Project-Specific Considerations"
 - Use dated headers: `### {Technology} (Web-researched {DATE})`
 
-18. **Generate customization report**: Create `.isdlc/skill-customization-report.md`
+25. **Generate customization report**: Create `.isdlc/skill-customization-report.md`
 
 ```markdown
 # Skill Customization Report
@@ -543,7 +911,7 @@ For fallback research, update local skill files:
 [Details of each skill/research result]
 ```
 
-19. **User confirmation**: Display summary
+26. **User confirmation**: Display summary
 
 **Explicit Step Announcements:**
 
@@ -641,24 +1009,45 @@ Use web research fallback when:
 - skills.sh is unavailable (network error)
 - Skill is too generic (need project-specific guidance)
 
-**Phase 4: Testing Infrastructure Setup (DYNAMIC TOOLING)**
+**Phase 4: Testing Infrastructure Setup (EVALUATION-DRIVEN)**
 
-After skill customization, set up the testing infrastructure based on Article XI (Integration Testing Integrity) requirements. This phase is FULLY DYNAMIC - no hardcoded tool mappings.
+After skill customization, set up testing infrastructure to fill the gaps identified in Phase 1b (Test Automation Evaluation). This phase respects existing infrastructure and only adds what's missing.
 
-**CRITICAL: All tooling decisions are made via web research based on detected tech stack.**
+**CRITICAL: Reference `state.json.test_evaluation.phase4_recommendations` to determine what to skip/add/configure.**
 
-20. **Announce Phase 4**:
+**INTELLIGENT SETUP FLOW:**
+- **Skip**: Tools already present (detected in Phase 1b)
+- **Add**: Missing test types (e2e, mutation, property-based)
+- **Configure**: Missing configurations (coverage thresholds)
+- **Enhance**: Existing patterns that need Article XI compliance
+
+27. **Announce Phase 4 with evaluation context**:
 ```
 ════════════════════════════════════════════════════════════════
   PHASE 4: Testing Infrastructure Setup
 ════════════════════════════════════════════════════════════════
   Detected Stack: {primary_language}, {framework}
-  Setting up: Mutation Testing, Adversarial Testing, Integration Testing
-  Method: Dynamic research (no hardcoded mappings)
+
+  From Test Evaluation (Phase 1b):
+    ✓ SKIP: Unit testing (Jest already configured)
+    ✓ SKIP: Coverage tool (Istanbul already present)
+    → ADD: Mutation testing (Stryker)
+    → ADD: E2E testing (Playwright)
+    → ADD: Property-based testing (fast-check)
+    → CONFIGURE: Coverage thresholds (80%)
 ════════════════════════════════════════════════════════════════
 ```
 
-21. **Research testing tools in parallel** (launch 4 agents simultaneously):
+28. **Research ONLY missing tools** (skip what exists):
+
+Check `state.json.test_evaluation.phase4_recommendations.add` and research only those:
+
+| Gap from Evaluation | Research Query | Purpose |
+|---------------------|---------------|---------|
+| **Mutation Testing** (if missing) | "{language} mutation testing tools {YEAR}" | Find mutation testing framework |
+| **E2E Testing** (if missing) | "{language} {framework} e2e testing {YEAR}" | Find E2E testing framework |
+| **Property-Based** (if missing) | "{language} property-based testing {YEAR}" | Find property-based testing tools |
+| **Performance** (if missing) | "{language} performance testing {YEAR}" | Find performance testing tools |
 
 | Agent | Research Query | Purpose |
 |-------|---------------|---------|
@@ -674,7 +1063,7 @@ Each agent returns:
 - Basic configuration template
 - Directory structure recommendations
 
-22. **Present tool recommendations to user**:
+29. **Present tool recommendations to user** (only for gaps):
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │  TESTING INFRASTRUCTURE RECOMMENDATIONS                      │
@@ -707,7 +1096,7 @@ Each agent returns:
 Proceed with installation? [Y/n]
 ```
 
-23. **Install dependencies** (if user confirms):
+30. **Install dependencies** (if user confirms):
 
 Detect package manager and run appropriate install:
 ```bash
@@ -726,7 +1115,7 @@ go get -t {packages}
 # Add to pom.xml or build.gradle
 ```
 
-24. **Create configuration files**:
+31. **Create configuration files** (only for new tools):
 
 For each tool, create the appropriate config file:
 
@@ -801,7 +1190,7 @@ export function validateResponse(response: any, schema: any): boolean {
 }
 ```
 
-25. **Create test directory structure**:
+32. **Create test directory structure** (merge with existing):
 
 ```
 tests/
@@ -817,7 +1206,7 @@ tests/
 └── reports/               # Test execution reports
 ```
 
-26. **Update package.json/pyproject.toml with test scripts**:
+33. **Update package.json/pyproject.toml with test scripts** (add missing only):
 
 ```json
 {
@@ -833,7 +1222,7 @@ tests/
 }
 ```
 
-27. **Generate testing infrastructure report**:
+34. **Generate testing infrastructure report**:
 
 Create `.isdlc/testing-infrastructure-report.md`:
 ```markdown
@@ -879,7 +1268,7 @@ Create `.isdlc/testing-infrastructure-report.md`:
 - [x] Execution-based reporting configured
 ```
 
-28. **Update state.json with testing infrastructure status**:
+35. **Update state.json with testing infrastructure status**:
 
 ```json
 {
@@ -979,7 +1368,7 @@ This phase is **triggered automatically** when GATE-06 (Integration Testing) pas
 - Automatic: GATE-06 passes AND `cloud_configuration.provider === "undecided"`
 - Manual: User runs `/sdlc configure-cloud`
 
-29. **Prompt for cloud configuration** (after testing completes):
+36. **Prompt for cloud configuration** (after testing completes):
 ```
 ════════════════════════════════════════════════════════════════
   PHASE 5: Cloud Provider Configuration (Optional)
@@ -998,12 +1387,12 @@ Where will this project be deployed?
 [5] Skip for now (can configure later with /sdlc configure-cloud)
 ```
 
-30. **Collect provider-specific config** (if 1-3 selected):
+37. **Collect provider-specific config** (if 1-3 selected):
     - AWS: Ask for profile name and region
     - GCP: Ask for project ID and region
     - Azure: Ask for subscription ID, resource group, and region
 
-31. **Update state.json** with cloud_configuration:
+38. **Update state.json** with cloud_configuration:
     - If provider selected (AWS/GCP/Azure):
       - Set `cloud_configuration.provider` to selected provider
       - Set `cloud_configuration.configured_at` to timestamp
@@ -1051,6 +1440,12 @@ After all phases complete, display final summary:
   Phase 1: Architecture Discovery ✓
     → docs/architecture/architecture-overview.md
 
+  Phase 1b: Test Automation Evaluation ✓
+    → Existing: Jest, Istanbul, 47 unit tests, 12 integration tests
+    → Coverage: 67% (target: 80%)
+    → Gaps: E2E, mutation testing, property-based testing
+    → .isdlc/test-evaluation-report.md
+
   Phase 2: Constitution Generation ✓
     → .isdlc/constitution.md
 
@@ -1059,7 +1454,8 @@ After all phases complete, display final summary:
     → .isdlc/skill-customization-report.md
 
   Phase 4: Testing Infrastructure Setup ✓
-    → Mutation, adversarial, integration testing configured
+    → Preserved: Jest, Istanbul (existing)
+    → Added: Stryker, fast-check, Playwright (gaps filled)
     → .isdlc/testing-infrastructure-report.md
 
   Phase 5: Cloud Configuration ✓ (or "Skipped")
@@ -1069,9 +1465,10 @@ After all phases complete, display final summary:
 ════════════════════════════════════════════════════════════════
 
   Next Steps:
-    1. Review constitution: cat .isdlc/constitution.md
-    2. Run tests: npm run test:all
-    3. Start workflow: /sdlc start "Your project description"
+    1. Review test evaluation: cat .isdlc/test-evaluation-report.md
+    2. Review constitution: cat .isdlc/constitution.md
+    3. Run tests: npm run test:all
+    4. Start workflow: /sdlc start "Your project description"
 
 ════════════════════════════════════════════════════════════════
 ```
