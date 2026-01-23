@@ -35,6 +35,114 @@ The `test-watcher` hook monitors your test executions. If you attempt to advance
 **Phase Gate**: GATE-06 (Testing Gate)
 **Next Phase**: 07 - Code Review & QA (QA Engineer)
 
+# ⚠️ PRE-PHASE CHECK: EXISTING TEST INFRASTRUCTURE
+
+**BEFORE running any tests, you MUST check for existing test infrastructure.**
+
+The `/sdlc discover` command evaluates existing test automation and stores results in:
+- `.isdlc/test-evaluation-report.md` - Detailed analysis of existing tests
+- `.isdlc/state.json` → `test_evaluation` - Summary metrics and gaps
+- `.isdlc/state.json` → `testing_infrastructure` - Installed tools and commands
+
+## Required Pre-Phase Actions
+
+1. **Read state.json for testing infrastructure**:
+   ```json
+   {
+     "test_evaluation": {
+       "summary": {
+         "test_types_found": ["unit", "integration"],
+         "coverage_percent": 67,
+         "article_xi_compliance": false
+       },
+       "existing_infrastructure": {
+         "framework": "jest",
+         "coverage_tool": "istanbul"
+       }
+     },
+     "testing_infrastructure": {
+       "configured_at": "2026-01-22T...",
+       "tools": {
+         "mutation": {
+           "name": "stryker",
+           "package": "@stryker-mutator/core",
+           "config": "stryker.conf.js",
+           "threshold": 80
+         },
+         "adversarial": {
+           "name": "fast-check",
+           "package": "fast-check",
+           "config": "tests/property/setup.ts"
+         },
+         "integration": {
+           "name": "supertest",
+           "base_url_env": "TEST_API_URL",
+           "no_stubs_enforced": true
+         }
+       },
+       "directories_created": ["tests/integration", "tests/property"],
+       "scripts_added": ["test:mutation", "test:property", "test:integration"]
+     }
+   }
+   ```
+
+2. **Use configured test commands** - DO NOT HARDCODE:
+
+| Test Type | Where to Find Command | Example |
+|-----------|----------------------|---------|
+| Integration | `package.json` → `test:integration` | `npm run test:integration` |
+| E2E | `package.json` → `test:e2e` | `npm run test:e2e` |
+| Mutation | `state.json` → `testing_infrastructure.tools.mutation` | `npm run test:mutation` |
+| Property/Adversarial | `state.json` → `testing_infrastructure.tools.adversarial` | `npm run test:property` |
+| Coverage | `package.json` → `test:coverage` | `npm run test:coverage` |
+
+3. **Respect existing test directories**:
+   - Check `testing_infrastructure.directories_created`
+   - Use existing `tests/integration/`, `tests/e2e/`, `tests/property/`
+   - Don't create duplicate directories
+
+4. **Use existing test patterns**:
+   - Follow naming conventions from test-evaluation-report.md
+   - Use existing fixtures and factories
+   - Match assertion style (or lack thereof for integration tests)
+
+## Command Discovery Protocol
+
+Before running ANY test command:
+
+```bash
+# Step 1: Check state.json for configured commands
+cat .isdlc/state.json | jq '.testing_infrastructure.tools'
+
+# Step 2: Check package.json for test scripts
+cat package.json | jq '.scripts | to_entries | map(select(.key | startswith("test")))'
+
+# Step 3: Use discovered commands in your iteration loop
+```
+
+## Article XI Compliance with Existing Infrastructure
+
+When `testing_infrastructure` is configured, it should already be Article XI compliant:
+
+| Article XI Rule | Check From state.json |
+|-----------------|----------------------|
+| Mutation Testing | `tools.mutation.name` + `tools.mutation.config` |
+| No Stubs | `tools.integration.no_stubs_enforced` |
+| Adversarial Testing | `tools.adversarial.name` |
+| Test URL | `tools.integration.base_url_env` (use this env var) |
+
+**If Article XI tools are NOT configured** (missing from state.json):
+- Flag as gap in test execution report
+- Escalate to orchestrator: "Article XI infrastructure not configured"
+- Do NOT proceed without mutation/adversarial testing capability
+
+## If No Test Infrastructure Exists
+
+If `.isdlc/state.json` has no `testing_infrastructure`:
+1. Check if `/sdlc discover` was run - recommend running it first
+2. If greenfield project: Follow test strategy from Phase 04
+3. Document missing infrastructure in defect-log.json
+
 # CONSTITUTIONAL PRINCIPLES
 
 **CRITICAL**: Before starting any work, read the project constitution at `.isdlc/constitution.md`.
@@ -181,13 +289,18 @@ After each skill execution, append to `.isdlc/state.json` → `skill_usage_log`:
 
 ## Iteration Workflow
 
+**IMPORTANT**: Use test commands from `state.json.testing_infrastructure` or `package.json`, NOT hardcoded commands.
+
 1. **Run Integration Tests**
-   - Execute all integration test suites
+   - **Discover command**: Check `package.json` scripts or `state.json`
+   - Execute: `npm run test:integration` (or discovered command)
    - Test component interactions, API endpoints, database integration
    - Capture full test output (pass/fail, error messages, logs)
+   - **Use TEST_API_URL** from `state.json.testing_infrastructure.tools.integration.base_url_env`
 
 2. **Run E2E Tests**
-   - Execute end-to-end workflow tests
+   - **Discover command**: Check `package.json` for `test:e2e`
+   - Execute: `npm run test:e2e` (or discovered command)
    - Test critical user journeys from start to finish
    - Capture screenshots, logs, and failure points
 
@@ -195,6 +308,18 @@ After each skill execution, append to `.isdlc/state.json` → `skill_usage_log`:
    - Validate implementation against interface specifications
    - Test all interfaces, input/output schemas, behaviors
    - Verify contract compliance (OpenAPI for APIs, CLI spec for CLIs, etc.)
+
+4. **Run Mutation Tests** (Article XI Required)
+   - **Discover command**: `state.json.testing_infrastructure.tools.mutation`
+   - Execute: `npm run test:mutation` (or discovered command)
+   - Verify mutation score ≥80% (threshold from state.json)
+   - If not configured: Escalate - "Mutation testing infrastructure missing"
+
+5. **Run Adversarial Tests** (Article XI Required)
+   - **Discover command**: `state.json.testing_infrastructure.tools.adversarial`
+   - Execute: `npm run test:property` (or discovered command)
+   - Property-based and fuzz testing
+   - If not configured: Escalate - "Adversarial testing infrastructure missing"
 
 4. **Evaluate Results**
    - ✅ **All tests pass** → Proceed to coverage analysis and reporting

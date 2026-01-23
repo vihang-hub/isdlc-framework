@@ -41,6 +41,97 @@ The `test-watcher` hook monitors your test executions. If you attempt to advance
 **Phase Gate**: GATE-05 (Implementation Gate)
 **Next Phase**: 06 - Integration & Testing (Integration Tester)
 
+# ⚠️ PRE-PHASE CHECK: EXISTING TEST INFRASTRUCTURE
+
+**BEFORE writing any tests, you MUST check for existing test infrastructure.**
+
+The `/sdlc discover` command evaluates existing test automation and stores results in:
+- `.isdlc/test-evaluation-report.md` - Detailed analysis of existing tests
+- `.isdlc/state.json` → `test_evaluation` - Summary metrics
+- `.isdlc/state.json` → `testing_infrastructure` - Installed tools and commands
+
+## Required Pre-Phase Actions
+
+1. **Read state.json for testing infrastructure**:
+   ```json
+   {
+     "test_evaluation": {
+       "existing_infrastructure": {
+         "framework": "jest",
+         "version": "29.x",
+         "coverage_tool": "istanbul",
+         "ci_integration": "github-actions"
+       }
+     },
+     "testing_infrastructure": {
+       "tools": {
+         "mutation": { "name": "stryker", "config": "stryker.conf.js" },
+         "adversarial": { "name": "fast-check", "config": "tests/property/setup.ts" }
+       },
+       "scripts_added": ["test:mutation", "test:property"]
+     }
+   }
+   ```
+
+2. **Identify existing test patterns** (from test-evaluation-report.md):
+   - Test file naming convention (`.test.ts`, `.spec.js`, `_test.go`)
+   - Test directory structure (`tests/`, `__tests__/`, `src/**/*.test.*`)
+   - Mocking strategy (jest.mock, MSW, manual mocks)
+   - Fixture/factory patterns
+   - Assertion style
+
+3. **Use existing infrastructure - DO NOT REPLACE**:
+
+| What Exists | Your Action |
+|-------------|-------------|
+| Jest configured | Write Jest tests, not Mocha/Vitest |
+| `tests/unit/` directory | Place unit tests there |
+| `tests/fixtures/` | Use existing fixtures, add new ones |
+| `tests/helpers/` | Use existing test utilities |
+| Coverage tool (Istanbul) | Use it, don't add another |
+| Test scripts in package.json | Use `npm test`, not custom commands |
+
+## Test Command Discovery
+
+Before running tests, discover the correct commands:
+
+1. **Check package.json/pyproject.toml** for test scripts
+2. **Check state.json** for configured commands
+3. **Use discovered commands** in your iteration loop
+
+```bash
+# Example: Use what's configured, not hardcoded
+npm test                    # If package.json has "test" script
+npm run test:unit           # If separate unit test script exists
+pytest tests/unit/          # If Python with pytest
+go test ./...               # If Go project
+```
+
+## Writing Tests That Fit Existing Patterns
+
+```typescript
+// ❌ WRONG: Ignoring existing patterns
+import { expect } from 'chai';  // Project uses Jest, not Chai!
+describe('User', () => { ... });
+
+// ✅ CORRECT: Following existing patterns
+import { render, screen } from '@testing-library/react'; // Project's testing lib
+import { createTestUser } from '../fixtures/user';       // Existing factory
+describe('User', () => {
+  it('should create user', () => {
+    const user = createTestUser();  // Use existing helpers
+    expect(user.id).toBeDefined();  // Jest assertions (project standard)
+  });
+});
+```
+
+## If No Test Infrastructure Exists
+
+If `.isdlc/state.json` has no `test_evaluation` or `testing_infrastructure`:
+1. This is a greenfield project - set up testing from scratch
+2. Follow the test strategy from Phase 04
+3. Document your choices for future reference
+
 # CONSTITUTIONAL PRINCIPLES
 
 **CRITICAL**: Before starting any work, read the project constitution at `.isdlc/constitution.md`.
@@ -148,6 +239,9 @@ After each skill execution, append to `.isdlc/state.json` → `skill_usage_log`:
 
 1. **Write Tests** (TDD Red phase)
    - Write unit tests for the feature/function
+   - **USE EXISTING TEST FRAMEWORK** from `state.json.test_evaluation.existing_infrastructure`
+   - **FOLLOW EXISTING PATTERNS** from test-evaluation-report.md
+   - Place tests in existing test directories
    - Ensure tests fail initially (no implementation yet)
 
 2. **Implement Code** (TDD Green phase)
@@ -155,8 +249,19 @@ After each skill execution, append to `.isdlc/state.json` → `skill_usage_log`:
    - Follow design specifications exactly
 
 3. **Run Tests**
+   - **USE CONFIGURED TEST COMMAND** from package.json or state.json
    - Execute full unit test suite
    - Capture test output (pass/fail counts, error messages)
+
+   ```bash
+   # Discover and use the correct command:
+   # 1. Check state.json.testing_infrastructure.tools
+   # 2. Check package.json scripts
+   # 3. Use discovered command, e.g.:
+   npm test                    # or
+   npm run test:unit           # or
+   pytest tests/unit/          # etc.
+   ```
 
 4. **Evaluate Results**
    - ✅ **All tests pass** → Proceed to Refactor phase
