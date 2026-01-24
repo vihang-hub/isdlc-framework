@@ -126,7 +126,7 @@ fi
 
 echo -e "${CYAN}After installation, run:${NC}"
 echo -e "  1. ${GREEN}claude${NC} to start Claude Code"
-echo -e "  2. ${GREEN}/sdlc discover${NC} to set up your project"
+echo -e "  2. ${GREEN}/discover${NC} to set up your project"
 echo ""
 echo -e "${YELLOW}The discover command will:${NC}"
 echo "  • Analyze your project (or ask about it if new)"
@@ -511,7 +511,7 @@ if [ -f ".isdlc/constitution.md" ]; then
 
 <!-- CONSTITUTION_STATUS: STARTER_TEMPLATE -->
 <!-- This marker indicates this constitution needs customization -->
-<!-- Run /sdlc discover to customize -->
+<!-- Run /discover to customize -->
 
 **Created**: $(date +"%Y-%m-%d")
 **Status**: ⚠️ NEEDS CUSTOMIZATION
@@ -524,7 +524,7 @@ This is a **starter constitution** auto-generated during framework installation.
 It contains generic articles that may not match your project's specific needs.
 
 **To customize this constitution:**
-Run \`/sdlc discover\` to analyze your project and generate tailored articles interactively.
+Run \`/discover\` to analyze your project and generate tailored articles interactively.
 
 **This constitution will be treated as a TEMPLATE until customized.**
 
@@ -623,7 +623,7 @@ if [ "$IS_EXISTING_PROJECT" = true ]; then
 else
     echo -e "${YELLOW}  Constitution template created at .isdlc/constitution.md${NC}"
 fi
-echo -e "${YELLOW}  Next step: Run /sdlc discover to customize your project constitution${NC}"
+echo -e "${YELLOW}  Next step: Run /discover to customize your project constitution${NC}"
 
 # ============================================================================
 # Step 6: Cleanup - Remove isdlc-framework folder
@@ -660,7 +660,7 @@ echo -e "${CYAN}║                    NEXT STEPS                              �
 echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "  1. Run ${GREEN}claude${NC} to start Claude Code"
-echo -e "  2. Run ${GREEN}/sdlc discover${NC} to:"
+echo -e "  2. Run ${GREEN}/discover${NC} to:"
 echo "     • Analyze your project (or describe it if new)"
 echo "     • Research best practices for your stack"
 echo "     • Create a tailored constitution interactively"

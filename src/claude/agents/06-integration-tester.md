@@ -39,7 +39,7 @@ The `test-watcher` hook monitors your test executions. If you attempt to advance
 
 **BEFORE running any tests, you MUST check for existing test infrastructure.**
 
-The `/sdlc discover` command evaluates existing test automation and stores results in:
+The `/discover` command evaluates existing test automation and stores results in:
 - `.isdlc/test-evaluation-report.md` - Detailed analysis of existing tests
 - `.isdlc/state.json` → `test_evaluation` - Summary metrics and gaps
 - `.isdlc/state.json` → `testing_infrastructure` - Installed tools and commands
@@ -139,7 +139,7 @@ When `testing_infrastructure` is configured, it should already be Article XI com
 ## If No Test Infrastructure Exists
 
 If `.isdlc/state.json` has no `testing_infrastructure`:
-1. Check if `/sdlc discover` was run - recommend running it first
+1. Check if `/discover` was run - recommend running it first
 2. If greenfield project: Follow test strategy from Phase 04
 3. Document missing infrastructure in defect-log.json
 

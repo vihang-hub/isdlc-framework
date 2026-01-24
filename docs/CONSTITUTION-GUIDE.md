@@ -62,10 +62,10 @@ The `/sdlc constitution` command will:
 ```bash
 # After running init-project.sh
 claude
-/sdlc discover
+/discover
 ```
 
-The `/sdlc discover` command will:
+The `/discover` command will:
 1. Analyze your codebase structure and dependencies
 2. Detect technologies, frameworks, and patterns
 3. Infer applicable articles from your stack
@@ -99,7 +99,7 @@ These are mandatory and should rarely be removed.
 
 ### Adding Domain-Specific Articles
 
-The `/sdlc discover` and `/sdlc constitution` commands will suggest domain-specific articles based on your project. You can also add them manually:
+The `/discover` and `/sdlc constitution` commands will suggest domain-specific articles based on your project. You can also add them manually:
 
 **For a Simple Internal Tool** (add after universal articles):
 ```markdown

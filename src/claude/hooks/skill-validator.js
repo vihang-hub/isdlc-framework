@@ -132,6 +132,12 @@ async function main() {
             isAuthorized = true;
             debugLog('Agent is orchestrator, always authorized');
         }
+        // Setup agents are always authorized (phase = "setup")
+        // These run during /discover before any workflow phase
+        else if (agentPhase === 'setup') {
+            isAuthorized = true;
+            debugLog('Agent is setup agent, always authorized');
+        }
         // Agent's phase matches current phase
         else if (agentPhase === currentPhase) {
             isAuthorized = true;

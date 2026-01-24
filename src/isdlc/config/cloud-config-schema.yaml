@@ -217,7 +217,7 @@ metadata:
 
 notes: |
   This configuration schema is used by:
-  - /sdlc discover command - To collect cloud provider info during discovery
+  - /discover command - To collect cloud provider info during discovery
   - /sdlc configure-cloud command - To configure cloud provider after discovery
   - SDLC Orchestrator - To determine workflow endpoint and phase transitions
   - init-project.sh - To initialize state.json with cloud_configuration template

@@ -45,7 +45,7 @@ The `test-watcher` hook monitors your test executions. If you attempt to advance
 
 **BEFORE writing any tests, you MUST check for existing test infrastructure.**
 
-The `/sdlc discover` command evaluates existing test automation and stores results in:
+The `/discover` command evaluates existing test automation and stores results in:
 - `.isdlc/test-evaluation-report.md` - Detailed analysis of existing tests
 - `.isdlc/state.json` → `test_evaluation` - Summary metrics
 - `.isdlc/state.json` → `testing_infrastructure` - Installed tools and commands

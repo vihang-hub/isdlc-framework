@@ -8,7 +8,7 @@
 
 version: "2.0.0"
 generated: "2026-01-17"
-total_skills: 119
+total_skills: 139
 enforcement_mode: strict  # strict | warn | audit
 
 # =============================================================================
@@ -57,6 +57,106 @@ ownership:
       - id: ORCH-010
         name: skill-validation
         path: orchestration/skill-validation
+
+  # ---------------------------------------------------------------------------
+  # Discover Orchestrator
+  # Phase: setup (pre-workflow)
+  # Category: discover/
+  # ---------------------------------------------------------------------------
+  discover-orchestrator:
+    agent_id: "D0"
+    phase: "setup"
+    skill_count: 4
+    skills:
+      - id: DISC-001
+        name: project-detection
+        path: discover/project-detection
+      - id: DISC-002
+        name: workflow-coordination
+        path: discover/workflow-coordination
+      - id: DISC-003
+        name: state-initialization
+        path: discover/state-initialization
+      - id: DISC-004
+        name: cloud-configuration
+        path: discover/cloud-configuration
+
+  # ---------------------------------------------------------------------------
+  # Discover Sub-Agents
+  # Phase: setup (pre-workflow)
+  # Category: discover/
+  # ---------------------------------------------------------------------------
+  architecture-analyzer:
+    agent_id: "D1"
+    phase: "setup"
+    skill_count: 4
+    skills:
+      - id: DISC-101
+        name: directory-scan
+        path: discover/directory-scan
+      - id: DISC-102
+        name: tech-detection
+        path: discover/tech-detection
+      - id: DISC-103
+        name: dependency-analysis
+        path: discover/dependency-analysis
+      - id: DISC-104
+        name: architecture-documentation
+        path: discover/architecture-documentation
+
+  test-evaluator:
+    agent_id: "D2"
+    phase: "setup"
+    skill_count: 4
+    skills:
+      - id: DISC-201
+        name: test-framework-detection
+        path: discover/test-framework-detection
+      - id: DISC-202
+        name: coverage-analysis
+        path: discover/coverage-analysis
+      - id: DISC-203
+        name: gap-identification
+        path: discover/gap-identification
+      - id: DISC-204
+        name: test-report-generation
+        path: discover/test-report-generation
+
+  constitution-generator:
+    agent_id: "D3"
+    phase: "setup"
+    skill_count: 4
+    skills:
+      - id: DISC-301
+        name: research-coordination
+        path: discover/research-coordination
+      - id: DISC-302
+        name: article-generation
+        path: discover/article-generation
+      - id: DISC-303
+        name: interactive-review
+        path: discover/interactive-review
+      - id: DISC-304
+        name: domain-detection
+        path: discover/domain-detection
+
+  skills-researcher:
+    agent_id: "D4"
+    phase: "setup"
+    skill_count: 4
+    skills:
+      - id: DISC-401
+        name: skills-search
+        path: discover/skills-search
+      - id: DISC-402
+        name: skill-evaluation
+        path: discover/skill-evaluation
+      - id: DISC-403
+        name: skill-installation
+        path: discover/skill-installation
+      - id: DISC-404
+        name: web-research-fallback
+        path: discover/web-research-fallback
 
   # ---------------------------------------------------------------------------
   # Agent 01: Requirements Analyst

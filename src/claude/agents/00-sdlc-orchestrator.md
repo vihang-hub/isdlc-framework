@@ -92,7 +92,7 @@ Project Type: Existing codebase detected ([detected stack])
 
 Select an option:
 
-[1] Run /sdlc discover (Recommended)
+[1] Run /discover (Recommended)
     Analyze existing codebase and auto-generate constitution
 
 [2] Create Constitution Interactively
@@ -104,7 +104,7 @@ Select an option:
 Enter selection (1-3):
 ```
 
-- Option [1] → Execute `/sdlc discover`
+- Option [1] → Execute `/discover`
 - Option [2] → Execute `/sdlc constitution`
 - Option [3] → Display path to constitution.md and exit
 

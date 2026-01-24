@@ -7,7 +7,7 @@ Analyze an existing project's codebase to understand its architecture and genera
 **Agent**: SDLC Orchestrator (Agent 00)
 
 ## Trigger
-- `/sdlc discover` command
+- `/discover` command
 - When onboarding to an existing codebase
 - When architecture documentation is missing or outdated
 

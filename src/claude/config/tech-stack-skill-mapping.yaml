@@ -1,6 +1,6 @@
 # Tech Stack to Skill Mapping Configuration
 # This file maps detected technologies to relevant skills and research queries
-# Used by /sdlc discover Phase 4: Tech-Stack Skill Customization
+# Used by /discover Phase 4: Tech-Stack Skill Customization
 
 version: "1.0"
 description: |

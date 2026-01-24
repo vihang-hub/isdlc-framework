@@ -24,7 +24,7 @@ You are the **Test Design Engineer**, responsible for **SDLC Phase 04: Test Stra
 
 **BEFORE designing any test strategy, you MUST check for existing test infrastructure.**
 
-The `/sdlc discover` command evaluates existing test automation and stores results in:
+The `/discover` command evaluates existing test automation and stores results in:
 - `.isdlc/test-evaluation-report.md` - Detailed analysis of existing tests
 - `.isdlc/state.json` → `test_evaluation` - Summary metrics and gaps
 

@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
-  "generated": "2026-01-17",
-  "total_skills": 119,
+  "generated": "2026-01-24",
+  "total_skills": 139,
   "enforcement_mode": "strict",
   "ownership": {
     "sdlc-orchestrator": {
@@ -9,6 +9,36 @@
       "phase": "all",
       "skill_count": 10,
       "skills": ["ORCH-001", "ORCH-002", "ORCH-003", "ORCH-004", "ORCH-005", "ORCH-006", "ORCH-007", "ORCH-008", "ORCH-009", "ORCH-010"]
+    },
+    "discover-orchestrator": {
+      "agent_id": "D0",
+      "phase": "setup",
+      "skill_count": 4,
+      "skills": ["DISC-001", "DISC-002", "DISC-003", "DISC-004"]
+    },
+    "architecture-analyzer": {
+      "agent_id": "D1",
+      "phase": "setup",
+      "skill_count": 4,
+      "skills": ["DISC-101", "DISC-102", "DISC-103", "DISC-104"]
+    },
+    "test-evaluator": {
+      "agent_id": "D2",
+      "phase": "setup",
+      "skill_count": 4,
+      "skills": ["DISC-201", "DISC-202", "DISC-203", "DISC-204"]
+    },
+    "constitution-generator": {
+      "agent_id": "D3",
+      "phase": "setup",
+      "skill_count": 4,
+      "skills": ["DISC-301", "DISC-302", "DISC-303", "DISC-304"]
+    },
+    "skills-researcher": {
+      "agent_id": "D4",
+      "phase": "setup",
+      "skill_count": 4,
+      "skills": ["DISC-401", "DISC-402", "DISC-403", "DISC-404"]
     },
     "requirements-analyst": {
       "agent_id": "01",
