@@ -114,16 +114,6 @@ if [ "$IS_EXISTING_PROJECT" = true ]; then
     echo -e "${YELLOW}This appears to be an existing project with code.${NC}"
     echo -e "${YELLOW}The framework will be installed without modifying your project structure.${NC}"
     echo ""
-    echo -e "${CYAN}After installation, run:${NC}"
-    echo -e "  1. ${GREEN}claude${NC} to start Claude Code"
-    echo -e "  2. ${GREEN}/sdlc discover${NC} to analyze your codebase and generate a tailored constitution"
-    echo ""
-    echo -e "${YELLOW}The discover command will:${NC}"
-    echo "  • Scan your project structure and dependencies"
-    echo "  • Detect technologies, frameworks, and patterns"
-    echo "  • Generate architecture documentation"
-    echo "  • Walk you through creating a project constitution based on your stack"
-    echo ""
 else
     echo ""
     echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
@@ -132,17 +122,17 @@ else
     echo ""
     echo -e "${YELLOW}This appears to be a new project.${NC}"
     echo ""
-    echo -e "${CYAN}After installation, run:${NC}"
-    echo -e "  1. ${GREEN}claude${NC} to start Claude Code"
-    echo -e "  2. ${GREEN}/sdlc constitution${NC} to create your project constitution"
-    echo ""
-    echo -e "${YELLOW}The constitution command will:${NC}"
-    echo "  • Ask what your project is about"
-    echo "  • Research best practices for your project type"
-    echo "  • Propose a draft constitution with relevant articles"
-    echo "  • Walk you through each article interactively"
-    echo ""
 fi
+
+echo -e "${CYAN}After installation, run:${NC}"
+echo -e "  1. ${GREEN}claude${NC} to start Claude Code"
+echo -e "  2. ${GREEN}/sdlc discover${NC} to set up your project"
+echo ""
+echo -e "${YELLOW}The discover command will:${NC}"
+echo "  • Analyze your project (or ask about it if new)"
+echo "  • Research best practices for your stack"
+echo "  • Guide you through creating a project constitution"
+echo ""
 
 # Workflow track is determined by orchestrator at runtime based on task complexity
 TRACK="auto"
@@ -562,7 +552,7 @@ if [ -f ".isdlc/constitution.md" ]; then
 
 <!-- CONSTITUTION_STATUS: STARTER_TEMPLATE -->
 <!-- This marker indicates this constitution needs customization -->
-<!-- Run /sdlc discover or /sdlc constitution to customize -->
+<!-- Run /sdlc discover to customize -->
 
 **Created**: $(date +"%Y-%m-%d")
 **Status**: ⚠️ NEEDS CUSTOMIZATION
@@ -575,8 +565,7 @@ This is a **starter constitution** auto-generated during framework installation.
 It contains generic articles that may not match your project's specific needs.
 
 **To customize this constitution:**
-- For existing projects: Run \`/sdlc discover\` to analyze your codebase and generate tailored articles
-- For new projects: Run \`/sdlc constitution\` to answer guided questions and create a project-specific constitution
+Run \`/sdlc discover\` to analyze your project and generate tailored articles interactively.
 
 **This constitution will be treated as a TEMPLATE until customized.**
 
@@ -675,7 +664,7 @@ if [ "$IS_EXISTING_PROJECT" = true ]; then
 else
     echo -e "${YELLOW}  Constitution template created at .isdlc/constitution.md${NC}"
 fi
-echo -e "${YELLOW}  Next step: Customize your project constitution using /sdlc constitution${NC}"
+echo -e "${YELLOW}  Next step: Run /sdlc discover to customize your project constitution${NC}"
 
 # ============================================================================
 # Step 6: Cleanup - Remove isdlc-framework folder
@@ -702,44 +691,27 @@ echo -e "${GREEN}║            Installation Complete!                          
 echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
-if [ "$IS_EXISTING_PROJECT" = true ]; then
-    # Existing project completion message
-    echo -e "${CYAN}Framework installed for existing project:${NC}"
-    echo "  .claude/           - Agent definitions and skills"
-    echo "  .isdlc/            - Project state and framework resources"
-    echo "  docs/              - Documentation (created if missing)"
-    echo ""
-    echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║                    NEXT STEPS                              ║${NC}"
-    echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
-    echo ""
-    echo -e "  1. Run ${GREEN}claude${NC} to start Claude Code"
-    echo -e "  2. Run ${GREEN}/sdlc discover${NC} to:"
-    echo "     • Analyze your project architecture"
-    echo "     • Generate architecture documentation"
-    echo "     • Create a tailored constitution interactively"
-    echo -e "  3. Run ${GREEN}/sdlc start${NC} to begin your workflow"
-    echo ""
-    echo -e "${YELLOW}Note: Your existing project structure was not modified.${NC}"
-else
-    # New project completion message
-    echo -e "${CYAN}Project Structure:${NC}"
-    echo "  .claude/           - Agent definitions and skills"
-    echo "  .isdlc/            - Project state and framework resources"
-    echo "  docs/              - Requirements and documentation"
+echo -e "${CYAN}Project Structure:${NC}"
+echo "  .claude/           - Agent definitions and skills"
+echo "  .isdlc/            - Project state and framework resources"
+echo "  docs/              - Documentation"
+if [ "$IS_EXISTING_PROJECT" = false ]; then
     echo "  src/               - Source code (lib/, utils/, config/)"
-    echo ""
-    echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║                    NEXT STEPS                              ║${NC}"
-    echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
-    echo ""
-    echo -e "  1. Run ${GREEN}claude${NC} to start Claude Code"
-    echo -e "  2. Run ${GREEN}/sdlc constitution${NC} to:"
-    echo "     • Describe your project"
-    echo "     • Get a tailored constitution based on your project type"
-    echo "     • Walk through each article interactively"
-    echo -e "  3. Run ${GREEN}/sdlc start${NC} to begin requirements capture"
-    echo ""
+fi
+echo ""
+echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║                    NEXT STEPS                              ║${NC}"
+echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "  1. Run ${GREEN}claude${NC} to start Claude Code"
+echo -e "  2. Run ${GREEN}/sdlc discover${NC} to:"
+echo "     • Analyze your project (or describe it if new)"
+echo "     • Research best practices for your stack"
+echo "     • Create a tailored constitution interactively"
+echo -e "  3. Run ${GREEN}/sdlc start${NC} to begin your workflow"
+echo ""
+if [ "$IS_EXISTING_PROJECT" = true ]; then
+    echo -e "${YELLOW}Note: Your existing project structure was not modified.${NC}"
 fi
 
 echo -e "${CYAN}Workflow:${NC} Orchestrator determines phases based on task complexity"
