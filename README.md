@@ -24,66 +24,49 @@ This framework implements a **1-to-1 mapping** between 13 SDLC phases and 13 spe
 ## Project Structure
 
 ```
-integrated-sdls-framework-v0.1/
-├── .claude/
-│   ├── agents/                    # 14 Agent definitions
-│   │   ├── 00-sdlc-orchestrator.md
-│   │   ├── 01-requirements-analyst.md
-│   │   ├── 02-solution-architect.md
-│   │   ├── 03-system-designer.md
-│   │   ├── 04-test-design-engineer.md
-│   │   ├── 05-software-developer.md
-│   │   ├── 06-integration-tester.md
-│   │   ├── 07-qa-engineer.md
-│   │   ├── 08-security-compliance-auditor.md
-│   │   ├── 09-cicd-engineer.md
-│   │   ├── 10-dev-environment-engineer.md
-│   │   ├── 11-deployment-engineer-staging.md
-│   │   ├── 12-release-manager.md
-│   │   └── 13-site-reliability-engineer.md
-│   ├── commands/                  # Custom slash commands
-│   │   └── primer.md              # /primer command for context loading
-│   ├── skills/                    # 119 Skills across 10 categories
-│   │   ├── orchestration/         # 10 skills
-│   │   ├── requirements/          # 10 skills
-│   │   ├── architecture/          # 12 skills
-│   │   ├── design/                # 10 skills
-│   │   ├── testing/               # 13 skills
-│   │   ├── development/           # 15 skills
-│   │   ├── devops/                # 14 skills
-│   │   ├── security/              # 13 skills
-│   │   ├── operations/            # 12 skills
-│   │   └── documentation/         # 10 skills
-│   ├── hooks/                     # Runtime enforcement hooks
-│   │   ├── config/
-│   │   │   ├── skills-manifest.json
-│   │   │   └── iteration-requirements.json
-│   │   ├── skill-validator.js
-│   │   ├── gate-blocker.js
-│   │   ├── test-watcher.js
-│   │   ├── constitution-validator.js
-│   │   └── menu-tracker.js
-│   ├── settings.json              # Hook configuration
-│   └── settings.local.json        # Claude Code configuration
-├── init-project.sh                # Installation script (run this!)
-├── isdlc-framework/               # Shared framework resources
-│   ├── templates/                 # Document templates
-│   ├── checklists/                # Phase gate checklists (13 files)
-│   ├── config/                    # Configuration files
-│   │   ├── defaults.yaml
-│   │   ├── coding-standards.yaml
-│   │   └── testing-standards.yaml
-│   └── scripts/                   # Utility scripts
-│       ├── validate-state.sh
-│       └── generate-report.sh
-├── docs/                          # Additional documentation
-│   ├── NEW-agents-and-skills-architecture.md
-│   ├── SKILL-DISTRIBUTION.md
-│   ├── DETAILED-SKILL-ALLOCATION.md
-│   ├── WORKFLOW-ALIGNMENT.md
-│   ├── SKILL-REDISTRIBUTION-COMPLETE.md
-│   └── RESTRUCTURING-SUMMARY.md
-└── README.md                      # This file
+isdlc-framework/
+├── src/
+│   ├── claude/                    # → Installed to .claude/
+│   │   ├── agents/                # 14 Agent definitions
+│   │   │   ├── 00-sdlc-orchestrator.md
+│   │   │   ├── 01-requirements-analyst.md
+│   │   │   └── ... (02-13)
+│   │   ├── commands/              # Custom slash commands
+│   │   │   └── primer.md
+│   │   ├── skills/                # 119 Skills across 10 categories
+│   │   │   ├── orchestration/
+│   │   │   ├── requirements/
+│   │   │   ├── architecture/
+│   │   │   ├── design/
+│   │   │   ├── testing/
+│   │   │   ├── development/
+│   │   │   ├── devops/
+│   │   │   ├── security/
+│   │   │   ├── operations/
+│   │   │   └── documentation/
+│   │   ├── hooks/                 # Runtime enforcement hooks
+│   │   │   ├── config/
+│   │   │   ├── skill-validator.js
+│   │   │   ├── gate-blocker.js
+│   │   │   └── ...
+│   │   └── settings.json
+│   │
+│   └── isdlc/                     # → Installed to .isdlc/
+│       ├── checklists/            # Phase gate checklists (13 files)
+│       ├── config/                # Configuration files
+│       │   ├── defaults.yaml
+│       │   ├── coding-standards.yaml
+│       │   └── testing-standards.yaml
+│       ├── scripts/               # Utility scripts
+│       │   ├── validate-state.sh
+│       │   └── generate-report.sh
+│       └── templates/             # Document templates
+│           └── constitution.md
+│
+├── docs/                          # Documentation
+├── install.sh                     # Installation script (run this!)
+├── README.md                      # This file
+└── LICENSE
 ```
 
 ## The 14 Specialized Agents
@@ -189,7 +172,7 @@ cd /path/to/your-project
 git clone <repo-url> isdlc-framework
 
 # Run the installation script
-./isdlc-framework/init-project.sh
+./isdlc-framework/install.sh
 ```
 
 The script is at the root of the cloned repo, so it's easy to find and run.
@@ -201,10 +184,10 @@ The script is at the root of the cloned repo, so it's easy to find and run.
 cd /path/to/your-project
 
 # Download and extract the framework
-# (creates isdlc-framework/ folder)
+# (clones into isdlc-framework/ folder)
 
 # Run the installation script
-./isdlc-framework/init-project.sh
+./isdlc-framework/install.sh
 ```
 
 ### What the Installation Does
@@ -225,7 +208,7 @@ cd /path/to/your-project
    - `checklists/` - Gate validation checklists
    - `templates/` - Document templates
 
-4. **Self-cleanup** - Removes the `isdlc-framework/` folder after installation
+4. **Self-cleanup** - Removes the cloned `isdlc-framework/` folder after installation
 
 ### After Installation
 
@@ -320,7 +303,7 @@ A project constitution is a set of immutable principles (like "Test-First Develo
 
 1. **Copy the template** to your project:
    ```bash
-   cp isdlc-framework/templates/constitution.md .isdlc/constitution.md
+   cp isdlc-framework/src/isdlc/templates/constitution.md .isdlc/constitution.md
    ```
    (Or use `init-project.sh` which does this automatically)
 
@@ -348,7 +331,7 @@ A project constitution is a set of immutable principles (like "Test-First Develo
 
 ### Resources
 
-- **Template**: [isdlc-framework/templates/constitution.md](isdlc-framework/templates/constitution.md)
+- **Template**: [src/isdlc/templates/constitution.md](src/isdlc/templates/constitution.md)
 - **Guide**: [docs/CONSTITUTION-GUIDE.md](docs/CONSTITUTION-GUIDE.md)
 - **Analysis**: [docs/FRAMEWORK-COMPARISON-ANALYSIS.md](docs/FRAMEWORK-COMPARISON-ANALYSIS.md)
 
@@ -416,7 +399,7 @@ When an agent needs functionality from a skill it doesn't own:
 ### Resources
 
 - **Documentation**: [docs/SKILL-ENFORCEMENT.md](docs/SKILL-ENFORCEMENT.md)
-- **Skills Manifest**: [isdlc-framework/config/skills-manifest.yaml](isdlc-framework/config/skills-manifest.yaml)
+- **Skills Manifest**: [src/isdlc/config/skills-manifest.yaml](src/isdlc/config/skills-manifest.yaml)
 - **Validation Skill**: [.claude/skills/orchestration/skill-validation/SKILL.md](.claude/skills/orchestration/skill-validation/SKILL.md)
 
 ## Autonomous Iteration
@@ -556,7 +539,7 @@ When iterations exceed max or circuit breaker triggers:
 
 ### Framework Defaults
 
-Located in `isdlc-framework/config/`:
+Located in `src/isdlc/config/`:
 
 - **defaults.yaml** - General framework settings
 - **coding-standards.yaml** - Code style and conventions
@@ -590,11 +573,11 @@ deployment:
 ## Utility Scripts
 
 ### init-project.sh (Installation Script)
-Located at the root of the cloned repo (`isdlc-framework/init-project.sh` from your project).
+Located at the root of the cloned repo (`isdlc-framework/install.sh` from your project).
 
 ```bash
 # Run from your project directory after cloning the framework
-./isdlc-framework/init-project.sh
+./isdlc-framework/install.sh
 ```
 
 This script:

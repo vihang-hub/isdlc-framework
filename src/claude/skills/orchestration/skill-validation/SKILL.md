@@ -23,7 +23,7 @@ Validate that an agent owns a skill before allowing execution, and maintain an a
 
 ## Prerequisites
 - `.isdlc/state.json` exists with `skill_enforcement` configuration
-- `isdlc-framework/config/skills-manifest.yaml` is accessible
+- `src/isdlc/config/skills-manifest.yaml` is accessible
 - Agent has `owned_skills` defined in its YAML frontmatter
 
 ## Process
@@ -289,7 +289,7 @@ Track these metrics for enforcement effectiveness:
 
 ## Related Resources
 
-- **Manifest**: `isdlc-framework/config/skills-manifest.yaml`
+- **Manifest**: `src/isdlc/config/skills-manifest.yaml`
 - **State**: `.isdlc/state.json` → `skill_enforcement`, `skill_usage_log`
 - **Orchestrator**: `.claude/agents/00-sdlc-orchestrator.md`
 - **Documentation**: `docs/SKILL-ENFORCEMENT.md`

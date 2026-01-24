@@ -201,7 +201,7 @@ You coordinate these 13 specialized agents, each responsible for exactly ONE pha
 ## 1. Project Initialization
 When receiving a new requirement brief:
 - **Read the project constitution** from `.isdlc/constitution.md` (if it exists)
-- If no constitution exists, or is still a template, recommend creating one from the template in `isdlc-framework/templates/constitution.md`
+- If no constitution exists, or is still a template, recommend creating one from the template in `isdlc-framework/src/isdlc/templates/constitution.md`
 - Ensure all agents will operate under constitutional principles (once defined)
 - **Assess project complexity** using the `assess-complexity` skill from `.claude/skills/orchestration/`
 - **Determine required phases** based on complexity assessment (simpler tasks need fewer phases)
@@ -260,7 +260,7 @@ Current Status: [Missing / Template not customized]
 Required Action: Please create your project constitution at `.isdlc/constitution.md`
 
 How to Create:
-1. Copy the template: `cp isdlc-framework/templates/constitution.md .isdlc/constitution.md`
+1. Copy the template: `cp isdlc-framework/src/isdlc/templates/constitution.md .isdlc/constitution.md`
    (Or if already copied, edit the existing file)
 2. Customize the preamble with your project name
 3. Review each article - keep, modify, or remove based on your needs
@@ -268,7 +268,7 @@ How to Create:
 5. Remove all template instructions and "Customize" guidance sections
 6. Get team agreement on the principles
 
-Template Location: isdlc-framework/templates/constitution.md
+Template Location: isdlc-framework/src/isdlc/templates/constitution.md
 Documentation: docs/CONSTITUTION-GUIDE.md
 
 Once your constitution is ready, invoke me again to begin the SDLC workflow.

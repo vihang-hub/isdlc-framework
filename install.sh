@@ -6,7 +6,7 @@
 #
 # Usage:
 #   1. Clone the iSDLC framework into your project: git clone <repo> isdlc-framework
-#   2. Run: ./isdlc-framework/init-project.sh
+#   2. Run: ./isdlc-framework/install.sh
 #   3. The script will set up the framework and clean up after itself
 #
 # What it does:
@@ -29,8 +29,8 @@ NC='\033[0m'
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # The project root is the parent of the cloned framework folder
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-# Framework resources are at the root of the cloned folder (not in a subdirectory)
-FRAMEWORK_DIR="$SCRIPT_DIR"
+# Framework resources are in src/ subdirectory
+FRAMEWORK_DIR="$SCRIPT_DIR/src"
 
 # ============================================================================
 # Remove framework development files (not needed by end users)
@@ -161,7 +161,7 @@ cd "$PROJECT_ROOT"
 # ============================================================================
 echo -e "${BLUE}[1/6]${NC} Setting up .claude folder..."
 
-FRAMEWORK_CLAUDE="$SCRIPT_DIR/.claude"
+FRAMEWORK_CLAUDE="$FRAMEWORK_DIR/claude"
 
 if [ ! -d "$FRAMEWORK_CLAUDE" ]; then
     echo -e "${RED}Error: Framework .claude folder not found at $FRAMEWORK_CLAUDE${NC}"
@@ -291,8 +291,8 @@ if [ -f "$SCRIPT_DIR/framework-info.md" ]; then
 fi
 
 # Copy templates to docs if they exist
-if [ -d "$FRAMEWORK_DIR/templates/requirements" ]; then
-    cp "$FRAMEWORK_DIR/templates/requirements/"*.md docs/requirements/ 2>/dev/null || true
+if [ -d "$FRAMEWORK_DIR/isdlc/templates/requirements" ]; then
+    cp "$FRAMEWORK_DIR/isdlc/templates/requirements/"*.md docs/requirements/ 2>/dev/null || true
     echo -e "${GREEN}  ✓ Copied requirement templates to docs/requirements/${NC}"
 fi
 
@@ -373,15 +373,15 @@ echo -e "${BLUE}[4/6]${NC} Setting up .isdlc folder..."
 mkdir -p .isdlc/phases/{01-requirements,02-architecture,03-design,04-test-strategy,05-implementation,06-testing,07-code-review,08-validation,09-cicd,10-local-testing,11-test-deploy,12-production,13-operations}/artifacts
 
 # Copy config files
-if [ -d "$FRAMEWORK_DIR/config" ]; then
-    cp -r "$FRAMEWORK_DIR/config" ".isdlc/"
+if [ -d "$FRAMEWORK_DIR/isdlc/config" ]; then
+    cp -r "$FRAMEWORK_DIR/isdlc/config" ".isdlc/"
     echo -e "${GREEN}  ✓ Copied config files${NC}"
 fi
 
 # Copy skills manifest to hooks config folder (hooks config lives with hooks)
 mkdir -p ".claude/hooks/config"
-if [ -f "$FRAMEWORK_DIR/config/skills-manifest.yaml" ]; then
-    cp "$FRAMEWORK_DIR/config/skills-manifest.yaml" ".claude/hooks/config/"
+if [ -f "$FRAMEWORK_DIR/isdlc/config/skills-manifest.yaml" ]; then
+    cp "$FRAMEWORK_DIR/isdlc/config/skills-manifest.yaml" ".claude/hooks/config/"
 
     # Convert skills manifest from YAML to JSON for runtime hooks
     # Check for yq
@@ -399,15 +399,15 @@ with open('.claude/hooks/config/skills-manifest.json', 'w') as f:
 " 2>/dev/null
         echo -e "${GREEN}  ✓ Copied and converted skills manifest to hooks/config/ (Python)${NC}"
     # Use scripts/convert-manifest.sh if available
-    elif [ -f "$FRAMEWORK_DIR/scripts/convert-manifest.sh" ]; then
+    elif [ -f "$FRAMEWORK_DIR/isdlc/scripts/convert-manifest.sh" ]; then
         mkdir -p "scripts"
-        cp "$FRAMEWORK_DIR/scripts/convert-manifest.sh" "scripts/"
+        cp "$FRAMEWORK_DIR/isdlc/scripts/convert-manifest.sh" "scripts/"
         chmod +x "scripts/convert-manifest.sh"
         "./scripts/convert-manifest.sh" --input ".claude/hooks/config/skills-manifest.yaml" --output ".claude/hooks/config/skills-manifest.json" >/dev/null 2>&1
         echo -e "${GREEN}  ✓ Copied and converted skills manifest to hooks/config/ (embedded)${NC}"
     # Fallback: copy pre-converted JSON if available
-    elif [ -f "$FRAMEWORK_DIR/config/skills-manifest.json" ]; then
-        cp "$FRAMEWORK_DIR/config/skills-manifest.json" ".claude/hooks/config/"
+    elif [ -f "$FRAMEWORK_DIR/isdlc/config/skills-manifest.json" ]; then
+        cp "$FRAMEWORK_DIR/isdlc/config/skills-manifest.json" ".claude/hooks/config/"
         echo -e "${GREEN}  ✓ Copied skills manifest (JSON) to hooks/config/${NC}"
     else
         echo -e "${YELLOW}  Warning: Could not convert manifest. Install yq or Python+PyYAML.${NC}"
@@ -415,26 +415,26 @@ with open('.claude/hooks/config/skills-manifest.json', 'w') as f:
 fi
 
 # Copy checklists
-if [ -d "$FRAMEWORK_DIR/checklists" ]; then
-    cp -r "$FRAMEWORK_DIR/checklists" ".isdlc/"
+if [ -d "$FRAMEWORK_DIR/isdlc/checklists" ]; then
+    cp -r "$FRAMEWORK_DIR/isdlc/checklists" ".isdlc/"
     echo -e "${GREEN}  ✓ Copied gate checklists${NC}"
 fi
 
 # Copy templates
-if [ -d "$FRAMEWORK_DIR/templates" ]; then
-    cp -r "$FRAMEWORK_DIR/templates" ".isdlc/"
+if [ -d "$FRAMEWORK_DIR/isdlc/templates" ]; then
+    cp -r "$FRAMEWORK_DIR/isdlc/templates" ".isdlc/"
     echo -e "${GREEN}  ✓ Copied templates${NC}"
 fi
 
 # Copy scripts (validate-state.sh, generate-report.sh)
-if [ -d "$FRAMEWORK_DIR/scripts" ]; then
-    cp -r "$FRAMEWORK_DIR/scripts" ".isdlc/"
+if [ -d "$FRAMEWORK_DIR/isdlc/scripts" ]; then
+    cp -r "$FRAMEWORK_DIR/isdlc/scripts" ".isdlc/"
     echo -e "${GREEN}  ✓ Copied utility scripts${NC}"
 fi
 
 # Copy constitution
-if [ -f "$FRAMEWORK_DIR/templates/constitution.md" ]; then
-    cp "$FRAMEWORK_DIR/templates/constitution.md" ".isdlc/constitution.md"
+if [ -f "$FRAMEWORK_DIR/isdlc/templates/constitution.md" ]; then
+    cp "$FRAMEWORK_DIR/isdlc/templates/constitution.md" ".isdlc/constitution.md"
     echo -e "${GREEN}  ✓ Copied constitution${NC}"
 fi
 

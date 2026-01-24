@@ -469,7 +469,7 @@ Auto-detect and escalate on:
 
 ### Track-Specific Settings
 
-Add to `isdlc-framework/config/tracks.yaml`:
+Add to `src/isdlc/config/tracks.yaml`:
 
 ```yaml
 tracks:
@@ -494,7 +494,7 @@ tracks:
 
 ### Phase-Article Mapping
 
-Add to `isdlc-framework/config/constitution-mapping.yaml`:
+Add to `src/isdlc/config/constitution-mapping.yaml`:
 
 ```yaml
 phase_articles:

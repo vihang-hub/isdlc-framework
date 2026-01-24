@@ -9,7 +9,7 @@ This is the **iSDLC Framework** itself - a comprehensive SDLC framework for Clau
 ## What's in This Repository
 
 ### Agents (14 Specialized AI Agents)
-Located in `.claude/agents/`:
+Located in `src/claude/agents/`:
 - **00-sdlc-orchestrator.md** - Coordinates all phases and validates gates
 - **01-requirements-analyst.md** - Captures requirements, user stories, NFRs
 - **02-solution-architect.md** - Designs architecture, tech stack, database
@@ -26,7 +26,7 @@ Located in `.claude/agents/`:
 - **13-site-reliability-engineer.md** - Operations and monitoring
 
 ### Skills (119 Specialized Skills)
-Located in `.claude/skills/` organized in 10 categories:
+Located in `src/claude/skills/` organized in 10 categories:
 - **orchestration/** (10 skills) - Workflow management, gates, delegation
 - **requirements/** (10 skills) - Elicitation, user stories, NFR quantification
 - **architecture/** (12 skills) - Architecture patterns, tech evaluation, ADRs
@@ -39,7 +39,7 @@ Located in `.claude/skills/` organized in 10 categories:
 - **operations/** (12 skills) - Monitoring, incident response, SLA management
 
 ### Framework Resources
-Located in `isdlc-framework/`:
+Located in `src/isdlc/`:
 - **checklists/** - 13 phase gate validation checklists
 - **templates/** - Document templates for artifacts
 - **config/** - Configuration files (defaults, coding standards, testing standards)
@@ -55,17 +55,17 @@ Located in `docs/`:
 
 ### If You're Working on the Framework Itself
 This repository is for developing and maintaining the iSDLC framework:
-- Add new skills to `.claude/skills/`
-- Modify agent definitions in `.claude/agents/`
-- Update templates in `isdlc-framework/templates/`
-- Enhance scripts in `isdlc-framework/scripts/`
+- Add new skills to `src/claude/skills/`
+- Modify agent definitions in `src/claude/agents/`
+- Update templates in `src/isdlc/templates/`
+- Enhance scripts in `src/isdlc/scripts/`
 - Update documentation in `docs/` and `README.md`
 
 ### If You Want to Use This Framework for a Project
 This framework is designed to be cloned/installed and then used for actual software projects:
 
 1. Clone this framework repository
-2. Run `./init-project.sh` to install into your project
+2. Run `./install.sh` to install into your project
 3. The project will have agents, skills, and its own `.isdlc/` state directory
 4. The cloned framework folder is cleaned up after installation
 
@@ -124,9 +124,9 @@ The orchestrator determines which phases to run based on task complexity:
 
 When working on this framework:
 
-1. **Agent Modifications**: Update agent files in `.claude/agents/` and ensure consistency with gate checklists
-2. **New Skills**: Add to appropriate category in `.claude/skills/`
-3. **Templates**: Maintain templates in `isdlc-framework/templates/` for artifact generation
+1. **Agent Modifications**: Update agent files in `src/claude/agents/` and ensure consistency with gate checklists
+2. **New Skills**: Add to appropriate category in `src/claude/skills/`
+3. **Templates**: Maintain templates in `src/isdlc/templates/` for artifact generation
 4. **Documentation**: Keep README.md and docs/ up-to-date with any changes
 5. **Testing**: Test changes with real projects using the framework
 

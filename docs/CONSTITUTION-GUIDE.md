@@ -77,7 +77,7 @@ The `/sdlc discover` command will:
 If you prefer manual creation:
 
 ```bash
-cp isdlc-framework/templates/constitution.md .isdlc/constitution.md
+cp isdlc-framework/src/isdlc/templates/constitution.md .isdlc/constitution.md
 ```
 
 ### Universal Articles (Baked In)
@@ -438,9 +438,9 @@ Use all template articles + domain-specific ones:
 
 ## Resources
 
-- **Constitution Template**: `isdlc-framework/templates/constitution.md`
+- **Constitution Template**: `src/isdlc/templates/constitution.md`
 - **Framework Analysis**: `docs/FRAMEWORK-COMPARISON-ANALYSIS.md`
-- **Agent Documentation**: `.claude/agents/00-sdlc-orchestrator.md`
+- **Agent Documentation**: `src/claude/agents/00-sdlc-orchestrator.md`
 - **Inspiration**: GitHub Spec Kit, BMAD-METHOD
 
 ---

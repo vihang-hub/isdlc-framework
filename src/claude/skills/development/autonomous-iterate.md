@@ -460,7 +460,7 @@ Auto-detect and escalate on:
 
 ### Track-Specific Settings
 
-Located in `isdlc-framework/config/tracks.yaml`:
+Located in `src/isdlc/config/tracks.yaml`:
 
 ```yaml
 tracks:
@@ -499,7 +499,7 @@ tracks:
 - **Inspired by**: Ralph Wiggum autonomous iteration loops
 - **Gate Integration**: GATE-05, GATE-06
 - **State Management**: `.isdlc/state.json`
-- **Configuration**: `isdlc-framework/config/tracks.yaml`
+- **Configuration**: `src/isdlc/config/tracks.yaml`
 
 ---
 

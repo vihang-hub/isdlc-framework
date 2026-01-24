@@ -275,7 +275,7 @@ To avoid clutter while gaining critical capabilities, add **only these 3 enhance
 
 **What to Add**:
 1. **Constitution Template**:
-   - Location: `isdlc-framework/templates/constitution.md`
+   - Location: `src/isdlc/templates/constitution.md`
    - Content: 9-12 immutable principles
    - Loaded by all agents at start
    - Enforced by orchestrator at gates
@@ -322,9 +322,9 @@ To avoid clutter while gaining critical capabilities, add **only these 3 enhance
    - Located in `.isdlc/constitution.md`
 
 **Files to Create/Modify**:
-- `isdlc-framework/templates/constitution.md` (NEW - ~150 lines)
-- `isdlc-framework/scripts/init-project.sh` (MODIFY - copy constitution)
-- `.claude/agents/00-sdlc-orchestrator.md` (MODIFY - add constitution validation)
+- `src/isdlc/templates/constitution.md` (NEW - ~150 lines)
+- `install.sh` (MODIFY - copy constitution)
+- `src/claude/agents/00-sdlc-orchestrator.md` (MODIFY - add constitution validation)
 - All 13 agent files (MODIFY - add "Read constitution first" instruction)
 
 **Size**: ~300 lines total
@@ -359,7 +359,7 @@ To avoid clutter while gaining critical capabilities, add **only these 3 enhance
    - Gates: All 13 gates
 
 3. **Track Configuration**:
-   - Location: `isdlc-framework/config/tracks.yaml`
+   - Location: `src/isdlc/config/tracks.yaml`
    - Defines which phases are required/optional per track
    - Orchestrator reads and enforces track
 
@@ -369,10 +369,10 @@ To avoid clutter while gaining critical capabilities, add **only these 3 enhance
    - `state.json` includes: `"phases_required": [1,2,3,4,5,6,7,9]`
 
 **Files to Create/Modify**:
-- `.claude/skills/orchestration/assess-complexity.md` (NEW - ~200 lines)
-- `isdlc-framework/config/tracks.yaml` (NEW - ~150 lines)
-- `isdlc-framework/scripts/init-project.sh` (MODIFY - add track selection)
-- `.claude/agents/00-sdlc-orchestrator.md` (MODIFY - add track enforcement)
+- `src/claude/skills/orchestration/assess-complexity.md` (NEW - ~200 lines)
+- `src/isdlc/config/tracks.yaml` (NEW - ~150 lines)
+- `install.sh` (MODIFY - add track selection)
+- `src/claude/agents/00-sdlc-orchestrator.md` (MODIFY - add track enforcement)
 - `.isdlc/state.json` template (MODIFY - add track fields)
 
 **Size**: ~500 lines total

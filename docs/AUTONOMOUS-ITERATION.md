@@ -297,7 +297,7 @@ To test autonomous iteration:
 
 1. **Create test project**:
    ```bash
-   ./isdlc-framework/scripts/init-project.sh test-autonomous-iteration
+   ./isdlc-framework/install.sh test-autonomous-iteration
    ```
 
 2. **Verify configuration**:

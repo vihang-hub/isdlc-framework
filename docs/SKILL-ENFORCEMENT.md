@@ -132,7 +132,7 @@ owner: software-developer
 The `skills-manifest.yaml` provides authoritative skill-to-agent mappings:
 
 ```yaml
-# isdlc-framework/config/skills-manifest.yaml
+# src/isdlc/config/skills-manifest.yaml
 version: "2.0.0"
 total_skills: 119
 enforcement_mode: strict
