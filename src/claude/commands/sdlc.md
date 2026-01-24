@@ -18,25 +18,31 @@ When `/sdlc` is invoked without any action, present a context-aware menu based o
    - `(Customize This)` markers
    - `## Articles (Generic - Customize for Your Project)`
 2. Check if `.isdlc/state.json` exists and has `current_phase` set (workflow in progress)
-3. Check if this is an existing project with source code
+3. Check if this is a new or existing project
 
-**Existing Project Detection:**
-An existing project is detected if ANY of these are found:
-- `src/` or `lib/` or `app/` directory exists
-- `package.json` exists (Node.js project)
-- `requirements.txt` or `pyproject.toml` exists (Python project)
-- `go.mod` exists (Go project)
-- `Cargo.toml` exists (Rust project)
-- `pom.xml` or `build.gradle` exists (Java project)
-- More than 5 source code files (`*.py`, `*.js`, `*.ts`, `*.go`, `*.rs`, `*.java`)
+**Project Type Detection (Priority Order):**
+
+1. **Primary: Check `state.json`** - Read `.isdlc/state.json` → `project.is_new_project`
+   - If `is_new_project: true` → NEW project
+   - If `is_new_project: false` → EXISTING project (or discovery completed)
+
+2. **Fallback: File-based detection** (if `is_new_project` not set or state.json missing)
+   An existing project is detected if ANY of these are found:
+   - `src/` or `lib/` or `app/` directory exists
+   - `package.json` exists (Node.js project)
+   - `requirements.txt` or `pyproject.toml` exists (Python project)
+   - `go.mod` exists (Go project)
+   - `Cargo.toml` exists (Rust project)
+   - `pom.xml` or `build.gradle` exists (Java project)
+   - More than 5 source code files (`*.py`, `*.js`, `*.ts`, `*.go`, `*.rs`, `*.java`)
 
 ---
 
-**SCENARIO 1: Constitution NOT configured + NEW project (no existing code)**
+**SCENARIO 1: Constitution NOT configured + NEW project (is_new_project: true)**
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
-║  iSDLC Framework - Setup                                     ║
+║  iSDLC Framework - New Project Setup                         ║
 ╚══════════════════════════════════════════════════════════════╝
 
 Constitution Status: Not configured
@@ -44,8 +50,8 @@ Project Type: New project
 
 Select an option:
 
-[1] Create Constitution Interactively (Recommended)
-    Answer guided questions to generate a tailored constitution
+[1] Run /sdlc discover (Recommended)
+    Define your project, set up tech stack, and create constitution
 
 [2] Edit constitution.md Manually
     Open .isdlc/constitution.md and customize the template yourself
@@ -55,11 +61,11 @@ Enter selection (1-2):
 
 ---
 
-**SCENARIO 2: Constitution NOT configured + EXISTING project (code detected)**
+**SCENARIO 2: Constitution NOT configured + EXISTING project (is_new_project: false)**
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
-║  iSDLC Framework - Setup                                     ║
+║  iSDLC Framework - Existing Project Setup                    ║
 ╚══════════════════════════════════════════════════════════════╝
 
 Constitution Status: Not configured
@@ -68,15 +74,12 @@ Project Type: Existing codebase detected (Node.js, TypeScript)
 Select an option:
 
 [1] Run /sdlc discover (Recommended)
-    Analyze existing codebase and auto-generate constitution
+    Analyze codebase and auto-generate tailored constitution
 
-[2] Create Constitution Interactively
-    Answer guided questions to generate a tailored constitution
-
-[3] Edit constitution.md Manually
+[2] Edit constitution.md Manually
     Open .isdlc/constitution.md and customize the template yourself
 
-Enter selection (1-3):
+Enter selection (1-2):
 ```
 
 ---
@@ -141,14 +144,13 @@ Enter selection (1-4):
 
 | Scenario | Option | Action |
 |----------|--------|--------|
-| 1 (New, no constitution) | [1] | Execute `/sdlc constitution` |
+| 1 (New, no constitution) | [1] | Execute `/sdlc discover` (runs NEW PROJECT FLOW) |
 | 1 (New, no constitution) | [2] | Display path to constitution.md and exit |
-| 2 (Existing, no constitution) | [1] | Execute `/sdlc discover` |
-| 2 (Existing, no constitution) | [2] | Execute `/sdlc constitution` |
-| 2 (Existing, no constitution) | [3] | Display path to constitution.md and exit |
+| 2 (Existing, no constitution) | [1] | Execute `/sdlc discover` (runs EXISTING PROJECT FLOW) |
+| 2 (Existing, no constitution) | [2] | Display path to constitution.md and exit |
 | 3 (Constitution ready) | [1] | Execute `/sdlc start` (prompt for project name) |
 | 3 (Constitution ready) | [2] | Display constitution contents |
-| 3 (Constitution ready) | [3] | Execute `/sdlc constitution` |
+| 3 (Constitution ready) | [3] | Execute `/sdlc discover` (re-run setup) |
 | 4 (Workflow in progress) | [1] | Execute `/sdlc status` |
 | 4 (Workflow in progress) | [2] | Execute `/sdlc gate-check` |
 | 4 (Workflow in progress) | [3] | Execute `/sdlc advance` |
@@ -292,11 +294,260 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 > Let's review each article...
 ```
 
-**discover** - Analyze existing project and create tailored constitution
+**discover** - Analyze project and create tailored constitution
 ```
 /sdlc discover
 ```
-This command analyzes an existing codebase and interactively creates a constitution.
+This command is the universal entry point for setting up a project with iSDLC. It adapts its behavior based on whether this is a new or existing project.
+
+**Step 0: Detect Project Type**
+
+First, read `.isdlc/state.json` and check the `project.is_new_project` flag:
+
+```
+Read .isdlc/state.json → project.is_new_project
+
+IF is_new_project === true:
+  → Execute NEW PROJECT FLOW (skip analysis, go to constitution)
+ELSE:
+  → Execute EXISTING PROJECT FLOW (full analysis)
+```
+
+---
+
+## NEW PROJECT FLOW (is_new_project: true)
+
+For new projects, skip the codebase analysis and go directly to interactive constitution creation.
+
+**Display:**
+```
+╔══════════════════════════════════════════════════════════════╗
+║  iSDLC Framework - New Project Setup                         ║
+╚══════════════════════════════════════════════════════════════╝
+
+Welcome! Let's set up your new project.
+
+Since this is a new project, I'll help you:
+  1. Define your project and tech stack
+  2. Research best practices for your stack
+  3. Create a tailored constitution
+  4. Set up the recommended folder structure
+```
+
+**NP-Step 1: Gather Project Information**
+
+Ask the user about their project:
+```
+What is this project about?
+(Describe the project type, purpose, and key features)
+
+> User: "A REST API for managing user authentication with JWT tokens"
+```
+
+**NP-Step 2: Identify Tech Stack**
+
+Ask about the intended tech stack:
+```
+What technology stack will you use?
+
+Language/Runtime:
+[1] Node.js (JavaScript/TypeScript)
+[2] Python
+[3] Go
+[4] Java
+[5] Rust
+[6] Other (specify)
+
+> User selects: [1] Node.js
+
+Framework:
+[1] Express.js
+[2] Fastify
+[3] NestJS
+[4] Koa
+[5] Hono
+[6] None/Custom
+
+> User selects: [3] NestJS
+
+Database:
+[1] PostgreSQL
+[2] MySQL
+[3] MongoDB
+[4] SQLite
+[5] None/Undecided
+[6] Other (specify)
+
+> User selects: [1] PostgreSQL
+```
+
+**NP-Step 3: Launch Parallel Research Agents**
+
+Same as the `constitution` command - launch 4 research agents IN PARALLEL:
+
+| Agent | Task | Search Queries |
+|-------|------|----------------|
+| **Best Practices** | Research industry best practices | "{project_type} {framework} best practices 2026" |
+| **Compliance** | Research compliance requirements | "{project_type} compliance requirements", relevant regulations |
+| **Performance** | Research performance benchmarks | "{framework} performance benchmarks", "{project_type} SLA standards" |
+| **Testing** | Research testing standards | "{framework} testing best practices", "{language} test coverage standards" |
+
+**NP-Step 4: Generate Draft Constitution**
+
+Create a draft constitution with:
+- Universal articles (from template)
+- Domain-specific articles based on research
+- Customized thresholds from research findings
+
+**NP-Step 5: Interactive Article Review**
+
+Walk through each article:
+- Display the article with research context
+- Ask: "Keep this article as-is, modify it, or remove it?"
+- Allow adding custom articles
+
+**NP-Step 6: Create Project Structure**
+
+Based on the selected tech stack, create the appropriate `src/` structure:
+
+**Node.js/TypeScript (Express, Fastify, Koa, Hono):**
+```
+src/
+├── config/           # Configuration and environment
+├── controllers/      # Route handlers
+├── middleware/       # Express/Fastify middleware
+├── models/          # Data models and types
+├── routes/          # Route definitions
+├── services/        # Business logic
+├── utils/           # Utility functions
+└── index.ts         # Entry point
+```
+
+**Node.js/TypeScript (NestJS):**
+```
+src/
+├── common/          # Shared decorators, pipes, guards
+├── config/          # Configuration modules
+├── modules/         # Feature modules
+│   └── users/       # Example module
+├── app.module.ts    # Root module
+└── main.ts          # Entry point
+```
+
+**Python (FastAPI, Flask, Django):**
+```
+src/
+├── api/             # API routes/views
+├── config/          # Configuration
+├── models/          # Data models
+├── schemas/         # Pydantic schemas (FastAPI)
+├── services/        # Business logic
+├── utils/           # Utilities
+├── __init__.py
+└── main.py          # Entry point
+```
+
+**Go:**
+```
+cmd/
+└── server/
+    └── main.go      # Entry point
+internal/
+├── config/          # Configuration
+├── handlers/        # HTTP handlers
+├── middleware/      # HTTP middleware
+├── models/          # Data models
+├── repository/      # Data access
+└── services/        # Business logic
+pkg/                 # Public packages
+```
+
+**Java (Spring Boot):**
+```
+src/
+└── main/
+    └── java/
+        └── com/example/
+            ├── config/       # Configuration classes
+            ├── controller/   # REST controllers
+            ├── model/        # Entity classes
+            ├── repository/   # JPA repositories
+            ├── service/      # Service layer
+            └── Application.java
+```
+
+**Rust:**
+```
+src/
+├── config/          # Configuration
+├── handlers/        # Request handlers
+├── models/          # Data models
+├── routes/          # Route definitions
+├── services/        # Business logic
+└── main.rs          # Entry point
+```
+
+Create the structure and add a README:
+```bash
+mkdir -p src/{appropriate_folders}
+echo "# Source Code - {project_name}\n\nGenerated by iSDLC discover for {framework} projects." > src/README.md
+```
+
+**NP-Step 7: Initialize Testing Infrastructure**
+
+Based on the selected stack, set up appropriate testing tools:
+
+| Stack | Unit Testing | Integration | E2E |
+|-------|-------------|-------------|-----|
+| Node.js/TS | Jest/Vitest | Supertest | Playwright |
+| Python | pytest | pytest + httpx | pytest + Playwright |
+| Go | go test | go test + httptest | - |
+| Java | JUnit 5 | Spring Boot Test | - |
+| Rust | cargo test | - | - |
+
+Create test directories:
+```
+tests/
+├── unit/
+├── integration/
+└── e2e/
+```
+
+**NP-Step 8: Save and Complete**
+
+1. Write constitution to `.isdlc/constitution.md`
+2. Update `state.json`:
+   - Set `project.is_new_project: false` (setup complete)
+   - Set `project.tech_stack` with detected/selected values
+   - Set `current_phase: "01-requirements"`
+3. Display completion summary
+
+```
+════════════════════════════════════════════════════════════════
+  NEW PROJECT SETUP COMPLETE
+════════════════════════════════════════════════════════════════
+
+  Project: {project_name}
+  Tech Stack: {language} + {framework} + {database}
+
+  Created:
+    ✓ .isdlc/constitution.md (tailored constitution)
+    ✓ src/ (project structure for {framework})
+    ✓ tests/ (testing infrastructure)
+
+  Next Steps:
+    1. Review constitution: cat .isdlc/constitution.md
+    2. Start coding in src/
+    3. When ready: /sdlc start "Your first task"
+
+════════════════════════════════════════════════════════════════
+```
+
+---
+
+## EXISTING PROJECT FLOW (is_new_project: false)
+
+For existing projects with code, run the full analysis workflow.
 
 **Phase 1: Architecture Discovery**
 1. Scan the project directory structure and files
@@ -1428,6 +1679,13 @@ Where will this project be deployed?
 
 Ready to start the SDLC workflow? Run /sdlc start
 ```
+
+**Final State Update:**
+
+After all phases complete, update `state.json`:
+- Set `project.is_new_project: false` (discovery complete, no longer needs setup flow)
+- Set `project.tech_stack` with discovered values (language, framework, database)
+- Set `project.discovered_at` to current timestamp
 
 **DISCOVER COMPLETE - Summary:**
 
