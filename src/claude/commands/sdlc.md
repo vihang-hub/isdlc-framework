@@ -300,26 +300,52 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 ```
 This command is the universal entry point for setting up a project with iSDLC. It adapts its behavior based on whether this is a new or existing project.
 
-**Step 0: Detect Project Type**
+---
 
-First, read `.isdlc/state.json` and check the `project.is_new_project` flag:
+## ⚡ FAST PATH CHECK (MANDATORY - Execute in <5 seconds)
+
+**CRITICAL: This check MUST happen FIRST, IMMEDIATELY, before ANY other action.**
 
 ```
-Read .isdlc/state.json → project.is_new_project
+┌─────────────────────────────────────────────────────────────────┐
+│  STOP. DO NOT:                                                  │
+│    ✗ Scan directories                                           │
+│    ✗ Read package.json, requirements.txt, or any project files  │
+│    ✗ Analyze codebase structure                                 │
+│    ✗ Launch exploration agents                                  │
+│    ✗ Search for patterns                                        │
+│                                                                 │
+│  UNTIL you complete this single-file check:                     │
+└─────────────────────────────────────────────────────────────────┘
+```
 
+**Step 1: Read state.json (ONE file, ONE field)**
+```
+Read .isdlc/state.json
+Extract: project.is_new_project
+```
+
+**Step 2: Branch IMMEDIATELY based on result**
+```
 IF is_new_project === true:
-  → Execute NEW PROJECT FLOW (skip analysis, go to constitution)
-ELSE:
-  → Execute EXISTING PROJECT FLOW (full analysis)
+  → Display "New Project Setup" header
+  → Ask "What is this project about?"
+  → DONE with fast path (continue to NEW PROJECT FLOW below)
+
+IF is_new_project === false:
+  → Display "Existing Project Setup" header
+  → Begin analysis (EXISTING PROJECT FLOW below)
 ```
+
+**Why this matters:** New projects have no code to analyze. Spending time scanning an empty project wastes user time. The `is_new_project` flag tells us instantly which path to take.
 
 ---
 
 ## NEW PROJECT FLOW (is_new_project: true)
 
-For new projects, skip the codebase analysis and go directly to interactive constitution creation.
+For new projects, skip ALL codebase analysis and go directly to interactive constitution creation.
 
-**Display:**
+**Immediately display (no scanning, no delay):**
 ```
 ╔══════════════════════════════════════════════════════════════╗
 ║  iSDLC Framework - New Project Setup                         ║
@@ -327,22 +353,29 @@ For new projects, skip the codebase analysis and go directly to interactive cons
 
 Welcome! Let's set up your new project.
 
-Since this is a new project, I'll help you:
+I'll help you:
   1. Define your project and tech stack
   2. Research best practices for your stack
   3. Create a tailored constitution
   4. Set up the recommended folder structure
-```
 
-**NP-Step 1: Gather Project Information**
-
-Ask the user about their project:
-```
 What is this project about?
 (Describe the project type, purpose, and key features)
-
-> User: "A REST API for managing user authentication with JWT tokens"
 ```
+
+**Then wait for user response.** Do NOT proceed until user describes the project.
+
+**NP-Step 1: Process Project Description**
+
+User responds with project description, e.g.:
+```
+> "A REST API for managing user authentication with JWT tokens"
+```
+
+Parse the description to identify:
+- Project type (API, web app, CLI, library, etc.)
+- Domain hints (auth, e-commerce, analytics, etc.)
+- Any mentioned technologies
 
 **NP-Step 2: Identify Tech Stack**
 
