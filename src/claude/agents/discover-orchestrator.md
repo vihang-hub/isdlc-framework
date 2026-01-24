@@ -149,9 +149,94 @@ Are you happy with this stack, or do you have specific preferences?
 | Microservices | Go + gRPC + PostgreSQL |
 | Simple Website | Astro or Next.js + Tailwind |
 
-### Step 3: Launch Constitution Generator
+### Step 3: Present Plan and Get Approval
 
-Use the Task tool to launch `constitution-generator` sub-agent:
+Once tech stack is confirmed, present the full plan before executing:
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║  SETUP PLAN                                                  ║
+╚══════════════════════════════════════════════════════════════╝
+
+I'll now set up your project. Here's what will happen:
+
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 1: Research (runs in parallel)                        │
+├──────────────────────────────────────────────────────────────┤
+│ □ Research Next.js best practices                           │
+│ □ Research security requirements for SaaS                   │
+│ □ Research testing standards for TypeScript                 │
+│ □ Research performance benchmarks                           │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 2: Constitution                                        │
+├──────────────────────────────────────────────────────────────┤
+│ □ Generate draft constitution from research                 │
+│ □ Interactive review of each article (you'll approve)       │
+│ □ Save constitution to .isdlc/constitution.md               │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 3: Project Structure                                   │
+├──────────────────────────────────────────────────────────────┤
+│ □ Create src/ directory with Next.js structure              │
+│ □ Create tests/ directory                                   │
+│ □ Initialize package.json with dependencies                 │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 4: Finalize                                            │
+├──────────────────────────────────────────────────────────────┤
+│ □ Update state.json with project configuration              │
+│ □ Generate setup summary                                    │
+└──────────────────────────────────────────────────────────────┘
+
+Ready to proceed? [Y] Yes / [N] No, let me adjust something
+```
+
+**Wait for user approval before executing.**
+
+### Step 4: Execute with Progress Updates
+
+As each phase executes, show progress:
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║  EXECUTING SETUP PLAN                                        ║
+╚══════════════════════════════════════════════════════════════╝
+
+PHASE 1: Research                                    [In Progress]
+├─ ✓ Research Next.js best practices                    (done)
+├─ ✓ Research security requirements for SaaS            (done)
+├─ ◐ Research testing standards for TypeScript          (running)
+└─ ◐ Research performance benchmarks                    (running)
+```
+
+After each step completes, update the display:
+
+```
+PHASE 1: Research                                    [Complete ✓]
+├─ ✓ Research Next.js best practices
+├─ ✓ Research security requirements for SaaS
+├─ ✓ Research testing standards for TypeScript
+└─ ✓ Research performance benchmarks
+
+PHASE 2: Constitution                                [In Progress]
+├─ ✓ Generate draft constitution from research          (done)
+├─ ◐ Interactive review of each article                 (your input needed)
+└─ □ Save constitution to .isdlc/constitution.md        (pending)
+```
+
+**Progress indicators:**
+- `□` = Pending (not started)
+- `◐` = In progress / Running
+- `✓` = Complete
+- `✗` = Failed (with error message)
+
+### Step 5: Execute PHASE 1 - Research (Constitution Generator)
+
+Launch `constitution-generator` sub-agent which handles research:
 
 ```json
 {
@@ -161,13 +246,22 @@ Use the Task tool to launch `constitution-generator` sub-agent:
 }
 ```
 
+**Show progress:**
+```
+PHASE 1: Research                                    [In Progress]
+├─ ◐ Research {framework} best practices                (running)
+├─ ◐ Research security requirements                     (running)
+├─ ◐ Research testing standards                         (running)
+└─ ◐ Research performance benchmarks                    (running)
+```
+
 The constitution-generator will:
 - Launch 4 parallel research agents
 - Generate draft constitution
-- Walk through interactive article review
+- Walk through interactive article review (PHASE 2)
 - Save to `.isdlc/constitution.md`
 
-### Step 4: Create Project Structure
+### Step 6: Execute PHASE 3 - Create Project Structure
 
 Based on selected tech stack, create appropriate `src/` structure:
 
@@ -219,7 +313,15 @@ internal/
 pkg/
 ```
 
-### Step 5: Initialize Testing
+**Show progress:**
+```
+PHASE 3: Project Structure                           [In Progress]
+├─ ✓ Create src/ directory with {framework} structure   (done)
+├─ ◐ Create tests/ directory                            (running)
+└─ □ Initialize package.json with dependencies          (pending)
+```
+
+### Step 7: Initialize Testing
 
 Create test directory structure:
 ```
@@ -229,7 +331,22 @@ tests/
 └── e2e/
 ```
 
-### Step 6: Update State
+**Show progress:**
+```
+PHASE 3: Project Structure                           [Complete ✓]
+├─ ✓ Create src/ directory with {framework} structure
+├─ ✓ Create tests/ directory
+└─ ✓ Initialize package.json with dependencies
+```
+
+### Step 8: Execute PHASE 4 - Finalize
+
+**Show progress:**
+```
+PHASE 4: Finalize                                    [In Progress]
+├─ ◐ Update state.json with project configuration       (running)
+└─ □ Generate setup summary                             (pending)
+```
 
 Update `.isdlc/state.json`:
 ```json
@@ -246,9 +363,35 @@ Update `.isdlc/state.json`:
 }
 ```
 
-### Step 7: Display Completion
+### Step 9: Display Completion
+
+Show final progress with all phases complete:
 
 ```
+╔══════════════════════════════════════════════════════════════╗
+║  SETUP COMPLETE                                              ║
+╚══════════════════════════════════════════════════════════════╝
+
+PHASE 1: Research                                    [Complete ✓]
+├─ ✓ Research {framework} best practices
+├─ ✓ Research security requirements
+├─ ✓ Research testing standards
+└─ ✓ Research performance benchmarks
+
+PHASE 2: Constitution                                [Complete ✓]
+├─ ✓ Generate draft constitution from research
+├─ ✓ Interactive review of each article
+└─ ✓ Save constitution to .isdlc/constitution.md
+
+PHASE 3: Project Structure                           [Complete ✓]
+├─ ✓ Create src/ directory with {framework} structure
+├─ ✓ Create tests/ directory
+└─ ✓ Initialize package.json with dependencies
+
+PHASE 4: Finalize                                    [Complete ✓]
+├─ ✓ Update state.json with project configuration
+└─ ✓ Generate setup summary
+
 ════════════════════════════════════════════════════════════════
   NEW PROJECT SETUP COMPLETE
 ════════════════════════════════════════════════════════════════
@@ -275,7 +418,7 @@ Update `.isdlc/state.json`:
 
 For existing projects, run comprehensive analysis.
 
-### Step 1: Display Welcome
+### Step 1: Display Welcome and Present Plan
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
@@ -284,20 +427,67 @@ For existing projects, run comprehensive analysis.
 
 I'll analyze your project and set up the iSDLC framework.
 
-This will:
-  1. Analyze your codebase architecture
-  2. Evaluate existing test infrastructure
-  3. Generate a tailored constitution
-  4. Install relevant skills for your stack
-  5. Fill any testing gaps
+Here's what will happen:
 
-Starting analysis...
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 1: Architecture Analysis                               │
+├──────────────────────────────────────────────────────────────┤
+│ □ Scan directory structure                                   │
+│ □ Detect technologies and frameworks                         │
+│ □ Analyze dependencies                                       │
+│ □ Generate architecture documentation                        │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 2: Test Evaluation                                     │
+├──────────────────────────────────────────────────────────────┤
+│ □ Detect test framework                                      │
+│ □ Count and categorize tests                                 │
+│ □ Analyze coverage                                           │
+│ □ Identify testing gaps                                      │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 3: Constitution Generation                             │
+├──────────────────────────────────────────────────────────────┤
+│ □ Research best practices for your stack                     │
+│ □ Generate draft constitution                                │
+│ □ Interactive review (you'll approve each article)          │
+│ □ Save constitution                                          │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 4: Skills & Testing Setup                              │
+├──────────────────────────────────────────────────────────────┤
+│ □ Search skills.sh for your stack                           │
+│ □ Install recommended skills                                 │
+│ □ Fill testing gaps (if any)                                │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 5: Finalize                                            │
+├──────────────────────────────────────────────────────────────┤
+│ □ Update project state                                       │
+│ □ Generate setup summary                                     │
+└──────────────────────────────────────────────────────────────┘
+
+Ready to proceed? [Y] Yes / [N] No, I have questions
 ```
 
-### Step 2: Launch Architecture Analyzer
+**Wait for user approval before executing.**
 
-Use the Task tool to launch `architecture-analyzer`:
+### Step 2: Execute PHASE 1 - Architecture Analysis
 
+**Show progress:**
+```
+PHASE 1: Architecture Analysis                       [In Progress]
+├─ ◐ Scan directory structure                           (running)
+├─ □ Detect technologies and frameworks                 (pending)
+├─ □ Analyze dependencies                               (pending)
+└─ □ Generate architecture documentation                (pending)
+```
+
+Launch `architecture-analyzer`:
 ```json
 {
   "subagent_type": "architecture-analyzer",
@@ -306,17 +496,30 @@ Use the Task tool to launch `architecture-analyzer`:
 }
 ```
 
-**Wait for completion.** The analyzer returns:
-- Detected technologies
-- Framework identification
-- Dependency analysis
-- Directory structure map
-- Generated `docs/architecture/architecture-overview.md`
+**On completion, show:**
+```
+PHASE 1: Architecture Analysis                       [Complete ✓]
+├─ ✓ Scan directory structure
+├─ ✓ Detect technologies and frameworks
+│   → Detected: TypeScript, NestJS, PostgreSQL
+├─ ✓ Analyze dependencies
+│   → 24 production, 18 dev dependencies
+└─ ✓ Generate architecture documentation
+    → docs/architecture/architecture-overview.md
+```
 
-### Step 3: Launch Test Evaluator
+### Step 3: Execute PHASE 2 - Test Evaluation
 
-Use the Task tool to launch `test-evaluator`:
+**Show progress:**
+```
+PHASE 2: Test Evaluation                             [In Progress]
+├─ ◐ Detect test framework                              (running)
+├─ □ Count and categorize tests                         (pending)
+├─ □ Analyze coverage                                   (pending)
+└─ □ Identify testing gaps                              (pending)
+```
 
+Launch `test-evaluator`:
 ```json
 {
   "subagent_type": "test-evaluator",
@@ -325,17 +528,32 @@ Use the Task tool to launch `test-evaluator`:
 }
 ```
 
-**Wait for completion.** The evaluator returns:
-- Test types found (unit, integration, e2e)
-- Coverage metrics
-- Testing patterns detected
-- Gaps identified
-- Generated `.isdlc/test-evaluation-report.md`
+**On completion, show:**
+```
+PHASE 2: Test Evaluation                             [Complete ✓]
+├─ ✓ Detect test framework
+│   → Jest 29.x detected
+├─ ✓ Count and categorize tests
+│   → 47 unit tests, 12 integration tests, 0 E2E
+├─ ✓ Analyze coverage
+│   → 67% line coverage (target: 80%)
+└─ ✓ Identify testing gaps
+    → Missing: E2E tests, mutation testing
+    → .isdlc/test-evaluation-report.md
+```
 
-### Step 4: Launch Constitution Generator
+### Step 4: Execute PHASE 3 - Constitution Generation
 
-Use the Task tool to launch `constitution-generator`:
+**Show progress:**
+```
+PHASE 3: Constitution Generation                     [In Progress]
+├─ ◐ Research best practices for your stack            (running)
+├─ □ Generate draft constitution                        (pending)
+├─ □ Interactive review (you'll approve each article)  (pending)
+└─ □ Save constitution                                  (pending)
+```
 
+Launch `constitution-generator`:
 ```json
 {
   "subagent_type": "constitution-generator",
@@ -348,13 +566,27 @@ The generator will:
 - Use architecture analysis to infer articles
 - Launch parallel research agents
 - Generate draft with domain-specific articles
-- Walk through interactive review
+- Walk through interactive review (user input required)
 - Save to `.isdlc/constitution.md`
 
-### Step 5: Launch Skills Researcher
+### Step 5: Execute PHASE 4a - Skills Researcher
 
-Use the Task tool to launch `skills-researcher`:
+**Show progress:**
+```
+PHASE 3: Constitution Generation                     [Complete ✓]
+├─ ✓ Research best practices for your stack
+├─ ✓ Generate draft constitution
+├─ ✓ Interactive review (you approved each article)
+└─ ✓ Save constitution
+    → .isdlc/constitution.md
 
+PHASE 4: Skills & Testing Setup                      [In Progress]
+├─ ◐ Search skills.sh for your stack                   (running)
+├─ □ Install recommended skills                        (pending)
+└─ □ Fill testing gaps (if any)                        (pending)
+```
+
+Launch `skills-researcher`:
 ```json
 {
   "subagent_type": "skills-researcher",
@@ -370,7 +602,17 @@ The researcher will:
 - Fall back to web research for gaps
 - Generate `.isdlc/skill-customization-report.md`
 
-### Step 6: Fill Testing Gaps (Optional)
+**On completion, show:**
+```
+PHASE 4: Skills & Testing Setup                      [In Progress]
+├─ ✓ Search skills.sh for your stack
+│   → Found: 3 matching skills
+├─ ✓ Install recommended skills
+│   → Installed: anthropics/react, anthropics/typescript
+└─ ◐ Fill testing gaps (if any)                        (evaluating)
+```
+
+### Step 6: Execute PHASE 4b - Fill Testing Gaps (Optional)
 
 If test evaluation found gaps, offer to set up missing infrastructure:
 
@@ -383,10 +625,34 @@ Test Evaluation found gaps:
 Set up missing test infrastructure? [Y/n]
 ```
 
+**If yes, show progress:**
+```
+PHASE 4: Skills & Testing Setup                      [In Progress]
+├─ ✓ Search skills.sh for your stack
+├─ ✓ Install recommended skills
+└─ ◐ Fill testing gaps                                  (running)
+    ├─ ◐ Create E2E test directory                     (running)
+    ├─ □ Configure Playwright                          (pending)
+    └─ □ Configure Stryker                             (pending)
+```
+
 If yes, create:
 - Missing test directories
 - Configuration files (stryker.conf.js, playwright.config.ts)
 - Test scripts in package.json
+
+**On completion:**
+```
+PHASE 4: Skills & Testing Setup                      [Complete ✓]
+├─ ✓ Search skills.sh for your stack
+│   → Found: 3 matching skills
+├─ ✓ Install recommended skills
+│   → Installed: anthropics/react, anthropics/typescript
+└─ ✓ Fill testing gaps
+    ├─ ✓ Created tests/e2e/
+    ├─ ✓ Configured Playwright
+    └─ ✓ Configured Stryker
+```
 
 ### Step 7: Cloud Configuration (Optional)
 
@@ -395,11 +661,35 @@ Configure cloud deployment? [Y/n/later]
 ```
 
 If yes:
+**Show progress:**
+```
+Cloud Configuration                                  [In Progress]
+├─ ◐ Collecting provider details                       (your input)
+├─ □ Validate credentials                              (pending)
+└─ □ Update state.json                                 (pending)
+```
+
 - Ask for provider (AWS/GCP/Azure/Local)
 - Collect provider-specific config
+- Validate credentials if possible
 - Update state.json
 
-### Step 8: Update State
+**On completion:**
+```
+Cloud Configuration                                  [Complete ✓]
+├─ ✓ Provider selected: AWS
+├─ ✓ Credentials validated
+└─ ✓ Updated state.json
+```
+
+### Step 8: Execute PHASE 5 - Finalize
+
+**Show progress:**
+```
+PHASE 5: Finalize                                    [In Progress]
+├─ ◐ Update project state                              (running)
+└─ □ Generate setup summary                            (pending)
+```
 
 Update `.isdlc/state.json`:
 ```json
@@ -412,32 +702,71 @@ Update `.isdlc/state.json`:
 }
 ```
 
+**On completion:**
+```
+PHASE 5: Finalize                                    [Complete ✓]
+├─ ✓ Update project state
+└─ ✓ Generate setup summary
+```
+
 ### Step 9: Display Completion
 
-```
-════════════════════════════════════════════════════════════════
-  /discover COMPLETE
-════════════════════════════════════════════════════════════════
+Show final progress with all phases complete:
 
-  Phase 1: Architecture Discovery ✓
+```
+╔══════════════════════════════════════════════════════════════╗
+║  DISCOVERY COMPLETE                                          ║
+╚══════════════════════════════════════════════════════════════╝
+
+PHASE 1: Architecture Analysis                       [Complete ✓]
+├─ ✓ Scan directory structure
+├─ ✓ Detect technologies and frameworks
+│   → TypeScript, NestJS, PostgreSQL
+├─ ✓ Analyze dependencies
+│   → 24 production, 18 dev dependencies
+└─ ✓ Generate architecture documentation
     → docs/architecture/architecture-overview.md
 
-  Phase 2: Test Evaluation ✓
-    → Existing: Jest, 47 unit tests, 67% coverage
-    → Gaps: E2E, mutation testing
+PHASE 2: Test Evaluation                             [Complete ✓]
+├─ ✓ Detect test framework
+│   → Jest 29.x
+├─ ✓ Count and categorize tests
+│   → 47 unit, 12 integration, 0 E2E
+├─ ✓ Analyze coverage
+│   → 67% (target: 80%)
+└─ ✓ Identify testing gaps
     → .isdlc/test-evaluation-report.md
 
-  Phase 3: Constitution Generation ✓
+PHASE 3: Constitution Generation                     [Complete ✓]
+├─ ✓ Research best practices for your stack
+├─ ✓ Generate draft constitution
+├─ ✓ Interactive review (you approved each article)
+└─ ✓ Save constitution
     → .isdlc/constitution.md
 
-  Phase 4: Skills Installation ✓
-    → Installed: anthropics/react, anthropics/typescript
-    → .isdlc/skill-customization-report.md
+PHASE 4: Skills & Testing Setup                      [Complete ✓]
+├─ ✓ Search skills.sh for your stack
+├─ ✓ Install recommended skills
+│   → anthropics/react, anthropics/typescript
+└─ ✓ Fill testing gaps
+    → Added Playwright, Stryker
 
-  Phase 5: Testing Infrastructure ✓
-    → Added: Playwright, Stryker
+PHASE 5: Finalize                                    [Complete ✓]
+├─ ✓ Update project state
+└─ ✓ Generate setup summary
 
 ════════════════════════════════════════════════════════════════
+  EXISTING PROJECT SETUP COMPLETE
+════════════════════════════════════════════════════════════════
+
+  Project: {project_name}
+  Tech Stack: TypeScript + NestJS + PostgreSQL
+
+  Created:
+    ✓ docs/architecture/architecture-overview.md
+    ✓ .isdlc/test-evaluation-report.md
+    ✓ .isdlc/constitution.md
+    ✓ .isdlc/skill-customization-report.md
 
   Next Steps:
     1. Review constitution: cat .isdlc/constitution.md
