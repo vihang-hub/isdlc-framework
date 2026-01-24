@@ -149,7 +149,7 @@ cd "$PROJECT_ROOT"
 # ============================================================================
 # Step 1: Handle .claude folder
 # ============================================================================
-echo -e "${BLUE}[1/6]${NC} Setting up .claude folder..."
+echo -e "${BLUE}[1/5]${NC} Setting up .claude folder..."
 
 FRAMEWORK_CLAUDE="$FRAMEWORK_DIR/claude"
 
@@ -220,7 +220,7 @@ fi
 # ============================================================================
 # Step 1b: Setup skill enforcement hooks (Node.js - Cross-Platform)
 # ============================================================================
-echo -e "${BLUE}[1b/6]${NC} Setting up skill enforcement hooks..."
+echo -e "${BLUE}[1b/5]${NC} Setting up skill enforcement hooks..."
 
 # Check for Node.js (required for hooks)
 if ! command -v node &> /dev/null; then
@@ -260,7 +260,7 @@ fi
 # ============================================================================
 # Step 2: Create docs folder
 # ============================================================================
-echo -e "${BLUE}[2/6]${NC} Setting up docs folder..."
+echo -e "${BLUE}[2/5]${NC} Setting up docs folder..."
 
 if [ -d "docs" ]; then
     echo -e "${YELLOW}  docs/ folder already exists${NC}"
@@ -314,51 +314,9 @@ EOF
 echo -e "${GREEN}  ✓ Created docs/README.md${NC}"
 
 # ============================================================================
-# Step 3: Create src folder with recommended structure (new projects only)
+# Step 3: Create .isdlc folder with state
 # ============================================================================
-echo -e "${BLUE}[3/6]${NC} Setting up src folder..."
-
-if [ "$IS_EXISTING_PROJECT" = true ]; then
-    echo -e "${YELLOW}  Existing project - skipping src folder creation${NC}"
-elif [ -d "src" ]; then
-    echo -e "${YELLOW}  src/ folder already exists - preserving existing structure${NC}"
-else
-    mkdir -p src/lib
-    mkdir -p src/utils
-    mkdir -p src/config
-
-    # Create a README in src
-    cat > src/README.md << 'SRCEOF'
-# Source Code
-
-This folder contains the project source code.
-
-## Structure
-
-```
-src/
-├── lib/        # Core library code and modules
-├── utils/      # Utility functions and helpers
-├── config/     # Configuration files and constants
-└── README.md   # This file
-```
-
-## Getting Started
-
-1. Add your core application code in `lib/`
-2. Create reusable utilities in `utils/`
-3. Place configuration and constants in `config/`
-
-Adjust this structure based on your project needs.
-SRCEOF
-
-    echo -e "${GREEN}  ✓ Created src/ with lib/, utils/, config/${NC}"
-fi
-
-# ============================================================================
-# Step 4: Create .isdlc folder with state
-# ============================================================================
-echo -e "${BLUE}[4/6]${NC} Setting up .isdlc folder..."
+echo -e "${BLUE}[3/5]${NC} Setting up .isdlc folder..."
 
 mkdir -p .isdlc/phases/{01-requirements,02-architecture,03-design,04-test-strategy,05-implementation,06-testing,07-code-review,08-validation,09-cicd,10-local-testing,11-test-deploy,12-production,13-operations}/artifacts
 
@@ -436,7 +394,8 @@ cat > .isdlc/state.json << EOF
   "project": {
     "name": "$PROJECT_NAME",
     "created": "$TIMESTAMP",
-    "description": ""
+    "description": "",
+    "is_new_project": $( [ "$IS_EXISTING_PROJECT" = true ] && echo "false" || echo "true" )
   },
   "complexity_assessment": {
     "level": $COMPLEXITY_LEVEL,
@@ -542,7 +501,7 @@ fi
 # ============================================================================
 # Step 5: Update constitution with project info and display for review
 # ============================================================================
-echo -e "${BLUE}[5/6]${NC} Configuring project constitution..."
+echo -e "${BLUE}[4/5]${NC} Configuring project constitution..."
 
 # Update constitution with project name and track info
 if [ -f ".isdlc/constitution.md" ]; then
@@ -669,7 +628,7 @@ echo -e "${YELLOW}  Next step: Run /sdlc discover to customize your project cons
 # ============================================================================
 # Step 6: Cleanup - Remove isdlc-framework folder
 # ============================================================================
-echo -e "${BLUE}[6/6]${NC} Cleaning up installation files..."
+echo -e "${BLUE}[5/5]${NC} Cleaning up installation files..."
 
 # Store the script dir before we delete it
 CLEANUP_DIR="$SCRIPT_DIR"
@@ -695,9 +654,6 @@ echo -e "${CYAN}Project Structure:${NC}"
 echo "  .claude/           - Agent definitions and skills"
 echo "  .isdlc/            - Project state and framework resources"
 echo "  docs/              - Documentation"
-if [ "$IS_EXISTING_PROJECT" = false ]; then
-    echo "  src/               - Source code (lib/, utils/, config/)"
-fi
 echo ""
 echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${CYAN}║                    NEXT STEPS                              ║${NC}"
