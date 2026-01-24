@@ -47,6 +47,23 @@ function loadIterationRequirements() {
 }
 
 /**
+ * Setup commands that should NEVER be blocked by gate validation.
+ * These run BEFORE workflows start or are configuration commands.
+ */
+const SETUP_COMMAND_KEYWORDS = [
+    'discover',
+    'constitution',
+    'init',
+    'setup',
+    'configure',
+    'configure-cloud',
+    'new project',
+    'project setup',
+    'install',
+    'status'  // Status checks should never be blocked
+];
+
+/**
  * Detect if this is a gate advancement attempt
  */
 function isGateAdvancementAttempt(input) {
@@ -58,6 +75,15 @@ function isGateAdvancementAttempt(input) {
         const subagentType = (toolInput.subagent_type || '').toLowerCase();
         const prompt = (toolInput.prompt || '').toLowerCase();
         const description = (toolInput.description || '').toLowerCase();
+        const combined = prompt + ' ' + description;
+
+        // FIRST: Check if this is a setup/configuration command - NEVER block these
+        for (const setupKeyword of SETUP_COMMAND_KEYWORDS) {
+            if (combined.includes(setupKeyword)) {
+                debugLog(`Setup command detected (${setupKeyword}), skipping gate check`);
+                return false;
+            }
+        }
 
         // Orchestrator invocations with gate-related keywords
         if (subagentType.includes('orchestrator') || subagentType === 'sdlc-orchestrator') {
@@ -74,6 +100,14 @@ function isGateAdvancementAttempt(input) {
     if (toolName === 'Skill') {
         const skill = (toolInput.skill || '').toLowerCase();
         const args = (toolInput.args || '').toLowerCase();
+
+        // Setup commands via Skill tool should not be blocked
+        for (const setupKeyword of SETUP_COMMAND_KEYWORDS) {
+            if (args.includes(setupKeyword)) {
+                debugLog(`Setup command detected via Skill (${setupKeyword}), skipping gate check`);
+                return false;
+            }
+        }
 
         if (skill === 'sdlc' && (args.includes('advance') || args.includes('gate'))) {
             return true;

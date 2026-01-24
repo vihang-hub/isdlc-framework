@@ -65,6 +65,23 @@ function loadIterationRequirements() {
 }
 
 /**
+ * Setup commands that should NEVER be blocked.
+ * These run BEFORE workflows start or are configuration commands.
+ */
+const SETUP_COMMAND_KEYWORDS = [
+    'discover',
+    'constitution',
+    'init',
+    'setup',
+    'configure',
+    'configure-cloud',
+    'new project',
+    'project setup',
+    'install',
+    'status'
+];
+
+/**
  * Detect if this is a phase completion attempt
  */
 function isPhaseCompletionAttempt(input) {
@@ -75,6 +92,14 @@ function isPhaseCompletionAttempt(input) {
         const prompt = (toolInput.prompt || '');
         const description = (toolInput.description || '');
         const combined = (prompt + ' ' + description).toLowerCase();
+
+        // FIRST: Check if this is a setup/configuration command - NEVER block these
+        for (const setupKeyword of SETUP_COMMAND_KEYWORDS) {
+            if (combined.includes(setupKeyword)) {
+                debugLog(`Setup command detected (${setupKeyword}), skipping phase completion check`);
+                return false;
+            }
+        }
 
         return COMPLETION_PATTERNS.some(pattern => pattern.test(combined));
     }
