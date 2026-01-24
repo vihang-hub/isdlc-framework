@@ -79,23 +79,75 @@ What is this project about?
 
 **Wait for user response before proceeding.**
 
-### Step 2: Gather Project Info
+### Step 2: Recommend Tech Stack
 
-After user describes the project:
+After user describes the project, **analyze their requirements** and recommend a complete, cohesive tech stack. Do NOT ask them to choose each layer separately.
+
+**Analysis factors:**
+- Project type (API, web app, CLI, mobile backend, etc.)
+- Key features mentioned (real-time, AI, payments, auth, etc.)
+- Scale indicators (personal project, startup, enterprise)
+- Any technologies explicitly mentioned by user
+
+**Present a complete recommendation:**
 
 ```
-What technology stack will you use?
+Based on your project (SaaS platform with payments and AI features),
+I recommend this tech stack:
 
-Language/Runtime:
-[1] Node.js (JavaScript/TypeScript)
-[2] Python
-[3] Go
-[4] Java
-[5] Rust
-[6] Other (specify)
+╔══════════════════════════════════════════════════════════════╗
+║  RECOMMENDED STACK                                           ║
+╠══════════════════════════════════════════════════════════════╣
+║                                                              ║
+║  Frontend:    Next.js 14 (React)                            ║
+║               → Server components, great DX, Vercel deploy   ║
+║                                                              ║
+║  Backend:     Next.js API Routes + tRPC                      ║
+║               → Type-safe end-to-end, single deployment      ║
+║                                                              ║
+║  Database:    PostgreSQL (via Prisma ORM)                    ║
+║               → Robust, great for SaaS, excellent tooling    ║
+║                                                              ║
+║  Auth:        NextAuth.js                                    ║
+║               → Built for Next.js, multiple providers        ║
+║                                                              ║
+║  Payments:    Stripe                                         ║
+║               → Industry standard, excellent docs            ║
+║                                                              ║
+║  AI:          Anthropic Claude API                           ║
+║               → Powerful, well-documented, good pricing      ║
+║                                                              ║
+║  Hosting:     Vercel + Supabase (or PlanetScale)            ║
+║               → Optimized for Next.js, easy scaling          ║
+║                                                              ║
+╚══════════════════════════════════════════════════════════════╝
+
+This stack is cohesive - all pieces work well together with
+excellent TypeScript support throughout.
+
+Are you happy with this stack, or do you have specific preferences?
+[Y] Yes, let's proceed
+[C] I have some changes (tell me what you'd prefer)
 ```
 
-Then ask for framework and database selections.
+**If user has changes:**
+- Listen to their preferences
+- Adjust the stack accordingly
+- Present updated recommendation
+- Confirm before proceeding
+
+**Stack recommendation guidelines by project type:**
+
+| Project Type | Recommended Stack |
+|-------------|-------------------|
+| SaaS Web App | Next.js + Prisma + PostgreSQL + Stripe |
+| REST API | Fastify/Express + TypeScript + PostgreSQL |
+| AI Application | Python FastAPI + PostgreSQL + LangChain |
+| Real-time App | Next.js + Supabase (realtime) + PostgreSQL |
+| Mobile Backend | NestJS + Prisma + PostgreSQL |
+| CLI Tool | Node.js + Commander.js or Python + Click |
+| Microservices | Go + gRPC + PostgreSQL |
+| Simple Website | Astro or Next.js + Tailwind |
 
 ### Step 3: Launch Constitution Generator
 
