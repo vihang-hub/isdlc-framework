@@ -8,7 +8,7 @@
  * - Task tool calls to orchestrator with "advance", "gate-check", "gate" in prompt
  * - Skill tool calls with /sdlc advance
  *
- * Version: 1.0.0
+ * Version: 2.0.0
  */
 
 const {
@@ -44,6 +44,48 @@ function loadIterationRequirements() {
         }
     }
     return null;
+}
+
+/**
+ * Load workflow definitions config
+ */
+function loadWorkflowDefinitions() {
+    const projectRoot = getProjectRoot();
+    const configPaths = [
+        path.join(projectRoot, '.isdlc', 'config', 'workflows.json'),
+        path.join(projectRoot, '.claude', 'hooks', 'config', 'workflows.json')
+    ];
+
+    for (const configPath of configPaths) {
+        if (fs.existsSync(configPath)) {
+            try {
+                return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            } catch (e) {
+                debugLog('Error loading workflow definitions:', e.message);
+            }
+        }
+    }
+    return null;
+}
+
+/**
+ * Deep merge two objects. Overrides replace base values.
+ */
+function mergeRequirements(base, overrides) {
+    if (!base) return overrides;
+    if (!overrides) return base;
+
+    const merged = JSON.parse(JSON.stringify(base));
+
+    for (const [key, value] of Object.entries(overrides)) {
+        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+            merged[key] = mergeRequirements(merged[key] || {}, value);
+        } else {
+            merged[key] = value;
+        }
+    }
+
+    return merged;
 }
 
 /**
@@ -316,8 +358,46 @@ async function main() {
             process.exit(0);
         }
 
-        // Get current phase
-        const currentPhase = state.current_phase;
+        // Determine current phase — workflow-aware
+        // If an active_workflow exists, use its current_phase; otherwise fall back to state.current_phase
+        const activeWorkflow = state.active_workflow;
+        let currentPhase;
+        let workflowDef = null;
+
+        if (activeWorkflow) {
+            currentPhase = activeWorkflow.current_phase || state.current_phase;
+            debugLog('Active workflow:', activeWorkflow.type, '| Phase:', currentPhase);
+
+            // Load workflow definition for sequence validation
+            const workflows = loadWorkflowDefinitions();
+            if (workflows && workflows.workflows) {
+                workflowDef = workflows.workflows[activeWorkflow.type];
+            }
+
+            // Validate phase is in the workflow sequence
+            if (workflowDef) {
+                const workflowPhases = workflowDef.phases;
+                const phaseIndex = activeWorkflow.current_phase_index;
+
+                // Verify current phase matches expected position in workflow
+                if (phaseIndex != null && workflowPhases[phaseIndex] !== currentPhase) {
+                    outputBlockResponse(
+                        `GATE BLOCKED: Workflow state mismatch. ` +
+                        `Expected phase '${workflowPhases[phaseIndex]}' at index ${phaseIndex} ` +
+                        `but current is '${currentPhase}'.`
+                    );
+                    process.exit(0);
+                }
+
+                // Check if this is the last phase (advancement would complete the workflow)
+                if (phaseIndex != null && phaseIndex >= workflowPhases.length - 1) {
+                    debugLog('At last workflow phase — gate check applies, advancement completes workflow');
+                }
+            }
+        } else {
+            currentPhase = state.current_phase;
+        }
+
         if (!currentPhase) {
             debugLog('No current phase set');
             process.exit(0);
@@ -325,11 +405,20 @@ async function main() {
 
         debugLog('Current phase:', currentPhase);
 
-        // Get phase requirements
-        const phaseReq = requirements.phase_requirements[currentPhase];
+        // Get base phase requirements
+        let phaseReq = requirements.phase_requirements[currentPhase];
         if (!phaseReq) {
             debugLog('No requirements defined for phase:', currentPhase);
             process.exit(0);
+        }
+
+        // Apply workflow-specific overrides if active
+        if (activeWorkflow && requirements.workflow_overrides) {
+            const overrides = requirements.workflow_overrides[activeWorkflow.type]?.[currentPhase];
+            if (overrides) {
+                debugLog('Applying workflow overrides for:', activeWorkflow.type, currentPhase);
+                phaseReq = mergeRequirements(phaseReq, overrides);
+            }
         }
 
         // Get phase state

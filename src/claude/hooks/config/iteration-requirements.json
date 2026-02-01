@@ -229,5 +229,48 @@
     "constitutional_max_exceeded": "human_decision",
     "circuit_breaker_triggered": "human_review",
     "timeout_exceeded": "human_notification"
+  },
+
+  "workflow_overrides": {
+    "_comment": "Per-workflow overrides that merge with base phase_requirements when a workflow is active",
+
+    "fix": {
+      "01-requirements": {
+        "interactive_elicitation": {
+          "min_menu_interactions": 1,
+          "scope": "bug-report"
+        }
+      },
+      "05-implementation": {
+        "test_iteration": {
+          "require_failing_test_first": true
+        }
+      }
+    },
+
+    "test-run": {
+      "06-testing": {
+        "constitutional_validation": {
+          "enabled": false
+        },
+        "test_iteration": {
+          "max_iterations": 1,
+          "report_only": true
+        }
+      }
+    },
+
+    "test-generate": {
+      "04-test-strategy": {
+        "constitutional_validation": {
+          "enabled": false
+        }
+      },
+      "06-testing": {
+        "test_iteration": {
+          "max_iterations": 5
+        }
+      }
+    }
   }
 }

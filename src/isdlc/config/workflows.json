@@ -1,0 +1,111 @@
+{
+  "version": "1.0.0",
+  "description": "Workflow definitions for iSDLC - each workflow defines a fixed, non-skippable phase sequence",
+
+  "workflows": {
+    "feature": {
+      "label": "New Feature",
+      "command": "/sdlc feature",
+      "description": "Implement a new feature end-to-end",
+      "phases": [
+        "01-requirements",
+        "02-architecture",
+        "03-design",
+        "05-implementation",
+        "06-testing",
+        "09-cicd",
+        "07-code-review"
+      ],
+      "gate_mode": "strict",
+      "agent_modifiers": {
+        "01-requirements": { "scope": "feature" },
+        "02-architecture": { "scope": "impact-assessment" }
+      }
+    },
+
+    "fix": {
+      "label": "Bug Fix",
+      "command": "/sdlc fix",
+      "description": "Fix a bug or defect with TDD",
+      "phases": [
+        "01-requirements",
+        "05-implementation",
+        "06-testing",
+        "09-cicd",
+        "07-code-review"
+      ],
+      "gate_mode": "strict",
+      "agent_modifiers": {
+        "01-requirements": { "scope": "bug-report" },
+        "05-implementation": { "require_failing_test_first": true }
+      }
+    },
+
+    "test-run": {
+      "label": "Run Tests",
+      "command": "/sdlc test run",
+      "description": "Execute existing automation tests",
+      "phases": [
+        "06-testing"
+      ],
+      "gate_mode": "strict",
+      "options": {
+        "test_type": {
+          "prompt": "Which tests do you want to run?",
+          "choices": ["unit", "system", "e2e"],
+          "multi_select": true
+        }
+      }
+    },
+
+    "test-generate": {
+      "label": "Generate Tests",
+      "command": "/sdlc test generate",
+      "description": "Create new tests for existing code",
+      "phases": [
+        "04-test-strategy",
+        "05-implementation",
+        "06-testing",
+        "07-code-review"
+      ],
+      "gate_mode": "strict",
+      "options": {
+        "test_type": {
+          "prompt": "What type of tests do you want to generate?",
+          "choices": ["unit", "system", "e2e"],
+          "multi_select": false
+        }
+      }
+    },
+
+    "full-lifecycle": {
+      "label": "Full Lifecycle",
+      "command": "/sdlc start",
+      "description": "Complete SDLC for new projects or major work",
+      "phases": [
+        "01-requirements",
+        "02-architecture",
+        "03-design",
+        "04-test-strategy",
+        "05-implementation",
+        "06-testing",
+        "07-code-review",
+        "08-validation",
+        "09-cicd",
+        "10-local-dev",
+        "11-staging",
+        "12-production",
+        "13-operations"
+      ],
+      "gate_mode": "strict",
+      "agent_modifiers": {}
+    }
+  },
+
+  "rules": {
+    "no_halfway_entry": true,
+    "no_phase_skipping": true,
+    "single_active_workflow": true,
+    "require_cancellation_reason": true
+  }
+}

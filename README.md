@@ -57,7 +57,9 @@ isdlc-framework/
 │       ├── config/                # Configuration files
 │       │   ├── defaults.yaml
 │       │   ├── coding-standards.yaml
-│       │   └── testing-standards.yaml
+│       │   ├── testing-standards.yaml
+│       │   ├── skills-manifest.yaml
+│       │   └── workflows.json
 │       ├── scripts/               # Utility scripts
 │       │   ├── validate-state.sh
 │       │   └── generate-report.sh
@@ -565,6 +567,8 @@ Located in `src/isdlc/config/`:
 - **defaults.yaml** - General framework settings
 - **coding-standards.yaml** - Code style and conventions
 - **testing-standards.yaml** - Test coverage requirements and standards
+- **skills-manifest.yaml** - Skill ownership and lookup tables
+- **workflows.json** - Workflow definitions (phase sequences, gate modes, agent modifiers)
 
 ### Project-Specific Config
 

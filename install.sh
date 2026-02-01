@@ -448,7 +448,12 @@ cat > .isdlc/state.json << EOF
       "workflow_endpoint": "10-local-testing"
     }
   },
+  "iteration_enforcement": {
+    "enabled": true
+  },
   "skill_usage_log": [],
+  "active_workflow": null,
+  "workflow_history": [],
   "current_phase": "01-requirements",
   "phases": {
     "01-requirements": { "status": "pending", "started": null, "completed": null, "gate_passed": null, "artifacts": [] },
