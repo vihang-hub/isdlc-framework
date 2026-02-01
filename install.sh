@@ -362,6 +362,14 @@ with open('.claude/hooks/config/skills-manifest.json', 'w') as f:
     fi
 fi
 
+# Copy workflows.json to both .isdlc/config/ and .claude/hooks/config/
+if [ -f "$FRAMEWORK_DIR/isdlc/config/workflows.json" ]; then
+    mkdir -p ".isdlc/config"
+    cp "$FRAMEWORK_DIR/isdlc/config/workflows.json" ".isdlc/config/"
+    cp "$FRAMEWORK_DIR/isdlc/config/workflows.json" ".claude/hooks/config/"
+    echo -e "${GREEN}  ✓ Copied workflow definitions${NC}"
+fi
+
 # Copy checklists
 if [ -d "$FRAMEWORK_DIR/isdlc/checklists" ]; then
     cp -r "$FRAMEWORK_DIR/isdlc/checklists" ".isdlc/"

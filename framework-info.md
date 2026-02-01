@@ -25,7 +25,7 @@ Located in `src/claude/agents/`:
 - **12-release-manager.md** - Manages production releases
 - **13-site-reliability-engineer.md** - Operations and monitoring
 
-### Discover Agents (6 Sub-Agents)
+### Discover Agents (8 Sub-Agents + 1 Orchestrator)
 Located in `src/claude/agents/discover/`:
 - **discover-orchestrator.md** - Coordinates project discovery (D0)
 - **architecture-analyzer.md** - Analyzes tech stack, dependencies, deployment topology (D1)
@@ -55,7 +55,7 @@ Located in `src/claude/skills/` organized in 11 categories:
 Located in `src/isdlc/`:
 - **checklists/** - 13 phase gate validation checklists
 - **templates/** - Document templates for artifacts
-- **config/** - Configuration files (defaults, coding standards, testing standards)
+- **config/** - Configuration files (defaults, coding standards, testing standards, skills manifest, workflow definitions)
 - **scripts/** - Utility scripts (validate-state, generate-report)
 
 ### Documentation
@@ -111,22 +111,21 @@ Each SDLC phase has exactly ONE dedicated agent:
 ### Quality Gates
 Each phase ends with a quality gate (GATE-01 through GATE-13) with specific validation criteria.
 
-### Linear Workflow
-Projects flow through phases sequentially:
-```
-Requirements → Architecture → Design → Test Strategy → Implementation
-→ Testing → Code Review → Validation → CI/CD → Local Dev
-→ Staging Deploy → Production Deploy → Operations
-```
+### Workflow Types
+Instead of always running all 13 phases, the framework provides focused workflows:
+
+| Command | Workflow | Phases |
+|---------|----------|--------|
+| `/sdlc feature` | New Feature | 01 → 02 → 03 → 05 → 06 → 09 → 07 |
+| `/sdlc fix` | Bug Fix (TDD) | 01 → 05 → 06 → 09 → 07 |
+| `/sdlc test run` | Run Tests | 06 |
+| `/sdlc test generate` | Generate Tests | 04 → 05 → 06 → 07 |
+| `/sdlc start` | Full Lifecycle | 01 → 02 → ... → 13 |
+
+Workflow definitions are in `.isdlc/config/workflows.json`. Each workflow has a fixed, non-skippable phase sequence with strict gate enforcement.
 
 ### Artifact-Based Handoffs
 Each phase produces specific artifacts that the next phase consumes.
-
-### Adaptive Workflow
-The orchestrator determines which phases to run based on task complexity:
-- Simple tasks (bug fixes) → fewer phases
-- Features and integrations → standard phases
-- Platforms and compliance → all 13 phases
 
 ### Key Features
 - **Project Constitution** - Customizable governance principles
@@ -147,7 +146,8 @@ When working on this framework:
 
 - **Clear Ownership**: Each agent owns exactly one phase
 - **Specialization**: Deep expertise in specific areas
-- **Quality Gates**: No phase skipping, validation required
+- **Quality Gates**: No phase skipping, validation required (workflow-aware)
+- **Focused Workflows**: Feature, fix, test, and full lifecycle paths
 - **Traceability**: Requirements → Design → Code → Tests
 - **Automation**: Scripts and tools to support the workflow
 - **Standardization**: Templates and standards for consistency
