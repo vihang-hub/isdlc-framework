@@ -275,45 +275,41 @@ async function main() {
             writeState(state);
         }
 
-        // Build article descriptions
+        // Build article descriptions with check instructions
         const articleDescriptions = getArticleDescriptions();
         const requiredArticles = phaseReq.constitutional_validation.articles;
-        const articleList = requiredArticles
-            .map(a => `  - Article ${a}: ${articleDescriptions[a] || 'Unknown'}`)
+        const articleChecklist = requiredArticles
+            .map(a => `   - Article ${a} (${(articleDescriptions[a] || 'Unknown').split(' - ')[0]}): ${(articleDescriptions[a] || 'Unknown').split(' - ')[1] || 'Check compliance'}`)
             .join('\n');
+
+        // Get iteration info
+        const constState = phaseState?.constitutional_validation;
+        const iterationsUsed = constState?.iterations_used || 0;
+        const maxIterations = phaseReq.constitutional_validation.max_iterations;
+        const remaining = maxIterations - iterationsUsed;
 
         // Block completion until constitutional validation is done
         const stopReason = `PHASE COMPLETION BLOCKED: Constitutional validation required.
 
 Status: ${status.reason}
-${status.message}
 
-Required Articles for ${currentPhase}:
-${articleList}
-
-Action Required: ${status.action}
-
-Before declaring phase complete, you MUST:
+MANDATORY: You are in a constitutional validation loop. You MUST:
 1. Read the constitution at .isdlc/constitution.md
-2. Validate all artifacts against the required articles listed above
-3. For each article, check if your artifacts comply
-4. If violations found, fix them and re-validate
-5. Update state.json with validation results
-6. Continue iterating until status is 'compliant' or max iterations reached
+2. For each article below, check your phase artifacts for compliance:
+${articleChecklist}
+3. If violations found: fix the artifacts, then re-validate
+4. Update state.json with results:
+   {
+     "phases": { "${currentPhase}": { "constitutional_validation": {
+       "status": "compliant", "completed": true,
+       "articles_checked": ${JSON.stringify(requiredArticles)},
+       "iterations_used": N
+     }}}
+   }
+5. Then declare phase complete again.
 
-Use the autonomous-constitution-validate skill (ORCH-011) protocol:
-- Max iterations: ${phaseReq.constitutional_validation.max_iterations}
-- Track each iteration in state.json → phases.${currentPhase}.constitutional_validation
-
-Example state update after validation:
-{
-  "constitutional_validation": {
-    "completed": true,
-    "status": "compliant",
-    "iterations_used": N,
-    "articles_checked": ${JSON.stringify(requiredArticles)}
-  }
-}`;
+DO NOT skip articles or mark compliant without actually checking.
+Iteration ${iterationsUsed}/${maxIterations} — you have ${remaining} attempts remaining.`;
 
         outputBlockResponse(stopReason);
         process.exit(0);

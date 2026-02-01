@@ -6,6 +6,11 @@
         "hooks": [
           {
             "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/iteration-corridor.js",
+            "timeout": 10000
+          },
+          {
+            "type": "command",
             "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/skill-validator.js",
             "timeout": 10000
           },
@@ -24,6 +29,11 @@
       {
         "matcher": "Skill",
         "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/iteration-corridor.js",
+            "timeout": 10000
+          },
           {
             "type": "command",
             "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/gate-blocker.js",

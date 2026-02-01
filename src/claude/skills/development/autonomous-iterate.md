@@ -3,7 +3,7 @@ name: autonomous-iterate
 description: Enable agents to autonomously retry tasks until success or max iterations reached
 skill_id: DEV-014
 owner: software-developer
-collaborators: []
+collaborators: [integration-tester]
 project: sdlc-framework
 version: 1.0.0
 when_to_use: Implementation phase, TDD workflow, bug fixes
@@ -104,49 +104,53 @@ exit_on_failure = false  # Continue on failure
 
 ### State Management
 
-Each iteration should update `.isdlc/state.json`:
+Each iteration should update `.isdlc/state.json` under the `iteration_requirements.test_iteration` path (this matches the structure that `test-watcher.js` writes):
 
 ```json
 {
   "phases": {
     "05-implementation": {
       "status": "in_progress",
-      "iterations": {
-        "current": 3,
-        "max": 10,
-        "history": [
-          {
-            "iteration": 1,
-            "timestamp": "2026-01-17T10:15:00Z",
-            "action": "Implemented getUserById function",
-            "test_command": "npm test -- user.test.js",
-            "result": "FAILED",
-            "failures": 2,
-            "errors": ["TypeError: Cannot read property 'id' of undefined"],
-            "fix_applied": "Added null check for user object"
-          },
-          {
-            "iteration": 2,
-            "timestamp": "2026-01-17T10:17:00Z",
-            "action": "Fixed null check, re-ran tests",
-            "test_command": "npm test -- user.test.js",
-            "result": "FAILED",
-            "failures": 1,
-            "errors": ["AssertionError: expected 200 to equal 404"],
-            "fix_applied": "Updated error handling for missing user"
-          },
-          {
-            "iteration": 3,
-            "timestamp": "2026-01-17T10:20:00Z",
-            "action": "Fixed error status code",
-            "test_command": "npm test -- user.test.js",
-            "result": "PASSED",
-            "failures": 0,
-            "errors": []
-          }
-        ],
-        "final_status": "success",
-        "total_duration_minutes": 5
+      "iteration_requirements": {
+        "test_iteration": {
+          "required": true,
+          "completed": false,
+          "current_iteration": 3,
+          "max_iterations": 10,
+          "last_test_result": "passed",
+          "last_test_command": "npm test -- user.test.js",
+          "failures_count": 2,
+          "identical_failure_count": 0,
+          "history": [
+            {
+              "iteration": 1,
+              "timestamp": "2026-01-17T10:15:00Z",
+              "command": "npm test -- user.test.js",
+              "result": "FAILED",
+              "failures": 2,
+              "error": "TypeError: Cannot read property 'id' of undefined"
+            },
+            {
+              "iteration": 2,
+              "timestamp": "2026-01-17T10:17:00Z",
+              "command": "npm test -- user.test.js",
+              "result": "FAILED",
+              "failures": 1,
+              "error": "AssertionError: expected 200 to equal 404"
+            },
+            {
+              "iteration": 3,
+              "timestamp": "2026-01-17T10:20:00Z",
+              "command": "npm test -- user.test.js",
+              "result": "PASSED",
+              "failures": 0,
+              "error": null
+            }
+          ],
+          "status": "success",
+          "started_at": "2026-01-17T10:15:00Z",
+          "completed_at": "2026-01-17T10:20:00Z"
+        }
       }
     }
   }

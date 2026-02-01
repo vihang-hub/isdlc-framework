@@ -362,9 +362,17 @@ async function main() {
 
             debugLog('Tests PASSED - iteration complete');
 
+            // Build constitutional article list from phase requirements
+            const constArticles = phaseReq.constitutional_validation?.articles;
+            const constArticleNote = constArticles
+                ? `Read .isdlc/constitution.md and validate artifacts against these articles: ${constArticles.join(', ')}\n` +
+                  `Update state.json → phases.${currentPhase}.constitutional_validation when complete.`
+                : `Check iteration-requirements.json for applicable constitutional articles.`;
+
             outputMessage = `\n\n✅ TESTS PASSED (iteration ${iterState.current_iteration})\n` +
-                `Test iteration requirement: SATISFIED\n` +
-                `You may now proceed with constitutional validation.`;
+                `Test iteration requirement: SATISFIED\n\n` +
+                `NEXT STEP: Constitutional validation required.\n` +
+                constArticleNote;
 
         } else {
             // FAILURE
@@ -410,12 +418,12 @@ async function main() {
                 outputMessage = `\n\n❌ TESTS FAILED (iteration ${iterState.current_iteration}/${iterState.max_iterations})\n` +
                     `Remaining iterations: ${remaining}\n` +
                     `Error: ${testResult.error}\n\n` +
-                    `⚠️ AUTONOMOUS ITERATION REQUIRED:\n` +
-                    `1. Analyze the error above\n` +
-                    `2. Identify the root cause\n` +
-                    `3. Fix the code\n` +
-                    `4. Run tests again\n\n` +
-                    `Do NOT proceed to gate validation until tests pass.`;
+                    `MANDATORY: You are in an active iteration loop. You MUST:\n` +
+                    `1. Read the test output above carefully\n` +
+                    `2. Identify the root cause of the failure\n` +
+                    `3. Fix the failing code or tests\n` +
+                    `4. Re-run the SAME test command: ${command}\n\n` +
+                    `DO NOT attempt to advance the phase, delegate to other agents, or skip this step.`;
             }
         }
 
