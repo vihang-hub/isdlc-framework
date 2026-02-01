@@ -103,7 +103,81 @@ Detect patterns in existing tests:
 | Property-based | `fast-check`, `hypothesis`, `gopter` |
 | Mutation testing | `stryker`, `mutmut`, `go-mutesting` |
 
-### Step 5: Identify Gaps
+### Step 5: Analyze Coverage by Type
+
+Break down coverage by test type, not just aggregate:
+
+**Per-type coverage analysis:**
+
+| Test Type | Files | Test Cases | Line Coverage | Branch Coverage |
+|-----------|-------|------------|---------------|-----------------|
+| Unit | 35 | 142 | 72% | 61% |
+| Integration | 12 | 48 | 58% | 45% |
+| E2E | 0 | 0 | 0% | 0% |
+| **Combined** | **47** | **190** | **67%** | **58%** |
+
+To determine per-type coverage:
+- Run unit tests with coverage in isolation if separate test scripts exist
+- Run integration tests with coverage in isolation
+- If only a combined test command exists, categorize by test file location
+
+### Step 6: Identify Critical Untested Paths
+
+Analyze which parts of the codebase carry the highest risk of being untested:
+
+**High-risk indicators (prioritize these):**
+- Files with complex business logic (payment processing, auth, data transformation)
+- Files with many dependencies / imports
+- Files changed frequently (high git churn)
+- Error handling paths and edge cases
+- Security-sensitive code (input validation, access control, crypto)
+
+**Analysis approach:**
+1. List files with 0% or very low coverage (<30%)
+2. Cross-reference with business domain importance
+3. Flag files that handle money, auth, or user data with low coverage
+
+**Output:**
+
+| File | Coverage | Risk Level | Reason |
+|------|----------|------------|--------|
+| `src/services/payment.ts` | 41% | HIGH | Handles financial transactions |
+| `src/middleware/auth.ts` | 28% | HIGH | Authentication/authorization |
+| `src/utils/crypto.ts` | 28% | HIGH | Cryptographic operations |
+| `src/models/user.ts` | 32% | MEDIUM | Core entity with validation |
+| `src/services/email.ts` | 15% | LOW | Non-critical, third-party wrapper |
+
+### Step 7: Assess Test Quality
+
+Beyond coverage numbers, evaluate test quality:
+
+**Flaky test detection:**
+- Check CI logs for tests that intermittently fail (if `.github/workflows/` exists)
+- Look for `setTimeout`, `sleep`, or timing-dependent assertions
+- Look for tests with `retry` or `flaky` annotations
+
+**Test smell detection:**
+
+| Smell | Pattern | Impact |
+|-------|---------|--------|
+| No assertions | Test functions without `expect`/`assert` | False passing |
+| Snapshot overuse | >50% of tests are snapshot tests | Brittle, low value |
+| Test interdependence | Shared mutable state between tests | Order-dependent failures |
+| Overly broad mocks | Mocking entire modules rather than specific functions | Tests don't catch real bugs |
+| Magic values | Hardcoded numbers/strings without context | Hard to maintain |
+| Missing error path tests | Only happy-path assertions | Bugs in error handling |
+
+**Output:**
+
+| Quality Metric | Status | Details |
+|---------------|--------|---------|
+| Assertion density | Good | Avg 3.2 assertions per test |
+| Snapshot ratio | Warning | 35% snapshot tests |
+| Flaky tests | 2 detected | `user.test.ts:42`, `api.test.ts:88` |
+| Error path coverage | Poor | Only 12% of catch blocks tested |
+| Test isolation | Good | No shared mutable state detected |
+
+### Step 8: Identify Gaps
 
 Compare against best practices:
 
@@ -116,8 +190,11 @@ Compare against best practices:
 | Mutation testing | Recommended | ✓/✗ |
 | Property-based testing | Recommended | ✓/✗ |
 | CI integration | Required | ✓/✗ |
+| Critical paths tested | Required | ✓/✗ |
+| No flaky tests | Required | ✓/✗ |
+| Error paths tested | Recommended | ✓/✗ |
 
-### Step 6: Check Test Scripts
+### Step 9: Check Test Scripts
 
 Verify test scripts in package.json/pyproject.toml:
 
@@ -133,7 +210,7 @@ Verify test scripts in package.json/pyproject.toml:
 }
 ```
 
-### Step 7: Generate Evaluation Report
+### Step 10: Generate Evaluation Report
 
 Create `.isdlc/test-evaluation-report.md`:
 
@@ -190,28 +267,62 @@ tests/
 - `src/services/payment.ts` - 41% (complex logic untested)
 - `src/utils/crypto.ts` - 28% (edge cases missing)
 
+## Coverage by Test Type
+
+| Test Type | Files | Test Cases | Line Coverage | Branch Coverage |
+|-----------|-------|------------|---------------|-----------------|
+| Unit | 35 | 142 | 72% | 61% |
+| Integration | 12 | 48 | 58% | 45% |
+| E2E | 0 | 0 | 0% | 0% |
+| **Combined** | **47** | **190** | **67%** | **58%** |
+
+## Critical Untested Paths
+
+| File | Coverage | Risk Level | Reason |
+|------|----------|------------|--------|
+| `src/services/payment.ts` | 41% | HIGH | Handles financial transactions |
+| `src/middleware/auth.ts` | 28% | HIGH | Authentication/authorization |
+| `src/utils/crypto.ts` | 28% | HIGH | Cryptographic operations |
+| `src/models/user.ts` | 32% | MEDIUM | Core entity with validation |
+
+## Test Quality Assessment
+
+| Quality Metric | Status | Details |
+|---------------|--------|---------|
+| Assertion density | Good | Avg 3.2 assertions per test |
+| Snapshot ratio | Warning | 35% snapshot tests |
+| Flaky tests | 2 detected | `user.test.ts:42`, `api.test.ts:88` |
+| Error path coverage | Poor | Only 12% of catch blocks tested |
+| Test isolation | Good | No shared mutable state detected |
+
 ## Identified Gaps
 
 ### Critical Gaps
 1. **No E2E Tests** - User flows not validated end-to-end
 2. **Coverage below 80%** - Target: 80%, Current: 67%
+3. **Critical paths undertested** - Payment, auth, and crypto below 50%
+4. **Flaky tests** - 2 tests with intermittent failures
 
 ### Recommended Improvements
 1. **Add mutation testing** - Verify test quality with Stryker
 2. **Add property-based tests** - Use fast-check for edge cases
 3. **Increase model coverage** - models/ at 45% needs attention
+4. **Fix flaky tests** - Stabilize intermittent failures
+5. **Add error path tests** - Only 12% of catch blocks tested
 
 ## Recommendations
 
 ### Immediate Actions
 1. Set up Playwright for E2E testing
-2. Add tests for low-coverage modules
-3. Configure coverage thresholds in CI
+2. Add tests for critical untested paths (payment, auth, crypto)
+3. Fix 2 flaky tests
+4. Configure coverage thresholds in CI
 
 ### Future Improvements
 1. Configure Stryker for mutation testing
 2. Add fast-check for property-based testing
 3. Set up contract testing with Pact
+4. Improve error path coverage
 
 ## Test Scripts Status
 
@@ -225,7 +336,8 @@ tests/
 | test:mutation | ❌ | Not configured |
 ```
 
-### Step 8: Return Results
+### Step 11: Return Results
+
 
 Return structured results to the orchestrator:
 
@@ -238,25 +350,44 @@ Return structured results to the orchestrator:
     "config_file": "jest.config.ts"
   },
   "test_counts": {
-    "unit": 35,
-    "integration": 12,
-    "e2e": 0,
+    "unit": {"files": 35, "cases": 142},
+    "integration": {"files": 12, "cases": 48},
+    "e2e": {"files": 0, "cases": 0},
     "total_files": 47,
     "total_cases": 190
   },
   "coverage": {
-    "lines": 67,
-    "branches": 58,
-    "functions": 72,
+    "combined": {"lines": 67, "branches": 58, "functions": 72},
+    "by_type": {
+      "unit": {"lines": 72, "branches": 61},
+      "integration": {"lines": 58, "branches": 45},
+      "e2e": {"lines": 0, "branches": 0}
+    },
     "target": 80,
     "meets_target": false
+  },
+  "critical_untested": [
+    {"file": "src/services/payment.ts", "coverage": 41, "risk": "high", "reason": "financial transactions"},
+    {"file": "src/middleware/auth.ts", "coverage": 28, "risk": "high", "reason": "authentication"},
+    {"file": "src/utils/crypto.ts", "coverage": 28, "risk": "high", "reason": "cryptographic operations"}
+  ],
+  "quality": {
+    "assertion_density": "good",
+    "snapshot_ratio": 0.35,
+    "flaky_tests": 2,
+    "error_path_coverage": 0.12,
+    "test_isolation": "good"
   },
   "gaps": [
     {"type": "critical", "name": "e2e_tests", "description": "No E2E tests found"},
     {"type": "critical", "name": "coverage", "description": "Coverage 67% < 80% target"},
+    {"type": "critical", "name": "critical_paths", "description": "Payment, auth, crypto below 50%"},
+    {"type": "critical", "name": "flaky_tests", "description": "2 flaky tests detected"},
     {"type": "recommended", "name": "mutation_testing", "description": "Not configured"},
-    {"type": "recommended", "name": "property_testing", "description": "Not configured"}
+    {"type": "recommended", "name": "property_testing", "description": "Not configured"},
+    {"type": "recommended", "name": "error_paths", "description": "Only 12% of catch blocks tested"}
   ],
+  "report_section": "## Test Coverage\n...",
   "generated_files": [
     ".isdlc/test-evaluation-report.md"
   ]
@@ -278,6 +409,8 @@ Return structured results to the orchestrator:
 | Skill ID | Name | Description |
 |----------|------|-------------|
 | DISC-201 | test-framework-detection | Detect test frameworks |
-| DISC-202 | coverage-analysis | Analyze test coverage |
+| DISC-202 | coverage-analysis | Analyze test coverage by type (unit/integration/e2e) |
 | DISC-203 | gap-identification | Identify testing gaps |
 | DISC-204 | test-report-generation | Generate evaluation report |
+| DISC-205 | critical-path-analysis | Identify high-risk untested code paths |
+| DISC-206 | test-quality-assessment | Assess test quality (flaky tests, assertion density, smells) |

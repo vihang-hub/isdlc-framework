@@ -123,7 +123,102 @@ Find main entry points:
 - `cmd/*/main.go`, `main.go` (Go)
 - `src/main/java/**/Application.java` (Java)
 
-### Step 6: Generate Architecture Overview
+### Step 6: Catalog Dependency Versions
+
+For each detected package manager, extract dependency names AND versions:
+
+**Node.js (package.json):**
+- Read `dependencies` and `devDependencies` with exact versions
+- Check for lockfile (`package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`)
+- Categorize: frameworks, databases, testing, build tools, utilities, security
+
+**Python (requirements.txt / pyproject.toml / Pipfile):**
+- Parse pinned versions (`package==1.2.3`) and ranges (`package>=1.2`)
+- Categorize similarly
+
+**Go (go.mod):**
+- Parse `require` block with versions
+
+**Present as versioned catalog:**
+
+| Category | Package | Version | Purpose |
+|----------|---------|---------|---------|
+| Framework | @nestjs/core | 10.3.2 | Core framework |
+| Database | @prisma/client | 5.8.1 | ORM |
+| Testing | jest | 29.7.0 | Test runner |
+| Build | typescript | 5.3.3 | Type checking |
+| Security | helmet | 7.1.0 | HTTP headers |
+
+Flag outdated dependencies where major versions are behind (e.g., if latest is v5 and project uses v3).
+
+### Step 7: Detect Deployment Topology
+
+Scan for deployment and infrastructure configuration:
+
+| File / Pattern | Indicates |
+|---------------|-----------|
+| `Dockerfile`, `docker-compose.yml` | Docker containerization |
+| `kubernetes/`, `k8s/`, `*.yaml` with `kind: Deployment` | Kubernetes orchestration |
+| `serverless.yml`, `serverless.ts` | Serverless Framework |
+| `terraform/`, `*.tf` | Terraform infrastructure |
+| `cdk.json`, `lib/*-stack.ts` | AWS CDK |
+| `pulumi/`, `Pulumi.yaml` | Pulumi infrastructure |
+| `.github/workflows/` | GitHub Actions CI/CD |
+| `.gitlab-ci.yml` | GitLab CI/CD |
+| `Jenkinsfile` | Jenkins CI/CD |
+| `vercel.json`, `.vercel/` | Vercel deployment |
+| `netlify.toml` | Netlify deployment |
+| `fly.toml` | Fly.io deployment |
+| `render.yaml` | Render deployment |
+| `Procfile` | Heroku deployment |
+| `appspec.yml` | AWS CodeDeploy |
+
+**For Docker projects, extract:**
+- Base image and version
+- Exposed ports
+- Multi-stage build (yes/no)
+- Docker Compose services (list service names and images)
+
+**For Kubernetes projects, extract:**
+- Number of deployments/services
+- Namespace usage
+- Ingress configuration
+- ConfigMaps/Secrets referenced
+
+**For CI/CD, extract:**
+- Pipeline stages (build, test, deploy)
+- Target environments (staging, production)
+- Automated testing in pipeline (yes/no)
+
+### Step 8: Map Integration Points
+
+Identify external services and APIs the project communicates with:
+
+**Configuration-based detection:**
+- Scan `.env`, `.env.example`, config files for URLs, API keys, connection strings
+- Look for environment variable names suggesting integrations:
+  - `*_API_KEY`, `*_API_URL`, `*_ENDPOINT`
+  - `DATABASE_URL`, `REDIS_URL`, `AMQP_URL`
+  - `STRIPE_*`, `SENDGRID_*`, `TWILIO_*`, `AWS_*`
+
+**Code-based detection:**
+- HTTP client usage (`axios`, `fetch`, `httpx`, `net/http`) with base URLs
+- SDK imports (`@aws-sdk/*`, `stripe`, `twilio`, `@sendgrid/mail`)
+- Message queue connections (RabbitMQ, Kafka, SQS)
+- gRPC client stubs
+
+**For each integration, document:**
+
+| Integration | Type | Technology | Purpose |
+|-------------|------|------------|---------|
+| PostgreSQL | Database | Prisma | Primary data store |
+| Redis | Cache | ioredis | Session store, rate limiting |
+| Stripe | Payment API | Stripe SDK | Payment processing |
+| SendGrid | Email API | SendGrid SDK | Transactional emails |
+| AWS S3 | Object storage | AWS SDK | File uploads |
+| Auth0 | Identity | Auth0 SDK | Authentication provider |
+
+### Step 9: Generate Architecture Overview
 
 Create `docs/architecture/architecture-overview.md`:
 
@@ -170,10 +265,41 @@ src/
 - `src/main.ts` - Application bootstrap
 - `src/app.module.ts` - Root module with imports
 
-## External Integrations
-- PostgreSQL database (via Prisma)
-- Redis cache (via @nestjs/cache-manager)
-- AWS S3 (via @aws-sdk/client-s3)
+## Dependency Catalog
+
+| Category | Package | Version | Purpose |
+|----------|---------|---------|---------|
+| Framework | @nestjs/core | 10.3.2 | Core framework |
+| Framework | @nestjs/platform-express | 10.3.2 | HTTP adapter |
+| Database | @prisma/client | 5.8.1 | ORM |
+| Auth | @nestjs/jwt | 10.2.0 | JWT authentication |
+| Validation | class-validator | 0.14.1 | DTO validation |
+| Cache | @nestjs/cache-manager | 2.2.1 | Cache layer |
+| Security | helmet | 7.1.0 | HTTP security headers |
+| Testing | jest | 29.7.0 | Test runner |
+| Testing | @nestjs/testing | 10.3.2 | Test utilities |
+| Build | typescript | 5.3.3 | Type checking |
+
+**Outdated:** None detected (or list any flagged)
+
+## Deployment Topology
+
+| Layer | Technology | Details |
+|-------|-----------|---------|
+| Containerization | Docker | Multi-stage build, node:20-alpine |
+| Orchestration | Docker Compose | 3 services: app, postgres, redis |
+| CI/CD | GitHub Actions | Build → Test → Deploy (staging, production) |
+| Hosting | AWS ECS | Fargate launch type |
+
+## Integration Points
+
+| Integration | Type | Technology | Purpose |
+|-------------|------|------------|---------|
+| PostgreSQL | Database | Prisma | Primary data store |
+| Redis | Cache | ioredis | Session cache, rate limiting |
+| Stripe | Payment API | Stripe SDK | Payment processing |
+| SendGrid | Email API | SendGrid SDK | Transactional emails |
+| AWS S3 | Object storage | AWS SDK | File uploads |
 
 ## Notes
 - Uses barrel exports (index.ts in each module)
@@ -181,7 +307,7 @@ src/
 - Swagger documentation enabled
 ```
 
-### Step 7: Return Results
+### Step 10: Return Results
 
 Return structured results to the orchestrator:
 
@@ -203,8 +329,24 @@ Return structured results to the orchestrator:
   "dependencies": {
     "production": 24,
     "development": 18,
-    "key_packages": ["@nestjs/core", "@prisma/client", "class-validator"]
+    "key_packages": ["@nestjs/core", "@prisma/client", "class-validator"],
+    "outdated": []
   },
+  "deployment": {
+    "containerization": "docker",
+    "orchestration": "docker-compose",
+    "ci_cd": "github-actions",
+    "hosting": "aws-ecs",
+    "environments": ["staging", "production"]
+  },
+  "integrations": [
+    {"name": "PostgreSQL", "type": "database", "technology": "prisma"},
+    {"name": "Redis", "type": "cache", "technology": "ioredis"},
+    {"name": "Stripe", "type": "payment_api", "technology": "stripe-sdk"},
+    {"name": "SendGrid", "type": "email_api", "technology": "sendgrid-sdk"},
+    {"name": "AWS S3", "type": "object_storage", "technology": "aws-sdk"}
+  ],
+  "report_section": "## Tech Stack\n...\n## Architecture\n...",
   "generated_files": [
     "docs/architecture/architecture-overview.md"
   ]
@@ -247,5 +389,7 @@ Consider using the NEW PROJECT FLOW instead.
 |----------|------|-------------|
 | DISC-101 | directory-scan | Scan and map directory structure |
 | DISC-102 | tech-detection | Detect technologies and frameworks |
-| DISC-103 | dependency-analysis | Analyze project dependencies |
+| DISC-103 | dependency-analysis | Analyze project dependencies with versions |
 | DISC-104 | architecture-documentation | Generate architecture docs |
+| DISC-105 | deployment-topology-detection | Detect containerization, CI/CD, and hosting |
+| DISC-106 | integration-point-mapping | Map external services and API integrations |

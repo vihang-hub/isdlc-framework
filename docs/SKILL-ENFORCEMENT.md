@@ -8,7 +8,7 @@
 
 ## Overview
 
-Skill Enforcement implements exclusive skill ownership where each of the 119 skills belongs to exactly one agent. This is now enforced at **runtime** using Claude Code hooks that intercept Task tool calls and validate agent authorization before execution.
+Skill Enforcement implements exclusive skill ownership where each of the 151 skills belongs to exactly one agent. This is now enforced at **runtime** using Claude Code hooks that intercept Task tool calls and validate agent authorization before execution.
 
 ---
 
@@ -134,7 +134,7 @@ The `skills-manifest.yaml` provides authoritative skill-to-agent mappings:
 ```yaml
 # src/isdlc/config/skills-manifest.yaml
 version: "2.0.0"
-total_skills: 119
+total_skills: 151
 enforcement_mode: strict
 
 skill_lookup:
@@ -221,7 +221,7 @@ Default is `allow` to ensure workflow continuity.
 
 ## Skill Distribution
 
-### By Agent (119 skills across 14 agents)
+### By Agent (151 skills across 20 agents)
 
 | Agent | Skills | Categories |
 |-------|--------|------------|

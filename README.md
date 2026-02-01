@@ -11,7 +11,7 @@ This framework implements a **1-to-1 mapping** between 13 SDLC phases and 13 spe
 - **14 Specialized Agents** (1 Orchestrator + 13 Phase Agents)
 - **1-to-1 Phase Mapping** - Each agent owns exactly one phase
 - **13 Quality Gates** with validation checklists
-- **119 Skills** distributed across 10 categories
+- **151 Skills** distributed across 11 categories
 - **Exclusive Skill Ownership** - Each skill belongs to exactly one agent with enforcement
 - **Skill Usage Audit Trail** - All skill executions logged for compliance tracking
 - **Adaptive Workflow** - Orchestrator determines required phases based on task complexity
@@ -27,13 +27,14 @@ This framework implements a **1-to-1 mapping** between 13 SDLC phases and 13 spe
 isdlc-framework/
 ├── src/
 │   ├── claude/                    # → Installed to .claude/
-│   │   ├── agents/                # 14 Agent definitions
+│   │   ├── agents/                # 14 SDLC agents + 6 discover sub-agents
 │   │   │   ├── 00-sdlc-orchestrator.md
 │   │   │   ├── 01-requirements-analyst.md
-│   │   │   └── ... (02-13)
+│   │   │   ├── ... (02-13)
+│   │   │   └── discover/          # Discover sub-agents (D1-D6)
 │   │   ├── commands/              # Custom slash commands
 │   │   │   └── primer.md
-│   │   ├── skills/                # 119 Skills across 10 categories
+│   │   ├── skills/                # 151 Skills across 11 categories
 │   │   │   ├── orchestration/
 │   │   │   ├── requirements/
 │   │   │   ├── architecture/
@@ -89,6 +90,22 @@ Each agent is a specialized AI with specific responsibilities, skills, and deliv
 | **11** | **Deployment Engineer (Staging)** | Staging deployment, smoke tests, rollback procedures | deployment-log-staging.md, smoke-test-results.md, rollback-plan.md |
 | **12** | **Release Manager** | Production deployment, release coordination, go-live | deployment-log-production.md, release-notes.md, post-deployment-report.md |
 | **13** | **Site Reliability Engineer** | Operations, monitoring, incident response, SLAs | monitoring-config/, alert-rules.yaml, incident-reports/, sla-tracking.md |
+
+## Discover Agents
+
+The `/discover` command uses specialized sub-agents to analyze projects before SDLC phases begin:
+
+| ID | Agent | Responsibility |
+|----|-------|----------------|
+| **D0** | **Discover Orchestrator** | Coordinates discovery, assembles report |
+| **D1** | **Architecture Analyzer** | Tech stack, dependencies, deployment topology, integrations |
+| **D2** | **Test Evaluator** | Test coverage by type, critical untested paths, test quality |
+| **D3** | **Constitution Generator** | Generates project constitution from analysis |
+| **D4** | **Skills Researcher** | Researches best practices for detected tech stack |
+| **D5** | **Data Model Analyzer** | Database schemas, ORM models, migrations, relationships |
+| **D6** | **Feature Mapper** | API endpoints, UI pages, CLI commands, business domains |
+
+For existing projects, D1, D2, D5, and D6 run in parallel to produce a unified `docs/project-discovery-report.md`.
 
 ## SDLC Phase Flow
 
@@ -218,7 +235,7 @@ Your project structure will look like:
 your-project/
 ├── .claude/           # Agent definitions and skills
 │   ├── agents/        # 14 specialized agents
-│   ├── skills/        # 119 skills across 10 categories
+│   ├── skills/        # 151 skills across 11 categories
 │   └── CLAUDE.md      # Project context for Claude
 ├── .isdlc/            # Framework state and resources
 │   ├── state.json     # Current phase and progress
@@ -256,7 +273,7 @@ Each phase produces specific artifacts in `.isdlc/phases/<phase-name>/` director
 
 ## Skills System
 
-The framework includes **119 specialized skills** distributed across 10 categories:
+The framework includes **151 specialized skills** distributed across 11 categories:
 
 | Category | Skills | Primary Agents |
 |----------|--------|----------------|
@@ -270,6 +287,7 @@ The framework includes **119 specialized skills** distributed across 10 categori
 | **Security** | 13 | Agent 08 (Security & Compliance Auditor) |
 | **Operations** | 12 | Agent 13 (Site Reliability Engineer) |
 | **Documentation** | 10 | Distributed across agents 10, 12, 13 |
+| **Discover** | 32 | Discover sub-agents D1-D6 |
 
 See [docs/SKILL-DISTRIBUTION.md](docs/SKILL-DISTRIBUTION.md) for detailed skill allocation.
 
@@ -375,7 +393,7 @@ The orchestrator enforces appropriate quality thresholds:
 
 ### How It Works
 
-1. **Exclusive Ownership**: Each of the 119 skills has exactly ONE owner agent
+1. **Exclusive Ownership**: Each of the 151 skills has exactly ONE owner agent
 2. **Pre-Execution Validation**: Before using a skill, the agent validates ownership
 3. **Audit Trail**: All skill usage (authorized and unauthorized) is logged to state.json
 4. **Gate Integration**: Skill compliance is reviewed at each quality gate
@@ -653,7 +671,7 @@ Additional documentation in [docs/](docs/):
 
 ### Completed
 - ✅ 14 agent definitions created
-- ✅ 119 skills organized into 10 categories
+- ✅ 151 skills organized into 11 categories
 - ✅ 13 phase gate checklists defined
 - ✅ 7 document templates created
 - ✅ Configuration system implemented
@@ -685,8 +703,8 @@ MIT License
 
 **Framework Version**: 2.1.0
 **Last Updated**: 2026-01-21
-**Agents**: 14 (1 Orchestrator + 13 Phase Agents)
-**Skills**: 119 across 10 categories
+**Agents**: 20 (14 SDLC agents + 6 Discover sub-agents)
+**Skills**: 151 across 11 categories
 **Quality Gates**: 13
 **Enforcement Hooks**: 5 (skill-validator, gate-blocker, test-watcher, constitution-validator, menu-tracker)
 **Enhancements**: 5 (Constitution, Scale-Adaptive, Autonomous Iteration, Skill Enforcement, Deterministic Iteration Enforcement)

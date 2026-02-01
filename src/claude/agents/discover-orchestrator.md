@@ -19,12 +19,14 @@ The Discover Orchestrator coordinates the `/discover` command workflow. It deter
 
 ## Sub-Agents
 
-| Agent | Purpose | When Used |
-|-------|---------|-----------|
-| `architecture-analyzer` | Scan codebase, detect tech stack, generate docs | Existing projects |
-| `test-evaluator` | Analyze test infrastructure, find gaps | Existing projects |
-| `constitution-generator` | Create tailored constitution with research | Both |
-| `skills-researcher` | Find and install skills from skills.sh | Both |
+| Agent | ID | Purpose | When Used |
+|-------|----|---------|-----------|
+| `architecture-analyzer` | D1 | Scan codebase, detect tech stack, deployment topology, integrations | Existing projects |
+| `test-evaluator` | D2 | Analyze test infrastructure, coverage by type, test quality, gaps | Existing projects |
+| `constitution-generator` | D3 | Create tailored constitution with research | Both |
+| `skills-researcher` | D4 | Find and install skills from skills.sh | Both |
+| `data-model-analyzer` | D5 | Discover data stores, schemas, entity relationships | Existing projects |
+| `feature-mapper` | D6 | Map API endpoints, UI pages, background jobs, business domains | Existing projects |
 
 ---
 
@@ -416,42 +418,47 @@ PHASE 4: Finalize                                    [Complete ✓]
 
 ## EXISTING PROJECT FLOW (is_new_project: false)
 
-For existing projects, run comprehensive analysis.
+For existing projects, run comprehensive analysis with 4 sub-agents in parallel, then assemble a unified discovery report.
 
 ### Step 1: Display Welcome and Present Plan
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
-║  iSDLC Framework - Existing Project Setup                    ║
+║  iSDLC Framework - Existing Project Discovery                ║
 ╚══════════════════════════════════════════════════════════════╝
 
-I'll analyze your project and set up the iSDLC framework.
+I'll analyze your project and create a comprehensive discovery report.
 
 Here's what will happen:
 
 ┌──────────────────────────────────────────────────────────────┐
-│ PHASE 1: Architecture Analysis                               │
+│ PHASE 1: Project Analysis (runs in parallel)                 │
 ├──────────────────────────────────────────────────────────────┤
-│ □ Scan directory structure                                   │
-│ □ Detect technologies and frameworks                         │
-│ □ Analyze dependencies                                       │
-│ □ Generate architecture documentation                        │
+│ □ Architecture & Tech Stack (D1)                             │
+│   → Structure, frameworks, dependencies, deployment,         │
+│     integration points                                       │
+│ □ Data Model (D5)                                            │
+│   → Schemas, entities, relationships, migrations             │
+│ □ Functional Features (D6)                                   │
+│   → API endpoints, UI pages, background jobs,                │
+│     business domains                                         │
+│ □ Test Coverage (D2)                                         │
+│   → Coverage by type, critical untested paths,               │
+│     test quality                                             │
 └──────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────┐
-│ PHASE 2: Test Evaluation                                     │
+│ PHASE 2: Discovery Report                                    │
 ├──────────────────────────────────────────────────────────────┤
-│ □ Detect test framework                                      │
-│ □ Count and categorize tests                                 │
-│ □ Analyze coverage                                           │
-│ □ Identify testing gaps                                      │
+│ □ Assemble unified discovery report                          │
+│ □ Present summary for review                                 │
 └──────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────┐
 │ PHASE 3: Constitution Generation                             │
 ├──────────────────────────────────────────────────────────────┤
 │ □ Research best practices for your stack                     │
-│ □ Generate draft constitution                                │
+│ □ Generate draft constitution (informed by discovery)        │
 │ □ Interactive review (you'll approve each article)          │
 │ □ Save constitution                                          │
 └──────────────────────────────────────────────────────────────┘
@@ -476,70 +483,163 @@ Ready to proceed? [Y] Yes / [N] No, I have questions
 
 **Wait for user approval before executing.**
 
-### Step 2: Execute PHASE 1 - Architecture Analysis
+### Step 2: Execute PHASE 1 - Project Analysis (4 Agents in Parallel)
+
+Launch ALL FOUR sub-agents simultaneously using parallel Task tool calls:
 
 **Show progress:**
 ```
-PHASE 1: Architecture Analysis                       [In Progress]
-├─ ◐ Scan directory structure                           (running)
-├─ □ Detect technologies and frameworks                 (pending)
-├─ □ Analyze dependencies                               (pending)
-└─ □ Generate architecture documentation                (pending)
+PHASE 1: Project Analysis                            [In Progress]
+├─ ◐ Architecture & Tech Stack (D1)                    (running)
+├─ ◐ Data Model (D5)                                   (running)
+├─ ◐ Functional Features (D6)                          (running)
+└─ ◐ Test Coverage (D2)                                (running)
 ```
 
-Launch `architecture-analyzer`:
+Launch in a SINGLE message with 4 parallel Task tool calls:
+
 ```json
+// Task 1
 {
   "subagent_type": "architecture-analyzer",
-  "prompt": "Analyze project architecture",
-  "description": "Scan codebase and generate architecture overview"
+  "prompt": "Analyze project architecture, tech stack, dependency versions, deployment topology, and integration points",
+  "description": "Architecture and tech stack analysis"
 }
 ```
 
-**On completion, show:**
-```
-PHASE 1: Architecture Analysis                       [Complete ✓]
-├─ ✓ Scan directory structure
-├─ ✓ Detect technologies and frameworks
-│   → Detected: TypeScript, NestJS, PostgreSQL
-├─ ✓ Analyze dependencies
-│   → 24 production, 18 dev dependencies
-└─ ✓ Generate architecture documentation
-    → docs/architecture/architecture-overview.md
+```json
+// Task 2
+{
+  "subagent_type": "data-model-analyzer",
+  "prompt": "Analyze project data model: discover data stores, extract schemas, map entity relationships, review migrations",
+  "description": "Data model analysis"
+}
 ```
 
-### Step 3: Execute PHASE 2 - Test Evaluation
+```json
+// Task 3
+{
+  "subagent_type": "feature-mapper",
+  "prompt": "Map functional features: catalog API endpoints, UI pages, CLI commands, background jobs, and business domains",
+  "description": "Functional feature mapping"
+}
+```
+
+```json
+// Task 4
+{
+  "subagent_type": "test-evaluator",
+  "prompt": "Evaluate test infrastructure: coverage by type, critical untested paths, test quality assessment, gap identification",
+  "description": "Test coverage evaluation"
+}
+```
+
+**IMPORTANT:** These 4 agents run in parallel. Wait for ALL to complete before proceeding.
+
+**As each completes, update progress:**
+```
+PHASE 1: Project Analysis                            [In Progress]
+├─ ✓ Architecture & Tech Stack (D1)                    (done)
+│   → TypeScript, NestJS, PostgreSQL
+│   → Docker + GitHub Actions CI/CD
+│   → 5 external integrations
+├─ ✓ Data Model (D5)                                   (done)
+│   → 6 entities, PostgreSQL + Redis
+│   → 24 migrations, Prisma ORM
+├─ ◐ Functional Features (D6)                          (running)
+└─ ✓ Test Coverage (D2)                                (done)
+    → 67% coverage, 0 E2E tests
+    → 3 high-risk untested paths
+```
+
+**On all complete:**
+```
+PHASE 1: Project Analysis                            [Complete ✓]
+├─ ✓ Architecture & Tech Stack (D1)
+│   → TypeScript, NestJS, PostgreSQL
+│   → Docker + GitHub Actions CI/CD
+│   → 5 external integrations
+├─ ✓ Data Model (D5)
+│   → 6 entities, PostgreSQL + Redis
+│   → 24 migrations, Prisma ORM
+├─ ✓ Functional Features (D6)
+│   → 32 API endpoints, 12 UI pages, 3 jobs
+│   → 6 business domains
+└─ ✓ Test Coverage (D2)
+    → 67% coverage (unit 72%, integration 58%, E2E 0%)
+    → 3 high-risk untested paths, 2 flaky tests
+```
+
+### Step 3: Execute PHASE 2 - Assemble Discovery Report
+
+Compile results from all 4 sub-agents into a single unified report.
 
 **Show progress:**
 ```
-PHASE 2: Test Evaluation                             [In Progress]
-├─ ◐ Detect test framework                              (running)
-├─ □ Count and categorize tests                         (pending)
-├─ □ Analyze coverage                                   (pending)
-└─ □ Identify testing gaps                              (pending)
+PHASE 2: Discovery Report                            [In Progress]
+├─ ◐ Assemble unified discovery report                 (running)
+└─ □ Present summary for review                        (pending)
 ```
 
-Launch `test-evaluator`:
-```json
-{
-  "subagent_type": "test-evaluator",
-  "prompt": "Evaluate test infrastructure",
-  "description": "Analyze existing tests, coverage, and gaps"
-}
+Create `docs/project-discovery-report.md` by assembling the `report_section` from each sub-agent:
+
+```markdown
+# Project Discovery Report
+
+**Generated:** {timestamp}
+**Analyzed by:** iSDLC Discover
+
+---
+
+## Tech Stack
+{from D1 architecture-analyzer: languages, frameworks, versions, runtime}
+
+## Architecture
+{from D1 architecture-analyzer: patterns, structure, entry points, deployment, integrations}
+
+## Data Model
+{from D5 data-model-analyzer: stores, entities, relationships, migrations}
+
+## Functional Features
+{from D6 feature-mapper: endpoints, pages, jobs, domains}
+
+## Test Coverage
+{from D2 test-evaluator: coverage by type, critical paths, quality, gaps}
+
+---
+
+## Summary
+
+| Area | Key Findings |
+|------|-------------|
+| Tech Stack | {language} + {framework} + {database} |
+| Architecture | {pattern}, {deployment topology} |
+| Data Model | {entity_count} entities across {store_count} stores |
+| Features | {endpoint_count} endpoints, {page_count} pages, {job_count} jobs |
+| Test Coverage | {coverage}% ({type breakdown}), {gap_count} gaps |
 ```
 
-**On completion, show:**
+**Present summary to user:**
 ```
-PHASE 2: Test Evaluation                             [Complete ✓]
-├─ ✓ Detect test framework
-│   → Jest 29.x detected
-├─ ✓ Count and categorize tests
-│   → 47 unit tests, 12 integration tests, 0 E2E
-├─ ✓ Analyze coverage
-│   → 67% line coverage (target: 80%)
-└─ ✓ Identify testing gaps
-    → Missing: E2E tests, mutation testing
-    → .isdlc/test-evaluation-report.md
+PHASE 2: Discovery Report                            [Complete ✓]
+├─ ✓ Assemble unified discovery report
+│   → docs/project-discovery-report.md
+└─ ✓ Present summary for review
+
+═══════════════════════════════════════════════════════════════
+  DISCOVERY REPORT SUMMARY
+═══════════════════════════════════════════════════════════════
+
+  Tech Stack:     TypeScript + NestJS 10.x + PostgreSQL
+  Architecture:   Modular monolith, Docker, GitHub Actions
+  Data Model:     6 entities (Prisma ORM), 24 migrations
+  Features:       32 endpoints, 12 pages, 3 background jobs
+                  6 business domains
+  Test Coverage:  67% overall (unit 72%, integration 58%, E2E 0%)
+                  3 high-risk untested paths
+
+  Full report: docs/project-discovery-report.md
+═══════════════════════════════════════════════════════════════
 ```
 
 ### Step 4: Execute PHASE 3 - Constitution Generation
@@ -553,17 +653,17 @@ PHASE 3: Constitution Generation                     [In Progress]
 └─ □ Save constitution                                  (pending)
 ```
 
-Launch `constitution-generator`:
+Launch `constitution-generator` with discovery findings:
 ```json
 {
   "subagent_type": "constitution-generator",
   "prompt": "Generate constitution for existing project",
-  "description": "Create constitution based on: {architecture_summary}, {test_evaluation}"
+  "description": "Create constitution informed by discovery: {tech_stack}, {architecture}, {data_model_summary}, {feature_summary}, {test_coverage_summary}"
 }
 ```
 
 The generator will:
-- Use architecture analysis to infer articles
+- Use ALL discovery findings to inform article generation
 - Launch parallel research agents
 - Generate draft with domain-specific articles
 - Walk through interactive review (user input required)
@@ -621,6 +721,7 @@ Test Evaluation found gaps:
   ❌ No E2E tests
   ❌ No mutation testing
   ⚠️ Coverage below 80%
+  ⚠️ 3 high-risk paths undertested
 
 Set up missing test infrastructure? [Y/n]
 ```
@@ -696,7 +797,14 @@ Update `.isdlc/state.json`:
 {
   "project": {
     "is_new_project": false,
-    "tech_stack": { ... },
+    "name": "{project_name}",
+    "discovery_completed": true,
+    "discovery_report": "docs/project-discovery-report.md",
+    "tech_stack": {
+      "language": "typescript",
+      "framework": "nestjs",
+      "database": "postgresql"
+    },
     "discovered_at": "2026-01-24T..."
   }
 }
@@ -718,24 +826,25 @@ Show final progress with all phases complete:
 ║  DISCOVERY COMPLETE                                          ║
 ╚══════════════════════════════════════════════════════════════╝
 
-PHASE 1: Architecture Analysis                       [Complete ✓]
-├─ ✓ Scan directory structure
-├─ ✓ Detect technologies and frameworks
+PHASE 1: Project Analysis                            [Complete ✓]
+├─ ✓ Architecture & Tech Stack (D1)
 │   → TypeScript, NestJS, PostgreSQL
-├─ ✓ Analyze dependencies
-│   → 24 production, 18 dev dependencies
-└─ ✓ Generate architecture documentation
-    → docs/architecture/architecture-overview.md
+│   → Docker + GitHub Actions CI/CD
+│   → 5 external integrations
+├─ ✓ Data Model (D5)
+│   → 6 entities, PostgreSQL + Redis
+│   → 24 migrations, Prisma ORM
+├─ ✓ Functional Features (D6)
+│   → 32 API endpoints, 12 UI pages, 3 jobs
+│   → 6 business domains
+└─ ✓ Test Coverage (D2)
+    → 67% coverage (unit 72%, integration 58%, E2E 0%)
+    → 3 high-risk untested paths
 
-PHASE 2: Test Evaluation                             [Complete ✓]
-├─ ✓ Detect test framework
-│   → Jest 29.x
-├─ ✓ Count and categorize tests
-│   → 47 unit, 12 integration, 0 E2E
-├─ ✓ Analyze coverage
-│   → 67% (target: 80%)
-└─ ✓ Identify testing gaps
-    → .isdlc/test-evaluation-report.md
+PHASE 2: Discovery Report                            [Complete ✓]
+├─ ✓ Assemble unified discovery report
+└─ ✓ Present summary for review
+    → docs/project-discovery-report.md
 
 PHASE 3: Constitution Generation                     [Complete ✓]
 ├─ ✓ Research best practices for your stack
@@ -756,22 +865,26 @@ PHASE 5: Finalize                                    [Complete ✓]
 └─ ✓ Generate setup summary
 
 ════════════════════════════════════════════════════════════════
-  EXISTING PROJECT SETUP COMPLETE
+  EXISTING PROJECT DISCOVERY COMPLETE
 ════════════════════════════════════════════════════════════════
 
   Project: {project_name}
   Tech Stack: TypeScript + NestJS + PostgreSQL
 
   Created:
+    ✓ docs/project-discovery-report.md (unified discovery report)
     ✓ docs/architecture/architecture-overview.md
     ✓ .isdlc/test-evaluation-report.md
     ✓ .isdlc/constitution.md
     ✓ .isdlc/skill-customization-report.md
 
   Next Steps:
-    1. Review constitution: cat .isdlc/constitution.md
-    2. Run tests: npm run test:all
-    3. Start workflow: /sdlc start "Your first task"
+    1. Review discovery report: cat docs/project-discovery-report.md
+    2. Review constitution: cat .isdlc/constitution.md
+    3. Start a workflow:
+       /sdlc feature  — Build a new feature
+       /sdlc fix      — Fix a bug
+       /sdlc test run — Run existing tests
 
 ════════════════════════════════════════════════════════════════
 ```

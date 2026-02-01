@@ -8,7 +8,7 @@
 
 version: "2.0.0"
 generated: "2026-01-17"
-total_skills: 139
+total_skills: 151
 enforcement_mode: strict  # strict | warn | audit
 
 # =============================================================================
@@ -89,7 +89,7 @@ ownership:
   architecture-analyzer:
     agent_id: "D1"
     phase: "setup"
-    skill_count: 4
+    skill_count: 6
     skills:
       - id: DISC-101
         name: directory-scan
@@ -103,11 +103,17 @@ ownership:
       - id: DISC-104
         name: architecture-documentation
         path: discover/architecture-documentation
+      - id: DISC-105
+        name: deployment-topology-detection
+        path: discover/deployment-topology-detection
+      - id: DISC-106
+        name: integration-point-mapping
+        path: discover/integration-point-mapping
 
   test-evaluator:
     agent_id: "D2"
     phase: "setup"
-    skill_count: 4
+    skill_count: 6
     skills:
       - id: DISC-201
         name: test-framework-detection
@@ -121,6 +127,12 @@ ownership:
       - id: DISC-204
         name: test-report-generation
         path: discover/test-report-generation
+      - id: DISC-205
+        name: critical-path-analysis
+        path: discover/critical-path-analysis
+      - id: DISC-206
+        name: test-quality-assessment
+        path: discover/test-quality-assessment
 
   constitution-generator:
     agent_id: "D3"
@@ -157,6 +169,42 @@ ownership:
       - id: DISC-404
         name: web-research-fallback
         path: discover/web-research-fallback
+
+  data-model-analyzer:
+    agent_id: "D5"
+    phase: "setup"
+    skill_count: 4
+    skills:
+      - id: DISC-501
+        name: data-store-detection
+        path: discover/data-store-detection
+      - id: DISC-502
+        name: schema-extraction
+        path: discover/schema-extraction
+      - id: DISC-503
+        name: relationship-mapping
+        path: discover/relationship-mapping
+      - id: DISC-504
+        name: migration-analysis
+        path: discover/migration-analysis
+
+  feature-mapper:
+    agent_id: "D6"
+    phase: "setup"
+    skill_count: 4
+    skills:
+      - id: DISC-601
+        name: endpoint-discovery
+        path: discover/endpoint-discovery
+      - id: DISC-602
+        name: page-discovery
+        path: discover/page-discovery
+      - id: DISC-603
+        name: job-discovery
+        path: discover/job-discovery
+      - id: DISC-604
+        name: domain-mapping
+        path: discover/domain-mapping
 
   # ---------------------------------------------------------------------------
   # Agent 01: Requirements Analyst

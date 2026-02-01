@@ -1,7 +1,7 @@
 {
   "version": "2.0.0",
   "generated": "2026-01-24",
-  "total_skills": 139,
+  "total_skills": 151,
   "enforcement_mode": "strict",
   "ownership": {
     "sdlc-orchestrator": {
@@ -19,14 +19,14 @@
     "architecture-analyzer": {
       "agent_id": "D1",
       "phase": "setup",
-      "skill_count": 4,
-      "skills": ["DISC-101", "DISC-102", "DISC-103", "DISC-104"]
+      "skill_count": 6,
+      "skills": ["DISC-101", "DISC-102", "DISC-103", "DISC-104", "DISC-105", "DISC-106"]
     },
     "test-evaluator": {
       "agent_id": "D2",
       "phase": "setup",
-      "skill_count": 4,
-      "skills": ["DISC-201", "DISC-202", "DISC-203", "DISC-204"]
+      "skill_count": 6,
+      "skills": ["DISC-201", "DISC-202", "DISC-203", "DISC-204", "DISC-205", "DISC-206"]
     },
     "constitution-generator": {
       "agent_id": "D3",
@@ -39,6 +39,18 @@
       "phase": "setup",
       "skill_count": 4,
       "skills": ["DISC-401", "DISC-402", "DISC-403", "DISC-404"]
+    },
+    "data-model-analyzer": {
+      "agent_id": "D5",
+      "phase": "setup",
+      "skill_count": 4,
+      "skills": ["DISC-501", "DISC-502", "DISC-503", "DISC-504"]
+    },
+    "feature-mapper": {
+      "agent_id": "D6",
+      "phase": "setup",
+      "skill_count": 4,
+      "skills": ["DISC-601", "DISC-602", "DISC-603", "DISC-604"]
     },
     "requirements-analyst": {
       "agent_id": "01",
