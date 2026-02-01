@@ -7,7 +7,7 @@
 
 ## Preamble
 
-This constitution establishes the fundamental principles governing all development activities within this project. These articles are **immutable** once established and guide all 13 SDLC phases and all agent interactions.
+This constitution establishes the fundamental principles governing all development activities within this project. These articles are **immutable** once established and guide all SDLC workflows and agent interactions, whether the workflow includes all 13 phases or a subset (e.g., feature, fix, test workflows).
 
 All agents (01-13) and the SDLC Orchestrator (00) MUST read and enforce these principles throughout the project lifecycle.
 
@@ -162,17 +162,20 @@ These 10 articles are mandatory for all projects. They represent industry best p
 
 ### Article IX: Quality Gate Integrity
 
-**Principle**: Quality gates cannot be skipped. Failures require remediation.
+**Principle**: Quality gates cannot be skipped. Failures require remediation. Gate enforcement applies to all workflow types.
 
 **Requirements**:
 1. All quality gates MUST be validated before phase advancement
 2. Gate failures MUST be remediated (cannot be waived)
 3. "Move fast and break things" is FORBIDDEN
 4. Gate fails twice → Escalate to human
+5. Workflow phase sequences are fixed — phases cannot be skipped or reordered
+6. Gate requirements may vary by workflow type (e.g., lighter elicitation for bug fixes) but gates themselves cannot be bypassed
 
 **Validation**:
 - Orchestrator validates all gate criteria before advancement
 - `gate-validation.json` MUST show PASS status
+- Gate enforcement applies to all workflows: feature, fix, test-run, test-generate, full-lifecycle
 
 ---
 

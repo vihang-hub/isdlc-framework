@@ -160,7 +160,7 @@
       }
     },
 
-    "10-local-dev": {
+    "10-local-testing": {
       "interactive_elicitation": {
         "enabled": false
       },
@@ -174,7 +174,7 @@
       }
     },
 
-    "11-staging": {
+    "11-test-deploy": {
       "interactive_elicitation": {
         "enabled": false
       },

@@ -92,8 +92,8 @@
         "07-code-review",
         "08-validation",
         "09-cicd",
-        "10-local-dev",
-        "11-staging",
+        "10-local-testing",
+        "11-test-deploy",
         "12-production",
         "13-operations"
       ],

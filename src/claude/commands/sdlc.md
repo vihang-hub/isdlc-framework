@@ -84,7 +84,7 @@ Enter selection (1-2):
 
 ---
 
-**SCENARIO 3: Constitution IS configured + Workflow NOT started**
+**SCENARIO 3: Constitution IS configured + No active workflow**
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
@@ -92,20 +92,18 @@ Enter selection (1-2):
 ╚══════════════════════════════════════════════════════════════╝
 
 Constitution Status: Configured ✓
-Workflow Status: Not started
+Workflow Status: No active workflow
 
-Select an option:
+What would you like to do?
 
-[1] Start Workflow (Recommended)
-    Begin the SDLC workflow with complexity assessment
+[1] New Feature       — Implement a new feature end-to-end
+[2] Fix               — Fix a bug or defect
+[3] Run Tests         — Execute existing automation tests
+[4] Generate Tests    — Create new tests for existing code
+[5] Full Lifecycle    — Run complete SDLC (all 13 phases)
+[6] View Status       — Check current project status
 
-[2] View Constitution
-    Display the current project constitution
-
-[3] Reconfigure Constitution
-    Update or replace the existing constitution
-
-Enter selection (1-3):
+Enter selection (1-6):
 ```
 
 ---
@@ -118,24 +116,18 @@ Enter selection (1-3):
 ╚══════════════════════════════════════════════════════════════╝
 
 Constitution Status: Configured ✓
-Workflow Status: Phase 05 - Implementation (in progress)
-Active Agent: Software Developer (Agent 05)
+Active Workflow: feature (Phase 03 - Design, 3/7 complete)
+Active Agent: System Designer (Agent 03)
 
 Select an option:
 
-[1] Check Status (Recommended)
-    View detailed progress, blockers, and next steps
+[1] Continue     — Resume current workflow (Recommended)
+[2] Gate Check   — Validate current phase gate
+[3] View Status  — Check detailed progress
+[4] Escalate     — Escalate a blocker to human
+[5] Cancel       — Cancel current workflow
 
-[2] Run Gate Check
-    Validate current phase gate requirements
-
-[3] Advance to Next Phase
-    Move to next phase (requires gate to pass)
-
-[4] Escalate Issue
-    Pause workflow and escalate an issue for human decision
-
-Enter selection (1-4):
+Enter selection (1-5):
 ```
 
 ---
@@ -148,27 +140,80 @@ Enter selection (1-4):
 | 1 (New, no constitution) | [2] | Display path to constitution.md and exit |
 | 2 (Existing, no constitution) | [1] | Execute `/discover` (runs EXISTING PROJECT FLOW) |
 | 2 (Existing, no constitution) | [2] | Display path to constitution.md and exit |
-| 3 (Constitution ready) | [1] | Execute `/sdlc start` (prompt for project name) |
-| 3 (Constitution ready) | [2] | Display constitution contents |
-| 3 (Constitution ready) | [3] | Execute `/discover` (re-run setup) |
-| 4 (Workflow in progress) | [1] | Execute `/sdlc status` |
-| 4 (Workflow in progress) | [2] | Execute `/sdlc gate-check` |
-| 4 (Workflow in progress) | [3] | Execute `/sdlc advance` |
-| 4 (Workflow in progress) | [4] | Prompt for issue description, then `/sdlc escalate` |
+| 3 (Ready, no workflow) | [1] | Execute `/sdlc feature` |
+| 3 (Ready, no workflow) | [2] | Execute `/sdlc fix` |
+| 3 (Ready, no workflow) | [3] | Execute `/sdlc test run` |
+| 3 (Ready, no workflow) | [4] | Execute `/sdlc test generate` |
+| 3 (Ready, no workflow) | [5] | Execute `/sdlc start` (full lifecycle) |
+| 3 (Ready, no workflow) | [6] | Execute `/sdlc status` |
+| 4 (Workflow active) | [1] | Resume current workflow at active phase |
+| 4 (Workflow active) | [2] | Execute `/sdlc gate-check` |
+| 4 (Workflow active) | [3] | Execute `/sdlc status` |
+| 4 (Workflow active) | [4] | Prompt for issue description, then `/sdlc escalate` |
+| 4 (Workflow active) | [5] | Execute `/sdlc cancel` |
 
 ---
 
 ### Actions
 
-**start** - Initialize a new project or feature workflow
+**feature** - Implement a new feature end-to-end
+```
+/sdlc feature "Feature description"
+```
+1. Validate constitution exists and is not a template
+2. Check no active workflow (block if one exists, suggest `/sdlc cancel` first)
+3. Initialize `active_workflow` in state.json with type `"feature"` and phases `["01-requirements", "02-architecture", "03-design", "05-implementation", "06-testing", "09-cicd", "07-code-review"]`
+4. Delegate to Requirements Analyst (Phase 01) with `scope: "feature"`
+
+**fix** - Fix a bug or defect with TDD
+```
+/sdlc fix "Bug description"
+```
+1. Validate constitution exists and is not a template
+2. Check no active workflow
+3. Initialize `active_workflow` with type `"fix"` and phases `["01-requirements", "05-implementation", "06-testing", "09-cicd", "07-code-review"]`
+4. Delegate to Requirements Analyst (Phase 01) with `scope: "bug-report"`
+5. Phase 05 requires a failing test before the fix (TDD enforcement)
+
+**test run** - Execute existing automation tests
+```
+/sdlc test run
+```
+1. Present test type selection: Unit, System, E2E (multi-select)
+2. Initialize `active_workflow` with type `"test-run"` and phases `["06-testing"]`
+3. Delegate to Integration Tester (Phase 06) with selected test types
+4. Report results — does NOT fix failures (suggest `/sdlc fix` for each)
+
+**test generate** - Create new tests for existing code
+```
+/sdlc test generate
+```
+1. Present test type selection: Unit, System, E2E (single-select)
+2. Initialize `active_workflow` with type `"test-generate"` and phases `["04-test-strategy", "05-implementation", "06-testing", "07-code-review"]`
+3. Phase 04: Analyze code and design test cases
+4. Phase 05: Write the test code
+5. Phase 06: Run new tests to verify they work
+6. Phase 07: Review test quality
+
+**start** - Run complete SDLC lifecycle (all 13 phases)
 ```
 /sdlc start "Project or feature description"
 ```
-1. Validate the project constitution at `.isdlc/constitution.md`
-2. If constitution is missing or still a template, STOP and guide the user to create one
-3. Assess project complexity and determine required phases
-4. Initialize workflow state in `.isdlc/state.json`
+1. Validate constitution exists and is not a template
+2. Check no active workflow
+3. Assess project complexity
+4. Initialize `active_workflow` with type `"full-lifecycle"` and all 13 phases
 5. Delegate to Requirements Analyst (Phase 01)
+
+**cancel** - Cancel the active workflow
+```
+/sdlc cancel
+```
+1. Check for active workflow (if none, inform user)
+2. Prompt for cancellation reason (required)
+3. Move workflow to `workflow_history` with status `"cancelled"` and reason
+4. Clear `active_workflow` from state.json
+5. Display cancellation confirmation
 
 **status** - Show current project status
 ```
@@ -402,26 +447,35 @@ Use this command to configure cloud deployment settings at any time, especially:
    - If yes: Advance to Phase 11
    - If no: Inform user to run `/sdlc advance` when ready
 
-### Adaptive Workflow
+### Workflows
 
-The orchestrator dynamically determines required phases based on task complexity:
+Each subcommand maps to a predefined workflow with a fixed, non-skippable phase sequence. Workflow definitions are in `.isdlc/config/workflows.json`.
 
-| Task Type | Typical Phases | When |
-|-----------|----------------|------|
-| Bug fixes, config changes | 01, 05, 06 | Simple, no architecture impact |
-| Features, API endpoints | 01-07, 09 | Multiple components, integration needed |
-| Platforms, compliance | All 13 | Complex architecture, regulatory requirements |
+| Command | Workflow | Phases | Gate Mode |
+|---------|----------|--------|-----------|
+| `/sdlc feature` | feature | 01 → 02 → 03 → 05 → 06 → 09 → 07 | strict |
+| `/sdlc fix` | fix | 01 → 05 → 06 → 09 → 07 | strict |
+| `/sdlc test run` | test-run | 06 | strict |
+| `/sdlc test generate` | test-generate | 04 → 05 → 06 → 07 | strict |
+| `/sdlc start` | full-lifecycle | 01 → 02 → ... → 13 | strict |
+
+**Enforcement rules:**
+- Workflows start at phase 1 — no `--start-at` flag
+- Phases cannot be skipped within a workflow
+- Only one active workflow at a time
+- Starting a new workflow requires cancelling the active one first
 
 ### Examples
 
 ```
-/sdlc start "Build a REST API for user authentication"
+/sdlc feature "Build a REST API for user authentication"
+/sdlc fix "Login endpoint returns 500 on empty password"
+/sdlc test run
+/sdlc test generate
+/sdlc start "New e-commerce platform"
 /sdlc status
 /sdlc gate-check
-/sdlc advance
-/sdlc delegate software-developer "Implement the login endpoint"
-/sdlc constitution
-/discover                 # Preferred (or /sdlc discover which redirects)
+/sdlc cancel
 /sdlc configure-cloud
 /sdlc escalate "Unclear requirement about session timeout"
 ```
@@ -447,6 +501,12 @@ When this command is invoked:
 3. The orchestrator will coordinate the appropriate workflow
 
 ```
-/sdlc (no args) → Task tool → sdlc-orchestrator → Interactive Menu → User Selection → Action
-/sdlc <action>  → Task tool → sdlc-orchestrator → Execute Action → Phase agents (01-13)
+/sdlc (no args)    → Task tool → sdlc-orchestrator → Interactive Menu → User Selection → Action
+/sdlc feature ...  → Task tool → sdlc-orchestrator → Initialize feature workflow → Phase agents
+/sdlc fix ...      → Task tool → sdlc-orchestrator → Initialize fix workflow → Phase agents
+/sdlc test run     → Task tool → sdlc-orchestrator → Initialize test-run workflow → Phase 06 agent
+/sdlc test generate → Task tool → sdlc-orchestrator → Initialize test-generate workflow → Phase agents
+/sdlc start ...    → Task tool → sdlc-orchestrator → Initialize full-lifecycle workflow → Phase agents
+/sdlc cancel       → Task tool → sdlc-orchestrator → Cancel active workflow
+/sdlc <action>     → Task tool → sdlc-orchestrator → Execute Action
 ```

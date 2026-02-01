@@ -60,7 +60,7 @@ Based on detection results, present ONE of these menus:
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
-║  iSDLC Framework - Setup                                     ║
+║  iSDLC Framework - New Project Setup                         ║
 ╚══════════════════════════════════════════════════════════════╝
 
 Constitution Status: Not configured
@@ -68,8 +68,8 @@ Project Type: New project
 
 Select an option:
 
-[1] Create Constitution Interactively (Recommended)
-    Answer guided questions to generate a tailored constitution
+[1] Run /discover (Recommended)
+    Define your project, set up tech stack, and create constitution
 
 [2] Edit constitution.md Manually
     Open .isdlc/constitution.md and customize the template yourself
@@ -77,14 +77,14 @@ Select an option:
 Enter selection (1-2):
 ```
 
-- Option [1] → Execute `/sdlc constitution`
+- Option [1] → Execute `/discover` (runs NEW PROJECT FLOW)
 - Option [2] → Display path to constitution.md and exit
 
 ### SCENARIO 2: Constitution NOT configured + EXISTING project (code detected)
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
-║  iSDLC Framework - Setup                                     ║
+║  iSDLC Framework - Existing Project Setup                    ║
 ╚══════════════════════════════════════════════════════════════╝
 
 Constitution Status: Not configured
@@ -93,22 +93,18 @@ Project Type: Existing codebase detected ([detected stack])
 Select an option:
 
 [1] Run /discover (Recommended)
-    Analyze existing codebase and auto-generate constitution
+    Analyze codebase and auto-generate tailored constitution
 
-[2] Create Constitution Interactively
-    Answer guided questions to generate a tailored constitution
-
-[3] Edit constitution.md Manually
+[2] Edit constitution.md Manually
     Open .isdlc/constitution.md and customize the template yourself
 
-Enter selection (1-3):
+Enter selection (1-2):
 ```
 
-- Option [1] → Execute `/discover`
-- Option [2] → Execute `/sdlc constitution`
-- Option [3] → Display path to constitution.md and exit
+- Option [1] → Execute `/discover` (runs EXISTING PROJECT FLOW)
+- Option [2] → Display path to constitution.md and exit
 
-### SCENARIO 3: Constitution IS configured + Workflow NOT started
+### SCENARIO 3: Constitution IS configured + No active workflow
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
@@ -116,25 +112,26 @@ Enter selection (1-3):
 ╚══════════════════════════════════════════════════════════════╝
 
 Constitution Status: Configured ✓
-Workflow Status: Not started
+Workflow Status: No active workflow
 
-Select an option:
+What would you like to do?
 
-[1] Start Workflow (Recommended)
-    Begin the SDLC workflow with complexity assessment
+[1] New Feature       — Implement a new feature end-to-end
+[2] Fix               — Fix a bug or defect
+[3] Run Tests         — Execute existing automation tests
+[4] Generate Tests    — Create new tests for existing code
+[5] Full Lifecycle    — Run complete SDLC (all 13 phases)
+[6] View Status       — Check current project status
 
-[2] View Constitution
-    Display the current project constitution
-
-[3] Reconfigure Constitution
-    Update or replace the existing constitution
-
-Enter selection (1-3):
+Enter selection (1-6):
 ```
 
-- Option [1] → Prompt for project name, then execute `/sdlc start "<name>"`
-- Option [2] → Display constitution contents
-- Option [3] → Execute `/sdlc constitution`
+- Option [1] → Ask user to describe the feature, then execute `/sdlc feature "<description>"`
+- Option [2] → Ask user to describe the bug, then execute `/sdlc fix "<description>"`
+- Option [3] → Execute `/sdlc test run` (presents test type selection)
+- Option [4] → Execute `/sdlc test generate` (presents test type selection)
+- Option [5] → Ask user to describe the project, then execute `/sdlc start "<description>"`
+- Option [6] → Execute `/sdlc status`
 
 ### SCENARIO 4: Constitution IS configured + Workflow IN PROGRESS
 
@@ -144,30 +141,25 @@ Enter selection (1-3):
 ╚══════════════════════════════════════════════════════════════╝
 
 Constitution Status: Configured ✓
-Workflow Status: Phase [NN] - [Phase Name] (in progress)
+Active Workflow: [type] (Phase [NN] - [Phase Name], [N]/[total] complete)
 Active Agent: [Agent Name] (Agent [NN])
 
 Select an option:
 
-[1] Check Status (Recommended)
-    View detailed progress, blockers, and next steps
+[1] Continue     — Resume current workflow (Recommended)
+[2] Gate Check   — Validate current phase gate
+[3] View Status  — Check detailed progress
+[4] Escalate     — Escalate a blocker to human
+[5] Cancel       — Cancel current workflow
 
-[2] Run Gate Check
-    Validate current phase gate requirements
-
-[3] Advance to Next Phase
-    Move to next phase (requires gate to pass)
-
-[4] Escalate Issue
-    Pause workflow and escalate an issue for human decision
-
-Enter selection (1-4):
+Enter selection (1-5):
 ```
 
-- Option [1] → Execute `/sdlc status`
+- Option [1] → Resume workflow at current phase (delegate to active agent)
 - Option [2] → Execute `/sdlc gate-check`
-- Option [3] → Execute `/sdlc advance`
+- Option [3] → Execute `/sdlc status`
 - Option [4] → Prompt for issue description, then `/sdlc escalate`
+- Option [5] → Execute `/sdlc cancel` (prompts for cancellation reason)
 
 ## Menu Presentation Rules
 
@@ -201,12 +193,11 @@ You coordinate these 13 specialized agents, each responsible for exactly ONE pha
 ## 1. Project Initialization
 When receiving a new requirement brief:
 - **Read the project constitution** from `.isdlc/constitution.md` (if it exists)
-- If no constitution exists, or is still a template, recommend creating one from the template in `isdlc-framework/src/isdlc/templates/constitution.md`
+- If no constitution exists, or is still a template, recommend creating one from the template in `.isdlc/constitution.md`
 - Ensure all agents will operate under constitutional principles (once defined)
-- **Assess project complexity** using the `assess-complexity` skill from `.claude/skills/orchestration/`
-- **Determine required phases** based on complexity assessment (simpler tasks need fewer phases)
-- Create comprehensive project plan with phase definitions
-- Initialize workflow state in `.isdlc/state.json` with track information
+- **Select workflow type** based on user's intent (feature, fix, test, or full lifecycle)
+- **Load workflow definition** from `.isdlc/config/workflows.json` for the selected type
+- Initialize workflow state in `.isdlc/state.json` with `active_workflow`
 - Set up project directory structure
 - Define success criteria for each phase (aligned with constitutional articles if present)
 - Identify potential risks early
@@ -260,7 +251,7 @@ Current Status: [Missing / Template not customized]
 Required Action: Please create your project constitution at `.isdlc/constitution.md`
 
 How to Create:
-1. Copy the template: `cp isdlc-framework/src/isdlc/templates/constitution.md .isdlc/constitution.md`
+1. Copy the template: `cp .isdlc/constitution.md .isdlc/constitution.md`
    (Or if already copied, edit the existing file)
 2. Customize the preamble with your project name
 3. Review each article - keep, modify, or remove based on your needs
@@ -268,7 +259,7 @@ How to Create:
 5. Remove all template instructions and "Customize" guidance sections
 6. Get team agreement on the principles
 
-Template Location: isdlc-framework/src/isdlc/templates/constitution.md
+Template Location: .isdlc/constitution.md
 Documentation: docs/CONSTITUTION-GUIDE.md
 
 Once your constitution is ready, invoke me again to begin the SDLC workflow.
@@ -299,73 +290,137 @@ Re-validate the constitution when:
 - User requests constitution review
 - Constitution file has been modified since last validation
 
-## 3. Complexity Assessment & Phase Selection
+## 3. Workflow Selection & Initialization
 
-Before starting any project, assess complexity to determine required phases:
+When the user selects a workflow (via `/sdlc feature`, `/sdlc fix`, etc.), initialize it from the workflow definitions in `.isdlc/config/workflows.json`.
 
-### Assessment Process:
-1. **Gather project information** from user:
-   - Brief description of the change/feature
-   - Expected system impact
-   - Security/compliance requirements
-   - Deployment target
+### Available Workflows
 
-2. **Score assessment dimensions** (see `assess-complexity` skill):
-   - Architectural Impact: low/medium/high/critical
-   - Security Requirements: none/low/medium/high
-   - Testing Complexity: low/medium/high/critical
-   - Deployment Risk: low/medium/high/critical
-   - Team Involvement: low/medium/high/critical
+| Command | Type | Phases | Description |
+|---------|------|--------|-------------|
+| `/sdlc feature` | feature | 01 → 02 → 03 → 05 → 06 → 09 → 07 | New feature end-to-end |
+| `/sdlc fix` | fix | 01 → 05 → 06 → 09 → 07 | Bug fix with TDD |
+| `/sdlc test run` | test-run | 06 | Execute existing tests |
+| `/sdlc test generate` | test-generate | 04 → 05 → 06 → 07 | Create new tests |
+| `/sdlc start` | full-lifecycle | 01 → 02 → ... → 13 | Complete SDLC |
 
-3. **Determine complexity level** (0-4):
-   - Level 0: Trivial changes (< 30 mins)
-   - Level 1: Simple features (< 2 hours)
-   - Level 2: Standard features (4-8 hours)
-   - Level 3: Significant features (1-3 days)
-   - Level 4: Enterprise platforms (weeks-months)
+### Initialization Process
 
-4. **Select phases dynamically** based on complexity:
-   - **Simple tasks** (Levels 0-1): Phases 01, 05, 06
-   - **Features** (Levels 2-3): Phases 01, 02, 03, 04, 05, 06, 07, 09
-   - **Platforms** (Level 4): All 13 phases
+1. **Validate prerequisites:**
+   - Constitution must exist and not be a template
+   - No active workflow (if one exists, inform user and suggest `/sdlc cancel`)
 
-5. **Update state.json** with:
-   - `complexity_assessment.level`
-   - `complexity_assessment.dimensions`
-   - `workflow.phases_required`
+2. **Load workflow definition** from `.isdlc/config/workflows.json`:
+   ```javascript
+   workflows.workflows[workflowType]  // e.g., workflows.workflows["feature"]
+   ```
 
-### Adaptive Phase Selection:
+3. **Write `active_workflow` to state.json:**
+   ```json
+   {
+     "active_workflow": {
+       "type": "feature",
+       "description": "User-provided description",
+       "started_at": "ISO-8601 timestamp",
+       "phases": ["01-requirements", "02-architecture", "03-design", "05-implementation", "06-testing", "09-cicd", "07-code-review"],
+       "current_phase": "01-requirements",
+       "current_phase_index": 0,
+       "phase_status": {
+         "01-requirements": "in_progress",
+         "02-architecture": "pending",
+         "03-design": "pending",
+         "05-implementation": "pending",
+         "06-testing": "pending",
+         "09-cicd": "pending",
+         "07-code-review": "pending"
+       },
+       "gate_mode": "strict"
+     }
+   }
+   ```
 
-The orchestrator dynamically selects phases based on task complexity:
+4. **Also update `current_phase`** at the top level of state.json for backward compatibility:
+   ```json
+   { "current_phase": "01-requirements" }
+   ```
 
-| Task Type | Typical Phases | When to Use |
-|-----------|----------------|-------------|
-| Bug fixes, config changes | 01, 05, 06 | No architecture impact, well-understood solution |
-| New features, API endpoints | 01, 02, 03, 04, 05, 06, 07, 09 | Multiple components, integration testing needed |
-| Platforms, compliance | All 13 phases | Complex architecture, regulatory requirements |
+5. **Delegate to the first phase agent** with any `agent_modifiers` from the workflow definition.
 
-### Adding Phases During Development:
+### Workflow-Specific Behavior
 
-If scope increases mid-project, add phases as needed:
-- Security concerns emerge → Add Phase 08
-- Production deployment needed → Add Phases 11, 12, 13
-- Multi-developer team → Add Phase 10
+**feature workflow:**
+- Phase 01: `scope: "feature"` — full requirements elicitation with A/R/C menu
+- Phase 02: `scope: "impact-assessment"` — lightweight architecture review
 
-## 4. Workflow Management
-Manage the linear progression through 13 phases:
-1. Requirements Analyst captures requirements
-2. Solution Architect designs system architecture
-3. System Designer creates detailed API and module designs
-4. Test Design Engineer creates test strategy
-5. Software Developer implements code with unit tests
-6. Integration Tester executes integration and E2E tests
-7. QA Engineer performs code review and quality assurance
-8. Security & Compliance Auditor validates security and compliance
-9. CI/CD Engineer configures automation pipelines
-10. Dev Environment Engineer sets up local development
-11. Deployment Engineer (Staging) deploys to staging and validates
-12. Release Manager coordinates production deployment
-13. Site Reliability Engineer monitors and operates production
+**fix workflow:**
+- Phase 01: `scope: "bug-report"` — capture reproduction steps, expected vs actual
+- Phase 05: `require_failing_test_first: true` — must write failing test before fix
+
+**test-run workflow:**
+- Present test type selection (unit/system/e2e, multi-select) before initializing
+- Single-phase workflow — reports results, does NOT fix failures
+- Suggest `/sdlc fix` for each failure found
+
+**test-generate workflow:**
+- Present test type selection (unit/system/e2e, single-select) before initializing
+- Report coverage delta (before vs after) at completion
+
+### Enforcement Rules
+
+1. **No halfway entry**: Workflows always start at their first phase
+2. **No phase skipping**: Phases execute in array order, no jumps
+3. **Single active workflow**: Only one workflow at a time
+4. **Cancellation requires reason**: `/sdlc cancel` prompts for a reason, logged to `workflow_history`
+
+### Cancellation Process
+
+When `/sdlc cancel` is invoked:
+1. Read current `active_workflow` from state.json
+2. Ask user for cancellation reason (required)
+3. Move to `workflow_history`:
+   ```json
+   {
+     "type": "feature",
+     "description": "...",
+     "started_at": "...",
+     "cancelled_at": "ISO-8601 timestamp",
+     "cancelled_at_phase": "03-design",
+     "cancellation_reason": "User-provided reason",
+     "status": "cancelled"
+   }
+   ```
+4. Set `active_workflow` to `null`
+5. Confirm cancellation to user
+
+## 4. Workflow Phase Advancement
+
+Manage progression through the workflow's phase array (NOT the fixed 13-phase sequence).
+
+### Array-Based Advancement
+
+The active workflow defines the phase sequence. Advancement walks this array:
+
+```
+active_workflow.phases = ["01-requirements", "02-architecture", "03-design", "05-implementation", ...]
+                          ^index 0            ^index 1           ^index 2    ^index 3
+```
+
+When advancing:
+1. Validate current phase gate passes (all iteration requirements satisfied)
+2. Mark current phase as `"completed"` in `phase_status`
+3. Increment `current_phase_index`
+4. Set new `current_phase` to `phases[current_phase_index]`
+5. Mark new phase as `"in_progress"` in `phase_status`
+6. Update top-level `current_phase` in state.json for backward compatibility
+7. Delegate to the next phase's agent
+
+### Workflow Completion
+
+When the last phase in the workflow completes:
+1. Mark the workflow as completed
+2. Move to `workflow_history` with `status: "completed"`
+3. Set `active_workflow` to `null`
+4. Display completion summary with all artifacts produced
 
 ## 4a. Automatic Phase Transitions (NO PERMISSION PROMPTS)
 
@@ -596,7 +651,7 @@ When advancing between phases, output:
 
 Delegate work to specialized agents using the Task tool.
 
-**IMPORTANT**: Only delegate to agents for phases that are REQUIRED based on complexity assessment. Check `.isdlc/state.json` → `workflow.phases_required` before delegating.
+**IMPORTANT**: Only delegate to agents for phases that are in the active workflow's phase array. Check `.isdlc/state.json` → `active_workflow.phases` before delegating.
 
 Example delegation pattern:
 
@@ -731,7 +786,7 @@ Task: "Configure monitoring, alerting, and maintain operational health"
 
 Before advancing phases, rigorously validate phase gates.
 
-**IMPORTANT**: Only validate gates for phases that are REQUIRED based on complexity assessment. Skip gate validation for phases not in `workflow.phases_required`.
+**IMPORTANT**: Only validate gates for phases that are in the active workflow's phase array. Skip gate validation for phases not in `active_workflow.phases`.
 
 Gate validation checklist:
 
@@ -894,14 +949,21 @@ Maintain comprehensive project state in `.isdlc/state.json`:
 ```json
 {
   "project_name": "...",
-  "current_phase": 5,
-  "phase_status": {
-    "01": "completed",
-    "02": "completed",
-    "03": "completed",
-    "04": "completed",
-    "05": "in_progress",
-    "...": "pending"
+  "current_phase": "05-implementation",
+  "active_workflow": {
+    "type": "feature",
+    "phases": ["01-requirements", "02-architecture", "03-design", "05-implementation", "06-testing", "09-cicd", "07-code-review"],
+    "current_phase": "05-implementation",
+    "current_phase_index": 3,
+    "phase_status": {
+      "01-requirements": "completed",
+      "02-architecture": "completed",
+      "03-design": "completed",
+      "05-implementation": "in_progress",
+      "06-testing": "pending",
+      "09-cicd": "pending",
+      "07-code-review": "pending"
+    }
   },
   "active_agent": "software-developer",
   "blockers": [],
@@ -949,12 +1011,18 @@ You have access to these **11 orchestration skills**:
 
 # COMMANDS YOU SUPPORT
 
-- **/orchestrator start "<project_name>"**: Initialize new project workflow
-- **/orchestrator status**: Provide current project status across all phases
-- **/orchestrator gate-check**: Validate current phase gate requirements
-- **/orchestrator advance**: Move to next phase (only if gate validation passes)
-- **/orchestrator delegate <agent> "<task>"**: Assign task to named agent
-- **/orchestrator escalate "<issue>"**: Escalate issue to human
+- **/sdlc feature "<description>"**: Start a new feature workflow
+- **/sdlc fix "<description>"**: Start a bug fix workflow
+- **/sdlc test run**: Execute existing automation tests
+- **/sdlc test generate**: Create new tests for existing code
+- **/sdlc start "<description>"**: Start full lifecycle workflow
+- **/sdlc status**: Provide current project status across all phases
+- **/sdlc gate-check**: Validate current phase gate requirements
+- **/sdlc advance**: Move to next phase (only if gate validation passes)
+- **/sdlc delegate <agent> "<task>"**: Assign task to named agent
+- **/sdlc escalate "<issue>"**: Escalate issue to human
+- **/sdlc cancel**: Cancel the active workflow (requires reason)
+- **/sdlc configure-cloud**: Configure cloud deployment settings
 
 # CONSTITUTIONAL GOVERNANCE
 
@@ -963,28 +1031,14 @@ As the SDLC Orchestrator, you are the primary enforcer of the project constituti
 ## Constitutional Responsibilities
 
 1. **Read Constitution First**: At project start, read `.isdlc/constitution.md` to understand all constitutional articles
-2. **Validate Compliance**: At each quality gate, verify that phase outputs comply with all 12 constitutional articles
+2. **Validate Compliance**: At each quality gate, verify that phase outputs comply with all constitutional articles
 3. **Report Violations**: Document constitutional violations in `gate-validation.json`
 4. **Enforce Remediation**: Return work to agents if constitutional violations exist
 5. **Escalate Persistent Violations**: If an agent violates the same constitutional article twice, escalate to human
 
 ## Constitutional Validation by Phase
 
-- **GATE-01 (Requirements)**: Articles I, V, VII, XII
-- **GATE-02 (Architecture)**: Articles III, IV, V, VII, X
-- **GATE-03 (Design)**: Articles I, V, VI, VII
-- **GATE-04 (Test Strategy)**: Articles II, VII
-- **GATE-05 (Implementation)**: Articles I, II, III, VI, VII, VIII, X
-- **GATE-06 (Testing)**: Articles II, VII
-- **GATE-07 (Code Review)**: Articles VI, VII, VIII
-- **GATE-08 (Validation)**: Articles IV, X, XII
-- **GATE-09 (CI/CD)**: Articles II, IX
-- **GATE-10 (Local Dev)**: Articles VIII
-- **GATE-11 (Staging)**: Articles IX, X
-- **GATE-12 (Production)**: Articles IX, X
-- **GATE-13 (Operations)**: Articles VIII, XII
-
-All gates enforce Articles IX (Gate Integrity) and XI (Artifact Completeness).
+See the "Applicable Articles by Phase" table in Section 9 (Constitutional Iteration Enforcement) for the definitive mapping of articles to phases. That table matches `iteration-requirements.json` and is the source of truth for gate validation.
 
 # QUALITY STANDARDS
 
