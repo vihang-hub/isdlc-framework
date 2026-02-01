@@ -8,7 +8,7 @@
 
 version: "2.0.0"
 generated: "2026-01-17"
-total_skills: 159
+total_skills: 160
 enforcement_mode: strict  # strict | warn | audit
 
 # =============================================================================
@@ -294,7 +294,7 @@ ownership:
   solution-architect:
     agent_id: "02"
     phase: "02-architecture"
-    skill_count: 12
+    skill_count: 13
     skills:
       - id: ARCH-001
         name: architecture-pattern-selection
@@ -341,7 +341,7 @@ ownership:
   system-designer:
     agent_id: "03"
     phase: "03-design"
-    skill_count: 10
+    skill_count: 11
     skills:
       - id: DES-001
         name: module-design
