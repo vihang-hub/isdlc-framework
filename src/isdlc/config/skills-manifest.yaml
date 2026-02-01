@@ -461,7 +461,7 @@ ownership:
   integration-tester:
     agent_id: "06"
     phase: "06-testing"
-    skill_count: 9
+    skill_count: 8
     skills:
       - id: TEST-006
         name: coverage-analysis
@@ -487,9 +487,6 @@ ownership:
       - id: TEST-013
         name: security-test
         path: testing/security-test
-      - id: DEV-014
-        name: autonomous-iterate
-        path: development/autonomous-iterate.md
 
   # ---------------------------------------------------------------------------
   # Agent 07: QA Engineer
@@ -827,7 +824,7 @@ skill_lookup:
   DEV-011: software-developer
   DEV-012: software-developer
   DEV-013: software-developer
-  DEV-014: software-developer  # shared with integration-tester
+  DEV-014: software-developer  # integration-tester has collaborator access
   DEV-015: qa-engineer
 
   # Security
@@ -944,6 +941,7 @@ path_lookup:
   orchestration/risk-assessment: sdlc-orchestrator
   orchestration/assess-complexity.md: sdlc-orchestrator
   orchestration/skill-validation: sdlc-orchestrator
+  orchestration/autonomous-constitution-validate.md: sdlc-orchestrator
 
   # Requirements
   requirements/elicitation: requirements-analyst

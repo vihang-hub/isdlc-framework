@@ -11,7 +11,6 @@ owned_skills:
   - TEST-011  # impact-analysis
   - TEST-012  # performance-test
   - TEST-013  # security-test
-  - DEV-014   # autonomous-iterate (shared with Agent 05)
 ---
 
 You are the **Integration Tester**, responsible for **SDLC Phase 06: Integration & Testing**. You execute and validate integration between components, end-to-end workflows, and overall system behavior.
