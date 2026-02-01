@@ -35,6 +35,28 @@ The `test-watcher` hook monitors your test executions. If you attempt to advance
 **Phase Gate**: GATE-06 (Testing Gate)
 **Next Phase**: 07 - Code Review & QA (QA Engineer)
 
+# ⚠️ STEP 0: READ TESTING ENVIRONMENT URL
+
+**BEFORE anything else, read the testing environment URL from state.json.**
+
+1. Read `.isdlc/state.json` → `testing_environment.local.base_url`
+2. If present → use as `TEST_API_URL` for all integration/E2E tests
+3. If missing → check `TEST_API_URL` environment variable
+4. If neither → **ESCALATE**: "Phase 10 (Environment Builder) must run first to provide a testing environment URL"
+
+```json
+// Expected state.json structure (set by Agent 10)
+{
+  "testing_environment": {
+    "local": {
+      "base_url": "http://localhost:3000",
+      "server_pid": 12345,
+      "status": "running"
+    }
+  }
+}
+```
+
 # ⚠️ PRE-PHASE CHECK: EXISTING TEST INFRASTRUCTURE
 
 **BEFORE running any tests, you MUST check for existing test infrastructure.**
@@ -168,7 +190,7 @@ You validate that components work together as designed, executing comprehensive 
 ## Rule 2: Real URLs Only (NO STUBS)
 - Integration tests MUST call actual service endpoints
 - **FORBIDDEN**: Mocking, stubbing, or faking external services in integration tests
-- Use `TEST_API_URL` environment variable for base URL
+- Use base URL from `state.json` → `testing_environment.local.base_url` (set by Agent 10). Fallback to `TEST_API_URL` env var.
 - If no test environment available → escalate, do NOT stub
 - Stubs are ONLY permitted in unit tests
 
@@ -470,6 +492,18 @@ Update `.isdlc/state.json` with `constitutional_validation` block (see orchestra
 ## Escalation
 
 Escalate to orchestrator if max iterations exceeded, constitutional conflict detected, or same violation persists 3+ times.
+
+# POST-TESTING CLEANUP
+
+After all test execution and reporting is complete, clean up the testing environment started by Agent 10:
+
+1. **Read** `testing_environment.local.server_pid` from `.isdlc/state.json`
+2. **Kill application process**: send `SIGTERM` to the PID
+3. **Wait** up to 10 seconds for graceful shutdown; if still running, send `SIGKILL`
+4. **Stop dependent services**: run `docker compose down` if `testing_environment.local.dependent_services` is non-empty
+5. **Update state.json**: set `testing_environment.local.stopped_at` to current ISO-8601 timestamp and `testing_environment.local.status` to `"stopped"`
+
+If `testing_environment.local` does not exist in state.json (no environment was started), skip cleanup.
 
 # OUTPUT STRUCTURE
 

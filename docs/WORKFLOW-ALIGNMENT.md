@@ -26,7 +26,7 @@ This document confirms the alignment of workflows, artifacts, and phase gates wi
 | **07** | QA Engineer | [07-qa-engineer.md](../.claude/agents/07-qa-engineer.md) | [07-code-review-gate.md](../checklists/07-code-review-gate.md) |
 | **08** | Security & Compliance Auditor | [08-security-compliance-auditor.md](../.claude/agents/08-security-compliance-auditor.md) | [08-validation-gate.md](../checklists/08-validation-gate.md) |
 | **09** | CI/CD Engineer | [09-cicd-engineer.md](../.claude/agents/09-cicd-engineer.md) | [09-cicd-gate.md](../checklists/09-cicd-gate.md) |
-| **10** | Dev Environment Engineer | [10-dev-environment-engineer.md](../.claude/agents/10-dev-environment-engineer.md) | [10-local-testing-gate.md](../checklists/10-local-testing-gate.md) |
+| **10** | Environment Builder | [10-dev-environment-engineer.md](../.claude/agents/10-dev-environment-engineer.md) | [10-local-testing-gate.md](../checklists/10-local-testing-gate.md) |
 | **11** | Deployment Engineer (Staging) | [11-deployment-engineer-staging.md](../.claude/agents/11-deployment-engineer-staging.md) | [11-test-deploy-gate.md](../checklists/11-test-deploy-gate.md) |
 | **12** | Release Manager | [12-release-manager.md](../.claude/agents/12-release-manager.md) | [12-production-gate.md](../checklists/12-production-gate.md) |
 | **13** | Site Reliability Engineer | [13-site-reliability-engineer.md](../.claude/agents/13-site-reliability-engineer.md) | [13-operations-gate.md](../checklists/13-operations-gate.md) |

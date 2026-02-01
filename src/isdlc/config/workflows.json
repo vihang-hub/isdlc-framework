@@ -12,6 +12,7 @@
         "02-architecture",
         "03-design",
         "05-implementation",
+        "10-local-testing",
         "06-testing",
         "09-cicd",
         "07-code-review"
@@ -19,7 +20,8 @@
       "gate_mode": "strict",
       "agent_modifiers": {
         "01-requirements": { "scope": "feature", "artifact_prefix": "REQ" },
-        "02-architecture": { "scope": "impact-assessment" }
+        "02-architecture": { "scope": "impact-assessment" },
+        "10-local-testing": { "scope": "local" }
       }
     },
 
@@ -30,6 +32,7 @@
       "phases": [
         "01-requirements",
         "05-implementation",
+        "10-local-testing",
         "06-testing",
         "09-cicd",
         "07-code-review"
@@ -41,7 +44,8 @@
           "artifact_prefix": "BUG",
           "require_external_id": true
         },
-        "05-implementation": { "require_failing_test_first": true }
+        "05-implementation": { "require_failing_test_first": true },
+        "10-local-testing": { "scope": "local" }
       }
     },
 
@@ -50,9 +54,13 @@
       "command": "/sdlc test run",
       "description": "Execute existing automation tests",
       "phases": [
+        "10-local-testing",
         "06-testing"
       ],
       "gate_mode": "strict",
+      "agent_modifiers": {
+        "10-local-testing": { "scope": "local" }
+      },
       "options": {
         "test_type": {
           "prompt": "Which tests do you want to run?",
@@ -69,10 +77,14 @@
       "phases": [
         "04-test-strategy",
         "05-implementation",
+        "10-local-testing",
         "06-testing",
         "07-code-review"
       ],
       "gate_mode": "strict",
+      "agent_modifiers": {
+        "10-local-testing": { "scope": "local" }
+      },
       "options": {
         "test_type": {
           "prompt": "What type of tests do you want to generate?",
@@ -92,17 +104,21 @@
         "03-design",
         "04-test-strategy",
         "05-implementation",
+        "10-local-testing",
         "06-testing",
         "07-code-review",
         "08-validation",
         "09-cicd",
-        "10-local-testing",
+        "10-remote-build",
         "11-test-deploy",
         "12-production",
         "13-operations"
       ],
       "gate_mode": "strict",
-      "agent_modifiers": {}
+      "agent_modifiers": {
+        "10-local-testing": { "scope": "local" },
+        "10-remote-build": { "scope": "remote" }
+      }
     }
   },
 

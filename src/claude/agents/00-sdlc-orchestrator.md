@@ -183,7 +183,7 @@ You coordinate these 13 specialized agents, each responsible for exactly ONE pha
 | **07** | QA Engineer | Code review & QA | code-review-report.md, quality-metrics.md |
 | **08** | Security & Compliance Auditor | Security validation | security-scan-report.md, penetration-test-report.md |
 | **09** | CI/CD Engineer | Pipeline automation | ci-config.yaml, cd-config.yaml |
-| **10** | Dev Environment Engineer | Local dev setup | docker-compose.yml, dev-guide.md |
+| **10** | Environment Builder | Environment build & launch | testing_environment in state.json, build-log.md |
 | **11** | Deployment Engineer (Staging) | Staging deployment | deployment-log-staging.md, smoke-test-results.md |
 | **12** | Release Manager | Production release | deployment-log-production.md, release-notes.md |
 | **13** | Site Reliability Engineer | Operations & monitoring | monitoring-config/, alert-rules.yaml |
@@ -298,11 +298,11 @@ When the user selects a workflow (via `/sdlc feature`, `/sdlc fix`, etc.), initi
 
 | Command | Type | Phases | Description |
 |---------|------|--------|-------------|
-| `/sdlc feature` | feature | 01 → 02 → 03 → 05 → 06 → 09 → 07 | New feature end-to-end |
-| `/sdlc fix` | fix | 01 → 05 → 06 → 09 → 07 | Bug fix with TDD |
-| `/sdlc test run` | test-run | 06 | Execute existing tests |
-| `/sdlc test generate` | test-generate | 04 → 05 → 06 → 07 | Create new tests |
-| `/sdlc start` | full-lifecycle | 01 → 02 → ... → 13 | Complete SDLC |
+| `/sdlc feature` | feature | 01 → 02 → 03 → 05 → 10 → 06 → 09 → 07 | New feature end-to-end |
+| `/sdlc fix` | fix | 01 → 05 → 10 → 06 → 09 → 07 | Bug fix with TDD |
+| `/sdlc test run` | test-run | 10 → 06 | Execute existing tests |
+| `/sdlc test generate` | test-generate | 04 → 05 → 10 → 06 → 07 | Create new tests |
+| `/sdlc start` | full-lifecycle | 01 → ... → 05 → 10 → 06 → ... → 10(remote) → 11 → ... → 13 | Complete SDLC |
 
 ### Initialization Process
 
@@ -774,12 +774,18 @@ Use Task tool to launch `cicd-engineer` agent with:
 Task: "Configure CI/CD pipelines with quality gates and deployment automation"
 ```
 
-**Phase 10 - Local Development:**
+**Phase 10 - Environment Build & Launch:**
 ```
-Use Task tool to launch `dev-environment-engineer` agent with:
-- Application code
-- Infrastructure requirements
-Task: "Create local development environment and developer documentation"
+Use Task tool to launch `environment-builder` agent with:
+- Application code and tech stack info
+- Scope modifier from workflow: "local" (before Phase 06) or "remote" (before Phase 11)
+Task (local): "Build application, start services, health-check, publish testing_environment.local to state.json"
+Task (remote): "Build for production, deploy to staging, verify health, publish testing_environment.remote to state.json"
+
+NOTE: In full-lifecycle, this agent is invoked TWICE:
+  1. "10-local-testing" (scope: local) — before Phase 06
+  2. "10-remote-build" (scope: remote) — before Phase 11
+Both resolve to Agent 10 (environment-builder) by the "10-" prefix.
 ```
 
 **Phase 11 - Staging Deployment:**
@@ -825,7 +831,7 @@ Gate validation checklist:
 | **GATE-07** | code-review-report.md, quality-metrics.md, qa-sign-off.md | Code review complete, QA approval |
 | **GATE-08** | security-scan-report.md, penetration-test-report.md, security-sign-off.md | Security validated, compliance verified |
 | **GATE-09** | ci-config.yaml, cd-config.yaml, pipeline-validation.md | Pipeline working, quality gates enforced |
-| **GATE-10** | docker-compose.yml, dev-guide.md, local-test-results.md | Local environment validated |
+| **GATE-10** | testing_environment in state.json, build-log.md | Environment built and running (local) or deployed (remote) |
 | **GATE-11** | deployment-log-staging.md, smoke-test-results.md, rollback-test.md | Staging validated, rollback tested |
 | **GATE-12** | deployment-log-production.md, release-notes.md, deployment-verification.md | Production deployed successfully |
 | **GATE-13** | monitoring-config/, alert-rules.yaml, runbooks/ | Monitoring active, alerts configured |

@@ -20,7 +20,7 @@ Located in `src/claude/agents/`:
 - **07-qa-engineer.md** - Performs code review and quality analysis
 - **08-security-compliance-auditor.md** - Security scanning and compliance
 - **09-cicd-engineer.md** - Sets up CI/CD pipelines
-- **10-dev-environment-engineer.md** - Configures local development
+- **10-dev-environment-engineer.md** - Builds and launches environments for testing
 - **11-deployment-engineer-staging.md** - Handles staging deployments
 - **12-release-manager.md** - Manages production releases
 - **13-site-reliability-engineer.md** - Operations and monitoring
@@ -37,7 +37,7 @@ Located in `src/claude/agents/discover/`:
 - **product-analyst.md** - Vision elicitation, brainstorming, PRD generation (D7)
 - **architecture-designer.md** - Designs architecture from PRD and tech stack (D8)
 
-### Skills (160 Specialized Skills)
+### Skills (162 Specialized Skills)
 Located in `src/claude/skills/` organized in 11 categories:
 - **orchestration/** (10 skills) - Workflow management, gates, delegation
 - **requirements/** (10 skills) - Elicitation, user stories, NFR quantification
@@ -46,7 +46,7 @@ Located in `src/claude/skills/` organized in 11 categories:
 - **testing/** (13 skills) - Test strategy, test cases, coverage analysis
 - **development/** (15 skills) - Implementation, code review, refactoring
 - **security/** (13 skills) - Threat modeling, scanning, penetration testing
-- **devops/** (14 skills) - CI/CD, infrastructure, deployment strategies
+- **devops/** (16 skills) - CI/CD, infrastructure, deployment strategies, build orchestration
 - **documentation/** (10 skills) - Technical writing, API docs, runbooks
 - **operations/** (12 skills) - Monitoring, incident response, SLA management
 - **discover/** (40 skills) - Project analysis, vision elicitation, PRD generation, architecture design
@@ -103,7 +103,7 @@ Each SDLC phase has exactly ONE dedicated agent:
 - Phase 07 → QA Engineer
 - Phase 08 → Security & Compliance Auditor
 - Phase 09 → CI/CD Engineer
-- Phase 10 → Dev Environment Engineer
+- Phase 10 → Environment Builder
 - Phase 11 → Deployment Engineer (Staging)
 - Phase 12 → Release Manager
 - Phase 13 → Site Reliability Engineer
@@ -116,11 +116,11 @@ Instead of always running all 13 phases, the framework provides focused workflow
 
 | Command | Workflow | Phases |
 |---------|----------|--------|
-| `/sdlc feature` | New Feature | 01 → 02 → 03 → 05 → 06 → 09 → 07 |
-| `/sdlc fix` | Bug Fix (TDD) | 01 → 05 → 06 → 09 → 07 |
-| `/sdlc test run` | Run Tests | 06 |
-| `/sdlc test generate` | Generate Tests | 04 → 05 → 06 → 07 |
-| `/sdlc start` | Full Lifecycle | 01 → 02 → ... → 13 |
+| `/sdlc feature` | New Feature | 01 → 02 → 03 → 05 → 10 → 06 → 09 → 07 |
+| `/sdlc fix` | Bug Fix (TDD) | 01 → 05 → 10 → 06 → 09 → 07 |
+| `/sdlc test run` | Run Tests | 10 → 06 |
+| `/sdlc test generate` | Generate Tests | 04 → 05 → 10 → 06 → 07 |
+| `/sdlc start` | Full Lifecycle | 01 → ... → 05 → 10 → 06 → ... → 10(remote) → 11 → ... → 13 |
 
 Workflow definitions are in `.isdlc/config/workflows.json`. Each workflow has a fixed, non-skippable phase sequence with strict gate enforcement.
 
@@ -165,7 +165,7 @@ See:
 
 When invoked in this repository:
 - You have access to all 14 agent definitions
-- You have access to all 160 skills
+- You have access to all 162 skills
 - You can reference templates, checklists, and configs
 - Focus on framework development, not project implementation
 - Help maintain consistency across agents and artifacts

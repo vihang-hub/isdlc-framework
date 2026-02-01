@@ -45,7 +45,7 @@ Analyst                    Architect                  Designer
 | **07** | **QA Engineer** | `qa-engineer` | Code review, quality metrics, QA sign-off | code-review-report.md, quality-metrics.md, qa-sign-off.md |
 | **08** | **Security & Compliance Auditor** | `security-compliance-auditor` | Security scanning, penetration testing, compliance | security-scan-report.md, penetration-test-report.md |
 | **09** | **CI/CD Engineer** | `cicd-engineer` | Pipeline automation, build configuration | ci-config.yaml, cd-config.yaml, Dockerfile |
-| **10** | **Dev Environment Engineer** | `dev-environment-engineer` | Local dev setup, developer experience | docker-compose.yml, dev-guide.md |
+| **10** | **Environment Builder** | `environment-builder` | Environment build & launch for testing | testing_environment in state.json, build-log.md |
 | **11** | **Deployment Engineer (Staging)** | `deployment-engineer-staging` | Staging deployment, smoke tests, rollback | deployment-log-staging.md, smoke-test-results.md |
 | **12** | **Release Manager** | `release-manager` | Production deployment, release coordination | deployment-log-production.md, release-notes.md |
 | **13** | **Site Reliability Engineer** | `site-reliability-engineer` | Operations, monitoring, incident response | monitoring-config/, alert-rules.yaml, incident-reports/ |

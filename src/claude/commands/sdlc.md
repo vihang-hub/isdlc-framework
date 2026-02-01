@@ -248,7 +248,7 @@ Enter selection (1-5):
 ```
 /sdlc delegate <agent-name> "task description"
 ```
-Agents: requirements-analyst, solution-architect, system-designer, test-design-engineer, software-developer, integration-tester, qa-engineer, security-compliance-auditor, cicd-engineer, dev-environment-engineer, deployment-engineer-staging, release-manager, site-reliability-engineer
+Agents: requirements-analyst, solution-architect, system-designer, test-design-engineer, software-developer, integration-tester, qa-engineer, security-compliance-auditor, cicd-engineer, environment-builder, deployment-engineer-staging, release-manager, site-reliability-engineer
 
 **escalate** - Escalate issue to human
 ```
@@ -457,11 +457,11 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 
 | Command | Workflow | Phases | Gate Mode |
 |---------|----------|--------|-----------|
-| `/sdlc feature` | feature | 01 → 02 → 03 → 05 → 06 → 09 → 07 | strict |
-| `/sdlc fix` | fix | 01 → 05 → 06 → 09 → 07 | strict |
-| `/sdlc test run` | test-run | 06 | strict |
-| `/sdlc test generate` | test-generate | 04 → 05 → 06 → 07 | strict |
-| `/sdlc start` | full-lifecycle | 01 → 02 → ... → 13 | strict |
+| `/sdlc feature` | feature | 01 → 02 → 03 → 05 → 10 → 06 → 09 → 07 | strict |
+| `/sdlc fix` | fix | 01 → 05 → 10 → 06 → 09 → 07 | strict |
+| `/sdlc test run` | test-run | 10 → 06 | strict |
+| `/sdlc test generate` | test-generate | 04 → 05 → 10 → 06 → 07 | strict |
+| `/sdlc start` | full-lifecycle | 01 → ... → 05 → 10 → 06 → ... → 10(remote) → 11 → ... → 13 | strict |
 
 **Enforcement rules:**
 - Workflows start at phase 1 — no `--start-at` flag

@@ -2,7 +2,7 @@
 name: technical-writing
 description: Write clear technical documentation for developers and users
 skill_id: DOC-001
-owner: dev-environment-engineer
+owner: environment-builder
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

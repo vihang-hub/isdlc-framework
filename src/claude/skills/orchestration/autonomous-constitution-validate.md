@@ -3,7 +3,7 @@ name: autonomous-constitution-validate
 description: Enable agents to autonomously iterate on artifacts until constitutional compliance is achieved
 skill_id: ORCH-011
 owner: sdlc-orchestrator
-collaborators: [requirements-analyst, solution-architect, system-designer, test-design-engineer, software-developer, integration-tester, qa-engineer, security-compliance-auditor, cicd-engineer, dev-environment-engineer, deployment-engineer-staging, release-manager, site-reliability-engineer]
+collaborators: [requirements-analyst, solution-architect, system-designer, test-design-engineer, software-developer, integration-tester, qa-engineer, security-compliance-auditor, cicd-engineer, environment-builder, deployment-engineer-staging, release-manager, site-reliability-engineer]
 project: sdlc-framework
 version: 1.0.0
 when_to_use: Gate validation, constitutional compliance checking

@@ -1,26 +1,33 @@
-# Phase 10: Local Testing Gate (DEPLOYMENT CHECKPOINT)
+# Phase 10: Environment Readiness Gate (DEPLOYMENT CHECKPOINT)
 
-**Phase**: Local Development & Manual Testing
-**Primary Agent**: Dev Environment Engineer (Agent 10)
+**Phase**: Environment Build & Launch
+**Primary Agent**: Environment Builder (Agent 10)
 **Gate Type**: DEPLOYMENT CHECKPOINT
 
 ---
 
 ## GATE PURPOSE
 
-This gate validates that the software works correctly in a local environment and is the
-**MANDATORY CHECKPOINT** before ANY remote deployment.
+This gate validates that the application environment is built, running, and reachable before testing begins (local scope) or before deployment proceeds (remote scope).
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    DEPLOYMENT CHECKPOINT                         │
 │                                                                  │
-│  After this gate passes:                                         │
+│  Local scope (before Phase 06):                                  │
+│  • Application built and running locally                         │
+│  • testing_environment.local.base_url in state.json              │
+│  • Next: Phase 06 (Integration Testing)                          │
+│                                                                  │
+│  Remote scope (before Phase 11):                                 │
+│  • Application built and deployed to staging                     │
+│  • testing_environment.remote.base_url in state.json             │
+│  • Next: Phase 11 (Staging Deployment)                           │
+│                                                                  │
+│  After remote scope gate passes:                                 │
 │  • If cloud configured (AWS/GCP/Azure): Continue to Phase 11     │
 │  • If provider == "none": WORKFLOW COMPLETES HERE                │
 │  • If provider == "undecided": WORKFLOW PAUSES HERE              │
-│                                                                  │
-│  This is the last common gate for ALL workflow configurations.   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -30,70 +37,33 @@ This gate validates that the software works correctly in a local environment and
 
 | Artifact | Path | Required |
 |----------|------|----------|
-| Local Setup Documentation | `docs/local-setup.md` | Yes |
-| Manual Test Results | `manual-test-results.md` | Yes |
-| Local Verification Signoff | `local-verification-signoff.md` | Yes |
-| Bug Reports | `bugs/` | If found |
+| Testing environment in state.json | `.isdlc/state.json` → `testing_environment` | Yes |
+| Build log | `docs/devops/build-log.md` | Yes |
+| Developer Guide | `docs/common/dev-guide.md` | If local scope |
+| Environment Readiness Validation | `docs/.validations/gate-10-environment-readiness.json` | Yes |
 
 ---
 
 ## Validation Criteria
 
-### 1. Local Environment
-- [ ] Local environment setup documented
-- [ ] Docker Compose (or equivalent) working
-- [ ] All services start successfully
-- [ ] Hot reload functioning
-- [ ] Local database with seed data
-- [ ] Mock services configured (if needed)
+### Local Scope Criteria
 
-### 2. Local Setup Verification
-- [ ] Fresh clone and setup works
-- [ ] Setup instructions are accurate
-- [ ] Dependencies install correctly
-- [ ] Configuration steps are clear
-- [ ] Common issues documented
+- [ ] Tech stack read from state.json (or fallback detection succeeded)
+- [ ] Build command executed successfully
+- [ ] Dependent services started (if docker-compose.yml/compose.yaml exists)
+- [ ] Application process running (PID recorded)
+- [ ] Health check passed (HTTP 200 at `localhost:{port}`)
+- [ ] `testing_environment.local.base_url` written to state.json
+- [ ] User confirmed build plan via A/R/C menu
 
-### 3. Manual Testing
-- [ ] All critical user journeys tested manually
-- [ ] UI renders correctly
-- [ ] Forms work correctly
-- [ ] Validation messages display
-- [ ] Error handling works
-- [ ] Success flows complete
+### Remote Scope Criteria
 
-### 4. Cross-Browser Testing (if applicable)
-- [ ] Chrome tested
-- [ ] Firefox tested
-- [ ] Safari tested
-- [ ] Edge tested
-- [ ] Mobile browsers tested (if required)
+- [ ] Production build executed successfully
+- [ ] Deployment to staging/remote completed
+- [ ] Remote health check passed (HTTP 200 at remote URL)
+- [ ] `testing_environment.remote.base_url` written to state.json
 
-### 5. Responsive Design
-- [ ] Mobile viewport tested
-- [ ] Tablet viewport tested
-- [ ] Desktop viewport tested
-- [ ] No layout issues
-
-### 6. Exploratory Testing
-- [ ] Exploratory testing performed
-- [ ] Edge cases discovered documented
-- [ ] Usability issues noted
-- [ ] Performance observations noted
-
-### 7. Bug Management
-- [ ] All bugs documented
-- [ ] Bug severity assigned
-- [ ] Critical bugs fixed
-- [ ] High bugs fixed or accepted
-
-### 8. Developer Experience
-- [ ] Build time acceptable
-- [ ] Test execution time acceptable
-- [ ] Developer documentation adequate
-- [ ] Debugging tools available
-
-### 9. Constitutional Compliance Iteration
+### Constitutional Compliance Iteration
 - [ ] Constitutional self-validation performed
 - [ ] Articles VIII, IX validated
 - [ ] Iteration count logged in state.json → `constitutional_validation`
@@ -102,14 +72,6 @@ This gate validates that the software works correctly in a local environment and
 - [ ] Iterations within limit (Quick: 3, Standard: 5, Enterprise: 7)
 - [ ] If escalated: unresolved violations documented with recommendations
 
-### 10. Local Verification Signoff (MANDATORY FOR DEPLOYMENT)
-- [ ] All tests passing locally (unit, integration, e2e)
-- [ ] Manual verification of critical user journeys complete
-- [ ] `local-verification-signoff.md` created and completed
-- [ ] Developer confirms software is ready for deployment
-- [ ] No unresolved critical or high bugs
-- [ ] Performance acceptable in local environment
-
 ---
 
 ## Gate Decision
@@ -117,14 +79,11 @@ This gate validates that the software works correctly in a local environment and
 | Criteria | Status | Notes |
 |----------|--------|-------|
 | Required artifacts present | [ ] Pass / [ ] Fail | |
-| Local environment works | [ ] Pass / [ ] Fail | |
-| Manual testing complete | [ ] Pass / [ ] Fail | |
-| Cross-browser verified | [ ] Pass / [ ] Fail | |
-| Responsive design verified | [ ] Pass / [ ] Fail | |
-| No critical bugs | [ ] Pass / [ ] Fail | |
-| Developer experience acceptable | [ ] Pass / [ ] Fail | |
-
-| Local verification signoff complete | [ ] Pass / [ ] Fail | |
+| Build succeeded | [ ] Pass / [ ] Fail | |
+| Application reachable | [ ] Pass / [ ] Fail | |
+| Health check passed | [ ] Pass / [ ] Fail | |
+| testing_environment in state.json | [ ] Pass / [ ] Fail | |
+| Constitutional compliance | [ ] Pass / [ ] Fail | |
 
 **Gate Status**: [ ] PASS / [ ] FAIL
 
@@ -140,62 +99,26 @@ This gate validates that the software works correctly in a local environment and
 │                     GATE-10 PASSED                               │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  Check cloud_configuration.provider in state.json:               │
+│  IF scope == "local":                                            │
+│     → AUTOMATIC: Advancing to Phase 06: Integration Testing      │
+│     → Primary Agent: Integration Tester (Agent 06)               │
 │                                                                  │
-│  IF provider == "aws" | "gcp" | "azure":                         │
-│     → AUTOMATIC: Advancing to Phase 11: Staging Deployment       │
-│     → Primary Agent: Deployment Engineer - Staging (Agent 11)    │
+│  IF scope == "remote":                                           │
+│     Check cloud_configuration.provider in state.json:            │
 │                                                                  │
-│  IF provider == "none":                                          │
-│     → WORKFLOW COMPLETE                                          │
-│     → Status: Local-only development complete                    │
-│     → All software validated and ready for local use             │
+│     IF provider == "aws" | "gcp" | "azure":                      │
+│        → AUTOMATIC: Advancing to Phase 11: Staging Deployment    │
+│        → Primary Agent: Deployment Engineer - Staging (Agent 11) │
 │                                                                  │
-│  IF provider == "undecided":                                     │
-│     → WORKFLOW PAUSED at Phase 10                                │
-│     → Action: Run /sdlc configure-cloud to:                      │
-│       • Configure cloud provider settings                        │
-│       • Resume workflow with deployment phases                   │
-│     → Alternative: Mark workflow as complete (local-only)        │
+│     IF provider == "none":                                       │
+│        → WORKFLOW COMPLETE                                       │
+│        → Status: Local-only development complete                 │
+│                                                                  │
+│     IF provider == "undecided":                                  │
+│        → WORKFLOW PAUSED at Phase 10                             │
+│        → Action: Run /sdlc configure-cloud                       │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Workflow Completion Messages
-
-### If provider == "none" (Local-only)
-```
-WORKFLOW COMPLETE
-
-Phase 10 (Local Testing) gate passed.
-Provider: none (local-only development)
-
-Your software has been:
-✓ Built and tested locally
-✓ Manually verified
-✓ Signed off for local use
-
-No remote deployment configured.
-To enable deployment later, run: /sdlc configure-cloud
-```
-
-### If provider == "undecided"
-```
-WORKFLOW PAUSED AT DEPLOYMENT CHECKPOINT
-
-Phase 10 (Local Testing) gate passed.
-Provider: undecided
-
-Your software is ready for deployment, but no cloud provider is configured.
-
-To continue:
-1. Run /sdlc configure-cloud to configure deployment
-2. Workflow will resume with Phase 11 (Staging)
-
-To complete without deployment:
-- Run /sdlc configure-cloud and select "Local only"
 ```
 
 ---
@@ -203,7 +126,8 @@ To complete without deployment:
 ## Next Phase (Conditional)
 
 Upon passing this gate:
-- **If cloud configured**: Advance to Phase 11: Test Environment Deployment
+- **Local scope**: Advance to Phase 06: Integration & Testing
+  - Primary Agent: Integration Tester (Agent 06)
+- **Remote scope + cloud configured**: Advance to Phase 11: Test Environment Deployment
   - Primary Agent: Deployment Engineer - Staging (Agent 11)
-  - Next Phase Handler: deployment-engineer-staging
-- **If no cloud**: Workflow completes or pauses as described above
+- **Remote scope + no cloud**: Workflow completes or pauses as described above

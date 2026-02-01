@@ -11,7 +11,7 @@ This framework implements a **1-to-1 mapping** between 13 SDLC phases and 13 spe
 - **14 Specialized Agents** (1 Orchestrator + 13 Phase Agents)
 - **1-to-1 Phase Mapping** - Each agent owns exactly one phase
 - **13 Quality Gates** with validation checklists
-- **160 Skills** distributed across 11 categories
+- **162 Skills** distributed across 11 categories
 - **Exclusive Skill Ownership** - Each skill belongs to exactly one agent with enforcement
 - **Skill Usage Audit Trail** - All skill executions logged for compliance tracking
 - **Adaptive Workflow** - Orchestrator determines required phases based on task complexity
@@ -34,7 +34,7 @@ isdlc-framework/
 │   │   │   └── discover/          # Discover sub-agents (D1-D6)
 │   │   ├── commands/              # Custom slash commands
 │   │   │   └── primer.md
-│   │   ├── skills/                # 160 Skills across 11 categories
+│   │   ├── skills/                # 162 Skills across 11 categories
 │   │   │   ├── orchestration/
 │   │   │   ├── requirements/
 │   │   │   ├── architecture/
@@ -88,7 +88,7 @@ Each agent is a specialized AI with specific responsibilities, skills, and deliv
 | **07** | **QA Engineer** | Code review, quality metrics, QA sign-off | code-review-report.md, quality-metrics.md, qa-sign-off.md |
 | **08** | **Security & Compliance Auditor** | Security scanning, penetration testing, compliance | security-scan-report.md, penetration-test-report.md, compliance-checklist.md |
 | **09** | **CI/CD Engineer** | Pipeline automation, build configuration, artifact registry | ci-config.yaml, cd-config.yaml, Dockerfile, pipeline-tests/ |
-| **10** | **Dev Environment Engineer** | Local dev setup, environment parity, developer docs | docker-compose.yml, dev-guide.md, local-testing-guide.md |
+| **10** | **Environment Builder** | Environment build & launch for testing | testing_environment in state.json, build-log.md |
 | **11** | **Deployment Engineer (Staging)** | Staging deployment, smoke tests, rollback procedures | deployment-log-staging.md, smoke-test-results.md, rollback-plan.md |
 | **12** | **Release Manager** | Production deployment, release coordination, go-live | deployment-log-production.md, release-notes.md, post-deployment-report.md |
 | **13** | **Site Reliability Engineer** | Operations, monitoring, incident response, SLAs | monitoring-config/, alert-rules.yaml, incident-reports/, sla-tracking.md |
@@ -154,7 +154,7 @@ Phase 09: Version Control & CI/CD
     → GATE-09: Pipeline operational
     ↓
 Phase 10: Local Development & Testing
-    ↓ (Dev Environment Engineer)
+    ↓ (Environment Builder)
     → GATE-10: Dev environment validated
     ↓
 Phase 11: Test Environment Deployment
@@ -240,7 +240,7 @@ Your project structure will look like:
 your-project/
 ├── .claude/           # Agent definitions and skills
 │   ├── agents/        # 14 specialized agents
-│   ├── skills/        # 160 skills across 11 categories
+│   ├── skills/        # 162 skills across 11 categories
 │   └── CLAUDE.md      # Project context for Claude
 ├── .isdlc/            # Framework state and resources
 │   ├── state.json     # Current phase and progress
@@ -278,7 +278,7 @@ Each phase produces specific artifacts in `.isdlc/phases/<phase-name>/` director
 
 ## Skills System
 
-The framework includes **160 specialized skills** distributed across 11 categories:
+The framework includes **162 specialized skills** distributed across 11 categories:
 
 | Category | Skills | Primary Agents |
 |----------|--------|----------------|
@@ -288,7 +288,7 @@ The framework includes **160 specialized skills** distributed across 11 categori
 | **Design** | 10 | Agent 03 (System Designer) |
 | **Testing** | 13 | Agent 04 (Test Design), Agent 06 (Integration Tester) |
 | **Development** | 15 | Agent 05 (Software Developer), Agent 07 (QA Engineer) |
-| **DevOps** | 14 | Agent 09, 10, 11, 12 (CI/CD, Dev Env, Deployment, Release) |
+| **DevOps** | 16 | Agent 09, 10, 11, 12 (CI/CD, Env Builder, Deployment, Release) |
 | **Security** | 13 | Agent 08 (Security & Compliance Auditor) |
 | **Operations** | 12 | Agent 13 (Site Reliability Engineer) |
 | **Documentation** | 10 | Distributed across agents 10, 12, 13 |
@@ -398,7 +398,7 @@ The orchestrator enforces appropriate quality thresholds:
 
 ### How It Works
 
-1. **Exclusive Ownership**: Each of the 160 skills has exactly ONE owner agent
+1. **Exclusive Ownership**: Each of the 162 skills has exactly ONE owner agent
 2. **Pre-Execution Validation**: Before using a skill, the agent validates ownership
 3. **Audit Trail**: All skill usage (authorized and unauthorized) is logged to state.json
 4. **Gate Integration**: Skill compliance is reviewed at each quality gate
@@ -678,7 +678,7 @@ Additional documentation in [docs/](docs/):
 
 ### Completed
 - ✅ 14 agent definitions created
-- ✅ 160 skills organized into 11 categories
+- ✅ 162 skills organized into 11 categories
 - ✅ 13 phase gate checklists defined
 - ✅ 7 document templates created
 - ✅ Configuration system implemented
@@ -711,7 +711,7 @@ MIT License
 **Framework Version**: 2.1.0
 **Last Updated**: 2026-01-21
 **Agents**: 23 (14 SDLC agents + 9 Discover agents)
-**Skills**: 160 across 11 categories
+**Skills**: 162 across 11 categories
 **Quality Gates**: 13
 **Enforcement Hooks**: 5 (skill-validator, gate-blocker, test-watcher, constitution-validator, menu-tracker)
 **Enhancements**: 5 (Constitution, Scale-Adaptive, Autonomous Iteration, Skill Enforcement, Deterministic Iteration Enforcement)

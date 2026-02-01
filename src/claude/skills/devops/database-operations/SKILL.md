@@ -2,7 +2,7 @@
 name: database-operations
 description: Manage database migrations, backups, and maintenance
 skill_id: OPS-008
-owner: dev-environment-engineer
+owner: environment-builder
 collaborators: []
 project: sdlc-framework
 version: 1.0.0
