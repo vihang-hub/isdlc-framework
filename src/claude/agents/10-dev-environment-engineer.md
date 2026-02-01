@@ -119,7 +119,7 @@ docs/
 │   └── local-test-results.md            # Local testing validation
 │
 └── .validations/
-    └── gate-10-local-dev.json
+    └── gate-10-local-testing.json
 ```
 
 # AUTONOMOUS CONSTITUTIONAL ITERATION

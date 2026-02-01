@@ -507,8 +507,8 @@ phase_articles:
   "07-code-review": ["VI", "VII", "VIII", "XI"]
   "08-validation": ["IV", "X", "XI", "XII"]
   "09-cicd": ["II", "IX", "XI"]
-  "10-local-dev": ["VIII", "XI"]
-  "11-staging": ["IX", "X", "XI"]
+  "10-local-testing": ["VIII", "XI"]
+  "11-test-deploy": ["IX", "X", "XI"]
   "12-production": ["IX", "X", "XI"]
   "13-operations": ["VIII", "XI", "XII"]
 ```

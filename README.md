@@ -27,7 +27,7 @@ This framework implements a **1-to-1 mapping** between 13 SDLC phases and 13 spe
 isdlc-framework/
 ├── src/
 │   ├── claude/                    # → Installed to .claude/
-│   │   ├── agents/                # 14 SDLC agents + 6 discover sub-agents
+│   │   ├── agents/                # 14 SDLC agents + 9 discover agents (D0-D8)
 │   │   │   ├── 00-sdlc-orchestrator.md
 │   │   │   ├── 01-requirements-analyst.md
 │   │   │   ├── ... (02-13)
@@ -710,7 +710,7 @@ MIT License
 
 **Framework Version**: 2.1.0
 **Last Updated**: 2026-01-21
-**Agents**: 22 (14 SDLC agents + 8 Discover sub-agents)
+**Agents**: 23 (14 SDLC agents + 9 Discover agents)
 **Skills**: 159 across 11 categories
 **Quality Gates**: 13
 **Enforcement Hooks**: 5 (skill-validator, gate-blocker, test-watcher, constitution-validator, menu-tracker)

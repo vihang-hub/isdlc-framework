@@ -282,6 +282,11 @@ function isAgentAuthorizedForPhase(agentName, currentPhase) {
         return true;
     }
 
+    // Setup agents (discover agents) are always authorized
+    if (agentPhase === 'setup') {
+        return true;
+    }
+
     // Check if agent's designated phase matches current phase
     return agentPhase === currentPhase;
 }

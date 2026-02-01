@@ -124,7 +124,7 @@ docs/
 │   └── deployment-runbook.md            # Deployment procedures
 │
 └── .validations/
-    └── gate-11-staging-deploy.json
+    └── gate-11-test-deploy.json
 ```
 
 # AUTONOMOUS CONSTITUTIONAL ITERATION

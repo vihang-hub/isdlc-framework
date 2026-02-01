@@ -172,7 +172,7 @@ Phase 13 → Site Reliability Engineer → GATE-13 → ✓
 - `gate-validation.json` - GATE-09 validation results
 
 ### Phase 10: Local Development
-**Directory**: `.isdlc/10-local-dev/`
+**Directory**: `.isdlc/phases/10-local-testing/`
 **Artifacts**:
 - `dev-guide.md` - Developer setup guide
 - `local-test-results.md` - Local testing validation
@@ -181,7 +181,7 @@ Phase 13 → Site Reliability Engineer → GATE-13 → ✓
 - `gate-validation.json` - GATE-10 validation results
 
 ### Phase 11: Staging Deployment
-**Directory**: `.isdlc/11-staging/`
+**Directory**: `.isdlc/phases/11-test-deploy/`
 **Artifacts**:
 - `deployment-log-staging.md` - Staging deployment log
 - `smoke-test-results.md` - Smoke test results

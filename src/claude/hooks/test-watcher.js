@@ -284,14 +284,25 @@ async function main() {
             process.exit(0);
         }
 
-        const currentPhase = state.current_phase;
+        // Determine current phase — prefer active_workflow if present
+        const activeWorkflow = state.active_workflow;
+        const currentPhase = (activeWorkflow && activeWorkflow.current_phase) || state.current_phase;
         if (!currentPhase) {
             process.exit(0);
         }
 
-        // Load requirements
+        // Load requirements and apply workflow overrides if applicable
         const requirements = loadIterationRequirements();
-        const phaseReq = requirements?.phase_requirements?.[currentPhase];
+        let phaseReq = requirements?.phase_requirements?.[currentPhase];
+        if (activeWorkflow && phaseReq && requirements.workflow_overrides) {
+            const overrides = requirements.workflow_overrides[activeWorkflow.type]?.[currentPhase];
+            if (overrides) {
+                phaseReq = { ...phaseReq };
+                if (overrides.test_iteration) {
+                    phaseReq.test_iteration = { ...phaseReq.test_iteration, ...overrides.test_iteration };
+                }
+            }
+        }
         if (!phaseReq?.test_iteration?.enabled) {
             debugLog('Test iteration not enabled for phase:', currentPhase);
             process.exit(0);
