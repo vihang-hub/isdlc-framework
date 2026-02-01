@@ -19,23 +19,34 @@ The Constitution Generator creates a customized project constitution based on:
 
 ## When Invoked
 
-Called by `discover-orchestrator` for both new and existing projects:
+Called by `discover-orchestrator` in three modes:
 
-**New Project:**
+**Research Only (new projects — Phase 2):**
+```json
+{
+  "subagent_type": "constitution-generator",
+  "prompt": "Research phase only — do NOT generate constitution yet. Research best practices, compliance requirements, performance benchmarks, and testing standards for this project. Project Brief: {project_brief_summary}. Return research findings only.",
+  "description": "Research for: {project_type}, {domain_indicators}"
+}
+```
+
+When the prompt contains "Research phase only", execute **only Steps 1-3** (parse input, launch research, aggregate results). Return the `research_summary` without generating articles or running interactive review. Skip Steps 4-8.
+
+**New Project — Full Constitution (Phase 6):**
 ```json
 {
   "subagent_type": "constitution-generator",
   "prompt": "Generate constitution for new project",
-  "description": "Create constitution for: REST API for user auth, Stack: Node.js/NestJS/PostgreSQL"
+  "description": "Create constitution informed by: Project Brief ({problem_summary}), PRD ({requirement_count} requirements), Architecture ({pattern} with {entity_count} entities), Tech Stack ({tech_stack}), Research ({research_summary})"
 }
 ```
 
-**Existing Project:**
+**Existing Project — Full Constitution:**
 ```json
 {
   "subagent_type": "constitution-generator",
   "prompt": "Generate constitution for existing project",
-  "description": "Create constitution based on: {architecture_summary}, {test_evaluation}"
+  "description": "Create constitution informed by: {architecture_summary}, {data_model_summary}, {feature_summary}, {test_coverage_summary}"
 }
 ```
 
@@ -46,11 +57,25 @@ Called by `discover-orchestrator` for both new and existing projects:
 ### Step 1: Parse Input Context
 
 Extract from orchestrator's context:
-- Project description
-- Tech stack (language, framework, database)
-- Architecture patterns (existing projects)
-- Test evaluation results (existing projects)
+
+**For research-only mode:**
+- Project Brief summary (problem, users, features)
 - Domain indicators (auth, e-commerce, healthcare, etc.)
+
+**For new projects (full constitution):**
+- Project Brief (problem, users, features, constraints)
+- Product Requirements Document (functional/NFR/MVP scope)
+- Architecture blueprint (pattern, components, data model)
+- Tech stack (language, framework, database)
+- Research findings (from earlier research-only invocation)
+- Domain indicators
+
+**For existing projects (full constitution):**
+- Architecture analysis (tech stack, patterns, deployment, integrations)
+- Data model summary (entities, relationships, stores)
+- Feature summary (endpoints, pages, business domains)
+- Test coverage summary (coverage by type, gaps, quality)
+- Domain indicators
 
 ### Step 2: Launch Parallel Research Agents
 

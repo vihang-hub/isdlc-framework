@@ -234,7 +234,30 @@ function normalizeAgentName(input) {
         'release': 'release-manager',
         '12-release-manager': 'release-manager',
         'sre': 'site-reliability-engineer',
-        '13-site-reliability-engineer': 'site-reliability-engineer'
+        '13-site-reliability-engineer': 'site-reliability-engineer',
+
+        // Discover agents (D0-D8)
+        'd0': 'discover-orchestrator',
+        'd0-discover-orchestrator': 'discover-orchestrator',
+        'discovery': 'discover-orchestrator',
+        'd1': 'architecture-analyzer',
+        'd1-architecture-analyzer': 'architecture-analyzer',
+        'arch-analyzer': 'architecture-analyzer',
+        'd2': 'test-evaluator',
+        'd2-test-evaluator': 'test-evaluator',
+        'd3': 'constitution-generator',
+        'd3-constitution-generator': 'constitution-generator',
+        'd4': 'skills-researcher',
+        'd4-skills-researcher': 'skills-researcher',
+        'd5': 'data-model-analyzer',
+        'd5-data-model-analyzer': 'data-model-analyzer',
+        'd6': 'feature-mapper',
+        'd6-feature-mapper': 'feature-mapper',
+        'd7': 'product-analyst',
+        'd7-product-analyst': 'product-analyst',
+        'd8': 'architecture-designer',
+        'd8-architecture-designer': 'architecture-designer',
+        'arch-designer': 'architecture-designer'
     };
 
     return mappings[normalized] || normalized;

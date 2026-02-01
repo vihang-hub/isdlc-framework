@@ -11,7 +11,7 @@ This framework implements a **1-to-1 mapping** between 13 SDLC phases and 13 spe
 - **14 Specialized Agents** (1 Orchestrator + 13 Phase Agents)
 - **1-to-1 Phase Mapping** - Each agent owns exactly one phase
 - **13 Quality Gates** with validation checklists
-- **151 Skills** distributed across 11 categories
+- **159 Skills** distributed across 11 categories
 - **Exclusive Skill Ownership** - Each skill belongs to exactly one agent with enforcement
 - **Skill Usage Audit Trail** - All skill executions logged for compliance tracking
 - **Adaptive Workflow** - Orchestrator determines required phases based on task complexity
@@ -34,7 +34,7 @@ isdlc-framework/
 │   │   │   └── discover/          # Discover sub-agents (D1-D6)
 │   │   ├── commands/              # Custom slash commands
 │   │   │   └── primer.md
-│   │   ├── skills/                # 151 Skills across 11 categories
+│   │   ├── skills/                # 159 Skills across 11 categories
 │   │   │   ├── orchestration/
 │   │   │   ├── requirements/
 │   │   │   ├── architecture/
@@ -104,8 +104,11 @@ The `/discover` command uses specialized sub-agents to analyze projects before S
 | **D4** | **Skills Researcher** | Researches best practices for detected tech stack |
 | **D5** | **Data Model Analyzer** | Database schemas, ORM models, migrations, relationships |
 | **D6** | **Feature Mapper** | API endpoints, UI pages, CLI commands, business domains |
+| **D7** | **Product Analyst** | Vision elicitation, brainstorming, PRD generation (new projects) |
+| **D8** | **Architecture Designer** | Architecture blueprint from PRD and tech stack (new projects) |
 
 For existing projects, D1, D2, D5, and D6 run in parallel to produce a unified `docs/project-discovery-report.md`.
+For new projects, D7 guides vision elicitation and PRD generation, D8 designs the architecture blueprint.
 
 ## SDLC Phase Flow
 
@@ -235,7 +238,7 @@ Your project structure will look like:
 your-project/
 ├── .claude/           # Agent definitions and skills
 │   ├── agents/        # 14 specialized agents
-│   ├── skills/        # 151 skills across 11 categories
+│   ├── skills/        # 159 skills across 11 categories
 │   └── CLAUDE.md      # Project context for Claude
 ├── .isdlc/            # Framework state and resources
 │   ├── state.json     # Current phase and progress
@@ -273,7 +276,7 @@ Each phase produces specific artifacts in `.isdlc/phases/<phase-name>/` director
 
 ## Skills System
 
-The framework includes **151 specialized skills** distributed across 11 categories:
+The framework includes **159 specialized skills** distributed across 11 categories:
 
 | Category | Skills | Primary Agents |
 |----------|--------|----------------|
@@ -287,7 +290,7 @@ The framework includes **151 specialized skills** distributed across 11 categori
 | **Security** | 13 | Agent 08 (Security & Compliance Auditor) |
 | **Operations** | 12 | Agent 13 (Site Reliability Engineer) |
 | **Documentation** | 10 | Distributed across agents 10, 12, 13 |
-| **Discover** | 32 | Discover sub-agents D1-D6 |
+| **Discover** | 40 | Discover sub-agents D1-D8 |
 
 See [docs/SKILL-DISTRIBUTION.md](docs/SKILL-DISTRIBUTION.md) for detailed skill allocation.
 
@@ -393,7 +396,7 @@ The orchestrator enforces appropriate quality thresholds:
 
 ### How It Works
 
-1. **Exclusive Ownership**: Each of the 151 skills has exactly ONE owner agent
+1. **Exclusive Ownership**: Each of the 159 skills has exactly ONE owner agent
 2. **Pre-Execution Validation**: Before using a skill, the agent validates ownership
 3. **Audit Trail**: All skill usage (authorized and unauthorized) is logged to state.json
 4. **Gate Integration**: Skill compliance is reviewed at each quality gate
@@ -671,7 +674,7 @@ Additional documentation in [docs/](docs/):
 
 ### Completed
 - ✅ 14 agent definitions created
-- ✅ 151 skills organized into 11 categories
+- ✅ 159 skills organized into 11 categories
 - ✅ 13 phase gate checklists defined
 - ✅ 7 document templates created
 - ✅ Configuration system implemented
@@ -703,8 +706,8 @@ MIT License
 
 **Framework Version**: 2.1.0
 **Last Updated**: 2026-01-21
-**Agents**: 20 (14 SDLC agents + 6 Discover sub-agents)
-**Skills**: 151 across 11 categories
+**Agents**: 22 (14 SDLC agents + 8 Discover sub-agents)
+**Skills**: 159 across 11 categories
 **Quality Gates**: 13
 **Enforcement Hooks**: 5 (skill-validator, gate-blocker, test-watcher, constitution-validator, menu-tracker)
 **Enhancements**: 5 (Constitution, Scale-Adaptive, Autonomous Iteration, Skill Enforcement, Deterministic Iteration Enforcement)

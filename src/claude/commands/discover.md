@@ -37,12 +37,14 @@ The `/discover` command is the universal entry point for setting up a project wi
 ### What It Does
 
 #### For New Projects (is_new_project: true)
-1. **Ask about your project** - What are you building?
-2. **Select tech stack** - Language, framework, database
-3. **Research best practices** - 4 parallel research agents
-4. **Generate constitution** - Interactive article review
-5. **Create project structure** - Tech-stack-specific `src/` layout
-6. **Set up testing** - Initialize test infrastructure
+1. **Project Vision** (D7) — Interactive elicitation: problem, users, features, constraints → Project Brief
+2. **Research** (D3) — 4 parallel research agents: best practices, compliance, performance, testing
+3. **Tech Stack Selection** — Recommend cohesive stack, user confirms
+4. **Product Requirements** (D7) — Generate PRD from brief + research → functional/NFR/MVP scope
+5. **Architecture Blueprint** (D8) — Design components, data model, API structure, directory layout
+6. **Constitution** (D3) — Generate from all prior artifacts, interactive article review
+7. **Project Structure** (D4) — Scaffold src/ from blueprint, install skills, set up tests
+8. **Finalize** — Update state, display summary
 
 #### For Existing Projects (is_new_project: false)
 1. **Project Analysis** (4 agents in parallel)
@@ -67,9 +69,13 @@ After completion, you'll have:
 - `.isdlc/skill-customization-report.md` - Installed skills report
 
 **New projects:**
+- `docs/project-brief.md` - Problem statement, users, features, constraints
+- `docs/requirements/prd.md` - Product Requirements Document with MVP scope
+- `docs/architecture/architecture-overview.md` - Architecture blueprint with data model and API design
+- `docs/architecture/data-model.md` - Detailed data model (if >5 entities)
 - `.isdlc/constitution.md` - Tailored project constitution
-- `src/` - Project structure (tech-stack-specific)
-- `tests/` - Test infrastructure
+- `src/` - Project structure scaffolded from architecture blueprint
+- `tests/` - Test infrastructure (unit, integration, e2e)
 
 ### Implementation
 
@@ -96,8 +102,11 @@ When this command is invoked:
    - `skills-researcher` (D4) - Finds and installs relevant skills
    - `data-model-analyzer` (D5) - Database schemas, entities, relationships, migrations
    - `feature-mapper` (D6) - API endpoints, UI pages, background jobs, business domains
+   - `product-analyst` (D7) - Vision elicitation, brainstorming, PRD generation (new projects)
+   - `architecture-designer` (D8) - Architecture blueprint from PRD and tech stack (new projects)
 
    For existing projects, D1, D2, D5, and D6 run **in parallel** during Phase 1.
+   For new projects, D7 handles vision + PRD, D8 handles architecture blueprint.
 
 ### Related Commands
 - `/sdlc feature` - Build a new feature after discover completes

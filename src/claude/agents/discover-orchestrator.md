@@ -27,6 +27,8 @@ The Discover Orchestrator coordinates the `/discover` command workflow. It deter
 | `skills-researcher` | D4 | Find and install skills from skills.sh | Both |
 | `data-model-analyzer` | D5 | Discover data stores, schemas, entity relationships | Existing projects |
 | `feature-mapper` | D6 | Map API endpoints, UI pages, background jobs, business domains | Existing projects |
+| `product-analyst` | D7 | Vision elicitation, brainstorming, PRD generation | New projects |
+| `architecture-designer` | D8 | Design architecture from PRD and tech stack | New projects |
 
 ---
 
@@ -58,74 +60,189 @@ Step 3: Branch IMMEDIATELY:
 
 ## NEW PROJECT FLOW (is_new_project: true)
 
-For new projects, skip all analysis and guide the user through setup.
+For new projects, guide the user through a structured inception process that produces actionable artifacts — a project brief, researched requirements, architecture blueprint, and constitution — before any code is written.
 
-### Step 1: Display Welcome (Immediately)
+### Step 1: Display Welcome and Present Plan
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
 ║  iSDLC Framework - New Project Setup                         ║
 ╚══════════════════════════════════════════════════════════════╝
 
-Welcome! Let's set up your new project.
+Welcome! I'll guide you through a structured setup process.
 
-I'll help you:
-  1. Define your project and tech stack
-  2. Research best practices for your stack
-  3. Create a tailored constitution
-  4. Set up the recommended folder structure
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 1: Project Vision (interactive)                        │
+├──────────────────────────────────────────────────────────────┤
+│ □ Understand what you're building and why                    │
+│ □ Identify target users and core features                    │
+│ □ Generate Project Brief                                     │
+└──────────────────────────────────────────────────────────────┘
 
-What is this project about?
-(Describe the project type, purpose, and key features)
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 2: Research (runs in parallel)                         │
+├──────────────────────────────────────────────────────────────┤
+│ □ Research best practices for your domain                    │
+│ □ Research compliance/regulatory requirements                │
+│ □ Research performance benchmarks                            │
+│ □ Research testing standards                                 │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 3: Tech Stack Selection                                │
+├──────────────────────────────────────────────────────────────┤
+│ □ Recommend cohesive tech stack                              │
+│ □ Review and confirm with you                                │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 4: Product Requirements                                │
+├──────────────────────────────────────────────────────────────┤
+│ □ Generate PRD from Project Brief + research                 │
+│ □ Define MVP scope                                           │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 5: Architecture Blueprint                              │
+├──────────────────────────────────────────────────────────────┤
+│ □ Design component architecture                              │
+│ □ Design data model                                          │
+│ □ Design API structure                                       │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 6: Constitution                                        │
+├──────────────────────────────────────────────────────────────┤
+│ □ Generate constitution from all prior artifacts             │
+│ □ Interactive article review (you'll approve)                │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 7: Project Structure                                   │
+├──────────────────────────────────────────────────────────────┤
+│ □ Create src/ layout from architecture blueprint             │
+│ □ Initialize test infrastructure                             │
+│ □ Install relevant skills                                    │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 8: Finalize                                            │
+├──────────────────────────────────────────────────────────────┤
+│ □ Update state.json with project configuration               │
+│ □ Display summary of all artifacts created                   │
+└──────────────────────────────────────────────────────────────┘
+
+Let's begin with Phase 1.
 ```
 
-**Wait for user response before proceeding.**
+Proceed directly to Phase 1 — no confirmation gate needed here since the first phase is interactive.
 
-### Step 2: Recommend Tech Stack
+### Step 2: Execute PHASE 1 — Project Vision (D7)
 
-After user describes the project, **analyze their requirements** and recommend a complete, cohesive tech stack. Do NOT ask them to choose each layer separately.
+Launch the `product-analyst` sub-agent for vision elicitation:
+
+```json
+{
+  "subagent_type": "product-analyst",
+  "prompt": "Elicit project vision for new project. Ask the user probing questions to understand: what problem they are solving, who the target users are, what the core features should be, and what success looks like. Produce a structured Project Brief.",
+  "description": "Project vision elicitation"
+}
+```
+
+**Show progress:**
+```
+PHASE 1: Project Vision                              [In Progress]
+├─ ◐ Interactive elicitation                           (your input needed)
+├─ □ Brainstorm solution approaches                    (pending)
+└─ □ Generate Project Brief                            (pending)
+```
+
+The product-analyst (D7) will:
+- Ask probing questions about problem, users, features, constraints
+- Brainstorm 2-3 solution approaches
+- Confirm understanding with user
+- Generate `docs/project-brief.md`
+
+**On completion:**
+```
+PHASE 1: Project Vision                              [Complete ✓]
+├─ ✓ Interactive elicitation
+├─ ✓ Brainstorm solution approaches
+└─ ✓ Generate Project Brief
+    → docs/project-brief.md
+```
+
+Capture the D7 return value — `project_brief` JSON with problem, users, core_features, scale, constraints.
+
+### Step 3: Execute PHASE 2 — Research (D3 Research Track)
+
+Launch `constitution-generator` in research-only mode, passing the Project Brief context:
+
+```json
+{
+  "subagent_type": "constitution-generator",
+  "prompt": "Research phase only — do NOT generate constitution yet. Research best practices, compliance requirements, performance benchmarks, and testing standards for this project. Project Brief: {project_brief_summary}. Return research findings only.",
+  "description": "Research for: {project_type}, {domain_indicators}"
+}
+```
+
+**Show progress:**
+```
+PHASE 2: Research                                    [In Progress]
+├─ ◐ Research best practices for {domain}              (running)
+├─ ◐ Research compliance/regulatory requirements       (running)
+├─ ◐ Research performance benchmarks                   (running)
+└─ ◐ Research testing standards                        (running)
+```
+
+The constitution-generator will launch its 4 parallel research agents and return findings.
+
+**On completion:**
+```
+PHASE 2: Research                                    [Complete ✓]
+├─ ✓ Research best practices for {domain}
+├─ ✓ Research compliance/regulatory requirements
+├─ ✓ Research performance benchmarks
+└─ ✓ Research testing standards
+```
+
+Capture the research summary for passing to subsequent phases.
+
+### Step 4: Execute PHASE 3 — Tech Stack Selection
+
+This phase is handled directly by the orchestrator (no sub-agent needed).
+
+**Analyze the Project Brief** and recommend a complete, cohesive tech stack. Do NOT ask the user to choose each layer separately.
 
 **Analysis factors:**
 - Project type (API, web app, CLI, mobile backend, etc.)
 - Key features mentioned (real-time, AI, payments, auth, etc.)
 - Scale indicators (personal project, startup, enterprise)
 - Any technologies explicitly mentioned by user
+- Research findings (best practices, performance requirements)
 
 **Present a complete recommendation:**
 
 ```
-Based on your project (SaaS platform with payments and AI features),
+Based on your project ({project_type}),
 I recommend this tech stack:
 
 ╔══════════════════════════════════════════════════════════════╗
 ║  RECOMMENDED STACK                                           ║
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                              ║
-║  Frontend:    Next.js 14 (React)                            ║
-║               → Server components, great DX, Vercel deploy   ║
+║  Language:    {language}                                     ║
+║               → {rationale}                                  ║
 ║                                                              ║
-║  Backend:     Next.js API Routes + tRPC                      ║
-║               → Type-safe end-to-end, single deployment      ║
+║  Framework:   {framework}                                    ║
+║               → {rationale}                                  ║
 ║                                                              ║
-║  Database:    PostgreSQL (via Prisma ORM)                    ║
-║               → Robust, great for SaaS, excellent tooling    ║
+║  Database:    {database} (via {ORM})                         ║
+║               → {rationale}                                  ║
 ║                                                              ║
-║  Auth:        NextAuth.js                                    ║
-║               → Built for Next.js, multiple providers        ║
-║                                                              ║
-║  Payments:    Stripe                                         ║
-║               → Industry standard, excellent docs            ║
-║                                                              ║
-║  AI:          Anthropic Claude API                           ║
-║               → Powerful, well-documented, good pricing      ║
-║                                                              ║
-║  Hosting:     Vercel + Supabase (or PlanetScale)            ║
-║               → Optimized for Next.js, easy scaling          ║
+║  {Additional services as needed}                             ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
-
-This stack is cohesive - all pieces work well together with
-excellent TypeScript support throughout.
 
 Are you happy with this stack, or do you have specific preferences?
 [Y] Yes, let's proceed
@@ -151,181 +268,123 @@ Are you happy with this stack, or do you have specific preferences?
 | Microservices | Go + gRPC + PostgreSQL |
 | Simple Website | Astro or Next.js + Tailwind |
 
-### Step 3: Present Plan and Get Approval
-
-Once tech stack is confirmed, present the full plan before executing:
-
+**On confirmation:**
 ```
-╔══════════════════════════════════════════════════════════════╗
-║  SETUP PLAN                                                  ║
-╚══════════════════════════════════════════════════════════════╝
-
-I'll now set up your project. Here's what will happen:
-
-┌──────────────────────────────────────────────────────────────┐
-│ PHASE 1: Research (runs in parallel)                        │
-├──────────────────────────────────────────────────────────────┤
-│ □ Research Next.js best practices                           │
-│ □ Research security requirements for SaaS                   │
-│ □ Research testing standards for TypeScript                 │
-│ □ Research performance benchmarks                           │
-└──────────────────────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────────────────────┐
-│ PHASE 2: Constitution                                        │
-├──────────────────────────────────────────────────────────────┤
-│ □ Generate draft constitution from research                 │
-│ □ Interactive review of each article (you'll approve)       │
-│ □ Save constitution to .isdlc/constitution.md               │
-└──────────────────────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────────────────────┐
-│ PHASE 3: Project Structure                                   │
-├──────────────────────────────────────────────────────────────┤
-│ □ Create src/ directory with Next.js structure              │
-│ □ Create tests/ directory                                   │
-│ □ Initialize package.json with dependencies                 │
-└──────────────────────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────────────────────┐
-│ PHASE 4: Finalize                                            │
-├──────────────────────────────────────────────────────────────┤
-│ □ Update state.json with project configuration              │
-│ □ Generate setup summary                                    │
-└──────────────────────────────────────────────────────────────┘
-
-Ready to proceed? [Y] Yes / [N] No, let me adjust something
+PHASE 3: Tech Stack Selection                        [Complete ✓]
+├─ ✓ Recommend cohesive tech stack
+└─ ✓ Confirmed: {language} + {framework} + {database}
 ```
 
-**Wait for user approval before executing.**
+### Step 5: Execute PHASE 4 — Product Requirements (D7)
 
-### Step 4: Execute with Progress Updates
-
-As each phase executes, show progress:
-
-```
-╔══════════════════════════════════════════════════════════════╗
-║  EXECUTING SETUP PLAN                                        ║
-╚══════════════════════════════════════════════════════════════╝
-
-PHASE 1: Research                                    [In Progress]
-├─ ✓ Research Next.js best practices                    (done)
-├─ ✓ Research security requirements for SaaS            (done)
-├─ ◐ Research testing standards for TypeScript          (running)
-└─ ◐ Research performance benchmarks                    (running)
-```
-
-After each step completes, update the display:
-
-```
-PHASE 1: Research                                    [Complete ✓]
-├─ ✓ Research Next.js best practices
-├─ ✓ Research security requirements for SaaS
-├─ ✓ Research testing standards for TypeScript
-└─ ✓ Research performance benchmarks
-
-PHASE 2: Constitution                                [In Progress]
-├─ ✓ Generate draft constitution from research          (done)
-├─ ◐ Interactive review of each article                 (your input needed)
-└─ □ Save constitution to .isdlc/constitution.md        (pending)
-```
-
-**Progress indicators:**
-- `□` = Pending (not started)
-- `◐` = In progress / Running
-- `✓` = Complete
-- `✗` = Failed (with error message)
-
-### Step 5: Execute PHASE 1 - Research (Constitution Generator)
-
-Launch `constitution-generator` sub-agent which handles research:
+Launch `product-analyst` again, this time for PRD generation:
 
 ```json
 {
-  "subagent_type": "constitution-generator",
-  "prompt": "Generate constitution for new project",
-  "description": "Create constitution for: {project_description}, Stack: {tech_stack}"
+  "subagent_type": "product-analyst",
+  "prompt": "Generate a Product Requirements Document (PRD) from the Project Brief and research findings. Project Brief: {project_brief_content}. Research Findings: {research_summary}. Tech Stack: {tech_stack}. Include functional requirements, non-functional requirements, and MVP scope.",
+  "description": "PRD generation from project brief"
 }
 ```
 
 **Show progress:**
 ```
-PHASE 1: Research                                    [In Progress]
-├─ ◐ Research {framework} best practices                (running)
-├─ ◐ Research security requirements                     (running)
-├─ ◐ Research testing standards                         (running)
-└─ ◐ Research performance benchmarks                    (running)
+PHASE 4: Product Requirements                        [In Progress]
+├─ ◐ Generate functional requirements                  (running)
+├─ ◐ Generate non-functional requirements              (running)
+└─ ◐ Define MVP scope                                  (running)
 ```
 
-The constitution-generator will:
-- Launch 4 parallel research agents
-- Generate draft constitution
-- Walk through interactive article review (PHASE 2)
-- Save to `.isdlc/constitution.md`
-
-### Step 6: Execute PHASE 3 - Create Project Structure
-
-Based on selected tech stack, create appropriate `src/` structure:
-
-**Node.js/Express:**
+**On completion:**
 ```
-src/
-├── config/
-├── controllers/
-├── middleware/
-├── models/
-├── routes/
-├── services/
-├── utils/
-└── index.ts
+PHASE 4: Product Requirements                        [Complete ✓]
+├─ ✓ Generate functional requirements
+│   → {count} requirements defined
+├─ ✓ Generate non-functional requirements
+│   → Performance, security, scalability targets
+└─ ✓ Define MVP scope
+    → {mvp_count} features in MVP, {deferred_count} deferred
+    → docs/requirements/prd.md
 ```
 
-**Node.js/NestJS:**
-```
-src/
-├── common/
-├── config/
-├── modules/
-├── app.module.ts
-└── main.ts
-```
+### Step 6: Execute PHASE 5 — Architecture Blueprint (D8)
 
-**Python/FastAPI:**
-```
-src/
-├── api/
-├── config/
-├── models/
-├── schemas/
-├── services/
-├── utils/
-└── main.py
-```
+Launch `architecture-designer` with the PRD and tech stack:
 
-**Go:**
-```
-cmd/server/main.go
-internal/
-├── config/
-├── handlers/
-├── middleware/
-├── models/
-├── repository/
-└── services/
-pkg/
+```json
+{
+  "subagent_type": "architecture-designer",
+  "prompt": "Design system architecture for new project. PRD: {prd_content}. Tech Stack: {tech_stack}. Research Findings: {research_summary}. Generate architecture overview, data model design, and API design.",
+  "description": "Architecture blueprint design"
+}
 ```
 
 **Show progress:**
 ```
-PHASE 3: Project Structure                           [In Progress]
-├─ ✓ Create src/ directory with {framework} structure   (done)
-├─ ◐ Create tests/ directory                            (running)
-└─ □ Initialize package.json with dependencies          (pending)
+PHASE 5: Architecture Blueprint                      [In Progress]
+├─ ◐ Design component architecture                     (running)
+├─ ◐ Design data model                                 (running)
+├─ ◐ Design API structure                              (running)
+└─ ◐ Define directory layout                           (running)
 ```
 
-### Step 7: Initialize Testing
+**On completion:**
+```
+PHASE 5: Architecture Blueprint                      [Complete ✓]
+├─ ✓ Design component architecture
+│   → {pattern} pattern, {component_count} components
+├─ ✓ Design data model
+│   → {entity_count} entities
+├─ ✓ Design API structure
+│   → {endpoint_count} endpoints
+└─ ✓ Define directory layout
+    → docs/architecture/architecture-overview.md
+    → docs/architecture/data-model.md (if >5 entities)
+```
 
-Create test directory structure:
+### Step 7: Execute PHASE 6 — Constitution Generation (D3)
+
+Launch `constitution-generator` with ALL prior artifacts:
+
+```json
+{
+  "subagent_type": "constitution-generator",
+  "prompt": "Generate constitution for new project",
+  "description": "Create constitution informed by: Project Brief ({problem_summary}), PRD ({requirement_count} requirements), Architecture ({pattern} with {entity_count} entities), Tech Stack ({tech_stack}), Research ({research_summary})"
+}
+```
+
+**Show progress:**
+```
+PHASE 6: Constitution                                [In Progress]
+├─ ◐ Generate draft constitution from all artifacts    (running)
+├─ □ Interactive review (you'll approve each article) (pending)
+└─ □ Save constitution                                (pending)
+```
+
+The constitution-generator will:
+- Use Project Brief, PRD, architecture, and research to inform articles
+- Generate domain-specific articles (e.g., if e-commerce: payment security article)
+- Walk through interactive article review (user input required)
+- Save to `.isdlc/constitution.md`
+
+**On completion:**
+```
+PHASE 6: Constitution                                [Complete ✓]
+├─ ✓ Generate draft constitution
+├─ ✓ Interactive review ({approved_count} articles approved)
+└─ ✓ Save constitution
+    → .isdlc/constitution.md
+```
+
+### Step 8: Execute PHASE 7 — Project Structure & Skills
+
+Create project scaffolding based on the architecture blueprint, then install skills.
+
+**Step 8a: Create directory structure**
+
+Use the directory layout from D8's architecture blueprint to create the `src/` structure. Also create test directories:
+
 ```
 tests/
 ├── unit/
@@ -333,83 +392,124 @@ tests/
 └── e2e/
 ```
 
+**Step 8b: Install skills**
+
+Launch `skills-researcher`:
+
+```json
+{
+  "subagent_type": "skills-researcher",
+  "prompt": "Find and install skills for tech stack",
+  "description": "Stack: {detected_technologies}"
+}
+```
+
 **Show progress:**
 ```
-PHASE 3: Project Structure                           [Complete ✓]
-├─ ✓ Create src/ directory with {framework} structure
+PHASE 7: Project Structure                           [In Progress]
+├─ ✓ Create src/ from architecture blueprint           (done)
+├─ ✓ Create tests/ directory                           (done)
+├─ ◐ Search skills.sh for your stack                   (running)
+└─ □ Install recommended skills                        (pending)
+```
+
+**On completion:**
+```
+PHASE 7: Project Structure                           [Complete ✓]
+├─ ✓ Create src/ from architecture blueprint
 ├─ ✓ Create tests/ directory
-└─ ✓ Initialize package.json with dependencies
+├─ ✓ Search skills.sh for your stack
+└─ ✓ Install recommended skills
+    → {installed_count} skills installed
 ```
 
-### Step 8: Execute PHASE 4 - Finalize
-
-**Show progress:**
-```
-PHASE 4: Finalize                                    [In Progress]
-├─ ◐ Update state.json with project configuration       (running)
-└─ □ Generate setup summary                             (pending)
-```
+### Step 9: Execute PHASE 8 — Finalize
 
 Update `.isdlc/state.json`:
 ```json
 {
   "project": {
     "is_new_project": false,
+    "name": "{project_name}",
+    "discovery_completed": true,
+    "project_brief": "docs/project-brief.md",
+    "prd": "docs/requirements/prd.md",
+    "architecture": "docs/architecture/architecture-overview.md",
     "tech_stack": {
-      "language": "typescript",
-      "framework": "nestjs",
-      "database": "postgresql"
+      "language": "{language}",
+      "framework": "{framework}",
+      "database": "{database}"
     },
-    "discovered_at": "2026-01-24T..."
+    "discovered_at": "{timestamp}"
   }
 }
 ```
 
-### Step 9: Display Completion
-
-Show final progress with all phases complete:
+### Step 10: Display Completion
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
-║  SETUP COMPLETE                                              ║
+║  NEW PROJECT SETUP COMPLETE                                  ║
 ╚══════════════════════════════════════════════════════════════╝
 
-PHASE 1: Research                                    [Complete ✓]
-├─ ✓ Research {framework} best practices
-├─ ✓ Research security requirements
-├─ ✓ Research testing standards
-└─ ✓ Research performance benchmarks
+PHASE 1: Project Vision                              [Complete ✓]
+├─ ✓ Interactive elicitation
+├─ ✓ Brainstorm solution approaches
+└─ ✓ Generate Project Brief
 
-PHASE 2: Constitution                                [Complete ✓]
-├─ ✓ Generate draft constitution from research
-├─ ✓ Interactive review of each article
-└─ ✓ Save constitution to .isdlc/constitution.md
+PHASE 2: Research                                    [Complete ✓]
+├─ ✓ Research best practices
+├─ ✓ Research compliance requirements
+├─ ✓ Research performance benchmarks
+└─ ✓ Research testing standards
 
-PHASE 3: Project Structure                           [Complete ✓]
-├─ ✓ Create src/ directory with {framework} structure
-├─ ✓ Create tests/ directory
-└─ ✓ Initialize package.json with dependencies
+PHASE 3: Tech Stack Selection                        [Complete ✓]
+├─ ✓ Recommend cohesive tech stack
+└─ ✓ Confirmed: {language} + {framework} + {database}
 
-PHASE 4: Finalize                                    [Complete ✓]
-├─ ✓ Update state.json with project configuration
-└─ ✓ Generate setup summary
+PHASE 4: Product Requirements                        [Complete ✓]
+├─ ✓ Functional requirements ({fr_count})
+├─ ✓ Non-functional requirements ({nfr_count})
+└─ ✓ MVP scope defined
 
-════════════════════════════════════════════════════════════════
-  NEW PROJECT SETUP COMPLETE
+PHASE 5: Architecture Blueprint                      [Complete ✓]
+├─ ✓ {pattern} architecture
+├─ ✓ {entity_count} entities designed
+└─ ✓ {endpoint_count} API endpoints planned
+
+PHASE 6: Constitution                                [Complete ✓]
+├─ ✓ {article_count} articles approved
+└─ ✓ Saved to .isdlc/constitution.md
+
+PHASE 7: Project Structure                           [Complete ✓]
+├─ ✓ src/ scaffolded from blueprint
+├─ ✓ tests/ infrastructure ready
+└─ ✓ {skill_count} skills installed
+
+PHASE 8: Finalize                                    [Complete ✓]
+├─ ✓ State updated
+└─ ✓ Summary generated
+
 ════════════════════════════════════════════════════════════════
 
   Project: {project_name}
   Tech Stack: {language} + {framework} + {database}
 
   Created:
-    ✓ .isdlc/constitution.md (tailored constitution)
-    ✓ src/ (project structure for {framework})
-    ✓ tests/ (testing infrastructure)
+    ✓ docs/project-brief.md
+    ✓ docs/requirements/prd.md
+    ✓ docs/architecture/architecture-overview.md
+    ✓ docs/architecture/data-model.md (if applicable)
+    ✓ .isdlc/constitution.md
+    ✓ src/ (project structure)
+    ✓ tests/ (test infrastructure)
 
   Next Steps:
-    1. Review constitution: cat .isdlc/constitution.md
-    2. Start coding in src/
-    3. When ready: /sdlc start "Your first task"
+    1. Review artifacts in docs/
+    2. Review constitution: cat .isdlc/constitution.md
+    3. Start a workflow:
+       /sdlc feature  — Build your first feature
+       /sdlc start    — Run full SDLC lifecycle
 
 ════════════════════════════════════════════════════════════════
 ```

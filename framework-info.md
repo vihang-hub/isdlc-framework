@@ -34,8 +34,10 @@ Located in `src/claude/agents/discover/`:
 - **skills-researcher.md** - Researches best practices for tech stack (D4)
 - **data-model-analyzer.md** - Scans schemas, ORM models, migrations, relationships (D5)
 - **feature-mapper.md** - Maps API endpoints, UI pages, CLI commands, business domains (D6)
+- **product-analyst.md** - Vision elicitation, brainstorming, PRD generation (D7)
+- **architecture-designer.md** - Designs architecture from PRD and tech stack (D8)
 
-### Skills (151 Specialized Skills)
+### Skills (159 Specialized Skills)
 Located in `src/claude/skills/` organized in 11 categories:
 - **orchestration/** (10 skills) - Workflow management, gates, delegation
 - **requirements/** (10 skills) - Elicitation, user stories, NFR quantification
@@ -47,7 +49,7 @@ Located in `src/claude/skills/` organized in 11 categories:
 - **devops/** (14 skills) - CI/CD, infrastructure, deployment strategies
 - **documentation/** (10 skills) - Technical writing, API docs, runbooks
 - **operations/** (12 skills) - Monitoring, incident response, SLA management
-- **discover/** (32 skills) - Project analysis: architecture, tests, data models, features
+- **discover/** (40 skills) - Project analysis, vision elicitation, PRD generation, architecture design
 
 ### Framework Resources
 Located in `src/isdlc/`:
@@ -163,7 +165,7 @@ See:
 
 When invoked in this repository:
 - You have access to all 14 agent definitions
-- You have access to all 151 skills
+- You have access to all 159 skills
 - You can reference templates, checklists, and configs
 - Focus on framework development, not project implementation
 - Help maintain consistency across agents and artifacts

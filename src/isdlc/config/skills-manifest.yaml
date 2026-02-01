@@ -8,7 +8,7 @@
 
 version: "2.0.0"
 generated: "2026-01-17"
-total_skills: 151
+total_skills: 159
 enforcement_mode: strict  # strict | warn | audit
 
 # =============================================================================
@@ -205,6 +205,42 @@ ownership:
       - id: DISC-604
         name: domain-mapping
         path: discover/domain-mapping
+
+  product-analyst:
+    agent_id: "D7"
+    phase: "setup"
+    skill_count: 4
+    skills:
+      - id: DISC-701
+        name: vision-elicitation
+        path: discover/vision-elicitation
+      - id: DISC-702
+        name: solution-brainstorming
+        path: discover/solution-brainstorming
+      - id: DISC-703
+        name: prd-generation
+        path: discover/prd-generation
+      - id: DISC-704
+        name: mvp-scoping
+        path: discover/mvp-scoping
+
+  architecture-designer:
+    agent_id: "D8"
+    phase: "setup"
+    skill_count: 4
+    skills:
+      - id: DISC-801
+        name: architecture-pattern-selection
+        path: discover/architecture-pattern-selection
+      - id: DISC-802
+        name: data-model-design
+        path: discover/data-model-design
+      - id: DISC-803
+        name: api-design
+        path: discover/api-design
+      - id: DISC-804
+        name: directory-scaffolding
+        path: discover/directory-scaffolding
 
   # ---------------------------------------------------------------------------
   # Agent 01: Requirements Analyst
@@ -843,6 +879,47 @@ skill_lookup:
   SRE-010: site-reliability-engineer
   SRE-011: site-reliability-engineer
   SRE-012: site-reliability-engineer
+  # Discover
+  DISC-001: discover-orchestrator
+  DISC-002: discover-orchestrator
+  DISC-003: discover-orchestrator
+  DISC-004: discover-orchestrator
+  DISC-101: architecture-analyzer
+  DISC-102: architecture-analyzer
+  DISC-103: architecture-analyzer
+  DISC-104: architecture-analyzer
+  DISC-105: architecture-analyzer
+  DISC-106: architecture-analyzer
+  DISC-201: test-evaluator
+  DISC-202: test-evaluator
+  DISC-203: test-evaluator
+  DISC-204: test-evaluator
+  DISC-205: test-evaluator
+  DISC-206: test-evaluator
+  DISC-301: constitution-generator
+  DISC-302: constitution-generator
+  DISC-303: constitution-generator
+  DISC-304: constitution-generator
+  DISC-401: skills-researcher
+  DISC-402: skills-researcher
+  DISC-403: skills-researcher
+  DISC-404: skills-researcher
+  DISC-501: data-model-analyzer
+  DISC-502: data-model-analyzer
+  DISC-503: data-model-analyzer
+  DISC-504: data-model-analyzer
+  DISC-601: feature-mapper
+  DISC-602: feature-mapper
+  DISC-603: feature-mapper
+  DISC-604: feature-mapper
+  DISC-701: product-analyst
+  DISC-702: product-analyst
+  DISC-703: product-analyst
+  DISC-704: product-analyst
+  DISC-801: architecture-designer
+  DISC-802: architecture-designer
+  DISC-803: architecture-designer
+  DISC-804: architecture-designer
 
 # =============================================================================
 # PATH LOOKUP TABLE
@@ -987,3 +1064,44 @@ path_lookup:
   operations/disaster-recovery: site-reliability-engineer
   operations/change-management: site-reliability-engineer
   operations/reporting: site-reliability-engineer
+  # Discover
+  discover/project-detection: discover-orchestrator
+  discover/workflow-coordination: discover-orchestrator
+  discover/state-initialization: discover-orchestrator
+  discover/cloud-configuration: discover-orchestrator
+  discover/tech-stack-detection: architecture-analyzer
+  discover/dependency-analysis: architecture-analyzer
+  discover/architecture-pattern-detection: architecture-analyzer
+  discover/framework-identification: architecture-analyzer
+  discover/deployment-topology-detection: architecture-analyzer
+  discover/integration-point-mapping: architecture-analyzer
+  discover/test-framework-detection: test-evaluator
+  discover/coverage-analysis: test-evaluator
+  discover/test-gap-identification: test-evaluator
+  discover/test-infrastructure-evaluation: test-evaluator
+  discover/critical-path-analysis: test-evaluator
+  discover/test-quality-assessment: test-evaluator
+  discover/research-coordination: constitution-generator
+  discover/article-generation: constitution-generator
+  discover/interactive-review: constitution-generator
+  discover/domain-detection: constitution-generator
+  discover/skills-search: skills-researcher
+  discover/skill-evaluation: skills-researcher
+  discover/skill-installation: skills-researcher
+  discover/web-research-fallback: skills-researcher
+  discover/data-store-detection: data-model-analyzer
+  discover/schema-extraction: data-model-analyzer
+  discover/relationship-mapping: data-model-analyzer
+  discover/migration-analysis: data-model-analyzer
+  discover/endpoint-discovery: feature-mapper
+  discover/page-discovery: feature-mapper
+  discover/job-discovery: feature-mapper
+  discover/domain-mapping: feature-mapper
+  discover/vision-elicitation: product-analyst
+  discover/solution-brainstorming: product-analyst
+  discover/prd-generation: product-analyst
+  discover/mvp-scoping: product-analyst
+  discover/architecture-pattern-selection: architecture-designer
+  discover/data-model-design: architecture-designer
+  discover/api-design: architecture-designer
+  discover/directory-scaffolding: architecture-designer
