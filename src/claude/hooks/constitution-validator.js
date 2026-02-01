@@ -197,16 +197,16 @@ function getArticleDescriptions() {
     return {
         'I': 'Specification Primacy - Code implements specifications exactly',
         'II': 'Test-First Development - Tests written before/with implementation',
-        'III': 'Library-First Design - Custom code justified over libraries',
-        'IV': 'Security by Design - Security considerations documented',
-        'V': 'Explicit Over Implicit - No vague requirements or assumptions',
-        'VI': 'Simplicity First - No over-engineering',
+        'III': 'Security by Design - Security considerations documented',
+        'IV': 'Explicit Over Implicit - No vague requirements or assumptions',
+        'V': 'Simplicity First - No over-engineering',
+        'VI': 'Code Review Required - All code reviewed before gate passage',
         'VII': 'Artifact Traceability - All artifacts have IDs and links',
         'VIII': 'Documentation Currency - Docs match current code',
         'IX': 'Quality Gate Integrity - Gates validated, not skipped',
         'X': 'Fail-Safe Defaults - Secure defaults implemented',
-        'XI': 'Artifact Completeness - All required artifacts exist',
-        'XII': 'Compliance Requirements - Regulatory compliance addressed'
+        'XI': 'Integration Testing Integrity - Integration tests validate component interactions',
+        'XII': 'Domain-Specific Compliance - Regulatory compliance addressed'
     };
 }
 

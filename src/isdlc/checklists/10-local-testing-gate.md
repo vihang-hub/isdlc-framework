@@ -95,7 +95,7 @@ This gate validates that the software works correctly in a local environment and
 
 ### 9. Constitutional Compliance Iteration
 - [ ] Constitutional self-validation performed
-- [ ] Articles VIII, XI validated
+- [ ] Articles VIII, IX validated
 - [ ] Iteration count logged in state.json → `constitutional_validation`
 - [ ] All violations documented and addressed
 - [ ] Final status is "compliant" (not "escalated" or "iterating")

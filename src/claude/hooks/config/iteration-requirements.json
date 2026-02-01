@@ -16,7 +16,7 @@
       "constitutional_validation": {
         "enabled": true,
         "max_iterations": 5,
-        "articles": ["I", "V", "VII", "XI", "XII"]
+        "articles": ["I", "IV", "VII", "IX", "XII"]
       }
     },
 
@@ -30,7 +30,7 @@
       "constitutional_validation": {
         "enabled": true,
         "max_iterations": 5,
-        "articles": ["III", "IV", "V", "VI", "VII", "X", "XI"]
+        "articles": ["III", "IV", "V", "VII", "IX", "X"]
       }
     },
 
@@ -44,7 +44,7 @@
       "constitutional_validation": {
         "enabled": true,
         "max_iterations": 5,
-        "articles": ["I", "V", "VI", "VII", "XI"]
+        "articles": ["I", "IV", "V", "VII", "IX"]
       }
     },
 
@@ -58,7 +58,7 @@
       "constitutional_validation": {
         "enabled": true,
         "max_iterations": 5,
-        "articles": ["II", "VII", "XI"]
+        "articles": ["II", "VII", "IX", "XI"]
       }
     },
 
@@ -79,7 +79,7 @@
       "constitutional_validation": {
         "enabled": true,
         "max_iterations": 5,
-        "articles": ["I", "II", "III", "VI", "VII", "VIII", "X", "XI"]
+        "articles": ["I", "II", "III", "V", "VI", "VII", "VIII", "IX", "X"]
       }
     },
 
@@ -100,7 +100,7 @@
       "constitutional_validation": {
         "enabled": true,
         "max_iterations": 5,
-        "articles": ["II", "VII", "XI"]
+        "articles": ["II", "VII", "IX", "XI"]
       },
       "on_gate_pass": {
         "trigger_cloud_config": {
@@ -122,7 +122,7 @@
       "constitutional_validation": {
         "enabled": true,
         "max_iterations": 5,
-        "articles": ["VI", "VII", "VIII", "XI"]
+        "articles": ["V", "VI", "VII", "VIII", "IX"]
       }
     },
 
@@ -136,7 +136,7 @@
       "constitutional_validation": {
         "enabled": true,
         "max_iterations": 5,
-        "articles": ["IV", "X", "XI", "XII"]
+        "articles": ["III", "IX", "X", "XII"]
       }
     },
 
@@ -156,7 +156,7 @@
       "constitutional_validation": {
         "enabled": true,
         "max_iterations": 5,
-        "articles": ["II", "IX", "XI"]
+        "articles": ["II", "IX"]
       }
     },
 
@@ -170,7 +170,7 @@
       "constitutional_validation": {
         "enabled": true,
         "max_iterations": 5,
-        "articles": ["VIII", "XI"]
+        "articles": ["VIII", "IX"]
       }
     },
 
@@ -184,7 +184,7 @@
       "constitutional_validation": {
         "enabled": true,
         "max_iterations": 5,
-        "articles": ["IX", "X", "XI"]
+        "articles": ["IX", "X"]
       }
     },
 
@@ -198,7 +198,7 @@
       "constitutional_validation": {
         "enabled": true,
         "max_iterations": 5,
-        "articles": ["IX", "X", "XI"]
+        "articles": ["IX", "X"]
       }
     },
 
@@ -212,7 +212,7 @@
       "constitutional_validation": {
         "enabled": true,
         "max_iterations": 5,
-        "articles": ["VIII", "XI", "XII"]
+        "articles": ["VIII", "IX", "XII"]
       }
     }
   },

@@ -811,16 +811,16 @@ For each gate:
 - **Validate constitutional compliance** against `.isdlc/constitution.md`:
   - Article I: Specifications serve as source of truth
   - Article II: Tests written before implementation
-  - Article III: Library-first design justified
-  - Article IV: Security considerations documented
-  - Article V: No unresolved `[NEEDS CLARIFICATION]` markers
-  - Article VI: Simplicity validated (no over-engineering)
+  - Article III: Security considerations documented
+  - Article IV: No unresolved `[NEEDS CLARIFICATION]` markers
+  - Article V: Simplicity validated (no over-engineering)
+  - Article VI: Code review completed before gate passage
   - Article VII: Artifact traceability verified
   - Article VIII: Documentation current with code
   - Article IX: Gate integrity maintained
   - Article X: Fail-safe defaults implemented
-  - Article XI: Phase artifacts complete
-  - Article XII: Compliance requirements met
+  - Article XI: Integration tests validate component interactions
+  - Article XII: Domain-specific compliance requirements met
 - Run all specified validators
 - Document validation results in `gate-validation.json` including constitutional compliance
 - Only advance if ALL validations pass (technical AND constitutional)
@@ -852,19 +852,19 @@ When reviewing a phase agent's gate submission:
 
 | Phase | Required Constitutional Articles |
 |-------|----------------------------------|
-| 01-requirements | I, V, VII, XI, XII |
-| 02-architecture | III, IV, V, VI, VII, X, XI |
-| 03-design | I, V, VI, VII, XI |
-| 04-test-strategy | II, VII, XI |
-| 05-implementation | I, II, III, VI, VII, VIII, X, XI |
-| 06-testing | II, VII, XI |
-| 07-code-review | VI, VII, VIII, XI |
-| 08-validation | IV, X, XI, XII |
-| 09-cicd | II, IX, XI |
-| 10-local-testing | VIII, XI |
-| 11-test-deploy | IX, X, XI |
-| 12-production | IX, X, XI |
-| 13-operations | VIII, XI, XII |
+| 01-requirements | I, IV, VII, IX, XII |
+| 02-architecture | III, IV, V, VII, IX, X |
+| 03-design | I, IV, V, VII, IX |
+| 04-test-strategy | II, VII, IX, XI |
+| 05-implementation | I, II, III, V, VI, VII, VIII, IX, X |
+| 06-testing | II, VII, IX, XI |
+| 07-code-review | V, VI, VII, VIII, IX |
+| 08-validation | III, IX, X, XII |
+| 09-cicd | II, IX |
+| 10-local-testing | VIII, IX |
+| 11-test-deploy | IX, X |
+| 12-production | IX, X |
+| 13-operations | VIII, IX, XII |
 
 ### Iteration Limits for Constitutional Validation
 

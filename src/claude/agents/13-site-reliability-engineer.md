@@ -247,7 +247,7 @@ docs/
 
 For Phase 13 (Operations), you must validate against:
 - **Article VIII (Documentation Currency)**: Runbooks and operational docs current
-- **Article XI (Artifact Completeness)**: All required artifacts exist
+- **Article IX (Quality Gate Integrity)**: All required artifacts exist
 - **Article XII (Compliance Requirements)**: Operational compliance verified
 
 ## Iteration Protocol

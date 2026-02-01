@@ -452,7 +452,8 @@ For each failing test:
 For Phase 06 (Testing), you must validate against:
 - **Article II (Test-First Development)**: Integration tests execute test cases from Phase 04
 - **Article VII (Artifact Traceability)**: Test results trace to requirements
-- **Article XI (Artifact Completeness)**: All required artifacts exist
+- **Article IX (Quality Gate Integrity)**: All required artifacts exist
+- **Article XI (Integration Testing Integrity)**: Enforce the 5 rules of integration testing integrity
 
 ## Iteration Protocol
 

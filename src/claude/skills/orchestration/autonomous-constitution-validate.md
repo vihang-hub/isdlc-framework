@@ -53,18 +53,18 @@ The constitution at `.isdlc/constitution.md` typically contains these articles (
 
 | Article | Principle | Primary Validators |
 |---------|-----------|-------------------|
-| **I** | Specification Primacy | Agents 01, 05, 07 |
+| **I** | Specification Primacy | Agents 01, 03, 05 |
 | **II** | Test-First Development | Agents 04, 05, 06 |
-| **III** | Library-First Design | Agents 02, 05 |
-| **IV** | Security by Design | Agents 02, 05, 08 |
-| **V** | Explicit Over Implicit | Agents 01, 02, 03 |
-| **VI** | Simplicity First | Agents 02, 05, 07 |
+| **III** | Security by Design | Agents 02, 05, 08 |
+| **IV** | Explicit Over Implicit | Agents 01, 02, 03 |
+| **V** | Simplicity First | Agents 02, 03, 05, 07 |
+| **VI** | Code Review Required | Agents 05, 07 |
 | **VII** | Artifact Traceability | All agents |
 | **VIII** | Documentation Currency | Agents 05, 07, 10, 13 |
-| **IX** | Quality Gate Integrity | Orchestrator |
+| **IX** | Quality Gate Integrity | Orchestrator, all agents |
 | **X** | Fail-Safe Defaults | Agents 02, 05, 08 |
-| **XI** | Artifact Completeness | All agents |
-| **XII** | Compliance Requirements | Agents 01, 08, 13 |
+| **XI** | Integration Testing Integrity | Agents 04, 06 |
+| **XII** | Domain-Specific Compliance | Agents 01, 08, 13 |
 
 ---
 
@@ -200,14 +200,7 @@ For each iteration, log:
 - Test strategy missing for feature
 **Fix**: Add missing tests, update test strategy
 
-### Article III: Library-First Design
-**Check**: Custom implementations have documented justification
-**Violations**:
-- Custom implementation of common functionality without ADR
-- Rejecting well-maintained libraries without reason
-**Fix**: Add ADR justifying custom implementation, or use library
-
-### Article IV: Security by Design
+### Article III: Security by Design
 **Check**: Security considerations documented before implementation
 **Violations**:
 - Missing threat model
@@ -215,7 +208,7 @@ For each iteration, log:
 - No security review for sensitive features
 **Fix**: Add security documentation, threat model section
 
-### Article V: Explicit Over Implicit
+### Article IV: Explicit Over Implicit
 **Check**: No unresolved `[NEEDS CLARIFICATION]` markers
 **Violations**:
 - Vague requirements ("fast", "user-friendly", "reliable")
@@ -223,13 +216,22 @@ For each iteration, log:
 - Missing edge case handling
 **Fix**: Quantify vague terms, document assumptions, add edge cases
 
-### Article VI: Simplicity First
+### Article V: Simplicity First
 **Check**: No over-engineering or premature optimization
 **Violations**:
 - Features beyond requirements ("gold plating")
 - Unnecessary abstraction layers
 - Premature optimization
-**Fix**: Remove unnecessary complexity, simplify design
+- Custom implementation of common functionality without justification
+**Fix**: Remove unnecessary complexity, simplify design, prefer libraries
+
+### Article VI: Code Review Required
+**Check**: All code reviewed before gate passage
+**Violations**:
+- Code merged without review
+- Review comments not addressed
+- No review sign-off documented
+**Fix**: Complete code review, address all comments, document sign-off
 
 ### Article VII: Artifact Traceability
 **Check**: All artifacts have IDs and links
@@ -262,14 +264,15 @@ For each iteration, log:
 - Sensitive data in error messages
 **Fix**: Implement deny-by-default, add input validation
 
-### Article XI: Artifact Completeness
-**Check**: All required artifacts exist
+### Article XI: Integration Testing Integrity
+**Check**: Integration tests validate component interactions
 **Violations**:
-- Missing required documents
-- Incomplete artifacts
-**Fix**: Complete all required artifacts for the phase
+- Missing integration tests for component boundaries
+- Integration test coverage below threshold
+- Mock-only testing without real integration validation
+**Fix**: Add integration tests for component interactions, validate real integrations
 
-### Article XII: Compliance Requirements
+### Article XII: Domain-Specific Compliance
 **Check**: Regulatory compliance addressed
 **Violations**:
 - Missing compliance documentation
@@ -389,10 +392,10 @@ gate_criteria:
 ### Scenario 1: Requirements Analyst (Agent 01)
 
 **Phase**: 01 - Requirements
-**Applicable Articles**: I, V, VII, XII
+**Applicable Articles**: I, IV, VII, IX, XII
 
 **Iteration 1**:
-- Check Article V: Found "The system should be fast" - VIOLATION
+- Check Article IV: Found "The system should be fast" - VIOLATION
 - Fix: Changed to "API response time p95 < 200ms"
 - Result: VIOLATIONS_FIXED
 
@@ -408,7 +411,7 @@ gate_criteria:
 ### Scenario 2: Software Developer (Agent 05)
 
 **Phase**: 05 - Implementation
-**Applicable Articles**: I, II, III, VI, VII, VIII, X
+**Applicable Articles**: I, II, III, V, VI, VII, VIII, IX, X
 
 **Iteration 1**:
 - Check Article II: Unit tests missing for 3 functions - VIOLATION
@@ -421,7 +424,7 @@ gate_criteria:
 - Result: VIOLATIONS_FIXED
 
 **Iteration 3**:
-- Check Article VI: Found unnecessary abstraction layer - VIOLATION
+- Check Article V: Found unnecessary abstraction layer - VIOLATION
 - Fix: Simplified by removing AbstractUserFactory
 - Result: VIOLATIONS_FIXED
 
@@ -432,15 +435,15 @@ gate_criteria:
 ### Scenario 3: Max Iterations Exceeded
 
 **Phase**: 02 - Architecture
-**Applicable Articles**: III, IV, V, VII, X
+**Applicable Articles**: III, IV, V, VII, IX, X
 
 **Iterations 1-5**:
-- Article IV violations persist: Security architecture keeps conflicting with performance requirements
+- Article III violations persist: Security architecture keeps conflicting with performance requirements
 - Each fix for security degrades performance below NFR threshold
 - After 5 iterations: fundamental conflict detected
 
 **Result**: ESCALATED
-- **Reason**: "Constitutional conflict between Article IV (Security by Design) and performance NFR-002 (p95 < 100ms). Security measures add 50ms latency."
+- **Reason**: "Constitutional conflict between Article III (Security by Design) and performance NFR-002 (p95 < 100ms). Security measures add 50ms latency."
 - **Recommendation**: "Stakeholder decision required: relax performance requirement OR accept security trade-off. Document decision in ADR."
 
 ---
@@ -498,19 +501,19 @@ Add to `src/isdlc/config/constitution-mapping.yaml`:
 
 ```yaml
 phase_articles:
-  "01-requirements": ["I", "V", "VII", "XI", "XII"]
-  "02-architecture": ["III", "IV", "V", "VI", "VII", "X", "XI"]
-  "03-design": ["I", "V", "VI", "VII", "XI"]
-  "04-test-strategy": ["II", "VII", "XI"]
-  "05-implementation": ["I", "II", "III", "VI", "VII", "VIII", "X", "XI"]
-  "06-testing": ["II", "VII", "XI"]
-  "07-code-review": ["VI", "VII", "VIII", "XI"]
-  "08-validation": ["IV", "X", "XI", "XII"]
-  "09-cicd": ["II", "IX", "XI"]
-  "10-local-testing": ["VIII", "XI"]
-  "11-test-deploy": ["IX", "X", "XI"]
-  "12-production": ["IX", "X", "XI"]
-  "13-operations": ["VIII", "XI", "XII"]
+  "01-requirements": ["I", "IV", "VII", "IX", "XII"]
+  "02-architecture": ["III", "IV", "V", "VII", "IX", "X"]
+  "03-design": ["I", "IV", "V", "VII", "IX"]
+  "04-test-strategy": ["II", "VII", "IX", "XI"]
+  "05-implementation": ["I", "II", "III", "V", "VI", "VII", "VIII", "IX", "X"]
+  "06-testing": ["II", "VII", "IX", "XI"]
+  "07-code-review": ["V", "VI", "VII", "VIII", "IX"]
+  "08-validation": ["III", "IX", "X", "XII"]
+  "09-cicd": ["II", "IX"]
+  "10-local-testing": ["VIII", "IX"]
+  "11-test-deploy": ["IX", "X"]
+  "12-production": ["IX", "X"]
+  "13-operations": ["VIII", "IX", "XII"]
 ```
 
 ---

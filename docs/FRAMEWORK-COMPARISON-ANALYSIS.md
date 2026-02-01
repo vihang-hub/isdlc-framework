@@ -177,13 +177,13 @@ After analyzing Ralph Wiggum, GitHub Spec Kit, and BMAD-METHOD against your iSDL
 - Architectural drift over time
 
 **Impact**:
-- Agent 02 (Architect) chooses library-first design
+- Agent 02 (Architect) chooses simplicity-first design
 - Agent 05 (Developer) ignores it, writes monolithic code
 - Agent 07 (QA) finds inconsistencies
 - No single source of truth for principles
 
 **What Other Frameworks Do**:
-- **Spec Kit**: 9-article constitution (test-first NON-NEGOTIABLE, library-first, etc.)
+- **Spec Kit**: 9-article constitution (test-first NON-NEGOTIABLE, security by design, etc.)
 - **BMAD**: Implicit in agent personas and workflows
 
 **Recommendation**: Add project constitution file
@@ -276,7 +276,7 @@ To avoid clutter while gaining critical capabilities, add **only these 3 enhance
 **What to Add**:
 1. **Constitution Template**:
    - Location: `src/isdlc/templates/constitution.md`
-   - Content: 9-12 immutable principles
+   - Content: 12 immutable principles
    - Loaded by all agents at start
    - Enforced by orchestrator at gates
 
@@ -290,17 +290,17 @@ To avoid clutter while gaining critical capabilities, add **only these 3 enhance
    ## Article II: Test-First Development
    Tests MUST be written before implementation. NON-NEGOTIABLE.
 
-   ## Article III: Library-First Design
-   Prefer composition over custom implementation.
-
-   ## Article IV: Security by Design
+   ## Article III: Security by Design
    Security considerations MUST precede implementation.
 
-   ## Article V: Explicit Over Implicit
+   ## Article IV: Explicit Over Implicit
    No assumptions. Mark uncertainties with [NEEDS CLARIFICATION].
 
-   ## Article VI: Simplicity First
-   Implement the simplest solution that satisfies requirements.
+   ## Article V: Simplicity First
+   Implement the simplest solution. Prefer composition over custom implementation.
+
+   ## Article VI: Code Review Required
+   All code MUST be reviewed before merge. NON-NEGOTIABLE.
 
    ## Article VII: Artifact Traceability
    Every code element MUST trace to a requirement.
@@ -310,6 +310,15 @@ To avoid clutter while gaining critical capabilities, add **only these 3 enhance
 
    ## Article IX: Quality Gate Integrity
    Gates cannot be skipped. Failures require remediation.
+
+   ## Article X: Fail-Safe Defaults
+   Systems default to secure and safe states.
+
+   ## Article XI: Integration Testing Integrity
+   Integration tests MUST verify cross-component behavior.
+
+   ## Article XII: Domain-Specific Compliance
+   Industry and regulatory standards MUST be enforced.
    ```
 
 3. **Agent Integration**:

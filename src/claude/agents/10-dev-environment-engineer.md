@@ -130,7 +130,7 @@ docs/
 
 For Phase 10 (Local Development), you must validate against:
 - **Article VIII (Documentation Currency)**: Dev guides are accurate and current
-- **Article XI (Artifact Completeness)**: All required artifacts exist
+- **Article IX (Quality Gate Integrity)**: All required artifacts exist
 
 ## Iteration Protocol
 

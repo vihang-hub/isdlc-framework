@@ -153,7 +153,6 @@ docs/
 For Phase 09 (CI/CD), you must validate against:
 - **Article II (Test-First Development)**: Pipeline runs tests before deployment
 - **Article IX (Quality Gate Integrity)**: Pipeline enforces quality gates
-- **Article XI (Artifact Completeness)**: All required artifacts exist
 
 ## Iteration Protocol
 

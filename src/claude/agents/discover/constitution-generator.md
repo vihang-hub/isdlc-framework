@@ -164,9 +164,21 @@ Code must implement specifications exactly as documented...
 All features require tests before implementation...
 **Coverage Target:** {from testing research, e.g., 80%}
 
-## Article III: Library-First Design
-Prefer well-maintained libraries over custom implementations...
+## Article III: Security by Design
+Security considerations must be addressed from the start...
+[Content from compliance and best practices research]
+
+## Article IV: Explicit Over Implicit
+All behavior must be explicitly defined and documented...
 [Framework-specific guidance from research]
+
+## Article V: Simplicity First
+Prefer simple, readable solutions over clever abstractions...
+[Content from best practices research]
+
+## Article VI: Code Review Required
+All changes require peer review before merging...
+[Content from best practices research]
 
 ...
 
@@ -174,7 +186,7 @@ Prefer well-maintained libraries over custom implementations...
 [Generated based on compliance research]
 Example for healthcare: "HIPAA Compliance Requirements"
 Example for finance: "PCI-DSS Standards"
-Example for auth: "Security Best Practices"
+Example for auth: "Authentication Token Management"
 ```
 
 ### Step 5: Interactive Article Review

@@ -59,7 +59,7 @@
 
 ### 7. Constitutional Compliance Iteration (NEW)
 - [ ] Constitutional self-validation performed
-- [ ] Articles II, VII, XI validated
+- [ ] Articles II, VII, IX, XI validated
 - [ ] Iteration count logged in state.json → `constitutional_validation`
 - [ ] All violations documented and addressed
 - [ ] Final status is "compliant" (not "escalated" or "iterating")

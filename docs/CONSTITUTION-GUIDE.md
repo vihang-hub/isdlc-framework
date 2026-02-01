@@ -82,18 +82,20 @@ cp isdlc-framework/src/isdlc/templates/constitution.md .isdlc/constitution.md
 
 ### Universal Articles (Baked In)
 
-The template includes 10 **universal articles** that apply to ALL projects:
+The template includes 12 **universal articles** that apply to ALL projects:
 
 1. **Specification Primacy** - Specs are source of truth
 2. **Test-First Development** - Tests before code (95% unit coverage)
 3. **Security by Design** - Security from day one
 4. **Explicit Over Implicit** - No assumptions, mark uncertainties
-5. **Simplicity First** - YAGNI, avoid over-engineering
+5. **Simplicity First** - YAGNI, prefer composition over custom implementation
 6. **Code Review Required** - All code reviewed before merge
 7. **Artifact Traceability** - Requirements → Code mapping
 8. **Documentation Currency** - Keep docs updated
 9. **Quality Gate Integrity** - Gates can't be skipped
 10. **Fail-Safe Defaults** - Secure and safe by default
+11. **Integration Testing Integrity** - Integration tests verify cross-component behavior
+12. **Domain-Specific Compliance** - Industry and regulatory standards enforced
 
 These are mandatory and should rarely be removed.
 
@@ -103,7 +105,7 @@ The `/discover` and `/sdlc constitution` commands will suggest domain-specific a
 
 **For a Simple Internal Tool** (add after universal articles):
 ```markdown
-### Article XI: Internal Tool Simplicity
+### Article XIII: Internal Tool Simplicity
 1. No external user authentication required
 2. Logging for audit purposes only
 3. Internal network access only
@@ -111,24 +113,24 @@ The `/discover` and `/sdlc constitution` commands will suggest domain-specific a
 
 **For an Enterprise SaaS Product** (add after universal articles):
 ```markdown
-### Article XI: Multi-Tenancy Isolation
+### Article XIII: Multi-Tenancy Isolation
 Tenant data MUST be completely isolated. Row-level security enforced.
 
-### Article XII: High Availability
+### Article XIV: High Availability
 System MUST maintain 99.9% uptime. Auto-scaling configured.
 
-### Article XIII: GDPR Compliance
+### Article XV: GDPR Compliance
 Data retention policies enforced. Right to deletion supported.
 ```
 
 **For an E-commerce Platform** (add after universal articles):
 ```markdown
-### Article XI: PCI-DSS Compliance
+### Article XIII: PCI-DSS Compliance
 1. No credit card data stored unencrypted
 2. Tokenization for all payment data
 3. Security scans before each deployment
 
-### Article XII: Performance Requirements
+### Article XIV: Performance Requirements
 1. API response time p95 < 200ms
 2. Checkout flow p95 < 500ms
 3. Support 1,000 concurrent users
@@ -178,11 +180,12 @@ git commit -m "Add project constitution"
 3. Self-validate before gate submission
 
 **Example - Software Developer (Agent 05):**
-- Reads Articles I, II, III, VI, VII, VIII, X
+- Reads Articles I, II, III, V, VI, VII, VIII, X
 - Implements only what's specified (Article I)
 - Writes tests first (Article II)
-- Prefers libraries (Article III)
-- Keeps it simple (Article VI)
+- Applies security by design (Article III)
+- Keeps it simple, prefers composition (Article V)
+- Ensures code is reviewed (Article VI)
 - Links code to requirements (Article VII)
 - Updates docs (Article VIII)
 - Uses fail-safe defaults (Article X)
@@ -198,15 +201,16 @@ Each quality gate checks relevant constitutional articles:
 ```
 GATE-01 (Requirements):
 ✓ Article I: Requirements are complete specs
-✓ Article V: No [NEEDS CLARIFICATION] markers
+✓ Article IV: No [NEEDS CLARIFICATION] markers
 ✓ Article VII: Traceability matrix exists
 ✓ Article XII: Compliance requirements identified
 
 GATE-05 (Implementation):
 ✓ Article I: Code matches specifications
 ✓ Article II: Tests written first, coverage ≥80%
-✓ Article III: Libraries used, ADRs document choices
-✓ Article VI: No over-engineering
+✓ Article III: Security considerations addressed
+✓ Article V: No over-engineering, composition preferred
+✓ Article VI: Code review completed
 ✓ Article VII: Code references requirement IDs
 ✓ Article VIII: Docs updated
 ✓ Article X: Fail-safe defaults implemented
@@ -289,7 +293,7 @@ Good for:
 - Customer-facing products
 - 3-12 month projects
 
-Use template articles I-IX, customize as needed.
+Use template articles I-XII, customize as needed.
 
 ### Pattern: Comprehensive Constitution (10-15 Articles)
 

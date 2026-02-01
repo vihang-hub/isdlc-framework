@@ -146,7 +146,7 @@ Before this phase can begin, the following prerequisites MUST be met:
 
 ### 12. Constitutional Compliance Iteration (NEW)
 - [ ] Constitutional self-validation performed
-- [ ] Articles IX, X, XI validated
+- [ ] Articles IX, X validated
 - [ ] Iteration count logged in state.json → `constitutional_validation`
 - [ ] All violations documented and addressed
 - [ ] Final status is "compliant" (not "escalated" or "iterating")
