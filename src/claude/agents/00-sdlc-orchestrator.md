@@ -351,9 +351,33 @@ When the user selects a workflow (via `/sdlc feature`, `/sdlc fix`, etc.), initi
 **feature workflow:**
 - Phase 01: `scope: "feature"` — full requirements elicitation with A/R/C menu
 - Phase 02: `scope: "impact-assessment"` — lightweight architecture review
+- Read `counters.next_req_id` from state.json, zero-pad to 4 digits (e.g., `1` → `0001`)
+- After Agent 01 saves artifacts, write these fields into `active_workflow`:
+  ```json
+  {
+    "artifact_prefix": "REQ",
+    "artifact_folder": "REQ-0001-{feature-name}",
+    "counter_used": 1
+  }
+  ```
+- Increment `counters.next_req_id` in state.json
 
 **fix workflow:**
 - Phase 01: `scope: "bug-report"` — capture reproduction steps, expected vs actual
+- Ask for external bug link (Jira, GitHub Issue, Linear, etc.) if not provided via `--link`
+- Agent 01 extracts external ID from URL (e.g., `PROJ-1234` from Jira, `GH-42` from GitHub)
+- Read `counters.next_bug_id` from state.json, zero-pad to 4 digits
+- After Agent 01 saves artifacts, write these fields into `active_workflow`:
+  ```json
+  {
+    "artifact_prefix": "BUG",
+    "artifact_folder": "BUG-0001-PROJ-1234",
+    "external_id": "PROJ-1234",
+    "external_url": "https://mycompany.atlassian.net/browse/PROJ-1234",
+    "counter_used": 1
+  }
+  ```
+- Increment `counters.next_bug_id` in state.json
 - Phase 05: `require_failing_test_first: true` — must write failing test before fix
 
 **test-run workflow:**

@@ -126,8 +126,8 @@ docs/
 │   └── qa-sign-off.md                   # QA approval document
 │
 ├── requirements/                        # Requirement-specific QA reports
-│   └── REQ-NNNN-{name}/
-│       └── code-review-report.md        # Code review for this requirement
+│   └── {work-item-folder}/              # From state.json → active_workflow.artifact_folder
+│       └── code-review-report.md        # Feature: REQ-NNNN-{name} | Bug fix: BUG-NNNN-{id}
 │
 └── .validations/
     └── gate-07-code-review.json

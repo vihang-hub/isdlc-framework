@@ -155,8 +155,8 @@ docs/
 │   └── security-sign-off.md             # Security approval
 │
 ├── requirements/                        # Requirement-specific security reports
-│   └── REQ-NNNN-{name}/
-│       └── security-assessment.md       # Security assessment for this feature
+│   └── {work-item-folder}/              # From state.json → active_workflow.artifact_folder
+│       └── security-assessment.md       # Feature: REQ-NNNN-{name} | Bug fix: BUG-NNNN-{id}
 │
 └── .validations/
     └── gate-08-validation.json

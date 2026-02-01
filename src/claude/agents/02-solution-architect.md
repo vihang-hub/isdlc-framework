@@ -441,8 +441,8 @@ docs/
 │       └── er-diagram.mermaid
 │
 ├── requirements/                        # Link architecture to requirements
-│   └── REQ-NNNN-{name}/
-│       └── database-design.md           # Database design for this requirement
+│   └── {work-item-folder}/              # From state.json → active_workflow.artifact_folder
+│       └── database-design.md           # Feature: REQ-NNNN-{name} | Bug fix: BUG-NNNN-{id}
 │
 └── .validations/
     └── gate-02-architecture.json
@@ -462,7 +462,7 @@ Examples:
 - **`docs/common/`**: Cross-cutting architecture docs (overview, tech stack, security)
 - **`docs/architecture/adrs/`**: All Architecture Decision Records
 - **`docs/architecture/diagrams/`**: C4, deployment, ER diagrams
-- **`docs/requirements/REQ-NNNN-{name}/`**: Requirement-specific designs (database schemas for that feature)
+- **`docs/requirements/{work-item-folder}/`**: Requirement-specific designs (database schemas for that feature). Read folder name from `state.json → active_workflow.artifact_folder` (Feature: `REQ-NNNN-{name}` | Bug fix: `BUG-NNNN-{id}`)
 
 # COMMUNICATION
 

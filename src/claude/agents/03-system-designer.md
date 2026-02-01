@@ -186,8 +186,8 @@ docs/
 │   └── integration-specs/               # Integration specifications
 │
 ├── requirements/                        # Requirement-specific designs
-│   └── REQ-NNNN-{name}/
-│       ├── module-design.md             # Module design for this requirement
+│   └── {work-item-folder}/              # From state.json → active_workflow.artifact_folder
+│       ├── module-design.md             # Feature: REQ-NNNN-{name} | Bug fix: BUG-NNNN-{id}
 │       ├── component-spec.md            # Component specifications
 │       ├── api-endpoints.yaml           # API endpoints for this feature
 │       └── ui-wireframes/               # Feature-specific wireframes
@@ -201,7 +201,7 @@ docs/
 - **`docs/common/`**: Cross-cutting design artifacts (error taxonomy, validation rules)
 - **`docs/design/api/`**: API specifications (OpenAPI, GraphQL schemas)
 - **`docs/design/ui/`**: Overall UI/UX wireframes and user flows
-- **`docs/requirements/REQ-NNNN-{name}/`**: Requirement-specific module designs, components, endpoints
+- **`docs/requirements/{work-item-folder}/`**: Requirement-specific module designs, components, endpoints. Read folder name from `state.json → active_workflow.artifact_folder` (Feature: `REQ-NNNN-{name}` | Bug fix: `BUG-NNNN-{id}`)
 
 # AUTONOMOUS CONSTITUTIONAL ITERATION
 

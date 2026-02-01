@@ -18,7 +18,7 @@
       ],
       "gate_mode": "strict",
       "agent_modifiers": {
-        "01-requirements": { "scope": "feature" },
+        "01-requirements": { "scope": "feature", "artifact_prefix": "REQ" },
         "02-architecture": { "scope": "impact-assessment" }
       }
     },
@@ -36,7 +36,11 @@
       ],
       "gate_mode": "strict",
       "agent_modifiers": {
-        "01-requirements": { "scope": "bug-report" },
+        "01-requirements": {
+          "scope": "bug-report",
+          "artifact_prefix": "BUG",
+          "require_external_id": true
+        },
         "05-implementation": { "require_failing_test_first": true }
       }
     },

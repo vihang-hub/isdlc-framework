@@ -119,7 +119,136 @@ Your choice: _
 
 ---
 
-# STEP-BASED WORKFLOW
+# SCOPE DETECTION
+
+The requirements workflow adapts based on the `scope` modifier from the active workflow.
+
+| Scope | Workflow | Folder Prefix | Counter Key | Flow |
+|-------|----------|---------------|-------------|------|
+| `feature` | feature, full-lifecycle | `REQ` | `counters.next_req_id` | Full 7-step discovery (Steps 1-7) |
+| `bug-report` | fix | `BUG` | `counters.next_bug_id` | Streamlined 4-step bug report flow |
+
+**Counter & Folder Naming:**
+1. Read the appropriate counter from `.isdlc/state.json` (e.g., `counters.next_bug_id`)
+2. Zero-pad to 4 digits: `1` → `0001`, `12` → `0012`
+3. Construct folder name:
+   - Feature: `REQ-{NNNN}-{feature-name}` (e.g., `REQ-0001-user-auth`)
+   - Bug fix: `BUG-{NNNN}-{external-id}` (e.g., `BUG-0001-JIRA-1234`)
+4. After saving artifacts, increment the counter in state.json
+
+**Scope Routing:**
+- If `scope` is `"bug-report"` → skip to **BUG REPORT FLOW** below
+- If `scope` is `"feature"` (or unset) → use the full **STEP-BASED WORKFLOW** (Steps 1-7)
+
+---
+
+# BUG REPORT FLOW (scope: "bug-report")
+
+A streamlined 4-step flow for bug fixes. Replaces the full 7-step discovery.
+
+## Bug Step 1: Bug Identification
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🐛 **BUG REPORT: Identification**
+
+I'll help capture this bug report. I need a few details:
+
+1. **Bug link** — Jira, GitHub Issue, Linear, or other tracker URL
+   (or say "none" if no tracker)
+2. **Expected behavior** — What should happen?
+3. **Actual behavior** — What happens instead?
+4. **Reproduction steps** — How can we reproduce this?
+
+Please share what you have.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**🛑 STOP. Wait for user response.**
+
+If the orchestrator passed a `--link` URL, pre-populate the bug link and skip asking for it.
+
+## Bug Step 2: Extract External ID
+
+Extract an identifier from the provided URL using these rules:
+
+| Source | URL Pattern | Extracted ID |
+|--------|-------------|--------------|
+| Jira | `https://*.atlassian.net/browse/PROJ-1234` | `PROJ-1234` |
+| GitHub Issue | `https://github.com/{org}/{repo}/issues/{N}` | `GH-{N}` |
+| GitHub PR | `https://github.com/{org}/{repo}/pull/{N}` | `GHPR-{N}` |
+| Linear | `https://linear.app/{team}/issue/{TEAM-N}` | `TEAM-N` |
+| Other URL | Any other URL | Ask user for a short ID (e.g., `TICKET-99`) |
+| No URL | User said "none" | Derive a slug from the bug description (kebab-case, max 4 words, e.g., `login-500-empty-password`) |
+
+## Bug Step 3: Draft Bug Report
+
+Present the structured bug report for review:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🐛 **DRAFT: Bug Report**
+
+**Bug ID:** BUG-{NNNN}-{external-id}
+**External Link:** {url or "None"}
+**External ID:** {extracted-id}
+
+**Summary:** {1-line summary}
+
+**Expected Behavior:**
+{what should happen}
+
+**Actual Behavior:**
+{what happens instead}
+
+**Reproduction Steps:**
+1. {step 1}
+2. {step 2}
+3. {step 3}
+
+**Environment:** {if mentioned}
+**Severity:** {Critical/High/Medium/Low — based on impact}
+
+**Fix Requirement:**
+{clear statement of what the fix must accomplish}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 **MENU: Bug Report**
+
+[A] Adjust — Correct details
+[R] Refine — Add more reproduction info or context
+[S] Save — Create artifacts and complete phase
+[X] Exit — Stop without saving
+
+Your choice: _
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**🛑 STOP. Wait for menu selection.**
+
+## Bug Step 4: Save Artifacts (on [S])
+
+ONLY when user selects [S], create these artifacts:
+
+1. Create folder: `docs/requirements/BUG-{NNNN}-{external-id}/`
+2. Write `bug-report.md` — the full bug report from Step 3
+3. Write `requirements-spec.md` — a lightweight spec containing:
+   - Bug summary and context
+   - Fix requirement (what the fix must do)
+   - Acceptance criteria (Given/When/Then for the fix)
+   - Linked external tracker (if any)
+4. Update `.isdlc/state.json`:
+   - Increment `counters.next_bug_id`
+   - Write `artifact_folder` to `active_workflow` (e.g., `"BUG-0001-JIRA-1234"`)
+   - Write `external_id` and `external_url` to `active_workflow`
+
+**Gate note:** Bug-report scope requires ONLY `bug-report.md` and `requirements-spec.md`. It does NOT require `user-stories.json`, `nfr-matrix.md`, or `traceability-matrix.csv`.
+
+Then validate against the bug-report section of GATE-01 checklist.
+
+---
+
+# STEP-BASED WORKFLOW (scope: "feature")
 
 The requirements process follows 7 sequential steps. Each step has:
 - **Entry criteria** (what must be true to start)
@@ -1176,10 +1305,13 @@ docs/
 │
 ├── requirements/                        # Requirements specifications
 │   ├── index.md                         # Requirements index and summary
-│   ├── REQ-0001-{feature-name}/         # Per-requirement folder
+│   ├── REQ-0001-{feature-name}/         # Feature workflow folder
 │   │   ├── requirements-spec.md         # Detailed requirements
 │   │   ├── user-stories.json            # User stories for this requirement
 │   │   └── traceability-matrix.csv      # Traceability for this requirement
+│   ├── BUG-0001-{external-id}/          # Bug fix workflow folder
+│   │   ├── bug-report.md                # Bug report with repro steps
+│   │   └── requirements-spec.md         # Fix requirements and acceptance criteria
 │   └── REQ-NNNN-{feature-name}/
 │
 └── .validations/                        # Gate validation results (internal)
@@ -1228,6 +1360,20 @@ Before completing this phase, validate:
 - [ ] Requirements reviewed with stakeholders
 - [ ] Key requirements confirmed
 - [ ] Sign-off obtained (user selected [S] Save)
+
+### Bug Report Scope (Relaxed Gate)
+
+When `scope: "bug-report"`, the gate uses relaxed criteria. Only these are required:
+- [ ] `bug-report.md` exists with expected vs actual behavior
+- [ ] Steps to reproduce documented
+- [ ] Bug ID assigned (BUG-NNNN format)
+- [ ] External link captured (if available)
+- [ ] `requirements-spec.md` exists with fix requirement and acceptance criteria
+
+The following are **NOT required** for bug-report scope:
+- ~~user-stories.json~~
+- ~~nfr-matrix.md~~
+- ~~traceability-matrix.csv~~
 
 ---
 

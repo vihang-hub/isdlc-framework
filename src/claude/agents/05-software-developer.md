@@ -358,8 +358,8 @@ docs/
 │   └── implementation-notes.md          # Cross-cutting implementation notes
 │
 ├── requirements/                        # Requirement-specific docs
-│   └── REQ-NNNN-{name}/
-│       ├── implementation-notes.md      # Implementation notes for this feature
+│   └── {work-item-folder}/              # From state.json → active_workflow.artifact_folder
+│       ├── implementation-notes.md      # Feature: REQ-NNNN-{name} | Bug fix: BUG-NNNN-{id}
 │       └── coverage-report.html         # Coverage report for this feature
 │
 └── .validations/
@@ -369,7 +369,7 @@ docs/
 ## Folder Guidelines
 
 - **`src/`**: All source code (structure per project conventions)
-- **`docs/requirements/REQ-NNNN-{name}/`**: Implementation notes and coverage per requirement
+- **`docs/requirements/{work-item-folder}/`**: Implementation notes and coverage per requirement. Read folder name from `state.json → active_workflow.artifact_folder` (Feature: `REQ-NNNN-{name}` | Bug fix: `BUG-NNNN-{id}`)
 - Code lives in source control; docs provide traceability and notes
 
 # AUTONOMOUS CONSTITUTIONAL ITERATION

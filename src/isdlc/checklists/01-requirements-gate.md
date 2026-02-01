@@ -67,6 +67,32 @@
 
 ---
 
+## Bug Report Scope (Relaxed Criteria)
+
+When the workflow scope is `bug-report` (i.e., `/sdlc fix`), the gate uses these relaxed criteria instead of the full feature criteria above.
+
+### Required Artifacts (Bug Report)
+
+| Artifact | Path | Required |
+|----------|------|----------|
+| Bug Report | `bug-report.md` | Yes |
+| Requirements Specification | `requirements-spec.md` | Yes |
+| User Stories | `user-stories.json` | No (not required) |
+| NFR Matrix | `nfr-matrix.md` | No (not required) |
+| Traceability Matrix | `traceability-matrix.csv` | No (not required) |
+
+### Validation Criteria (Bug Report)
+
+- [ ] Bug report includes expected vs actual behavior
+- [ ] Steps to reproduce are documented
+- [ ] Bug ID assigned in BUG-NNNN format (e.g., BUG-0001-JIRA-1234)
+- [ ] External link captured (if available)
+- [ ] Fix requirement is clearly stated in requirements-spec.md
+- [ ] Acceptance criteria defined for the fix (Given/When/Then)
+- [ ] Severity assessed (Critical/High/Medium/Low)
+
+---
+
 ## Gate Decision
 
 | Criteria | Status | Notes |

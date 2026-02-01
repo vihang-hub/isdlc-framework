@@ -168,12 +168,16 @@ Enter selection (1-5):
 **fix** - Fix a bug or defect with TDD
 ```
 /sdlc fix "Bug description"
+/sdlc fix "Bug description" --link https://mycompany.atlassian.net/browse/JIRA-1234
 ```
 1. Validate constitution exists and is not a template
 2. Check no active workflow
 3. Initialize `active_workflow` with type `"fix"` and phases `["01-requirements", "05-implementation", "06-testing", "09-cicd", "07-code-review"]`
-4. Delegate to Requirements Analyst (Phase 01) with `scope: "bug-report"`
-5. Phase 05 requires a failing test before the fix (TDD enforcement)
+4. If `--link` provided, pass it to Agent 01 as the external bug URL
+5. Delegate to Requirements Analyst (Phase 01) with `scope: "bug-report"`
+6. Agent 01 extracts external ID from URL and creates `BUG-NNNN-{external-id}/` folder
+7. If no `--link` provided, Agent 01 asks for the bug link during the bug report flow
+8. Phase 05 requires a failing test before the fix (TDD enforcement)
 
 **test run** - Execute existing automation tests
 ```
@@ -470,6 +474,7 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 ```
 /sdlc feature "Build a REST API for user authentication"
 /sdlc fix "Login endpoint returns 500 on empty password"
+/sdlc fix "Login endpoint returns 500 on empty password" --link https://mycompany.atlassian.net/browse/AUTH-456
 /sdlc test run
 /sdlc test generate
 /sdlc start "New e-commerce platform"

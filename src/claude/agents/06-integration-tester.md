@@ -488,8 +488,8 @@ docs/
 │   └── defect-log.json                  # Defects found during testing
 │
 ├── requirements/                        # Requirement-specific test results
-│   └── REQ-NNNN-{name}/
-│       ├── test-execution-report.md     # Test results for this requirement
+│   └── {work-item-folder}/              # From state.json → active_workflow.artifact_folder
+│       ├── test-execution-report.md     # Feature: REQ-NNNN-{name} | Bug fix: BUG-NNNN-{id}
 │       └── defect-log.json              # Defects for this requirement
 │
 └── .validations/

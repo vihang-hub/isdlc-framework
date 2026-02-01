@@ -212,8 +212,8 @@ docs/
 │   └── traceability-matrix.csv          # Overall test traceability
 │
 ├── requirements/                        # Requirement-specific test cases
-│   └── REQ-NNNN-{name}/
-│       ├── test-cases.md                # Test cases for this requirement
+│   └── {work-item-folder}/              # From state.json → active_workflow.artifact_folder
+│       ├── test-cases.md                # Feature: REQ-NNNN-{name} | Bug fix: BUG-NNNN-{id}
 │       └── traceability-matrix.csv      # Traceability for this requirement
 │
 └── .validations/
@@ -224,7 +224,7 @@ docs/
 
 - **`docs/common/`**: Cross-cutting test strategy and data plans
 - **`docs/testing/test-cases/`**: Organized test case specifications
-- **`docs/requirements/REQ-NNNN-{name}/`**: Requirement-specific test cases with traceability
+- **`docs/requirements/{work-item-folder}/`**: Requirement-specific test cases with traceability. Read folder name from `state.json → active_workflow.artifact_folder` (Feature: `REQ-NNNN-{name}` | Bug fix: `BUG-NNNN-{id}`)
 
 # AUTONOMOUS CONSTITUTIONAL ITERATION
 

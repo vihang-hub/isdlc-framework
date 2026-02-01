@@ -462,6 +462,10 @@ cat > .isdlc/state.json << EOF
   "skill_usage_log": [],
   "active_workflow": null,
   "workflow_history": [],
+  "counters": {
+    "next_req_id": 1,
+    "next_bug_id": 1
+  },
   "current_phase": "01-requirements",
   "phases": {
     "01-requirements": { "status": "pending", "started": null, "completed": null, "gate_passed": null, "artifacts": [] },
