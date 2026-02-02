@@ -230,7 +230,11 @@ After all articles reviewed:
 
 ### Step 7: Save Constitution
 
-Write to `.isdlc/constitution.md`:
+**Path resolution:**
+- **Single-project mode:** Write to `.isdlc/constitution.md`
+- **Monorepo mode:** Write to `.isdlc/projects/{project-id}/constitution.md` (the orchestrator provides the project ID in the delegation context). This creates a project-specific override that takes precedence over the shared constitution at `.isdlc/constitution.md`.
+
+Write to the resolved constitution path:
 
 ```markdown
 <!-- CONSTITUTION_STATUS: CUSTOMIZED -->

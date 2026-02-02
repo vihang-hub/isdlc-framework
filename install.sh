@@ -105,7 +105,89 @@ if [ "$IS_EXISTING_PROJECT" = false ]; then
     fi
 fi
 
-if [ "$IS_EXISTING_PROJECT" = true ]; then
+# ============================================================================
+# Detect if this is a monorepo
+# ============================================================================
+IS_MONOREPO=false
+MONOREPO_TYPE=""
+declare -a DETECTED_PROJECTS=()
+
+# Check for workspace indicators
+if [ -f "$PROJECT_ROOT/pnpm-workspace.yaml" ]; then
+    IS_MONOREPO=true
+    MONOREPO_TYPE="pnpm"
+elif [ -f "$PROJECT_ROOT/lerna.json" ]; then
+    IS_MONOREPO=true
+    MONOREPO_TYPE="lerna"
+elif [ -f "$PROJECT_ROOT/turbo.json" ]; then
+    IS_MONOREPO=true
+    MONOREPO_TYPE="turbo"
+elif [ -f "$PROJECT_ROOT/nx.json" ]; then
+    IS_MONOREPO=true
+    MONOREPO_TYPE="nx"
+elif [ -f "$PROJECT_ROOT/rush.json" ]; then
+    IS_MONOREPO=true
+    MONOREPO_TYPE="rush"
+fi
+
+# Check for common monorepo directory patterns if not detected yet
+if [ "$IS_MONOREPO" = false ]; then
+    APPS_COUNT=0
+    if [ -d "$PROJECT_ROOT/apps" ]; then
+        APPS_COUNT=$(ls -d "$PROJECT_ROOT/apps"/*/ 2>/dev/null | wc -l | tr -d ' ')
+    fi
+    PACKAGES_COUNT=0
+    if [ -d "$PROJECT_ROOT/packages" ]; then
+        PACKAGES_COUNT=$(ls -d "$PROJECT_ROOT/packages"/*/ 2>/dev/null | wc -l | tr -d ' ')
+    fi
+    SERVICES_COUNT=0
+    if [ -d "$PROJECT_ROOT/services" ]; then
+        SERVICES_COUNT=$(ls -d "$PROJECT_ROOT/services"/*/ 2>/dev/null | wc -l | tr -d ' ')
+    fi
+
+    TOTAL_SUBPROJECTS=$((APPS_COUNT + PACKAGES_COUNT + SERVICES_COUNT))
+    if [ "$TOTAL_SUBPROJECTS" -ge 2 ]; then
+        IS_MONOREPO=true
+        MONOREPO_TYPE="directory-structure"
+    fi
+fi
+
+# Auto-detect projects in monorepo
+if [ "$IS_MONOREPO" = true ]; then
+    for SCAN_DIR in apps packages services; do
+        if [ -d "$PROJECT_ROOT/$SCAN_DIR" ]; then
+            for PROJ_DIR in "$PROJECT_ROOT/$SCAN_DIR"/*/; do
+                if [ -d "$PROJ_DIR" ]; then
+                    PROJ_NAME=$(basename "$PROJ_DIR")
+                    PROJ_REL_PATH="$SCAN_DIR/$PROJ_NAME"
+                    DETECTED_PROJECTS+=("$PROJ_NAME:$PROJ_REL_PATH")
+                fi
+            done
+        fi
+    done
+fi
+
+if [ "$IS_MONOREPO" = true ]; then
+    echo ""
+    echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║           MONOREPO DETECTED                                ║${NC}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${YELLOW}This appears to be a monorepo (${MONOREPO_TYPE}).${NC}"
+    echo -e "${YELLOW}Detected ${#DETECTED_PROJECTS[@]} sub-projects:${NC}"
+    for PROJ_ENTRY in "${DETECTED_PROJECTS[@]}"; do
+        PROJ_NAME="${PROJ_ENTRY%%:*}"
+        PROJ_PATH="${PROJ_ENTRY#*:}"
+        echo "  - $PROJ_NAME ($PROJ_PATH)"
+    done
+    echo ""
+    read -p "Set up monorepo mode? [Y/n]: " MONOREPO_CONFIRM
+    MONOREPO_CONFIRM=${MONOREPO_CONFIRM:-Y}
+    if [[ ! "$MONOREPO_CONFIRM" =~ ^[Yy]$ ]]; then
+        IS_MONOREPO=false
+        echo -e "${YELLOW}Skipping monorepo setup. Installing as single-project.${NC}"
+    fi
+elif [ "$IS_EXISTING_PROJECT" = true ]; then
     echo ""
     echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
     echo -e "${CYAN}║           EXISTING PROJECT DETECTED                        ║${NC}"
@@ -495,6 +577,149 @@ cat > .isdlc/state.json << EOF
 EOF
 
 echo -e "${GREEN}  ✓ Created state.json${NC}"
+
+# ============================================================================
+# Step 3b: Monorepo setup (if monorepo detected and confirmed)
+# ============================================================================
+if [ "$IS_MONOREPO" = true ]; then
+    echo -e "${BLUE}[3b/5]${NC} Setting up monorepo structure..."
+
+    # Determine default project (first detected project)
+    DEFAULT_PROJECT=""
+    if [ ${#DETECTED_PROJECTS[@]} -gt 0 ]; then
+        DEFAULT_PROJECT="${DETECTED_PROJECTS[0]%%:*}"
+    fi
+
+    # Build scan_paths array
+    SCAN_PATHS_JSON="["
+    FIRST_SCAN=true
+    for SCAN_DIR in apps packages services; do
+        if [ -d "$PROJECT_ROOT/$SCAN_DIR" ]; then
+            if [ "$FIRST_SCAN" = false ]; then
+                SCAN_PATHS_JSON+=", "
+            fi
+            SCAN_PATHS_JSON+="\"${SCAN_DIR}/\""
+            FIRST_SCAN=false
+        fi
+    done
+    SCAN_PATHS_JSON+="]"
+
+    # Build projects object
+    PROJECTS_JSON="{"
+    FIRST_PROJ=true
+    for PROJ_ENTRY in "${DETECTED_PROJECTS[@]}"; do
+        PROJ_NAME="${PROJ_ENTRY%%:*}"
+        PROJ_PATH="${PROJ_ENTRY#*:}"
+        if [ "$FIRST_PROJ" = false ]; then
+            PROJECTS_JSON+=","
+        fi
+        PROJECTS_JSON+="
+    \"$PROJ_NAME\": {
+      \"name\": \"$PROJ_NAME\",
+      \"path\": \"$PROJ_PATH\",
+      \"registered_at\": \"$TIMESTAMP\",
+      \"discovered\": true
+    }"
+        FIRST_PROJ=false
+    done
+    PROJECTS_JSON+="
+  }"
+
+    # Create monorepo.json
+    cat > .isdlc/monorepo.json << MONOREPOEOF
+{
+  "version": "1.0.0",
+  "default_project": "$DEFAULT_PROJECT",
+  "projects": $PROJECTS_JSON,
+  "scan_paths": $SCAN_PATHS_JSON
+}
+MONOREPOEOF
+
+    echo -e "${GREEN}  ✓ Created monorepo.json${NC}"
+
+    # Create per-project directories and state files
+    mkdir -p .isdlc/projects
+    for PROJ_ENTRY in "${DETECTED_PROJECTS[@]}"; do
+        PROJ_NAME="${PROJ_ENTRY%%:*}"
+        PROJ_PATH="${PROJ_ENTRY#*:}"
+
+        # Create project state directory
+        mkdir -p ".isdlc/projects/$PROJ_NAME"
+
+        # Check if the sub-project has existing code
+        PROJ_IS_NEW=true
+        if [ -f "$PROJECT_ROOT/$PROJ_PATH/package.json" ] || \
+           [ -f "$PROJECT_ROOT/$PROJ_PATH/go.mod" ] || \
+           [ -f "$PROJECT_ROOT/$PROJ_PATH/Cargo.toml" ] || \
+           [ -d "$PROJECT_ROOT/$PROJ_PATH/src" ]; then
+            PROJ_IS_NEW=false
+        fi
+
+        # Create per-project state.json
+        cat > ".isdlc/projects/$PROJ_NAME/state.json" << PROJSTATEEOF
+{
+  "framework_version": "2.0.0",
+  "project": {
+    "name": "$PROJ_NAME",
+    "path": "$PROJ_PATH",
+    "created": "$TIMESTAMP",
+    "description": "",
+    "is_new_project": $( [ "$PROJ_IS_NEW" = true ] && echo "true" || echo "false" )
+  },
+  "constitution": {
+    "enforced": true,
+    "path": ".isdlc/constitution.md",
+    "override_path": null,
+    "validated_at": null
+  },
+  "skill_enforcement": {
+    "enabled": true,
+    "mode": "strict",
+    "fail_behavior": "allow",
+    "manifest_version": "2.0.0"
+  },
+  "cloud_configuration": {
+    "provider": "undecided",
+    "configured_at": null,
+    "credentials_validated": false,
+    "deployment": {
+      "staging_enabled": false,
+      "production_enabled": false,
+      "workflow_endpoint": "10-local-testing"
+    }
+  },
+  "skill_usage_log": [],
+  "active_workflow": null,
+  "workflow_history": [],
+  "counters": {
+    "next_req_id": 1,
+    "next_bug_id": 1
+  },
+  "current_phase": null,
+  "phases": {},
+  "blockers": [],
+  "active_agent": null,
+  "history": [
+    {
+      "timestamp": "$TIMESTAMP",
+      "agent": "init-script",
+      "action": "Project registered in monorepo"
+    }
+  ]
+}
+PROJSTATEEOF
+
+        echo -e "${GREEN}  ✓ Created state for project: $PROJ_NAME${NC}"
+
+        # Create per-project docs directories
+        mkdir -p "docs/$PROJ_NAME/requirements"
+        mkdir -p "docs/$PROJ_NAME/architecture"
+        mkdir -p "docs/$PROJ_NAME/design"
+        echo -e "${GREEN}  ✓ Created docs/$PROJ_NAME/${NC}"
+    done
+
+    echo -e "${GREEN}  ✓ Monorepo setup complete (${#DETECTED_PROJECTS[@]} projects)${NC}"
+fi
 
 # Handle CLAUDE.md in project root
 FRAMEWORK_INSTRUCTION="Read docs/framework-info.md"

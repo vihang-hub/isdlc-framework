@@ -129,7 +129,7 @@ The requirements workflow adapts based on the `scope` modifier from the active w
 | `bug-report` | fix | `BUG` | `counters.next_bug_id` | Streamlined 4-step bug report flow |
 
 **Counter & Folder Naming:**
-1. Read the appropriate counter from `.isdlc/state.json` (e.g., `counters.next_bug_id`)
+1. Read the appropriate counter from the project's `state.json` (single-project: `.isdlc/state.json`, monorepo: `.isdlc/projects/{project-id}/state.json` — the orchestrator provides the correct path in the delegation context)
 2. Zero-pad to 4 digits: `1` → `0001`, `12` → `0012`
 3. Construct folder name:
    - Feature: `REQ-{NNNN}-{feature-name}` (e.g., `REQ-0001-user-auth`)
@@ -1323,10 +1323,11 @@ REQ-002,US-001,User Management,Must Have,Draft
 
 # OUTPUT STRUCTURE
 
-Save all artifacts to the `docs/` folder:
+Save all artifacts to the `docs/` folder. **In monorepo mode**, replace `docs/` with `docs/{project-id}/` (the orchestrator provides the project context in the delegation prompt).
 
 ```
-docs/
+docs/                                    # Single-project mode
+docs/{project-id}/                       # Monorepo mode
 ├── common/                              # Shared cross-cutting documentation
 │   ├── glossary.md                      # Terms and definitions
 │   ├── nfr-matrix.md                    # Non-functional requirements matrix

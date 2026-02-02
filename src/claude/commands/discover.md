@@ -18,6 +18,7 @@ The `/discover` command is the universal entry point for setting up a project wi
 |--------|-------------|
 | `--new` | Force new project flow (skip detection) |
 | `--existing` | Force existing project flow (skip detection) |
+| `--project {id}` | Target a specific project in monorepo mode |
 | `--skip-tests` | Skip test infrastructure evaluation |
 | `--skip-skills` | Skip skills.sh integration |
 | `--help` | Show this help message |
@@ -32,6 +33,9 @@ The `/discover` command is the universal entry point for setting up a project wi
 
 # Analyze existing project, skip test evaluation
 /discover --existing --skip-tests
+
+# Discover a specific project in a monorepo
+/discover --project api-service
 ```
 
 ### What It Does
@@ -77,6 +81,12 @@ After completion, you'll have:
 - `src/` - Project structure scaffolded from architecture blueprint
 - `tests/` - Test infrastructure (unit, integration, e2e)
 
+**Monorepo mode** (when `--project {id}` is used or monorepo detected):
+- All `docs/` outputs go to `docs/{project-id}/` instead
+- Discovery scopes analysis to the project's path (not entire monorepo root)
+- Constitution goes to `.isdlc/projects/{project-id}/constitution.md` (project override)
+- State updates go to `.isdlc/projects/{project-id}/state.json`
+
 ### Implementation
 
 When this command is invoked:
@@ -90,10 +100,11 @@ When this command is invoked:
    ```json
    {
      "subagent_type": "discover-orchestrator",
-     "prompt": "Execute /discover command",
+     "prompt": "Execute /discover command [--new|--existing] [--project {id}] [--skip-tests] [--skip-skills]",
      "description": "Run project discovery workflow"
    }
    ```
+   If `--project {id}` is provided, include it in the prompt so the orchestrator scopes discovery to that project's path and writes outputs to project-scoped locations.
 
 3. **The orchestrator coordinates** the workflow by launching sub-agents:
    - `architecture-analyzer` (D1) - Tech stack, architecture, dependencies, deployment, integrations

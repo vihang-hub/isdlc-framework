@@ -170,6 +170,29 @@ See:
 - [docs/WORKFLOW-ALIGNMENT.md](docs/WORKFLOW-ALIGNMENT.md) - Workflows and artifacts
 - [docs/DETAILED-SKILL-ALLOCATION.md](docs/DETAILED-SKILL-ALLOCATION.md) - Skill allocation
 
+## Monorepo Support
+
+The framework supports managing multiple projects from a single installation. When installed in a monorepo, the framework creates:
+
+- **`.isdlc/monorepo.json`** — project registry with default project and scan paths
+- **`.isdlc/projects/{id}/state.json`** — per-project state, counters, and workflows
+- **`.isdlc/projects/{id}/constitution.md`** — optional per-project constitution overrides
+- **`docs/{id}/`** — per-project documentation (requirements, architecture, design)
+
+### How It Works
+
+1. **Detection**: `install.sh` auto-detects monorepos via workspace indicators (pnpm-workspace.yaml, turbo.json, nx.json, etc.) or directory patterns (apps/, packages/, services/)
+2. **Project Selection**: Use `--project {id}` flag on commands, or set `default_project` in monorepo.json
+3. **Independent Workflows**: Each project can have its own active workflow with separate counters and state
+4. **Shared Resources**: Agents, skills, hooks, config, and checklists are shared across all projects
+5. **Branch Naming**: Monorepo branches are prefixed with project ID: `{project-id}/feature/REQ-0001-name`
+
+### Backward Compatibility
+
+Single-project installations work unchanged. Monorepo mode activates only when `.isdlc/monorepo.json` exists.
+
+For detailed setup instructions, see `docs/MONOREPO-GUIDE.md`.
+
 ## For Claude Code AI Agents
 
 When invoked in this repository:
