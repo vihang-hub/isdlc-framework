@@ -79,6 +79,8 @@
 - [ ] Coding standards followed
 - [ ] Commit message format correct
 - [ ] Branch naming conventions followed
+- [ ] All changes committed to feature/bugfix branch
+- [ ] Branch ready for merge to main (no uncommitted work)
 - [ ] PR description is complete
 
 ### 6. Constitutional Compliance Iteration (NEW)

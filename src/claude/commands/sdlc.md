@@ -164,6 +164,8 @@ Enter selection (1-5):
 2. Check no active workflow (block if one exists, suggest `/sdlc cancel` first)
 3. Initialize `active_workflow` in state.json with type `"feature"` and phases `["01-requirements", "02-architecture", "03-design", "05-implementation", "06-testing", "09-cicd", "07-code-review"]`
 4. Delegate to Requirements Analyst (Phase 01) with `scope: "feature"`
+5. After GATE-01: creates `feature/REQ-NNNN-description` branch from main
+6. After GATE-07: merges branch to main, deletes branch
 
 **fix** - Fix a bug or defect with TDD
 ```
@@ -178,6 +180,8 @@ Enter selection (1-5):
 6. Agent 01 extracts external ID from URL and creates `BUG-NNNN-{external-id}/` folder
 7. If no `--link` provided, Agent 01 asks for the bug link during the bug report flow
 8. Phase 05 requires a failing test before the fix (TDD enforcement)
+9. After GATE-01: creates `bugfix/BUG-NNNN-external-id` branch from main
+10. After GATE-07: merges branch to main, deletes branch
 
 **test run** - Execute existing automation tests
 ```
@@ -215,9 +219,10 @@ Enter selection (1-5):
 ```
 1. Check for active workflow (if none, inform user)
 2. Prompt for cancellation reason (required)
-3. Move workflow to `workflow_history` with status `"cancelled"` and reason
-4. Clear `active_workflow` from state.json
-5. Display cancellation confirmation
+3. If git branch is active: commit uncommitted work, checkout main, preserve branch
+4. Move workflow to `workflow_history` with status `"cancelled"` and reason
+5. Clear `active_workflow` from state.json
+6. Display cancellation confirmation (include branch preservation note if applicable)
 
 **status** - Show current project status
 ```
@@ -455,13 +460,13 @@ Use this command to configure cloud deployment settings at any time, especially:
 
 Each subcommand maps to a predefined workflow with a fixed, non-skippable phase sequence. Workflow definitions are in `.isdlc/config/workflows.json`.
 
-| Command | Workflow | Phases | Gate Mode |
-|---------|----------|--------|-----------|
-| `/sdlc feature` | feature | 01 → 02 → 03 → 05 → 10 → 06 → 09 → 07 | strict |
-| `/sdlc fix` | fix | 01 → 05 → 10 → 06 → 09 → 07 | strict |
-| `/sdlc test run` | test-run | 10 → 06 | strict |
-| `/sdlc test generate` | test-generate | 04 → 05 → 10 → 06 → 07 | strict |
-| `/sdlc start` | full-lifecycle | 01 → ... → 05 → 10 → 06 → ... → 10(remote) → 11 → ... → 13 | strict |
+| Command | Workflow | Phases | Gate Mode | Branch |
+|---------|----------|--------|-----------|--------|
+| `/sdlc feature` | feature | 01 → 02 → 03 → 05 → 10 → 06 → 09 → 07 | strict | `feature/REQ-NNNN-...` |
+| `/sdlc fix` | fix | 01 → 05 → 10 → 06 → 09 → 07 | strict | `bugfix/BUG-NNNN-...` |
+| `/sdlc test run` | test-run | 10 → 06 | strict | none |
+| `/sdlc test generate` | test-generate | 04 → 05 → 10 → 06 → 07 | strict | none |
+| `/sdlc start` | full-lifecycle | 01 → ... → 05 → 10 → 06 → ... → 10(remote) → 11 → ... → 13 | strict | `feature/REQ-NNNN-...` |
 
 **Enforcement rules:**
 - Workflows start at phase 1 — no `--start-at` flag

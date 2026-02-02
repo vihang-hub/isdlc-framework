@@ -161,8 +161,9 @@ git:
       - hotfix
       - release
     examples:
-      - "feature/PROJ-123-add-user-auth"
-      - "bugfix/PROJ-456-fix-login-error"
+      - "feature/REQ-0001-user-auth"
+      - "bugfix/BUG-0001-JIRA-1234"
+      - "feature/REQ-0012-payment-processing"
 
 # Language-Specific (TypeScript/JavaScript)
 typescript:

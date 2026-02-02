@@ -22,7 +22,8 @@
         "01-requirements": { "scope": "feature", "artifact_prefix": "REQ" },
         "02-architecture": { "scope": "impact-assessment" },
         "10-local-testing": { "scope": "local" }
-      }
+      },
+      "requires_branch": true
     },
 
     "fix": {
@@ -46,7 +47,8 @@
         },
         "05-implementation": { "require_failing_test_first": true },
         "10-local-testing": { "scope": "local" }
-      }
+      },
+      "requires_branch": true
     },
 
     "test-run": {
@@ -67,7 +69,8 @@
           "choices": ["unit", "system", "e2e"],
           "multi_select": true
         }
-      }
+      },
+      "requires_branch": false
     },
 
     "test-generate": {
@@ -91,7 +94,8 @@
           "choices": ["unit", "system", "e2e"],
           "multi_select": false
         }
-      }
+      },
+      "requires_branch": false
     },
 
     "full-lifecycle": {
@@ -118,7 +122,8 @@
       "agent_modifiers": {
         "10-local-testing": { "scope": "local" },
         "10-remote-build": { "scope": "remote" }
-      }
+      },
+      "requires_branch": true
     }
   },
 

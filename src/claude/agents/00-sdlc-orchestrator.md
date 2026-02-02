@@ -346,6 +346,10 @@ When the user selects a workflow (via `/sdlc feature`, `/sdlc fix`, etc.), initi
 
 5. **Delegate to the first phase agent** with any `agent_modifiers` from the workflow definition.
 
+6. **Check `requires_branch`** from the workflow definition:
+   - If `true`: Branch will be created after GATE-01 passes (see Section 3a)
+   - If `false`: No branch operations for this workflow
+
 ### Workflow-Specific Behavior
 
 **feature workflow:**
@@ -361,6 +365,7 @@ When the user selects a workflow (via `/sdlc feature`, `/sdlc fix`, etc.), initi
   }
   ```
 - Increment `counters.next_req_id` in state.json
+- After GATE-01: create branch `feature/{artifact_folder}` from main (see Section 3a)
 
 **fix workflow:**
 - Phase 01: `scope: "bug-report"` — capture reproduction steps, expected vs actual
@@ -378,6 +383,7 @@ When the user selects a workflow (via `/sdlc feature`, `/sdlc fix`, etc.), initi
   }
   ```
 - Increment `counters.next_bug_id` in state.json
+- After GATE-01: create branch `bugfix/{artifact_folder}` from main (see Section 3a)
 - Phase 05: `require_failing_test_first: true` — must write failing test before fix
 
 **test-run workflow:**
@@ -401,7 +407,8 @@ When the user selects a workflow (via `/sdlc feature`, `/sdlc fix`, etc.), initi
 When `/sdlc cancel` is invoked:
 1. Read current `active_workflow` from state.json
 2. Ask user for cancellation reason (required)
-3. Move to `workflow_history`:
+3. If `active_workflow.git_branch` exists: execute branch abandonment (Section 3a)
+4. Move to `workflow_history`:
    ```json
    {
      "type": "feature",
@@ -410,11 +417,170 @@ When `/sdlc cancel` is invoked:
      "cancelled_at": "ISO-8601 timestamp",
      "cancelled_at_phase": "03-design",
      "cancellation_reason": "User-provided reason",
-     "status": "cancelled"
+     "status": "cancelled",
+     "git_branch": {
+       "name": "feature/REQ-0001-user-auth",
+       "status": "abandoned",
+       "abandoned_at": "ISO-8601 timestamp"
+     }
    }
    ```
-4. Set `active_workflow` to `null`
-5. Confirm cancellation to user
+5. Set `active_workflow` to `null`
+6. Confirm cancellation to user (include branch preservation note if applicable)
+
+## 3a. Git Branch Lifecycle Management
+
+Workflows with `requires_branch: true` in `.isdlc/config/workflows.json` automatically manage a git branch for the duration of the workflow. The orchestrator owns all branch operations — phase agents work on the branch without awareness of branch management.
+
+### Branch Creation (Post-GATE-01)
+
+When GATE-01 passes AND the active workflow has `requires_branch: true`:
+
+1. **Read branch context from state.json:**
+   - `active_workflow.type` → determines prefix: feature/full-lifecycle → `feature/`, fix → `bugfix/`
+   - `active_workflow.artifact_folder` → identifier (e.g., `REQ-0001-user-auth` or `BUG-0001-JIRA-1234`)
+
+2. **Construct branch name:**
+   - Feature / full-lifecycle: `feature/{artifact_folder}` (lowercase, hyphens)
+   - Fix: `bugfix/{artifact_folder}`
+
+3. **Pre-flight checks:**
+   - `git rev-parse --is-inside-work-tree` — if not a git repo, skip all branch ops and log warning:
+     ```
+     WARNING: Not a git repository. Skipping branch operations.
+     All work will remain on the current working tree.
+     ```
+   - `git status --porcelain` — if dirty working tree, commit staged and unstaged changes:
+     ```
+     git add -A && git commit -m "chore: pre-branch checkpoint for {artifact_folder}"
+     ```
+   - `git rev-parse --abbrev-ref HEAD` — if not on `main`, checkout main first:
+     ```
+     git checkout main
+     ```
+
+4. **Create and switch to branch:**
+   ```
+   git checkout -b {branch_name}
+   ```
+
+5. **Update state.json** → add `git_branch` to `active_workflow`:
+   ```json
+   {
+     "active_workflow": {
+       "git_branch": {
+         "name": "feature/REQ-0001-user-auth",
+         "created_from": "main",
+         "created_at": "ISO-8601 timestamp",
+         "status": "active"
+       }
+     }
+   }
+   ```
+
+6. **Announce branch creation:**
+   ```
+   ════════════════════════════════════════════════════════════════
+     GIT BRANCH CREATED
+   ════════════════════════════════════════════════════════════════
+     Branch:  feature/REQ-0001-user-auth
+     From:    main
+     Status:  Active — all subsequent phases execute on this branch
+   ════════════════════════════════════════════════════════════════
+   ```
+
+7. Proceed to next phase delegation.
+
+### Branch Merge (Workflow Completion)
+
+When the final phase gate passes AND `active_workflow.git_branch` exists:
+
+1. **Pre-merge**: Commit any uncommitted changes on the branch:
+   ```
+   git add -A && git commit -m "chore: final commit before merge — {artifact_folder}"
+   ```
+   (Skip if working tree is clean.)
+
+2. **Merge to main:**
+   ```
+   git checkout main
+   git merge --no-ff {branch_name} -m "merge: {type} {artifact_folder} — all gates passed"
+   ```
+
+3. **On merge conflict**: Abort the merge and escalate to human. Do NOT auto-resolve conflicts:
+   ```
+   git merge --abort
+   ```
+   ```
+   MERGE CONFLICT — HUMAN INTERVENTION REQUIRED
+
+   Branch: {branch_name} → main
+   Conflicting files: [list]
+
+   Action Required: Resolve conflicts manually, then run /sdlc advance to retry.
+   ```
+
+4. **Post-merge** (on success):
+   - Delete the branch: `git branch -d {branch_name}`
+   - Update state.json `git_branch`:
+     ```json
+     {
+       "status": "merged",
+       "merged_at": "ISO-8601 timestamp",
+       "merge_commit": "{commit_sha}"
+     }
+     ```
+
+5. **Announce merge:**
+   ```
+   ════════════════════════════════════════════════════════════════
+     GIT BRANCH MERGED
+   ════════════════════════════════════════════════════════════════
+     Branch:  feature/REQ-0001-user-auth → main
+     Method:  --no-ff (merge commit preserved)
+     Commit:  {merge_commit_sha}
+     Status:  Branch deleted
+   ════════════════════════════════════════════════════════════════
+   ```
+
+6. Proceed with existing completion logic.
+
+### Branch on Cancellation
+
+When `/sdlc cancel` is invoked AND `active_workflow.git_branch` exists:
+
+1. **Commit uncommitted work** (preserve progress):
+   ```
+   git add -A && git commit -m "wip: cancelled — {cancellation_reason}"
+   ```
+   (Skip if working tree is clean.)
+
+2. **Checkout main:**
+   ```
+   git checkout main
+   ```
+
+3. **Do NOT delete the branch** — cancelled work may be resumed by the user.
+
+4. **Update state.json** `git_branch`:
+   ```json
+   {
+     "status": "abandoned",
+     "abandoned_at": "ISO-8601 timestamp",
+     "abandonment_reason": "{cancellation_reason}"
+   }
+   ```
+
+5. **Inform user:**
+   ```
+   Branch preserved: {branch_name}
+   You can resume work on this branch later or delete it with:
+     git branch -d {branch_name}
+   ```
+
+### Workflows Without Branches
+
+When `requires_branch` is `false` (test-run, test-generate): skip all git branch operations. No `git_branch` field is added to `active_workflow` in state.json.
 
 ## 4. Workflow Phase Advancement
 
@@ -441,10 +607,12 @@ When advancing:
 ### Workflow Completion
 
 When the last phase in the workflow completes:
-1. Mark the workflow as completed
-2. Move to `workflow_history` with `status: "completed"`
-3. Set `active_workflow` to `null`
-4. Display completion summary with all artifacts produced
+1. If `active_workflow.git_branch` exists: execute branch merge (Section 3a)
+   - On merge conflict: **STOP**, escalate to human, do NOT complete the workflow
+2. Mark the workflow as completed
+3. Move to `workflow_history` with `status: "completed"` (include `git_branch` info)
+4. Set `active_workflow` to `null`
+5. Display completion summary with all artifacts produced and merge status
 
 ## 4a. Automatic Phase Transitions (NO PERMISSION PROMPTS)
 
