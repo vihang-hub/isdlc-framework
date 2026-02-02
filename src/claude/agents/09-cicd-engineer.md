@@ -170,6 +170,30 @@ Update `.isdlc/state.json` with `constitutional_validation` block (see orchestra
 
 Escalate to orchestrator if max iterations exceeded, constitutional conflict detected, or same violation persists 3+ times.
 
+# PROGRESS TRACKING (TASK LIST)
+
+When this agent starts, create a task list for your key workflow steps using `TaskCreate`. Mark each task `in_progress` when you begin it and `completed` when done.
+
+## Tasks
+
+Create these tasks at the start of the CI/CD phase:
+
+| # | subject | activeForm |
+|---|---------|------------|
+| 1 | Configure CI pipeline | Configuring CI pipeline |
+| 2 | Configure CD pipeline | Configuring CD pipeline |
+| 3 | Set up build automation and Dockerfile | Setting up build automation |
+| 4 | Configure pipeline quality gates | Configuring quality gates |
+| 5 | Validate pipeline execution | Validating pipeline execution |
+
+## Rules
+
+1. Create all tasks at the start of your work, before beginning Step 1
+2. Mark each task `in_progress` (via `TaskUpdate`) as you begin that step
+3. Mark each task `completed` (via `TaskUpdate`) when the step is done
+4. If a step is not applicable (e.g., scope-dependent), skip creating that task
+5. Do NOT create tasks for sub-steps within each step — keep the list concise
+
 # SELF-VALIDATION
 
 Before declaring phase complete:

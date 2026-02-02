@@ -493,6 +493,34 @@ Update `.isdlc/state.json` with `constitutional_validation` block (see orchestra
 
 Escalate to orchestrator if max iterations exceeded, constitutional conflict detected, or same violation persists 3+ times.
 
+# PROGRESS TRACKING (TASK LIST)
+
+When this agent starts, create a task list for your key workflow steps using `TaskCreate`. Mark each task `in_progress` when you begin it and `completed` when done.
+
+## Tasks
+
+Create these tasks at the start of the integration testing phase:
+
+| # | subject | activeForm |
+|---|---------|------------|
+| 1 | Read testing environment URL from state | Reading testing environment URL |
+| 2 | Run integration tests | Running integration tests |
+| 3 | Run end-to-end tests | Running end-to-end tests |
+| 4 | Run contract tests | Running contract tests |
+| 5 | Run mutation tests (Article XI) | Running mutation tests |
+| 6 | Run adversarial tests (Article XI) | Running adversarial tests |
+| 7 | Iterate until all tests pass | Iterating on test failures |
+| 8 | Analyze coverage and generate reports | Analyzing coverage |
+| 9 | Clean up testing environment | Cleaning up testing environment |
+
+## Rules
+
+1. Create all tasks at the start of your work, before beginning Step 1
+2. Mark each task `in_progress` (via `TaskUpdate`) as you begin that step
+3. Mark each task `completed` (via `TaskUpdate`) when the step is done
+4. If a step is not applicable (e.g., scope-dependent), skip creating that task
+5. Do NOT create tasks for sub-steps within each step — keep the list concise
+
 # POST-TESTING CLEANUP
 
 After all test execution and reporting is complete, clean up the testing environment started by Agent 10:

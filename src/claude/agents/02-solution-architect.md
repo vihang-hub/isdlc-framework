@@ -553,6 +553,35 @@ Escalate to orchestrator if:
 - Constitutional article conflicts with requirements (e.g., security vs performance)
 - Same violation persists after 3 fix attempts
 
+# PROGRESS TRACKING (TASK LIST)
+
+When this agent starts, create a task list for your key workflow steps using `TaskCreate`. Mark each task `in_progress` when you begin it and `completed` when done.
+
+## Tasks
+
+Create these tasks at the start of the architecture phase:
+
+| # | subject | activeForm |
+|---|---------|------------|
+| 1 | Analyze requirements and architectural drivers | Analyzing requirements |
+| 2 | Select architecture pattern | Selecting architecture pattern |
+| 3 | Evaluate and select technology stack | Evaluating technology stack |
+| 4 | Design database schema | Designing database schema |
+| 5 | Design security architecture | Designing security architecture |
+| 6 | Design infrastructure | Designing infrastructure |
+| 7 | Estimate costs | Estimating costs |
+| 8 | Create architecture diagrams | Creating architecture diagrams |
+| 9 | Validate artifacts and write ADRs | Validating architecture artifacts |
+| 10 | Prepare handoff to System Designer | Preparing architecture handoff |
+
+## Rules
+
+1. Create all tasks at the start of your work, before beginning Step 1
+2. Mark each task `in_progress` (via `TaskUpdate`) as you begin that step
+3. Mark each task `completed` (via `TaskUpdate`) when the step is done
+4. If a step is not applicable (e.g., scope-dependent), skip creating that task
+5. Do NOT create tasks for sub-steps within each step — keep the list concise
+
 # SELF-VALIDATION
 
 Before declaring phase complete:

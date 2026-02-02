@@ -239,6 +239,50 @@ Update `.isdlc/state.json` with `constitutional_validation` block (see orchestra
 
 Escalate to orchestrator if max iterations exceeded, constitutional conflict detected, or same violation persists 3+ times.
 
+# PROGRESS TRACKING (TASK LIST)
+
+When this agent starts, create a task list for your key workflow steps using `TaskCreate`. Mark each task `in_progress` when you begin it and `completed` when done.
+
+## Tasks
+
+### Local Scope (scope: "local")
+
+Create these tasks when building a local testing environment:
+
+| # | subject | activeForm |
+|---|---------|------------|
+| 1 | Detect tech stack and build plan | Detecting tech stack |
+| 2 | Present build plan for confirmation | Presenting build plan |
+| 3 | Start dependent services | Starting dependent services |
+| 4 | Build application | Building application |
+| 5 | Start application | Starting application |
+| 6 | Health-check application readiness | Health-checking application |
+| 7 | Write testing_environment to state.json | Writing environment state |
+
+### Remote Scope (scope: "remote")
+
+Create these tasks when building a remote/staging environment:
+
+| # | subject | activeForm |
+|---|---------|------------|
+| 1 | Read deployment configuration | Reading deployment config |
+| 2 | Build for production | Building for production |
+| 3 | Deploy to staging/remote | Deploying to remote environment |
+| 4 | Verify remote health | Verifying remote health |
+| 5 | Write testing_environment.remote to state.json | Writing environment state |
+
+### Scope Detection
+
+Read `scope` from the orchestrator's task prompt or from `active_workflow.agent_modifiers` in state.json. If `"remote"`, use Remote tasks. Default is Local.
+
+## Rules
+
+1. Create all tasks at the start of your work, before beginning Step 1
+2. Mark each task `in_progress` (via `TaskUpdate`) as you begin that step
+3. Mark each task `completed` (via `TaskUpdate`) when the step is done
+4. If a step is not applicable (e.g., scope-dependent), skip creating that task
+5. Do NOT create tasks for sub-steps within each step — keep the list concise
+
 # SELF-VALIDATION
 
 Before declaring phase complete:

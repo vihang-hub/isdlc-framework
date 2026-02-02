@@ -133,7 +133,7 @@ The requirements workflow adapts based on the `scope` modifier from the active w
 2. Zero-pad to 4 digits: `1` → `0001`, `12` → `0012`
 3. Construct folder name:
    - Feature: `REQ-{NNNN}-{feature-name}` (e.g., `REQ-0001-user-auth`)
-   - Bug fix: `BUG-{NNNN}-{external-id}` (e.g., `BUG-0001-JIRA-1234`)
+   - Bug fix: `BUG-{NNNN}-{external-id}` (e.g., `BUG-0001-JIRA-1234`, or `BUG-0002-MAN` for manual entry)
 4. After saving artifacts, increment the counter in state.json
 
 **Scope Routing:**
@@ -179,7 +179,7 @@ Extract an identifier from the provided URL using these rules:
 | GitHub PR | `https://github.com/{org}/{repo}/pull/{N}` | `GHPR-{N}` |
 | Linear | `https://linear.app/{team}/issue/{TEAM-N}` | `TEAM-N` |
 | Other URL | Any other URL | Ask user for a short ID (e.g., `TICKET-99`) |
-| No URL | User said "none" | Derive a slug from the bug description (kebab-case, max 4 words, e.g., `login-500-empty-password`) |
+| No URL / Manual | User said "none" or no tracker | `MAN` (manual entry, no external tracker) |
 
 ## Bug Step 3: Draft Bug Report
 
@@ -1417,6 +1417,49 @@ Escalate to Orchestrator when:
 - Compliance or regulatory issues discovered
 
 ---
+
+# PROGRESS TRACKING (TASK LIST)
+
+When this agent starts, create a task list for your key workflow steps using `TaskCreate`. Mark each task `in_progress` when you begin it and `completed` when done.
+
+## Tasks
+
+### Feature Scope (scope: "feature")
+
+Create these tasks at the start of the feature requirements workflow:
+
+| # | subject | activeForm |
+|---|---------|------------|
+| 1 | Discover project context (5 lenses) | Discovering project context |
+| 2 | Identify users and personas | Identifying users and personas |
+| 3 | Define core features | Defining core features |
+| 4 | Specify non-functional requirements | Specifying non-functional requirements |
+| 5 | Write user stories | Writing user stories |
+| 6 | Prioritize requirements (MoSCoW) | Prioritizing requirements |
+| 7 | Finalize and save artifacts | Finalizing requirements artifacts |
+
+### Bug Report Scope (scope: "bug-report")
+
+Create these tasks at the start of the bug report workflow:
+
+| # | subject | activeForm |
+|---|---------|------------|
+| 1 | Identify bug and gather details | Gathering bug details |
+| 2 | Extract external ID from tracker | Extracting external ID |
+| 3 | Draft bug report for review | Drafting bug report |
+| 4 | Save bug report artifacts | Saving bug report artifacts |
+
+### Scope Detection
+
+Read `scope` from the orchestrator's task prompt or from `active_workflow.agent_modifiers["01-requirements"]` in state.json. If scope is `"bug-report"`, use the Bug Report task list. Otherwise use the Feature task list.
+
+## Rules
+
+1. Create all tasks at the start of your work, before beginning Step 1
+2. Mark each task `in_progress` (via `TaskUpdate`) as you begin that step
+3. Mark each task `completed` (via `TaskUpdate`) when the step is done
+4. If a step is not applicable (e.g., scope-dependent), skip creating that task
+5. Do NOT create tasks for sub-steps within each step — keep the list concise
 
 # SELF-VALIDATION
 

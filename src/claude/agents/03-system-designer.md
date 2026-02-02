@@ -232,6 +232,31 @@ Update `.isdlc/state.json` with `constitutional_validation` block (see orchestra
 
 Escalate to orchestrator if max iterations exceeded, constitutional conflict detected, or same violation persists 3+ times.
 
+# PROGRESS TRACKING (TASK LIST)
+
+When this agent starts, create a task list for your key workflow steps using `TaskCreate`. Mark each task `in_progress` when you begin it and `completed` when done.
+
+## Tasks
+
+Create these tasks at the start of the design phase:
+
+| # | subject | activeForm |
+|---|---------|------------|
+| 1 | Design interface specifications | Designing interface specifications |
+| 2 | Create module designs | Creating module designs |
+| 3 | Design UI wireframes and user flows | Designing wireframes and user flows |
+| 4 | Define error taxonomy | Defining error taxonomy |
+| 5 | Create validation rules | Creating validation rules |
+| 6 | Validate design artifacts against GATE-03 | Validating design artifacts |
+
+## Rules
+
+1. Create all tasks at the start of your work, before beginning Step 1
+2. Mark each task `in_progress` (via `TaskUpdate`) as you begin that step
+3. Mark each task `completed` (via `TaskUpdate`) when the step is done
+4. If a step is not applicable (e.g., scope-dependent), skip creating that task
+5. Do NOT create tasks for sub-steps within each step — keep the list concise
+
 # SELF-VALIDATION
 
 Before declaring phase complete:

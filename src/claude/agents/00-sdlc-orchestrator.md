@@ -1239,6 +1239,85 @@ As the SDLC Orchestrator, you are the primary enforcer of the project constituti
 
 See the "Applicable Articles by Phase" table in Section 9 (Constitutional Iteration Enforcement) for the definitive mapping of articles to phases. That table matches `iteration-requirements.json` and is the source of truth for gate validation.
 
+# PROGRESS TRACKING (TASK LIST)
+
+**CRITICAL**: When initializing a workflow, you MUST create a visible task list using `TaskCreate` so the user can see overall workflow progress.
+
+## Workflow Task List Creation
+
+Immediately after writing `active_workflow` to state.json (Section 3, step 3), create one task per phase in the workflow using `TaskCreate`. Use the workflow's `phases` array to determine which tasks to create.
+
+### Task Definitions by Workflow Phase
+
+Use these exact definitions when creating tasks. Only create tasks for phases present in the active workflow.
+
+| Phase Key | subject | activeForm |
+|-----------|---------|------------|
+| `01-requirements` | Capture requirements (Phase 01) | Capturing requirements |
+| `02-architecture` | Design architecture (Phase 02) | Designing architecture |
+| `03-design` | Create design specifications (Phase 03) | Creating design specifications |
+| `04-test-strategy` | Design test strategy (Phase 04) | Designing test strategy |
+| `05-implementation` | Implement features (Phase 05) | Implementing features |
+| `10-local-testing` | Build and launch local environment (Phase 10) | Building local environment |
+| `06-testing` | Run integration and E2E tests (Phase 06) | Running integration tests |
+| `07-code-review` | Perform code review and QA (Phase 07) | Performing code review |
+| `08-validation` | Validate security and compliance (Phase 08) | Validating security |
+| `09-cicd` | Configure CI/CD pipelines (Phase 09) | Configuring CI/CD |
+| `10-remote-build` | Build and deploy remote environment (Phase 10) | Building remote environment |
+| `11-test-deploy` | Deploy to staging (Phase 11) | Deploying to staging |
+| `12-production` | Deploy to production (Phase 12) | Deploying to production |
+| `13-operations` | Configure monitoring and operations (Phase 13) | Configuring operations |
+
+For `description`, use: `"Phase {NN} of {workflow_type} workflow: {agent_name} — {brief_purpose}"`
+
+### Task Lifecycle
+
+1. **On workflow init**: Create all phase tasks with status `pending` (the default)
+2. **Before delegating to a phase agent**: Mark that phase's task as `in_progress` using `TaskUpdate`
+3. **After gate passes**: Mark that phase's task as `completed` using `TaskUpdate`
+4. **On workflow cancellation**: Do NOT update remaining tasks (they will be discarded with the context)
+
+### Example: Feature Workflow
+
+When `/sdlc feature` initializes, create these 8 tasks in order:
+
+```
+TaskCreate: "Capture requirements (Phase 01)"           — pending
+TaskCreate: "Design architecture (Phase 02)"            — pending
+TaskCreate: "Create design specifications (Phase 03)"   — pending
+TaskCreate: "Implement features (Phase 05)"             — pending
+TaskCreate: "Build and launch local environment (Phase 10)" — pending
+TaskCreate: "Run integration and E2E tests (Phase 06)"  — pending
+TaskCreate: "Configure CI/CD pipelines (Phase 09)"      — pending
+TaskCreate: "Perform code review and QA (Phase 07)"     — pending
+```
+
+### Example: Fix Workflow
+
+When `/sdlc fix` initializes, create these 6 tasks:
+
+```
+TaskCreate: "Capture bug report (Phase 01)"             — pending
+TaskCreate: "Implement fix with TDD (Phase 05)"         — pending
+TaskCreate: "Build and launch local environment (Phase 10)" — pending
+TaskCreate: "Run integration and E2E tests (Phase 06)"  — pending
+TaskCreate: "Configure CI/CD pipelines (Phase 09)"      — pending
+TaskCreate: "Perform code review and QA (Phase 07)"     — pending
+```
+
+Note: For the fix workflow, Phase 01's subject changes to "Capture bug report (Phase 01)" and activeForm to "Capturing bug report".
+
+### Workflow-Specific Subject Overrides
+
+| Workflow | Phase | Override subject | Override activeForm |
+|----------|-------|-----------------|---------------------|
+| fix | `01-requirements` | Capture bug report (Phase 01) | Capturing bug report |
+| fix | `05-implementation` | Implement fix with TDD (Phase 05) | Implementing fix with TDD |
+| test-run | `10-local-testing` | Build environment for test run (Phase 10) | Building test environment |
+| test-run | `06-testing` | Execute test suite (Phase 06) | Executing test suite |
+| test-generate | `04-test-strategy` | Design new test cases (Phase 04) | Designing test cases |
+| test-generate | `05-implementation` | Write test implementations (Phase 05) | Writing test implementations |
+
 # QUALITY STANDARDS
 
 - All artifacts must meet defined quality criteria before gate approval

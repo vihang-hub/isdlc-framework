@@ -127,7 +127,7 @@ Workflow definitions are in `.isdlc/config/workflows.json`. Each workflow has a 
 ### Git Branch Lifecycle
 Workflows that produce code (feature, fix, full-lifecycle) automatically manage git branches:
 - **Branch creation**: After Phase 01 assigns the work item ID, a branch is created from main
-- **Naming**: `feature/REQ-NNNN-description` or `bugfix/BUG-NNNN-external-id`
+- **Naming**: `feature/REQ-NNNN-description` or `bugfix/BUG-NNNN-external-id` (or `bugfix/BUG-NNNN-MAN` for manual entry without external tracker)
 - **All phases** execute on the branch
 - **Merge**: After the final gate passes, branch merges to main with `--no-ff`
 - **Conflicts**: Trigger human escalation (no auto-resolution)

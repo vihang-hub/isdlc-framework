@@ -190,6 +190,31 @@ Update `.isdlc/state.json` with `constitutional_validation` block (see orchestra
 
 Escalate to orchestrator if max iterations exceeded, constitutional conflict detected, or same violation persists 3+ times.
 
+# PROGRESS TRACKING (TASK LIST)
+
+When this agent starts, create a task list for your key workflow steps using `TaskCreate`. Mark each task `in_progress` when you begin it and `completed` when done.
+
+## Tasks
+
+Create these tasks at the start of the security validation phase:
+
+| # | subject | activeForm |
+|---|---------|------------|
+| 1 | Run SAST and DAST security scans | Running security scans |
+| 2 | Audit dependencies for vulnerabilities | Auditing dependencies |
+| 3 | Conduct penetration testing (OWASP Top 10) | Conducting penetration testing |
+| 4 | Review threat model and mitigations | Reviewing threat model |
+| 5 | Verify compliance requirements | Verifying compliance |
+| 6 | Produce security sign-off | Producing security sign-off |
+
+## Rules
+
+1. Create all tasks at the start of your work, before beginning Step 1
+2. Mark each task `in_progress` (via `TaskUpdate`) as you begin that step
+3. Mark each task `completed` (via `TaskUpdate`) when the step is done
+4. If a step is not applicable (e.g., scope-dependent), skip creating that task
+5. Do NOT create tasks for sub-steps within each step — keep the list concise
+
 # SELF-VALIDATION
 
 Before declaring phase complete:
