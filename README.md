@@ -4,7 +4,7 @@
 
 <h3><em>Structured AI-powered software development, from requirements to production.</em></h3>
 
-<p><strong>A comprehensive SDLC framework for Claude Code with 14 specialized agents, 164 skills, and 13 quality gates.</strong></p>
+<p><strong>A comprehensive SDLC framework for Claude Code with 23 agents, 164 skills, 13 quality gates, and monorepo support.</strong></p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Agents](https://img.shields.io/badge/Agents-23-purple.svg)](#the-sdlc-agents)
@@ -18,16 +18,16 @@
 
 ## Table of Contents
 
-- [What is iSDLC?](#-what-is-isdlc)
-- [Get Started](#-get-started)
-- [Available Workflows](#-available-workflows)
-- [The SDLC Agents](#-the-sdlc-agents)
-- [Development Phases](#-development-phases)
-- [Core Features](#-core-features)
-- [Configuration](#-configuration)
-- [Project Status](#-project-status)
-- [Contributing](#-contributing)
-- [License](#-license)
+- [What is iSDLC?](#what-is-isdlc)
+- [Get Started](#get-started)
+- [The SDLC Agents](#the-sdlc-agents)
+- [Development Phases](#development-phases)
+- [Available Workflows](#available-workflows)
+- [Core Features](#core-features)
+- [Configuration](#configuration)
+- [Project Status](#project-status)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
@@ -38,6 +38,17 @@ The iSDLC (integrated Software Development Lifecycle) framework implements a **1
 The framework is designed to be installed **into your existing project**. It provides structured multi-agent workflows, quality gates between every phase, and standardized processes for building software using AI-powered development with Claude Code.
 
 Key principles: **clear ownership** (one agent per phase), **exclusive skill ownership** (each skill belongs to one agent), **quality gates** (validation at every phase boundary), **artifact traceability** (requirements to design to code to tests), and **adaptive workflows** (the orchestrator selects phases based on task complexity).
+
+### Main Usage
+
+| Use Case | Command | Description |
+|----------|---------|-------------|
+| **Project Discovery** | `/discover` | Analyze an existing project's tech stack, tests, data models, and features |
+| **Reverse Engineering** | `/sdlc reverse-engineer` | Extract acceptance criteria and generate characterization tests from existing code |
+| **Test Pack Generation** | `/sdlc test generate` | Generate a comprehensive test suite for existing code |
+| **New Feature** | `/sdlc feature "desc"` | Develop a new feature end-to-end with full SDLC rigor |
+| **Bug Fix** | `/sdlc fix "desc"` | Fix a bug using test-driven development |
+| **Full Lifecycle** | `/sdlc start` | Complete SDLC for new projects or major work |
 
 ## Get Started
 
@@ -107,28 +118,13 @@ your-project/
 # Start Claude Code in your project
 claude
 
-# The SDLC Orchestrator (Agent 00) coordinates the workflow.
-# Use /sdlc commands to start a workflow:
+# Discover your project first (recommended for existing projects)
+/discover
+
+# Then start a workflow
 /sdlc feature "Add user authentication"
 /sdlc fix "Fix login timeout bug"
 ```
-
-## Available Workflows
-
-The orchestrator provides focused workflows via `/sdlc` commands. Each workflow defines a fixed, non-skippable phase sequence with strict gate enforcement.
-
-| Command | Workflow | Phases | Branch |
-|---------|----------|--------|--------|
-| `/sdlc feature "desc"` | New Feature | 01 → 02 → 03 → 04 → 05 → 10 → 06 → 09 → 07 | Yes |
-| `/sdlc fix "desc"` | Bug Fix (TDD) | 01 → 04 → 05 → 10 → 06 → 09 → 07 | Yes |
-| `/sdlc test run` | Run Tests | 10 → 06 | No |
-| `/sdlc test generate` | Generate Tests | 04 → 05 → 10 → 06 → 07 | No |
-| `/sdlc start` | Full Lifecycle | 01 → ... → 13 (all phases) | Yes |
-| `/sdlc reverse-engineer` | Reverse Engineer | R1 → R2 → R3 → R4 | No |
-
-**Git branch lifecycle**: Workflows that produce code automatically create branches (`feature/REQ-NNNN-desc` or `bugfix/BUG-NNNN-id`), execute all phases on the branch, and merge to main with `--no-ff` after the final gate passes.
-
-**ATDD mode**: Feature and fix workflows support `--atdd` for Acceptance Test-Driven Development with `test.skip()` scaffolds and Given-When-Then AC mapping.
 
 ## The SDLC Agents
 
@@ -153,7 +149,7 @@ Each agent is a specialized AI mapped to exactly one SDLC phase, with specific r
 
 ### Discover Agents
 
-The `/discover` command uses specialized sub-agents to analyze projects before SDLC phases begin.
+The `/discover` command uses 9 specialized sub-agents to analyze projects before SDLC workflows begin. For existing projects, D1, D2, D5, and D6 run in parallel to produce a unified `docs/project-discovery-report.md`. For new projects, D7 guides vision elicitation and D8 designs the architecture blueprint.
 
 | ID | Agent | Responsibility |
 |----|-------|----------------|
@@ -166,9 +162,6 @@ The `/discover` command uses specialized sub-agents to analyze projects before S
 | **D6** | **Feature Mapper** | API endpoints, UI pages, CLI commands, business domains |
 | **D7** | **Product Analyst** | Vision elicitation, brainstorming, PRD generation (new projects) |
 | **D8** | **Architecture Designer** | Architecture blueprint from PRD and tech stack (new projects) |
-
-For existing projects, D1, D2, D5, and D6 run in parallel to produce a unified `docs/project-discovery-report.md`.
-For new projects, D7 guides vision elicitation and PRD generation, D8 designs the architecture blueprint.
 
 ## Development Phases
 
@@ -223,7 +216,36 @@ Phase 13: Production Operations
 
 **1-to-1 Mapping**: Each phase has exactly ONE dedicated agent with clear entry/exit criteria. No overlapping responsibilities — conflicts only occur at phase boundaries and are handled by the Orchestrator.
 
+## Available Workflows
+
+The orchestrator provides focused workflows via `/sdlc` and `/discover` commands. Each workflow defines a fixed, non-skippable phase sequence with strict gate enforcement.
+
+| Command | Workflow | Phases | Branch |
+|---------|----------|--------|--------|
+| `/discover` | Project Discovery | D1-D8 sub-agents analyze tech stack, tests, data models, features | No |
+| `/sdlc feature "desc"` | New Feature | Requirements → Architecture → Design → Test Strategy → Implementation → Local Testing → Integration Testing → CI/CD → Code Review | Yes |
+| `/sdlc fix "desc"` | Bug Fix (TDD) | Requirements → Test Strategy → Implementation → Local Testing → Integration Testing → CI/CD → Code Review | Yes |
+| `/sdlc test run` | Run Tests | Local Testing → Integration Testing | No |
+| `/sdlc test generate` | Generate Tests | Test Strategy → Implementation → Local Testing → Integration Testing → Code Review | No |
+| `/sdlc start` | Full Lifecycle | All 13 phases (Requirements through Operations) | Yes |
+| `/sdlc reverse-engineer` | Reverse Engineer | Behavior Extraction → Characterization Tests → Artifact Integration → ATDD Bridge | No |
+
+**Git branch lifecycle**: Workflows that produce code automatically create branches (`feature/REQ-NNNN-desc` or `bugfix/BUG-NNNN-id`), execute all phases on the branch, and merge to main with `--no-ff` after the final gate passes.
+
+**ATDD mode**: Feature and fix workflows support `--atdd` for Acceptance Test-Driven Development with `test.skip()` scaffolds and Given-When-Then AC mapping.
+
 ## Core Features
+
+- [**Project Constitution**](#project-constitution) — Customizable governance principles enforced at every quality gate
+- [**Skills System**](#skills-system) — 164 specialized skills across 11 categories with exclusive ownership
+- [**Quality Gates**](#quality-gates) — 13 validation gates with checklist-based verification
+- [**Skill Enforcement**](#skill-enforcement) — Runtime ownership validation and audit logging
+- [**Autonomous Iteration**](#autonomous-iteration) — Self-correcting agents that iterate until tests pass
+- [**Deterministic Iteration Enforcement**](#deterministic-iteration-enforcement) — Hook-based enforcement of iteration requirements
+- [**Monorepo Support**](#monorepo-support) — Multi-project management from a single installation
+- [**Task Planning & Progress Tracking**](#task-planning--progress-tracking) — Persistent task plans with checkbox-based tracking (ORCH-012)
+
+---
 
 ### Project Constitution
 
