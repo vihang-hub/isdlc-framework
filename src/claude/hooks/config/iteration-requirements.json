@@ -59,6 +59,13 @@
         "enabled": true,
         "max_iterations": 5,
         "articles": ["II", "VII", "IX", "XI"]
+      },
+      "atdd_validation": {
+        "enabled": true,
+        "when": "atdd_mode",
+        "requires": ["atdd_checklist_generated", "all_ac_have_tests", "all_tests_have_priorities"],
+        "artifacts": [".isdlc/atdd-checklist.json", "tests/acceptance/"],
+        "gate_block_on_failure": true
       }
     },
 
@@ -80,6 +87,17 @@
         "enabled": true,
         "max_iterations": 5,
         "articles": ["I", "II", "III", "V", "VI", "VII", "VIII", "IX", "X"]
+      },
+      "atdd_validation": {
+        "enabled": true,
+        "when": "atdd_mode",
+        "requires": ["all_priority_tests_passing", "no_orphan_skips", "red_green_transitions_recorded"],
+        "priority_enforcement": {
+          "process_order": ["P0", "P1", "P2", "P3"],
+          "all_must_pass": true,
+          "block_on_incomplete_priority": true
+        },
+        "gate_block_on_failure": true
       }
     },
 
@@ -101,6 +119,14 @@
         "enabled": true,
         "max_iterations": 5,
         "articles": ["II", "VII", "IX", "XI"]
+      },
+      "atdd_validation": {
+        "enabled": true,
+        "when": "atdd_mode",
+        "requires": ["no_orphan_skips", "all_priorities_100_percent", "checklist_synced"],
+        "orphan_skip_patterns": ["it.skip", "test.skip", "@pytest.mark.skip", "@Disabled", "@Ignore", "t.Skip", "xit", "xdescribe"],
+        "scan_directories": ["tests/acceptance/", "src/test/java/acceptance/"],
+        "gate_block_on_failure": true
       },
       "on_gate_pass": {
         "trigger_cloud_config": {

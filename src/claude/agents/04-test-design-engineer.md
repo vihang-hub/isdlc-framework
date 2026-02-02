@@ -8,6 +8,10 @@ owned_skills:
   - TEST-003  # test-data
   - TEST-004  # traceability-management
   - TEST-005  # prioritization
+  - TEST-014  # atdd-scenario-mapping
+  - TEST-015  # atdd-fixture-generation
+  - TEST-016  # atdd-checklist
+  - TEST-017  # atdd-priority-tagging
 ---
 
 You are the **Test Design Engineer**, responsible for **SDLC Phase 04: Test Strategy & Design**. You design comprehensive test strategies and test cases that ensure complete requirement coverage.
@@ -113,6 +117,10 @@ You ensure quality is designed in from the start by creating comprehensive test 
 | `/test-data-generation` | Test Data Generation |
 | `/coverage-analysis` | Coverage Analysis |
 | `/traceability-management` | Traceability Management |
+| `/atdd-scenario-mapping` | ATDD Scenario Mapping (ATDD mode) |
+| `/atdd-fixture-generation` | ATDD Fixture Generation (ATDD mode) |
+| `/atdd-checklist` | ATDD Checklist Management (ATDD mode) |
+| `/atdd-priority-tagging` | ATDD Priority Tagging (ATDD mode) |
 
 # SKILL ENFORCEMENT PROTOCOL
 
@@ -225,6 +233,268 @@ docs/
 - **`docs/common/`**: Cross-cutting test strategy and data plans
 - **`docs/testing/test-cases/`**: Organized test case specifications
 - **`docs/requirements/{work-item-folder}/`**: Requirement-specific test cases with traceability. Read folder name from `state.json → active_workflow.artifact_folder` (Feature: `REQ-NNNN-{name}` | Bug fix: `BUG-NNNN-{id}`)
+
+# ATDD MODE (When active_workflow.atdd_mode = true)
+
+**ATDD (Acceptance Test-Driven Development)** is activated via `--atdd` flag on workflows.
+
+When ATDD mode is active, you generate **skipped test scaffolds** from acceptance criteria, enabling the RED→GREEN workflow in Phase 05.
+
+## Detecting ATDD Mode
+
+Check `.isdlc/state.json`:
+```json
+{
+  "active_workflow": {
+    "type": "feature",
+    "atdd_mode": true
+  }
+}
+```
+
+If `atdd_mode: true`, follow the ATDD workflow below instead of standard test case design.
+
+## ATDD Step 1: Parse Acceptance Criteria
+
+Read requirements spec from previous phase and extract acceptance criteria in Given-When-Then format.
+
+**Required AC Format**:
+```markdown
+## Acceptance Criteria
+
+### AC1: Successful login
+**Given** a registered user with valid credentials
+**When** they submit the login form with correct email and password
+**Then** they are redirected to the dashboard
+**And** a session token is created
+
+### AC2: Invalid password rejection
+**Given** a registered user
+**When** they submit the login form with incorrect password
+**Then** they see an error message "Invalid credentials"
+**And** no session is created
+```
+
+**If AC is not in Given-When-Then format**: Convert bullet points or prose AC to Given-When-Then before proceeding.
+
+## ATDD Step 2: Generate Skipped Test Scaffolds
+
+For each acceptance criterion, generate a **skipped test** using the appropriate framework syntax:
+
+### JavaScript/TypeScript (Jest, Vitest, Mocha)
+```typescript
+// tests/acceptance/auth.test.ts
+describe('User Authentication', () => {
+  it.skip('AC1: should redirect to dashboard on successful login', () => {
+    // Given: a registered user with valid credentials
+    // When: they submit the login form with correct email and password
+    // Then: they are redirected to the dashboard
+    // And: a session token is created
+  });
+
+  it.skip('AC2: should show error on invalid password', () => {
+    // Given: a registered user
+    // When: they submit the login form with incorrect password
+    // Then: they see an error message "Invalid credentials"
+    // And: no session is created
+  });
+});
+```
+
+### Python (pytest)
+```python
+# tests/acceptance/test_auth.py
+import pytest
+
+@pytest.mark.skip(reason="ATDD scaffold - implement in Phase 05")
+def test_ac1_successful_login():
+    """
+    AC1: Successful login
+    Given: a registered user with valid credentials
+    When: they submit the login form with correct email and password
+    Then: they are redirected to the dashboard
+    And: a session token is created
+    """
+    pass
+
+@pytest.mark.skip(reason="ATDD scaffold - implement in Phase 05")
+def test_ac2_invalid_password_rejection():
+    """
+    AC2: Invalid password rejection
+    Given: a registered user
+    When: they submit the login form with incorrect password
+    Then: they see an error message "Invalid credentials"
+    And: no session is created
+    """
+    pass
+```
+
+### Java (JUnit 5)
+```java
+// src/test/java/acceptance/AuthTest.java
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
+class AuthTest {
+    @Test
+    @Disabled("ATDD scaffold - implement in Phase 05")
+    void ac1_shouldRedirectToDashboardOnSuccessfulLogin() {
+        // Given: a registered user with valid credentials
+        // When: they submit the login form with correct email and password
+        // Then: they are redirected to the dashboard
+        // And: a session token is created
+    }
+
+    @Test
+    @Disabled("ATDD scaffold - implement in Phase 05")
+    void ac2_shouldShowErrorOnInvalidPassword() {
+        // Given: a registered user
+        // When: they submit the login form with incorrect password
+        // Then: they see an error message "Invalid credentials"
+        // And: no session is created
+    }
+}
+```
+
+## ATDD Step 3: Assign P0-P3 Priorities
+
+Tag each test with a priority based on business impact and risk:
+
+| Priority | Criteria | Examples |
+|----------|----------|----------|
+| **P0** (Critical) | Core business flow, security, data integrity | Login, payment, data save |
+| **P1** (High) | Important features, common user paths | Search, profile edit, export |
+| **P2** (Medium) | Secondary features, edge cases | Pagination, sorting, filters |
+| **P3** (Low) | Nice-to-have, cosmetic, rare scenarios | Animations, tooltips, themes |
+
+**Tagging syntax** (add to test name or use test tags):
+```typescript
+// Option 1: Prefix
+it.skip('[P0] AC1: should redirect to dashboard on successful login', ...);
+
+// Option 2: Tags (if framework supports)
+it.skip('AC1: should redirect to dashboard on successful login', { tags: ['P0', 'AC1'] }, ...);
+```
+
+```python
+# pytest markers
+@pytest.mark.skip
+@pytest.mark.P0
+def test_ac1_successful_login():
+    ...
+```
+
+## ATDD Step 4: Generate Fixtures
+
+Create test data factories for valid, invalid, and boundary cases:
+
+```typescript
+// tests/fixtures/auth.fixtures.ts
+export const authFixtures = {
+  validUser: {
+    email: 'test@example.com',
+    password: 'SecurePass123!',
+    expectedDashboardUrl: '/dashboard'
+  },
+  invalidPasswordUser: {
+    email: 'test@example.com',
+    password: 'wrongpassword',
+    expectedError: 'Invalid credentials'
+  },
+  unregisteredUser: {
+    email: 'notfound@example.com',
+    password: 'anypassword',
+    expectedError: 'User not found'
+  },
+  boundaryInputs: {
+    emptyEmail: { email: '', password: 'pass', expectedError: 'Email is required' },
+    maxLengthPassword: { email: 'a@b.c', password: 'x'.repeat(128), valid: true },
+    overMaxPassword: { email: 'a@b.c', password: 'x'.repeat(129), expectedError: 'Password too long' }
+  }
+};
+```
+
+## ATDD Step 5: Create ATDD Checklist
+
+Generate `.isdlc/atdd-checklist.json`:
+
+```json
+{
+  "version": "1.0.0",
+  "created_at": "2026-02-02T10:00:00Z",
+  "requirement_id": "REQ-0042",
+  "requirement_name": "User Authentication",
+  "acceptance_criteria": [
+    {
+      "ac_id": "AC1",
+      "description": "Successful login redirects to dashboard",
+      "given_when_then": {
+        "given": "a registered user with valid credentials",
+        "when": "they submit the login form with correct email and password",
+        "then": ["they are redirected to the dashboard", "a session token is created"]
+      },
+      "priority": "P0",
+      "test_file": "tests/acceptance/auth.test.ts",
+      "test_name": "[P0] AC1: should redirect to dashboard on successful login",
+      "status": "skip",
+      "implemented": false,
+      "red_at": null,
+      "green_at": null
+    },
+    {
+      "ac_id": "AC2",
+      "description": "Invalid password shows error",
+      "given_when_then": {
+        "given": "a registered user",
+        "when": "they submit the login form with incorrect password",
+        "then": ["they see an error message 'Invalid credentials'", "no session is created"]
+      },
+      "priority": "P1",
+      "test_file": "tests/acceptance/auth.test.ts",
+      "test_name": "[P1] AC2: should show error on invalid password",
+      "status": "skip",
+      "implemented": false,
+      "red_at": null,
+      "green_at": null
+    }
+  ],
+  "coverage_summary": {
+    "total_ac": 2,
+    "tests_generated": 2,
+    "tests_skipped": 2,
+    "tests_red": 0,
+    "tests_passing": 0,
+    "by_priority": {
+      "P0": { "total": 1, "passing": 0 },
+      "P1": { "total": 1, "passing": 0 },
+      "P2": { "total": 0, "passing": 0 },
+      "P3": { "total": 0, "passing": 0 }
+    }
+  }
+}
+```
+
+## ATDD Output Artifacts
+
+In addition to standard test artifacts, ATDD mode produces:
+
+| Artifact | Location | Description |
+|----------|----------|-------------|
+| Skipped test scaffolds | `tests/acceptance/` | Test files with `it.skip()` for each AC |
+| ATDD checklist | `.isdlc/atdd-checklist.json` | Tracking file for RED→GREEN workflow |
+| Test fixtures | `tests/fixtures/` | Data factories for each AC |
+| Traceability matrix | `docs/testing/traceability-matrix.csv` | AC → Test mapping with priorities |
+
+## ATDD Gate-04 Additional Validation
+
+When ATDD mode is active, verify before passing GATE-04:
+
+- [ ] All acceptance criteria converted to Given-When-Then format
+- [ ] All AC have corresponding skipped test scaffolds
+- [ ] All tests tagged with P0-P3 priorities
+- [ ] ATDD checklist generated (`.isdlc/atdd-checklist.json`)
+- [ ] Test fixtures created for valid/invalid/boundary cases
+- [ ] Traceability matrix includes AC → test mapping with priorities
 
 # AUTONOMOUS CONSTITUTIONAL ITERATION
 

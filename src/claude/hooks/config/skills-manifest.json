@@ -1,7 +1,7 @@
 {
-  "version": "2.0.0",
-  "generated": "2026-01-24",
-  "total_skills": 163,
+  "version": "2.1.0",
+  "generated": "2026-02-02",
+  "total_skills": 167,
   "enforcement_mode": "strict",
   "ownership": {
     "sdlc-orchestrator": {
@@ -85,8 +85,8 @@
     "test-design-engineer": {
       "agent_id": "04",
       "phase": "04-test-strategy",
-      "skill_count": 5,
-      "skills": ["TEST-001", "TEST-002", "TEST-003", "TEST-004", "TEST-005"]
+      "skill_count": 9,
+      "skills": ["TEST-001", "TEST-002", "TEST-003", "TEST-004", "TEST-005", "TEST-014", "TEST-015", "TEST-016", "TEST-017"]
     },
     "software-developer": {
       "agent_id": "05",
@@ -193,6 +193,10 @@
     "TEST-003": "test-design-engineer",
     "TEST-004": "test-design-engineer",
     "TEST-005": "test-design-engineer",
+    "TEST-014": "test-design-engineer",
+    "TEST-015": "test-design-engineer",
+    "TEST-016": "test-design-engineer",
+    "TEST-017": "test-design-engineer",
     "TEST-006": "integration-tester",
     "TEST-007": "integration-tester",
     "TEST-008": "integration-tester",
@@ -358,6 +362,10 @@
     "testing/test-data": "test-design-engineer",
     "testing/traceability-management": "test-design-engineer",
     "testing/prioritization": "test-design-engineer",
+    "testing/atdd-scenario-mapping": "test-design-engineer",
+    "testing/atdd-fixture-generation": "test-design-engineer",
+    "testing/atdd-checklist": "test-design-engineer",
+    "testing/atdd-priority-tagging": "test-design-engineer",
     "testing/coverage-analysis": "integration-tester",
     "testing/defect-analysis": "integration-tester",
     "testing/regression-management": "integration-tester",

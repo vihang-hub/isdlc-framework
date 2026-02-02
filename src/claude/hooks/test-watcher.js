@@ -26,6 +26,23 @@ const fs = require('fs');
 const path = require('path');
 
 /**
+ * ATDD skip patterns - used to detect orphan skipped tests
+ */
+const SKIP_PATTERNS = [
+    /it\.skip\s*\(/,
+    /test\.skip\s*\(/,
+    /describe\.skip\s*\(/,
+    /@pytest\.mark\.skip/,
+    /@Disabled/,
+    /@Ignore/,
+    /t\.Skip\s*\(/,
+    /\bxit\s*\(/,
+    /\bxdescribe\s*\(/,
+    /\bxcontext\s*\(/,
+    /\.only\s*\(/  // Also flag .only() as potential issue
+];
+
+/**
  * Test command patterns
  */
 const TEST_COMMAND_PATTERNS = [
@@ -221,6 +238,65 @@ function isIdenticalFailure(currentError, history) {
 }
 
 /**
+ * Detect skipped tests in output (for ATDD mode)
+ */
+function detectSkippedTests(output) {
+    if (!output) return { count: 0, details: [] };
+
+    const skippedDetails = [];
+    let totalSkipped = 0;
+
+    // Jest/Vitest skipped count
+    const jestSkipMatch = output.match(/Tests:.*?(\d+)\s+skipped/i);
+    if (jestSkipMatch) {
+        totalSkipped = parseInt(jestSkipMatch[1]);
+    }
+
+    // pytest skipped count
+    const pytestSkipMatch = output.match(/(\d+)\s+skipped/i);
+    if (pytestSkipMatch && !jestSkipMatch) {
+        totalSkipped = parseInt(pytestSkipMatch[1]);
+    }
+
+    // Mocha pending
+    const mochaPendingMatch = output.match(/(\d+)\s+pending/i);
+    if (mochaPendingMatch) {
+        totalSkipped = Math.max(totalSkipped, parseInt(mochaPendingMatch[1]));
+    }
+
+    // Try to extract individual skipped test names
+    const lines = output.split('\n');
+    for (const line of lines) {
+        // Jest/Vitest: "○ skipped test name"
+        if (/^\s*○\s+/.test(line) || /\bskipped\b/i.test(line)) {
+            const testNameMatch = line.match(/○\s+(.+)/) || line.match(/skipped\s+(.+)/i);
+            if (testNameMatch) {
+                skippedDetails.push(testNameMatch[1].trim());
+            }
+        }
+        // pytest: "SKIPPED [1] test_file.py::test_name"
+        if (/SKIPPED\s+\[/.test(line)) {
+            const testNameMatch = line.match(/SKIPPED\s+\[\d+\]\s+(.+)/);
+            if (testNameMatch) {
+                skippedDetails.push(testNameMatch[1].trim());
+            }
+        }
+    }
+
+    return {
+        count: totalSkipped,
+        details: skippedDetails
+    };
+}
+
+/**
+ * Check if ATDD mode is active
+ */
+function isATDDMode(state) {
+    return state?.active_workflow?.atdd_mode === true;
+}
+
+/**
  * Extract exit code from tool result if available
  */
 function extractExitCode(toolResult) {
@@ -362,6 +438,27 @@ async function main() {
 
             debugLog('Tests PASSED - iteration complete');
 
+            // Check for ATDD mode and skipped tests
+            const atddMode = isATDDMode(state);
+            const skippedInfo = detectSkippedTests(result);
+
+            let atddWarning = '';
+            if (atddMode && skippedInfo.count > 0) {
+                // In ATDD mode, skipped tests are NOT allowed at gate
+                atddWarning = `\n\n⚠️ ATDD MODE WARNING: ${skippedInfo.count} skipped test(s) detected!\n` +
+                    `In ATDD mode, ALL acceptance tests must be implemented (no test.skip() allowed).\n` +
+                    `Skipped tests:\n${skippedInfo.details.slice(0, 5).map(t => `  - ${t}`).join('\n')}\n` +
+                    (skippedInfo.details.length > 5 ? `  ... and ${skippedInfo.details.length - 5} more\n` : '') +
+                    `\nYou must unskip and implement these tests before advancing the gate.`;
+
+                // Update state with ATDD skip info
+                if (!state.phases[currentPhase].atdd_validation) {
+                    state.phases[currentPhase].atdd_validation = {};
+                }
+                state.phases[currentPhase].atdd_validation.orphan_skips_detected = skippedInfo.count;
+                state.phases[currentPhase].atdd_validation.orphan_skip_details = skippedInfo.details;
+            }
+
             // Build constitutional article list from phase requirements
             const constArticles = phaseReq.constitutional_validation?.articles;
             const constArticleNote = constArticles
@@ -370,8 +467,9 @@ async function main() {
                 : `Check iteration-requirements.json for applicable constitutional articles.`;
 
             outputMessage = `\n\n✅ TESTS PASSED (iteration ${iterState.current_iteration})\n` +
-                `Test iteration requirement: SATISFIED\n\n` +
-                `NEXT STEP: Constitutional validation required.\n` +
+                `Test iteration requirement: SATISFIED\n` +
+                atddWarning +
+                `\n\nNEXT STEP: Constitutional validation required.\n` +
                 constArticleNote;
 
         } else {

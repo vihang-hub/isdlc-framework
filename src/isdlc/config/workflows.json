@@ -11,6 +11,7 @@
         "01-requirements",
         "02-architecture",
         "03-design",
+        "04-test-strategy",
         "05-implementation",
         "10-local-testing",
         "06-testing",
@@ -18,9 +19,30 @@
         "07-code-review"
       ],
       "gate_mode": "strict",
+      "options": {
+        "atdd_mode": {
+          "description": "Enable ATDD with test.skip() scaffolds and Given-When-Then AC mapping",
+          "default": false,
+          "flag": "--atdd"
+        }
+      },
       "agent_modifiers": {
         "01-requirements": { "scope": "feature", "artifact_prefix": "REQ" },
         "02-architecture": { "scope": "impact-assessment" },
+        "04-test-strategy": {
+          "_when_atdd_mode": {
+            "generate_skipped_tests": true,
+            "require_given_when_then_ac": true,
+            "create_atdd_checklist": true
+          }
+        },
+        "05-implementation": {
+          "_when_atdd_mode": {
+            "track_red_green_transitions": true,
+            "require_priority_order": true,
+            "all_priorities_must_pass": true
+          }
+        },
         "10-local-testing": { "scope": "local" }
       },
       "requires_branch": true
@@ -32,6 +54,7 @@
       "description": "Fix a bug or defect with TDD",
       "phases": [
         "01-requirements",
+        "04-test-strategy",
         "05-implementation",
         "10-local-testing",
         "06-testing",
@@ -39,13 +62,34 @@
         "07-code-review"
       ],
       "gate_mode": "strict",
+      "options": {
+        "atdd_mode": {
+          "description": "Enable ATDD with test.skip() scaffolds and Given-When-Then AC mapping",
+          "default": false,
+          "flag": "--atdd"
+        }
+      },
       "agent_modifiers": {
         "01-requirements": {
           "scope": "bug-report",
           "artifact_prefix": "BUG",
           "require_external_id": true
         },
-        "05-implementation": { "require_failing_test_first": true },
+        "04-test-strategy": {
+          "_when_atdd_mode": {
+            "generate_skipped_tests": true,
+            "require_given_when_then_ac": true,
+            "create_atdd_checklist": true
+          }
+        },
+        "05-implementation": {
+          "require_failing_test_first": true,
+          "_when_atdd_mode": {
+            "track_red_green_transitions": true,
+            "require_priority_order": true,
+            "all_priorities_must_pass": true
+          }
+        },
         "10-local-testing": { "scope": "local" }
       },
       "requires_branch": true

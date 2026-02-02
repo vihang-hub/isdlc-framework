@@ -465,6 +465,223 @@ For each failing test:
    - Mark as "escalated to developer"
 4. **Track in iteration history**
 
+# ATDD MODE VALIDATION (When active_workflow.atdd_mode = true)
+
+**When ATDD mode is active**, additional validation is required before passing GATE-06.
+
+## Detecting ATDD Mode
+
+Check `.isdlc/state.json`:
+```json
+{
+  "active_workflow": {
+    "type": "feature",
+    "atdd_mode": true
+  }
+}
+```
+
+## ATDD Validation Step 1: Scan for Orphan Skips
+
+Search all acceptance test files for orphan `skip` statements that should have been unskipped in Phase 05:
+
+### Skip Detection Patterns
+
+| Framework | Pattern | Regex |
+|-----------|---------|-------|
+| Jest/Vitest/Mocha | `it.skip()`, `test.skip()` | `/it\.skip\s*\(/`, `/test\.skip\s*\(/` |
+| pytest | `@pytest.mark.skip` | `/@pytest\.mark\.skip/` |
+| JUnit 5 | `@Disabled` | `/@Disabled/` |
+| JUnit 4 | `@Ignore` | `/@Ignore/` |
+| Go | `t.Skip()` | `/t\.Skip\s*\(/` |
+| RSpec | `xit`, `xdescribe` | `/\bxit\b/`, `/\bxdescribe\b/` |
+
+### Scan Command
+```bash
+# JavaScript/TypeScript
+grep -rn "it\.skip\|test\.skip\|xit\|xdescribe" tests/acceptance/
+
+# Python
+grep -rn "@pytest.mark.skip" tests/acceptance/
+
+# Java
+grep -rn "@Disabled\|@Ignore" src/test/java/acceptance/
+```
+
+### Validation Rule
+
+**If any skipped acceptance tests are found**:
+1. Log each orphan skip with file and line number
+2. Update ATDD checklist with orphan count
+3. **BLOCK GATE-06** - cannot advance with orphan skips
+
+```json
+// Add to state.json
+{
+  "phases": {
+    "06-testing": {
+      "atdd_validation": {
+        "orphan_skips_found": 2,
+        "orphan_details": [
+          {
+            "file": "tests/acceptance/auth.test.ts",
+            "line": 45,
+            "test_name": "[P3] AC7: should show password strength meter",
+            "priority": "P3"
+          }
+        ],
+        "validation_status": "failed",
+        "reason": "Orphan test.skip() found - all acceptance tests must be implemented"
+      }
+    }
+  }
+}
+```
+
+## ATDD Validation Step 2: Verify All Priorities Passing
+
+Read ATDD checklist and verify ALL priority levels are complete:
+
+```json
+// .isdlc/atdd-checklist.json
+{
+  "coverage_summary": {
+    "by_priority": {
+      "P0": { "total": 3, "passing": 3 },  // ✅ 100%
+      "P1": { "total": 2, "passing": 2 },  // ✅ 100%
+      "P2": { "total": 4, "passing": 4 },  // ✅ 100%
+      "P3": { "total": 1, "passing": 1 }   // ✅ 100%
+    }
+  }
+}
+```
+
+### Validation Rule
+
+**ALL priorities must have 100% passing:**
+
+| Priority | Passing | Total | Status |
+|----------|---------|-------|--------|
+| P0 | 3 | 3 | ✅ PASS |
+| P1 | 2 | 2 | ✅ PASS |
+| P2 | 4 | 4 | ✅ PASS |
+| P3 | 0 | 1 | ❌ FAIL - Gate blocked |
+
+If ANY priority has `passing < total`, **BLOCK GATE-06**.
+
+## ATDD Validation Step 3: Cross-Reference with Checklist
+
+Compare discovered test files against ATDD checklist:
+
+1. **All checklist items have corresponding test files**
+2. **All test files are referenced in checklist**
+3. **Status in checklist matches actual test status**
+
+```bash
+# Extract test names from checklist
+jq '.acceptance_criteria[].test_name' .isdlc/atdd-checklist.json
+
+# Compare with actual test names in files
+grep -h "it\('" tests/acceptance/*.test.ts | sed "s/.*it('//" | sed "s/',.*//"
+```
+
+### Validation Rule
+
+**Mismatches indicate sync issues**:
+- Checklist says "pass" but test actually fails → Re-run tests
+- Test exists but not in checklist → Checklist was not updated
+- Checklist entry but no test file → Test was deleted
+
+## ATDD Validation Step 4: Run Acceptance Test Suite
+
+Execute the full acceptance test suite and verify all pass:
+
+```bash
+# Discover acceptance test command from package.json or state.json
+npm run test:acceptance
+
+# Or run with specific pattern
+npm test -- --testPathPattern="acceptance"
+```
+
+### Expected Output
+```
+Test Suites: 4 passed, 4 total
+Tests:       10 passed, 10 total
+Snapshots:   0 total
+Time:        4.532s
+
+All acceptance tests passed ✅
+```
+
+## ATDD Gate-06 Additional Validation Checklist
+
+When ATDD mode is active, add these to GATE-06 checklist:
+
+- [ ] **No orphan skips**: Zero `it.skip()`, `test.skip()`, `@Disabled`, `@Ignore` in acceptance tests
+- [ ] **P0 100% passing**: All critical acceptance tests pass
+- [ ] **P1 100% passing**: All high-priority acceptance tests pass
+- [ ] **P2 100% passing**: All medium-priority acceptance tests pass
+- [ ] **P3 100% passing**: All low-priority acceptance tests pass
+- [ ] **Checklist synced**: `.isdlc/atdd-checklist.json` reflects actual test status
+- [ ] **Acceptance suite green**: Full acceptance test run passes
+
+## ATDD Mutation Testing Integration
+
+When running mutation tests on acceptance tests:
+
+1. **Acceptance tests should catch mutants** - if they don't, they're too weak
+2. **Mutation score threshold applies** (≥80%)
+3. **Focus on P0/P1 tests** for mutation coverage - these are most critical
+
+```bash
+# Run mutation tests on acceptance tests
+npm run test:mutation -- --files="src/**/*.ts" --mutate="tests/acceptance/**/*.test.ts"
+```
+
+## ATDD Validation Failure Actions
+
+If ATDD validation fails:
+
+1. **Orphan skips found**:
+   - Return test files to Phase 05 agent for completion
+   - List specific tests that need implementation
+   - Do NOT proceed to coverage analysis
+
+2. **Priority tests failing**:
+   - Identify which priority level has failures
+   - Escalate to developer with specific test names
+   - Track in defect-log.json
+
+3. **Checklist out of sync**:
+   - Re-generate or update checklist
+   - Re-run validation after sync
+
+## ATDD State Update
+
+After ATDD validation, update state.json:
+
+```json
+{
+  "phases": {
+    "06-testing": {
+      "atdd_validation": {
+        "completed_at": "2026-02-02T14:00:00Z",
+        "orphan_skips_found": 0,
+        "priority_coverage": {
+          "P0": { "total": 3, "passing": 3, "percent": 100 },
+          "P1": { "total": 2, "passing": 2, "percent": 100 },
+          "P2": { "total": 4, "passing": 4, "percent": 100 },
+          "P3": { "total": 1, "passing": 1, "percent": 100 }
+        },
+        "checklist_synced": true,
+        "validation_status": "passed"
+      }
+    }
+  }
+}
+```
+
 # AUTONOMOUS CONSTITUTIONAL ITERATION
 
 **CRITICAL**: Before declaring phase complete, you MUST iterate on constitutional compliance until all applicable articles are satisfied. This is IN ADDITION to the test iteration protocol above.
