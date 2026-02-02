@@ -4,10 +4,10 @@
 
 <h3><em>Structured AI-powered software development, from requirements to production.</em></h3>
 
-<p><strong>A comprehensive SDLC framework for Claude Code with 24 agents, 170 skills, 14 quality gates, and monorepo support.</strong></p>
+<p><strong>A comprehensive SDLC framework for Claude Code with 28 agents, 170 skills, 14 quality gates, and monorepo support.</strong></p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Agents](https://img.shields.io/badge/Agents-24-purple.svg)](#the-sdlc-agents)
+[![Agents](https://img.shields.io/badge/Agents-28-purple.svg)](#the-sdlc-agents)
 [![Skills](https://img.shields.io/badge/Skills-170-green.svg)](#skills-system)
 [![Gates](https://img.shields.io/badge/Quality%20Gates-14-orange.svg)](#quality-gates)
 [![Hooks](https://img.shields.io/badge/Hooks-5-red.svg)](#deterministic-iteration-enforcement)
@@ -96,7 +96,7 @@ The installer copies agents, skills, hooks, and configuration into your project,
 ```
 your-project/
 ├── .claude/           # Agent definitions, skills, hooks
-│   ├── agents/        # 15 SDLC agents + 9 discover agents
+│   ├── agents/        # 28 agents (15 SDLC + 9 discover + 4 reverse-engineer)
 │   ├── skills/        # 170 skills across 12 categories
 │   ├── hooks/         # Runtime enforcement hooks
 │   └── settings.json
@@ -180,6 +180,17 @@ The `/discover` command uses 9 specialized sub-agents to analyze projects before
 | **D6** | **Feature Mapper** | API endpoints, UI pages, CLI commands, business domains |
 | **D7** | **Product Analyst** | Vision elicitation, brainstorming, PRD generation (new projects) |
 | **D8** | **Architecture Designer** | Architecture blueprint from PRD and tech stack (new projects) |
+
+### Reverse Engineer Agents
+
+The `/sdlc reverse-engineer` command uses 4 specialized sub-agents to extract acceptance criteria and generate characterization tests from existing code.
+
+| ID | Agent | Responsibility |
+|----|-------|----------------|
+| **R1** | **Behavior Analyzer** | Extract behavioral contracts, side effects, and implicit AC from source code |
+| **R2** | **Characterization Test Generator** | Generate tests that capture current behavior as executable specifications |
+| **R3** | **Artifact Integration** | Link extracted AC to feature maps, generate traceability matrices |
+| **R4** | **ATDD Bridge** | Prepare extracted AC for ATDD workflow integration with priority tagging |
 
 ## Development Phases
 
@@ -522,7 +533,7 @@ deployment:
 ## Project Status
 
 ### Completed
-- 15 agent definitions (SDLC) + 9 discover agents
+- 28 agent definitions (15 SDLC + 9 discover + 4 reverse-engineer)
 - 170 skills organized into 12 categories
 - 14 phase gate checklists
 - 7 document templates
@@ -556,6 +567,6 @@ MIT License
 
 <div align="center">
 
-**iSDLC Framework** v2.2.0 — 24 agents, 170 skills, 14 gates, 5 hooks, 8 enhancements
+**iSDLC Framework** v2.2.0 — 28 agents, 170 skills, 14 gates, 5 hooks, 8 enhancements
 
 </div>
