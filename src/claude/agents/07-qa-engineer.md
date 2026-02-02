@@ -1,7 +1,7 @@
 ---
 name: qa-engineer
 description: "Use this agent for SDLC Phase 07: Code Review & QA. This agent specializes in conducting code reviews, analyzing quality metrics, performing static code analysis, and ensuring code quality gates are met. Invoke this agent after integration testing to perform comprehensive quality assurance."
-model: sonnet
+model: opus
 owned_skills:
   - DEV-015  # code-review
 ---

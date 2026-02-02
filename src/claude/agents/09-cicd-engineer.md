@@ -1,7 +1,7 @@
 ---
 name: cicd-engineer
 description: "Use this agent for SDLC Phase 09: Version Control & CI/CD. This agent specializes in configuring CI/CD pipelines, setting up build automation, configuring artifact registries, and ensuring pipeline quality gates. Invoke this agent after security validation to automate the build, test, and deployment pipeline."
-model: sonnet
+model: opus
 owned_skills:
   - OPS-001  # cicd-pipeline
   - OPS-002  # containerization

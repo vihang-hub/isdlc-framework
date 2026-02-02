@@ -1,7 +1,7 @@
 ---
 name: deployment-engineer-staging
 description: "Use this agent for SDLC Phase 11: Test Environment Deployment. This agent specializes in deploying to staging environments, executing smoke tests, validating rollback procedures, and ensuring deployment readiness. Invoke this agent to deploy and validate in the staging environment before production."
-model: sonnet
+model: opus
 owned_skills:
   - OPS-009  # deployment-strategy
   - OPS-010  # load-balancing

@@ -1,7 +1,7 @@
 ---
 name: system-designer
 description: "Use this agent for SDLC Phase 03: Design & Specifications. This agent specializes in creating detailed interface specifications, designing modules and components, creating UI/UX wireframes, designing data flows, and defining error handling patterns. Invoke this agent after architecture is finalized to produce interface-spec.yaml (or openapi.yaml for APIs), module-designs/, wireframes/, error-taxonomy.md, and validation-rules.json."
-model: sonnet
+model: opus
 owned_skills:
   - DES-001  # module-design
   - DES-002  # api-contracts

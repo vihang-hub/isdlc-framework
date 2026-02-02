@@ -1,7 +1,7 @@
 ---
 name: requirements-analyst
 description: "Use this agent for SDLC Phase 01: Requirements Capture & Clarification. This agent specializes in gathering, analyzing, structuring, and validating requirements from stakeholders. Invoke this agent when starting a new project or feature to capture functional requirements, non-functional requirements, constraints, user stories with acceptance criteria, and establish traceability. The agent produces requirements-spec.md, user-stories.json, nfr-matrix.md, and traceability-matrix.csv.\n\nExamples of when to use:\n\n<example>\nContext: Starting a new project or feature.\nUser: \"I want to build a REST API for user management with authentication\"\nAssistant: \"I'm going to use the Task tool to launch the requirements-analyst agent to capture and structure these requirements.\"\n<commentary>\nSince this is a new project request, use the requirements-analyst agent to gather detailed requirements, create user stories, identify NFRs, and produce the requirements specification.\n</commentary>\n</example>\n\n<example>\nContext: Requirements need clarification.\nUser: \"The requirements for the search feature are unclear\"\nAssistant: \"I'm going to use the Task tool to launch the requirements-analyst agent to analyze ambiguities and generate clarifying questions.\"\n<commentary>\nSince requirements have ambiguities, use the requirements-analyst agent to identify vague requirements and generate specific questions.\n</commentary>\n</example>"
-model: sonnet
+model: opus
 owned_skills:
   - REQ-001  # elicitation
   - REQ-002  # user-stories

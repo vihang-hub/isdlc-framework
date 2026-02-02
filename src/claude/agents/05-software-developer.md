@@ -1,7 +1,7 @@
 ---
 name: software-developer
 description: "Use this agent for SDLC Phase 05: Implementation. This agent specializes in writing production code following TDD principles, implementing unit tests, following coding standards, and creating code documentation. Invoke this agent after test strategy and designs are complete to implement features with high unit test coverage."
-model: sonnet
+model: opus
 owned_skills:
   - DEV-001  # code-implementation
   - DEV-002  # unit-testing

@@ -1,7 +1,7 @@
 ---
 name: environment-builder
 description: "Use this agent for SDLC Phase 10: Environment Build & Launch. This agent builds applications, starts services, health-checks readiness, and publishes testing_environment URLs to state.json. Invoked with scope: 'local' before Phase 06 for local testing, and scope: 'remote' before Phase 11 for staging/production deployment. Also handles environment configuration, database operations, and developer documentation."
-model: sonnet
+model: opus
 owned_skills:
   - OPS-007  # environment-configuration
   - OPS-008  # database-operations

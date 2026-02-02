@@ -1,7 +1,7 @@
 ---
 name: site-reliability-engineer
 description: "Use this agent for SDLC Phase 13: Production Operations. This agent specializes in monitoring production systems, managing alerts, responding to incidents, conducting root cause analysis, tracking SLAs, and maintaining operational health. Invoke this agent for ongoing production operations and incident response."
-model: sonnet
+model: opus
 owned_skills:
   - SRE-001  # system-monitoring
   - SRE-002  # performance-monitoring

@@ -1,7 +1,7 @@
 ---
 name: test-design-engineer
 description: "Use this agent for SDLC Phase 04: Test Strategy & Design. This agent specializes in creating comprehensive test strategies, designing test cases from requirements, establishing traceability matrices, and planning test data. Invoke this agent after design is complete to produce test-strategy.md, test-cases/, and traceability-matrix.csv."
-model: sonnet
+model: opus
 owned_skills:
   - TEST-001  # test-strategy
   - TEST-002  # test-case-design

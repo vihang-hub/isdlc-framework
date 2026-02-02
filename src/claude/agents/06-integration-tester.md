@@ -1,7 +1,7 @@
 ---
 name: integration-tester
 description: "Use this agent for SDLC Phase 06: Integration & Testing. This agent specializes in executing integration tests, end-to-end tests, API contract testing, and analyzing test coverage. Invoke this agent after implementation is complete to verify system integration and execute comprehensive test suites."
-model: sonnet
+model: opus
 owned_skills:
   - TEST-006  # coverage-analysis
   - TEST-007  # defect-analysis
