@@ -1,7 +1,7 @@
 {
-  "version": "2.1.0",
+  "version": "2.2.0",
   "generated": "2026-02-02",
-  "total_skills": 167,
+  "total_skills": 182,
   "enforcement_mode": "strict",
   "ownership": {
     "sdlc-orchestrator": {
@@ -63,6 +63,18 @@
       "phase": "setup",
       "skill_count": 4,
       "skills": ["DISC-801", "DISC-802", "DISC-803", "DISC-804"]
+    },
+    "behavior-analyzer": {
+      "agent_id": "R1",
+      "phase": "R1-behavior-extraction",
+      "skill_count": 8,
+      "skills": ["RE-001", "RE-002", "RE-003", "RE-004", "RE-005", "RE-006", "RE-007", "RE-008"]
+    },
+    "characterization-test-generator": {
+      "agent_id": "R2",
+      "phase": "R2-characterization-tests",
+      "skill_count": 7,
+      "skills": ["RE-101", "RE-102", "RE-103", "RE-104", "RE-105", "RE-106", "RE-107"]
     },
     "requirements-analyst": {
       "agent_id": "01",
@@ -310,7 +322,22 @@
     "DISC-801": "architecture-designer",
     "DISC-802": "architecture-designer",
     "DISC-803": "architecture-designer",
-    "DISC-804": "architecture-designer"
+    "DISC-804": "architecture-designer",
+    "RE-001": "behavior-analyzer",
+    "RE-002": "behavior-analyzer",
+    "RE-003": "behavior-analyzer",
+    "RE-004": "behavior-analyzer",
+    "RE-005": "behavior-analyzer",
+    "RE-006": "behavior-analyzer",
+    "RE-007": "behavior-analyzer",
+    "RE-008": "behavior-analyzer",
+    "RE-101": "characterization-test-generator",
+    "RE-102": "characterization-test-generator",
+    "RE-103": "characterization-test-generator",
+    "RE-104": "characterization-test-generator",
+    "RE-105": "characterization-test-generator",
+    "RE-106": "characterization-test-generator",
+    "RE-107": "characterization-test-generator"
   },
   "path_lookup": {
     "orchestration/workflow-management": "sdlc-orchestrator",
@@ -479,6 +506,21 @@
     "discover/architecture-pattern-selection": "architecture-designer",
     "discover/data-model-design": "architecture-designer",
     "discover/api-design": "architecture-designer",
-    "discover/directory-scaffolding": "architecture-designer"
+    "discover/directory-scaffolding": "architecture-designer",
+    "reverse-engineer/code-behavior-extraction": "behavior-analyzer",
+    "reverse-engineer/ac-generation-from-code": "behavior-analyzer",
+    "reverse-engineer/precondition-inference": "behavior-analyzer",
+    "reverse-engineer/postcondition-inference": "behavior-analyzer",
+    "reverse-engineer/side-effect-detection": "behavior-analyzer",
+    "reverse-engineer/business-rule-extraction": "behavior-analyzer",
+    "reverse-engineer/data-transformation-mapping": "behavior-analyzer",
+    "reverse-engineer/priority-scoring": "behavior-analyzer",
+    "reverse-engineer/execution-capture": "characterization-test-generator",
+    "reverse-engineer/fixture-generation": "characterization-test-generator",
+    "reverse-engineer/side-effect-mocking": "characterization-test-generator",
+    "reverse-engineer/snapshot-creation": "characterization-test-generator",
+    "reverse-engineer/boundary-input-discovery": "characterization-test-generator",
+    "reverse-engineer/test-scaffold-generation": "characterization-test-generator",
+    "reverse-engineer/golden-file-management": "characterization-test-generator"
   }
 }
