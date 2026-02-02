@@ -4,12 +4,12 @@
 
 <h3><em>Structured AI-powered software development, from requirements to production.</em></h3>
 
-<p><strong>A comprehensive SDLC framework for Claude Code with 23 agents, 164 skills, 13 quality gates, and monorepo support.</strong></p>
+<p><strong>A comprehensive SDLC framework for Claude Code with 24 agents, 170 skills, 14 quality gates, and monorepo support.</strong></p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Agents](https://img.shields.io/badge/Agents-23-purple.svg)](#the-sdlc-agents)
-[![Skills](https://img.shields.io/badge/Skills-164-green.svg)](#skills-system)
-[![Gates](https://img.shields.io/badge/Quality%20Gates-13-orange.svg)](#quality-gates)
+[![Agents](https://img.shields.io/badge/Agents-24-purple.svg)](#the-sdlc-agents)
+[![Skills](https://img.shields.io/badge/Skills-170-green.svg)](#skills-system)
+[![Gates](https://img.shields.io/badge/Quality%20Gates-14-orange.svg)](#quality-gates)
 [![Hooks](https://img.shields.io/badge/Hooks-5-red.svg)](#deterministic-iteration-enforcement)
 
 </div>
@@ -48,6 +48,7 @@ Key principles: **clear ownership** (one agent per phase), **exclusive skill own
 | **Test Pack Generation** | `/sdlc test generate` | Generate a comprehensive test suite for existing code |
 | **New Feature** | `/sdlc feature "desc"` | Develop a new feature end-to-end with full SDLC rigor |
 | **Bug Fix** | `/sdlc fix "desc"` | Fix a bug using test-driven development |
+| **Upgrade** | `/sdlc upgrade "name"` | Upgrade a dependency, runtime, or tool with impact analysis and regression testing |
 | **Full Lifecycle** | `/sdlc start` | Complete SDLC for new projects or major work |
 
 ## Get Started
@@ -95,8 +96,8 @@ The installer copies agents, skills, hooks, and configuration into your project,
 ```
 your-project/
 ├── .claude/           # Agent definitions, skills, hooks
-│   ├── agents/        # 14 SDLC agents + 9 discover agents
-│   ├── skills/        # 164 skills across 11 categories
+│   ├── agents/        # 15 SDLC agents + 9 discover agents
+│   ├── skills/        # 170 skills across 12 categories
 │   ├── hooks/         # Runtime enforcement hooks
 │   └── settings.json
 ├── .isdlc/            # Framework state and resources
@@ -114,16 +115,23 @@ your-project/
 
 ### Quick Start
 
+**Existing application:**
+
 ```bash
-# Start Claude Code in your project
-claude
+claude                                    # 1. Start Claude Code
+/discover                                 # 2. Analyze project, generate constitution
+/sdlc reverse-engineer                    # 3. Extract AC from existing code
+/sdlc test generate                       # 4. Generate comprehensive test pack
+/sdlc feature "Add user authentication"   # 5. Develop new features
+/sdlc fix "Fix login timeout bug"         #    ...or fix bugs
+```
 
-# Discover your project first (recommended for existing projects)
-/discover
+**New application:**
 
-# Then start a workflow
-/sdlc feature "Add user authentication"
-/sdlc fix "Fix login timeout bug"
+```bash
+claude                                    # 1. Start Claude Code
+/discover                                 # 2. Elicit vision, generate constitution & architecture
+/sdlc feature "Build initial feature"     # 3. Start building features
 ```
 
 ## The SDLC Agents
@@ -146,6 +154,7 @@ Each agent is a specialized AI mapped to exactly one SDLC phase, with specific r
 | **11** | **Deployment Engineer (Staging)** | Staging deployment, smoke tests, rollback | deployment-log-staging.md, smoke-test-results.md |
 | **12** | **Release Manager** | Production deployment, release coordination | release-notes.md, post-deployment-report.md |
 | **13** | **Site Reliability Engineer** | Operations, monitoring, incident response, SLAs | monitoring-config/, alert-rules.yaml, sla-tracking.md |
+| **14** | **Upgrade Engineer** | Dependency/tool upgrades with regression testing | upgrade-analysis.md, upgrade-summary.md |
 
 ### Discover Agents
 
@@ -228,6 +237,7 @@ The orchestrator provides focused workflows via `/sdlc` and `/discover` commands
 | `/sdlc test run` | Run Tests | Local Testing → Integration Testing | No |
 | `/sdlc test generate` | Generate Tests | Test Strategy → Implementation → Local Testing → Integration Testing → Code Review | No |
 | `/sdlc start` | Full Lifecycle | All 13 phases (Requirements through Operations) | Yes |
+| `/sdlc upgrade "name"` | Upgrade | Impact Analysis → Upgrade Execution → Code Review | Yes |
 | `/sdlc reverse-engineer` | Reverse Engineer | Behavior Extraction → Characterization Tests → Artifact Integration → ATDD Bridge | No |
 
 **Git branch lifecycle**: Workflows that produce code automatically create branches (`feature/REQ-NNNN-desc` or `bugfix/BUG-NNNN-id`), execute all phases on the branch, and merge to main with `--no-ff` after the final gate passes.
@@ -236,16 +246,71 @@ The orchestrator provides focused workflows via `/sdlc` and `/discover` commands
 
 ## Core Features
 
+- [**Monorepo Support**](#monorepo-support) — Multi-project management from a single installation
 - [**Project Constitution**](#project-constitution) — Customizable governance principles enforced at every quality gate
-- [**Skills System**](#skills-system) — 164 specialized skills across 11 categories with exclusive ownership
-- [**Quality Gates**](#quality-gates) — 13 validation gates with checklist-based verification
+- [**Skills System**](#skills-system) — 170 specialized skills across 12 categories with exclusive ownership
+- [**Quality Gates**](#quality-gates) — 14 validation gates with three-layer enforcement
 - [**Skill Enforcement**](#skill-enforcement) — Runtime ownership validation and audit logging
 - [**Autonomous Iteration**](#autonomous-iteration) — Self-correcting agents that iterate until tests pass
 - [**Deterministic Iteration Enforcement**](#deterministic-iteration-enforcement) — Hook-based enforcement of iteration requirements
-- [**Monorepo Support**](#monorepo-support) — Multi-project management from a single installation
 - [**Task Planning & Progress Tracking**](#task-planning--progress-tracking) — Persistent task plans with checkbox-based tracking (ORCH-012)
 
 ---
+
+### Monorepo Support
+
+The framework supports monorepo installations where multiple projects share a single framework installation.
+
+- **Auto-detection**: `install.sh` detects monorepos via workspace indicators (pnpm-workspace.yaml, turbo.json, nx.json, lerna.json, rush.json) or directory patterns
+- **Per-project isolation**: Each project gets its own `state.json`, counters, workflows, and optional constitution override
+- **Shared resources**: Agents, skills, hooks, checklists, and config are shared across all projects
+- **Backward compatible**: Single-project repos work unchanged; monorepo mode activates only when `.isdlc/monorepo.json` exists
+
+<details>
+<summary><strong>Monorepo directory structure</strong></summary>
+
+```
+monorepo/
+├── .claude/                          # Shared
+├── .isdlc/
+│   ├── monorepo.json                 # Project registry
+│   ├── constitution.md               # Shared constitution
+│   ├── config/                       # Shared config
+│   └── projects/                     # Per-project state
+│       ├── api-service/
+│       │   ├── state.json
+│       │   └── constitution.md       # Optional override
+│       └── web-frontend/
+│           └── state.json
+├── docs/
+│   ├── api-service/                  # Per-project docs
+│   │   ├── requirements/
+│   │   ├── architecture/
+│   │   └── design/
+│   └── web-frontend/
+│       ├── requirements/
+│       ├── architecture/
+│       └── design/
+└── apps/
+    ├── api-service/
+    └── web-frontend/
+```
+
+</details>
+
+```bash
+# Target a specific project
+/sdlc feature "Add auth" --project api-service
+/discover --project web-frontend
+
+# Manage projects
+/sdlc project list
+/sdlc project add shared-lib packages/shared-lib
+/sdlc project scan
+/sdlc project select api-service
+```
+
+See [docs/MONOREPO-GUIDE.md](docs/MONOREPO-GUIDE.md) for detailed setup and usage.
 
 ### Project Constitution
 
@@ -261,7 +326,7 @@ See [docs/CONSTITUTION-GUIDE.md](docs/CONSTITUTION-GUIDE.md) for the full guide.
 
 ### Skills System
 
-The framework includes **164 specialized skills** distributed across 11 categories:
+The framework includes **170 specialized skills** distributed across 12 categories:
 
 | Category | Skills | Primary Agents |
 |----------|--------|----------------|
@@ -276,12 +341,19 @@ The framework includes **164 specialized skills** distributed across 11 categori
 | **Operations** | 12 | Agent 13 (Site Reliability Engineer) |
 | **Documentation** | 10 | Distributed across agents 10, 12, 13 |
 | **Discover** | 40 | Discover sub-agents D1-D8 |
+| **Upgrade** | 6 | Agent 14 (Upgrade Engineer) |
 
-See [docs/SKILL-DISTRIBUTION.md](docs/SKILL-DISTRIBUTION.md) for detailed skill allocation.
+See [docs/DETAILED-SKILL-ALLOCATION.md](docs/DETAILED-SKILL-ALLOCATION.md) for detailed skill allocation.
 
 ### Quality Gates
 
-Each phase has a quality gate (GATE-01 through GATE-13) with specific validation criteria.
+Each phase has a quality gate (GATE-01 through GATE-14) with specific validation criteria. Gates are enforced through three layers:
+
+1. **Artifact validation** — The orchestrator checks that all required phase artifacts exist and meet quality criteria before allowing advancement
+2. **Constitutional compliance** — Agents iterate against applicable constitutional articles; the `constitution-validator.js` hook blocks phase completion until validation passes
+3. **Deterministic hook enforcement** — The `gate-blocker.js` hook intercepts any gate advancement attempt and blocks it unless all iteration requirements (tests passing, constitutional validation, stakeholder elicitation) are satisfied
+
+Gates cannot be skipped or bypassed. When iteration limits are exceeded, the system escalates to a human rather than auto-passing.
 
 <details>
 <summary><strong>Gate checklist files</strong></summary>
@@ -301,12 +373,13 @@ Each phase has a quality gate (GATE-01 through GATE-13) with specific validation
 | GATE-11 | `11-test-deploy-gate.md` | Staging deployment verified |
 | GATE-12 | `12-production-gate.md` | Production deployment complete |
 | GATE-13 | `13-operations-gate.md` | Operations stable and monitored |
+| GATE-14 | `14-upgrade-gate.md` | Upgrade complete, zero regressions, tests adequate |
 
 </details>
 
 ### Skill Enforcement
 
-Each of the 164 skills has exactly ONE owner agent, with runtime validation and audit logging.
+Each of the 170 skills has exactly ONE owner agent, with runtime validation and audit logging.
 
 - **Pre-Execution Validation**: Before using a skill, the agent validates ownership
 - **Audit Trail**: All skill usage (authorized and unauthorized) is logged to state.json
@@ -385,61 +458,6 @@ gate-blocker.js (PreToolUse)
 
 </details>
 
-### Monorepo Support
-
-The framework supports monorepo installations where multiple projects share a single framework installation.
-
-- **Auto-detection**: `install.sh` detects monorepos via workspace indicators (pnpm-workspace.yaml, turbo.json, nx.json, lerna.json, rush.json) or directory patterns
-- **Per-project isolation**: Each project gets its own `state.json`, counters, workflows, and optional constitution override
-- **Shared resources**: Agents, skills, hooks, checklists, and config are shared across all projects
-- **Backward compatible**: Single-project repos work unchanged; monorepo mode activates only when `.isdlc/monorepo.json` exists
-
-<details>
-<summary><strong>Monorepo directory structure</strong></summary>
-
-```
-monorepo/
-├── .claude/                          # Shared
-├── .isdlc/
-│   ├── monorepo.json                 # Project registry
-│   ├── constitution.md               # Shared constitution
-│   ├── config/                       # Shared config
-│   └── projects/                     # Per-project state
-│       ├── api-service/
-│       │   ├── state.json
-│       │   └── constitution.md       # Optional override
-│       └── web-frontend/
-│           └── state.json
-├── docs/
-│   ├── api-service/                  # Per-project docs
-│   │   ├── requirements/
-│   │   ├── architecture/
-│   │   └── design/
-│   └── web-frontend/
-│       ├── requirements/
-│       ├── architecture/
-│       └── design/
-└── apps/
-    ├── api-service/
-    └── web-frontend/
-```
-
-</details>
-
-```bash
-# Target a specific project
-/sdlc feature "Add auth" --project api-service
-/discover --project web-frontend
-
-# Manage projects
-/sdlc project list
-/sdlc project add shared-lib packages/shared-lib
-/sdlc project scan
-/sdlc project select api-service
-```
-
-See [docs/MONOREPO-GUIDE.md](docs/MONOREPO-GUIDE.md) for detailed setup and usage.
-
 ### Task Planning & Progress Tracking
 
 After GATE-01 passes, the orchestrator generates a persistent task plan at `.isdlc/tasks.md` (ORCH-012). The plan provides a single view of all work across workflow phases:
@@ -492,9 +510,9 @@ deployment:
 ## Project Status
 
 ### Completed
-- 14 agent definitions (SDLC) + 9 discover agents
-- 164 skills organized into 11 categories
-- 13 phase gate checklists
+- 15 agent definitions (SDLC) + 9 discover agents
+- 170 skills organized into 12 categories
+- 14 phase gate checklists
 - 7 document templates
 - Configuration system and utility scripts
 - Project Constitution system (Enhancement #1)
@@ -526,6 +544,6 @@ MIT License
 
 <div align="center">
 
-**iSDLC Framework** v2.1.0 — 23 agents, 164 skills, 13 gates, 5 hooks, 7 enhancements
+**iSDLC Framework** v2.2.0 — 24 agents, 170 skills, 14 gates, 5 hooks, 8 enhancements
 
 </div>

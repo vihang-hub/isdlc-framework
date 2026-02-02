@@ -149,8 +149,9 @@ What would you like to do?
 [4] Generate Tests    — Create new tests for existing code
 [5] Full Lifecycle    — Run complete SDLC (all 13 phases)
 [6] View Status       — Check current project status
+[7] Upgrade           — Upgrade a dependency, runtime, or tool
 
-Enter selection (1-6):
+Enter selection (1-7):
 ```
 
 ---
@@ -196,6 +197,7 @@ Enter selection (1-5):
 | 3 (Ready, no workflow) | [4] | Execute `/sdlc test generate` |
 | 3 (Ready, no workflow) | [5] | Execute `/sdlc start` (full lifecycle) |
 | 3 (Ready, no workflow) | [6] | Execute `/sdlc status` |
+| 3 (Ready, no workflow) | [7] | Ask what to upgrade, then execute `/sdlc upgrade "<name>"` |
 | 4 (Workflow active) | [1] | Resume current workflow at active phase |
 | 4 (Workflow active) | [2] | Execute `/sdlc gate-check` |
 | 4 (Workflow active) | [3] | Execute `/sdlc status` |
@@ -400,6 +402,33 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 > Let's review each article...
 ```
 
+
+**upgrade** - Upgrade a dependency, runtime, framework, or tool
+```
+/sdlc upgrade "react"
+/sdlc upgrade "typescript" --project api-service
+/sdlc upgrade "node"
+```
+1. Validate constitution exists and is not a template
+2. Check no active workflow (block if one exists, suggest `/sdlc cancel` first)
+3. Initialize `active_workflow` in state.json with type `"upgrade"` and phases `["14-upgrade-plan", "14-upgrade-execute", "07-code-review"]`
+4. **Validate test adequacy** — run the full test suite to confirm adequate coverage exists. If no tests exist, block the upgrade and recommend `/sdlc test generate` first. If coverage is below thresholds, warn the user and require explicit acceptance before proceeding.
+5. Delegate to Upgrade Engineer (Phase 14) with `scope: "analysis"`:
+   - Detect ecosystem and current version
+   - Look up available versions from registry
+   - Perform impact analysis (changelogs, codebase scan)
+   - Generate migration plan ranked by risk
+   - **Require user approval** before proceeding
+6. After plan approval: create `upgrade/{name}-v{version}` branch from main
+7. Delegate to Upgrade Engineer (Phase 14) with `scope: "execution"`:
+   - Capture baseline test results
+   - Execute migration steps with implement-test loop
+   - Max iterations configurable (default: 10)
+   - Circuit breaker: 3 identical failures → escalate
+8. Delegate to QA Engineer (Phase 07) with `scope: "upgrade-review"` for code review
+9. After GATE-07: merge branch to main, delete branch
+
+---
 
 **discover** - Analyze project and create tailored constitution
 ```
@@ -654,6 +683,7 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 | `/sdlc test run` | test-run | 10 → 06 | strict | none |
 | `/sdlc test generate` | test-generate | 04 → 05 → 10 → 06 → 07 | strict | none |
 | `/sdlc start` | full-lifecycle | 01 → ... → 05 → 10 → 06 → ... → 10(remote) → 11 → ... → 13 | strict | `feature/REQ-NNNN-...` |
+| `/sdlc upgrade` | upgrade | 14-plan → 14-execute → 07 | strict | `upgrade/{name}-v{ver}` |
 | `/sdlc reverse-engineer` | reverse-engineer | R1 → R2 → R3 → R4 | permissive | none |
 
 **Enforcement rules:**
@@ -682,6 +712,10 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 /sdlc project add shared-lib packages/shared-lib
 /sdlc project scan
 /sdlc project select api-service
+/sdlc upgrade "react"
+/sdlc upgrade "typescript" --project api-service
+/sdlc upgrade "node"
+/sdlc upgrade "express"
 /sdlc reverse-engineer
 /sdlc reverse-engineer --scope domain --target "payments"
 /sdlc reverse-engineer --priority critical --atdd-ready
@@ -720,6 +754,7 @@ When this command is invoked:
 /sdlc test run     → Task tool → sdlc-orchestrator → Initialize test-run workflow → Phase 06 agent
 /sdlc test generate → Task tool → sdlc-orchestrator → Initialize test-generate workflow → Phase agents
 /sdlc start ...    → Task tool → sdlc-orchestrator → Initialize full-lifecycle workflow → Phase agents
+/sdlc upgrade ...  → Task tool → sdlc-orchestrator → Initialize upgrade workflow → Agent 14 (analysis) → Agent 14 (execution) → Agent 07
 /sdlc cancel       → Task tool → sdlc-orchestrator → Cancel active workflow
 /sdlc <action>     → Task tool → sdlc-orchestrator → Execute Action
 ```

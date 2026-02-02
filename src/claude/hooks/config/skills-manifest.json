@@ -1,7 +1,7 @@
 {
-  "version": "2.2.0",
+  "version": "2.3.0",
   "generated": "2026-02-02",
-  "total_skills": 182,
+  "total_skills": 188,
   "enforcement_mode": "strict",
   "ownership": {
     "sdlc-orchestrator": {
@@ -153,6 +153,12 @@
       "phase": "13-operations",
       "skill_count": 14,
       "skills": ["SRE-001", "SRE-002", "SRE-003", "SRE-004", "SRE-005", "SRE-006", "SRE-007", "SRE-008", "SRE-009", "SRE-010", "SRE-011", "SRE-012", "DOC-007", "DOC-008"]
+    },
+    "upgrade-engineer": {
+      "agent_id": "14",
+      "phase": "14-upgrade",
+      "skill_count": 6,
+      "skills": ["UPG-001", "UPG-002", "UPG-003", "UPG-004", "UPG-005", "UPG-006"]
     }
   },
   "skill_lookup": {
@@ -337,7 +343,13 @@
     "RE-104": "characterization-test-generator",
     "RE-105": "characterization-test-generator",
     "RE-106": "characterization-test-generator",
-    "RE-107": "characterization-test-generator"
+    "RE-107": "characterization-test-generator",
+    "UPG-001": "upgrade-engineer",
+    "UPG-002": "upgrade-engineer",
+    "UPG-003": "upgrade-engineer",
+    "UPG-004": "upgrade-engineer",
+    "UPG-005": "upgrade-engineer",
+    "UPG-006": "upgrade-engineer"
   },
   "path_lookup": {
     "orchestration/workflow-management": "sdlc-orchestrator",
@@ -521,6 +533,12 @@
     "reverse-engineer/snapshot-creation": "characterization-test-generator",
     "reverse-engineer/boundary-input-discovery": "characterization-test-generator",
     "reverse-engineer/test-scaffold-generation": "characterization-test-generator",
-    "reverse-engineer/golden-file-management": "characterization-test-generator"
+    "reverse-engineer/golden-file-management": "characterization-test-generator",
+    "upgrade/version-detection": "upgrade-engineer",
+    "upgrade/registry-lookup": "upgrade-engineer",
+    "upgrade/impact-analysis": "upgrade-engineer",
+    "upgrade/migration-planning": "upgrade-engineer",
+    "upgrade/upgrade-execution": "upgrade-engineer",
+    "upgrade/regression-validation": "upgrade-engineer"
   }
 }

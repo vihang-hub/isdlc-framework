@@ -170,6 +170,36 @@
       "requires_branch": true
     },
 
+    "upgrade": {
+      "label": "Dependency/Tool Upgrade",
+      "command": "/sdlc upgrade <name>",
+      "description": "Upgrade a dependency, runtime, framework, or tool with full impact analysis and regression testing",
+      "phases": [
+        "14-upgrade-plan",
+        "14-upgrade-execute",
+        "07-code-review"
+      ],
+      "gate_mode": "strict",
+      "options": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "prompt": "What dependency, runtime, or tool do you want to upgrade?"
+        },
+        "max_iterations": {
+          "type": "integer",
+          "default": 10,
+          "description": "Maximum implement-test loop iterations"
+        }
+      },
+      "agent_modifiers": {
+        "14-upgrade-plan": { "scope": "analysis", "require_user_approval": true },
+        "14-upgrade-execute": { "scope": "execution", "max_iterations": 10 },
+        "07-code-review": { "scope": "upgrade-review" }
+      },
+      "requires_branch": true
+    },
+
     "reverse-engineer": {
       "label": "Reverse Engineer",
       "command": "/sdlc reverse-engineer",

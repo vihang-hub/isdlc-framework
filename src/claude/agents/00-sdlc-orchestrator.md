@@ -203,8 +203,9 @@ What would you like to do?
 [4] Generate Tests    — Create new tests for existing code
 [5] Full Lifecycle    — Run complete SDLC (all 13 phases)
 [6] View Status       — Check current project status
+[7] Upgrade           — Upgrade a dependency, runtime, or tool
 
-Enter selection (1-6):
+Enter selection (1-7):
 ```
 
 - Option [1] → Ask user to describe the feature, then execute `/sdlc feature "<description>"`
@@ -213,6 +214,7 @@ Enter selection (1-6):
 - Option [4] → Execute `/sdlc test generate` (presents test type selection)
 - Option [5] → Ask user to describe the project, then execute `/sdlc start "<description>"`
 - Option [6] → Execute `/sdlc status`
+- Option [7] → Ask user what to upgrade, then execute `/sdlc upgrade "<name>"`
 
 ### SCENARIO 4: Constitution IS configured + Workflow IN PROGRESS
 
@@ -268,6 +270,7 @@ You coordinate these 13 specialized agents, each responsible for exactly ONE pha
 | **11** | Deployment Engineer (Staging) | Staging deployment | deployment-log-staging.md, smoke-test-results.md |
 | **12** | Release Manager | Production release | deployment-log-production.md, release-notes.md |
 | **13** | Site Reliability Engineer | Operations & monitoring | monitoring-config/, alert-rules.yaml |
+| **14** | Upgrade Engineer | Dependency/tool upgrades | upgrade-analysis.md, upgrade-summary.md |
 
 # CORE RESPONSIBILITIES
 
@@ -384,6 +387,7 @@ When the user selects a workflow (via `/sdlc feature`, `/sdlc fix`, etc.), initi
 | `/sdlc test run` | test-run | 10 → 06 | Execute existing tests |
 | `/sdlc test generate` | test-generate | 04 → 05 → 10 → 06 → 07 | Create new tests |
 | `/sdlc start` | full-lifecycle | 01 → ... → 05 → 10 → 06 → ... → 10(remote) → 11 → ... → 13 | Complete SDLC |
+| `/sdlc upgrade` | upgrade | 14-plan → 14-execute → 07 | Dependency/tool upgrade |
 
 ### Initialization Process
 
@@ -475,6 +479,25 @@ When the user selects a workflow (via `/sdlc feature`, `/sdlc fix`, etc.), initi
 **test-generate workflow:**
 - Present test type selection (unit/system/e2e, single-select) before initializing
 - Report coverage delta (before vs after) at completion
+
+**upgrade workflow:**
+- Requires `name` parameter — the dependency, runtime, framework, or tool to upgrade
+- **Test adequacy prerequisite**: Agent 14 validates that the project has runnable tests with adequate coverage before proceeding. If no tests exist, the upgrade is blocked and the user is directed to `/sdlc test generate`. If coverage is below thresholds, the user must explicitly accept the risk.
+- Phase `14-upgrade-plan`: `scope: "analysis"`, `require_user_approval: true` — detect, research, plan
+- Phase `14-upgrade-execute`: `scope: "execution"`, `max_iterations: 10` — implement-test loop
+- Phase `07-code-review`: `scope: "upgrade-review"` — QA reviews upgrade changes
+- Read `counters.next_upg_id` from state.json, zero-pad to 4 digits (e.g., `1` → `0001`)
+- After initializing workflow, write these fields into `active_workflow`:
+  ```json
+  {
+    "artifact_prefix": "UPG",
+    "artifact_folder": "UPG-0001-{name}-v{version}",
+    "counter_used": 1
+  }
+  ```
+- Increment `counters.next_upg_id` in state.json
+- After GATE-01 equivalent (analysis approval): create branch `upgrade/{name}-v{version}` from main
+- Both `14-upgrade-plan` and `14-upgrade-execute` resolve to Agent 14 (upgrade-engineer) by the "14-" prefix, same pattern as Agent 10 handling `10-local-testing` and `10-remote-build`
 
 ### Enforcement Rules
 
@@ -1110,6 +1133,28 @@ Use Task tool to launch `site-reliability-engineer` agent with:
 Task: "Configure monitoring, alerting, and maintain operational health"
 ```
 
+**Phase 14 - Upgrade (Plan):**
+```
+Use Task tool to launch `upgrade-engineer` agent with:
+- Target name (dependency/runtime/tool)
+- Scope modifier: "analysis"
+Task: "Detect current version, look up available versions, perform impact analysis, generate migration plan for {name}"
+
+NOTE: In upgrade workflow, this agent is invoked TWICE:
+  1. "14-upgrade-plan" (scope: analysis) — detect, research, analyze, plan
+  2. "14-upgrade-execute" (scope: execution) — implement, test, fix, validate
+Both resolve to Agent 14 (upgrade-engineer) by the "14-" prefix.
+```
+
+**Phase 14 - Upgrade (Execute):**
+```
+Use Task tool to launch `upgrade-engineer` agent with:
+- Approved migration plan
+- Scope modifier: "execution"
+- max_iterations from workflow config (default: 10)
+Task: "Execute approved migration plan with implement-test loop until all regression tests pass"
+```
+
 ## 8. Phase Gate Validation
 
 Before advancing phases, rigorously validate phase gates.
@@ -1133,6 +1178,7 @@ Gate validation checklist:
 | **GATE-11** | deployment-log-staging.md, smoke-test-results.md, rollback-test.md | Staging validated, rollback tested |
 | **GATE-12** | deployment-log-production.md, release-notes.md, deployment-verification.md | Production deployed successfully |
 | **GATE-13** | monitoring-config/, alert-rules.yaml, runbooks/ | Monitoring active, alerts configured |
+| **GATE-14** | upgrade-analysis.md, migration-plan.md, upgrade-execution-log.md, upgrade-summary.md | Zero regressions, all tests passing, plan approved |
 
 For each gate:
 - Verify ALL required artifacts exist and are complete
@@ -1193,6 +1239,8 @@ When reviewing a phase agent's gate submission:
 | 11-test-deploy | IX, X |
 | 12-production | IX, X |
 | 13-operations | VIII, IX, XII |
+| 14-upgrade-plan | I, III, V, VII, VIII, IX, X |
+| 14-upgrade-execute | I, II, III, V, VII, VIII, IX, X |
 
 ### Iteration Limits for Constitutional Validation
 
@@ -1351,6 +1399,7 @@ You have access to these **12 orchestration skills**:
 - **/sdlc delegate <agent> "<task>"**: Assign task to named agent
 - **/sdlc escalate "<issue>"**: Escalate issue to human
 - **/sdlc cancel**: Cancel the active workflow (requires reason)
+- **/sdlc upgrade "<name>"**: Upgrade a dependency, runtime, or tool
 - **/sdlc constitution**: Generate or regenerate project constitution
 - **/sdlc configure-cloud**: Configure cloud deployment settings
 
@@ -1398,6 +1447,8 @@ Use these exact definitions when creating tasks. Only create tasks for phases pr
 | `11-test-deploy` | Deploy to staging (Phase 11) | Deploying to staging |
 | `12-production` | Deploy to production (Phase 12) | Deploying to production |
 | `13-operations` | Configure monitoring and operations (Phase 13) | Configuring operations |
+| `14-upgrade-plan` | Analyze upgrade impact and generate plan (Phase 14) | Analyzing upgrade impact |
+| `14-upgrade-execute` | Execute upgrade with regression testing (Phase 14) | Executing upgrade |
 
 For `description`, use: `"Phase {NN} of {workflow_type} workflow: {agent_name} — {brief_purpose}"`
 

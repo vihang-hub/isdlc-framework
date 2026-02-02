@@ -1,6 +1,6 @@
 # iSDLC Framework Repository
 
-This is the **iSDLC Framework** itself - a comprehensive SDLC framework for Claude Code with 14 specialized AI agents.
+This is the **iSDLC Framework** itself - a comprehensive SDLC framework for Claude Code with 15 specialized AI agents.
 
 ## Repository Type
 
@@ -8,7 +8,7 @@ This is the **iSDLC Framework** itself - a comprehensive SDLC framework for Clau
 
 ## What's in This Repository
 
-### SDLC Agents (14 Specialized AI Agents)
+### SDLC Agents (15 Specialized AI Agents)
 Located in `src/claude/agents/`:
 - **00-sdlc-orchestrator.md** - Coordinates all phases and validates gates
 - **01-requirements-analyst.md** - Captures requirements, user stories, NFRs
@@ -24,6 +24,7 @@ Located in `src/claude/agents/`:
 - **11-deployment-engineer-staging.md** - Handles staging deployments
 - **12-release-manager.md** - Manages production releases
 - **13-site-reliability-engineer.md** - Operations and monitoring
+- **14-upgrade-engineer.md** - Dependency/tool upgrades with regression testing
 
 ### Discover Agents (8 Sub-Agents + 1 Orchestrator)
 Located in `src/claude/agents/discover/`:
@@ -37,8 +38,8 @@ Located in `src/claude/agents/discover/`:
 - **product-analyst.md** - Vision elicitation, brainstorming, PRD generation (D7)
 - **architecture-designer.md** - Designs architecture from PRD and tech stack (D8)
 
-### Skills (164 Specialized Skills)
-Located in `src/claude/skills/` organized in 11 categories:
+### Skills (170 Specialized Skills)
+Located in `src/claude/skills/` organized in 12 categories:
 - **orchestration/** (10 skills) - Workflow management, gates, delegation
 - **requirements/** (10 skills) - Elicitation, user stories, NFR quantification
 - **architecture/** (12 skills) - Architecture patterns, tech evaluation, ADRs
@@ -50,10 +51,11 @@ Located in `src/claude/skills/` organized in 11 categories:
 - **documentation/** (10 skills) - Technical writing, API docs, runbooks
 - **operations/** (12 skills) - Monitoring, incident response, SLA management
 - **discover/** (40 skills) - Project analysis, vision elicitation, PRD generation, architecture design
+- **upgrade/** (6 skills) - Version detection, registry lookup, impact analysis, migration planning
 
 ### Framework Resources
 Located in `src/isdlc/`:
-- **checklists/** - 13 phase gate validation checklists
+- **checklists/** - 14 phase gate validation checklists
 - **templates/** - Document templates for artifacts
 - **config/** - Configuration files (defaults, coding standards, testing standards, skills manifest, workflow definitions)
 - **scripts/** - Utility scripts (validate-state, generate-report)
@@ -121,6 +123,7 @@ Instead of always running all 13 phases, the framework provides focused workflow
 | `/sdlc test run` | Run Tests | 10 → 06 |
 | `/sdlc test generate` | Generate Tests | 04 → 05 → 10 → 06 → 07 |
 | `/sdlc start` | Full Lifecycle | 01 → ... → 05 → 10 → 06 → ... → 10(remote) → 11 → ... → 13 |
+| `/sdlc upgrade` | Upgrade | 14-plan → 14-execute → 07 |
 
 Workflow definitions are in `.isdlc/config/workflows.json`. Each workflow has a fixed, non-skippable phase sequence with strict gate enforcement.
 
@@ -196,8 +199,8 @@ For detailed setup instructions, see `docs/MONOREPO-GUIDE.md`.
 ## For Claude Code AI Agents
 
 When invoked in this repository:
-- You have access to all 14 agent definitions
-- You have access to all 164 skills
+- You have access to all 15 agent definitions
+- You have access to all 170 skills
 - You can reference templates, checklists, and configs
 - Focus on framework development, not project implementation
 - Help maintain consistency across agents and artifacts
