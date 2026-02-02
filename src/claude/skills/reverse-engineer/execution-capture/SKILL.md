@@ -282,6 +282,20 @@ const captured = {
 | response_snapshot | JSON | Response data |
 | side_effect_log | Array | Tracked side effects |
 
+## Project-Specific Considerations
+- Configure test database with realistic seed data
+- Handle authentication tokens for protected endpoints
+- Set up appropriate mock servers for external APIs
+- Account for rate limiting and retry logic
+- Document environment variables needed for execution
+
+## Integration Points
+- **AC Generation (RE-002)**: Executes paths defined in AC
+- **Side Effect Mocking (RE-103)**: Uses mock configuration
+- **Fixture Generation (RE-102)**: Captured data seeds fixtures
+- **Snapshot Creation (RE-104)**: Captured responses become snapshots
+- **Test Evaluator (D2)**: Validates against existing test patterns
+
 ## Validation
 - All inputs executed
 - Outputs fully captured

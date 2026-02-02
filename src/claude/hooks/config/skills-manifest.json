@@ -76,6 +76,18 @@
       "skill_count": 7,
       "skills": ["RE-101", "RE-102", "RE-103", "RE-104", "RE-105", "RE-106", "RE-107"]
     },
+    "artifact-integration": {
+      "agent_id": "R3",
+      "phase": "R3-artifact-integration",
+      "skill_count": 3,
+      "skills": ["RE-201", "RE-202", "RE-203"]
+    },
+    "atdd-bridge": {
+      "agent_id": "R4",
+      "phase": "R4-atdd-bridge",
+      "skill_count": 3,
+      "skills": ["RE-301", "RE-302", "RE-303"]
+    },
     "requirements-analyst": {
       "agent_id": "01",
       "phase": "01-requirements",
@@ -344,6 +356,12 @@
     "RE-105": "characterization-test-generator",
     "RE-106": "characterization-test-generator",
     "RE-107": "characterization-test-generator",
+    "RE-201": "artifact-integration",
+    "RE-202": "artifact-integration",
+    "RE-203": "artifact-integration",
+    "RE-301": "atdd-bridge",
+    "RE-302": "atdd-bridge",
+    "RE-303": "atdd-bridge",
     "UPG-001": "upgrade-engineer",
     "UPG-002": "upgrade-engineer",
     "UPG-003": "upgrade-engineer",
@@ -534,6 +552,12 @@
     "reverse-engineer/boundary-input-discovery": "characterization-test-generator",
     "reverse-engineer/test-scaffold-generation": "characterization-test-generator",
     "reverse-engineer/golden-file-management": "characterization-test-generator",
+    "reverse-engineer/ac-feature-linking": "artifact-integration",
+    "reverse-engineer/traceability-matrix-generation": "artifact-integration",
+    "reverse-engineer/report-generation": "artifact-integration",
+    "reverse-engineer/atdd-checklist-generation": "atdd-bridge",
+    "reverse-engineer/ac-behavior-tagging": "atdd-bridge",
+    "reverse-engineer/priority-migration": "atdd-bridge",
     "upgrade/version-detection": "upgrade-engineer",
     "upgrade/registry-lookup": "upgrade-engineer",
     "upgrade/impact-analysis": "upgrade-engineer",

@@ -189,6 +189,20 @@ And sync timestamp is recorded
 | ac_metadata | JSON | Source, confidence, priority |
 | extraction_notes | Markdown | Details for review |
 
+## Project-Specific Considerations
+- Follow existing AC naming conventions if project has them (AC-001, US-001-AC-01, etc.)
+- Include domain-specific terminology from project glossary
+- Reference existing user stories or requirements if available
+- Align Given-When-Then style with existing test patterns
+- Note compliance requirements (GDPR, PCI-DSS) in relevant AC
+
+## Integration Points
+- **Behavior Extraction (RE-001)**: Consumes behavior models as input
+- **Precondition Inference (RE-003)**: Provides Given clause details
+- **Postcondition Inference (RE-004)**: Provides Then clause details
+- **Test Scaffold Generation (RE-106)**: AC used to generate test cases
+- **Requirements Analyst (01)**: AC format aligns with forward-engineering AC
+
 ## Validation
 - Given clauses capture all preconditions
 - When clauses are specific and actionable

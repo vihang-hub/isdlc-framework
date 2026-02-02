@@ -43,3 +43,6 @@ docs/SESSION-*.md
 
 # Archive of old documentation
 docs/archive/
+
+# Local setup scripts
+setup-remotes.sh

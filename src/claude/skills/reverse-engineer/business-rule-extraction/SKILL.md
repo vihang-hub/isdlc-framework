@@ -260,6 +260,20 @@ if (daysSinceOrder > RETURN_WINDOW_DAYS) {
 | state_machine | Object | State transition rules |
 | calculations | Array | Calculation formulas |
 
+## Project-Specific Considerations
+- Document currency handling and rounding rules for financial calculations
+- Note timezone handling for date-based business rules
+- Include localization rules if behavior varies by region
+- Map to existing business rule documentation if available
+- Flag rules that may need compliance review (pricing, eligibility)
+
+## Integration Points
+- **Behavior Extraction (RE-001)**: Receives conditional logic from control flow
+- **AC Generation (RE-002)**: Business rules become AC scenarios
+- **Boundary Input Discovery (RE-105)**: Rules inform boundary values
+- **Test Design Engineer (04)**: Rules guide test case design
+- **Requirements Analyst (01)**: Cross-reference with documented requirements
+
 ## Validation
 - All conditionals analyzed
 - Business meaning documented

@@ -280,6 +280,20 @@ export const generateBoundaryTests = (
 | edge_cases | Array | Edge case inputs |
 | test_matrix | Array | Full test case list |
 
+## Project-Specific Considerations
+- Respect domain-specific constraints (e.g., valid date ranges for bookings)
+- Include locale-specific edge cases (Unicode, RTL text)
+- Generate SQL injection and XSS payloads for security boundary tests
+- Consider API rate limits as boundary conditions
+- Include file size limits for upload endpoints
+
+## Integration Points
+- **Precondition Inference (RE-003)**: Validation rules inform boundaries
+- **Business Rule Extraction (RE-006)**: Business limits define boundaries
+- **Fixture Generation (RE-102)**: Boundary values added to fixtures
+- **Test Scaffold Generation (RE-106)**: Boundary tests in test files
+- **Security Auditor (08)**: Security boundaries for penetration testing
+
 ## Validation
 - All boundaries identified
 - Both sides of limits covered

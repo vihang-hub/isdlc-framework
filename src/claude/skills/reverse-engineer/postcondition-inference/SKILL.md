@@ -237,6 +237,20 @@ return {
 | mutations | Array | Database/state changes |
 | events | Array | Emitted events/messages |
 
+## Project-Specific Considerations
+- Handle custom response wrappers and envelope patterns
+- Document pagination metadata in list responses
+- Note HATEOAS links if API follows REST maturity level 3
+- Include rate limit headers in response documentation
+- Account for content negotiation (JSON vs XML responses)
+
+## Integration Points
+- **Behavior Extraction (RE-001)**: Receives return type information
+- **AC Generation (RE-002)**: Provides Then clauses for AC
+- **Side Effect Detection (RE-005)**: Shares mutation analysis
+- **Fixture Generation (RE-102)**: Response shapes inform expected outputs
+- **Snapshot Creation (RE-104)**: Response shapes guide snapshot structure
+
 ## Validation
 - All return paths documented
 - Response shape fully captured
