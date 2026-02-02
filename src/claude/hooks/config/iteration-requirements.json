@@ -1,8 +1,81 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Deterministic iteration requirements per phase - enforced by hooks",
 
   "phase_requirements": {
+    "R1-behavior-extraction": {
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": false
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 5,
+        "articles": ["I", "VII", "VIII", "IX"]
+      },
+      "extraction_validation": {
+        "enabled": true,
+        "min_confidence_percent": 80,
+        "max_iterations": 10
+      }
+    },
+
+    "R2-characterization-tests": {
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": true,
+        "max_iterations": 10,
+        "circuit_breaker_threshold": 3,
+        "test_commands": ["npm test", "npm run test", "yarn test", "pnpm test", "pytest", "python -m pytest", "go test", "cargo test", "jest", "vitest"],
+        "success_criteria": {
+          "all_tests_generated": true,
+          "fixtures_complete": true
+        }
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 5,
+        "articles": ["II", "VII", "VIII", "IX", "XI"]
+      }
+    },
+
+    "R3-artifact-integration": {
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": false
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 5,
+        "articles": ["VII", "IX"]
+      }
+    },
+
+    "R4-atdd-bridge": {
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": false
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 5,
+        "articles": ["II", "VII", "IX"]
+      },
+      "atdd_validation": {
+        "enabled": true,
+        "when": "atdd_ready_flag",
+        "requires": ["atdd_checklist_generated", "ac_tagged_as_captured_behavior"]
+      }
+    },
+
     "01-requirements": {
       "interactive_elicitation": {
         "enabled": true,
@@ -259,6 +332,21 @@
 
   "workflow_overrides": {
     "_comment": "Per-workflow overrides that merge with base phase_requirements when a workflow is active",
+
+    "reverse-engineer": {
+      "R1-behavior-extraction": {
+        "extraction_validation": {
+          "min_confidence_percent": 70,
+          "_comment": "Allow lower confidence threshold when --priority critical is used"
+        }
+      },
+      "R2-characterization-tests": {
+        "test_iteration": {
+          "max_iterations": 15,
+          "_comment": "Allow more iterations for complex test generation"
+        }
+      }
+    },
 
     "fix": {
       "01-requirements": {
