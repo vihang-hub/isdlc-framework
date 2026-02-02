@@ -33,7 +33,7 @@
 
 ## What is iSDLC?
 
-The iSDLC (integrated Software Development Lifecycle) framework implements a **1-to-1 mapping** between 13 SDLC phases and 13 specialized AI agents, coordinated by an orchestrator. Each phase has exactly ONE dedicated agent, creating clear ownership, simplified workflows, and explicit handoff points.
+The iSDLC (integrated Software Development Lifecycle) framework implements a **1-to-1 mapping** between 14 SDLC phases and 14 specialized AI agents, coordinated by an orchestrator. Each phase has exactly ONE dedicated agent, creating clear ownership, simplified workflows, and explicit handoff points.
 
 The framework is designed to be installed **into your existing project**. It provides structured multi-agent workflows, quality gates between every phase, and standardized processes for building software using AI-powered development with Claude Code.
 
@@ -126,6 +126,15 @@ claude                                    # 1. Start Claude Code
 /sdlc fix "Fix login timeout bug"         #    ...or fix bugs
 ```
 
+**Upgrade a dependency or tool:**
+
+```bash
+claude                                    # 1. Start Claude Code
+/discover                                 # 2. Analyze project, generate constitution
+/sdlc test generate                       # 3. Generate comprehensive test pack
+/sdlc upgrade "Node.js 22"               # 4. Upgrade with impact analysis & regression testing
+```
+
 **New application:**
 
 ```bash
@@ -174,7 +183,7 @@ The `/discover` command uses 9 specialized sub-agents to analyze projects before
 
 ## Development Phases
 
-The framework implements a linear 13-phase workflow with quality gates between each phase.
+The framework implements a linear 14-phase workflow with quality gates between each phase.
 
 <details>
 <summary><strong>Phase flow diagram</strong></summary>
@@ -219,6 +228,9 @@ Phase 12: Production Deployment
 Phase 13: Production Operations
     | (Site Reliability Engineer)
     v GATE-13: Operations stable
+Phase 14: Upgrades
+    | (Upgrade Engineer)
+    v GATE-14: Upgrade complete, zero regressions
 ```
 
 </details>
@@ -236,7 +248,7 @@ The orchestrator provides focused workflows via `/sdlc` and `/discover` commands
 | `/sdlc fix "desc"` | Bug Fix (TDD) | Requirements → Test Strategy → Implementation → Local Testing → Integration Testing → CI/CD → Code Review | Yes |
 | `/sdlc test run` | Run Tests | Local Testing → Integration Testing | No |
 | `/sdlc test generate` | Generate Tests | Test Strategy → Implementation → Local Testing → Integration Testing → Code Review | No |
-| `/sdlc start` | Full Lifecycle | All 13 phases (Requirements through Operations) | Yes |
+| `/sdlc start` | Full Lifecycle | All 14 phases (Requirements through Operations) | Yes |
 | `/sdlc upgrade "name"` | Upgrade | Impact Analysis → Upgrade Execution → Code Review | Yes |
 | `/sdlc reverse-engineer` | Reverse Engineer | Behavior Extraction → Characterization Tests → Artifact Integration → ATDD Bridge | No |
 
@@ -314,7 +326,7 @@ See [docs/MONOREPO-GUIDE.md](docs/MONOREPO-GUIDE.md) for detailed setup and usag
 
 ### Project Constitution
 
-A project constitution is a set of immutable principles (e.g., "Test-First Development", "Security by Design") that govern all development activities. The orchestrator and all 13 phase agents read and enforce these principles at quality gates.
+A project constitution is a set of immutable principles (e.g., "Test-First Development", "Security by Design") that govern all development activities. The orchestrator and all 14 phase agents read and enforce these principles at quality gates.
 
 1. Install creates a starter template at `.isdlc/constitution.md`
 2. Customize the articles for your project — keep relevant ones, remove what doesn't apply, add your own
