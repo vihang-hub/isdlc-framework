@@ -227,6 +227,20 @@ this.eventEmitter.emit('order.created', order);        // -> EVENT:order.created
 | mock_requirements | Array | What to mock in tests |
 | external_services | Array | External dependencies |
 
+## Project-Specific Considerations
+- Identify project-specific ORM patterns (TypeORM, Prisma, Sequelize, etc.)
+- Map custom event bus implementations to standard patterns
+- Document queue technology specifics (BullMQ, RabbitMQ, SQS)
+- Note file storage patterns (local, S3, GCS)
+- Include audit logging as a side effect category if present
+
+## Integration Points
+- **Behavior Extraction (RE-001)**: Shares control flow analysis
+- **Postcondition Inference (RE-004)**: Side effects become Then clauses
+- **Side Effect Mocking (RE-103)**: Provides mock requirements
+- **Characterization Test Generator (R2)**: Guides test isolation strategy
+- **Architecture Analyzer (D1)**: Validates against integration point mapping
+
 ## Validation
 - All DB operations captured
 - External calls identified

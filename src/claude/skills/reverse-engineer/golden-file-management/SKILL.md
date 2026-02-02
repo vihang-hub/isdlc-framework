@@ -397,6 +397,20 @@ describe.skip('UPDATE GOLDEN FILES', () => {
 | manifest_entry | JSON | Entry in _manifest.json |
 | comparison_helper | Function | Compare utility |
 
+## Project-Specific Considerations
+- Store golden files in version control for team visibility
+- Document golden file update approval process
+- Configure CI to fail on unexpected golden file changes
+- Support multiple output formats (JSON, HTML, XML, CSV)
+- Include manifest for tracking golden file provenance
+
+## Integration Points
+- **Snapshot Creation (RE-104)**: Large outputs redirected to golden files
+- **Execution Capture (RE-101)**: Captured outputs become baselines
+- **Test Scaffold Generation (RE-106)**: Tests reference golden files
+- **QA Engineer (07)**: Golden file changes reviewed in PRs
+- **CI/CD Engineer (09)**: Golden file verification in pipeline
+
 ## Validation
 - File created successfully
 - Manifest updated

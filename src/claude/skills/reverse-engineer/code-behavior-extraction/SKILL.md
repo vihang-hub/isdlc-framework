@@ -148,6 +148,19 @@ function UserForm({ onSubmit }: Props) {
 | control_flow_graph | JSON | Branching and conditions |
 | dependency_list | Array | Called functions/services |
 
+## Project-Specific Considerations
+- Adapt extraction patterns based on detected framework (NestJS vs Express vs FastAPI)
+- Handle monorepo structures with shared code paths
+- Account for middleware chains and decorator patterns
+- Consider async/await patterns and Promise chains
+- Include GraphQL resolvers if detected alongside REST
+
+## Integration Points
+- **Priority Scoring (RE-008)**: Receives targets to analyze in priority order
+- **AC Generation (RE-002)**: Consumes behavior models to generate Given-When-Then
+- **Side Effect Detection (RE-005)**: Shares control flow analysis
+- **Architecture Analyzer (D1)**: Uses framework detection results
+
 ## Validation
 - All entry points identified
 - Input/output types captured

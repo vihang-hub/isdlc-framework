@@ -208,6 +208,19 @@ Some preconditions are implicit and must be inferred:
 | auth_requirements | Object | Auth/authz details |
 | state_requirements | Array | Required entity states |
 
+## Project-Specific Considerations
+- Map custom auth decorators/middleware to standard patterns
+- Include tenant/organization isolation for multi-tenant apps
+- Document feature flag dependencies as preconditions
+- Note environment-specific preconditions (dev vs prod behavior)
+- Handle custom validation frameworks beyond standard decorators
+
+## Integration Points
+- **Behavior Extraction (RE-001)**: Receives guard/middleware chain information
+- **AC Generation (RE-002)**: Provides Given clauses for AC
+- **Fixture Generation (RE-102)**: Preconditions inform test setup requirements
+- **Security Auditor (08)**: Auth requirements feed security review
+
 ## Validation
 - All guards and middleware captured
 - Validation rules documented

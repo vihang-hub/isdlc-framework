@@ -286,6 +286,19 @@ tests/characterization/
 | snapshot_test | TypeScript | Test with snapshot assertion |
 | update_helper | TypeScript | Golden file update script |
 
+## Project-Specific Considerations
+- Use project's snapshot format (Jest inline, separate .snap files)
+- Configure snapshot serializers for custom types
+- Document snapshot update workflow for the team
+- Handle CI/CD snapshot verification setup
+- Include snapshot review guidelines in PR process
+
+## Integration Points
+- **Execution Capture (RE-101)**: Captured responses become snapshots
+- **Golden File Management (RE-107)**: Large outputs go to golden files
+- **Test Scaffold Generation (RE-106)**: Snapshot assertions in tests
+- **QA Engineer (07)**: Snapshot review in code review process
+
 ## Validation
 - Dynamic values normalized
 - Snapshots deterministic

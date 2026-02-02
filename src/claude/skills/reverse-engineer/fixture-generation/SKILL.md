@@ -296,6 +296,20 @@ export * from './shared/factories';
 | factory_functions | TypeScript | Dynamic generators |
 | seed_data | JSON/SQL | Database seed scripts |
 
+## Project-Specific Considerations
+- Use existing fixture patterns if project has them (factory-bot style, etc.)
+- Generate realistic data using faker libraries appropriate to domain
+- Include PII-safe test data (no real emails, SSNs, etc.)
+- Support both TypeScript and JavaScript based on project config
+- Align with existing test data management approach
+
+## Integration Points
+- **Execution Capture (RE-101)**: Observed data informs fixtures
+- **Data Transformation Mapping (RE-007)**: Type definitions guide structure
+- **Test Scaffold Generation (RE-106)**: Fixtures imported by tests
+- **Boundary Input Discovery (RE-105)**: Edge cases added to fixtures
+- **Software Developer (05)**: Aligns with existing test fixtures
+
 ## Validation
 - All required fields present
 - Types match definitions

@@ -251,6 +251,19 @@ const price = dto.type === 'premium'
 | excluded_fields | Array | Fields removed from output |
 | enrichment_sources | Array | External lookups |
 
+## Project-Specific Considerations
+- Document serialization libraries used (class-transformer, marshmallow, etc.)
+- Note sensitive field handling (PII masking, encryption)
+- Map custom type converters and transformers
+- Include pagination transformation patterns
+- Document versioned response transformations for API versioning
+
+## Integration Points
+- **Behavior Extraction (RE-001)**: Receives input/output type information
+- **Fixture Generation (RE-102)**: Transformations guide fixture structure
+- **Postcondition Inference (RE-004)**: Transformation results become assertions
+- **System Designer (03)**: Aligns with data flow documentation
+
 ## Validation
 - All input fields traced
 - All output fields sourced

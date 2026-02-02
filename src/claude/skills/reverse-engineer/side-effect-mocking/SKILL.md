@@ -381,6 +381,20 @@ describe('UserService', () => {
 | setup_helpers | TypeScript | Test setup utilities |
 | capture_types | TypeScript | Captured data types |
 
+## Project-Specific Considerations
+- Use project's existing mocking library (Jest, Sinon, unittest.mock)
+- Align mock patterns with existing test infrastructure
+- Support dependency injection patterns used in the project
+- Handle TypeORM/Prisma/Sequelize repository patterns appropriately
+- Include mock reset utilities for test isolation
+
+## Integration Points
+- **Side Effect Detection (RE-005)**: Receives list of effects to mock
+- **Execution Capture (RE-101)**: Mocks enable isolated execution
+- **Test Scaffold Generation (RE-106)**: Mocks imported by test files
+- **Test Evaluator (D2)**: Aligns with existing mock patterns
+- **Integration Tester (06)**: Mock strategy supports test types
+
 ## Validation
 - All side effects mockable
 - Capture mechanisms working

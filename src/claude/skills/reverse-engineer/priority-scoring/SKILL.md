@@ -246,6 +246,20 @@ Based on priority scores and dependencies:
 | priority_breakdown | Object | P0/P1/P2/P3 counts |
 | recommended_order | Array | Suggested analysis order |
 
+## Project-Specific Considerations
+- Adjust domain criticality scores based on project context (e.g., healthcare prioritizes compliance over revenue)
+- Consider regulatory requirements (PCI-DSS, HIPAA, GDPR) when scoring business criticality
+- Factor in upcoming deadlines or release schedules for time-sensitive code
+- Account for team knowledge - code owned by departed team members may need higher priority
+- Include technical debt indicators if available from static analysis tools
+
+## Integration Points
+- **Behavior Analyzer (R1)**: Receives prioritized target list for extraction order
+- **Test Evaluator (D2)**: Consumes coverage data from test evaluation report
+- **Feature Mapper (D6)**: Uses domain mapping from feature discovery
+- **Orchestrator**: Reports priority breakdown for workflow planning
+- **ATDD Workflow**: P0/P1 targets recommended for --atdd-ready flag
+
 ## Validation
 - All targets scored
 - Factors consistently weighted

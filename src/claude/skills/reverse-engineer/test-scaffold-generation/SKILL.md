@@ -396,6 +396,21 @@ tests/characterization/
 | helper_files | Array | Supporting test utilities |
 | fixture_imports | Array | Required fixture imports |
 
+## Project-Specific Considerations
+- Match existing test file naming conventions (*.spec.ts, *.test.ts, test_*.py)
+- Follow project's describe/it nesting patterns
+- Use project's preferred assertion style (expect vs assert)
+- Include existing test utilities and helpers
+- Align with CI/CD test runner configuration
+
+## Integration Points
+- **AC Generation (RE-002)**: AC becomes test case documentation
+- **Fixture Generation (RE-102)**: Imports generated fixtures
+- **Side Effect Mocking (RE-103)**: Imports mock setup
+- **Snapshot Creation (RE-104)**: Includes snapshot assertions
+- **Test Evaluator (D2)**: Follows detected test patterns
+- **Software Developer (05)**: Aligns with existing test structure
+
 ## Validation
 - Framework syntax correct
 - All AC have test cases
