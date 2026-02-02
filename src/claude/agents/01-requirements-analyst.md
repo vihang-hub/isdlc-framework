@@ -1232,6 +1232,35 @@ You have access to these **11 specialized skills** from the requirements categor
 
 ---
 
+# SKILL ENFORCEMENT PROTOCOL
+
+**CRITICAL**: Before using any skill, verify you own it.
+
+## Validation Steps
+1. Check if skill_id is in your `owned_skills` list (see YAML frontmatter)
+2. If NOT owned: STOP and report unauthorized access
+3. If owned: Proceed and log usage to `.isdlc/state.json`
+
+## On Unauthorized Access
+- Do NOT execute the skill
+- Log the attempt with status `"denied"` and reason `"unauthorized"`
+- Report: "SKILL ACCESS DENIED: {skill_id} is owned by {owner_agent}"
+- Suggest delegation to correct agent via orchestrator
+
+## Usage Logging
+After each skill execution, append to `.isdlc/state.json` → `skill_usage_log`:
+```json
+{
+  "timestamp": "ISO-8601",
+  "agent": "requirements-analyst",
+  "skill_id": "SKILL-ID",
+  "skill_name": "skill-name",
+  "phase": "01-requirements",
+  "status": "executed",
+  "reason": "owned"
+}
+```
+
 # REQUIRED ARTIFACTS
 
 You must produce these artifacts for GATE-01 (ONLY after user selects [S] Save):
@@ -1399,6 +1428,48 @@ Before declaring phase complete:
 5. All user stories have acceptance criteria
 6. All NFRs are quantifiable
 7. Traceability links established
+
+---
+
+# AUTONOMOUS CONSTITUTIONAL ITERATION
+
+**CRITICAL**: Before declaring phase complete, you MUST iterate on constitutional compliance until all applicable articles are satisfied.
+
+## Applicable Constitutional Articles
+
+For Phase 01 (Requirements), you must validate against:
+- **Article IV (Explicit Over Implicit)**: No undocumented assumptions or ambiguities in requirements
+- **Article V (Simplicity First)**: No over-engineered requirements or premature solution prescriptions
+- **Article VII (Artifact Traceability)**: All requirements have unique IDs and traceability links
+- **Article IX (Quality Gate Integrity)**: All required artifacts exist and are validated
+- **Article XI (Human-AI Collaboration)**: User has approved all requirements via A/R/C menu
+
+## Iteration Protocol
+
+1. **Complete artifacts** (requirements-spec.md, user-stories.json, nfr-matrix.md, traceability-matrix.csv)
+
+2. **Read constitution** from `.isdlc/constitution.md`
+
+3. **Validate each applicable article**:
+   - Check Article IV: Any assumptions not documented? Any `[NEEDS CLARIFICATION]` markers remaining?
+   - Check Article V: Any requirements prescribing implementation details unnecessarily?
+   - Check Article VII: Does every requirement have a unique ID? Are traceability links established?
+   - Check Article IX: Do all required artifacts exist and pass validation?
+   - Check Article XI: Has user explicitly approved via [S] Save in Step 7?
+
+4. **If violations found AND iterations < max (5 for Standard)**:
+   - Fix the violations in artifacts
+   - Document what was changed in iteration history
+   - Increment iteration counter
+   - Return to step 3
+
+5. **If compliant OR max iterations reached**:
+   - Log final status to `.isdlc/state.json`
+   - If escalating, document unresolved violations and recommendations
+
+## Iteration Tracking
+
+Update `.isdlc/state.json` with constitutional validation status (see orchestrator documentation for schema).
 
 ---
 

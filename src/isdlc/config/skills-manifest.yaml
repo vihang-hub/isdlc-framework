@@ -8,7 +8,7 @@
 
 version: "2.0.0"
 generated: "2026-01-17"
-total_skills: 162
+total_skills: 163
 enforcement_mode: strict  # strict | warn | audit
 
 # =============================================================================
@@ -253,7 +253,7 @@ ownership:
   requirements-analyst:
     agent_id: "01"
     phase: "01-requirements"
-    skill_count: 10
+    skill_count: 11
     skills:
       - id: REQ-001
         name: elicitation
@@ -285,6 +285,9 @@ ownership:
       - id: REQ-010
         name: nfr-quantification
         path: requirements/nfr-quantification
+      - id: REQ-011
+        name: domain-research
+        path: requirements/domain-research
 
   # ---------------------------------------------------------------------------
   # Agent 02: Solution Architect
@@ -774,6 +777,7 @@ skill_lookup:
   REQ-008: requirements-analyst
   REQ-009: requirements-analyst
   REQ-010: requirements-analyst
+  REQ-011: requirements-analyst
 
   # Architecture
   ARCH-001: solution-architect
@@ -962,6 +966,7 @@ path_lookup:
   requirements/traceability: requirements-analyst
   requirements/acceptance-criteria: requirements-analyst
   requirements/nfr-quantification: requirements-analyst
+  requirements/domain-research: requirements-analyst
 
   # Architecture
   architecture/architecture-pattern-selection: solution-architect

@@ -106,6 +106,6 @@
 ## Next Phase
 
 Upon passing this gate:
-- Advance to Phase 10: Local Development & Manual Testing
-- Primary Agent: Dev Environment Engineer (Agent 10)
+- Advance to Phase 10: Environment Build & Launch
+- Primary Agent: Environment Builder (Agent 10)
 - Next Phase Handler: environment-builder

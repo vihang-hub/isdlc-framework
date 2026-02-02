@@ -37,7 +37,7 @@ Located in `src/claude/agents/discover/`:
 - **product-analyst.md** - Vision elicitation, brainstorming, PRD generation (D7)
 - **architecture-designer.md** - Designs architecture from PRD and tech stack (D8)
 
-### Skills (162 Specialized Skills)
+### Skills (163 Specialized Skills)
 Located in `src/claude/skills/` organized in 11 categories:
 - **orchestration/** (10 skills) - Workflow management, gates, delegation
 - **requirements/** (10 skills) - Elicitation, user stories, NFR quantification
@@ -165,7 +165,7 @@ See:
 
 When invoked in this repository:
 - You have access to all 14 agent definitions
-- You have access to all 162 skills
+- You have access to all 163 skills
 - You can reference templates, checklists, and configs
 - Focus on framework development, not project implementation
 - Help maintain consistency across agents and artifacts

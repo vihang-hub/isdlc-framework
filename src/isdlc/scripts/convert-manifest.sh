@@ -107,31 +107,31 @@ cat > "$JSON_OUTPUT" << 'JSONEOF'
 {
   "version": "2.0.0",
   "generated": "2026-01-17",
-  "total_skills": 119,
+  "total_skills": 123,
   "enforcement_mode": "strict",
   "ownership": {
     "sdlc-orchestrator": {
       "agent_id": "00",
       "phase": "all",
-      "skill_count": 10,
-      "skills": ["ORCH-001", "ORCH-002", "ORCH-003", "ORCH-004", "ORCH-005", "ORCH-006", "ORCH-007", "ORCH-008", "ORCH-009", "ORCH-010"]
+      "skill_count": 11,
+      "skills": ["ORCH-001", "ORCH-002", "ORCH-003", "ORCH-004", "ORCH-005", "ORCH-006", "ORCH-007", "ORCH-008", "ORCH-009", "ORCH-010", "ORCH-011"]
     },
     "requirements-analyst": {
       "agent_id": "01",
       "phase": "01-requirements",
-      "skill_count": 10,
-      "skills": ["REQ-001", "REQ-002", "REQ-003", "REQ-004", "REQ-005", "REQ-006", "REQ-007", "REQ-008", "REQ-009", "REQ-010"]
+      "skill_count": 11,
+      "skills": ["REQ-001", "REQ-002", "REQ-003", "REQ-004", "REQ-005", "REQ-006", "REQ-007", "REQ-008", "REQ-009", "REQ-010", "REQ-011"]
     },
     "solution-architect": {
       "agent_id": "02",
       "phase": "02-architecture",
-      "skill_count": 12,
+      "skill_count": 13,
       "skills": ["ARCH-001", "ARCH-002", "ARCH-003", "ARCH-004", "ARCH-005", "ARCH-006", "ARCH-007", "ARCH-008", "ARCH-009", "ARCH-010", "ARCH-011", "ARCH-012", "DOC-009"]
     },
     "system-designer": {
       "agent_id": "03",
       "phase": "03-design",
-      "skill_count": 10,
+      "skill_count": 11,
       "skills": ["DES-001", "DES-002", "DES-003", "DES-004", "DES-005", "DES-006", "DES-007", "DES-008", "DES-009", "DES-010", "DOC-010"]
     },
     "test-design-engineer": {
@@ -206,6 +206,7 @@ cat > "$JSON_OUTPUT" << 'JSONEOF'
     "ORCH-008": "sdlc-orchestrator",
     "ORCH-009": "sdlc-orchestrator",
     "ORCH-010": "sdlc-orchestrator",
+    "ORCH-011": "sdlc-orchestrator",
     "REQ-001": "requirements-analyst",
     "REQ-002": "requirements-analyst",
     "REQ-003": "requirements-analyst",
@@ -216,6 +217,7 @@ cat > "$JSON_OUTPUT" << 'JSONEOF'
     "REQ-008": "requirements-analyst",
     "REQ-009": "requirements-analyst",
     "REQ-010": "requirements-analyst",
+    "REQ-011": "requirements-analyst",
     "ARCH-001": "solution-architect",
     "ARCH-002": "solution-architect",
     "ARCH-003": "solution-architect",
@@ -329,6 +331,7 @@ cat > "$JSON_OUTPUT" << 'JSONEOF'
     "orchestration/risk-assessment": "sdlc-orchestrator",
     "orchestration/assess-complexity.md": "sdlc-orchestrator",
     "orchestration/skill-validation": "sdlc-orchestrator",
+    "orchestration/autonomous-constitution-validate.md": "sdlc-orchestrator",
     "requirements/elicitation": "requirements-analyst",
     "requirements/user-stories": "requirements-analyst",
     "requirements/classification": "requirements-analyst",
@@ -339,6 +342,7 @@ cat > "$JSON_OUTPUT" << 'JSONEOF'
     "requirements/traceability": "requirements-analyst",
     "requirements/acceptance-criteria": "requirements-analyst",
     "requirements/nfr-quantification": "requirements-analyst",
+    "requirements/domain-research": "requirements-analyst",
     "architecture/architecture-pattern-selection": "solution-architect",
     "architecture/technology-evaluation": "solution-architect",
     "architecture/database-design": "solution-architect",

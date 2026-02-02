@@ -11,7 +11,7 @@ This framework implements a **1-to-1 mapping** between 13 SDLC phases and 13 spe
 - **14 Specialized Agents** (1 Orchestrator + 13 Phase Agents)
 - **1-to-1 Phase Mapping** - Each agent owns exactly one phase
 - **13 Quality Gates** with validation checklists
-- **162 Skills** distributed across 11 categories
+- **163 Skills** distributed across 11 categories
 - **Exclusive Skill Ownership** - Each skill belongs to exactly one agent with enforcement
 - **Skill Usage Audit Trail** - All skill executions logged for compliance tracking
 - **Adaptive Workflow** - Orchestrator determines required phases based on task complexity
@@ -34,7 +34,7 @@ isdlc-framework/
 │   │   │   └── discover/          # Discover sub-agents (D1-D6)
 │   │   ├── commands/              # Custom slash commands
 │   │   │   └── primer.md
-│   │   ├── skills/                # 162 Skills across 11 categories
+│   │   ├── skills/                # 163 Skills across 11 categories
 │   │   │   ├── orchestration/
 │   │   │   ├── requirements/
 │   │   │   ├── architecture/
@@ -240,7 +240,7 @@ Your project structure will look like:
 your-project/
 ├── .claude/           # Agent definitions and skills
 │   ├── agents/        # 14 specialized agents
-│   ├── skills/        # 162 skills across 11 categories
+│   ├── skills/        # 163 skills across 11 categories
 │   └── CLAUDE.md      # Project context for Claude
 ├── .isdlc/            # Framework state and resources
 │   ├── state.json     # Current phase and progress
@@ -278,7 +278,7 @@ Each phase produces specific artifacts in `.isdlc/phases/<phase-name>/` director
 
 ## Skills System
 
-The framework includes **162 specialized skills** distributed across 11 categories:
+The framework includes **163 specialized skills** distributed across 11 categories:
 
 | Category | Skills | Primary Agents |
 |----------|--------|----------------|
@@ -398,7 +398,7 @@ The orchestrator enforces appropriate quality thresholds:
 
 ### How It Works
 
-1. **Exclusive Ownership**: Each of the 162 skills has exactly ONE owner agent
+1. **Exclusive Ownership**: Each of the 163 skills has exactly ONE owner agent
 2. **Pre-Execution Validation**: Before using a skill, the agent validates ownership
 3. **Audit Trail**: All skill usage (authorized and unauthorized) is logged to state.json
 4. **Gate Integration**: Skill compliance is reviewed at each quality gate
@@ -678,7 +678,7 @@ Additional documentation in [docs/](docs/):
 
 ### Completed
 - ✅ 14 agent definitions created
-- ✅ 162 skills organized into 11 categories
+- ✅ 163 skills organized into 11 categories
 - ✅ 13 phase gate checklists defined
 - ✅ 7 document templates created
 - ✅ Configuration system implemented
@@ -711,7 +711,7 @@ MIT License
 **Framework Version**: 2.1.0
 **Last Updated**: 2026-01-21
 **Agents**: 23 (14 SDLC agents + 9 Discover agents)
-**Skills**: 162 across 11 categories
+**Skills**: 163 across 11 categories
 **Quality Gates**: 13
 **Enforcement Hooks**: 5 (skill-validator, gate-blocker, test-watcher, constitution-validator, menu-tracker)
 **Enhancements**: 5 (Constitution, Scale-Adaptive, Autonomous Iteration, Skill Enforcement, Deterministic Iteration Enforcement)

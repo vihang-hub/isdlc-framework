@@ -1,14 +1,14 @@
 {
   "version": "2.0.0",
   "generated": "2026-01-24",
-  "total_skills": 162,
+  "total_skills": 163,
   "enforcement_mode": "strict",
   "ownership": {
     "sdlc-orchestrator": {
       "agent_id": "00",
       "phase": "all",
-      "skill_count": 10,
-      "skills": ["ORCH-001", "ORCH-002", "ORCH-003", "ORCH-004", "ORCH-005", "ORCH-006", "ORCH-007", "ORCH-008", "ORCH-009", "ORCH-010"]
+      "skill_count": 11,
+      "skills": ["ORCH-001", "ORCH-002", "ORCH-003", "ORCH-004", "ORCH-005", "ORCH-006", "ORCH-007", "ORCH-008", "ORCH-009", "ORCH-010", "ORCH-011"]
     },
     "discover-orchestrator": {
       "agent_id": "D0",
@@ -67,8 +67,8 @@
     "requirements-analyst": {
       "agent_id": "01",
       "phase": "01-requirements",
-      "skill_count": 10,
-      "skills": ["REQ-001", "REQ-002", "REQ-003", "REQ-004", "REQ-005", "REQ-006", "REQ-007", "REQ-008", "REQ-009", "REQ-010"]
+      "skill_count": 11,
+      "skills": ["REQ-001", "REQ-002", "REQ-003", "REQ-004", "REQ-005", "REQ-006", "REQ-007", "REQ-008", "REQ-009", "REQ-010", "REQ-011"]
     },
     "solution-architect": {
       "agent_id": "02",
@@ -154,6 +154,7 @@
     "ORCH-008": "sdlc-orchestrator",
     "ORCH-009": "sdlc-orchestrator",
     "ORCH-010": "sdlc-orchestrator",
+    "ORCH-011": "sdlc-orchestrator",
     "REQ-001": "requirements-analyst",
     "REQ-002": "requirements-analyst",
     "REQ-003": "requirements-analyst",
@@ -164,6 +165,7 @@
     "REQ-008": "requirements-analyst",
     "REQ-009": "requirements-analyst",
     "REQ-010": "requirements-analyst",
+    "REQ-011": "requirements-analyst",
     "ARCH-001": "solution-architect",
     "ARCH-002": "solution-architect",
     "ARCH-003": "solution-architect",
@@ -317,6 +319,7 @@
     "orchestration/risk-assessment": "sdlc-orchestrator",
     "orchestration/assess-complexity.md": "sdlc-orchestrator",
     "orchestration/skill-validation": "sdlc-orchestrator",
+    "orchestration/autonomous-constitution-validate.md": "sdlc-orchestrator",
     "requirements/elicitation": "requirements-analyst",
     "requirements/user-stories": "requirements-analyst",
     "requirements/classification": "requirements-analyst",
@@ -327,6 +330,7 @@
     "requirements/traceability": "requirements-analyst",
     "requirements/acceptance-criteria": "requirements-analyst",
     "requirements/nfr-quantification": "requirements-analyst",
+    "requirements/domain-research": "requirements-analyst",
     "architecture/architecture-pattern-selection": "solution-architect",
     "architecture/technology-evaluation": "solution-architect",
     "architecture/database-design": "solution-architect",
