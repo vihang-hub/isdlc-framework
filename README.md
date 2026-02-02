@@ -33,7 +33,11 @@
 
 ## What is iSDLC?
 
-The iSDLC (integrated Software Development Lifecycle) framework implements a **1-to-1 mapping** between 14 SDLC phases and 14 specialized AI agents, coordinated by an orchestrator. Each phase has exactly ONE dedicated agent, creating clear ownership, simplified workflows, and explicit handoff points.
+The iSDLC (integrated Software Development Lifecycle) framework provides **28 specialized AI agents** organized into three groups:
+
+- **15 SDLC agents** (1 orchestrator + 14 phase agents) — implement a 1-to-1 mapping between SDLC phases and agents, each owning exactly one phase from requirements through operations and upgrades
+- **9 Discover agents** — analyze existing projects or elicit vision for new ones before development begins
+- **4 Reverse Engineer agents** — extract acceptance criteria and generate characterization tests from existing codebases
 
 The framework is designed to be installed **into your existing project**. It provides structured multi-agent workflows, quality gates between every phase, and standardized processes for building software using AI-powered development with Claude Code.
 
@@ -145,7 +149,7 @@ claude                                    # 1. Start Claude Code
 
 ## The SDLC Agents
 
-Each agent is a specialized AI mapped to exactly one SDLC phase, with specific responsibilities, skills, and deliverables.
+The framework's 28 agents are organized into three groups: 15 SDLC agents that execute development phases, 9 Discover agents that analyze projects before development begins, and 4 Reverse Engineer agents that extract knowledge from existing code.
 
 | Phase | Agent | Responsibility | Key Artifacts |
 |-------|-------|----------------|---------------|
