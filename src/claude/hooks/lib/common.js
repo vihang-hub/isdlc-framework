@@ -4,7 +4,8 @@
  * Shared functions for skill validation hooks
  * Cross-platform Node.js implementation
  *
- * Version: 2.0.0
+ * Version: 3.0.0
+ * Monorepo support: state routing, project isolation
  */
 
 const fs = require('fs');
@@ -33,14 +34,159 @@ function getProjectRoot() {
     return process.cwd();
 }
 
+// =========================================================================
+// Monorepo Support
+// =========================================================================
+
+/**
+ * Check if this installation is in monorepo mode.
+ * Monorepo mode is active when .isdlc/monorepo.json exists.
+ * @returns {boolean} True if monorepo mode is active
+ */
+function isMonorepoMode() {
+    const projectRoot = getProjectRoot();
+    return fs.existsSync(path.join(projectRoot, '.isdlc', 'monorepo.json'));
+}
+
+/**
+ * Read and parse monorepo.json
+ * @returns {object|null} Parsed monorepo config or null
+ */
+function readMonorepoConfig() {
+    const projectRoot = getProjectRoot();
+    const configFile = path.join(projectRoot, '.isdlc', 'monorepo.json');
+
+    if (!fs.existsSync(configFile)) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(fs.readFileSync(configFile, 'utf8'));
+    } catch (e) {
+        return null;
+    }
+}
+
+/**
+ * Write monorepo.json
+ * @param {object} config - Monorepo config to write
+ * @returns {boolean} Success
+ */
+function writeMonorepoConfig(config) {
+    const projectRoot = getProjectRoot();
+    const configFile = path.join(projectRoot, '.isdlc', 'monorepo.json');
+
+    try {
+        fs.writeFileSync(configFile, JSON.stringify(config, null, 2));
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+/**
+ * Get the active project ID in monorepo mode.
+ * Resolution order:
+ *   1. ISDLC_PROJECT env var
+ *   2. monorepo.json default_project
+ * @returns {string|null} Project ID or null if not in monorepo mode
+ */
+function getActiveProject() {
+    if (!isMonorepoMode()) {
+        return null;
+    }
+
+    // 1. Environment variable override
+    if (process.env.ISDLC_PROJECT) {
+        return process.env.ISDLC_PROJECT;
+    }
+
+    // 2. default_project from monorepo.json
+    const config = readMonorepoConfig();
+    if (config && config.default_project) {
+        return config.default_project;
+    }
+
+    return null;
+}
+
+/**
+ * Resolve the path to state.json, accounting for monorepo mode.
+ * - Single project: .isdlc/state.json
+ * - Monorepo: .isdlc/projects/{project-id}/state.json
+ * @param {string} [projectId] - Optional project ID override
+ * @returns {string} Absolute path to state.json
+ */
+function resolveStatePath(projectId) {
+    const projectRoot = getProjectRoot();
+
+    if (isMonorepoMode()) {
+        const id = projectId || getActiveProject();
+        if (id) {
+            return path.join(projectRoot, '.isdlc', 'projects', id, 'state.json');
+        }
+    }
+
+    // Default: single-project mode
+    return path.join(projectRoot, '.isdlc', 'state.json');
+}
+
+/**
+ * Resolve the path to the constitution file, accounting for monorepo mode.
+ * In monorepo mode, returns the project-specific override if it exists,
+ * otherwise falls back to the shared constitution.
+ * @param {string} [projectId] - Optional project ID override
+ * @returns {string} Absolute path to the effective constitution.md
+ */
+function resolveConstitutionPath(projectId) {
+    const projectRoot = getProjectRoot();
+
+    if (isMonorepoMode()) {
+        const id = projectId || getActiveProject();
+        if (id) {
+            const projectConstitution = path.join(projectRoot, '.isdlc', 'projects', id, 'constitution.md');
+            if (fs.existsSync(projectConstitution)) {
+                return projectConstitution;
+            }
+        }
+    }
+
+    // Shared/single-project constitution
+    return path.join(projectRoot, '.isdlc', 'constitution.md');
+}
+
+/**
+ * Resolve the docs base path for artifacts, accounting for monorepo mode.
+ * - Single project: docs/
+ * - Monorepo: docs/{project-id}/
+ * @param {string} [projectId] - Optional project ID override
+ * @returns {string} Absolute path to docs base directory
+ */
+function resolveDocsPath(projectId) {
+    const projectRoot = getProjectRoot();
+
+    if (isMonorepoMode()) {
+        const id = projectId || getActiveProject();
+        if (id) {
+            return path.join(projectRoot, 'docs', id);
+        }
+    }
+
+    return path.join(projectRoot, 'docs');
+}
+
+// =========================================================================
+// State Management (monorepo-aware)
+// =========================================================================
+
 /**
  * Read JSON value from state.json
  * @param {string} jsonPath - Dot-notation path (e.g., "skill_enforcement.mode")
+ * @param {string} [projectId] - Optional project ID for monorepo mode
  * @returns {any} Value at path or undefined
  */
-function readStateValue(jsonPath) {
-    const projectRoot = getProjectRoot();
-    const stateFile = path.join(projectRoot, '.isdlc', 'state.json');
+function readStateValue(jsonPath, projectId) {
+    const stateFile = resolveStatePath(projectId);
 
     if (!fs.existsSync(stateFile)) {
         return undefined;
@@ -68,11 +214,11 @@ function getNestedValue(obj, path) {
 
 /**
  * Read and parse state.json
+ * @param {string} [projectId] - Optional project ID for monorepo mode
  * @returns {object|null} Parsed state or null
  */
-function readState() {
-    const projectRoot = getProjectRoot();
-    const stateFile = path.join(projectRoot, '.isdlc', 'state.json');
+function readState(projectId) {
+    const stateFile = resolveStatePath(projectId);
 
     if (!fs.existsSync(stateFile)) {
         return null;
@@ -88,11 +234,17 @@ function readState() {
 /**
  * Write state.json
  * @param {object} state - State object to write
+ * @param {string} [projectId] - Optional project ID for monorepo mode
  * @returns {boolean} Success
  */
-function writeState(state) {
-    const projectRoot = getProjectRoot();
-    const stateFile = path.join(projectRoot, '.isdlc', 'state.json');
+function writeState(state, projectId) {
+    const stateFile = resolveStatePath(projectId);
+
+    // Ensure directory exists (for monorepo project directories)
+    const dir = path.dirname(stateFile);
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
 
     try {
         fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
@@ -339,6 +491,15 @@ function debugLog(...args) {
 
 module.exports = {
     getProjectRoot,
+    // Monorepo support
+    isMonorepoMode,
+    readMonorepoConfig,
+    writeMonorepoConfig,
+    getActiveProject,
+    resolveStatePath,
+    resolveConstitutionPath,
+    resolveDocsPath,
+    // State management (monorepo-aware)
     readStateValue,
     readState,
     writeState,

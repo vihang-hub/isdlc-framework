@@ -291,6 +291,39 @@ Add articles below based on your project's specific needs. These are optional bu
 
 ---
 
+## Monorepo: Shared and Per-Project Constitutions
+
+In monorepo setups, this constitution serves as the **shared constitution** applying to all projects. Individual projects can create **override constitutions** at `.isdlc/projects/{project-id}/constitution.md`.
+
+### Override Rules
+
+1. A per-project constitution **inherits all articles** from the shared constitution
+2. Per-project constitutions can **add** project-specific articles (e.g., "Article XII: PCI-DSS Compliance (api-service only)")
+3. Per-project constitutions can **tighten** thresholds (e.g., raise coverage from 80% to 95%) but cannot weaken shared requirements
+4. If no per-project constitution exists, the shared constitution applies in full
+
+### Example Per-Project Override
+
+```markdown
+# Project Constitution Override: api-service
+
+Inherits all articles from the shared constitution at `.isdlc/constitution.md`.
+
+## Additional Articles
+
+### Article XII: PCI-DSS Compliance
+(Applies to api-service only — handles payment processing)
+1. No credit card data stored unencrypted
+2. Tokenization for all payment data
+3. Security scans before each deployment
+
+### Article XIII: API Performance SLAs
+1. API response time p95 < 200ms
+2. Error rate < 0.1% under normal load
+```
+
+---
+
 ## Constitutional Enforcement
 
 ### How Enforcement Works

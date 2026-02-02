@@ -19,7 +19,7 @@ This framework implements a **1-to-1 mapping** between 13 SDLC phases and 13 spe
 - **Autonomous Iteration** - Self-correcting agents that iterate until tests pass
 - **Standardized Artifacts** - Templates for each phase's deliverables
 - **Linear Workflow** with clear handoff points
-- **Monorepo Ready** - Share framework across multiple projects
+- **Monorepo Support** - Manage multiple projects from a single installation with independent state, workflows, and artifacts
 
 ## Project Structure
 
@@ -425,6 +425,66 @@ When an agent needs functionality from a skill it doesn't own:
 - **Skills Manifest**: [src/isdlc/config/skills-manifest.yaml](src/isdlc/config/skills-manifest.yaml)
 - **Validation Skill**: [.claude/skills/orchestration/skill-validation/SKILL.md](.claude/skills/orchestration/skill-validation/SKILL.md)
 
+## Monorepo Support
+
+The framework supports monorepo installations where multiple projects share a single framework installation.
+
+### How It Works
+
+1. **Auto-detection**: `install.sh` detects monorepos via workspace indicators (pnpm-workspace.yaml, turbo.json, nx.json, lerna.json, rush.json) or directory patterns (apps/, packages/, services/ with 2+ sub-projects)
+2. **Project registry**: `.isdlc/monorepo.json` tracks all projects, their paths, and the default project
+3. **Per-project isolation**: Each project gets its own `state.json`, counters, workflows, and optional constitution override
+4. **Shared resources**: Agents, skills, hooks, checklists, and config are shared across all projects
+
+### Monorepo Directory Structure
+
+```
+monorepo/
+├── .claude/                          # Shared
+├── .isdlc/
+│   ├── monorepo.json                 # Project registry
+│   ├── constitution.md               # Shared constitution
+│   ├── config/                       # Shared config
+│   └── projects/                     # Per-project state
+│       ├── api-service/
+│       │   ├── state.json
+│       │   └── constitution.md       # Optional override
+│       └── web-frontend/
+│           └── state.json
+├── docs/
+│   ├── api-service/                  # Per-project docs
+│   │   ├── requirements/
+│   │   ├── architecture/
+│   │   └── design/
+│   └── web-frontend/
+│       ├── requirements/
+│       ├── architecture/
+│       └── design/
+└── apps/
+    ├── api-service/
+    └── web-frontend/
+```
+
+### Commands
+
+```bash
+# Target a specific project
+/sdlc feature "Add auth" --project api-service
+/discover --project web-frontend
+
+# Manage projects
+/sdlc project list
+/sdlc project add shared-lib packages/shared-lib
+/sdlc project scan
+/sdlc project select api-service
+```
+
+### Backward Compatibility
+
+Single-project repos work unchanged. Monorepo mode activates only when `.isdlc/monorepo.json` exists.
+
+See [docs/MONOREPO-GUIDE.md](docs/MONOREPO-GUIDE.md) for detailed setup and usage instructions.
+
 ## Autonomous Iteration
 
 **NEW**: Agents now autonomously iterate when tests fail, rather than stopping at first failure.
@@ -688,6 +748,7 @@ Additional documentation in [docs/](docs/):
 - ✅ Autonomous Iteration for self-correcting agents (Enhancement #3)
 - ✅ Exclusive Skill Ownership & Enforcement (Enhancement #4)
 - ✅ Deterministic Iteration Enforcement via Hooks (Enhancement #5)
+- ✅ Monorepo Support with per-project state isolation (Enhancement #6)
 
 ### In Progress
 - ⏳ Integration testing across all phases
@@ -708,10 +769,10 @@ MIT License
 
 ---
 
-**Framework Version**: 2.1.0
+**Framework Version**: 2.0.0
 **Last Updated**: 2026-01-21
 **Agents**: 23 (14 SDLC agents + 9 Discover agents)
 **Skills**: 163 across 11 categories
 **Quality Gates**: 13
 **Enforcement Hooks**: 5 (skill-validator, gate-blocker, test-watcher, constitution-validator, menu-tracker)
-**Enhancements**: 5 (Constitution, Scale-Adaptive, Autonomous Iteration, Skill Enforcement, Deterministic Iteration Enforcement)
+**Enhancements**: 6 (Constitution, Scale-Adaptive, Autonomous Iteration, Skill Enforcement, Deterministic Iteration Enforcement, Monorepo Support)

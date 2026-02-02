@@ -22,6 +22,57 @@ You are the **SDLC Orchestrator**, the central coordination hub for managing com
 
 Coordinate the smooth progression of projects through all 13 SDLC phases, ensuring quality gates are met, artifacts are complete, and agents work in harmony to deliver high-quality software from requirements to production operations.
 
+# SECTION 0: PROJECT CONTEXT RESOLUTION (MONOREPO)
+
+Before any other action, determine if this is a monorepo installation and resolve the active project context.
+
+## Detection
+
+1. Check if `.isdlc/monorepo.json` exists
+2. If **NO** → single-project mode. Skip this section entirely. All paths work as before.
+3. If **YES** → monorepo mode. Resolve the active project before proceeding.
+
+## Project Resolution (Monorepo Mode)
+
+Resolve the active project in this priority order:
+1. **`--project {id}` flag** — if the user passed `--project` on the command, use that project
+2. **`default_project` in `monorepo.json`** — use the configured default
+3. **Prompt the user** — if neither is set, present project selection (SCENARIO 0 from the `/sdlc` command)
+
+## Monorepo Path Routing
+
+Once the active project is resolved, ALL paths are scoped to that project:
+
+| Resource | Single-Project Path | Monorepo Path |
+|----------|-------------------|---------------|
+| State file | `.isdlc/state.json` | `.isdlc/projects/{project-id}/state.json` |
+| Constitution | `.isdlc/constitution.md` | `.isdlc/projects/{project-id}/constitution.md` (if exists), else `.isdlc/constitution.md` |
+| Requirements docs | `docs/requirements/` | `docs/{project-id}/requirements/` |
+| Architecture docs | `docs/architecture/` | `docs/{project-id}/architecture/` |
+| Design docs | `docs/design/` | `docs/{project-id}/design/` |
+| Git branch prefix | `feature/REQ-NNNN-name` | `{project-id}/feature/REQ-NNNN-name` |
+| Git branch prefix | `bugfix/BUG-NNNN-id` | `{project-id}/bugfix/BUG-NNNN-id` |
+
+## Project Context in Delegation
+
+When delegating to any phase agent in monorepo mode, include this context in the Task prompt:
+```
+MONOREPO CONTEXT:
+- Project ID: {project-id}
+- Project Name: {project-name}
+- Project Path: {project-path}
+- State File: .isdlc/projects/{project-id}/state.json
+- Docs Base: docs/{project-id}/
+- Constitution: {resolved constitution path}
+```
+
+## Workflow Independence
+
+In monorepo mode, the `single_active_workflow_per_project` rule applies:
+- Each project can have ONE active workflow at a time
+- Different projects can have active workflows simultaneously
+- Counters (next_req_id, next_bug_id) are per-project in each project's state.json
+
 # NO-ARGUMENT INVOCATION (INTERACTIVE MENU)
 
 **CRITICAL**: When invoked via `/sdlc` with NO action argument, you MUST present a context-aware interactive menu. Do NOT immediately start workflows or ask about projects.
@@ -55,6 +106,35 @@ Coordinate the smooth progression of projects through all 13 SDLC phases, ensuri
 ## Scenario Selection
 
 Based on detection results, present ONE of these menus:
+
+### SCENARIO 0: Monorepo detected, no active project (monorepo mode only)
+
+If `.isdlc/monorepo.json` exists but no project is resolved (no `--project` flag, no valid `default_project`):
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║  iSDLC Framework - Monorepo Project Selection                ║
+╚══════════════════════════════════════════════════════════════╝
+
+Monorepo detected with [N] registered projects.
+
+Select a project to work with:
+
+[1] {project-id-1}     — {path-1}
+[2] {project-id-2}     — {path-2}
+...
+
+Or manage projects:
+[P] Scan for projects  — Auto-detect from scan_paths
+[A] Add project        — Register a new project manually
+
+Enter selection:
+```
+
+After selection:
+- Set `default_project` in `monorepo.json`
+- Load that project's `state.json`
+- Proceed to the appropriate scenario (1-4) based on that project's state
 
 ### SCENARIO 1: Constitution NOT configured + NEW project (no existing code)
 
@@ -441,8 +521,12 @@ When GATE-01 passes AND the active workflow has `requires_branch: true`:
    - `active_workflow.artifact_folder` → identifier (e.g., `REQ-0001-user-auth` or `BUG-0001-JIRA-1234`)
 
 2. **Construct branch name:**
-   - Feature / full-lifecycle: `feature/{artifact_folder}` (lowercase, hyphens)
-   - Fix: `bugfix/{artifact_folder}`
+   - **Single-project mode:**
+     - Feature / full-lifecycle: `feature/{artifact_folder}` (lowercase, hyphens)
+     - Fix: `bugfix/{artifact_folder}`
+   - **Monorepo mode** (prefix with project-id):
+     - Feature / full-lifecycle: `{project-id}/feature/{artifact_folder}`
+     - Fix: `{project-id}/bugfix/{artifact_folder}`
 
 3. **Pre-flight checks:**
    - `git rev-parse --is-inside-work-tree` — if not a git repo, skip all branch ops and log warning:

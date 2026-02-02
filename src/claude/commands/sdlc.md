@@ -4,6 +4,25 @@ Invoke the SDLC Orchestrator to coordinate software development lifecycle workfl
 ### Usage
 `/sdlc <action> [options]`
 
+### Monorepo Support
+
+When the project is a monorepo (`.isdlc/monorepo.json` exists), all commands accept a `--project {id}` flag to target a specific project. If `--project` is not provided, the `default_project` from `monorepo.json` is used.
+
+**Project subcommands:**
+```
+/sdlc project list                    — List all registered projects
+/sdlc project add {id} {path}         — Manually register a project
+/sdlc project scan                    — Auto-detect projects from scan_paths
+/sdlc project select {id}             — Set default project
+```
+
+**Project flag on action commands:**
+```
+/sdlc feature "description" --project api-service
+/sdlc fix "description" --project web-frontend
+/sdlc status --project api-service
+```
+
 ### No-Argument Behavior (Interactive Menu)
 
 When `/sdlc` is invoked without any action, present a context-aware menu based on project state.
@@ -35,6 +54,34 @@ When `/sdlc` is invoked without any action, present a context-aware menu based o
    - `Cargo.toml` exists (Rust project)
    - `pom.xml` or `build.gradle` exists (Java project)
    - More than 5 source code files (`*.py`, `*.js`, `*.ts`, `*.go`, `*.rs`, `*.java`)
+
+---
+
+**SCENARIO 0: Monorepo detected, no project selected**
+
+When `.isdlc/monorepo.json` exists but no `--project` flag was provided AND no `default_project` is set (or the default project is invalid):
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║  iSDLC Framework - Monorepo Project Selection                ║
+╚══════════════════════════════════════════════════════════════╝
+
+Monorepo detected with [N] registered projects.
+
+Select a project to work with:
+
+[1] api-service        — apps/api-service
+[2] web-frontend       — apps/web-frontend
+[3] shared-lib         — packages/shared-lib
+
+Or manage projects:
+[P] Scan for projects  — Auto-detect from scan_paths
+[A] Add project        — Register a new project manually
+
+Enter selection:
+```
+
+After selection, set `default_project` in `monorepo.json` and proceed to the appropriate scenario (1-4) for that project.
 
 ---
 
@@ -136,6 +183,9 @@ Enter selection (1-5):
 
 | Scenario | Option | Action |
 |----------|--------|--------|
+| 0 (Monorepo, no project) | [1-N] | Set selected project as default, proceed to scenario 1-4 |
+| 0 (Monorepo, no project) | [P] | Execute `/sdlc project scan` |
+| 0 (Monorepo, no project) | [A] | Prompt for project ID and path, execute `/sdlc project add` |
 | 1 (New, no constitution) | [1] | Execute `/discover` (runs NEW PROJECT FLOW) |
 | 1 (New, no constitution) | [2] | Display path to constitution.md and exit |
 | 2 (Existing, no constitution) | [1] | Execute `/discover` (runs EXISTING PROJECT FLOW) |
@@ -159,6 +209,7 @@ Enter selection (1-5):
 **feature** - Implement a new feature end-to-end
 ```
 /sdlc feature "Feature description"
+/sdlc feature "Feature description" --project api-service
 ```
 1. Validate constitution exists and is not a template
 2. Check no active workflow (block if one exists, suggest `/sdlc cancel` first)
@@ -171,6 +222,7 @@ Enter selection (1-5):
 ```
 /sdlc fix "Bug description"
 /sdlc fix "Bug description" --link https://mycompany.atlassian.net/browse/JIRA-1234
+/sdlc fix "Bug description" --project api-service
 ```
 1. Validate constitution exists and is not a template
 2. Check no active workflow
@@ -382,6 +434,42 @@ See `/discover --help` for full documentation.
 
 ---
 
+**project list** - List all registered projects in monorepo (monorepo only)
+```
+/sdlc project list
+```
+1. Read `.isdlc/monorepo.json`
+2. Display all registered projects with their paths and status
+3. Indicate the current default project
+
+**project add** - Manually register a project in monorepo (monorepo only)
+```
+/sdlc project add {id} {path}
+```
+1. Validate the path exists
+2. Add project entry to `monorepo.json`
+3. Create `.isdlc/projects/{project-id}/` directory with initial `state.json`
+4. Create `docs/{project-id}/` directory structure
+
+**project scan** - Auto-detect projects from scan_paths (monorepo only)
+```
+/sdlc project scan
+```
+1. Read `scan_paths` from `monorepo.json`
+2. Scan for projects (look for package.json, go.mod, Cargo.toml, etc. in subdirectories)
+3. Present discovered projects for confirmation
+4. Register confirmed projects
+
+**project select** - Set the default project (monorepo only)
+```
+/sdlc project select {id}
+```
+1. Validate project ID exists in `monorepo.json`
+2. Update `default_project` in `monorepo.json`
+3. Confirm selection
+
+---
+
 **configure-cloud** - Configure or reconfigure cloud provider for deployment
 ```
 /sdlc configure-cloud
@@ -478,16 +566,22 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 
 ```
 /sdlc feature "Build a REST API for user authentication"
+/sdlc feature "Add payment processing" --project api-service
 /sdlc fix "Login endpoint returns 500 on empty password"
 /sdlc fix "Login endpoint returns 500 on empty password" --link https://mycompany.atlassian.net/browse/AUTH-456
 /sdlc test run
 /sdlc test generate
 /sdlc start "New e-commerce platform"
 /sdlc status
+/sdlc status --project web-frontend
 /sdlc gate-check
 /sdlc cancel
 /sdlc configure-cloud
 /sdlc escalate "Unclear requirement about session timeout"
+/sdlc project list
+/sdlc project add shared-lib packages/shared-lib
+/sdlc project scan
+/sdlc project select api-service
 ```
 
 ### Prerequisites
@@ -499,15 +593,21 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 
 When this command is invoked:
 
+**If `--project {id}` flag is present (monorepo mode):**
+- Extract the project ID from the flag
+- Include `MONOREPO CONTEXT: --project {id}` in the Task prompt passed to the orchestrator
+- The orchestrator will resolve all paths (state, docs, constitution) to that project
+
 **If NO action argument provided (`/sdlc` alone):**
 1. Use the Task tool to launch the `sdlc-orchestrator` agent
 2. Pass explicit instruction: "No action specified. Present the interactive context-aware menu based on constitution status, workflow status, and existing project detection."
-3. The orchestrator MUST present the appropriate scenario menu (1-4) based on detection logic
-4. Wait for user selection before taking further action
+3. In monorepo mode with no project resolved, the orchestrator MUST present SCENARIO 0 first
+4. Otherwise, present the appropriate scenario menu (1-4) based on detection logic
+5. Wait for user selection before taking further action
 
 **If action argument provided (`/sdlc <action>`):**
 1. Use the Task tool to launch the `sdlc-orchestrator` agent
-2. Pass the action and any arguments to the agent
+2. Pass the action, any arguments, and `--project` flag (if present) to the agent
 3. The orchestrator will coordinate the appropriate workflow
 
 ```
