@@ -8,7 +8,7 @@
 
 version: "2.0.0"
 generated: "2026-01-17"
-total_skills: 163
+total_skills: 164
 enforcement_mode: strict  # strict | warn | audit
 
 # =============================================================================
@@ -25,7 +25,7 @@ ownership:
   sdlc-orchestrator:
     agent_id: "00"
     phase: "all"
-    skill_count: 11
+    skill_count: 12
     skills:
       - id: ORCH-001
         name: workflow-management
@@ -60,6 +60,9 @@ ownership:
       - id: ORCH-011
         name: autonomous-constitution-validate
         path: orchestration/autonomous-constitution-validate.md
+      - id: ORCH-012
+        name: generate-plan
+        path: orchestration/generate-plan
 
   # ---------------------------------------------------------------------------
   # Discover Orchestrator
@@ -765,6 +768,7 @@ skill_lookup:
   ORCH-009: sdlc-orchestrator
   ORCH-010: sdlc-orchestrator
   ORCH-011: sdlc-orchestrator
+  ORCH-012: sdlc-orchestrator
 
   # Requirements
   REQ-001: requirements-analyst
@@ -954,6 +958,7 @@ path_lookup:
   orchestration/assess-complexity.md: sdlc-orchestrator
   orchestration/skill-validation: sdlc-orchestrator
   orchestration/autonomous-constitution-validate.md: sdlc-orchestrator
+  orchestration/generate-plan: sdlc-orchestrator
 
   # Requirements
   requirements/elicitation: requirements-analyst

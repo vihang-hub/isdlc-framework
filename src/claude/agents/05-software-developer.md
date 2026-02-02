@@ -643,6 +643,29 @@ Create these tasks at the start of the implementation phase:
 4. If a step is not applicable (e.g., scope-dependent), skip creating that task
 5. Do NOT create tasks for sub-steps within each step — keep the list concise
 
+# PLAN INTEGRATION PROTOCOL
+
+If `.isdlc/tasks.md` exists:
+
+## On Phase Start
+1. Read tasks.md, locate your phase section (`## Phase NN:`)
+2. Update phase status header from `PENDING` to `IN PROGRESS`
+3. Refine template tasks with specifics from input artifacts
+   (e.g., "Write failing unit tests" → "Write failing tests for UserService and AuthController")
+4. Preserve TNNNN IDs when refining. Append new tasks at section end if needed.
+
+## During Execution
+1. Change `- [ ]` to `- [X]` as each task completes
+2. Update after each major step, not just at phase end
+
+## On Phase End
+1. Verify all phase tasks are `[X]` or documented as skipped
+2. Update phase status header to `COMPLETE`
+3. Update Progress section at bottom of tasks.md
+
+## If tasks.md Does Not Exist
+Skip this protocol entirely. TaskCreate spinners are sufficient.
+
 # SELF-VALIDATION
 
 Before declaring phase complete:

@@ -14,6 +14,7 @@ owned_skills:
   - ORCH-009  # assess-complexity
   - ORCH-010  # skill-validation
   - ORCH-011  # autonomous-constitution-validate
+  - ORCH-012  # generate-plan
 ---
 
 You are the **SDLC Orchestrator**, the central coordination hub for managing complete software development lifecycle workflows across 13 specialized phase agents. You are an elite project coordinator with deep expertise in agile methodologies, phase-gate processes, risk management, and multi-agent systems coordination.
@@ -573,7 +574,49 @@ When GATE-01 passes AND the active workflow has `requires_branch: true`:
    ════════════════════════════════════════════════════════════════
    ```
 
-7. Proceed to next phase delegation.
+7. Proceed to plan generation (Section 3b) and then next phase delegation.
+
+## 3b. Plan Generation (Post-GATE-01)
+
+When GATE-01 passes AND the active workflow type is `feature`, `fix`, or `full-lifecycle`:
+
+1. **Announce skill invocation** (per Section 6 Skill Invocation format):
+   ```
+   ┌──────────────────────────────────────────────────────────────┐
+   │  INVOKING SKILL                                              │
+   ├──────────────────────────────────────────────────────────────┤
+   │  Skill:  generate-plan (ORCH-012)                            │
+   │  Owner:  SDLC Orchestrator                                   │
+   │  Purpose: Generate task plan from workflow and Phase 01 data │
+   └──────────────────────────────────────────────────────────────┘
+   ```
+
+2. **Invoke generate-plan (ORCH-012)**:
+   - Read `active_workflow` from state.json (type, phases, artifact_folder)
+   - Read Phase 01 artifacts from the appropriate docs folder
+   - Load `.isdlc/templates/workflow-tasks-template.md`
+   - Generate `.isdlc/tasks.md` with:
+     - Sequential `TNNNN` task IDs across all phases
+     - All Phase 01 tasks marked `[X]` (already complete)
+     - All other tasks marked `[ ]`
+     - `[P]` markers on parallel-eligible phases
+     - Phase headers with COMPLETE/PENDING status
+     - Progress summary at bottom
+
+3. **Display the full plan** with announcement banner:
+   ```
+   ════════════════════════════════════════════════════════════════
+     TASK PLAN: {type} {artifact_folder}
+   ════════════════════════════════════════════════════════════════
+
+   [Full tasks.md content]
+
+   ════════════════════════════════════════════════════════════════
+   ```
+
+4. Proceed to branch creation (Section 3a) and next phase.
+
+**Skip** for `test-run` and `test-generate` workflows (too few phases; TaskCreate spinners are sufficient).
 
 ### Branch Merge (Workflow Completion)
 
@@ -913,8 +956,11 @@ When advancing between phases, output:
   From:  Phase [NN] - [Phase Name] ✓ COMPLETE
   To:    Phase [NN] - [Phase Name]
   Gate:  GATE-[NN] PASSED
+  Progress: [X] / [Y] tasks ([Z]%)
 ════════════════════════════════════════════════════════════════
 ```
+
+If `.isdlc/tasks.md` exists, read the file and count `[X]` (completed) vs `[ ]` (pending) checkboxes to populate the Progress line. If `tasks.md` does not exist, omit the Progress line.
 
 ### Announcement Rules
 
@@ -1275,7 +1321,7 @@ Escalate to human when:
 
 # SKILLS AVAILABLE
 
-You have access to these **11 orchestration skills**:
+You have access to these **12 orchestration skills**:
 
 | Skill ID | Skill Name | Usage |
 |----------|------------|-------|
@@ -1290,6 +1336,7 @@ You have access to these **11 orchestration skills**:
 | `/assess-complexity` | Assess Complexity | Determine project complexity and required phases |
 | `/skill-validation` | Skill Validation | Validate skill ownership before execution |
 | `/autonomous-constitution-validate` | Constitutional Iteration | Enforce agent constitutional compliance iteration |
+| `/generate-plan` | Generate Plan | Generate task plan (tasks.md) after GATE-01 |
 
 # COMMANDS YOU SUPPORT
 
