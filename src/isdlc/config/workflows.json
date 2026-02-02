@@ -168,6 +168,75 @@
         "10-remote-build": { "scope": "remote" }
       },
       "requires_branch": true
+    },
+
+    "reverse-engineer": {
+      "label": "Reverse Engineer",
+      "command": "/sdlc reverse-engineer",
+      "description": "Extract acceptance criteria and generate characterization tests from existing code",
+      "phases": [
+        "R1-behavior-extraction",
+        "R2-characterization-tests",
+        "R3-artifact-integration",
+        "R4-atdd-bridge"
+      ],
+      "gate_mode": "permissive",
+      "options": {
+        "scope": {
+          "prompt": "What scope do you want to analyze?",
+          "choices": ["all", "module", "endpoint", "domain"],
+          "default": "all"
+        },
+        "target": {
+          "prompt": "Specify target name (module, endpoint path, or domain name)",
+          "type": "string",
+          "required_when": ["scope:module", "scope:endpoint", "scope:domain"]
+        },
+        "priority": {
+          "prompt": "Filter by risk priority",
+          "choices": ["all", "critical", "high", "medium"],
+          "default": "all"
+        },
+        "generate_tests": {
+          "description": "Generate characterization tests",
+          "flag": "--generate-tests",
+          "default": true
+        },
+        "atdd_ready": {
+          "description": "Prepare artifacts for ATDD workflow integration",
+          "flag": "--atdd-ready",
+          "default": false
+        }
+      },
+      "prerequisites": {
+        "discover_completed": true,
+        "artifacts_required": [
+          "docs/project-discovery-report.md",
+          ".isdlc/test-evaluation-report.md"
+        ]
+      },
+      "agent_modifiers": {
+        "R1-behavior-extraction": {
+          "read_discovery_artifacts": true,
+          "prioritize_by_risk": true
+        },
+        "R2-characterization-tests": {
+          "use_test_skip_scaffolds": true,
+          "capture_side_effects": true
+        },
+        "R3-artifact-integration": {
+          "link_to_feature_map": true,
+          "generate_traceability": true
+        },
+        "R4-atdd-bridge": {
+          "_when_atdd_ready": {
+            "create_atdd_checklist": true,
+            "mark_as_captured_behavior": true,
+            "set_pending_human_review": true
+          }
+        }
+      },
+      "requires_branch": false
     }
   },
 

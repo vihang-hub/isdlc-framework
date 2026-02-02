@@ -434,6 +434,105 @@ See `/discover --help` for full documentation.
 
 ---
 
+**reverse-engineer** - Extract acceptance criteria and generate characterization tests from existing code
+```
+/sdlc reverse-engineer
+/sdlc reverse-engineer --scope domain --target "payments"
+/sdlc reverse-engineer --priority critical
+/sdlc reverse-engineer --atdd-ready
+```
+
+**Prerequisites:**
+- `/sdlc discover` must have completed successfully
+- `docs/project-discovery-report.md` must exist
+- `.isdlc/test-evaluation-report.md` must exist
+
+**Workflow Phases:**
+
+| Phase | Agent | Description |
+|-------|-------|-------------|
+| R1 | Behavior Analyzer | Extract behavior from code, generate Given-When-Then AC |
+| R2 | Characterization Test Generator | Create test.skip() scaffolds capturing actual outputs |
+| R3 | Artifact Integration | Link AC to feature map, generate traceability |
+| R4 | ATDD Bridge | Create atdd-checklist.json (when --atdd-ready) |
+
+**Options:**
+
+| Option | Values | Default | Description |
+|--------|--------|---------|-------------|
+| `--scope` | all, module, endpoint, domain | all | Analysis scope |
+| `--target` | string | - | Target name (required when scope is module/endpoint/domain) |
+| `--priority` | all, critical, high, medium | all | Filter by risk priority |
+| `--generate-tests` | flag | true | Generate characterization tests |
+| `--atdd-ready` | flag | false | Prepare for ATDD workflow integration |
+
+**Output Artifacts:**
+
+```
+docs/requirements/reverse-engineered/
+├── index.md                    # Summary with prioritization
+├── {domain}/                   # Domain-grouped AC
+│   └── {feature}.md            # Given-When-Then acceptance criteria
+
+tests/characterization/
+├── {domain}/
+│   └── {feature}.characterization.ts   # test.skip() scaffolds
+└── __golden__/                 # Golden file baselines
+
+tests/fixtures/reverse-engineered/
+└── {domain}.fixtures.ts        # Generated test fixtures
+
+.isdlc/
+├── reverse-engineer-report.md  # Execution summary
+├── ac-traceability.csv         # Code → AC → Test mapping
+└── atdd-checklist-{domain}.json  # When --atdd-ready used
+```
+
+**ATDD Integration:**
+
+When `--atdd-ready` is specified, the workflow prepares artifacts for integration with `/sdlc feature --atdd`:
+
+1. Generated AC are tagged with `type: "captured_behavior"` and `human_reviewed: false`
+2. Characterization tests serve as acceptance test baselines
+3. `atdd-checklist-{domain}.json` files are created for each domain
+4. After human review, use `/sdlc feature "Migrate X" --atdd` to work against the captured behavior
+
+**Workflow Integration:**
+```
+/sdlc discover                         # Baseline: architecture, features, tests
+        ↓
+/sdlc reverse-engineer --atdd-ready    # AC + characterization tests
+        ↓
+Human reviews AC, approves correct behavior
+        ↓
+/sdlc feature "Migrate X" --atdd       # Uses AC as acceptance baseline
+        ↓
+RED→GREEN against known behavior
+```
+
+**Examples:**
+```bash
+# Analyze all discovered features
+/sdlc reverse-engineer
+
+# Focus on specific domain
+/sdlc reverse-engineer --scope domain --target "payments"
+
+# Only critical paths (payment, auth, core business)
+/sdlc reverse-engineer --priority critical
+
+# Prepare for ATDD workflow
+/sdlc reverse-engineer --atdd-ready
+
+# Analyze specific endpoint
+/sdlc reverse-engineer --scope endpoint --target "/api/users/register"
+
+# Analyze specific module
+/sdlc reverse-engineer --scope module --target "UserService"
+```
+
+---
+
 **project list** - List all registered projects in monorepo (monorepo only)
 ```
 /sdlc project list
@@ -555,6 +654,7 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 | `/sdlc test run` | test-run | 10 → 06 | strict | none |
 | `/sdlc test generate` | test-generate | 04 → 05 → 10 → 06 → 07 | strict | none |
 | `/sdlc start` | full-lifecycle | 01 → ... → 05 → 10 → 06 → ... → 10(remote) → 11 → ... → 13 | strict | `feature/REQ-NNNN-...` |
+| `/sdlc reverse-engineer` | reverse-engineer | R1 → R2 → R3 → R4 | permissive | none |
 
 **Enforcement rules:**
 - Workflows start at phase 1 — no `--start-at` flag
@@ -582,6 +682,9 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 /sdlc project add shared-lib packages/shared-lib
 /sdlc project scan
 /sdlc project select api-service
+/sdlc reverse-engineer
+/sdlc reverse-engineer --scope domain --target "payments"
+/sdlc reverse-engineer --priority critical --atdd-ready
 ```
 
 ### Prerequisites
