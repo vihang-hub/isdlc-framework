@@ -34,13 +34,23 @@ The Discover Orchestrator coordinates the `/discover` command workflow. It deter
 
 ## Workflow
 
+### ROOT RESOLUTION (Before anything else)
+
+Resolve the **project root** — the directory containing `.isdlc/` — before any other action.
+
+1. Check if `.isdlc/` exists in CWD
+2. If **not found**, walk up parent directories (`../`, `../../`, etc.) looking for a directory that contains `.isdlc/state.json` or `.isdlc/monorepo.json`
+3. When found, treat that directory as the **project root** for all subsequent `.isdlc/` and `.claude/` path references
+4. Record the relative path from that root to the original CWD (e.g., if root is `~/projects/my-app` and CWD is `~/projects/my-app/FE`, the relative path is `FE`). This becomes the **CWD-relative path** used for monorepo project matching.
+5. If `.isdlc/` is not found in CWD or any parent, fall through to the error handling in FAST PATH CHECK (state.json missing)
+
 ### MONOREPO PREAMBLE (Before fast path check)
 
-If `--project {id}` was passed, or if `.isdlc/monorepo.json` exists:
+If `--project {id}` was passed, or if `.isdlc/monorepo.json` exists (at the resolved project root):
 
 1. **Resolve the active project:**
    - If `--project {id}` was passed, use that ID
-   - Otherwise, detect from CWD: compute relative path from project root, match against registered project paths in `monorepo.json` (longest prefix match)
+   - Otherwise, detect from CWD: use the **CWD-relative path** from ROOT RESOLUTION and match against registered project paths in `monorepo.json` (longest prefix match)
    - Otherwise, fall back to `default_project` in `monorepo.json`
    - If no project resolved, present project selection menu (same as SCENARIO 0 from `/sdlc`)
 
@@ -83,7 +93,7 @@ If NOT in monorepo mode, skip the preamble entirely and proceed to the fast path
 │  UNTIL you complete this single-file check:                     │
 └─────────────────────────────────────────────────────────────────┘
 
-Step 1: Read .isdlc/state.json (or project-scoped state.json in monorepo mode)
+Step 1: Read .isdlc/state.json at the resolved project root (or project-scoped state.json in monorepo mode)
 Step 2: Extract project.is_new_project value
 Step 3: Branch IMMEDIATELY:
         - true  → NEW PROJECT FLOW
@@ -1032,7 +1042,13 @@ PHASE 5: Finalize                                    [Complete ✓]
 ERROR: .isdlc/state.json not found.
 
 The iSDLC framework may not be installed correctly.
-Run the install script first:
+
+If you are in a monorepo sub-project directory, make sure the
+framework is installed at the monorepo root (the parent directory
+containing .isdlc/). The orchestrator checks parent directories
+automatically, but .isdlc/ must exist somewhere above CWD.
+
+Otherwise, run the install script first:
   ./isdlc-framework/install.sh
 ```
 

@@ -6,10 +6,10 @@ Invoke the SDLC Orchestrator to coordinate software development lifecycle workfl
 
 ### Monorepo Support
 
-When the project is a monorepo (`.isdlc/monorepo.json` exists), all commands accept a `--project {id}` flag to target a specific project.
+When the project is a monorepo (`.isdlc/monorepo.json` exists), all commands accept a `--project {id}` flag to target a specific project. The orchestrator resolves the project root by walking up parent directories from CWD to find `.isdlc/`, so you can launch Claude from a sub-project directory (e.g., `cd FE && claude`) and it will find the framework at the monorepo root.
 
 **Project resolution order** (when `--project` is not provided):
-1. **CWD-based detection** — if CWD is inside a registered project path (longest prefix match), that project is auto-selected
+1. **CWD-based detection** — compute the relative path from the resolved project root to CWD, match against registered project paths in `monorepo.json` (longest prefix match)
 2. **`default_project`** from `monorepo.json` — the configured default
 3. **Interactive prompt** — if no project can be resolved, present selection menu
 
@@ -735,9 +735,9 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 
 When this command is invoked:
 
-**If in monorepo mode** (`.isdlc/monorepo.json` exists):
+**If in monorepo mode** (`.isdlc/monorepo.json` exists at the resolved project root — found by walking up parent directories from CWD):
 - If `--project {id}` flag is present: extract the project ID from the flag
-- Otherwise: auto-detect project from CWD (match against registered project paths, longest prefix match)
+- Otherwise: auto-detect project from CWD (use the relative path from project root to CWD, match against registered project paths, longest prefix match)
 - Otherwise: fall back to `default_project` in `monorepo.json`
 - Include `MONOREPO CONTEXT: --project {id}` in the Task prompt passed to the orchestrator
 - The orchestrator will resolve all paths (state, docs, constitution, external skills) to that project

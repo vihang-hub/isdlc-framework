@@ -135,6 +135,7 @@ When this command is invoked:
 ### Prerequisites
 - iSDLC framework must be installed (`.isdlc/` and `.claude/` folders exist)
 - `state.json` must exist with `project.is_new_project` flag
+- **Monorepo sub-projects:** `.isdlc/` and `.claude/` may be in a parent directory. The orchestrator walks up parent directories to find the project root. You do not need these folders inside each sub-project.
 
 ### See Also
 - `.isdlc/constitution.md` - Project constitution
