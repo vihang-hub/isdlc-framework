@@ -152,6 +152,34 @@ if [ "$IS_MONOREPO" = false ]; then
     fi
 fi
 
+# Check root-level directories for project markers (catches frontend/ + backend/ layouts)
+SKIP_DIRS=".claude .isdlc .git docs node_modules scripts vendor dist build target $(basename "$SCRIPT_DIR")"
+declare -a ROOT_PROJECT_DIRS=()
+for DIR in "$PROJECT_ROOT"/*/; do
+    [ -d "$DIR" ] || continue
+    DIR_NAME=$(basename "$DIR")
+    # Skip known non-project directories
+    SKIP=false
+    for SKIP_NAME in $SKIP_DIRS; do
+        if [ "$DIR_NAME" = "$SKIP_NAME" ]; then
+            SKIP=true
+            break
+        fi
+    done
+    [ "$SKIP" = true ] && continue
+    # Check for project markers
+    if [ -f "$DIR/package.json" ] || [ -f "$DIR/go.mod" ] || [ -f "$DIR/Cargo.toml" ] || \
+       [ -f "$DIR/pyproject.toml" ] || [ -f "$DIR/pom.xml" ] || [ -f "$DIR/build.gradle" ] || \
+       [ -d "$DIR/src" ]; then
+        ROOT_PROJECT_DIRS+=("$DIR_NAME")
+    fi
+done
+
+if [ "$IS_MONOREPO" = false ] && [ ${#ROOT_PROJECT_DIRS[@]} -ge 2 ]; then
+    IS_MONOREPO=true
+    MONOREPO_TYPE="root-directories"
+fi
+
 # Auto-detect projects in monorepo
 if [ "$IS_MONOREPO" = true ]; then
     for SCAN_DIR in apps packages services; do
@@ -165,46 +193,111 @@ if [ "$IS_MONOREPO" = true ]; then
             done
         fi
     done
+    # Also include root-level project directories
+    for DIR_NAME in "${ROOT_PROJECT_DIRS[@]}"; do
+        # Avoid duplicates (directory might already be under apps/packages/services)
+        ALREADY_ADDED=false
+        for EXISTING in "${DETECTED_PROJECTS[@]}"; do
+            if [ "${EXISTING%%:*}" = "$DIR_NAME" ]; then
+                ALREADY_ADDED=true
+                break
+            fi
+        done
+        if [ "$ALREADY_ADDED" = false ]; then
+            DETECTED_PROJECTS+=("$DIR_NAME:$DIR_NAME")
+        fi
+    done
 fi
 
+# Always ask user about monorepo — auto-detection informs the default
+echo ""
 if [ "$IS_MONOREPO" = true ]; then
-    echo ""
     echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║           MONOREPO DETECTED                                ║${NC}"
+    echo -e "${CYAN}║           MONOREPO INDICATORS DETECTED                     ║${NC}"
     echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
     echo ""
     echo -e "${YELLOW}This appears to be a monorepo (${MONOREPO_TYPE}).${NC}"
-    echo -e "${YELLOW}Detected ${#DETECTED_PROJECTS[@]} sub-projects:${NC}"
-    for PROJ_ENTRY in "${DETECTED_PROJECTS[@]}"; do
-        PROJ_NAME="${PROJ_ENTRY%%:*}"
-        PROJ_PATH="${PROJ_ENTRY#*:}"
-        echo "  - $PROJ_NAME ($PROJ_PATH)"
-    done
-    echo ""
-    read -p "Set up monorepo mode? [Y/n]: " MONOREPO_CONFIRM
-    MONOREPO_CONFIRM=${MONOREPO_CONFIRM:-Y}
-    if [[ ! "$MONOREPO_CONFIRM" =~ ^[Yy]$ ]]; then
-        IS_MONOREPO=false
-        echo -e "${YELLOW}Skipping monorepo setup. Installing as single-project.${NC}"
+    if [ ${#DETECTED_PROJECTS[@]} -gt 0 ]; then
+        echo -e "${YELLOW}Detected ${#DETECTED_PROJECTS[@]} sub-projects:${NC}"
+        for PROJ_ENTRY in "${DETECTED_PROJECTS[@]}"; do
+            PROJ_NAME="${PROJ_ENTRY%%:*}"
+            PROJ_PATH="${PROJ_ENTRY#*:}"
+            echo "  - $PROJ_NAME ($PROJ_PATH)"
+        done
     fi
-elif [ "$IS_EXISTING_PROJECT" = true ]; then
     echo ""
-    echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║           EXISTING PROJECT DETECTED                        ║${NC}"
-    echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
-    echo ""
-    echo -e "${YELLOW}This appears to be an existing project with code.${NC}"
-    echo -e "${YELLOW}The framework will be installed without modifying your project structure.${NC}"
-    echo ""
+    read -p "Is this a monorepo? [Y/n]: " MONOREPO_ANSWER
+    MONOREPO_ANSWER=${MONOREPO_ANSWER:-Y}
 else
+    if [ "$IS_EXISTING_PROJECT" = true ]; then
+        echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${CYAN}║           EXISTING PROJECT DETECTED                        ║${NC}"
+        echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
+        echo ""
+        echo -e "${YELLOW}This appears to be an existing project with code.${NC}"
+    else
+        echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${CYAN}║              NEW PROJECT DETECTED                          ║${NC}"
+        echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
+        echo ""
+        echo -e "${YELLOW}This appears to be a new project.${NC}"
+    fi
     echo ""
-    echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║              NEW PROJECT DETECTED                          ║${NC}"
-    echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
-    echo ""
-    echo -e "${YELLOW}This appears to be a new project.${NC}"
-    echo ""
+    read -p "Is this a monorepo? [y/N]: " MONOREPO_ANSWER
+    MONOREPO_ANSWER=${MONOREPO_ANSWER:-N}
 fi
+
+# User's answer is final
+if [[ "$MONOREPO_ANSWER" =~ ^[Yy]$ ]]; then
+    IS_MONOREPO=true
+    [ -z "$MONOREPO_TYPE" ] && MONOREPO_TYPE="user-specified"
+
+    # If projects were detected, let user confirm or edit
+    if [ ${#DETECTED_PROJECTS[@]} -gt 0 ]; then
+        echo ""
+        echo -e "${YELLOW}Detected sub-projects:${NC}"
+        for PROJ_ENTRY in "${DETECTED_PROJECTS[@]}"; do
+            PROJ_NAME="${PROJ_ENTRY%%:*}"
+            PROJ_PATH="${PROJ_ENTRY#*:}"
+            echo "  - $PROJ_NAME ($PROJ_PATH)"
+        done
+        echo ""
+        read -p "Use these projects? [Y/n]: " USE_DETECTED
+        USE_DETECTED=${USE_DETECTED:-Y}
+        if [[ ! "$USE_DETECTED" =~ ^[Yy]$ ]]; then
+            DETECTED_PROJECTS=()
+        fi
+    fi
+
+    # If no projects (none detected or user rejected), ask for manual entry
+    if [ ${#DETECTED_PROJECTS[@]} -eq 0 ]; then
+        echo ""
+        echo -e "${YELLOW}Enter project directories (comma-separated, relative to project root):${NC}"
+        echo -e "${YELLOW}  Example: frontend, backend, shared${NC}"
+        read -p "> " MANUAL_DIRS
+        if [ -n "$MANUAL_DIRS" ]; then
+            IFS=',' read -ra DIR_ARRAY <<< "$MANUAL_DIRS"
+            for RAW_DIR in "${DIR_ARRAY[@]}"; do
+                DIR_TRIMMED=$(echo "$RAW_DIR" | xargs)  # trim whitespace
+                if [ -d "$PROJECT_ROOT/$DIR_TRIMMED" ]; then
+                    DIR_BASE=$(basename "$DIR_TRIMMED")
+                    DETECTED_PROJECTS+=("$DIR_BASE:$DIR_TRIMMED")
+                    echo -e "${GREEN}  ✓ $DIR_TRIMMED${NC}"
+                else
+                    echo -e "${RED}  ✗ $DIR_TRIMMED (not found — skipping)${NC}"
+                fi
+            done
+        fi
+        if [ ${#DETECTED_PROJECTS[@]} -eq 0 ]; then
+            echo -e "${RED}No valid project directories found. Falling back to single-project mode.${NC}"
+            IS_MONOREPO=false
+        fi
+    fi
+else
+    IS_MONOREPO=false
+    echo -e "${YELLOW}Installing as single-project.${NC}"
+fi
+echo ""
 
 echo -e "${CYAN}After installation, run:${NC}"
 echo -e "  1. ${GREEN}claude${NC} to start Claude Code"
@@ -588,15 +681,25 @@ if [ "$IS_MONOREPO" = true ]; then
         DEFAULT_PROJECT="${DETECTED_PROJECTS[0]%%:*}"
     fi
 
-    # Build scan_paths array
+    # Build scan_paths array from detected project paths
     SCAN_PATHS_JSON="["
     FIRST_SCAN=true
-    for SCAN_DIR in apps packages services; do
-        if [ -d "$PROJECT_ROOT/$SCAN_DIR" ]; then
+    declare -A SEEN_SCAN_PATHS=()
+    for PROJ_ENTRY in "${DETECTED_PROJECTS[@]}"; do
+        PROJ_PATH="${PROJ_ENTRY#*:}"
+        # For nested paths like apps/web, use the parent dir (apps/)
+        # For root-level paths like frontend, use the path directly
+        if [[ "$PROJ_PATH" == */* ]]; then
+            SCAN_PATH="${PROJ_PATH%%/*}/"
+        else
+            SCAN_PATH="$PROJ_PATH"
+        fi
+        if [ -z "${SEEN_SCAN_PATHS[$SCAN_PATH]+x}" ]; then
+            SEEN_SCAN_PATHS["$SCAN_PATH"]=1
             if [ "$FIRST_SCAN" = false ]; then
                 SCAN_PATHS_JSON+=", "
             fi
-            SCAN_PATHS_JSON+="\"${SCAN_DIR}/\""
+            SCAN_PATHS_JSON+="\"${SCAN_PATH}\""
             FIRST_SCAN=false
         fi
     done
