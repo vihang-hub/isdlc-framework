@@ -25,6 +25,7 @@
 const {
     readState,
     loadManifest,
+    loadExternalManifest,
     normalizeAgentName,
     readStdin,
     outputBlockResponse,
@@ -115,7 +116,13 @@ async function main() {
 
         // Check if agent exists in manifest
         if (!manifest.ownership || !manifest.ownership[targetAgent]) {
-            debugLog(`Agent '${targetAgent}' not found in manifest`);
+            // Check external manifest for recognition
+            const externalManifest = loadExternalManifest();
+            if (externalManifest && externalManifest.skills) {
+                debugLog(`Agent '${targetAgent}' not in framework manifest, but external manifest loaded with ${Object.keys(externalManifest.skills).length} skills`);
+            } else {
+                debugLog(`Agent '${targetAgent}' not found in manifest`);
+            }
             // Unknown agent - this might be a non-SDLC agent, allow
             process.exit(0);
         }

@@ -37,8 +37,9 @@ Before any other action, determine if this is a monorepo installation and resolv
 
 Resolve the active project in this priority order:
 1. **`--project {id}` flag** — if the user passed `--project` on the command, use that project
-2. **`default_project` in `monorepo.json`** — use the configured default
-3. **Prompt the user** — if neither is set, present project selection (SCENARIO 0 from the `/sdlc` command)
+2. **CWD-based detection** — compute relative path from project root to CWD, match against registered project paths in `monorepo.json` (longest prefix match)
+3. **`default_project` in `monorepo.json`** — use the configured default
+4. **Prompt the user** — if none of the above resolves, present project selection (SCENARIO 0 from the `/sdlc` command)
 
 ## Monorepo Path Routing
 
@@ -48,6 +49,9 @@ Once the active project is resolved, ALL paths are scoped to that project:
 |----------|-------------------|---------------|
 | State file | `.isdlc/state.json` | `.isdlc/projects/{project-id}/state.json` |
 | Constitution | `.isdlc/constitution.md` | `.isdlc/projects/{project-id}/constitution.md` (if exists), else `.isdlc/constitution.md` |
+| External skills | `.claude/skills/external/` | `.isdlc/projects/{project-id}/skills/external/` |
+| External manifest | `.isdlc/external-skills-manifest.json` | `.isdlc/projects/{project-id}/external-skills-manifest.json` |
+| Skill report | `.isdlc/skill-customization-report.md` | `.isdlc/projects/{project-id}/skill-customization-report.md` |
 | Requirements docs | `docs/requirements/` | `docs/{project-id}/requirements/` |
 | Architecture docs | `docs/architecture/` | `docs/{project-id}/architecture/` |
 | Design docs | `docs/design/` | `docs/{project-id}/design/` |
@@ -65,6 +69,9 @@ MONOREPO CONTEXT:
 - State File: .isdlc/projects/{project-id}/state.json
 - Docs Base: docs/{project-id}/
 - Constitution: {resolved constitution path}
+- External Skills: .isdlc/projects/{project-id}/skills/external/
+- External Manifest: .isdlc/projects/{project-id}/external-skills-manifest.json
+- Skill Report: .isdlc/projects/{project-id}/skill-customization-report.md
 ```
 
 ## Workflow Independence

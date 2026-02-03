@@ -643,8 +643,9 @@ MONOREPOEOF
         PROJ_NAME="${PROJ_ENTRY%%:*}"
         PROJ_PATH="${PROJ_ENTRY#*:}"
 
-        # Create project state directory
+        # Create project state directory and external skills directory
         mkdir -p ".isdlc/projects/$PROJ_NAME"
+        mkdir -p ".isdlc/projects/$PROJ_NAME/skills/external"
 
         # Check if the sub-project has existing code
         PROJ_IS_NEW=true
@@ -710,6 +711,17 @@ MONOREPOEOF
 PROJSTATEEOF
 
         echo -e "${GREEN}  ✓ Created state for project: $PROJ_NAME${NC}"
+
+        # Create empty external skills manifest
+        cat > ".isdlc/projects/$PROJ_NAME/external-skills-manifest.json" << EXTMANIFESTEOF
+{
+  "version": "1.0.0",
+  "project_id": "$PROJ_NAME",
+  "updated_at": "$TIMESTAMP",
+  "skills": {}
+}
+EXTMANIFESTEOF
+        echo -e "${GREEN}  ✓ Created external skills manifest for: $PROJ_NAME${NC}"
 
         # Create per-project docs directories
         mkdir -p "docs/$PROJ_NAME/requirements"

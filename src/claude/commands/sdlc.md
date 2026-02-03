@@ -6,7 +6,12 @@ Invoke the SDLC Orchestrator to coordinate software development lifecycle workfl
 
 ### Monorepo Support
 
-When the project is a monorepo (`.isdlc/monorepo.json` exists), all commands accept a `--project {id}` flag to target a specific project. If `--project` is not provided, the `default_project` from `monorepo.json` is used.
+When the project is a monorepo (`.isdlc/monorepo.json` exists), all commands accept a `--project {id}` flag to target a specific project.
+
+**Project resolution order** (when `--project` is not provided):
+1. **CWD-based detection** — if CWD is inside a registered project path (longest prefix match), that project is auto-selected
+2. **`default_project`** from `monorepo.json` — the configured default
+3. **Interactive prompt** — if no project can be resolved, present selection menu
 
 **Project subcommands:**
 ```
@@ -730,10 +735,12 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 
 When this command is invoked:
 
-**If `--project {id}` flag is present (monorepo mode):**
-- Extract the project ID from the flag
+**If in monorepo mode** (`.isdlc/monorepo.json` exists):
+- If `--project {id}` flag is present: extract the project ID from the flag
+- Otherwise: auto-detect project from CWD (match against registered project paths, longest prefix match)
+- Otherwise: fall back to `default_project` in `monorepo.json`
 - Include `MONOREPO CONTEXT: --project {id}` in the Task prompt passed to the orchestrator
-- The orchestrator will resolve all paths (state, docs, constitution) to that project
+- The orchestrator will resolve all paths (state, docs, constitution, external skills) to that project
 
 **If NO action argument provided (`/sdlc` alone):**
 1. Use the Task tool to launch the `sdlc-orchestrator` agent

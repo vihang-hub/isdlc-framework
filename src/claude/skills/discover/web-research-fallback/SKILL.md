@@ -37,7 +37,17 @@ From the research results, extract key patterns: recommended project structure, 
 Compose a lightweight SKILL.md file following the standard skill format. Include the technology name, a concise description, key conventions, recommended patterns, and common anti-patterns. Mark the skill as "auto-generated" in its metadata.
 
 ### Step 4: Write and Register
-Write the generated skill file to `.claude/skills/external/{technology-name}/SKILL.md`. Register it in the skill index with source marked as "web-research" to distinguish it from registry-sourced skills.
+Write the generated skill file to the external skills directory:
+- Single-project: `.claude/skills/external/{technology-name}/SKILL.md`
+- Monorepo: `.isdlc/projects/{project-id}/skills/external/{technology-name}/SKILL.md`
+
+Register it in the skill index with source marked as "web-research" to distinguish it from registry-sourced skills.
+
+Also register the skill in the external skills manifest:
+- Single-project: `.isdlc/external-skills-manifest.json`
+- Monorepo: `.isdlc/projects/{project-id}/external-skills-manifest.json`
+
+Record: name, `source: "web-research"`, `version: "generated"`, path, `available_to: "all"`, and installation timestamp.
 
 ## Inputs
 | Input | Type | Required | Description |
@@ -63,3 +73,4 @@ Write the generated skill file to `.claude/skills/external/{technology-name}/SKI
 - At least three authoritative sources were consulted
 - Skill content is specific to the target technology, not generic
 - File is properly written and registered in the skill index
+- External manifest entry exists with `source: "web-research"`

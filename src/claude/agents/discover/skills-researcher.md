@@ -129,16 +129,61 @@ For each selected skill:
 
 ```bash
 # Download skill definition
-curl -s "https://skills.sh/api/skills/anthropics/nestjs" > .claude/skills/external/nestjs.md
+# Single-project: .claude/skills/external/
+# Monorepo: .isdlc/projects/{project-id}/skills/external/
+curl -s "https://skills.sh/api/skills/anthropics/nestjs" > {external_skills_path}/nestjs.md
 
 # Or use skills.sh CLI if available
 skills install anthropics/nestjs --project
 ```
 
-Update `.claude/skills/external/` with:
+**Path resolution (monorepo-aware):**
+- Check if `.isdlc/monorepo.json` exists
+- If monorepo: install to `.isdlc/projects/{project-id}/skills/external/`
+- If single-project: install to `.claude/skills/external/`
+
+Update the external skills directory with:
 - Skill definition files
 - Configuration if needed
 - README with usage
+
+### Step 5.5: Register External Skills in Manifest
+
+After installing skills, create or update the external skills manifest:
+
+**Path:**
+- Single-project: `.isdlc/external-skills-manifest.json`
+- Monorepo: `.isdlc/projects/{project-id}/external-skills-manifest.json`
+
+For each installed skill, register it in the manifest:
+
+```json
+{
+  "version": "1.0.0",
+  "project_id": "{project-id or null}",
+  "updated_at": "{timestamp}",
+  "skills": {
+    "anthropics/nestjs": {
+      "name": "anthropics/nestjs",
+      "source": "skills.sh",
+      "version": "1.2.0",
+      "path": "{external_skills_path}/nestjs.md",
+      "installed_at": "{timestamp}",
+      "available_to": "all"
+    },
+    "playwright-patterns": {
+      "name": "playwright-patterns",
+      "source": "web-research",
+      "version": "generated",
+      "path": "{external_skills_path}/playwright-patterns.md",
+      "installed_at": "{timestamp}",
+      "available_to": "all"
+    }
+  }
+}
+```
+
+If the manifest already exists, merge new skills into the existing `skills` object (overwrite entries with the same key).
 
 ### Step 6: Handle Gaps
 
@@ -161,7 +206,9 @@ If yes, generate a lightweight skill file from web research.
 
 ### Step 7: Generate Installation Report
 
-Create `.isdlc/skill-customization-report.md`:
+Create the skill customization report:
+- Single-project: `.isdlc/skill-customization-report.md`
+- Monorepo: `.isdlc/projects/{project-id}/skill-customization-report.md`
 
 ```markdown
 # Skill Installation Report
@@ -275,10 +322,11 @@ Return structured results to the orchestrator:
 
 ## Output Files
 
-| File | Description |
-|------|-------------|
-| `.isdlc/skill-customization-report.md` | Installation summary |
-| `.claude/skills/external/*.md` | Installed skill definitions |
+| File | Monorepo Path | Description |
+|------|---------------|-------------|
+| `.isdlc/skill-customization-report.md` | `.isdlc/projects/{id}/skill-customization-report.md` | Installation summary |
+| `.claude/skills/external/*.md` | `.isdlc/projects/{id}/skills/external/*.md` | Installed skill definitions |
+| `.isdlc/external-skills-manifest.json` | `.isdlc/projects/{id}/external-skills-manifest.json` | External skills registry |
 
 ---
 

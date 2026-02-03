@@ -87,10 +87,20 @@ monorepo/
 │   └── projects/                     # Per-project state
 │       ├── api-service/
 │       │   ├── state.json            # Independent state + counters
-│       │   └── constitution.md       # Optional override
+│       │   ├── constitution.md       # Optional override
+│       │   ├── external-skills-manifest.json  # External skills registry
+│       │   ├── skill-customization-report.md  # Skills report
+│       │   └── skills/
+│       │       └── external/         # Project-scoped external skills
+│       │           ├── nestjs.md
+│       │           └── typescript.md
 │       └── web-frontend/
 │           ├── state.json
-│           └── constitution.md
+│           ├── constitution.md
+│           ├── external-skills-manifest.json
+│           ├── skill-customization-report.md
+│           └── skills/
+│               └── external/
 ├── docs/
 │   ├── api-service/                  # Per-project docs
 │   │   ├── requirements/
@@ -138,7 +148,7 @@ monorepo/
 
 ### Selecting a Project
 
-There are three ways to target a project:
+There are four ways to target a project (in priority order):
 
 1. **`--project` flag** (highest priority):
    ```
@@ -146,13 +156,21 @@ There are three ways to target a project:
    /discover --project web-frontend
    ```
 
-2. **Default project** (set in monorepo.json):
+2. **CWD-based auto-detection**: If your shell is inside a registered project directory, the project is auto-selected:
+   ```
+   cd apps/api-service
+   /sdlc status          # Automatically targets api-service
+   /discover             # Automatically scopes to api-service
+   ```
+   The framework matches CWD against registered project paths using longest prefix match.
+
+3. **Default project** (set in monorepo.json):
    ```
    /sdlc project select api-service
    ```
    Then subsequent commands without `--project` target api-service.
 
-3. **Interactive selection**: If no project is resolved, the framework presents a project selection menu.
+4. **Interactive selection**: If no project is resolved, the framework presents a project selection menu.
 
 ### Managing Projects
 
@@ -198,6 +216,9 @@ Each project has its own workflow lifecycle:
 | Architecture | `docs/architecture/` | `docs/api-service/architecture/` |
 | Design | `docs/design/` | `docs/api-service/design/` |
 | State | `.isdlc/state.json` | `.isdlc/projects/api-service/state.json` |
+| External skills | `.claude/skills/external/` | `.isdlc/projects/api-service/skills/external/` |
+| External manifest | `.isdlc/external-skills-manifest.json` | `.isdlc/projects/api-service/external-skills-manifest.json` |
+| Skill report | `.isdlc/skill-customization-report.md` | `.isdlc/projects/api-service/skill-customization-report.md` |
 
 ## Constitution: Shared + Override
 
@@ -225,8 +246,11 @@ The web-frontend project adds:
 All hooks (gate-blocker, test-watcher, constitution-validator, menu-tracker, skill-validator) automatically route to the correct project's state.json through the `common.js` library. The routing uses:
 
 1. `ISDLC_PROJECT` environment variable (if set)
-2. `default_project` from `monorepo.json`
-3. Falls back to `.isdlc/state.json` (single-project mode)
+2. **CWD-based detection** — matches CWD against registered project paths (longest prefix match)
+3. `default_project` from `monorepo.json`
+4. Falls back to `.isdlc/state.json` (single-project mode)
+
+CWD-based detection means that running commands from within a project subdirectory (e.g., `cd apps/api-service && /sdlc status`) automatically targets the correct project without needing `--project` or setting a default.
 
 No hook configuration changes are needed for monorepo mode.
 
@@ -254,6 +278,19 @@ A: Each project can have its own constitution override with language-specific ar
 **Q: Can I run workflows on two projects simultaneously?**
 A: Yes. Each project has independent workflow state. You can start a feature on project-a and a fix on project-b.
 
+**Q: What happens to external skills (from /discover) in a monorepo?**
+A: External skills are isolated per project. Running `/discover --project frontend` installs skills to `.isdlc/projects/frontend/skills/external/`, not the shared `.claude/skills/external/`. This prevents one project's tech-stack skills from overwriting another's.
+
+**Q: Does CWD-based detection work from any subdirectory?**
+A: Yes. If you're anywhere inside a registered project path (e.g., `apps/api-service/src/controllers/`), the framework matches the longest prefix and resolves to `api-service`. If CWD is at the monorepo root or outside any registered path, it falls back to `default_project`.
+
+**Q: How do I migrate an existing monorepo install to support per-project external skills?**
+A: For each registered project:
+1. Create the external skills directory: `mkdir -p .isdlc/projects/{id}/skills/external`
+2. Create an empty manifest: `echo '{"version":"1.0.0","project_id":"{id}","updated_at":"","skills":{}}' > .isdlc/projects/{id}/external-skills-manifest.json`
+3. If you previously ran `/discover` and have skills in `.claude/skills/external/`, move the relevant skill files to the appropriate project directory
+4. Re-run `/discover --project {id}` to regenerate the manifest
+
 ---
 
-**Framework Version**: 2.0.0
+**Framework Version**: 2.2.0

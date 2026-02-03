@@ -22,6 +22,7 @@
 const {
     readState,
     loadManifest,
+    loadExternalManifest,
     normalizeAgentName,
     appendSkillLog,
     getTimestamp,
@@ -96,6 +97,12 @@ async function main() {
         // Load manifest to determine authorization
         const manifest = loadManifest();
 
+        // Load external manifest for recognition
+        const externalManifest = loadExternalManifest();
+        const externalSkillsRegistered = externalManifest && externalManifest.skills
+            ? Object.keys(externalManifest.skills).length
+            : 0;
+
         // Determine authorization status
         let status = 'executed';
         let reason = 'allowed';
@@ -136,7 +143,8 @@ async function main() {
             description: description,
             status: status,
             reason: reason,
-            enforcement_mode: enforcementMode
+            enforcement_mode: enforcementMode,
+            external_skills_registered: externalSkillsRegistered
         };
 
         // Append to skill_usage_log

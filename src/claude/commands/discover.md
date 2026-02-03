@@ -81,11 +81,18 @@ After completion, you'll have:
 - `src/` - Project structure scaffolded from architecture blueprint
 - `tests/` - Test infrastructure (unit, integration, e2e)
 
-**Monorepo mode** (when `--project {id}` is used or monorepo detected):
+**Monorepo mode** (when `--project {id}` is used, CWD matches a registered project, or monorepo detected):
 - All `docs/` outputs go to `docs/{project-id}/` instead
 - Discovery scopes analysis to the project's path (not entire monorepo root)
 - Constitution goes to `.isdlc/projects/{project-id}/constitution.md` (project override)
 - State updates go to `.isdlc/projects/{project-id}/state.json`
+- External skills install to `.isdlc/projects/{project-id}/skills/external/` (not shared `.claude/skills/external/`)
+- External skills manifest at `.isdlc/projects/{project-id}/external-skills-manifest.json`
+- Skill report at `.isdlc/projects/{project-id}/skill-customization-report.md`
+
+**CWD-based project resolution** (when `--project` not provided):
+- If CWD is inside a registered project path, that project is auto-selected
+- Resolution order: `--project` flag > CWD detection > `default_project` > interactive prompt
 
 ### Implementation
 

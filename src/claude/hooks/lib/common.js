@@ -85,10 +85,60 @@ function writeMonorepoConfig(config) {
 }
 
 /**
+ * Resolve project ID from current working directory.
+ * Matches CWD against registered project paths (longest prefix match).
+ * @returns {string|null} Project ID or null if no match
+ */
+function resolveProjectFromCwd() {
+    if (!isMonorepoMode()) {
+        return null;
+    }
+
+    const config = readMonorepoConfig();
+    if (!config || !config.projects) {
+        return null;
+    }
+
+    const projectRoot = getProjectRoot();
+    const cwd = process.cwd();
+
+    // Compute relative path from project root to CWD
+    const relativeCwd = path.relative(projectRoot, cwd);
+    if (relativeCwd.startsWith('..')) {
+        // CWD is outside the project root
+        return null;
+    }
+
+    // Find longest prefix match among registered project paths
+    let bestMatch = null;
+    let bestMatchLength = -1;
+
+    for (const [projectId, projectConfig] of Object.entries(config.projects)) {
+        const projectPath = projectConfig.path;
+        if (!projectPath) continue;
+
+        // Normalize: remove trailing slashes
+        const normalizedProjectPath = projectPath.replace(/\/+$/, '');
+
+        // Check if CWD is at or under this project path
+        if (relativeCwd === normalizedProjectPath ||
+            relativeCwd.startsWith(normalizedProjectPath + '/')) {
+            if (normalizedProjectPath.length > bestMatchLength) {
+                bestMatch = projectId;
+                bestMatchLength = normalizedProjectPath.length;
+            }
+        }
+    }
+
+    return bestMatch;
+}
+
+/**
  * Get the active project ID in monorepo mode.
  * Resolution order:
  *   1. ISDLC_PROJECT env var
- *   2. monorepo.json default_project
+ *   2. CWD-based project detection
+ *   3. monorepo.json default_project
  * @returns {string|null} Project ID or null if not in monorepo mode
  */
 function getActiveProject() {
@@ -101,7 +151,13 @@ function getActiveProject() {
         return process.env.ISDLC_PROJECT;
     }
 
-    // 2. default_project from monorepo.json
+    // 2. CWD-based project detection
+    const cwdProject = resolveProjectFromCwd();
+    if (cwdProject) {
+        return cwdProject;
+    }
+
+    // 3. default_project from monorepo.json
     const config = readMonorepoConfig();
     if (config && config.default_project) {
         return config.default_project;
@@ -173,6 +229,85 @@ function resolveDocsPath(projectId) {
     }
 
     return path.join(projectRoot, 'docs');
+}
+
+/**
+ * Resolve the path to the external skills directory, accounting for monorepo mode.
+ * - Single project: .claude/skills/external/
+ * - Monorepo: .isdlc/projects/{project-id}/skills/external/
+ * @param {string} [projectId] - Optional project ID override
+ * @returns {string} Absolute path to external skills directory
+ */
+function resolveExternalSkillsPath(projectId) {
+    const projectRoot = getProjectRoot();
+
+    if (isMonorepoMode()) {
+        const id = projectId || getActiveProject();
+        if (id) {
+            return path.join(projectRoot, '.isdlc', 'projects', id, 'skills', 'external');
+        }
+    }
+
+    return path.join(projectRoot, '.claude', 'skills', 'external');
+}
+
+/**
+ * Resolve the path to the external skills manifest, accounting for monorepo mode.
+ * - Single project: .isdlc/external-skills-manifest.json
+ * - Monorepo: .isdlc/projects/{project-id}/external-skills-manifest.json
+ * @param {string} [projectId] - Optional project ID override
+ * @returns {string} Absolute path to external skills manifest
+ */
+function resolveExternalManifestPath(projectId) {
+    const projectRoot = getProjectRoot();
+
+    if (isMonorepoMode()) {
+        const id = projectId || getActiveProject();
+        if (id) {
+            return path.join(projectRoot, '.isdlc', 'projects', id, 'external-skills-manifest.json');
+        }
+    }
+
+    return path.join(projectRoot, '.isdlc', 'external-skills-manifest.json');
+}
+
+/**
+ * Resolve the path to the skill customization report, accounting for monorepo mode.
+ * - Single project: .isdlc/skill-customization-report.md
+ * - Monorepo: .isdlc/projects/{project-id}/skill-customization-report.md
+ * @param {string} [projectId] - Optional project ID override
+ * @returns {string} Absolute path to skill customization report
+ */
+function resolveSkillReportPath(projectId) {
+    const projectRoot = getProjectRoot();
+
+    if (isMonorepoMode()) {
+        const id = projectId || getActiveProject();
+        if (id) {
+            return path.join(projectRoot, '.isdlc', 'projects', id, 'skill-customization-report.md');
+        }
+    }
+
+    return path.join(projectRoot, '.isdlc', 'skill-customization-report.md');
+}
+
+/**
+ * Load and parse the external skills manifest.
+ * @param {string} [projectId] - Optional project ID for monorepo mode
+ * @returns {object|null} Parsed external manifest or null if not found
+ */
+function loadExternalManifest(projectId) {
+    const manifestPath = resolveExternalManifestPath(projectId);
+
+    if (!fs.existsSync(manifestPath)) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    } catch (e) {
+        return null;
+    }
 }
 
 // =========================================================================
@@ -257,10 +392,11 @@ function writeState(state, projectId) {
 /**
  * Append entry to skill_usage_log array
  * @param {object} logEntry - Log entry to append
+ * @param {string} [projectId] - Optional project ID for monorepo mode
  * @returns {boolean} Success
  */
-function appendSkillLog(logEntry) {
-    const state = readState();
+function appendSkillLog(logEntry, projectId) {
+    const state = readState(projectId);
     if (!state) {
         return false;
     }
@@ -270,7 +406,7 @@ function appendSkillLog(logEntry) {
     }
 
     state.skill_usage_log.push(logEntry);
-    return writeState(state);
+    return writeState(state, projectId);
 }
 
 /**
@@ -495,10 +631,15 @@ module.exports = {
     isMonorepoMode,
     readMonorepoConfig,
     writeMonorepoConfig,
+    resolveProjectFromCwd,
     getActiveProject,
     resolveStatePath,
     resolveConstitutionPath,
     resolveDocsPath,
+    resolveExternalSkillsPath,
+    resolveExternalManifestPath,
+    resolveSkillReportPath,
+    loadExternalManifest,
     // State management (monorepo-aware)
     readStateValue,
     readState,

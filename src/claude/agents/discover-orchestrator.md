@@ -34,6 +34,40 @@ The Discover Orchestrator coordinates the `/discover` command workflow. It deter
 
 ## Workflow
 
+### MONOREPO PREAMBLE (Before fast path check)
+
+If `--project {id}` was passed, or if `.isdlc/monorepo.json` exists:
+
+1. **Resolve the active project:**
+   - If `--project {id}` was passed, use that ID
+   - Otherwise, detect from CWD: compute relative path from project root, match against registered project paths in `monorepo.json` (longest prefix match)
+   - Otherwise, fall back to `default_project` in `monorepo.json`
+   - If no project resolved, present project selection menu (same as SCENARIO 0 from `/sdlc`)
+
+2. **Read state from project-scoped path:**
+   - State file: `.isdlc/projects/{project-id}/state.json` (not root `state.json`)
+   - Scope analysis to the project's registered path
+
+3. **Resolve external skills paths for D4 delegation:**
+   - External skills: `.isdlc/projects/{project-id}/skills/external/`
+   - External manifest: `.isdlc/projects/{project-id}/external-skills-manifest.json`
+   - Skill report: `.isdlc/projects/{project-id}/skill-customization-report.md`
+
+4. **Pass project context when delegating to sub-agents:**
+   ```
+   MONOREPO CONTEXT:
+   - Project ID: {project-id}
+   - Project Path: {project-path}
+   - State File: .isdlc/projects/{project-id}/state.json
+   - External Skills Path: .isdlc/projects/{project-id}/skills/external/
+   - External Manifest: .isdlc/projects/{project-id}/external-skills-manifest.json
+   - Skill Report: .isdlc/projects/{project-id}/skill-customization-report.md
+   - Docs Base: docs/{project-id}/
+   - Constitution: {resolved constitution path}
+   ```
+
+If NOT in monorepo mode, skip the preamble entirely and proceed to the fast path check.
+
 ### FAST PATH CHECK (Must complete in <5 seconds)
 
 ```
@@ -49,7 +83,7 @@ The Discover Orchestrator coordinates the `/discover` command workflow. It deter
 │  UNTIL you complete this single-file check:                     │
 └─────────────────────────────────────────────────────────────────┘
 
-Step 1: Read .isdlc/state.json
+Step 1: Read .isdlc/state.json (or project-scoped state.json in monorepo mode)
 Step 2: Extract project.is_new_project value
 Step 3: Branch IMMEDIATELY:
         - true  → NEW PROJECT FLOW
