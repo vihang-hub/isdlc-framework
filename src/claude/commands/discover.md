@@ -137,6 +137,5 @@ When this command is invoked:
 - `state.json` must exist with `project.is_new_project` flag
 
 ### See Also
-- `docs/framework-info.md` - Framework overview
 - `.isdlc/constitution.md` - Project constitution
 - `.isdlc/state.json` - Project state

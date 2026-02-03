@@ -356,11 +356,9 @@ mkdir -p docs/requirements
 mkdir -p docs/architecture
 mkdir -p docs/design
 
-# Copy framework-info.md to docs folder
-if [ -f "$SCRIPT_DIR/framework-info.md" ]; then
-    cp "$SCRIPT_DIR/framework-info.md" docs/
-    echo -e "${GREEN}  ✓ Copied framework-info.md to docs/${NC}"
-fi
+# Note: framework-info.md is NOT copied to user projects.
+# It is framework documentation available in the framework repo.
+# Agents and commands are self-contained and don't need it.
 
 # Copy templates to docs if they exist
 if [ -d "$FRAMEWORK_DIR/isdlc/templates/requirements" ]; then
@@ -733,23 +731,12 @@ EXTMANIFESTEOF
     echo -e "${GREEN}  ✓ Monorepo setup complete (${#DETECTED_PROJECTS[@]} projects)${NC}"
 fi
 
-# Handle CLAUDE.md in project root
-FRAMEWORK_INSTRUCTION="Read docs/framework-info.md"
-
-if [ -f "CLAUDE.md" ]; then
-    # Check if the instruction already exists
-    if ! grep -q "$FRAMEWORK_INSTRUCTION" "CLAUDE.md"; then
-        echo "" >> "CLAUDE.md"
-        echo "$FRAMEWORK_INSTRUCTION" >> "CLAUDE.md"
-        echo -e "${GREEN}  ✓ Added framework reference to existing CLAUDE.md${NC}"
-    else
-        echo -e "${YELLOW}  CLAUDE.md already contains framework reference${NC}"
-    fi
-else
-    echo "$FRAMEWORK_INSTRUCTION" > "CLAUDE.md"
+# CLAUDE.md - only create if missing, don't inject framework-info read
+# Agents and commands are self-contained; no framework-info.md needed at runtime
+if [ ! -f "CLAUDE.md" ]; then
+    touch "CLAUDE.md"
     echo ""
-    echo -e "${YELLOW}  ⚠ CLAUDE.md was missing - created one in project root${NC}"
-    echo -e "${GREEN}  ✓ Created CLAUDE.md with framework reference${NC}"
+    echo -e "${YELLOW}  ⚠ CLAUDE.md was missing - created empty one in project root${NC}"
 fi
 
 # ============================================================================
