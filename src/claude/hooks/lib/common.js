@@ -214,7 +214,8 @@ function resolveConstitutionPath(projectId) {
 /**
  * Resolve the docs base path for artifacts, accounting for monorepo mode.
  * - Single project: docs/
- * - Monorepo: docs/{project-id}/
+ * - Monorepo (docs_location="root" or absent): docs/{project-id}/
+ * - Monorepo (docs_location="project"): {project-path}/docs/
  * @param {string} [projectId] - Optional project ID override
  * @returns {string} Absolute path to docs base directory
  */
@@ -224,6 +225,13 @@ function resolveDocsPath(projectId) {
     if (isMonorepoMode()) {
         const id = projectId || getActiveProject();
         if (id) {
+            const config = readMonorepoConfig();
+            if (config && config.docs_location === 'project') {
+                const project = config.projects && config.projects[id];
+                if (project && project.path) {
+                    return path.join(projectRoot, project.path, 'docs');
+                }
+            }
             return path.join(projectRoot, 'docs', id);
         }
     }

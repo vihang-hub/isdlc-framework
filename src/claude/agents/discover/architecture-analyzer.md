@@ -220,7 +220,7 @@ Identify external services and APIs the project communicates with:
 
 ### Step 9: Generate Architecture Overview
 
-Create `docs/architecture/architecture-overview.md` (or `docs/{project-id}/architecture/architecture-overview.md` in monorepo mode — check the orchestrator's delegation context for project path):
+Create `docs/architecture/architecture-overview.md` (in monorepo mode, use the `Docs Base` path from the orchestrator's MONOREPO CONTEXT delegation block):
 
 ```markdown
 # Architecture Overview

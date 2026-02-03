@@ -308,9 +308,9 @@ Compile the full architecture overview:
 
 ### Step 9: Save and Return
 
-Save to `docs/architecture/architecture-overview.md` (or `docs/{project-id}/architecture/architecture-overview.md` in monorepo mode — check the orchestrator's delegation context for project path).
+Save to `docs/architecture/architecture-overview.md` (in monorepo mode, use the `Docs Base` path from the orchestrator's MONOREPO CONTEXT delegation block).
 
-If the data model is substantial (>5 entities), also save a dedicated `docs/architecture/data-model.md` (or `docs/{project-id}/architecture/data-model.md` in monorepo mode).
+If the data model is substantial (>5 entities), also save a dedicated `docs/architecture/data-model.md` (in monorepo mode, use the `Docs Base` path from the MONOREPO CONTEXT).
 
 Return structured results:
 

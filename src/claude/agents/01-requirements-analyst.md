@@ -1323,11 +1323,11 @@ REQ-002,US-001,User Management,Must Have,Draft
 
 # OUTPUT STRUCTURE
 
-Save all artifacts to the `docs/` folder. **In monorepo mode**, replace `docs/` with `docs/{project-id}/` (the orchestrator provides the project context in the delegation prompt).
+Save all artifacts to the `docs/` folder. **In monorepo mode**, use the docs base path from the orchestrator's `MONOREPO CONTEXT` delegation block (either `docs/{project-id}/` or `{project-path}/docs/` depending on `docs_location` config).
 
 ```
 docs/                                    # Single-project mode
-docs/{project-id}/                       # Monorepo mode
+{docs base from MONOREPO CONTEXT}/       # Monorepo mode
 ├── common/                              # Shared cross-cutting documentation
 │   ├── glossary.md                      # Terms and definitions
 │   ├── nfr-matrix.md                    # Non-functional requirements matrix

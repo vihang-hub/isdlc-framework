@@ -582,7 +582,7 @@ RED→GREEN against known behavior
 1. Validate the path exists
 2. Add project entry to `monorepo.json`
 3. Create `.isdlc/projects/{project-id}/` directory with initial `state.json`
-4. Create `docs/{project-id}/` directory structure
+4. Create docs directory structure (`docs/{project-id}/` or `{project-path}/docs/` based on `docs_location` in monorepo.json)
 
 **project scan** - Auto-detect projects from scan_paths (monorepo only)
 ```

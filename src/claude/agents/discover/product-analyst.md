@@ -173,7 +173,7 @@ Produce a structured Project Brief:
 
 ### Step 6: Save and Return
 
-Save the Project Brief to `docs/project-brief.md` (or `docs/{project-id}/project-brief.md` in monorepo mode — check the orchestrator's delegation context for project path).
+Save the Project Brief to `docs/project-brief.md` (in monorepo mode, use the `Docs Base` path from the orchestrator's MONOREPO CONTEXT delegation block).
 
 Return structured results:
 
@@ -336,7 +336,7 @@ Compile the full PRD:
 
 ### Step 12: Save and Return
 
-Save the PRD to `docs/requirements/prd.md` (or `docs/{project-id}/requirements/prd.md` in monorepo mode).
+Save the PRD to `docs/requirements/prd.md` (in monorepo mode, use the `Docs Base` path from the orchestrator's MONOREPO CONTEXT delegation block).
 
 Return structured results:
 

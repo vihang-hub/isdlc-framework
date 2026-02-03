@@ -62,9 +62,9 @@ Once the active project is resolved, ALL paths are scoped to that project:
 | External skills | `.claude/skills/external/` | `.isdlc/projects/{project-id}/skills/external/` |
 | External manifest | `.isdlc/external-skills-manifest.json` | `.isdlc/projects/{project-id}/external-skills-manifest.json` |
 | Skill report | `.isdlc/skill-customization-report.md` | `.isdlc/projects/{project-id}/skill-customization-report.md` |
-| Requirements docs | `docs/requirements/` | `docs/{project-id}/requirements/` |
-| Architecture docs | `docs/architecture/` | `docs/{project-id}/architecture/` |
-| Design docs | `docs/design/` | `docs/{project-id}/design/` |
+| Requirements docs | `docs/requirements/` | `docs/{project-id}/requirements/` or `{project-path}/docs/requirements/` (depends on `docs_location` in monorepo.json) |
+| Architecture docs | `docs/architecture/` | `docs/{project-id}/architecture/` or `{project-path}/docs/architecture/` (depends on `docs_location`) |
+| Design docs | `docs/design/` | `docs/{project-id}/design/` or `{project-path}/docs/design/` (depends on `docs_location`) |
 | Git branch prefix | `feature/REQ-NNNN-name` | `{project-id}/feature/REQ-NNNN-name` |
 | Git branch prefix | `bugfix/BUG-NNNN-id` | `{project-id}/bugfix/BUG-NNNN-id` |
 
@@ -77,7 +77,7 @@ MONOREPO CONTEXT:
 - Project Name: {project-name}
 - Project Path: {project-path}
 - State File: .isdlc/projects/{project-id}/state.json
-- Docs Base: docs/{project-id}/
+- Docs Base: {resolved docs path — docs/{project-id}/ if docs_location="root" or absent, {project-path}/docs/ if docs_location="project"}
 - Constitution: {resolved constitution path}
 - External Skills: .isdlc/projects/{project-id}/skills/external/
 - External Manifest: .isdlc/projects/{project-id}/external-skills-manifest.json

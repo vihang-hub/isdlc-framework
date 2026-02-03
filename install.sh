@@ -726,11 +726,25 @@ if [ "$IS_MONOREPO" = true ]; then
     PROJECTS_JSON+="
   }"
 
+    # Ask where project docs should live
+    echo ""
+    echo -e "${YELLOW}Where should project documentation live?${NC}"
+    echo "  1) Root docs folder  — docs/{project-id}/  (shared-concern monorepos: FE/BE/shared)"
+    echo "  2) Inside each project — {project-path}/docs/  (multi-app monorepos: app1/app2/app3)"
+    read -p "Choice [1]: " DOCS_LOC_ANSWER
+    DOCS_LOC_ANSWER=${DOCS_LOC_ANSWER:-1}
+    if [ "$DOCS_LOC_ANSWER" = "2" ]; then
+        DOCS_LOCATION="project"
+    else
+        DOCS_LOCATION="root"
+    fi
+
     # Create monorepo.json
     cat > .isdlc/monorepo.json << MONOREPOEOF
 {
   "version": "1.0.0",
   "default_project": "$DEFAULT_PROJECT",
+  "docs_location": "$DOCS_LOCATION",
   "projects": $PROJECTS_JSON,
   "scan_paths": $SCAN_PATHS_JSON
 }
@@ -825,10 +839,17 @@ EXTMANIFESTEOF
         echo -e "${GREEN}  ✓ Created external skills manifest for: $PROJ_NAME${NC}"
 
         # Create per-project docs directories
-        mkdir -p "docs/$PROJ_NAME/requirements"
-        mkdir -p "docs/$PROJ_NAME/architecture"
-        mkdir -p "docs/$PROJ_NAME/design"
-        echo -e "${GREEN}  ✓ Created docs/$PROJ_NAME/${NC}"
+        if [ "$DOCS_LOCATION" = "project" ]; then
+            mkdir -p "$PROJ_PATH/docs/requirements"
+            mkdir -p "$PROJ_PATH/docs/architecture"
+            mkdir -p "$PROJ_PATH/docs/design"
+            echo -e "${GREEN}  ✓ Created $PROJ_PATH/docs/${NC}"
+        else
+            mkdir -p "docs/$PROJ_NAME/requirements"
+            mkdir -p "docs/$PROJ_NAME/architecture"
+            mkdir -p "docs/$PROJ_NAME/design"
+            echo -e "${GREEN}  ✓ Created docs/$PROJ_NAME/${NC}"
+        fi
     done
 
     echo -e "${GREEN}  ✓ Monorepo setup complete (${#DETECTED_PROJECTS[@]} projects)${NC}"

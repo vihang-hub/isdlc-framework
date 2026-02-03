@@ -72,7 +72,7 @@ If `--project {id}` was passed, or if `.isdlc/monorepo.json` exists (at the reso
    - External Skills Path: .isdlc/projects/{project-id}/skills/external/
    - External Manifest: .isdlc/projects/{project-id}/external-skills-manifest.json
    - Skill Report: .isdlc/projects/{project-id}/skill-customization-report.md
-   - Docs Base: docs/{project-id}/
+   - Docs Base: {resolved docs path — docs/{project-id}/ if docs_location="root" or absent, {project-path}/docs/ if docs_location="project"}
    - Constitution: {resolved constitution path}
    ```
 

@@ -35,6 +35,7 @@ To convert an existing single-project installation to monorepo mode:
 {
   "version": "1.0.0",
   "default_project": "api-service",
+  "docs_location": "root",
   "projects": {
     "api-service": {
       "name": "API Service",
@@ -64,12 +65,23 @@ mkdir -p .isdlc/projects/web-frontend
 
 4. Create per-project docs directories:
 
+If `docs_location` is `"root"` (default):
 ```bash
 mkdir -p docs/api-service/{requirements,architecture,design}
 mkdir -p docs/web-frontend/{requirements,architecture,design}
 ```
 
+If `docs_location` is `"project"`:
+```bash
+mkdir -p apps/api-service/docs/{requirements,architecture,design}
+mkdir -p apps/web-frontend/docs/{requirements,architecture,design}
+```
+
 ## Directory Structure
+
+The docs layout depends on the `docs_location` setting in `monorepo.json`:
+
+### `docs_location: "root"` (default) — shared-concern monorepos (FE/BE/shared)
 
 ```
 monorepo/
@@ -102,7 +114,7 @@ monorepo/
 │           └── skills/
 │               └── external/
 ├── docs/
-│   ├── api-service/                  # Per-project docs
+│   ├── api-service/                  # Per-project docs at root
 │   │   ├── requirements/
 │   │   ├── architecture/
 │   │   └── design/
@@ -115,12 +127,39 @@ monorepo/
 │   └── web-frontend/
 ```
 
+### `docs_location: "project"` — multi-app monorepos (app1/app2/app3)
+
+```
+monorepo/
+├── .claude/                          # Shared (unchanged)
+├── .isdlc/
+│   ├── monorepo.json
+│   ├── constitution.md
+│   └── projects/                     # Per-project state (same as above)
+│       ├── app1/
+│       └── app2/
+├── apps/
+│   ├── app1/
+│   │   ├── docs/                     # Docs live inside each project
+│   │   │   ├── requirements/
+│   │   │   ├── architecture/
+│   │   │   └── design/
+│   │   └── src/
+│   └── app2/
+│       ├── docs/
+│       │   ├── requirements/
+│       │   ├── architecture/
+│       │   └── design/
+│       └── src/
+```
+
 ## monorepo.json Schema
 
 ```json
 {
   "version": "1.0.0",
   "default_project": "api-service",
+  "docs_location": "root",
   "projects": {
     "api-service": {
       "name": "API Service",
@@ -137,6 +176,7 @@ monorepo/
 |-------|-------------|
 | `version` | Schema version |
 | `default_project` | Project used when `--project` is not specified |
+| `docs_location` | Where project docs live: `"root"` (default) puts docs at `docs/{project-id}/`, `"project"` puts docs at `{project-path}/docs/` |
 | `projects` | Registry of all managed projects |
 | `projects.{id}.name` | Human-readable project name |
 | `projects.{id}.path` | Relative path from monorepo root to project code |
@@ -189,7 +229,7 @@ There are four ways to target a project (in priority order):
 
 In monorepo mode, discovery:
 - Scopes analysis to the project's path (not the entire monorepo)
-- Outputs reports to `docs/{project-id}/`
+- Outputs reports to the resolved docs path (`docs/{project-id}/` or `{project-path}/docs/` depending on `docs_location`)
 - Creates the constitution at `.isdlc/projects/{project-id}/constitution.md`
 - Updates the project-specific `state.json`
 
@@ -210,11 +250,11 @@ Each project has its own workflow lifecycle:
 
 ### Artifact Paths
 
-| Artifact | Single-project | Monorepo |
-|----------|---------------|----------|
-| Requirements | `docs/requirements/REQ-0001-name/` | `docs/api-service/requirements/REQ-0001-name/` |
-| Architecture | `docs/architecture/` | `docs/api-service/architecture/` |
-| Design | `docs/design/` | `docs/api-service/design/` |
+| Artifact | Single-project | Monorepo (`docs_location: "root"`) | Monorepo (`docs_location: "project"`) |
+|----------|---------------|----------|----------|
+| Requirements | `docs/requirements/REQ-0001-name/` | `docs/api-service/requirements/REQ-0001-name/` | `apps/api-service/docs/requirements/REQ-0001-name/` |
+| Architecture | `docs/architecture/` | `docs/api-service/architecture/` | `apps/api-service/docs/architecture/` |
+| Design | `docs/design/` | `docs/api-service/design/` | `apps/api-service/docs/design/` |
 | State | `.isdlc/state.json` | `.isdlc/projects/api-service/state.json` |
 | External skills | `.claude/skills/external/` | `.isdlc/projects/api-service/skills/external/` |
 | External manifest | `.isdlc/external-skills-manifest.json` | `.isdlc/projects/api-service/external-skills-manifest.json` |
@@ -261,7 +301,7 @@ To convert an existing single-project iSDLC installation to a monorepo:
 1. Create `monorepo.json` (see Manual Setup above)
 2. Move `state.json` to `.isdlc/projects/{project-id}/state.json`
 3. Move constitution override (if desired) to `.isdlc/projects/{project-id}/constitution.md`
-4. Move docs to `docs/{project-id}/`
+4. Move docs to `docs/{project-id}/` (or `{project-path}/docs/` if using `docs_location: "project"`)
 5. Rename existing branches to add project prefix
 
 ## FAQ

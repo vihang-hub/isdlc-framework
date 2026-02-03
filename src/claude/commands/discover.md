@@ -82,7 +82,7 @@ After completion, you'll have:
 - `tests/` - Test infrastructure (unit, integration, e2e)
 
 **Monorepo mode** (when `--project {id}` is used, CWD matches a registered project, or monorepo detected):
-- All `docs/` outputs go to `docs/{project-id}/` instead
+- All `docs/` outputs go to the resolved docs path (`docs/{project-id}/` when `docs_location` is `"root"` or absent, `{project-path}/docs/` when `docs_location` is `"project"` — configured in monorepo.json)
 - Discovery scopes analysis to the project's path (not entire monorepo root)
 - Constitution goes to `.isdlc/projects/{project-id}/constitution.md` (project override)
 - State updates go to `.isdlc/projects/{project-id}/state.json`
