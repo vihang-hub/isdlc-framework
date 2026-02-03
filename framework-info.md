@@ -1,6 +1,6 @@
 # iSDLC Framework Repository
 
-This is the **iSDLC Framework** itself - a comprehensive SDLC framework for Claude Code with 15 specialized AI agents.
+This is the **iSDLC Framework** itself - a comprehensive SDLC framework for Claude Code with 28 specialized AI agents, 170 skills, 14 quality gates, and monorepo support.
 
 ## Repository Type
 
@@ -8,7 +8,7 @@ This is the **iSDLC Framework** itself - a comprehensive SDLC framework for Clau
 
 ## What's in This Repository
 
-### SDLC Agents (15 Specialized AI Agents)
+### SDLC Agents (15: 1 Orchestrator + 14 Phase Agents)
 Located in `src/claude/agents/`:
 - **00-sdlc-orchestrator.md** - Coordinates all phases and validates gates
 - **01-requirements-analyst.md** - Captures requirements, user stories, NFRs
@@ -26,7 +26,7 @@ Located in `src/claude/agents/`:
 - **13-site-reliability-engineer.md** - Operations and monitoring
 - **14-upgrade-engineer.md** - Dependency/tool upgrades with regression testing
 
-### Discover Agents (8 Sub-Agents + 1 Orchestrator)
+### Discover Agents (9: 1 Orchestrator + 8 Sub-Agents)
 Located in `src/claude/agents/discover/`:
 - **discover-orchestrator.md** - Coordinates project discovery (D0)
 - **architecture-analyzer.md** - Analyzes tech stack, dependencies, deployment topology (D1)
@@ -37,6 +37,13 @@ Located in `src/claude/agents/discover/`:
 - **feature-mapper.md** - Maps API endpoints, UI pages, CLI commands, business domains (D6)
 - **product-analyst.md** - Vision elicitation, brainstorming, PRD generation (D7)
 - **architecture-designer.md** - Designs architecture from PRD and tech stack (D8)
+
+### Reverse Engineer Agents (4 Sub-Agents)
+Located in `src/claude/agents/reverse-engineer/`:
+- **behavior-analyzer.md** - Extracts behavioral contracts, side effects, and implicit AC from source code (R1)
+- **characterization-test-generator.md** - Generates tests that capture current behavior as executable specifications (R2)
+- **artifact-integration.md** - Links extracted AC to feature maps, generates traceability matrices (R3)
+- **atdd-bridge.md** - Prepares extracted AC for ATDD workflow integration with priority tagging (R4)
 
 ### Skills (170 Specialized Skills)
 Located in `src/claude/skills/` organized in 12 categories:
@@ -88,8 +95,8 @@ This framework is designed to be cloned/installed and then used for actual softw
 
 This is the framework repository, so there's no "current phase" - it's the foundation that projects will use.
 
-**Framework Version**: 2.0.0
-**Last Updated**: 2026-01-18
+**Framework Version**: 2.2.0
+**Last Updated**: 2026-02-03
 **Status**: Active development
 
 ## Key Framework Concepts
@@ -109,69 +116,52 @@ Each SDLC phase has exactly ONE dedicated agent:
 - Phase 11 → Deployment Engineer (Staging)
 - Phase 12 → Release Manager
 - Phase 13 → Site Reliability Engineer
+- Phase 14 → Upgrade Engineer
 
 ### Quality Gates
-Each phase ends with a quality gate (GATE-01 through GATE-13) with specific validation criteria.
+Each phase ends with a quality gate (GATE-01 through GATE-14) with specific validation criteria. Gates are enforced through three layers:
+1. **Artifact validation** — The orchestrator checks that all required phase artifacts exist and meet quality criteria
+2. **Constitutional compliance** — Agents iterate against applicable constitutional articles; the `constitution-validator.js` hook blocks phase completion until validation passes
+3. **Deterministic hook enforcement** — The `gate-blocker.js` hook intercepts any gate advancement attempt and blocks it unless all iteration requirements are satisfied
+
+Gates cannot be skipped or bypassed. When iteration limits are exceeded, the system escalates to a human rather than auto-passing.
 
 ### Workflow Types
-Instead of always running all 13 phases, the framework provides focused workflows:
+Instead of always running all 14 phases, the framework provides focused workflows:
 
 | Command | Workflow | Phases |
 |---------|----------|--------|
-| `/sdlc feature` | New Feature | 01 → 02 → 03 → 05 → 10 → 06 → 09 → 07 |
-| `/sdlc fix` | Bug Fix (TDD) | 01 → 05 → 10 → 06 → 09 → 07 |
-| `/sdlc test run` | Run Tests | 10 → 06 |
-| `/sdlc test generate` | Generate Tests | 04 → 05 → 10 → 06 → 07 |
-| `/sdlc start` | Full Lifecycle | 01 → ... → 05 → 10 → 06 → ... → 10(remote) → 11 → ... → 13 |
-| `/sdlc upgrade` | Upgrade | 14-plan → 14-execute → 07 |
+| `/discover` | Project Discovery | D1-D8 sub-agents analyze tech stack, tests, data models, features |
+| `/sdlc feature "desc"` | New Feature | Requirements → Architecture → Design → Test Strategy → Implementation → Local Testing → Integration Testing → CI/CD → Code Review |
+| `/sdlc fix "desc"` | Bug Fix (TDD) | Requirements → Test Strategy → Implementation → Local Testing → Integration Testing → CI/CD → Code Review |
+| `/sdlc test run` | Run Tests | Local Testing → Integration Testing |
+| `/sdlc test generate` | Generate Tests | Test Strategy → Implementation → Local Testing → Integration Testing → Code Review |
+| `/sdlc start` | Full Lifecycle | All 14 phases (Requirements through Operations) |
+| `/sdlc upgrade "name"` | Upgrade | Impact Analysis → Upgrade Execution → Code Review |
+| `/sdlc reverse-engineer` | Reverse Engineer | Behavior Extraction → Characterization Tests → Artifact Integration → ATDD Bridge |
 
 Workflow definitions are in `.isdlc/config/workflows.json`. Each workflow has a fixed, non-skippable phase sequence with strict gate enforcement.
 
 ### Git Branch Lifecycle
-Workflows that produce code (feature, fix, full-lifecycle) automatically manage git branches:
+Workflows that produce code (feature, fix, full-lifecycle, upgrade) automatically manage git branches:
 - **Branch creation**: After Phase 01 assigns the work item ID, a branch is created from main
 - **Naming**: `feature/REQ-NNNN-description` or `bugfix/BUG-NNNN-external-id` (or `bugfix/BUG-NNNN-MAN` for manual entry without external tracker)
 - **All phases** execute on the branch
 - **Merge**: After the final gate passes, branch merges to main with `--no-ff`
 - **Conflicts**: Trigger human escalation (no auto-resolution)
-- **Test workflows** (test-run, test-generate) do not create branches
+- **Test workflows** (test-run, test-generate) and reverse-engineer do not create branches
 
 ### Artifact-Based Handoffs
 Each phase produces specific artifacts that the next phase consumes.
 
 ### Key Features
-- **Project Constitution** - Customizable governance principles
-- **Autonomous Iteration** - Self-correcting agents that iterate until tests pass
-- **Skill Enforcement** - Exclusive skill ownership with audit logging
-
-## Development Guidelines
-
-When working on this framework:
-
-1. **Agent Modifications**: Update agent files in `src/claude/agents/` and ensure consistency with gate checklists
-2. **New Skills**: Add to appropriate category in `src/claude/skills/`
-3. **Templates**: Maintain templates in `src/isdlc/templates/` for artifact generation
-4. **Documentation**: Keep README.md and docs/ up-to-date with any changes
-5. **Testing**: Test changes with real projects using the framework
-
-## Framework Philosophy
-
-- **Clear Ownership**: Each agent owns exactly one phase
-- **Specialization**: Deep expertise in specific areas
-- **Quality Gates**: No phase skipping, validation required (workflow-aware)
-- **Focused Workflows**: Feature, fix, test, and full lifecycle paths
-- **Traceability**: Requirements → Design → Code → Tests
-- **Automation**: Scripts and tools to support the workflow
-- **Standardization**: Templates and standards for consistency
-
-## Questions About This Framework?
-
-See:
-- [README.md](README.md) - Complete framework overview and installation guide
-- [docs/README.md](docs/README.md) - Documentation index and guide
-- [docs/NEW-agents-and-skills-architecture.md](docs/NEW-agents-and-skills-architecture.md) - Architecture overview
-- [docs/WORKFLOW-ALIGNMENT.md](docs/WORKFLOW-ALIGNMENT.md) - Workflows and artifacts
-- [docs/DETAILED-SKILL-ALLOCATION.md](docs/DETAILED-SKILL-ALLOCATION.md) - Skill allocation
+- **Project Constitution** - Customizable governance principles enforced at every quality gate
+- **Autonomous Iteration** - Self-correcting agents that iterate until tests pass (circuit breaker after 3 identical failures)
+- **Skill Enforcement** - Exclusive skill ownership with runtime validation and audit logging
+- **Deterministic Iteration Enforcement** - Hook-based enforcement of iteration requirements (4 hooks)
+- **Monorepo Support** - Multi-project management from a single installation
+- **Task Planning & Progress Tracking** - Persistent task plans with checkbox-based tracking (ORCH-012)
+- **ATDD Mode** - Feature and fix workflows support `--atdd` for Acceptance Test-Driven Development
 
 ## Monorepo Support
 
@@ -196,11 +186,40 @@ Single-project installations work unchanged. Monorepo mode activates only when `
 
 For detailed setup instructions, see `docs/MONOREPO-GUIDE.md`.
 
+## Development Guidelines
+
+When working on this framework:
+
+1. **Agent Modifications**: Update agent files in `src/claude/agents/` and ensure consistency with gate checklists
+2. **New Skills**: Add to appropriate category in `src/claude/skills/`
+3. **Templates**: Maintain templates in `src/isdlc/templates/` for artifact generation
+4. **Documentation**: Keep README.md and docs/ up-to-date with any changes
+5. **Testing**: Test changes with real projects using the framework
+
+## Framework Philosophy
+
+- **Clear Ownership**: Each agent owns exactly one phase
+- **Specialization**: Deep expertise in specific areas
+- **Quality Gates**: No phase skipping, validation required (workflow-aware)
+- **Focused Workflows**: Feature, fix, test, upgrade, reverse-engineer, and full lifecycle paths
+- **Traceability**: Requirements → Design → Code → Tests
+- **Automation**: Scripts and tools to support the workflow
+- **Standardization**: Templates and standards for consistency
+
+## Questions About This Framework?
+
+See:
+- [README.md](README.md) - Complete framework overview and installation guide
+- [docs/README.md](docs/README.md) - Documentation index and guide
+- [docs/NEW-agents-and-skills-architecture.md](docs/NEW-agents-and-skills-architecture.md) - Architecture overview
+- [docs/WORKFLOW-ALIGNMENT.md](docs/WORKFLOW-ALIGNMENT.md) - Workflows and artifacts
+- [docs/DETAILED-SKILL-ALLOCATION.md](docs/DETAILED-SKILL-ALLOCATION.md) - Skill allocation
+
 ## For Claude Code AI Agents
 
 When invoked in this repository:
-- You have access to all 15 agent definitions
-- You have access to all 170 skills
+- You have access to all 28 agent definitions (15 SDLC + 9 discover + 4 reverse-engineer)
+- You have access to all 170 skills across 12 categories
 - You can reference templates, checklists, and configs
 - Focus on framework development, not project implementation
 - Help maintain consistency across agents and artifacts
