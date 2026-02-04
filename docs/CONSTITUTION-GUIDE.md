@@ -1,8 +1,8 @@
 # Project Constitution Guide
 ## How to Create and Use Constitutional Principles in iSDLC Projects
 
-**Date**: 2026-01-17
-**Version**: 1.0.0
+**Date**: 2026-02-04
+**Version**: 1.1.0
 
 ---
 
@@ -12,7 +12,7 @@ A **Project Constitution** is a set of immutable principles that govern all deve
 
 ### Why Use a Constitution?
 
-✅ **Consistency**: Ensures all 14 agents apply the same principles
+✅ **Consistency**: Ensures all 36 agents apply the same principles
 ✅ **Quality**: Enforces standards automatically at quality gates
 ✅ **Alignment**: Keeps long-running projects on track architecturally
 ✅ **Clarity**: Makes expectations explicit and non-negotiable
@@ -167,7 +167,7 @@ git commit -m "Add project constitution"
 3. Fails gate if violations found
 4. Documents compliance in `gate-validation.json`
 
-### Phase Agents (01-13)
+### Phase Agents (00-13)
 
 **Before Starting Work:**
 1. Read `docs/isdlc/constitution.md`
@@ -462,6 +462,6 @@ Remember: **A constitution should help, not hinder**. If it's slowing you down w
 
 ---
 
-**Guide Version**: 1.0.0
-**Last Updated**: 2026-01-17
-**Framework Compatibility**: iSDLC v1.0.0+
+**Guide Version**: 1.1.0
+**Last Updated**: 2026-02-04
+**Framework Compatibility**: iSDLC v2.6.0+

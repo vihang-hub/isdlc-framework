@@ -346,4 +346,4 @@ A: For each registered project:
 
 ---
 
-**Framework Version**: 2.2.0
+**Framework Version**: 2.6.0

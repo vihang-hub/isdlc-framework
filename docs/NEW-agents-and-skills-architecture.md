@@ -1,16 +1,16 @@
 # Integrated SDLC Framework: 1-to-1 Agent-Phase Mapping
-## AI-Powered SDLC Implementation with 13 Specialized Agents
+## AI-Powered SDLC Implementation with 36 Specialized Agents
 
 ---
 
 ## Overview
 
-This framework implements a **1-to-1 mapping** between SDLC phases and specialized AI agents. Each of the 13 SDLC phases has exactly ONE dedicated agent responsible for that phase, creating clear ownership, simplified workflows, and streamlined handoffs.
+This framework implements a **1-to-1 mapping** between SDLC phases and specialized AI agents. The 15 core SDLC phases (including Phase 00 for Mapping/Tracing exploration) each have dedicated agents, plus 9 Discover agents and 4 Reverse Engineer agents, totaling 36 agents. This creates clear ownership, simplified workflows, and streamlined handoffs.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                  SDLC ORCHESTRATOR (Agent 00)                    │
-│              Coordinates all 13 phases & validates gates         │
+│              Coordinates all 15 phases & validates gates         │
 └─────────────────────────────────────────────────────────────────┘
                                 │
     ┌───────────────────────────┼───────────────────────────┐
