@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# iSDLC Framework - Uninstall Script
+# iSDLC Framework - Safe Uninstall Script
 #
-# Removes the iSDLC framework from a project that was set up with install.sh.
+# SAFETY: Only removes framework-installed files tracked in the manifest.
+# User-created agents, skills, commands, and hooks are PRESERVED.
 #
 # Usage:
 #   ./uninstall.sh [options]
@@ -15,18 +16,18 @@
 #   --dry-run     Show what would be removed without removing anything
 #   --help        Show this help message
 #
-# What gets removed:
-#   - .claude/agents/, .claude/skills/, .claude/commands/, .claude/hooks/
+# What gets removed (ONLY if tracked in manifest):
+#   - Framework-installed files in .claude/agents/, skills/, commands/, hooks/
 #   - Framework keys (hooks, permissions) from .claude/settings.json
 #   - .isdlc/ directory (unless --keep-state)
 #   - Framework-generated docs (unless --keep-docs)
 #   - scripts/convert-manifest.sh (install fallback)
 #
-# What is preserved:
+# What is ALWAYS preserved:
+#   - User-created agents, skills, commands, hooks (not in manifest)
 #   - .claude/settings.local.json (user customizations)
 #   - CLAUDE.md (user-owned)
 #   - Non-framework files in .claude/
-#   - Non-empty docs/ content
 
 set -e
 
@@ -70,7 +71,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --help|-h)
-            echo "iSDLC Framework - Uninstall Script"
+            echo "iSDLC Framework - Safe Uninstall Script"
             echo ""
             echo "Usage: ./uninstall.sh [options]"
             echo ""
@@ -81,6 +82,9 @@ while [[ $# -gt 0 ]]; do
             echo "  --keep-state  Preserve .isdlc/ directory (state, constitution, checklists)"
             echo "  --dry-run     Show what would be removed without removing anything"
             echo "  --help        Show this help message"
+            echo ""
+            echo "SAFETY: Only removes files tracked in .isdlc/installed-files.json"
+            echo "        User-created agents, skills, commands, and hooks are preserved."
             exit 0
             ;;
         *)
@@ -100,19 +104,11 @@ declare -a REMOVED_DIRS=()
 declare -a REMOVED_FILES=()
 declare -a CLEANED_FILES=()
 declare -a SKIPPED_ITEMS=()
+declare -a PRESERVED_USER_FILES=()
 
 # ============================================================================
 # Helper: perform or simulate an action
 # ============================================================================
-do_rm_rf() {
-    if [ "$DRY_RUN" = true ]; then
-        echo -e "${YELLOW}  [dry-run] Would remove directory: $1${NC}"
-    else
-        rm -rf "$1"
-    fi
-    REMOVED_DIRS+=("$1")
-}
-
 do_rm_f() {
     if [ "$DRY_RUN" = true ]; then
         echo -e "${YELLOW}  [dry-run] Would remove file: $1${NC}"
@@ -122,7 +118,7 @@ do_rm_f() {
     REMOVED_FILES+=("$1")
 }
 
-do_rmdir() {
+do_rmdir_if_empty() {
     # Remove directory only if empty
     if [ -d "$1" ] && [ -z "$(ls -A "$1" 2>/dev/null)" ]; then
         if [ "$DRY_RUN" = true ]; then
@@ -139,7 +135,7 @@ do_rmdir() {
 # ============================================================================
 echo ""
 echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║           iSDLC Framework - Uninstall                      ║${NC}"
+echo -e "${CYAN}║           iSDLC Framework - Safe Uninstall                 ║${NC}"
 echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${BLUE}Project Directory:${NC} $PROJECT_ROOT"
@@ -147,6 +143,7 @@ echo ""
 
 HAS_ISDLC=false
 HAS_CLAUDE_AGENTS=false
+HAS_MANIFEST=false
 IS_MONOREPO=false
 
 if [ -d "$PROJECT_ROOT/.isdlc" ]; then
@@ -155,6 +152,10 @@ fi
 
 if [ -d "$PROJECT_ROOT/.claude/agents" ]; then
     HAS_CLAUDE_AGENTS=true
+fi
+
+if [ -f "$PROJECT_ROOT/.isdlc/installed-files.json" ]; then
+    HAS_MANIFEST=true
 fi
 
 if [ -f "$PROJECT_ROOT/.isdlc/monorepo.json" ]; then
@@ -173,21 +174,249 @@ if [ "$IS_MONOREPO" = true ]; then
 fi
 
 # ============================================================================
-# Step 2: Show what will be removed and confirm
+# Step 2: Load manifest or warn about legacy installation
+# ============================================================================
+MANIFEST_FILE="$PROJECT_ROOT/.isdlc/installed-files.json"
+declare -a MANIFEST_FILES=()
+
+if [ "$HAS_MANIFEST" = true ]; then
+    echo -e "${GREEN}  Installation manifest found - will only remove tracked files${NC}"
+
+    if command -v jq &> /dev/null; then
+        # Load file list from manifest
+        while IFS= read -r file; do
+            MANIFEST_FILES+=("$file")
+        done < <(jq -r '.files[]' "$MANIFEST_FILE" 2>/dev/null)
+
+        echo -e "${BLUE}  Tracked files: ${#MANIFEST_FILES[@]}${NC}"
+    else
+        echo -e "${YELLOW}  Warning: jq not available. Cannot parse manifest.${NC}"
+        echo -e "${YELLOW}  Will use legacy removal mode (less safe).${NC}"
+        HAS_MANIFEST=false
+    fi
+else
+    echo ""
+    echo -e "${YELLOW}╔════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${YELLOW}║                    WARNING                                  ║${NC}"
+    echo -e "${YELLOW}╚════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${YELLOW}No installation manifest found at .isdlc/installed-files.json${NC}"
+    echo ""
+    echo -e "${YELLOW}This installation was created before manifest tracking was added.${NC}"
+    echo -e "${YELLOW}The uninstaller cannot distinguish between:${NC}"
+    echo -e "${YELLOW}  - Framework-installed files${NC}"
+    echo -e "${YELLOW}  - User-created files${NC}"
+    echo ""
+    echo -e "${RED}RISK: User-created agents, skills, commands, or hooks may be deleted.${NC}"
+    echo ""
+
+    if [ "$FORCE" = false ]; then
+        echo -e "${CYAN}Options:${NC}"
+        echo "  1) Continue anyway (will attempt safe removal)"
+        echo "  2) Abort and manually remove framework files"
+        echo "  3) Create manifest from current state first (recommended)"
+        echo ""
+        read -p "Choose [1/2/3]: " LEGACY_CHOICE
+
+        case "$LEGACY_CHOICE" in
+            1)
+                echo -e "${YELLOW}Continuing with legacy mode...${NC}"
+                ;;
+            2)
+                echo -e "${RED}Uninstall aborted.${NC}"
+                exit 0
+                ;;
+            3)
+                echo ""
+                echo -e "${BLUE}Creating manifest from current state...${NC}"
+                # Generate manifest from existing framework files
+                # This assumes all current files in .claude/{agents,skills,commands,hooks} are framework files
+                TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+                MANIFEST_CONTENT='{"version":"1.0.0","created":"'"$TIMESTAMP"'","files":['
+                FIRST_FILE=true
+
+                for DIR in agents skills commands hooks; do
+                    if [ -d "$PROJECT_ROOT/.claude/$DIR" ]; then
+                        while IFS= read -r file; do
+                            if [ "$FIRST_FILE" = false ]; then
+                                MANIFEST_CONTENT+=','
+                            fi
+                            # Store relative path from project root
+                            REL_PATH="${file#$PROJECT_ROOT/}"
+                            MANIFEST_CONTENT+='"'"$REL_PATH"'"'
+                            FIRST_FILE=false
+                        done < <(find "$PROJECT_ROOT/.claude/$DIR" -type f 2>/dev/null)
+                    fi
+                done
+
+                # Add settings.json if it exists
+                if [ -f "$PROJECT_ROOT/.claude/settings.json" ]; then
+                    if [ "$FIRST_FILE" = false ]; then
+                        MANIFEST_CONTENT+=','
+                    fi
+                    MANIFEST_CONTENT+='".claude/settings.json"'
+                fi
+
+                MANIFEST_CONTENT+=']}'
+
+                echo "$MANIFEST_CONTENT" | jq '.' > "$MANIFEST_FILE"
+                echo -e "${GREEN}  ✓ Created manifest with $(echo "$MANIFEST_CONTENT" | jq '.files | length') files${NC}"
+                echo ""
+                echo -e "${YELLOW}Please review .isdlc/installed-files.json and remove any${NC}"
+                echo -e "${YELLOW}user-created files from the list before running uninstall again.${NC}"
+                exit 0
+                ;;
+            *)
+                echo -e "${RED}Invalid choice. Aborting.${NC}"
+                exit 1
+                ;;
+        esac
+    fi
+fi
+
+# ============================================================================
+# Step 3: Identify what will be removed vs preserved
+# ============================================================================
+echo ""
+echo -e "${BLUE}Analyzing files...${NC}"
+
+declare -a FILES_TO_REMOVE=()
+declare -a USER_FILES_PRESERVED=()
+
+if [ "$HAS_MANIFEST" = true ] && [ ${#MANIFEST_FILES[@]} -gt 0 ]; then
+    # SAFE MODE: Only remove files in the manifest
+    for file in "${MANIFEST_FILES[@]}"; do
+        FULL_PATH="$PROJECT_ROOT/$file"
+        if [ -f "$FULL_PATH" ]; then
+            FILES_TO_REMOVE+=("$file")
+        fi
+    done
+
+    # Find user-created files (files in .claude/ NOT in manifest)
+    for DIR in agents skills commands hooks; do
+        if [ -d "$PROJECT_ROOT/.claude/$DIR" ]; then
+            while IFS= read -r file; do
+                REL_PATH="${file#$PROJECT_ROOT/}"
+                IN_MANIFEST=false
+                for manifest_file in "${MANIFEST_FILES[@]}"; do
+                    if [ "$REL_PATH" = "$manifest_file" ]; then
+                        IN_MANIFEST=true
+                        break
+                    fi
+                done
+                if [ "$IN_MANIFEST" = false ]; then
+                    USER_FILES_PRESERVED+=("$REL_PATH")
+                fi
+            done < <(find "$PROJECT_ROOT/.claude/$DIR" -type f 2>/dev/null)
+        fi
+    done
+else
+    # LEGACY MODE: Remove known framework patterns only
+    # This is less safe but tries to preserve obvious user files
+
+    # Known framework file patterns (conservative list)
+    FRAMEWORK_PATTERNS=(
+        # Orchestrator and numbered agents
+        "00-sdlc-orchestrator.md"
+        "01-requirements-analyst.md"
+        "02-solution-architect.md"
+        "03-tech-lead.md"
+        "04-test-design-engineer.md"
+        "05-software-developer.md"
+        "06-integration-tester.md"
+        "07-code-reviewer.md"
+        "08-uat-coordinator.md"
+        "09-devops-engineer.md"
+        "10-release-manager.md"
+        "11-deployment-specialist.md"
+        "12-prod-support-engineer.md"
+        "13-operations-analyst.md"
+        "14-upgrade-engineer.md"
+        # Discover agents
+        "discover-orchestrator.md"
+        "product-analyst.md"
+        "architecture-analyzer.md"
+        "architecture-designer.md"
+        "skills-researcher.md"
+        # Reverse engineering agents
+        "R1-*.md"
+        "R2-*.md"
+        "R3-*.md"
+        "R4-*.md"
+        # Enactor agents
+        "enactor-*.md"
+        # Hook files
+        "gate-blocker.js"
+        "test-watcher.js"
+        "constitution-validator.js"
+        "menu-tracker.js"
+        "skill-validator.js"
+        "log-skill-usage.js"
+        "common.js"
+    )
+
+    for DIR in agents skills commands hooks; do
+        if [ -d "$PROJECT_ROOT/.claude/$DIR" ]; then
+            while IFS= read -r file; do
+                REL_PATH="${file#$PROJECT_ROOT/}"
+                FILENAME=$(basename "$file")
+                IS_FRAMEWORK=false
+
+                for pattern in "${FRAMEWORK_PATTERNS[@]}"; do
+                    if [[ "$FILENAME" == $pattern ]]; then
+                        IS_FRAMEWORK=true
+                        break
+                    fi
+                done
+
+                # For skills, check if it's under a known framework skill directory
+                if [ "$DIR" = "skills" ]; then
+                    if [[ "$REL_PATH" == *"/sdlc/"* ]] || \
+                       [[ "$REL_PATH" == *"/discover/"* ]] || \
+                       [[ "$REL_PATH" == *"/gates/"* ]] || \
+                       [[ "$REL_PATH" == *"/workflows/"* ]]; then
+                        IS_FRAMEWORK=true
+                    fi
+                fi
+
+                if [ "$IS_FRAMEWORK" = true ]; then
+                    FILES_TO_REMOVE+=("$REL_PATH")
+                else
+                    USER_FILES_PRESERVED+=("$REL_PATH")
+                fi
+            done < <(find "$PROJECT_ROOT/.claude/$DIR" -type f 2>/dev/null)
+        fi
+    done
+fi
+
+# ============================================================================
+# Step 4: Show what will be removed and confirm
 # ============================================================================
 echo ""
 echo -e "${YELLOW}The following will be removed:${NC}"
 echo ""
 
-echo -e "${BLUE}  Framework directories:${NC}"
-[ -d "$PROJECT_ROOT/.claude/agents" ]   && echo "    .claude/agents/"
-[ -d "$PROJECT_ROOT/.claude/skills" ]   && echo "    .claude/skills/"
-[ -d "$PROJECT_ROOT/.claude/commands" ] && echo "    .claude/commands/"
-[ -d "$PROJECT_ROOT/.claude/hooks" ]    && echo "    .claude/hooks/"
+if [ ${#FILES_TO_REMOVE[@]} -gt 0 ]; then
+    echo -e "${BLUE}  Framework files (${#FILES_TO_REMOVE[@]} files):${NC}"
+    # Show first 10 files
+    COUNT=0
+    for file in "${FILES_TO_REMOVE[@]}"; do
+        if [ $COUNT -lt 10 ]; then
+            echo "    $file"
+        fi
+        ((COUNT++))
+    done
+    if [ ${#FILES_TO_REMOVE[@]} -gt 10 ]; then
+        echo "    ... and $((${#FILES_TO_REMOVE[@]} - 10)) more files"
+    fi
+fi
 
-if [ -f "$PROJECT_ROOT/.claude/settings.json" ]; then
-    echo -e "${BLUE}  Settings cleanup:${NC}"
-    echo "    .claude/settings.json (remove hooks and permissions keys)"
+if [ ${#USER_FILES_PRESERVED[@]} -gt 0 ]; then
+    echo ""
+    echo -e "${GREEN}  User files PRESERVED (${#USER_FILES_PRESERVED[@]} files):${NC}"
+    for file in "${USER_FILES_PRESERVED[@]}"; do
+        echo "    $file"
+    done
 fi
 
 if [ "$KEEP_STATE" = true ]; then
@@ -208,11 +437,6 @@ else
     echo "    Empty docs subdirs (requirements/, architecture/, design/)"
 fi
 
-if [ -f "$PROJECT_ROOT/scripts/convert-manifest.sh" ]; then
-    echo -e "${BLUE}  Fallback script:${NC}"
-    echo "    scripts/convert-manifest.sh"
-fi
-
 echo ""
 
 if [ "$DRY_RUN" = true ]; then
@@ -231,7 +455,7 @@ if [ "$FORCE" = false ]; then
 fi
 
 # ============================================================================
-# Step 3: Backup (if --backup)
+# Step 5: Backup (if --backup)
 # ============================================================================
 if [ "$BACKUP" = true ]; then
     TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
@@ -264,61 +488,44 @@ if [ "$BACKUP" = true ]; then
 fi
 
 # ============================================================================
-# Step 4: Monorepo cleanup (before .isdlc/ removal)
+# Step 6: Remove framework files (manifest-tracked or pattern-matched)
 # ============================================================================
-if [ "$IS_MONOREPO" = true ] && [ "$KEEP_DOCS" = false ]; then
-    echo -e "${BLUE}Cleaning monorepo per-project doc directories...${NC}"
+echo -e "${BLUE}Removing framework files...${NC}"
 
-    if command -v jq &> /dev/null; then
-        DOCS_LOCATION=$(jq -r '.docs_location // "root"' "$PROJECT_ROOT/.isdlc/monorepo.json" 2>/dev/null)
-        PROJECT_IDS=$(jq -r '.projects | keys[]' "$PROJECT_ROOT/.isdlc/monorepo.json" 2>/dev/null)
-        PROJECT_PATHS=$(jq -r '.projects | to_entries[] | .value.path' "$PROJECT_ROOT/.isdlc/monorepo.json" 2>/dev/null)
-
-        if [ "$DOCS_LOCATION" = "project" ]; then
-            # Docs live inside each project: {project-path}/docs/
-            while IFS= read -r PROJ_PATH; do
-                [ -z "$PROJ_PATH" ] && continue
-                for SUBDIR in requirements architecture design; do
-                    do_rmdir "$PROJECT_ROOT/$PROJ_PATH/docs/$SUBDIR"
-                done
-                do_rmdir "$PROJECT_ROOT/$PROJ_PATH/docs"
-            done <<< "$PROJECT_PATHS"
-        else
-            # Docs live at root: docs/{project-id}/
-            while IFS= read -r PROJ_ID; do
-                [ -z "$PROJ_ID" ] && continue
-                for SUBDIR in requirements architecture design; do
-                    do_rmdir "$PROJECT_ROOT/docs/$PROJ_ID/$SUBDIR"
-                done
-                do_rmdir "$PROJECT_ROOT/docs/$PROJ_ID"
-            done <<< "$PROJECT_IDS"
-        fi
-
-        echo -e "${GREEN}  ✓ Monorepo doc directories cleaned${NC}"
-    else
-        echo -e "${YELLOW}  Warning: jq not available. Monorepo doc directories may need manual cleanup.${NC}"
-        echo -e "${YELLOW}  Check .isdlc/monorepo.json for project paths.${NC}"
-        SKIPPED_ITEMS+=("monorepo doc dirs (jq unavailable)")
+for file in "${FILES_TO_REMOVE[@]}"; do
+    FULL_PATH="$PROJECT_ROOT/$file"
+    if [ -f "$FULL_PATH" ]; then
+        do_rm_f "$FULL_PATH"
     fi
-    echo ""
-fi
+done
+
+echo -e "${GREEN}  ✓ Removed ${#FILES_TO_REMOVE[@]} framework files${NC}"
+echo ""
 
 # ============================================================================
-# Step 5: Remove .claude/ framework directories
+# Step 7: Clean empty directories in .claude/
 # ============================================================================
-echo -e "${BLUE}Removing framework directories from .claude/...${NC}"
+echo -e "${BLUE}Cleaning empty directories...${NC}"
 
-for DIR_NAME in agents skills commands hooks; do
-    if [ -d "$PROJECT_ROOT/.claude/$DIR_NAME" ]; then
-        do_rm_rf "$PROJECT_ROOT/.claude/$DIR_NAME"
-        echo -e "${GREEN}  ✓ Removed .claude/$DIR_NAME/${NC}"
+# Remove empty subdirectories (deepest first)
+for DIR in agents skills commands hooks; do
+    if [ -d "$PROJECT_ROOT/.claude/$DIR" ]; then
+        # Find and remove empty directories, deepest first
+        find "$PROJECT_ROOT/.claude/$DIR" -type d -empty -delete 2>/dev/null || true
+        # Check if the main directory is now empty
+        do_rmdir_if_empty "$PROJECT_ROOT/.claude/$DIR"
     fi
+done
+
+# Also clean hooks subdirectories
+for SUBDIR in lib config tests; do
+    do_rmdir_if_empty "$PROJECT_ROOT/.claude/hooks/$SUBDIR"
 done
 
 echo ""
 
 # ============================================================================
-# Step 6: Clean settings.json (strip hooks and permissions keys)
+# Step 8: Clean settings.json (strip hooks and permissions keys)
 # ============================================================================
 if [ -f "$PROJECT_ROOT/.claude/settings.json" ]; then
     echo -e "${BLUE}Cleaning .claude/settings.json...${NC}"
@@ -357,7 +564,7 @@ if [ -f "$PROJECT_ROOT/.claude/settings.json" ]; then
 fi
 
 # ============================================================================
-# Step 7: Remove .isdlc/ (unless --keep-state)
+# Step 9: Remove .isdlc/ (unless --keep-state)
 # ============================================================================
 if [ "$KEEP_STATE" = true ]; then
     echo -e "${BLUE}.isdlc/ preserved${NC} (--keep-state)"
@@ -365,25 +572,30 @@ if [ "$KEEP_STATE" = true ]; then
 else
     if [ -d "$PROJECT_ROOT/.isdlc" ]; then
         echo -e "${BLUE}Removing .isdlc/...${NC}"
-        do_rm_rf "$PROJECT_ROOT/.isdlc"
+        if [ "$DRY_RUN" = true ]; then
+            echo -e "${YELLOW}  [dry-run] Would remove directory: .isdlc/${NC}"
+        else
+            rm -rf "$PROJECT_ROOT/.isdlc"
+        fi
+        REMOVED_DIRS+=(".isdlc/")
         echo -e "${GREEN}  ✓ Removed .isdlc/${NC}"
     fi
 fi
 echo ""
 
 # ============================================================================
-# Step 8: Remove fallback script
+# Step 10: Remove fallback script
 # ============================================================================
 if [ -f "$PROJECT_ROOT/scripts/convert-manifest.sh" ]; then
     echo -e "${BLUE}Removing fallback script...${NC}"
     do_rm_f "$PROJECT_ROOT/scripts/convert-manifest.sh"
     echo -e "${GREEN}  ✓ Removed scripts/convert-manifest.sh${NC}"
-    do_rmdir "$PROJECT_ROOT/scripts"
+    do_rmdir_if_empty "$PROJECT_ROOT/scripts"
     echo ""
 fi
 
 # ============================================================================
-# Step 9: Restore CLAUDE.md backup (offer to restore)
+# Step 11: Restore CLAUDE.md backup (offer to restore)
 # ============================================================================
 if [ -f "$PROJECT_ROOT/CLAUDE.md.backup" ]; then
     echo -e "${BLUE}Found CLAUDE.md.backup${NC}"
@@ -409,7 +621,7 @@ if [ -f "$PROJECT_ROOT/CLAUDE.md.backup" ]; then
 fi
 
 # ============================================================================
-# Step 10: Docs cleanup (unless --keep-docs)
+# Step 12: Docs cleanup (unless --keep-docs)
 # ============================================================================
 if [ "$KEEP_DOCS" = true ]; then
     echo -e "${BLUE}docs/ preserved${NC} (--keep-docs)"
@@ -431,17 +643,17 @@ else
 
         # Remove empty standard subdirectories
         for SUBDIR in requirements architecture design; do
-            do_rmdir "$PROJECT_ROOT/docs/$SUBDIR"
+            do_rmdir_if_empty "$PROJECT_ROOT/docs/$SUBDIR"
         done
 
         # Remove docs/ itself if empty
-        do_rmdir "$PROJECT_ROOT/docs"
+        do_rmdir_if_empty "$PROJECT_ROOT/docs"
     fi
 fi
 echo ""
 
 # ============================================================================
-# Step 11: Clean empty .claude/ directory
+# Step 13: Clean empty .claude/ directory
 # ============================================================================
 if [ -d "$PROJECT_ROOT/.claude" ]; then
     # Check if anything remains besides settings.local.json
@@ -452,8 +664,10 @@ if [ -d "$PROJECT_ROOT/.claude" ]; then
             echo -e "${YELLOW}.claude/ contains only settings.local.json — preserving${NC}"
             SKIPPED_ITEMS+=(".claude/ (contains settings.local.json)")
         else
-            do_rmdir "$PROJECT_ROOT/.claude"
+            do_rmdir_if_empty "$PROJECT_ROOT/.claude"
         fi
+    else
+        echo -e "${GREEN}.claude/ preserved — contains user files${NC}"
     fi
 fi
 
@@ -470,21 +684,14 @@ fi
 echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
+if [ ${#REMOVED_FILES[@]} -gt 0 ]; then
+    echo -e "${BLUE}Removed files:${NC} ${#REMOVED_FILES[@]}"
+fi
+
 if [ ${#REMOVED_DIRS[@]} -gt 0 ]; then
     echo -e "${BLUE}Removed directories:${NC}"
     for ITEM in "${REMOVED_DIRS[@]}"; do
-        # Show relative path
-        REL_PATH="${ITEM#"$PROJECT_ROOT"/}"
-        echo "  - $REL_PATH"
-    done
-    echo ""
-fi
-
-if [ ${#REMOVED_FILES[@]} -gt 0 ]; then
-    echo -e "${BLUE}Removed files:${NC}"
-    for ITEM in "${REMOVED_FILES[@]}"; do
-        REL_PATH="${ITEM#"$PROJECT_ROOT"/}"
-        echo "  - $REL_PATH"
+        echo "  - $ITEM"
     done
     echo ""
 fi
@@ -492,6 +699,14 @@ fi
 if [ ${#CLEANED_FILES[@]} -gt 0 ]; then
     echo -e "${BLUE}Cleaned files:${NC}"
     for ITEM in "${CLEANED_FILES[@]}"; do
+        echo "  - $ITEM"
+    done
+    echo ""
+fi
+
+if [ ${#USER_FILES_PRESERVED[@]} -gt 0 ]; then
+    echo -e "${GREEN}User files preserved:${NC} ${#USER_FILES_PRESERVED[@]}"
+    for ITEM in "${USER_FILES_PRESERVED[@]}"; do
         echo "  - $ITEM"
     done
     echo ""

@@ -324,7 +324,7 @@ cd "$PROJECT_ROOT"
 # ============================================================================
 # Step 1: Handle .claude folder
 # ============================================================================
-echo -e "${BLUE}[1/5]${NC} Setting up .claude folder..."
+echo -e "${BLUE}[1/6]${NC} Setting up .claude folder..."
 
 FRAMEWORK_CLAUDE="$FRAMEWORK_DIR/claude"
 
@@ -395,7 +395,7 @@ fi
 # ============================================================================
 # Step 1b: Setup skill enforcement hooks (Node.js - Cross-Platform)
 # ============================================================================
-echo -e "${BLUE}[1b/5]${NC} Setting up skill enforcement hooks..."
+echo -e "${BLUE}[1b/6]${NC} Setting up skill enforcement hooks..."
 
 # Check for Node.js (required for hooks)
 if ! command -v node &> /dev/null; then
@@ -435,7 +435,7 @@ fi
 # ============================================================================
 # Step 2: Create docs folder
 # ============================================================================
-echo -e "${BLUE}[2/5]${NC} Setting up docs folder..."
+echo -e "${BLUE}[2/6]${NC} Setting up docs folder..."
 
 if [ -d "docs" ]; then
     echo -e "${YELLOW}  docs/ folder already exists${NC}"
@@ -489,7 +489,7 @@ echo -e "${GREEN}  ✓ Created docs/README.md${NC}"
 # ============================================================================
 # Step 3: Create .isdlc folder with state
 # ============================================================================
-echo -e "${BLUE}[3/5]${NC} Setting up .isdlc folder..."
+echo -e "${BLUE}[3/6]${NC} Setting up .isdlc folder..."
 
 mkdir -p .isdlc/phases/{01-requirements,02-architecture,03-design,04-test-strategy,05-implementation,06-testing,07-code-review,08-validation,09-cicd,10-local-testing,11-test-deploy,12-production,13-operations}/artifacts
 
@@ -673,7 +673,7 @@ echo -e "${GREEN}  ✓ Created state.json${NC}"
 # Step 3b: Monorepo setup (if monorepo detected and confirmed)
 # ============================================================================
 if [ "$IS_MONOREPO" = true ]; then
-    echo -e "${BLUE}[3b/5]${NC} Setting up monorepo structure..."
+    echo -e "${BLUE}[3b/6]${NC} Setting up monorepo structure..."
 
     # Determine default project (first detected project)
     DEFAULT_PROJECT=""
@@ -866,7 +866,7 @@ fi
 # ============================================================================
 # Step 5: Update constitution with project info and display for review
 # ============================================================================
-echo -e "${BLUE}[4/5]${NC} Configuring project constitution..."
+echo -e "${BLUE}[4/6]${NC} Configuring project constitution..."
 
 # Update constitution with project name and track info
 if [ -f ".isdlc/constitution.md" ]; then
@@ -991,9 +991,57 @@ fi
 echo -e "${YELLOW}  Next step: Run /discover to customize your project constitution${NC}"
 
 # ============================================================================
+# Step 5b: Generate installation manifest for safe uninstall
+# ============================================================================
+echo -e "${BLUE}[5/6]${NC} Generating installation manifest..."
+
+MANIFEST_FILE="$PROJECT_ROOT/.isdlc/installed-files.json"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+# Collect all installed framework files
+declare -a INSTALLED_FILES=()
+
+# Collect files from .claude directories
+for DIR in agents skills commands hooks; do
+    if [ -d "$PROJECT_ROOT/.claude/$DIR" ]; then
+        while IFS= read -r file; do
+            REL_PATH="${file#$PROJECT_ROOT/}"
+            INSTALLED_FILES+=("$REL_PATH")
+        done < <(find "$PROJECT_ROOT/.claude/$DIR" -type f 2>/dev/null)
+    fi
+done
+
+# Add settings.json if it exists
+if [ -f "$PROJECT_ROOT/.claude/settings.json" ]; then
+    INSTALLED_FILES+=(".claude/settings.json")
+fi
+
+# Build JSON manifest
+MANIFEST_JSON='{"version":"1.0.0","created":"'"$TIMESTAMP"'","framework_version":"2.0.0","files":['
+FIRST_FILE=true
+for file in "${INSTALLED_FILES[@]}"; do
+    if [ "$FIRST_FILE" = false ]; then
+        MANIFEST_JSON+=','
+    fi
+    MANIFEST_JSON+='"'"$file"'"'
+    FIRST_FILE=false
+done
+MANIFEST_JSON+=']}'
+
+# Write manifest (use jq to format if available, otherwise write raw)
+if command -v jq &> /dev/null; then
+    echo "$MANIFEST_JSON" | jq '.' > "$MANIFEST_FILE"
+else
+    echo "$MANIFEST_JSON" > "$MANIFEST_FILE"
+fi
+
+echo -e "${GREEN}  ✓ Created installation manifest (${#INSTALLED_FILES[@]} files tracked)${NC}"
+echo -e "${YELLOW}    This manifest enables safe uninstall - user files will be preserved${NC}"
+
+# ============================================================================
 # Step 6: Cleanup - Remove isdlc-framework folder
 # ============================================================================
-echo -e "${BLUE}[5/5]${NC} Cleaning up installation files..."
+echo -e "${BLUE}[6/6]${NC} Cleaning up installation files..."
 
 # Store the script dir before we delete it
 CLEANUP_DIR="$SCRIPT_DIR"
