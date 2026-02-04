@@ -570,11 +570,31 @@ When GATE-01 passes AND the active workflow has `requires_branch: true`:
      - Fix: `{project-id}/bugfix/{artifact_folder}`
 
 3. **Pre-flight checks:**
-   - `git rev-parse --is-inside-work-tree` — if not a git repo, skip all branch ops and log warning:
-     ```
-     WARNING: Not a git repository. Skipping branch operations.
-     All work will remain on the current working tree.
-     ```
+   - `git rev-parse --is-inside-work-tree` — if git repo, proceed normally. If not git, detect other VCS:
+     - If `.svn/` exists at project root:
+       ```
+       WARNING: SVN repository detected. Automatic branch operations are not supported for SVN.
+       Create an SVN branch manually if needed (e.g., svn copy trunk branches/{name}).
+       All work will remain on the current working tree.
+       ```
+     - If `.hg/` exists at project root:
+       ```
+       WARNING: Mercurial repository detected. Automatic branch operations are not supported for Mercurial.
+       Create a Mercurial branch manually if needed (e.g., hg branch {name}).
+       All work will remain on the current working tree.
+       ```
+     - If `.bzr/` exists at project root:
+       ```
+       WARNING: Bazaar repository detected. Automatic branch operations are not supported for Bazaar.
+       Create a Bazaar branch manually if needed (e.g., bzr branch . ../{name}).
+       All work will remain on the current working tree.
+       ```
+     - If no VCS detected:
+       ```
+       WARNING: No version control system detected. Skipping branch operations.
+       Consider initializing a repository (e.g., git init) to enable branching and history.
+       All work will remain on the current working tree.
+       ```
    - `git status --porcelain` — if dirty working tree, commit staged and unstaged changes:
      ```
      git add -A && git commit -m "chore: pre-branch checkpoint for {artifact_folder}"
