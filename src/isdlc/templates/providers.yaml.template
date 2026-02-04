@@ -1,0 +1,266 @@
+# iSDLC Multi-Provider Configuration
+# ====================================
+# Configure which LLM providers to use for different SDLC phases.
+# Copy this file to .isdlc/providers.yaml and customize.
+#
+# Quick Start:
+#   1. Copy to .isdlc/providers.yaml
+#   2. Set your API keys in environment variables
+#   3. (Optional) Install Ollama for local inference
+#   4. Run /provider status to verify
+#
+# Version: 1.0.0
+
+# ============================================================================
+# PROVIDER DEFINITIONS
+# ============================================================================
+# Configure the LLM providers you want to use.
+# Disable providers you don't have access to.
+
+providers:
+  # Anthropic (Claude) - Recommended for complex reasoning
+  # Requires: ANTHROPIC_API_KEY environment variable
+  anthropic:
+    enabled: true
+    base_url: "https://api.anthropic.com"
+    api_key_env: "ANTHROPIC_API_KEY"
+    models:
+      - id: "claude-opus-4-5-20251101"
+        alias: "opus"
+        context_window: 200000
+        cost_tier: "premium"
+      - id: "claude-sonnet-4-20250514"
+        alias: "sonnet"
+        context_window: 200000
+        cost_tier: "standard"
+    health_check:
+      endpoint: "/v1/messages"
+      timeout_ms: 5000
+
+  # Ollama - Local inference (FREE, requires local GPU)
+  # Install: https://ollama.com/download
+  # Then run: ollama pull qwen3-coder
+  # NOTE: Requires 12-24GB VRAM. Skip if you don't have a GPU.
+  ollama:
+    enabled: false  # Set to true if you have Ollama installed
+    base_url: "http://localhost:11434"
+    auth_token: "ollama"
+    models:
+      # Recommended: Qwen 3 Coder (needs 24GB VRAM)
+      - id: "qwen3-coder"
+        alias: "qwen-coder"
+        context_window: 32768
+        cost_tier: "free"
+      # Alternative: Qwen 2.5 Coder (needs 12GB VRAM)
+      - id: "qwen2.5-coder:14b"
+        alias: "qwen25-coder"
+        context_window: 32768
+        cost_tier: "free"
+    health_check:
+      endpoint: "/api/tags"
+      timeout_ms: 2000
+
+  # =========================================================================
+  # FREE CLOUD PROVIDERS (No local GPU required!)
+  # =========================================================================
+
+  # Groq - Ultra-fast inference (FREE: 1,000 req/day)
+  # Get API key at: https://console.groq.com/
+  # Best for: Fast responses, good for iterative development
+  groq:
+    enabled: false  # Set to true after getting free API key
+    base_url: "https://api.groq.com/openai/v1"
+    api_key_env: "GROQ_API_KEY"
+    models:
+      - id: "llama-3.3-70b-versatile"
+        alias: "groq-llama"
+        context_window: 128000
+        cost_tier: "free"
+    health_check:
+      endpoint: "/models"
+      timeout_ms: 5000
+
+  # Together AI - Open-source models ($1 free credit)
+  # Get API key at: https://api.together.xyz/
+  # Best for: Quality open-source models, good code generation
+  together:
+    enabled: false  # Set to true after getting free API key
+    base_url: "https://api.together.xyz/v1"
+    api_key_env: "TOGETHER_API_KEY"
+    models:
+      - id: "Qwen/Qwen2.5-Coder-32B-Instruct"
+        alias: "together-qwen-coder"
+        context_window: 32768
+        cost_tier: "budget"
+      - id: "meta-llama/Llama-3.3-70B-Instruct-Turbo"
+        alias: "together-llama"
+        context_window: 128000
+        cost_tier: "budget"
+    health_check:
+      endpoint: "/models"
+      timeout_ms: 5000
+
+  # Google AI Studio - Gemini (FREE: 60 req/min)
+  # Get API key at: https://aistudio.google.com/
+  # Best for: Huge context window (1M+ tokens), multimodal
+  google:
+    enabled: false  # Set to true after getting free API key
+    base_url: "https://generativelanguage.googleapis.com/v1beta"
+    api_key_env: "GOOGLE_AI_API_KEY"
+    models:
+      - id: "gemini-2.0-flash"
+        alias: "gemini-flash"
+        context_window: 1000000
+        cost_tier: "free"
+    health_check:
+      endpoint: "/models"
+      timeout_ms: 5000
+
+  # OpenRouter - Cloud aggregator with many models
+  # Requires: OPENROUTER_API_KEY environment variable
+  # Get key at: https://openrouter.ai/
+  openrouter:
+    enabled: false  # Set to true if you have an OpenRouter API key
+    base_url: "https://openrouter.ai/api/v1"
+    api_key_env: "OPENROUTER_API_KEY"
+    models:
+      - id: "anthropic/claude-3.5-sonnet"
+        alias: "or-sonnet"
+        context_window: 200000
+        cost_tier: "standard"
+      - id: "deepseek/deepseek-coder"
+        alias: "or-deepseek"
+        context_window: 65536
+        cost_tier: "budget"
+    health_check:
+      endpoint: "/models"
+      timeout_ms: 5000
+
+  # Custom endpoint - For self-hosted or enterprise LLMs
+  # Uncomment and configure if you have a custom endpoint
+  # custom:
+  #   enabled: true
+  #   base_url: "https://your-llm-endpoint.company.com"
+  #   api_key_env: "CUSTOM_LLM_API_KEY"
+  #   models:
+  #     - id: "your-model-id"
+  #       alias: "custom"
+  #       context_window: 32768
+
+# ============================================================================
+# DEFAULT PROVIDER
+# ============================================================================
+# Used when no phase-specific rule matches
+
+defaults:
+  provider: "anthropic"
+  model: "sonnet"
+
+  # Fallback chain - tried in order if primary fails
+  fallback_chain:
+    - "ollama:qwen-coder"
+
+# ============================================================================
+# OPERATIONAL MODE
+# ============================================================================
+# Choose how providers are selected:
+#
+# - free:    Use free cloud tiers (Groq, Together, Google) - NO LOCAL GPU NEEDED
+# - budget:  Use Ollama if available, otherwise free cloud (saves money)
+# - quality: Use Anthropic for all phases (best results)
+# - local:   Ollama only, no cloud calls (requires GPU)
+# - hybrid:  Smart routing by phase complexity (recommended)
+
+active_mode: "free"  # Good default for users without GPU
+
+# Mode definitions (customize as needed)
+modes:
+  # FREE MODE - Best for users without GPU or Anthropic API key
+  free:
+    description: "Use free-tier cloud providers (no GPU needed)"
+    default_provider: "groq"
+    default_model: "groq-llama"
+    fallback_chain:
+      - "together:together-llama"
+      - "google:gemini-flash"
+
+  budget:
+    description: "Minimize costs - local Ollama if available, otherwise free cloud"
+    default_provider: "ollama"
+    fallback_chain:
+      - "groq:groq-llama"
+      - "together:together-llama"
+    cloud_phases_only:
+      - "02-architecture"
+      - "13-security-review"
+
+  quality:
+    description: "Use Anthropic for all phases (best results)"
+    default_provider: "anthropic"
+    default_model: "sonnet"
+
+  local:
+    description: "Ollama only - requires 12GB+ VRAM GPU"
+    default_provider: "ollama"
+    default_model: "qwen-coder"
+    allow_cloud: false
+    warning: "Requires Ollama with GPU. Complex phases may have reduced quality."
+
+  hybrid:
+    description: "Smart routing based on phase complexity"
+    use_phase_routing: true
+
+# ============================================================================
+# PHASE ROUTING (for hybrid mode)
+# ============================================================================
+# Customize which provider handles each SDLC phase.
+# Uncomment and modify to override defaults.
+
+# phase_routing:
+#   # Use local for code exploration
+#   "00-mapping":
+#     provider: "ollama"
+#     model: "qwen-coder"
+#
+#   # Use cloud for architecture decisions
+#   "02-architecture":
+#     provider: "anthropic"
+#     model: "opus"
+#
+#   # Use local for test execution
+#   "06-testing":
+#     provider: "ollama"
+#     model: "qwen-coder"
+
+# ============================================================================
+# USAGE TRACKING
+# ============================================================================
+# Track provider usage for cost analysis
+
+constraints:
+  track_usage: true
+  usage_log_path: ".isdlc/usage-log.jsonl"
+
+  # Optional: Get alerts when approaching budget limits
+  # daily_budget_alert_usd: 10.0
+  # monthly_budget_alert_usd: 100.0
+
+# ============================================================================
+# TROUBLESHOOTING
+# ============================================================================
+#
+# Provider not working?
+#   1. Run /provider status to check health
+#   2. Verify API keys: echo $ANTHROPIC_API_KEY
+#   3. For Ollama: ensure it's running (ollama serve)
+#
+# Want to force a specific provider?
+#   export ISDLC_PROVIDER_OVERRIDE=ollama
+#   export ISDLC_MODEL_OVERRIDE=qwen-coder
+#
+# Enable debug logging:
+#   export ISDLC_PROVIDER_DEBUG=true
+#
+# More info:
+#   /provider --help
+#   docs/designs/MULTI-PROVIDER-SUPPORT-DESIGN.md

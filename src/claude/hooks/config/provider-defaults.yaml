@@ -1,0 +1,524 @@
+# iSDLC Multi-Provider Configuration - Framework Defaults
+# ========================================================
+# This file contains the default provider configuration shipped with iSDLC.
+# Users can override these settings by creating .isdlc/providers.yaml
+#
+# Version: 1.0.0
+
+# ============================================================================
+# PROVIDER DEFINITIONS
+# ============================================================================
+
+providers:
+  # Anthropic (Default - Claude models)
+  anthropic:
+    enabled: true
+    base_url: "https://api.anthropic.com"
+    api_key_env: "ANTHROPIC_API_KEY"
+    models:
+      - id: "claude-opus-4-5-20251101"
+        alias: "opus"
+        context_window: 200000
+        capabilities:
+          - reasoning
+          - coding
+          - vision
+          - tool_use
+        cost_tier: "premium"
+      - id: "claude-sonnet-4-20250514"
+        alias: "sonnet"
+        context_window: 200000
+        capabilities:
+          - reasoning
+          - coding
+          - vision
+          - tool_use
+        cost_tier: "standard"
+    health_check:
+      endpoint: "/v1/messages"
+      timeout_ms: 5000
+
+  # Ollama (Local models)
+  ollama:
+    enabled: true
+    base_url: "http://localhost:11434"
+    api_key: "ollama"
+    auth_token: "ollama"
+    models:
+      - id: "qwen3-coder"
+        alias: "qwen-coder"
+        context_window: 32768
+        capabilities:
+          - coding
+          - tool_use
+        cost_tier: "free"
+        min_vram_gb: 24
+      - id: "deepseek-coder-v2:16b"
+        alias: "deepseek"
+        context_window: 65536
+        capabilities:
+          - coding
+          - tool_use
+        cost_tier: "free"
+        min_vram_gb: 16
+      - id: "codellama:34b"
+        alias: "codellama"
+        context_window: 16384
+        capabilities:
+          - coding
+        cost_tier: "free"
+        min_vram_gb: 24
+      - id: "qwen2.5-coder:14b"
+        alias: "qwen25-coder"
+        context_window: 32768
+        capabilities:
+          - coding
+          - tool_use
+        cost_tier: "free"
+        min_vram_gb: 12
+    health_check:
+      endpoint: "/api/tags"
+      timeout_ms: 2000
+
+  # OpenRouter (Cloud aggregator)
+  openrouter:
+    enabled: false
+    base_url: "https://openrouter.ai/api/v1"
+    api_key_env: "OPENROUTER_API_KEY"
+    models:
+      - id: "anthropic/claude-3.5-sonnet"
+        alias: "or-sonnet"
+        context_window: 200000
+        capabilities:
+          - reasoning
+          - coding
+          - vision
+          - tool_use
+        cost_tier: "standard"
+      - id: "deepseek/deepseek-coder"
+        alias: "or-deepseek"
+        context_window: 65536
+        capabilities:
+          - coding
+          - tool_use
+        cost_tier: "budget"
+    health_check:
+      endpoint: "/models"
+      timeout_ms: 5000
+
+  # Groq - Ultra-fast inference (FREE: 1,000 req/day)
+  # Get API key at: https://console.groq.com/
+  groq:
+    enabled: false
+    base_url: "https://api.groq.com/openai/v1"
+    api_key_env: "GROQ_API_KEY"
+    api_style: "openai"  # Uses OpenAI-compatible API
+    models:
+      - id: "llama-3.3-70b-versatile"
+        alias: "groq-llama"
+        context_window: 128000
+        capabilities:
+          - reasoning
+          - coding
+          - tool_use
+        cost_tier: "free"
+      - id: "mixtral-8x7b-32768"
+        alias: "groq-mixtral"
+        context_window: 32768
+        capabilities:
+          - coding
+          - tool_use
+        cost_tier: "free"
+    health_check:
+      endpoint: "/models"
+      timeout_ms: 5000
+    rate_limits:
+      requests_per_day: 1000
+      tokens_per_minute: 6000
+
+  # Together AI - Open-source models ($1 free credit)
+  # Get API key at: https://api.together.xyz/
+  together:
+    enabled: false
+    base_url: "https://api.together.xyz/v1"
+    api_key_env: "TOGETHER_API_KEY"
+    api_style: "openai"
+    models:
+      - id: "meta-llama/Llama-3.3-70B-Instruct-Turbo"
+        alias: "together-llama"
+        context_window: 128000
+        capabilities:
+          - reasoning
+          - coding
+          - tool_use
+        cost_tier: "budget"
+      - id: "Qwen/Qwen2.5-Coder-32B-Instruct"
+        alias: "together-qwen-coder"
+        context_window: 32768
+        capabilities:
+          - coding
+          - tool_use
+        cost_tier: "budget"
+      - id: "deepseek-ai/DeepSeek-V3"
+        alias: "together-deepseek"
+        context_window: 65536
+        capabilities:
+          - reasoning
+          - coding
+          - tool_use
+        cost_tier: "budget"
+    health_check:
+      endpoint: "/models"
+      timeout_ms: 5000
+
+  # Google AI Studio - Gemini (FREE: 60 req/min)
+  # Get API key at: https://aistudio.google.com/
+  google:
+    enabled: false
+    base_url: "https://generativelanguage.googleapis.com/v1beta"
+    api_key_env: "GOOGLE_AI_API_KEY"
+    api_style: "google"
+    models:
+      - id: "gemini-2.0-flash"
+        alias: "gemini-flash"
+        context_window: 1000000
+        capabilities:
+          - reasoning
+          - coding
+          - vision
+          - tool_use
+        cost_tier: "free"
+      - id: "gemini-1.5-pro"
+        alias: "gemini-pro"
+        context_window: 2000000
+        capabilities:
+          - reasoning
+          - coding
+          - vision
+          - tool_use
+        cost_tier: "standard"
+    health_check:
+      endpoint: "/models"
+      timeout_ms: 5000
+    rate_limits:
+      requests_per_minute: 60
+
+  # Mistral AI - Codestral for coding
+  # Get API key at: https://console.mistral.ai/
+  mistral:
+    enabled: false
+    base_url: "https://api.mistral.ai/v1"
+    api_key_env: "MISTRAL_API_KEY"
+    api_style: "openai"
+    models:
+      - id: "codestral-latest"
+        alias: "codestral"
+        context_window: 32768
+        capabilities:
+          - coding
+          - tool_use
+        cost_tier: "budget"
+      - id: "mistral-large-latest"
+        alias: "mistral-large"
+        context_window: 128000
+        capabilities:
+          - reasoning
+          - coding
+          - tool_use
+        cost_tier: "standard"
+    health_check:
+      endpoint: "/models"
+      timeout_ms: 5000
+
+  # Custom endpoint (for self-hosted or enterprise)
+  custom:
+    enabled: false
+    base_url: "${CUSTOM_LLM_BASE_URL}"
+    api_key_env: "CUSTOM_LLM_API_KEY"
+    models:
+      - id: "${CUSTOM_MODEL_ID}"
+        alias: "custom"
+        context_window: 32768
+        capabilities:
+          - coding
+          - tool_use
+        cost_tier: "custom"
+
+# ============================================================================
+# DEFAULT PROVIDER SELECTION
+# ============================================================================
+
+defaults:
+  # Primary provider when no phase-specific rule matches
+  provider: "anthropic"
+  model: "sonnet"
+
+  # Fallback chain (tried in order if primary fails)
+  # Prioritizes free cloud options before local Ollama
+  fallback_chain:
+    - "groq:groq-llama"
+    - "together:together-llama"
+    - "openrouter:or-sonnet"
+    - "ollama:qwen-coder"
+
+# ============================================================================
+# PHASE ROUTING STRATEGY
+# ============================================================================
+# Routes different SDLC phases to appropriate providers based on
+# task complexity and reasoning requirements.
+
+phase_routing:
+  # Exploration phases - code search/analysis (local OK)
+  "00-mapping":
+    provider: "ollama"
+    model: "qwen-coder"
+    rationale: "Pattern-based code search, no complex reasoning needed"
+    fallback:
+      - "anthropic:sonnet"
+
+  "00-tracing":
+    provider: "ollama"
+    model: "qwen-coder"
+    rationale: "Execution path tracing is pattern-based"
+    fallback:
+      - "anthropic:sonnet"
+
+  # Requirements & Architecture - complex reasoning (cloud recommended)
+  "01-requirements":
+    provider: "anthropic"
+    model: "sonnet"
+    rationale: "Stakeholder elicitation requires nuanced reasoning"
+    fallback:
+      - "openrouter:or-sonnet"
+      - "ollama:qwen-coder"
+
+  "02-architecture":
+    provider: "anthropic"
+    model: "opus"
+    rationale: "Architectural decisions are high-stakes, need best reasoning"
+    fallback:
+      - "anthropic:sonnet"
+      - "openrouter:or-sonnet"
+
+  "03-design":
+    provider: "anthropic"
+    model: "sonnet"
+    rationale: "Design requires consistency with architecture"
+    fallback:
+      - "openrouter:or-sonnet"
+      - "ollama:qwen-coder"
+
+  # Test Design - template generation (local OK)
+  "04-test-strategy":
+    provider: "ollama"
+    model: "qwen-coder"
+    rationale: "Test case generation is pattern-based from specs"
+    fallback:
+      - "anthropic:sonnet"
+
+  # Implementation - quality critical (cloud recommended)
+  "05-implementation":
+    provider: "anthropic"
+    model: "sonnet"
+    rationale: "Code quality directly impacts product"
+    fallback:
+      - "openrouter:or-sonnet"
+      - "ollama:qwen-coder"
+
+  # Testing - execution-based (local OK)
+  "06-testing":
+    provider: "ollama"
+    model: "qwen-coder"
+    rationale: "Test execution and iteration is mechanical"
+    fallback:
+      - "anthropic:sonnet"
+
+  # Code Review - needs reasoning (cloud recommended)
+  "07-code-review":
+    provider: "anthropic"
+    model: "sonnet"
+    rationale: "Review quality requires understanding intent"
+    fallback:
+      - "openrouter:or-sonnet"
+
+  # Documentation - template-based (local OK)
+  "08-documentation":
+    provider: "ollama"
+    model: "qwen-coder"
+    rationale: "Doc generation is largely template-based"
+    fallback:
+      - "anthropic:sonnet"
+
+  # CI/CD - infrastructure (local OK)
+  "09-cicd":
+    provider: "ollama"
+    model: "qwen-coder"
+    rationale: "Pipeline config is pattern-based"
+    fallback:
+      - "anthropic:sonnet"
+
+  # Local Testing - execution (local OK)
+  "10-local-testing":
+    provider: "ollama"
+    model: "qwen-coder"
+    rationale: "Local test execution is mechanical"
+    fallback:
+      - "anthropic:sonnet"
+
+  # Cloud Infrastructure - critical (cloud recommended)
+  "11-cloud-infra":
+    provider: "anthropic"
+    model: "sonnet"
+    rationale: "Infrastructure decisions have cost/security implications"
+    fallback:
+      - "openrouter:or-sonnet"
+
+  "12-cloud-deployment":
+    provider: "anthropic"
+    model: "sonnet"
+    rationale: "Deployment configs affect production"
+    fallback:
+      - "openrouter:or-sonnet"
+
+  # Security Review - critical (cloud required)
+  "13-security-review":
+    provider: "anthropic"
+    model: "opus"
+    rationale: "Security review requires best reasoning capability"
+    fallback:
+      - "anthropic:sonnet"
+    local_override: false  # Never use local for security
+
+  # Upgrade Planning - reasoning needed
+  "14-upgrade":
+    provider: "anthropic"
+    model: "sonnet"
+    rationale: "Upgrade planning requires understanding dependencies"
+    fallback:
+      - "openrouter:or-sonnet"
+
+# ============================================================================
+# AGENT-SPECIFIC OVERRIDES
+# ============================================================================
+# Override provider selection for specific agents regardless of phase
+
+agent_overrides:
+  # Orchestrator always uses premium for routing decisions
+  "sdlc-orchestrator":
+    provider: "anthropic"
+    model: "opus"
+    rationale: "Orchestration decisions affect entire workflow"
+
+  # Discover agents can use local (code analysis)
+  "architecture-analyzer":
+    provider: "ollama"
+    model: "qwen-coder"
+
+  "feature-mapper":
+    provider: "ollama"
+    model: "qwen-coder"
+
+  "data-model-analyzer":
+    provider: "ollama"
+    model: "qwen-coder"
+
+# ============================================================================
+# OPERATIONAL MODES
+# ============================================================================
+
+modes:
+  # Free mode - use free-tier cloud providers (no local GPU needed)
+  free:
+    description: "Use free-tier cloud providers (Groq, Together, Google AI) - no local GPU required"
+    default_provider: "groq"
+    default_model: "groq-llama"
+    fallback_chain:
+      - "together:together-llama"
+      - "google:gemini-flash"
+      - "openrouter:or-deepseek"
+    cloud_phases_only:
+      - "02-architecture"
+      - "13-security-review"
+    note: "Requires free API keys from Groq, Together AI, or Google AI Studio"
+
+  # Budget mode - minimize costs (prefers local Ollama if available)
+  budget:
+    description: "Minimize API costs - use local Ollama if available, otherwise free cloud"
+    default_provider: "ollama"
+    default_model: "qwen-coder"
+    fallback_chain:
+      - "groq:groq-llama"
+      - "together:together-llama"
+    cloud_phases_only:
+      - "02-architecture"
+      - "13-security-review"
+
+  # Quality mode - best models everywhere
+  quality:
+    description: "Use best available models (Anthropic) for all phases"
+    default_provider: "anthropic"
+    default_model: "sonnet"
+
+  # Local-only mode - no cloud calls (requires Ollama)
+  local:
+    description: "All processing stays on local machine (Ollama only)"
+    default_provider: "ollama"
+    default_model: "qwen-coder"
+    allow_cloud: false
+    warning: "Local-only mode: Requires Ollama with 12GB+ VRAM. Some phases may have reduced quality."
+
+  # Hybrid mode - smart routing (default)
+  hybrid:
+    description: "Smart routing based on phase complexity"
+    use_phase_routing: true
+
+# Active mode (can be changed via /provider set <mode>)
+active_mode: "hybrid"
+
+# ============================================================================
+# CONSTRAINTS & LIMITS
+# ============================================================================
+
+constraints:
+  # Context window minimum for iSDLC operations
+  min_context_window: 16384
+  recommended_context_window: 32768
+
+  # Maximum retries before fallback
+  max_retries_per_provider: 2
+
+  # Timeout for provider health checks
+  health_check_timeout_ms: 5000
+
+  # Cost tracking
+  track_usage: true
+  usage_log_path: ".isdlc/usage-log.jsonl"
+
+  # Budget alerts (if tracking enabled)
+  daily_budget_alert_usd: 10.0
+  monthly_budget_alert_usd: 100.0
+
+# ============================================================================
+# ENVIRONMENT VARIABLE MAPPINGS
+# ============================================================================
+# These env vars are set before invoking the target agent
+
+environment:
+  anthropic:
+    ANTHROPIC_API_KEY: "${api_key}"
+    ANTHROPIC_BASE_URL: "${base_url}"
+
+  ollama:
+    ANTHROPIC_API_KEY: ""
+    ANTHROPIC_AUTH_TOKEN: "ollama"
+    ANTHROPIC_BASE_URL: "${base_url}"
+
+  openrouter:
+    ANTHROPIC_API_KEY: "${api_key}"
+    ANTHROPIC_BASE_URL: "${base_url}"
+    HTTP_REFERER: "https://github.com/isdlc-framework"
+    X_TITLE: "iSDLC Framework"
+
+  custom:
+    ANTHROPIC_API_KEY: "${api_key}"
+    ANTHROPIC_BASE_URL: "${base_url}"
