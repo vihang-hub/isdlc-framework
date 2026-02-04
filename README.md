@@ -56,6 +56,7 @@ Key principles: **clear ownership** (one agent per phase), **exclusive skill own
 | **Bug Fix** | `/sdlc fix "desc"` | Fix a bug using test-driven development |
 | **Upgrade** | `/sdlc upgrade "name"` | Upgrade a dependency, runtime, or tool with impact analysis and regression testing |
 | **Full Lifecycle** | `/sdlc start` | Complete SDLC for new projects or major work |
+| **Provider Config** | `/provider` | Manage LLM providers (Ollama, Groq, Anthropic) |
 
 ## Get Started
 
@@ -318,6 +319,7 @@ The orchestrator provides focused workflows via `/sdlc` and `/discover` commands
 - [**Autonomous Iteration**](#autonomous-iteration) — Self-correcting agents that iterate until tests pass
 - [**Deterministic Iteration Enforcement**](#deterministic-iteration-enforcement) — Hook-based enforcement of iteration requirements
 - [**Task Planning & Progress Tracking**](#task-planning--progress-tracking) — Persistent task plans with checkbox-based tracking (ORCH-012)
+- [**Multi-Provider LLM Support**](#multi-provider-llm-support) — Use Ollama, free cloud providers, or Anthropic with phase-aware routing
 
 ---
 
@@ -539,6 +541,59 @@ After GATE-01 passes, the orchestrator generates a persistent task plan at `docs
 
 Applies to feature, fix, and full-lifecycle workflows. Test-run and test-generate workflows skip plan generation.
 
+### Multi-Provider LLM Support
+
+The framework supports multiple LLM providers beyond Anthropic, enabling free local inference and cost-optimized workflows.
+
+**Supported Providers:**
+
+| Provider | Type | Cost | Requirements |
+|----------|------|------|--------------|
+| **Ollama** | Local | Free | GPU with 8-24GB VRAM |
+| **Groq** | Cloud | Free | API key (1,000 req/day) |
+| **Together AI** | Cloud | Free | API key ($1 free credit) |
+| **Google AI Studio** | Cloud | Free | API key (60 req/min) |
+| **OpenRouter** | Cloud | Varies | API key |
+| **Anthropic** | Cloud | Paid | API key (best quality) |
+
+**Operational Modes:**
+
+| Mode | Description | Best For |
+|------|-------------|----------|
+| `free` | Use free cloud providers (Groq, Together, Google) | Learning, prototyping |
+| `budget` | Ollama if available, free cloud fallback | Cost-conscious teams |
+| `quality` | Anthropic for all phases | Production, critical work |
+| `local` | Ollama only, no cloud calls | Privacy, offline, air-gapped |
+| `hybrid` | Phase-aware routing by complexity | Balanced cost/quality |
+
+**Quick Start:**
+
+```bash
+# Option 1: Free cloud (no GPU needed)
+export GROQ_API_KEY=your-free-key
+/provider init
+/provider set free
+
+# Option 2: Local with Ollama (automatic setup)
+/provider setup-ollama
+
+# Option 3: Check status
+/provider status
+```
+
+**Phase-Aware Routing (Hybrid Mode):**
+
+Different SDLC phases use different providers based on complexity:
+
+- **Exploration (Phase 00)** → Ollama (pattern-based code search)
+- **Requirements/Architecture** → Anthropic (complex reasoning)
+- **Test Strategy** → Ollama (template generation)
+- **Implementation** → Anthropic (code quality critical)
+- **Testing** → Ollama (mechanical execution)
+- **Security Review** → Anthropic Opus (never local)
+
+See [docs/designs/MULTI-PROVIDER-SUPPORT-DESIGN.md](docs/designs/MULTI-PROVIDER-SUPPORT-DESIGN.md) for the full design and `/provider` command documentation.
+
 ## Configuration
 
 ### Framework Defaults
@@ -580,9 +635,9 @@ deployment:
 ## Project Status
 
 ### Completed
-- 28 agent definitions (15 SDLC + 9 discover + 4 reverse-engineer)
+- 36 agent definitions (15 SDLC + 9 discover + 4 mapping + 4 tracing + 4 reverse-engineer)
 - 200 skills organized into 14 categories
-- 14 phase gate checklists
+- 16 phase gate checklists (14 SDLC + 2 exploration)
 - 7 document templates
 - Configuration system and utility scripts
 - Project Constitution system (Enhancement #1)
@@ -592,6 +647,8 @@ deployment:
 - Deterministic Iteration Enforcement via Hooks (Enhancement #5)
 - Monorepo Support (Enhancement #6)
 - Task Planning & Progress Tracking — ORCH-012 (Enhancement #7)
+- Phase 00 Exploration Mode — Mapping & Tracing agents (Enhancement #8)
+- Multi-Provider LLM Support — Ollama, free cloud, phase routing (Enhancement #9)
 
 ### In Progress
 - Integration testing across all phases
@@ -614,6 +671,6 @@ MIT License
 
 <div align="center">
 
-**iSDLC Framework** v2.3.0 — 36 agents, 200 skills, 16 gates, 5 hooks, 8 enhancements, Phase 00 Exploration Mode
+**iSDLC Framework** v2.4.0 — 36 agents, 200 skills, 16 gates, 5 hooks, 9 enhancements, Multi-Provider LLM Support
 
 </div>
