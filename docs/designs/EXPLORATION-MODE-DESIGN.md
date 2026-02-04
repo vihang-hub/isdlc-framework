@@ -1,9 +1,10 @@
 # Exploration Mode Design: Mapping & Tracing
 
-**Version**: 1.0.0
+**Version**: 1.1.0
 **Date**: 2026-02-04
-**Status**: Draft
+**Status**: Implemented
 **Author**: Claude Opus 4.5
+**Commit**: 36cf5f8
 
 ---
 
@@ -374,7 +375,7 @@ model: opus
 owned_skills:
   - TRACE-001  # tracing-delegation
   - TRACE-002  # trace-consolidation
-  - TRACE-003  # hypothesis-ranking
+  - TRACE-003  # diagnosis-summary
 ---
 ```
 
@@ -397,17 +398,17 @@ description: "Use this agent for Tracing Phase T1: Symptom Analysis. Analyzes er
 model: opus
 owned_skills:
   - TRACE-101  # error-message-parsing
-  - TRACE-102  # log-pattern-analysis
+  - TRACE-102  # stack-trace-analysis
   - TRACE-103  # reproduction-step-extraction
-  - TRACE-104  # condition-identification
+  - TRACE-104  # symptom-pattern-matching
 ---
 ```
 
 **Responsibilities**:
 1. Parse bug description for error messages/stack traces
-2. Search codebase for error message origins
-3. Analyze logs if provided
-4. Extract reproduction steps
+2. Analyze stack traces to identify failure points
+3. Extract reproduction steps from bug reports
+4. Match symptom patterns against known issues
 5. Identify triggering conditions
 6. Return structured symptom report
 
@@ -439,19 +440,19 @@ name: execution-path-tracer
 description: "Use this agent for Tracing Phase T2: Execution Path Tracing. Follows the code execution from entry point through the call chain to where the bug manifests. Maps data flow and state changes."
 model: opus
 owned_skills:
-  - TRACE-201  # call-chain-tracing
-  - TRACE-202  # data-flow-analysis
+  - TRACE-201  # call-chain-reconstruction
+  - TRACE-202  # data-flow-tracing
   - TRACE-203  # state-mutation-tracking
-  - TRACE-204  # async-flow-tracing
+  - TRACE-204  # branch-point-identification
 ---
 ```
 
 **Responsibilities**:
 1. Read symptom analysis to identify starting points
-2. Trace execution from entry point (API/UI/Job)
-3. Follow call chain through services/repositories
-4. Track data transformations along the path
-5. Identify state mutations and side effects
+2. Reconstruct call chain from entry point to failure
+3. Trace data flow through the execution path
+4. Track state mutations and side effects
+5. Identify branch points where bugs may originate
 6. Return structured execution path report
 
 **Output Format**:
@@ -489,8 +490,8 @@ model: opus
 owned_skills:
   - TRACE-301  # hypothesis-generation
   - TRACE-302  # evidence-correlation
-  - TRACE-303  # similar-bug-search
-  - TRACE-304  # fix-suggestion
+  - TRACE-303  # root-cause-confirmation
+  - TRACE-304  # fix-recommendation
 ---
 ```
 
@@ -498,9 +499,9 @@ owned_skills:
 1. Read symptom and execution path analyses
 2. Generate hypotheses for root cause
 3. Correlate evidence from symptoms and execution path
-4. Search for similar past bugs (git history, comments)
+4. Confirm root cause through code analysis
 5. Rank hypotheses by likelihood
-6. Suggest potential fixes
+6. Recommend potential fixes
 7. Return structured root cause report
 
 **Output Format**:
@@ -541,19 +542,19 @@ owned_skills:
 |----------|------|-------|-------------|
 | TRACE-001 | tracing-delegation | tracing-orchestrator | Delegate to tracing sub-agents |
 | TRACE-002 | trace-consolidation | tracing-orchestrator | Consolidate sub-agent reports |
-| TRACE-003 | hypothesis-ranking | tracing-orchestrator | Rank root cause hypotheses |
-| TRACE-101 | error-message-parsing | symptom-analyzer | Parse error messages and stack traces |
-| TRACE-102 | log-pattern-analysis | symptom-analyzer | Analyze log patterns |
+| TRACE-003 | diagnosis-summary | tracing-orchestrator | Summarize diagnosis findings |
+| TRACE-101 | error-message-parsing | symptom-analyzer | Parse error messages from bug reports |
+| TRACE-102 | stack-trace-analysis | symptom-analyzer | Analyze stack traces to find failure points |
 | TRACE-103 | reproduction-step-extraction | symptom-analyzer | Extract reproduction steps |
-| TRACE-104 | condition-identification | symptom-analyzer | Identify triggering conditions |
-| TRACE-201 | call-chain-tracing | execution-path-tracer | Trace function call chains |
-| TRACE-202 | data-flow-analysis | execution-path-tracer | Analyze data flow through code |
+| TRACE-104 | symptom-pattern-matching | symptom-analyzer | Match symptoms against known patterns |
+| TRACE-201 | call-chain-reconstruction | execution-path-tracer | Reconstruct function call chains |
+| TRACE-202 | data-flow-tracing | execution-path-tracer | Trace data flow through code |
 | TRACE-203 | state-mutation-tracking | execution-path-tracer | Track state changes |
-| TRACE-204 | async-flow-tracing | execution-path-tracer | Trace async execution paths |
+| TRACE-204 | branch-point-identification | execution-path-tracer | Identify branch points where bugs originate |
 | TRACE-301 | hypothesis-generation | root-cause-identifier | Generate root cause hypotheses |
 | TRACE-302 | evidence-correlation | root-cause-identifier | Correlate evidence to hypotheses |
-| TRACE-303 | similar-bug-search | root-cause-identifier | Search for similar past bugs |
-| TRACE-304 | fix-suggestion | root-cause-identifier | Suggest potential fixes |
+| TRACE-303 | root-cause-confirmation | root-cause-identifier | Confirm root cause through analysis |
+| TRACE-304 | fix-recommendation | root-cause-identifier | Recommend potential fixes |
 
 **Total**: 15 skills (3 orchestrator + 4 T1 + 4 T2 + 4 T3)
 
@@ -919,19 +920,19 @@ src/claude/skills/
 └── tracing/
     ├── tracing-delegation/SKILL.md           # TRACE-001
     ├── trace-consolidation/SKILL.md          # TRACE-002
-    ├── hypothesis-ranking/SKILL.md           # TRACE-003
+    ├── diagnosis-summary/SKILL.md            # TRACE-003
     ├── error-message-parsing/SKILL.md        # TRACE-101
-    ├── log-pattern-analysis/SKILL.md         # TRACE-102
+    ├── stack-trace-analysis/SKILL.md         # TRACE-102
     ├── reproduction-step-extraction/SKILL.md # TRACE-103
-    ├── condition-identification/SKILL.md     # TRACE-104
-    ├── call-chain-tracing/SKILL.md           # TRACE-201
-    ├── data-flow-analysis/SKILL.md           # TRACE-202
+    ├── symptom-pattern-matching/SKILL.md     # TRACE-104
+    ├── call-chain-reconstruction/SKILL.md    # TRACE-201
+    ├── data-flow-tracing/SKILL.md            # TRACE-202
     ├── state-mutation-tracking/SKILL.md      # TRACE-203
-    ├── async-flow-tracing/SKILL.md           # TRACE-204
+    ├── branch-point-identification/SKILL.md  # TRACE-204
     ├── hypothesis-generation/SKILL.md        # TRACE-301
     ├── evidence-correlation/SKILL.md         # TRACE-302
-    ├── similar-bug-search/SKILL.md           # TRACE-303
-    └── fix-suggestion/SKILL.md               # TRACE-304
+    ├── root-cause-confirmation/SKILL.md      # TRACE-303
+    └── fix-recommendation/SKILL.md           # TRACE-304
 ```
 
 ### 4.3 New Checklist Files
@@ -1136,3 +1137,52 @@ You are the **{Agent Name}**, responsible for **{Phase}: {Phase Name}**.
 # SELF-VALIDATION
 {completion criteria}
 ```
+
+---
+
+## Part 7: Implementation Status
+
+### 7.1 Completed (2026-02-04)
+
+| Item | Status | Notes |
+|------|--------|-------|
+| 8 Agent files | ✅ Complete | M0-M3, T0-T3 in `src/claude/agents/mapping/` and `src/claude/agents/tracing/` |
+| 30 Skill files | ✅ Complete | 15 MAP + 15 TRACE in `src/claude/skills/mapping/` and `src/claude/skills/tracing/` |
+| 2 Gate checklists | ✅ Complete | `00-mapping-gate.md` and `00-tracing-gate.md` |
+| workflows.json update | ✅ Complete | Phase 00 added with `--no-mapping` and `--no-tracing` skip flags |
+| Orchestrator update | ✅ Complete | Reads exploration context before Phase 01 delegation |
+| Requirements Analyst update | ✅ Complete | PRE-PHASE CHECK for impact-analysis.md and trace-analysis.md |
+| skills-manifest.yaml | ✅ Complete | 200 total skills (v2.1.0) |
+| skills-manifest.json | ✅ Complete | 218 total skills with lookup (v2.4.0) |
+| README update | ✅ Complete | 36 agents, 200 skills, 16 gates |
+
+### 7.2 Implementation Deviations
+
+The following changes were made during implementation:
+
+1. **Skip flags renamed**: `--skip-mapping` → `--no-mapping`, `--skip-tracing` → `--no-tracing` for consistency with CLI conventions
+
+2. **Skill naming refined**:
+   - T1: `log-pattern-analysis` → `stack-trace-analysis`, `condition-identification` → `symptom-pattern-matching`
+   - T2: `call-chain-tracing` → `call-chain-reconstruction`, `data-flow-analysis` → `data-flow-tracing`, `async-flow-tracing` → `branch-point-identification`
+   - T3: `similar-bug-search` → `root-cause-confirmation`, `fix-suggestion` → `fix-recommendation`
+   - T0: `hypothesis-ranking` → `diagnosis-summary`
+
+3. **Agent descriptions**: Enhanced with "Use this agent when..." patterns for Claude Code Task tool selection
+
+### 7.3 Framework Totals (Post-Implementation)
+
+| Category | Count |
+|----------|-------|
+| Agents | 36 (15 SDLC + 9 Discover + 4 Mapping + 4 Tracing + 4 Reverse Engineer) |
+| Skills | 200 |
+| Phases | 15 (Phase 00 Mapping/Tracing + Phases 01-13 + R0) |
+| Gates | 16 |
+| Categories | 14 |
+
+### 7.4 Commits
+
+| Commit | Description |
+|--------|-------------|
+| 36cf5f8 | Add Phase 00 Exploration Mode: Mapping for features, Tracing for bug fixes |
+| 3fb578e | Update framework docs to reflect 36 agents, 200 skills, 16 gates |
