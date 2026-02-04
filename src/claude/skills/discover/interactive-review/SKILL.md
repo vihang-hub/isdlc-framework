@@ -61,4 +61,4 @@ After reviewing all articles, present a summary of changes made (kept, modified,
 - Every draft article received a user decision (no articles skipped)
 - Modified articles preserve required structural format
 - Custom articles follow the same format as generated articles
-- Final constitution file is written successfully to .isdlc/constitution.md
+- Final constitution file is written successfully to docs/isdlc/constitution.md

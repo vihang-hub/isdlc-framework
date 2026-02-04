@@ -33,7 +33,7 @@ When the project is a monorepo (`.isdlc/monorepo.json` exists), all commands acc
 When `/sdlc` is invoked without any action, present a context-aware menu based on project state.
 
 **Detection Logic:**
-1. Check if `.isdlc/constitution.md` exists and is NOT a template. Template markers include:
+1. Check if `docs/isdlc/constitution.md` exists and is NOT a template. Template markers include:
    - `<!-- CONSTITUTION_STATUS: STARTER_TEMPLATE -->` (init script marker)
    - `## ⚠️ CUSTOMIZATION REQUIRED` section
    - `**Status**: ⚠️ NEEDS CUSTOMIZATION`
@@ -106,7 +106,7 @@ Select an option:
     Define your project, set up tech stack, and create constitution
 
 [2] Edit constitution.md Manually
-    Open .isdlc/constitution.md and customize the template yourself
+    Open docs/isdlc/constitution.md and customize the template yourself
 
 Enter selection (1-2):
 ```
@@ -129,7 +129,7 @@ Select an option:
     Analyze codebase and auto-generate tailored constitution
 
 [2] Edit constitution.md Manually
-    Open .isdlc/constitution.md and customize the template yourself
+    Open docs/isdlc/constitution.md and customize the template yourself
 
 Enter selection (1-2):
 ```
@@ -380,7 +380,7 @@ Walk through each article one by one:
 - Allow adding custom articles
 
 **Step 6: Save and Validate**
-Write final constitution to `.isdlc/constitution.md`
+Write final constitution to `docs/isdlc/constitution.md`
 
 **Example Flow:**
 ```
@@ -479,7 +479,7 @@ See `/discover --help` for full documentation.
 **Prerequisites:**
 - `/sdlc discover` must have completed successfully
 - `docs/project-discovery-report.md` must exist
-- `.isdlc/test-evaluation-report.md` must exist
+- `docs/isdlc/test-evaluation-report.md` must exist
 
 **Workflow Phases:**
 
@@ -728,7 +728,7 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 
 ### Prerequisites
 
-1. **Project Constitution**: A valid `.isdlc/constitution.md` is required before starting any workflow
+1. **Project Constitution**: A valid `docs/isdlc/constitution.md` is required before starting any workflow
 2. **Framework Installation**: The iSDLC framework must be installed (run `init-project.sh`)
 
 ### Implementation

@@ -137,7 +137,7 @@
         "enabled": true,
         "when": "atdd_mode",
         "requires": ["atdd_checklist_generated", "all_ac_have_tests", "all_tests_have_priorities"],
-        "artifacts": [".isdlc/atdd-checklist.json", "tests/acceptance/"],
+        "artifacts": ["docs/isdlc/atdd-checklist.json", "tests/acceptance/"],
         "gate_block_on_failure": true
       }
     },

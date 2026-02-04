@@ -462,7 +462,7 @@ async function main() {
             // Build constitutional article list from phase requirements
             const constArticles = phaseReq.constitutional_validation?.articles;
             const constArticleNote = constArticles
-                ? `Read .isdlc/constitution.md and validate artifacts against these articles: ${constArticles.join(', ')}\n` +
+                ? `Read docs/isdlc/constitution.md and validate artifacts against these articles: ${constArticles.join(', ')}\n` +
                   `Update state.json → phases.${currentPhase}.constitutional_validation when complete.`
                 : `Check iteration-requirements.json for applicable constitutional articles.`;
 

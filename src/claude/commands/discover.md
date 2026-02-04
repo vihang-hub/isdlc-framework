@@ -68,27 +68,27 @@ After completion, you'll have:
 **Existing projects:**
 - `docs/project-discovery-report.md` - Unified discovery report (tech stack, architecture, data model, features, test coverage)
 - `docs/architecture/architecture-overview.md` - Detailed architecture documentation
-- `.isdlc/test-evaluation-report.md` - Test analysis with per-type coverage and quality assessment
-- `.isdlc/constitution.md` - Tailored project constitution
-- `.isdlc/skill-customization-report.md` - Installed skills report
+- `docs/isdlc/test-evaluation-report.md` - Test analysis with per-type coverage and quality assessment
+- `docs/isdlc/constitution.md` - Tailored project constitution
+- `docs/isdlc/skill-customization-report.md` - Installed skills report
 
 **New projects:**
 - `docs/project-brief.md` - Problem statement, users, features, constraints
 - `docs/requirements/prd.md` - Product Requirements Document with MVP scope
 - `docs/architecture/architecture-overview.md` - Architecture blueprint with data model and API design
 - `docs/architecture/data-model.md` - Detailed data model (if >5 entities)
-- `.isdlc/constitution.md` - Tailored project constitution
+- `docs/isdlc/constitution.md` - Tailored project constitution
 - `src/` - Project structure scaffolded from architecture blueprint
 - `tests/` - Test infrastructure (unit, integration, e2e)
 
 **Monorepo mode** (when `--project {id}` is used, CWD matches a registered project, or monorepo detected):
 - All `docs/` outputs go to the resolved docs path (`docs/{project-id}/` when `docs_location` is `"root"` or absent, `{project-path}/docs/` when `docs_location` is `"project"` — configured in monorepo.json)
 - Discovery scopes analysis to the project's path (not entire monorepo root)
-- Constitution goes to `.isdlc/projects/{project-id}/constitution.md` (project override)
+- Constitution goes to `docs/isdlc/projects/{project-id}/constitution.md` (project override)
 - State updates go to `.isdlc/projects/{project-id}/state.json`
 - External skills install to `.isdlc/projects/{project-id}/skills/external/` (not shared `.claude/skills/external/`)
-- External skills manifest at `.isdlc/projects/{project-id}/external-skills-manifest.json`
-- Skill report at `.isdlc/projects/{project-id}/skill-customization-report.md`
+- External skills manifest at `docs/isdlc/projects/{project-id}/external-skills-manifest.json`
+- Skill report at `docs/isdlc/projects/{project-id}/skill-customization-report.md`
 
 **CWD-based project resolution** (when `--project` not provided):
 - If CWD is inside a registered project path, that project is auto-selected
@@ -138,5 +138,5 @@ When this command is invoked:
 - **Monorepo sub-projects:** `.isdlc/` and `.claude/` may be in a parent directory. The orchestrator walks up parent directories to find the project root. You do not need these folders inside each sub-project.
 
 ### See Also
-- `.isdlc/constitution.md` - Project constitution
+- `docs/isdlc/constitution.md` - Project constitution
 - `.isdlc/state.json` - Project state

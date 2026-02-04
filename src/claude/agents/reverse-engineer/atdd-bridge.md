@@ -60,8 +60,8 @@ This is a hard requirement enforced by the iSDLC framework:
    ```
 
 2. **Load artifacts**:
-   - Read `.isdlc/ac-traceability.csv` for linked artifacts
-   - Read `.isdlc/reverse-engineer-report.md` for summary
+   - Read `docs/isdlc/ac-traceability.csv` for linked artifacts
+   - Read `docs/isdlc/reverse-engineer-report.md` for summary
    - Read `docs/requirements/reverse-engineered/` for AC files
 
 3. **If artifacts missing**:
@@ -72,7 +72,7 @@ This is a hard requirement enforced by the iSDLC framework:
 
 # CONSTITUTIONAL PRINCIPLES
 
-**CRITICAL**: Before starting any work, read the project constitution at `.isdlc/constitution.md`.
+**CRITICAL**: Before starting any work, read the project constitution at `docs/isdlc/constitution.md`.
 
 As the ATDD Bridge agent, you must uphold these constitutional articles:
 
@@ -129,9 +129,9 @@ After each skill execution, append to `.isdlc/state.json` → `skill_usage_log`:
 
 # REQUIRED ARTIFACTS
 
-1. **.isdlc/atdd-checklist-{domain}.json**: ATDD checklist per domain
+1. **docs/isdlc/atdd-checklist-{domain}.json**: ATDD checklist per domain
 2. **Updated AC files**: Tagged with `type: captured_behavior`
-3. **.isdlc/atdd-migration-guide.md**: Guide for ATDD workflow
+3. **docs/isdlc/atdd-migration-guide.md**: Guide for ATDD workflow
 
 # PHASE GATE VALIDATION (GATE-R4)
 
@@ -147,7 +147,7 @@ After each skill execution, append to `.isdlc/state.json` → `skill_usage_log`:
 ## Step 1: Load R3 Artifacts
 
 ```
-1. Load traceability matrix from .isdlc/ac-traceability.csv
+1. Load traceability matrix from docs/isdlc/ac-traceability.csv
 2. Load reverse-engineer-report.md for summary
 3. Load AC files from docs/requirements/reverse-engineered/
 4. Load characterization tests from tests/characterization/
@@ -155,7 +155,7 @@ After each skill execution, append to `.isdlc/state.json` → `skill_usage_log`:
 
 ## Step 2: Generate ATDD Checklist
 
-Create `.isdlc/atdd-checklist-{domain}.json`:
+Create `docs/isdlc/atdd-checklist-{domain}.json`:
 
 ```json
 {
@@ -245,7 +245,7 @@ Document how reverse-engineered priorities map to ATDD:
 
 ## Step 5: Generate Migration Guide
 
-Create `.isdlc/atdd-migration-guide.md`:
+Create `docs/isdlc/atdd-migration-guide.md`:
 
 ```markdown
 # ATDD Migration Guide
@@ -344,7 +344,7 @@ For Phase R4 (ATDD Bridge), you must validate against:
 ## Iteration Protocol
 
 1. **Complete artifacts** (checklists, tagged AC, guide)
-2. **Read constitution** from `.isdlc/constitution.md`
+2. **Read constitution** from `docs/isdlc/constitution.md`
 3. **Validate each applicable article**
 4. **If violations found AND iterations < max (5)**: Fix violations, retry
 5. **If compliant OR max iterations reached**: Log final status

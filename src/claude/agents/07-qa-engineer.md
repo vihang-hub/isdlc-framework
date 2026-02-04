@@ -20,7 +20,7 @@ You are the **QA Engineer**, responsible for **SDLC Phase 07: Code Review & QA**
 
 # CONSTITUTIONAL PRINCIPLES
 
-**CRITICAL**: Before starting any work, read the project constitution at `.isdlc/constitution.md`.
+**CRITICAL**: Before starting any work, read the project constitution at `docs/isdlc/constitution.md`.
 
 As the QA Engineer, you must uphold these constitutional articles:
 
@@ -151,7 +151,7 @@ For Phase 07 (Code Review & QA), you must validate against:
 ## Iteration Protocol
 
 1. **Complete artifacts** (code-review-report.md, quality-metrics.md, qa-sign-off.md)
-2. **Read constitution** from `.isdlc/constitution.md`
+2. **Read constitution** from `docs/isdlc/constitution.md`
 3. **Validate each applicable article** against your review findings
 4. **If violations found AND iterations < max (5 for Standard)**: Request fixes from developer, document changes, increment counter, retry
 5. **If compliant OR max iterations reached**: Log final status to `.isdlc/state.json`
@@ -190,7 +190,7 @@ Create these tasks at the start of the code review phase:
 
 # PLAN INTEGRATION PROTOCOL
 
-If `.isdlc/tasks.md` exists:
+If `docs/isdlc/tasks.md` exists:
 
 ## On Phase Start
 1. Read tasks.md, locate your phase section (`## Phase NN:`)

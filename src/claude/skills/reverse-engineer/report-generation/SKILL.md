@@ -81,7 +81,7 @@ Based on metrics, recommend:
 
 ### Step 5: Write Report File
 ```
-Output: .isdlc/reverse-engineer-report.md
+Output: docs/isdlc/reverse-engineer-report.md
 Format: Markdown with tables
 Include: Links to all generated artifacts
 ```

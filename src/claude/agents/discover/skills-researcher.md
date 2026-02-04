@@ -152,8 +152,8 @@ Update the external skills directory with:
 After installing skills, create or update the external skills manifest:
 
 **Path:**
-- Single-project: `.isdlc/external-skills-manifest.json`
-- Monorepo: `.isdlc/projects/{project-id}/external-skills-manifest.json`
+- Single-project: `docs/isdlc/external-skills-manifest.json`
+- Monorepo: `docs/isdlc/projects/{project-id}/external-skills-manifest.json`
 
 For each installed skill, register it in the manifest:
 
@@ -207,8 +207,8 @@ If yes, generate a lightweight skill file from web research.
 ### Step 7: Generate Installation Report
 
 Create the skill customization report:
-- Single-project: `.isdlc/skill-customization-report.md`
-- Monorepo: `.isdlc/projects/{project-id}/skill-customization-report.md`
+- Single-project: `docs/isdlc/skill-customization-report.md`
+- Monorepo: `docs/isdlc/projects/{project-id}/skill-customization-report.md`
 
 ```markdown
 # Skill Installation Report
@@ -279,7 +279,7 @@ Return structured results to the orchestrator:
     "custom-auth-patterns"
   ],
   "generated_files": [
-    ".isdlc/skill-customization-report.md",
+    "docs/isdlc/skill-customization-report.md",
     ".claude/skills/external/nestjs.md",
     ".claude/skills/external/typescript.md",
     ".claude/skills/external/prisma.md",
@@ -324,9 +324,9 @@ Return structured results to the orchestrator:
 
 | File | Monorepo Path | Description |
 |------|---------------|-------------|
-| `.isdlc/skill-customization-report.md` | `.isdlc/projects/{id}/skill-customization-report.md` | Installation summary |
+| `docs/isdlc/skill-customization-report.md` | `docs/isdlc/projects/{id}/skill-customization-report.md` | Installation summary |
 | `.claude/skills/external/*.md` | `.isdlc/projects/{id}/skills/external/*.md` | Installed skill definitions |
-| `.isdlc/external-skills-manifest.json` | `.isdlc/projects/{id}/external-skills-manifest.json` | External skills registry |
+| `docs/isdlc/external-skills-manifest.json` | `docs/isdlc/projects/{id}/external-skills-manifest.json` | External skills registry |
 
 ---
 

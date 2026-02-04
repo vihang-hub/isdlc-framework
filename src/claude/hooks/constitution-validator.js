@@ -294,7 +294,7 @@ async function main() {
 Status: ${status.reason}
 
 MANDATORY: You are in a constitutional validation loop. You MUST:
-1. Read the constitution at .isdlc/constitution.md
+1. Read the constitution at docs/isdlc/constitution.md
 2. For each article below, check your phase artifacts for compliance:
 ${articleChecklist}
 3. If violations found: fix the artifacts, then re-validate

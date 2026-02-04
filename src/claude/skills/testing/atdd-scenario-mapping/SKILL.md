@@ -135,7 +135,7 @@ AC2,Order fails on invalid payment,P1,tests/acceptance/order.test.ts,[P1] AC2: s
 | Output | Type | Description |
 |--------|------|-------------|
 | tests/acceptance/*.test.* | Test files | Skipped test scaffolds |
-| .isdlc/atdd-checklist.json | JSON | AC tracking (partial) |
+| docs/isdlc/atdd-checklist.json | JSON | AC tracking (partial) |
 | docs/testing/traceability-matrix.csv | CSV | AC → Test mapping |
 
 ## Framework-Specific Syntax

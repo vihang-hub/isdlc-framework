@@ -328,7 +328,7 @@ To avoid clutter while gaining critical capabilities, add **only these 3 enhance
 
 4. **Project-Specific Overrides**:
    - Projects can add articles (not remove framework articles)
-   - Located in `.isdlc/constitution.md`
+   - Located in `docs/isdlc/constitution.md`
 
 **Files to Create/Modify**:
 - `src/isdlc/templates/constitution.md` (NEW - ~150 lines)

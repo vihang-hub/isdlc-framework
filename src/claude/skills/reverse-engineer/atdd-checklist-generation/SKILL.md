@@ -85,7 +85,7 @@ For each domain in traceability matrix:
 
 ### Step 5: Write Checklist Files
 ```
-Output: .isdlc/atdd-checklist-{domain}.json
+Output: docs/isdlc/atdd-checklist-{domain}.json
 One file per domain
 Compatible with ATDD workflow loader
 ```

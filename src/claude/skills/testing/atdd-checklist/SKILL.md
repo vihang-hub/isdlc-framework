@@ -1,6 +1,6 @@
 ---
 name: atdd-checklist
-description: Manage .isdlc/atdd-checklist.json for tracking RED→GREEN test transitions
+description: Manage docs/isdlc/atdd-checklist.json for tracking RED→GREEN test transitions
 skill_id: TEST-016
 owner: test-design-engineer
 collaborators: [software-developer, integration-tester]
@@ -109,7 +109,7 @@ Create and maintain the ATDD checklist that tracks acceptance test implementatio
 
 ### Step 1: Initialize Checklist (Phase 04)
 
-Create `.isdlc/atdd-checklist.json` after scenario mapping:
+Create `docs/isdlc/atdd-checklist.json` after scenario mapping:
 
 ```json
 {
@@ -241,7 +241,7 @@ function validateATDDCompletion() {
 ### Read Checklist
 ```javascript
 function readChecklist() {
-  const path = '.isdlc/atdd-checklist.json';
+  const path = 'docs/isdlc/atdd-checklist.json';
   if (!fs.existsSync(path)) {
     throw new Error('ATDD checklist not found - run Phase 04 first');
   }
@@ -253,7 +253,7 @@ function readChecklist() {
 ```javascript
 function writeChecklist(checklist) {
   checklist.updated_at = new Date().toISOString();
-  fs.writeFileSync('.isdlc/atdd-checklist.json', JSON.stringify(checklist, null, 2));
+  fs.writeFileSync('docs/isdlc/atdd-checklist.json', JSON.stringify(checklist, null, 2));
 }
 ```
 
@@ -292,7 +292,7 @@ function getProgressReport() {
 
 | Output | Type | Description |
 |--------|------|-------------|
-| .isdlc/atdd-checklist.json | JSON | Master checklist file |
+| docs/isdlc/atdd-checklist.json | JSON | Master checklist file |
 | progress_report | Object | Current completion status |
 | validation_result | Object | Gate validation result |
 

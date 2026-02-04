@@ -9,25 +9,39 @@
 #   ./uninstall.sh [options]
 #
 # Options:
-#   --force       Skip all confirmation prompts
-#   --backup      Archive framework files before removal
-#   --keep-docs   Preserve docs/ directory entirely
-#   --keep-state  Preserve .isdlc/ directory (state, constitution, checklists)
-#   --dry-run     Show what would be removed without removing anything
-#   --help        Show this help message
+#   --force           Skip all confirmation prompts
+#   --backup          Archive framework files before removal
+#   --purge-all       DANGER: Also remove user artifacts (.isdlc/state.json, constitution, etc.)
+#   --purge-docs      DANGER: Also remove docs/ even if it contains user documents
+#   --dry-run         Show what would be removed without removing anything
+#   --help            Show this help message
 #
 # What gets removed (ONLY if tracked in manifest):
 #   - Framework-installed files in .claude/agents/, skills/, commands/, hooks/
 #   - Framework keys (hooks, permissions) from .claude/settings.json
-#   - .isdlc/ directory (unless --keep-state)
-#   - Framework-generated docs (unless --keep-docs)
+#   - Framework config in .isdlc/ (config/, templates/, scripts/, installed-files.json)
+#   - Empty docs/ scaffolding (only if no user content exists)
 #   - scripts/convert-manifest.sh (install fallback)
 #
 # What is ALWAYS preserved:
 #   - User-created agents, skills, commands, hooks (not in manifest)
 #   - .claude/settings.local.json (user customizations)
 #   - CLAUDE.md (user-owned)
-#   - Non-framework files in .claude/
+#   - Runtime state in .isdlc/:
+#       - state.json (project state, phase progress, iteration history)
+#       - projects/{id}/state.json (monorepo per-project states)
+#       - projects/{id}/skills/external/ (installed external skills)
+#   - User documents in docs/isdlc/:
+#       - constitution.md, constitution.draft.md (project constitution)
+#       - tasks.md (orchestrator task plan)
+#       - test-evaluation-report.md (test infrastructure analysis)
+#       - atdd-checklist.json (ATDD compliance tracking)
+#       - skill-customization-report.md (external skills summary)
+#       - external-skills-manifest.json (external skills registry)
+#       - checklists/ (gate checklist responses)
+#       - projects/{id}/ (monorepo per-project documents)
+#   - All user documents in docs/ (requirements, architecture, design, etc.)
+#   - Any source code in the project
 
 set -e
 
@@ -44,8 +58,8 @@ NC='\033[0m'
 # ============================================================================
 FORCE=false
 BACKUP=false
-KEEP_DOCS=false
-KEEP_STATE=false
+PURGE_ALL=false
+PURGE_DOCS=false
 DRY_RUN=false
 
 while [[ $# -gt 0 ]]; do
@@ -58,12 +72,12 @@ while [[ $# -gt 0 ]]; do
             BACKUP=true
             shift
             ;;
-        --keep-docs)
-            KEEP_DOCS=true
+        --purge-all)
+            PURGE_ALL=true
             shift
             ;;
-        --keep-state)
-            KEEP_STATE=true
+        --purge-docs)
+            PURGE_DOCS=true
             shift
             ;;
         --dry-run)
@@ -76,15 +90,18 @@ while [[ $# -gt 0 ]]; do
             echo "Usage: ./uninstall.sh [options]"
             echo ""
             echo "Options:"
-            echo "  --force       Skip all confirmation prompts"
-            echo "  --backup      Archive framework files to isdlc-backup-{timestamp}.tar.gz"
-            echo "  --keep-docs   Preserve docs/ directory entirely"
-            echo "  --keep-state  Preserve .isdlc/ directory (state, constitution, checklists)"
-            echo "  --dry-run     Show what would be removed without removing anything"
-            echo "  --help        Show this help message"
+            echo "  --force           Skip all confirmation prompts"
+            echo "  --backup          Archive framework files to isdlc-backup-{timestamp}.tar.gz"
+            echo "  --purge-all       DANGER: Also remove user artifacts (state, constitution, checklists)"
+            echo "  --purge-docs      DANGER: Also remove docs/ even if it contains user documents"
+            echo "  --dry-run         Show what would be removed without removing anything"
+            echo "  --help            Show this help message"
             echo ""
-            echo "SAFETY: Only removes files tracked in .isdlc/installed-files.json"
-            echo "        User-created agents, skills, commands, and hooks are preserved."
+            echo "SAFETY (default behavior):"
+            echo "  - Only removes framework files tracked in .isdlc/installed-files.json"
+            echo "  - Preserves user-created agents, skills, commands, hooks"
+            echo "  - Preserves user artifacts: state.json, constitution.md, checklists/, phases/"
+            echo "  - Preserves all documents in docs/ (requirements, architecture, design, etc.)"
             exit 0
             ;;
         *)
@@ -419,22 +436,33 @@ if [ ${#USER_FILES_PRESERVED[@]} -gt 0 ]; then
     done
 fi
 
-if [ "$KEEP_STATE" = true ]; then
-    echo -e "${BLUE}  .isdlc/:${NC} ${GREEN}KEPT${NC} (--keep-state)"
-else
-    [ -d "$PROJECT_ROOT/.isdlc" ] && echo -e "${BLUE}  State directory:${NC}" && echo "    .isdlc/ (entire directory)"
+echo ""
+echo -e "${GREEN}User artifacts that will be PRESERVED (safe by default):${NC}"
+
+# .isdlc/ artifacts
+if [ -d "$PROJECT_ROOT/.isdlc" ]; then
+    if [ "$PURGE_ALL" = true ]; then
+        echo -e "${RED}  .isdlc/: WILL BE DELETED (--purge-all)${NC}"
+    else
+        echo -e "${GREEN}  .isdlc/ user artifacts:${NC}"
+        [ -f "$PROJECT_ROOT/.isdlc/state.json" ] && echo -e "${GREEN}    - state.json (project state & history)${NC}"
+        [ -f "$PROJECT_ROOT/.isdlc/constitution.md" ] && echo -e "${GREEN}    - constitution.md (project constitution)${NC}"
+        [ -d "$PROJECT_ROOT/.isdlc/checklists" ] && echo -e "${GREEN}    - checklists/ (gate checklist responses)${NC}"
+        [ -d "$PROJECT_ROOT/.isdlc/phases" ] && echo -e "${GREEN}    - phases/ (phase artifacts)${NC}"
+        [ -d "$PROJECT_ROOT/.isdlc/projects" ] && echo -e "${GREEN}    - projects/ (monorepo project states)${NC}"
+    fi
 fi
 
-if [ "$KEEP_DOCS" = true ]; then
-    echo -e "${BLUE}  docs/:${NC} ${GREEN}KEPT${NC} (--keep-docs)"
-else
-    echo -e "${BLUE}  Docs cleanup:${NC}"
-    if [ -f "$PROJECT_ROOT/docs/README.md" ]; then
-        if grep -q "iSDLC" "$PROJECT_ROOT/docs/README.md" 2>/dev/null; then
-            echo "    docs/README.md (framework-generated)"
-        fi
+# docs/ artifacts
+if [ -d "$PROJECT_ROOT/docs" ]; then
+    DOC_FILE_COUNT=$(find "$PROJECT_ROOT/docs" -type f ! -name ".*" 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$PURGE_DOCS" = true ]; then
+        echo -e "${RED}  docs/: WILL BE DELETED (--purge-docs) - $DOC_FILE_COUNT files${NC}"
+    elif [ "$DOC_FILE_COUNT" -gt 0 ]; then
+        echo -e "${GREEN}  docs/ ($DOC_FILE_COUNT user documents)${NC}"
+    else
+        echo -e "${YELLOW}  docs/: empty scaffolding (will be cleaned up)${NC}"
     fi
-    echo "    Empty docs subdirs (requirements/, architecture/, design/)"
 fi
 
 echo ""
@@ -564,21 +592,108 @@ if [ -f "$PROJECT_ROOT/.claude/settings.json" ]; then
 fi
 
 # ============================================================================
-# Step 9: Remove .isdlc/ (unless --keep-state)
+# Step 9: Clean .isdlc/ - ONLY remove framework config, PRESERVE user artifacts
 # ============================================================================
-if [ "$KEEP_STATE" = true ]; then
-    echo -e "${BLUE}.isdlc/ preserved${NC} (--keep-state)"
-    SKIPPED_ITEMS+=(".isdlc/ (--keep-state)")
-else
-    if [ -d "$PROJECT_ROOT/.isdlc" ]; then
-        echo -e "${BLUE}Removing .isdlc/...${NC}"
+if [ -d "$PROJECT_ROOT/.isdlc" ]; then
+    if [ "$PURGE_ALL" = true ]; then
+        # DANGER MODE: Remove everything including user artifacts
+        echo -e "${RED}Removing .isdlc/ completely (--purge-all)...${NC}"
         if [ "$DRY_RUN" = true ]; then
             echo -e "${YELLOW}  [dry-run] Would remove directory: .isdlc/${NC}"
         else
             rm -rf "$PROJECT_ROOT/.isdlc"
         fi
         REMOVED_DIRS+=(".isdlc/")
-        echo -e "${GREEN}  ✓ Removed .isdlc/${NC}"
+        echo -e "${RED}  ✓ Removed .isdlc/ (including user artifacts)${NC}"
+    else
+        # SAFE MODE: Only remove framework config, preserve user artifacts
+        echo -e "${BLUE}Cleaning .isdlc/ (preserving user artifacts)...${NC}"
+
+        # Framework-only directories that are safe to remove completely
+        FRAMEWORK_ONLY_DIRS=(
+            "config"           # Framework configuration files
+            "templates"        # Framework templates (user copies are elsewhere)
+            "scripts"          # Framework utility scripts
+        )
+
+        # Remove framework-only directories
+        for DIR in "${FRAMEWORK_ONLY_DIRS[@]}"; do
+            if [ -d "$PROJECT_ROOT/.isdlc/$DIR" ]; then
+                if [ "$DRY_RUN" = true ]; then
+                    echo -e "${YELLOW}  [dry-run] Would remove: .isdlc/$DIR/${NC}"
+                else
+                    rm -rf "$PROJECT_ROOT/.isdlc/$DIR"
+                fi
+                REMOVED_DIRS+=(".isdlc/$DIR/")
+                echo -e "${GREEN}  ✓ Removed .isdlc/$DIR/ (framework config)${NC}"
+            fi
+        done
+
+        # Remove framework-only files (but preserve user artifacts)
+        FRAMEWORK_ONLY_FILES=(
+            "installed-files.json"    # Installation manifest
+            "monorepo.json"           # Monorepo config (if exists)
+        )
+
+        for FILE in "${FRAMEWORK_ONLY_FILES[@]}"; do
+            if [ -f "$PROJECT_ROOT/.isdlc/$FILE" ]; then
+                do_rm_f "$PROJECT_ROOT/.isdlc/$FILE"
+                echo -e "${GREEN}  ✓ Removed .isdlc/$FILE (framework config)${NC}"
+            fi
+        done
+
+        # USER ARTIFACTS - Always preserved (unless --purge-all):
+        # Runtime state in .isdlc/:
+        # - .isdlc/state.json (project state, history, iteration logs)
+        # - .isdlc/projects/ (monorepo project runtime states)
+        # User documents in docs/isdlc/:
+        # - docs/isdlc/constitution.md (user-customized constitution)
+        # - docs/isdlc/tasks.md (orchestrator task plan)
+        # - docs/isdlc/test-evaluation-report.md (test infrastructure analysis)
+        # - docs/isdlc/atdd-checklist.json (ATDD compliance tracking)
+        # - docs/isdlc/skill-customization-report.md (external skills summary)
+        # - docs/isdlc/external-skills-manifest.json (external skills registry)
+        # - docs/isdlc/checklists/ (gate checklist responses)
+        # - docs/isdlc/projects/ (monorepo per-project documents)
+
+        echo ""
+        echo -e "${GREEN}  Runtime state PRESERVED in .isdlc/:${NC}"
+
+        # List preserved runtime items
+        PRESERVED_ITEMS=()
+        [ -f "$PROJECT_ROOT/.isdlc/state.json" ] && PRESERVED_ITEMS+=(".isdlc/state.json (project state & history)")
+        [ -d "$PROJECT_ROOT/.isdlc/projects" ] && PRESERVED_ITEMS+=(".isdlc/projects/ (monorepo runtime states)")
+        if [ ${#PRESERVED_ITEMS[@]} -gt 0 ]; then
+            for ITEM in "${PRESERVED_ITEMS[@]}"; do
+                echo -e "${GREEN}    - $ITEM${NC}"
+                SKIPPED_ITEMS+=("$ITEM (runtime state)")
+            done
+        else
+            echo -e "${YELLOW}    (no runtime state found)${NC}"
+            # If no user artifacts, remove .isdlc/ if empty
+            do_rmdir_if_empty "$PROJECT_ROOT/.isdlc"
+        fi
+
+        # Also show user documents in docs/isdlc/
+        if [ -d "$PROJECT_ROOT/docs/isdlc" ]; then
+            echo ""
+            echo -e "${GREEN}  User documents PRESERVED in docs/isdlc/:${NC}"
+            DOCS_PRESERVED=()
+            [ -f "$PROJECT_ROOT/docs/isdlc/constitution.md" ] && DOCS_PRESERVED+=("constitution.md")
+            [ -f "$PROJECT_ROOT/docs/isdlc/constitution.draft.md" ] && DOCS_PRESERVED+=("constitution.draft.md")
+            [ -f "$PROJECT_ROOT/docs/isdlc/tasks.md" ] && DOCS_PRESERVED+=("tasks.md")
+            [ -f "$PROJECT_ROOT/docs/isdlc/test-evaluation-report.md" ] && DOCS_PRESERVED+=("test-evaluation-report.md")
+            [ -f "$PROJECT_ROOT/docs/isdlc/atdd-checklist.json" ] && DOCS_PRESERVED+=("atdd-checklist.json")
+            [ -f "$PROJECT_ROOT/docs/isdlc/skill-customization-report.md" ] && DOCS_PRESERVED+=("skill-customization-report.md")
+            [ -f "$PROJECT_ROOT/docs/isdlc/external-skills-manifest.json" ] && DOCS_PRESERVED+=("external-skills-manifest.json")
+            [ -d "$PROJECT_ROOT/docs/isdlc/checklists" ] && DOCS_PRESERVED+=("checklists/")
+            [ -d "$PROJECT_ROOT/docs/isdlc/projects" ] && DOCS_PRESERVED+=("projects/")
+
+            for ITEM in "${DOCS_PRESERVED[@]}"; do
+                echo -e "${GREEN}    - $ITEM${NC}"
+                SKIPPED_ITEMS+=("docs/isdlc/$ITEM (user document)")
+            done
+        fi
     fi
 fi
 echo ""
@@ -621,33 +736,59 @@ if [ -f "$PROJECT_ROOT/CLAUDE.md.backup" ]; then
 fi
 
 # ============================================================================
-# Step 12: Docs cleanup (unless --keep-docs)
+# Step 12: Docs cleanup - NEVER remove user content, only empty scaffolding
 # ============================================================================
-if [ "$KEEP_DOCS" = true ]; then
-    echo -e "${BLUE}docs/ preserved${NC} (--keep-docs)"
-    SKIPPED_ITEMS+=("docs/ (--keep-docs)")
-else
-    if [ -d "$PROJECT_ROOT/docs" ]; then
-        echo -e "${BLUE}Cleaning docs/...${NC}"
-
-        # Remove framework-generated README only if it still contains the marker
-        if [ -f "$PROJECT_ROOT/docs/README.md" ]; then
-            if grep -q "iSDLC" "$PROJECT_ROOT/docs/README.md" 2>/dev/null; then
-                do_rm_f "$PROJECT_ROOT/docs/README.md"
-                echo -e "${GREEN}  ✓ Removed docs/README.md (framework-generated)${NC}"
-            else
-                echo -e "${YELLOW}  Kept docs/README.md (user-modified)${NC}"
-                SKIPPED_ITEMS+=("docs/README.md (user-modified)")
-            fi
+if [ -d "$PROJECT_ROOT/docs" ]; then
+    if [ "$PURGE_DOCS" = true ]; then
+        # DANGER MODE: Remove docs/ completely
+        echo -e "${RED}Removing docs/ completely (--purge-docs)...${NC}"
+        if [ "$DRY_RUN" = true ]; then
+            echo -e "${YELLOW}  [dry-run] Would remove directory: docs/${NC}"
+        else
+            rm -rf "$PROJECT_ROOT/docs"
         fi
+        REMOVED_DIRS+=("docs/")
+        echo -e "${RED}  ✓ Removed docs/ (including user documents)${NC}"
+    else
+        # SAFE MODE: Never remove user content
+        echo -e "${BLUE}Checking docs/ for user content...${NC}"
 
-        # Remove empty standard subdirectories
-        for SUBDIR in requirements architecture design; do
-            do_rmdir_if_empty "$PROJECT_ROOT/docs/$SUBDIR"
-        done
+        # Count files in docs/ (excluding .DS_Store and other hidden files)
+        DOC_FILE_COUNT=$(find "$PROJECT_ROOT/docs" -type f ! -name ".*" 2>/dev/null | wc -l | tr -d ' ')
 
-        # Remove docs/ itself if empty
-        do_rmdir_if_empty "$PROJECT_ROOT/docs"
+        if [ "$DOC_FILE_COUNT" -gt 0 ]; then
+            # User has created documents - NEVER touch them
+            echo -e "${GREEN}  docs/ contains $DOC_FILE_COUNT user documents - PRESERVED${NC}"
+            SKIPPED_ITEMS+=("docs/ ($DOC_FILE_COUNT user documents)")
+
+            # List what's being preserved
+            echo -e "${GREEN}  User documents preserved:${NC}"
+            for SUBDIR in requirements architecture design testing; do
+                if [ -d "$PROJECT_ROOT/docs/$SUBDIR" ]; then
+                    SUBDIR_COUNT=$(find "$PROJECT_ROOT/docs/$SUBDIR" -type f ! -name ".*" 2>/dev/null | wc -l | tr -d ' ')
+                    if [ "$SUBDIR_COUNT" -gt 0 ]; then
+                        echo -e "${GREEN}    - docs/$SUBDIR/ ($SUBDIR_COUNT files)${NC}"
+                    fi
+                fi
+            done
+
+            # Check for other docs
+            OTHER_DOCS=$(find "$PROJECT_ROOT/docs" -maxdepth 1 -type f ! -name ".*" 2>/dev/null | wc -l | tr -d ' ')
+            if [ "$OTHER_DOCS" -gt 0 ]; then
+                echo -e "${GREEN}    - docs/ root ($OTHER_DOCS files)${NC}"
+            fi
+        else
+            # docs/ is empty scaffolding - safe to clean up
+            echo -e "${YELLOW}  docs/ contains only empty scaffolding - cleaning up${NC}"
+
+            # Remove empty standard subdirectories
+            for SUBDIR in requirements architecture design testing; do
+                do_rmdir_if_empty "$PROJECT_ROOT/docs/$SUBDIR"
+            done
+
+            # Remove docs/ itself if empty
+            do_rmdir_if_empty "$PROJECT_ROOT/docs"
+        fi
     fi
 fi
 echo ""

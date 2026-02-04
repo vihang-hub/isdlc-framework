@@ -92,28 +92,33 @@ monorepo/
 │   └── commands/
 ├── .isdlc/
 │   ├── monorepo.json                 # Project registry
-│   ├── constitution.md               # Shared constitution
 │   ├── config/                       # Shared config
 │   ├── checklists/                   # Shared checklists
 │   ├── templates/                    # Shared templates
-│   └── projects/                     # Per-project state
+│   └── projects/                     # Per-project runtime state
 │       ├── api-service/
 │       │   ├── state.json            # Independent state + counters
-│       │   ├── constitution.md       # Optional override
-│       │   ├── external-skills-manifest.json  # External skills registry
-│       │   ├── skill-customization-report.md  # Skills report
 │       │   └── skills/
 │       │       └── external/         # Project-scoped external skills
 │       │           ├── nestjs.md
 │       │           └── typescript.md
 │       └── web-frontend/
 │           ├── state.json
-│           ├── constitution.md
-│           ├── external-skills-manifest.json
-│           ├── skill-customization-report.md
 │           └── skills/
 │               └── external/
 ├── docs/
+│   ├── isdlc/                        # Shared iSDLC documents
+│   │   ├── constitution.md           # Shared constitution
+│   │   └── projects/                 # Per-project user documents
+│   │       ├── api-service/
+│   │       │   ├── constitution.md   # Optional override
+│   │       │   ├── tasks.md
+│   │       │   ├── external-skills-manifest.json
+│   │       │   └── skill-customization-report.md
+│   │       └── web-frontend/
+│   │           ├── tasks.md
+│   │           ├── external-skills-manifest.json
+│   │           └── skill-customization-report.md
 │   ├── api-service/                  # Per-project docs at root
 │   │   ├── requirements/
 │   │   ├── architecture/
@@ -134,10 +139,15 @@ monorepo/
 ├── .claude/                          # Shared (unchanged)
 ├── .isdlc/
 │   ├── monorepo.json
-│   ├── constitution.md
-│   └── projects/                     # Per-project state (same as above)
+│   └── projects/                     # Per-project runtime state (same as above)
 │       ├── app1/
 │       └── app2/
+├── docs/
+│   └── isdlc/                        # Shared iSDLC documents
+│       ├── constitution.md           # Shared constitution
+│       └── projects/                 # Per-project user documents
+│           ├── app1/
+│           └── app2/
 ├── apps/
 │   ├── app1/
 │   │   ├── docs/                     # Docs live inside each project
@@ -230,7 +240,7 @@ There are four ways to target a project (in priority order):
 In monorepo mode, discovery:
 - Scopes analysis to the project's path (not the entire monorepo)
 - Outputs reports to the resolved docs path (`docs/{project-id}/` or `{project-path}/docs/` depending on `docs_location`)
-- Creates the constitution at `.isdlc/projects/{project-id}/constitution.md`
+- Creates the constitution at `docs/isdlc/projects/{project-id}/constitution.md`
 - Updates the project-specific `state.json`
 
 ## Independent Workflows
@@ -255,14 +265,16 @@ Each project has its own workflow lifecycle:
 | Requirements | `docs/requirements/REQ-0001-name/` | `docs/api-service/requirements/REQ-0001-name/` | `apps/api-service/docs/requirements/REQ-0001-name/` |
 | Architecture | `docs/architecture/` | `docs/api-service/architecture/` | `apps/api-service/docs/architecture/` |
 | Design | `docs/design/` | `docs/api-service/design/` | `apps/api-service/docs/design/` |
-| State | `.isdlc/state.json` | `.isdlc/projects/api-service/state.json` |
-| External skills | `.claude/skills/external/` | `.isdlc/projects/api-service/skills/external/` |
-| External manifest | `.isdlc/external-skills-manifest.json` | `.isdlc/projects/api-service/external-skills-manifest.json` |
-| Skill report | `.isdlc/skill-customization-report.md` | `.isdlc/projects/api-service/skill-customization-report.md` |
+| State | `.isdlc/state.json` | `.isdlc/projects/api-service/state.json` | `.isdlc/projects/api-service/state.json` |
+| Constitution | `docs/isdlc/constitution.md` | `docs/isdlc/projects/api-service/constitution.md` | `docs/isdlc/projects/api-service/constitution.md` |
+| Tasks | `docs/isdlc/tasks.md` | `docs/isdlc/projects/api-service/tasks.md` | `docs/isdlc/projects/api-service/tasks.md` |
+| External skills | `.claude/skills/external/` | `.isdlc/projects/api-service/skills/external/` | `.isdlc/projects/api-service/skills/external/` |
+| External manifest | `docs/isdlc/external-skills-manifest.json` | `docs/isdlc/projects/api-service/external-skills-manifest.json` | `docs/isdlc/projects/api-service/external-skills-manifest.json` |
+| Skill report | `docs/isdlc/skill-customization-report.md` | `docs/isdlc/projects/api-service/skill-customization-report.md` | `docs/isdlc/projects/api-service/skill-customization-report.md` |
 
 ## Constitution: Shared + Override
 
-The shared constitution at `.isdlc/constitution.md` applies to all projects. Individual projects can create overrides at `.isdlc/projects/{project-id}/constitution.md`.
+The shared constitution at `docs/isdlc/constitution.md` applies to all projects. Individual projects can create overrides at `docs/isdlc/projects/{project-id}/constitution.md`.
 
 ### Override Rules
 
@@ -300,9 +312,10 @@ To convert an existing single-project iSDLC installation to a monorepo:
 
 1. Create `monorepo.json` (see Manual Setup above)
 2. Move `state.json` to `.isdlc/projects/{project-id}/state.json`
-3. Move constitution override (if desired) to `.isdlc/projects/{project-id}/constitution.md`
-4. Move docs to `docs/{project-id}/` (or `{project-path}/docs/` if using `docs_location: "project"`)
-5. Rename existing branches to add project prefix
+3. Move constitution override (if desired) to `docs/isdlc/projects/{project-id}/constitution.md`
+4. Move project docs to `docs/{project-id}/` (or `{project-path}/docs/` if using `docs_location: "project"`)
+5. Move iSDLC documents to `docs/isdlc/projects/{project-id}/`
+6. Rename existing branches to add project prefix
 
 ## FAQ
 
@@ -327,7 +340,7 @@ A: Yes. If you're anywhere inside a registered project path (e.g., `apps/api-ser
 **Q: How do I migrate an existing monorepo install to support per-project external skills?**
 A: For each registered project:
 1. Create the external skills directory: `mkdir -p .isdlc/projects/{id}/skills/external`
-2. Create an empty manifest: `echo '{"version":"1.0.0","project_id":"{id}","updated_at":"","skills":{}}' > .isdlc/projects/{id}/external-skills-manifest.json`
+2. Create an empty manifest: `echo '{"version":"1.0.0","project_id":"{id}","updated_at":"","skills":{}}' > docs/isdlc/projects/{id}/external-skills-manifest.json`
 3. If you previously ran `/discover` and have skills in `.claude/skills/external/`, move the relevant skill files to the appropriate project directory
 4. Re-run `/discover --project {id}` to regenerate the manifest
 

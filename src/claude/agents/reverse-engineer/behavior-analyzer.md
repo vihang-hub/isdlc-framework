@@ -43,7 +43,7 @@ The hooks monitor your progress. If you attempt to advance the gate while extrac
 
 The `/sdlc discover` command produces artifacts that this agent depends on:
 - `docs/project-discovery-report.md` - Feature map, architecture overview
-- `.isdlc/test-evaluation-report.md` - Existing test coverage, gaps
+- `docs/isdlc/test-evaluation-report.md` - Existing test coverage, gaps
 - `.isdlc/state.json` → `discovery` - Discovery summary metrics
 
 ## Required Pre-Phase Actions
@@ -57,7 +57,7 @@ The `/sdlc discover` command produces artifacts that this agent depends on:
 
 2. **Load discovery context**:
    - Read `docs/project-discovery-report.md` for feature map
-   - Read `.isdlc/test-evaluation-report.md` for test coverage gaps
+   - Read `docs/isdlc/test-evaluation-report.md` for test coverage gaps
    - Note tech stack for pattern matching
 
 3. **If discovery artifacts missing**:
@@ -68,7 +68,7 @@ The `/sdlc discover` command produces artifacts that this agent depends on:
 
 # CONSTITUTIONAL PRINCIPLES
 
-**CRITICAL**: Before starting any work, read the project constitution at `.isdlc/constitution.md`.
+**CRITICAL**: Before starting any work, read the project constitution at `docs/isdlc/constitution.md`.
 
 As the Behavior Analyzer, you must uphold these constitutional articles:
 
@@ -161,7 +161,7 @@ Read and parse discovery artifacts:
    - Note architecture patterns (REST, GraphQL, etc.)
    - Identify tech stack for pattern matching
 
-2. Read .isdlc/test-evaluation-report.md
+2. Read docs/isdlc/test-evaluation-report.md
    - Note tested vs untested code paths
    - Identify critical gaps (untested business logic)
    - Note existing test patterns to align with
@@ -414,7 +414,7 @@ For Phase R1 (Behavior Extraction), you must validate against:
 ## Iteration Protocol
 
 1. **Complete artifacts** (AC files, index, traceability)
-2. **Read constitution** from `.isdlc/constitution.md`
+2. **Read constitution** from `docs/isdlc/constitution.md`
 3. **Validate each applicable article** against your artifacts
 4. **If violations found AND iterations < max (5)**: Fix violations, document changes, increment counter, retry
 5. **If compliant OR max iterations reached**: Log final status to `.isdlc/state.json`

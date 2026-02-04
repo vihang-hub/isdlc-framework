@@ -14,7 +14,7 @@ dependencies: [ORCH-001]
 
 ## Purpose
 
-Generate a persistent task plan file (`.isdlc/tasks.md`) that shows the user all planned work across every phase of the active workflow. The plan provides phase-grouped, numbered tasks with progress tracking via checkboxes. Phase agents update this file as they complete work, giving the user a single view of overall progress.
+Generate a persistent task plan file (`docs/isdlc/tasks.md`) that shows the user all planned work across every phase of the active workflow. The plan provides phase-grouped, numbered tasks with progress tracking via checkboxes. Phase agents update this file as they complete work, giving the user a single view of overall progress.
 
 ## When to Use
 
@@ -80,8 +80,8 @@ Format for parallel tasks: `- [ ] TNNNN [P] Description`
 
 ```
 1. Compose the full document with header, phase sections, and summary
-2. Write to .isdlc/tasks.md (single-project) or
-   .isdlc/projects/{project-id}/tasks.md (monorepo)
+2. Write to docs/isdlc/tasks.md (single-project) or
+   docs/isdlc/projects/{project-id}/tasks.md (monorepo)
 3. Display the full plan to the user with announcement banner
 ```
 
@@ -172,13 +172,13 @@ Use these display names for phase headers:
 
 | Output | Type | Description |
 |--------|------|-------------|
-| .isdlc/tasks.md | Markdown | Persistent task plan with checkboxes and progress |
+| docs/isdlc/tasks.md | Markdown | Persistent task plan with checkboxes and progress |
 
 ## Monorepo Support
 
 In monorepo mode, write the tasks file to the project-scoped path:
-- **Single-project**: `.isdlc/tasks.md`
-- **Monorepo**: `.isdlc/projects/{project-id}/tasks.md`
+- **Single-project**: `docs/isdlc/tasks.md`
+- **Monorepo**: `docs/isdlc/projects/{project-id}/tasks.md`
 
 ## Integration Points
 

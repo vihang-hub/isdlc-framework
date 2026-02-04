@@ -85,13 +85,17 @@ The installer copies agents, skills, hooks, and configuration into your project,
    - If you already have a `.claude/` folder, it merges the contents
    - Backs up your existing `CLAUDE.md` if present
 2. **Creates `docs/` folder** — For requirements, architecture, and design documents
-3. **Creates `.isdlc/` folder** — Framework state and resources
+3. **Creates `.isdlc/` folder** — Framework runtime state (gitignored)
    - `state.json` — Current phase and progress tracking
-   - `constitution.md` — Project governance principles
    - `config/` — Framework configuration
    - `checklists/` — Gate validation checklists
    - `templates/` — Document templates
-4. **Self-cleanup** — Removes the cloned `isdlc-framework/` folder after installation
+4. **Creates `docs/isdlc/` folder** — User-generated documents (committed to git)
+   - `constitution.md` — Project governance principles
+   - `tasks.md` — Task plan and progress tracking
+   - `test-evaluation-report.md` — Test infrastructure analysis
+   - Additional reports and checklists as workflows generate them
+5. **Self-cleanup** — Removes the cloned `isdlc-framework/` folder after installation
 
 </details>
 
@@ -104,16 +108,19 @@ your-project/
 │   ├── skills/        # 170 skills across 12 categories
 │   ├── hooks/         # Runtime enforcement hooks
 │   └── settings.json
-├── .isdlc/            # Framework state and resources
+├── .isdlc/            # Framework runtime state (gitignored)
 │   ├── state.json     # Current phase and progress
-│   ├── constitution.md
-│   ├── config/
-│   ├── checklists/
-│   └── templates/
+│   ├── config/        # Framework configuration
+│   ├── checklists/    # Gate validation checklists
+│   └── templates/     # Document templates
 ├── docs/              # Requirements and documentation
 │   ├── requirements/
 │   ├── architecture/
-│   └── design/
+│   ├── design/
+│   └── isdlc/         # User-generated iSDLC documents
+│       ├── constitution.md    # Project governance
+│       ├── tasks.md           # Task plan & progress
+│       └── test-evaluation-report.md
 └── src/               # Your source code
 ```
 
@@ -301,15 +308,21 @@ monorepo/
 ├── .claude/                          # Shared
 ├── .isdlc/
 │   ├── monorepo.json                 # Project registry
-│   ├── constitution.md               # Shared constitution
 │   ├── config/                       # Shared config
-│   └── projects/                     # Per-project state
+│   └── projects/                     # Per-project runtime state
 │       ├── api-service/
-│       │   ├── state.json
-│       │   └── constitution.md       # Optional override
+│       │   └── state.json
 │       └── web-frontend/
 │           └── state.json
 ├── docs/
+│   ├── isdlc/                        # Shared iSDLC documents
+│   │   ├── constitution.md           # Shared constitution
+│   │   └── projects/                 # Per-project user documents
+│   │       ├── api-service/
+│   │       │   ├── constitution.md   # Optional override
+│   │       │   └── tasks.md
+│   │       └── web-frontend/
+│   │           └── tasks.md
 │   ├── api-service/                  # Per-project docs
 │   │   ├── requirements/
 │   │   ├── architecture/
@@ -343,7 +356,7 @@ See [docs/MONOREPO-GUIDE.md](docs/MONOREPO-GUIDE.md) for detailed setup and usag
 
 A project constitution is a set of immutable principles (e.g., "Test-First Development", "Security by Design") that govern all development activities. The orchestrator and all 14 phase agents read and enforce these principles at quality gates.
 
-1. Install creates a starter template at `.isdlc/constitution.md`
+1. Install creates a starter template at `docs/isdlc/constitution.md`
 2. Customize the articles for your project — keep relevant ones, remove what doesn't apply, add your own
 3. Agents enforce constitutional compliance at each quality gate
 
@@ -487,7 +500,7 @@ gate-blocker.js (PreToolUse)
 
 ### Task Planning & Progress Tracking
 
-After GATE-01 passes, the orchestrator generates a persistent task plan at `.isdlc/tasks.md` (ORCH-012). The plan provides a single view of all work across workflow phases:
+After GATE-01 passes, the orchestrator generates a persistent task plan at `docs/isdlc/tasks.md` (ORCH-012). The plan provides a single view of all work across workflow phases:
 
 - **Checkbox-based tracking** — Phase agents mark tasks complete as work progresses
 - **Sequential task IDs** — Tasks numbered T0001, T0002, etc. across all phases

@@ -44,8 +44,8 @@ Write the generated skill file to the external skills directory:
 Register it in the skill index with source marked as "web-research" to distinguish it from registry-sourced skills.
 
 Also register the skill in the external skills manifest:
-- Single-project: `.isdlc/external-skills-manifest.json`
-- Monorepo: `.isdlc/projects/{project-id}/external-skills-manifest.json`
+- Single-project: `docs/isdlc/external-skills-manifest.json`
+- Monorepo: `docs/isdlc/projects/{project-id}/external-skills-manifest.json`
 
 Record: name, `source: "web-research"`, `version: "generated"`, path, `available_to: "all"`, and installation timestamp.
 

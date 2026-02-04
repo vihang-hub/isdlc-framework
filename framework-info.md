@@ -88,7 +88,10 @@ This framework is designed to be cloned/installed and then used for actual softw
 
 1. Clone this framework repository
 2. Run `./install.sh` to install into your project
-3. The project will have agents, skills, and its own `.isdlc/` state directory
+3. The project will have:
+   - `.claude/` — agents, skills, hooks
+   - `.isdlc/` — runtime state (gitignored)
+   - `docs/isdlc/` — user-generated documents (committed to git)
 4. The cloned framework folder is cleaned up after installation
 
 ## Current State
@@ -168,10 +171,12 @@ Each phase produces specific artifacts that the next phase consumes.
 The framework supports managing multiple projects from a single installation. When installed in a monorepo, the framework creates:
 
 - **`.isdlc/monorepo.json`** — project registry with default project and scan paths
-- **`.isdlc/projects/{id}/state.json`** — per-project state, counters, and workflows
-- **`.isdlc/projects/{id}/constitution.md`** — optional per-project constitution overrides
+- **`.isdlc/projects/{id}/state.json`** — per-project runtime state, counters, and workflows
 - **`.isdlc/projects/{id}/skills/external/`** — per-project external skills (isolated from other projects)
-- **`.isdlc/projects/{id}/external-skills-manifest.json`** — registry of installed external skills
+- **`docs/isdlc/constitution.md`** — shared project constitution
+- **`docs/isdlc/projects/{id}/constitution.md`** — optional per-project constitution overrides
+- **`docs/isdlc/projects/{id}/tasks.md`** — per-project task plans
+- **`docs/isdlc/projects/{id}/external-skills-manifest.json`** — registry of installed external skills
 - **Per-project docs** — location depends on `docs_location` in monorepo.json: `docs/{id}/` (root mode, default) or `{project-path}/docs/` (project mode)
 
 ### How It Works

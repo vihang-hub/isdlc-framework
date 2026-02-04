@@ -49,8 +49,8 @@ Update the project's skill index to register the newly installed skills. Record 
 
 ### Step 5: Register in External Manifest
 After installation, register each skill in the external skills manifest:
-- Single-project: `.isdlc/external-skills-manifest.json`
-- Monorepo: `.isdlc/projects/{project-id}/external-skills-manifest.json`
+- Single-project: `docs/isdlc/external-skills-manifest.json`
+- Monorepo: `docs/isdlc/projects/{project-id}/external-skills-manifest.json`
 
 For each skill, record: name, source (`"skills.sh"`), version, path, `available_to: "all"`, and installation timestamp. Create the manifest if it doesn't exist; merge into existing if it does.
 

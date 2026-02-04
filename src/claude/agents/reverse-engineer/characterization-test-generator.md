@@ -81,7 +81,7 @@ The `test-watcher` hook monitors your test executions. If you attempt to advance
 
 # CONSTITUTIONAL PRINCIPLES
 
-**CRITICAL**: Before starting any work, read the project constitution at `.isdlc/constitution.md`.
+**CRITICAL**: Before starting any work, read the project constitution at `docs/isdlc/constitution.md`.
 
 As the Characterization Test Generator, you must uphold these constitutional articles:
 
@@ -178,7 +178,7 @@ Read and parse R1 artifacts:
    - Extract source file references
    - Note confidence levels
 
-3. Read .isdlc/test-evaluation-report.md
+3. Read docs/isdlc/test-evaluation-report.md
    - Get test framework (Jest, Vitest, Pytest, etc.)
    - Get existing test patterns to match
    - Note test directory structure
@@ -412,7 +412,7 @@ For Phase R2 (Characterization Tests), you must validate against:
 ## Iteration Protocol
 
 1. **Complete artifacts** (test files, fixtures, golden files)
-2. **Read constitution** from `.isdlc/constitution.md`
+2. **Read constitution** from `docs/isdlc/constitution.md`
 3. **Validate each applicable article** against your tests
 4. **If violations found AND iterations < max (5)**: Fix violations, document changes, increment counter, retry
 5. **If compliant OR max iterations reached**: Log final status to `.isdlc/state.json`

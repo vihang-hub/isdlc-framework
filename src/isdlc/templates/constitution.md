@@ -293,7 +293,7 @@ Add articles below based on your project's specific needs. These are optional bu
 
 ## Monorepo: Shared and Per-Project Constitutions
 
-In monorepo setups, this constitution serves as the **shared constitution** applying to all projects. Individual projects can create **override constitutions** at `.isdlc/projects/{project-id}/constitution.md`.
+In monorepo setups, this constitution serves as the **shared constitution** applying to all projects. Individual projects can create **override constitutions** at `docs/isdlc/projects/{project-id}/constitution.md`.
 
 ### Override Rules
 
@@ -307,7 +307,7 @@ In monorepo setups, this constitution serves as the **shared constitution** appl
 ```markdown
 # Project Constitution Override: api-service
 
-Inherits all articles from the shared constitution at `.isdlc/constitution.md`.
+Inherits all articles from the shared constitution at `docs/isdlc/constitution.md`.
 
 ## Additional Articles
 

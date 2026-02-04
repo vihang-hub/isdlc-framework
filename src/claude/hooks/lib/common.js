@@ -191,6 +191,10 @@ function resolveStatePath(projectId) {
  * Resolve the path to the constitution file, accounting for monorepo mode.
  * In monorepo mode, returns the project-specific override if it exists,
  * otherwise falls back to the shared constitution.
+ *
+ * New location: docs/isdlc/constitution.md (v3.1.0+)
+ * Legacy location: .isdlc/constitution.md (fallback for migration)
+ *
  * @param {string} [projectId] - Optional project ID override
  * @returns {string} Absolute path to the effective constitution.md
  */
@@ -200,15 +204,35 @@ function resolveConstitutionPath(projectId) {
     if (isMonorepoMode()) {
         const id = projectId || getActiveProject();
         if (id) {
-            const projectConstitution = path.join(projectRoot, '.isdlc', 'projects', id, 'constitution.md');
-            if (fs.existsSync(projectConstitution)) {
-                return projectConstitution;
+            // New location (preferred)
+            const newProjectConstitution = path.join(projectRoot, 'docs', 'isdlc', 'projects', id, 'constitution.md');
+            if (fs.existsSync(newProjectConstitution)) {
+                return newProjectConstitution;
             }
+            // Legacy location (fallback)
+            const legacyProjectConstitution = path.join(projectRoot, '.isdlc', 'projects', id, 'constitution.md');
+            if (fs.existsSync(legacyProjectConstitution)) {
+                return legacyProjectConstitution;
+            }
+            // Default to new location for creation
+            return newProjectConstitution;
         }
     }
 
-    // Shared/single-project constitution
-    return path.join(projectRoot, '.isdlc', 'constitution.md');
+    // New location (preferred)
+    const newPath = path.join(projectRoot, 'docs', 'isdlc', 'constitution.md');
+    if (fs.existsSync(newPath)) {
+        return newPath;
+    }
+
+    // Legacy location (fallback)
+    const legacyPath = path.join(projectRoot, '.isdlc', 'constitution.md');
+    if (fs.existsSync(legacyPath)) {
+        return legacyPath;
+    }
+
+    // Default to new location for creation
+    return newPath;
 }
 
 /**
@@ -261,8 +285,10 @@ function resolveExternalSkillsPath(projectId) {
 
 /**
  * Resolve the path to the external skills manifest, accounting for monorepo mode.
- * - Single project: .isdlc/external-skills-manifest.json
- * - Monorepo: .isdlc/projects/{project-id}/external-skills-manifest.json
+ *
+ * New location: docs/isdlc/external-skills-manifest.json (v3.1.0+)
+ * Legacy location: .isdlc/external-skills-manifest.json (fallback for migration)
+ *
  * @param {string} [projectId] - Optional project ID override
  * @returns {string} Absolute path to external skills manifest
  */
@@ -272,17 +298,41 @@ function resolveExternalManifestPath(projectId) {
     if (isMonorepoMode()) {
         const id = projectId || getActiveProject();
         if (id) {
-            return path.join(projectRoot, '.isdlc', 'projects', id, 'external-skills-manifest.json');
+            // New location (preferred)
+            const newPath = path.join(projectRoot, 'docs', 'isdlc', 'projects', id, 'external-skills-manifest.json');
+            if (fs.existsSync(newPath)) {
+                return newPath;
+            }
+            // Legacy location (fallback)
+            const legacyPath = path.join(projectRoot, '.isdlc', 'projects', id, 'external-skills-manifest.json');
+            if (fs.existsSync(legacyPath)) {
+                return legacyPath;
+            }
+            return newPath;
         }
     }
 
-    return path.join(projectRoot, '.isdlc', 'external-skills-manifest.json');
+    // New location (preferred)
+    const newPath = path.join(projectRoot, 'docs', 'isdlc', 'external-skills-manifest.json');
+    if (fs.existsSync(newPath)) {
+        return newPath;
+    }
+
+    // Legacy location (fallback)
+    const legacyPath = path.join(projectRoot, '.isdlc', 'external-skills-manifest.json');
+    if (fs.existsSync(legacyPath)) {
+        return legacyPath;
+    }
+
+    return newPath;
 }
 
 /**
  * Resolve the path to the skill customization report, accounting for monorepo mode.
- * - Single project: .isdlc/skill-customization-report.md
- * - Monorepo: .isdlc/projects/{project-id}/skill-customization-report.md
+ *
+ * New location: docs/isdlc/skill-customization-report.md (v3.1.0+)
+ * Legacy location: .isdlc/skill-customization-report.md (fallback for migration)
+ *
  * @param {string} [projectId] - Optional project ID override
  * @returns {string} Absolute path to skill customization report
  */
@@ -292,11 +342,188 @@ function resolveSkillReportPath(projectId) {
     if (isMonorepoMode()) {
         const id = projectId || getActiveProject();
         if (id) {
-            return path.join(projectRoot, '.isdlc', 'projects', id, 'skill-customization-report.md');
+            // New location (preferred)
+            const newPath = path.join(projectRoot, 'docs', 'isdlc', 'projects', id, 'skill-customization-report.md');
+            if (fs.existsSync(newPath)) {
+                return newPath;
+            }
+            // Legacy location (fallback)
+            const legacyPath = path.join(projectRoot, '.isdlc', 'projects', id, 'skill-customization-report.md');
+            if (fs.existsSync(legacyPath)) {
+                return legacyPath;
+            }
+            return newPath;
         }
     }
 
-    return path.join(projectRoot, '.isdlc', 'skill-customization-report.md');
+    // New location (preferred)
+    const newPath = path.join(projectRoot, 'docs', 'isdlc', 'skill-customization-report.md');
+    if (fs.existsSync(newPath)) {
+        return newPath;
+    }
+
+    // Legacy location (fallback)
+    const legacyPath = path.join(projectRoot, '.isdlc', 'skill-customization-report.md');
+    if (fs.existsSync(legacyPath)) {
+        return legacyPath;
+    }
+
+    return newPath;
+}
+
+/**
+ * Resolve the path to the tasks plan file, accounting for monorepo mode.
+ *
+ * New location: docs/isdlc/tasks.md (v3.1.0+)
+ * Legacy location: .isdlc/tasks.md (fallback for migration)
+ *
+ * @param {string} [projectId] - Optional project ID override
+ * @returns {string} Absolute path to tasks.md
+ */
+function resolveTasksPath(projectId) {
+    const projectRoot = getProjectRoot();
+
+    if (isMonorepoMode()) {
+        const id = projectId || getActiveProject();
+        if (id) {
+            const newPath = path.join(projectRoot, 'docs', 'isdlc', 'projects', id, 'tasks.md');
+            if (fs.existsSync(newPath)) {
+                return newPath;
+            }
+            const legacyPath = path.join(projectRoot, '.isdlc', 'projects', id, 'tasks.md');
+            if (fs.existsSync(legacyPath)) {
+                return legacyPath;
+            }
+            return newPath;
+        }
+    }
+
+    const newPath = path.join(projectRoot, 'docs', 'isdlc', 'tasks.md');
+    if (fs.existsSync(newPath)) {
+        return newPath;
+    }
+
+    const legacyPath = path.join(projectRoot, '.isdlc', 'tasks.md');
+    if (fs.existsSync(legacyPath)) {
+        return legacyPath;
+    }
+
+    return newPath;
+}
+
+/**
+ * Resolve the path to the test evaluation report, accounting for monorepo mode.
+ *
+ * New location: docs/isdlc/test-evaluation-report.md (v3.1.0+)
+ * Legacy location: .isdlc/test-evaluation-report.md (fallback for migration)
+ *
+ * @param {string} [projectId] - Optional project ID override
+ * @returns {string} Absolute path to test-evaluation-report.md
+ */
+function resolveTestEvaluationPath(projectId) {
+    const projectRoot = getProjectRoot();
+
+    if (isMonorepoMode()) {
+        const id = projectId || getActiveProject();
+        if (id) {
+            const newPath = path.join(projectRoot, 'docs', 'isdlc', 'projects', id, 'test-evaluation-report.md');
+            if (fs.existsSync(newPath)) {
+                return newPath;
+            }
+            const legacyPath = path.join(projectRoot, '.isdlc', 'projects', id, 'test-evaluation-report.md');
+            if (fs.existsSync(legacyPath)) {
+                return legacyPath;
+            }
+            return newPath;
+        }
+    }
+
+    const newPath = path.join(projectRoot, 'docs', 'isdlc', 'test-evaluation-report.md');
+    if (fs.existsSync(newPath)) {
+        return newPath;
+    }
+
+    const legacyPath = path.join(projectRoot, '.isdlc', 'test-evaluation-report.md');
+    if (fs.existsSync(legacyPath)) {
+        return legacyPath;
+    }
+
+    return newPath;
+}
+
+/**
+ * Resolve the path to the ATDD checklist, accounting for monorepo mode.
+ *
+ * New location: docs/isdlc/atdd-checklist.json (v3.1.0+)
+ * Legacy location: .isdlc/atdd-checklist.json (fallback for migration)
+ *
+ * @param {string} [projectId] - Optional project ID override
+ * @param {string} [domain] - Optional domain suffix (e.g., "inventory" for atdd-checklist-inventory.json)
+ * @returns {string} Absolute path to atdd-checklist.json
+ */
+function resolveAtddChecklistPath(projectId, domain) {
+    const projectRoot = getProjectRoot();
+    const filename = domain ? `atdd-checklist-${domain}.json` : 'atdd-checklist.json';
+
+    if (isMonorepoMode()) {
+        const id = projectId || getActiveProject();
+        if (id) {
+            const newPath = path.join(projectRoot, 'docs', 'isdlc', 'projects', id, filename);
+            if (fs.existsSync(newPath)) {
+                return newPath;
+            }
+            const legacyPath = path.join(projectRoot, '.isdlc', 'projects', id, filename);
+            if (fs.existsSync(legacyPath)) {
+                return legacyPath;
+            }
+            return newPath;
+        }
+    }
+
+    const newPath = path.join(projectRoot, 'docs', 'isdlc', filename);
+    if (fs.existsSync(newPath)) {
+        return newPath;
+    }
+
+    const legacyPath = path.join(projectRoot, '.isdlc', filename);
+    if (fs.existsSync(legacyPath)) {
+        return legacyPath;
+    }
+
+    return newPath;
+}
+
+/**
+ * Resolve the path to the iSDLC docs folder, accounting for monorepo mode.
+ * This is the base folder for all iSDLC-generated documents.
+ *
+ * @param {string} [projectId] - Optional project ID override
+ * @returns {string} Absolute path to docs/isdlc/ or docs/isdlc/projects/{id}/
+ */
+function resolveIsdlcDocsPath(projectId) {
+    const projectRoot = getProjectRoot();
+
+    if (isMonorepoMode()) {
+        const id = projectId || getActiveProject();
+        if (id) {
+            return path.join(projectRoot, 'docs', 'isdlc', 'projects', id);
+        }
+    }
+
+    return path.join(projectRoot, 'docs', 'isdlc');
+}
+
+/**
+ * Check if migration from .isdlc/ to docs/isdlc/ is needed.
+ * Returns true if legacy files exist but new location doesn't.
+ * @returns {boolean} True if migration is needed
+ */
+function isMigrationNeeded() {
+    const projectRoot = getProjectRoot();
+    const legacyConstitution = path.join(projectRoot, '.isdlc', 'constitution.md');
+    const newConstitution = path.join(projectRoot, 'docs', 'isdlc', 'constitution.md');
+
+    return fs.existsSync(legacyConstitution) && !fs.existsSync(newConstitution);
 }
 
 /**
@@ -647,6 +874,11 @@ module.exports = {
     resolveExternalSkillsPath,
     resolveExternalManifestPath,
     resolveSkillReportPath,
+    resolveTasksPath,
+    resolveTestEvaluationPath,
+    resolveAtddChecklistPath,
+    resolveIsdlcDocsPath,
+    isMigrationNeeded,
     loadExternalManifest,
     // State management (monorepo-aware)
     readStateValue,

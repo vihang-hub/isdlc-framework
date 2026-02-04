@@ -64,7 +64,7 @@ The `test-watcher` hook monitors your test executions. If you attempt to advance
 **BEFORE running any tests, you MUST check for existing test infrastructure.**
 
 The `/discover` command evaluates existing test automation and stores results in:
-- `.isdlc/test-evaluation-report.md` - Detailed analysis of existing tests
+- `docs/isdlc/test-evaluation-report.md` - Detailed analysis of existing tests
 - `.isdlc/state.json` → `test_evaluation` - Summary metrics and gaps
 - `.isdlc/state.json` → `testing_infrastructure` - Installed tools and commands
 
@@ -169,7 +169,7 @@ If `.isdlc/state.json` has no `testing_infrastructure`:
 
 # CONSTITUTIONAL PRINCIPLES
 
-**CRITICAL**: Before starting any work, read the project constitution at `.isdlc/constitution.md`.
+**CRITICAL**: Before starting any work, read the project constitution at `docs/isdlc/constitution.md`.
 
 As the Integration Tester, you must uphold these constitutional articles:
 
@@ -545,7 +545,7 @@ grep -rn "@Disabled\|@Ignore" src/test/java/acceptance/
 Read ATDD checklist and verify ALL priority levels are complete:
 
 ```json
-// .isdlc/atdd-checklist.json
+// docs/isdlc/atdd-checklist.json
 {
   "coverage_summary": {
     "by_priority": {
@@ -581,7 +581,7 @@ Compare discovered test files against ATDD checklist:
 
 ```bash
 # Extract test names from checklist
-jq '.acceptance_criteria[].test_name' .isdlc/atdd-checklist.json
+jq '.acceptance_criteria[].test_name' docs/isdlc/atdd-checklist.json
 
 # Compare with actual test names in files
 grep -h "it\('" tests/acceptance/*.test.ts | sed "s/.*it('//" | sed "s/',.*//"
@@ -625,7 +625,7 @@ When ATDD mode is active, add these to GATE-06 checklist:
 - [ ] **P1 100% passing**: All high-priority acceptance tests pass
 - [ ] **P2 100% passing**: All medium-priority acceptance tests pass
 - [ ] **P3 100% passing**: All low-priority acceptance tests pass
-- [ ] **Checklist synced**: `.isdlc/atdd-checklist.json` reflects actual test status
+- [ ] **Checklist synced**: `docs/isdlc/atdd-checklist.json` reflects actual test status
 - [ ] **Acceptance suite green**: Full acceptance test run passes
 
 ## ATDD Mutation Testing Integration
@@ -699,7 +699,7 @@ For Phase 06 (Testing), you must validate against:
 ## Iteration Protocol
 
 1. **Complete artifacts** (integration tests, E2E tests, contract tests, coverage report)
-2. **Read constitution** from `.isdlc/constitution.md`
+2. **Read constitution** from `docs/isdlc/constitution.md`
 3. **Validate each applicable article** against your test results and artifacts
 4. **If violations found AND iterations < max (5 for Standard)**: Fix violations, document changes, increment counter, retry
 5. **If compliant OR max iterations reached**: Log final status to `.isdlc/state.json`
@@ -742,7 +742,7 @@ Create these tasks at the start of the integration testing phase:
 
 # PLAN INTEGRATION PROTOCOL
 
-If `.isdlc/tasks.md` exists:
+If `docs/isdlc/tasks.md` exists:
 
 ## On Phase Start
 1. Read tasks.md, locate your phase section (`## Phase NN:`)

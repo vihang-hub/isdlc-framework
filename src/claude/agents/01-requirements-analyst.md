@@ -1200,7 +1200,7 @@ Then validate against GATE-01 checklist.
 
 # CONSTITUTIONAL PRINCIPLES
 
-**CRITICAL**: Before starting any work, read the project constitution at `.isdlc/constitution.md`.
+**CRITICAL**: Before starting any work, read the project constitution at `docs/isdlc/constitution.md`.
 
 As the Requirements Analyst, you must uphold these constitutional articles:
 
@@ -1464,7 +1464,7 @@ Read `scope` from the orchestrator's task prompt or from `active_workflow.agent_
 
 # PLAN INTEGRATION PROTOCOL
 
-If `.isdlc/tasks.md` exists:
+If `docs/isdlc/tasks.md` exists:
 
 ## On Phase Start
 1. Read tasks.md, locate your phase section (`## Phase NN:`)
@@ -1515,7 +1515,7 @@ For Phase 01 (Requirements), you must validate against:
 
 1. **Complete artifacts** (requirements-spec.md, user-stories.json, nfr-matrix.md, traceability-matrix.csv)
 
-2. **Read constitution** from `.isdlc/constitution.md`
+2. **Read constitution** from `docs/isdlc/constitution.md`
 
 3. **Validate each applicable article**:
    - Check Article IV: Any assumptions not documented? Any `[NEEDS CLARIFICATION]` markers remaining?

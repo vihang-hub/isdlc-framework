@@ -60,8 +60,8 @@ If `--project {id}` was passed, or if `.isdlc/monorepo.json` exists (at the reso
 
 3. **Resolve external skills paths for D4 delegation:**
    - External skills: `.isdlc/projects/{project-id}/skills/external/`
-   - External manifest: `.isdlc/projects/{project-id}/external-skills-manifest.json`
-   - Skill report: `.isdlc/projects/{project-id}/skill-customization-report.md`
+   - External manifest: `docs/isdlc/projects/{project-id}/external-skills-manifest.json`
+   - Skill report: `docs/isdlc/projects/{project-id}/skill-customization-report.md`
 
 4. **Pass project context when delegating to sub-agents:**
    ```
@@ -70,8 +70,8 @@ If `--project {id}` was passed, or if `.isdlc/monorepo.json` exists (at the reso
    - Project Path: {project-path}
    - State File: .isdlc/projects/{project-id}/state.json
    - External Skills Path: .isdlc/projects/{project-id}/skills/external/
-   - External Manifest: .isdlc/projects/{project-id}/external-skills-manifest.json
-   - Skill Report: .isdlc/projects/{project-id}/skill-customization-report.md
+   - External Manifest: docs/isdlc/projects/{project-id}/external-skills-manifest.json
+   - Skill Report: docs/isdlc/projects/{project-id}/skill-customization-report.md
    - Docs Base: {resolved docs path — docs/{project-id}/ if docs_location="root" or absent, {project-path}/docs/ if docs_location="project"}
    - Constitution: {resolved constitution path}
    ```
@@ -410,7 +410,7 @@ The constitution-generator will:
 - Use Project Brief, PRD, architecture, and research to inform articles
 - Generate domain-specific articles (e.g., if e-commerce: payment security article)
 - Walk through interactive article review (user input required)
-- Save to `.isdlc/constitution.md`
+- Save to `docs/isdlc/constitution.md`
 
 **On completion:**
 ```
@@ -418,7 +418,7 @@ PHASE 6: Constitution                                [Complete ✓]
 ├─ ✓ Generate draft constitution
 ├─ ✓ Interactive review ({approved_count} articles approved)
 └─ ✓ Save constitution
-    → .isdlc/constitution.md
+    → docs/isdlc/constitution.md
 ```
 
 ### Step 8: Execute PHASE 7 — Project Structure & Skills
@@ -523,7 +523,7 @@ PHASE 5: Architecture Blueprint                      [Complete ✓]
 
 PHASE 6: Constitution                                [Complete ✓]
 ├─ ✓ {article_count} articles approved
-└─ ✓ Saved to .isdlc/constitution.md
+└─ ✓ Saved to docs/isdlc/constitution.md
 
 PHASE 7: Project Structure                           [Complete ✓]
 ├─ ✓ src/ scaffolded from blueprint
@@ -544,13 +544,13 @@ PHASE 8: Finalize                                    [Complete ✓]
     ✓ docs/requirements/prd.md
     ✓ docs/architecture/architecture-overview.md
     ✓ docs/architecture/data-model.md (if applicable)
-    ✓ .isdlc/constitution.md
+    ✓ docs/isdlc/constitution.md
     ✓ src/ (project structure)
     ✓ tests/ (test infrastructure)
 
   Next Steps:
     1. Review artifacts in docs/
-    2. Review constitution: cat .isdlc/constitution.md
+    2. Review constitution: cat docs/isdlc/constitution.md
     3. Start a workflow:
        /sdlc feature  — Build your first feature
        /sdlc start    — Run full SDLC lifecycle
@@ -811,7 +811,7 @@ The generator will:
 - Launch parallel research agents
 - Generate draft with domain-specific articles
 - Walk through interactive review (user input required)
-- Save to `.isdlc/constitution.md`
+- Save to `docs/isdlc/constitution.md`
 
 ### Step 5: Execute PHASE 4a - Skills Researcher
 
@@ -822,7 +822,7 @@ PHASE 3: Constitution Generation                     [Complete ✓]
 ├─ ✓ Generate draft constitution
 ├─ ✓ Interactive review (you approved each article)
 └─ ✓ Save constitution
-    → .isdlc/constitution.md
+    → docs/isdlc/constitution.md
 
 PHASE 4: Skills & Testing Setup                      [In Progress]
 ├─ ◐ Search skills.sh for your stack                   (running)
@@ -844,7 +844,7 @@ The researcher will:
 - Present recommendations to user
 - Install selected skills
 - Fall back to web research for gaps
-- Generate `.isdlc/skill-customization-report.md`
+- Generate `docs/isdlc/skill-customization-report.md`
 
 **On completion, show:**
 ```
@@ -995,7 +995,7 @@ PHASE 3: Constitution Generation                     [Complete ✓]
 ├─ ✓ Generate draft constitution
 ├─ ✓ Interactive review (you approved each article)
 └─ ✓ Save constitution
-    → .isdlc/constitution.md
+    → docs/isdlc/constitution.md
 
 PHASE 4: Skills & Testing Setup                      [Complete ✓]
 ├─ ✓ Search skills.sh for your stack
@@ -1018,13 +1018,13 @@ PHASE 5: Finalize                                    [Complete ✓]
   Created:
     ✓ docs/project-discovery-report.md (unified discovery report)
     ✓ docs/architecture/architecture-overview.md
-    ✓ .isdlc/test-evaluation-report.md
-    ✓ .isdlc/constitution.md
-    ✓ .isdlc/skill-customization-report.md
+    ✓ docs/isdlc/test-evaluation-report.md
+    ✓ docs/isdlc/constitution.md
+    ✓ docs/isdlc/skill-customization-report.md
 
   Next Steps:
     1. Review discovery report: cat docs/project-discovery-report.md
-    2. Review constitution: cat .isdlc/constitution.md
+    2. Review constitution: cat docs/isdlc/constitution.md
     3. Start a workflow:
        /sdlc feature  — Build a new feature
        /sdlc fix      — Fix a bug

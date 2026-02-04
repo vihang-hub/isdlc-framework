@@ -77,7 +77,7 @@ The `/discover` command will:
 If you prefer manual creation:
 
 ```bash
-cp isdlc-framework/src/isdlc/templates/constitution.md .isdlc/constitution.md
+cp isdlc-framework/src/isdlc/templates/constitution.md docs/isdlc/constitution.md
 ```
 
 ### Universal Articles (Baked In)
@@ -146,7 +146,7 @@ Data retention policies enforced. Right to deletion supported.
 ### Step 5: Commit It
 
 ```bash
-git add .isdlc/constitution.md
+git add docs/isdlc/constitution.md
 git commit -m "Add project constitution"
 ```
 
@@ -157,7 +157,7 @@ git commit -m "Add project constitution"
 ### Orchestrator (Agent 00)
 
 **At Project Start:**
-1. Reads `.isdlc/constitution.md`
+1. Reads `docs/isdlc/constitution.md`
 2. Validates it exists and is complete
 3. If missing, recommends creating one
 
@@ -170,7 +170,7 @@ git commit -m "Add project constitution"
 ### Phase Agents (01-13)
 
 **Before Starting Work:**
-1. Read `.isdlc/constitution.md`
+1. Read `docs/isdlc/constitution.md`
 2. Review articles relevant to their phase
 3. Apply principles to all decisions
 
@@ -254,7 +254,7 @@ GATE-05 (Implementation):
    - Ensure consensus
 
 3. **Update Constitution**
-   - Edit `.isdlc/constitution.md`
+   - Edit `docs/isdlc/constitution.md`
    - Version it (e.g., "v2.0.0")
    - Add amendment log
 
@@ -264,7 +264,7 @@ GATE-05 (Implementation):
 
 5. **Commit Changes**
    ```bash
-   git add .isdlc/constitution.md
+   git add docs/isdlc/constitution.md
    git commit -m "Constitution amendment v2.0.0: Update test coverage to 75%"
    ```
 
@@ -368,7 +368,7 @@ Use all template articles + domain-specific ones:
 **Problem**: Agent doesn't seem to follow constitutional principles.
 
 **Solutions**:
-1. Verify `.isdlc/constitution.md` exists
+1. Verify `docs/isdlc/constitution.md` exists
 2. Check constitution is readable (not corrupted)
 3. Ensure articles are clearly written
 4. Remind orchestrator to enforce compliance

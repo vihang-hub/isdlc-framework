@@ -449,6 +449,10 @@ mkdir -p docs/requirements
 mkdir -p docs/architecture
 mkdir -p docs/design
 
+# Create docs/isdlc for iSDLC-generated documents
+mkdir -p docs/isdlc/checklists
+echo -e "${GREEN}  ✓ Created docs/isdlc/ for iSDLC documents${NC}"
+
 # Note: framework-info.md is NOT copied to user projects.
 # It is framework documentation available in the framework repo.
 # Agents and commands are self-contained and don't need it.
@@ -469,6 +473,10 @@ This folder contains all project documentation following the iSDLC framework.
 
 ```
 docs/
+├── isdlc/              # iSDLC-generated documents
+│   ├── constitution.md # Project constitution
+│   ├── tasks.md        # Task plan
+│   └── checklists/     # Gate checklist responses
 ├── requirements/       # Requirements specifications and user stories
 ├── architecture/       # Architecture decisions and system design
 ├── design/            # Detailed design documents
@@ -563,7 +571,7 @@ fi
 
 # Copy constitution
 if [ -f "$FRAMEWORK_DIR/isdlc/templates/constitution.md" ]; then
-    cp "$FRAMEWORK_DIR/isdlc/templates/constitution.md" ".isdlc/constitution.md"
+    cp "$FRAMEWORK_DIR/isdlc/templates/constitution.md" "docs/isdlc/constitution.md"
     echo -e "${GREEN}  ✓ Copied constitution${NC}"
 fi
 
@@ -601,7 +609,7 @@ cat > .isdlc/state.json << EOF
   },
   "constitution": {
     "enforced": true,
-    "path": ".isdlc/constitution.md",
+    "path": "docs/isdlc/constitution.md",
     "validated_at": null
   },
   "autonomous_iteration": {
@@ -754,13 +762,17 @@ MONOREPOEOF
 
     # Create per-project directories and state files
     mkdir -p .isdlc/projects
+    mkdir -p docs/isdlc/projects
     for PROJ_ENTRY in "${DETECTED_PROJECTS[@]}"; do
         PROJ_NAME="${PROJ_ENTRY%%:*}"
         PROJ_PATH="${PROJ_ENTRY#*:}"
 
-        # Create project state directory and external skills directory
+        # Create project runtime directory (state, skills)
         mkdir -p ".isdlc/projects/$PROJ_NAME"
         mkdir -p ".isdlc/projects/$PROJ_NAME/skills/external"
+
+        # Create project docs directory (user documents)
+        mkdir -p "docs/isdlc/projects/$PROJ_NAME"
 
         # Check if the sub-project has existing code
         PROJ_IS_NEW=true
@@ -784,7 +796,7 @@ MONOREPOEOF
   },
   "constitution": {
     "enforced": true,
-    "path": ".isdlc/constitution.md",
+    "path": "docs/isdlc/constitution.md",
     "override_path": null,
     "validated_at": null
   },
@@ -827,8 +839,8 @@ PROJSTATEEOF
 
         echo -e "${GREEN}  ✓ Created state for project: $PROJ_NAME${NC}"
 
-        # Create empty external skills manifest
-        cat > ".isdlc/projects/$PROJ_NAME/external-skills-manifest.json" << EXTMANIFESTEOF
+        # Create empty external skills manifest in docs/isdlc
+        cat > "docs/isdlc/projects/$PROJ_NAME/external-skills-manifest.json" << EXTMANIFESTEOF
 {
   "version": "1.0.0",
   "project_id": "$PROJ_NAME",
@@ -869,9 +881,9 @@ fi
 echo -e "${BLUE}[4/6]${NC} Configuring project constitution..."
 
 # Update constitution with project name and track info
-if [ -f ".isdlc/constitution.md" ]; then
+if [ -f "docs/isdlc/constitution.md" ]; then
     # Create a project-specific constitution based on the track
-    cat > .isdlc/constitution.md << CONSTEOF
+    cat > docs/isdlc/constitution.md << CONSTEOF
 # Project Constitution - $PROJECT_NAME
 
 <!-- CONSTITUTION_STATUS: STARTER_TEMPLATE -->
@@ -984,9 +996,9 @@ fi
 
 # Note about constitution (both new and existing projects)
 if [ "$IS_EXISTING_PROJECT" = true ]; then
-    echo -e "${YELLOW}  Existing project - constitution template created at .isdlc/constitution.md${NC}"
+    echo -e "${YELLOW}  Existing project - constitution template created at docs/isdlc/constitution.md${NC}"
 else
-    echo -e "${YELLOW}  Constitution template created at .isdlc/constitution.md${NC}"
+    echo -e "${YELLOW}  Constitution template created at docs/isdlc/constitution.md${NC}"
 fi
 echo -e "${YELLOW}  Next step: Run /discover to customize your project constitution${NC}"
 

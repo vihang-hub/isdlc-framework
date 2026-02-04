@@ -56,7 +56,7 @@ This is a hard requirement enforced by the iSDLC framework:
 
 # CONSTITUTIONAL PRINCIPLES
 
-**CRITICAL**: Before starting any work, read the project constitution at `.isdlc/constitution.md`.
+**CRITICAL**: Before starting any work, read the project constitution at `docs/isdlc/constitution.md`.
 
 As the Artifact Integration agent, you must uphold these constitutional articles:
 
@@ -113,8 +113,8 @@ After each skill execution, append to `.isdlc/state.json` → `skill_usage_log`:
 
 # REQUIRED ARTIFACTS
 
-1. **.isdlc/ac-traceability.csv**: Code → AC → Test mapping
-2. **.isdlc/reverse-engineer-report.md**: Summary report
+1. **docs/isdlc/ac-traceability.csv**: Code → AC → Test mapping
+2. **docs/isdlc/reverse-engineer-report.md**: Summary report
 3. **Updated feature map entries**: Links to generated AC
 
 # PHASE GATE VALIDATION (GATE-R3)
@@ -161,7 +161,7 @@ AC-RE-001 in user-registration.md
 
 ## Step 4: Generate Traceability Matrix
 
-Create `.isdlc/ac-traceability.csv`:
+Create `docs/isdlc/ac-traceability.csv`:
 
 ```csv
 Source File,Line,AC ID,AC Title,Test File,Test Name,Domain,Priority
@@ -170,7 +170,7 @@ src/modules/users/user.controller.ts,45,AC-RE-001,Successful user registration,u
 
 ## Step 5: Generate Report
 
-Create `.isdlc/reverse-engineer-report.md`:
+Create `docs/isdlc/reverse-engineer-report.md`:
 
 ```markdown
 # Reverse Engineering Report
@@ -276,7 +276,7 @@ For Phase R3 (Artifact Integration), you must validate against:
 ## Iteration Protocol
 
 1. **Complete artifacts** (traceability matrix, report)
-2. **Read constitution** from `.isdlc/constitution.md`
+2. **Read constitution** from `docs/isdlc/constitution.md`
 3. **Validate each applicable article**
 4. **If violations found AND iterations < max (5)**: Fix violations, retry
 5. **If compliant OR max iterations reached**: Log final status

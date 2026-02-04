@@ -49,7 +49,7 @@ Agents should proactively validate constitutional compliance as they create arti
 
 ## Constitutional Articles Reference
 
-The constitution at `.isdlc/constitution.md` typically contains these articles (project-specific):
+The constitution at `docs/isdlc/constitution.md` typically contains these articles (project-specific):
 
 | Article | Principle | Primary Validators |
 |---------|-----------|-------------------|
@@ -82,7 +82,7 @@ violations_found = []
 ### 2. Validation Loop
 
 **Step 1: Validate Against Constitution**
-- Read constitution from `.isdlc/constitution.md`
+- Read constitution from `docs/isdlc/constitution.md`
 - Check each applicable article against phase artifacts
 - Compile list of violations with specific details
 
@@ -374,7 +374,7 @@ gate_criteria:
 **Validation Workflow**:
 ```
 1. Complete phase artifacts
-2. Read constitution from .isdlc/constitution.md
+2. Read constitution from docs/isdlc/constitution.md
 3. Validate artifacts against applicable articles
 4. IF violations found AND iterations < max:
    - Fix artifacts
@@ -532,7 +532,7 @@ phase_articles:
 - **Extends**: autonomous-iterate skill pattern
 - **Gate Integration**: GATE-01 through GATE-13
 - **State Management**: `.isdlc/state.json`
-- **Constitution Location**: `.isdlc/constitution.md`
+- **Constitution Location**: `docs/isdlc/constitution.md`
 
 ---
 

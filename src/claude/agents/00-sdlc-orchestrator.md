@@ -58,10 +58,10 @@ Once the active project is resolved, ALL paths are scoped to that project:
 | Resource | Single-Project Path | Monorepo Path |
 |----------|-------------------|---------------|
 | State file | `.isdlc/state.json` | `.isdlc/projects/{project-id}/state.json` |
-| Constitution | `.isdlc/constitution.md` | `.isdlc/projects/{project-id}/constitution.md` (if exists), else `.isdlc/constitution.md` |
+| Constitution | `docs/isdlc/constitution.md` | `docs/isdlc/projects/{project-id}/constitution.md` (if exists), else `docs/isdlc/constitution.md` |
 | External skills | `.claude/skills/external/` | `.isdlc/projects/{project-id}/skills/external/` |
-| External manifest | `.isdlc/external-skills-manifest.json` | `.isdlc/projects/{project-id}/external-skills-manifest.json` |
-| Skill report | `.isdlc/skill-customization-report.md` | `.isdlc/projects/{project-id}/skill-customization-report.md` |
+| External manifest | `docs/isdlc/external-skills-manifest.json` | `docs/isdlc/projects/{project-id}/external-skills-manifest.json` |
+| Skill report | `docs/isdlc/skill-customization-report.md` | `docs/isdlc/projects/{project-id}/skill-customization-report.md` |
 | Requirements docs | `docs/requirements/` | `docs/{project-id}/requirements/` or `{project-path}/docs/requirements/` (depends on `docs_location` in monorepo.json) |
 | Architecture docs | `docs/architecture/` | `docs/{project-id}/architecture/` or `{project-path}/docs/architecture/` (depends on `docs_location`) |
 | Design docs | `docs/design/` | `docs/{project-id}/design/` or `{project-path}/docs/design/` (depends on `docs_location`) |
@@ -80,8 +80,8 @@ MONOREPO CONTEXT:
 - Docs Base: {resolved docs path — docs/{project-id}/ if docs_location="root" or absent, {project-path}/docs/ if docs_location="project"}
 - Constitution: {resolved constitution path}
 - External Skills: .isdlc/projects/{project-id}/skills/external/
-- External Manifest: .isdlc/projects/{project-id}/external-skills-manifest.json
-- Skill Report: .isdlc/projects/{project-id}/skill-customization-report.md
+- External Manifest: docs/isdlc/projects/{project-id}/external-skills-manifest.json
+- Skill Report: docs/isdlc/projects/{project-id}/skill-customization-report.md
 ```
 
 ## Workflow Independence
@@ -98,7 +98,7 @@ In monorepo mode, the `single_active_workflow_per_project` rule applies:
 ## Detection Logic (Execute in Order)
 
 1. **Check Constitution Status**:
-   - Does `.isdlc/constitution.md` exist?
+   - Does `docs/isdlc/constitution.md` exist?
    - If exists, is it still a TEMPLATE? Check for ANY of these markers:
      - `<!-- CONSTITUTION_STATUS: STARTER_TEMPLATE -->` (init script marker)
      - `## ⚠️ CUSTOMIZATION REQUIRED` section
@@ -170,7 +170,7 @@ Select an option:
     Define your project, set up tech stack, and create constitution
 
 [2] Edit constitution.md Manually
-    Open .isdlc/constitution.md and customize the template yourself
+    Open docs/isdlc/constitution.md and customize the template yourself
 
 Enter selection (1-2):
 ```
@@ -194,7 +194,7 @@ Select an option:
     Analyze codebase and auto-generate tailored constitution
 
 [2] Edit constitution.md Manually
-    Open .isdlc/constitution.md and customize the template yourself
+    Open docs/isdlc/constitution.md and customize the template yourself
 
 Enter selection (1-2):
 ```
@@ -293,8 +293,8 @@ You coordinate these 13 specialized agents, each responsible for exactly ONE pha
 
 ## 1. Project Initialization
 When receiving a new requirement brief:
-- **Read the project constitution** from `.isdlc/constitution.md` (if it exists)
-- If no constitution exists, or is still a template, recommend creating one from the template in `.isdlc/constitution.md`
+- **Read the project constitution** from `docs/isdlc/constitution.md` (if it exists)
+- If no constitution exists, or is still a template, recommend creating one from the template in `docs/isdlc/constitution.md`
 - Ensure all agents will operate under constitutional principles (once defined)
 - **Select workflow type** based on user's intent (feature, fix, test, or full lifecycle)
 - **Load workflow definition** from `.isdlc/config/workflows.json` for the selected type
@@ -309,10 +309,10 @@ When receiving a new requirement brief:
 
 ### Validation Procedure
 
-1. **Check for Constitution File**: Look for `.isdlc/constitution.md`
+1. **Check for Constitution File**: Look for `docs/isdlc/constitution.md`
 
 2. **Determine Constitution Status**:
-   - **MISSING**: File does not exist at `.isdlc/constitution.md`
+   - **MISSING**: File does not exist at `docs/isdlc/constitution.md`
    - **TEMPLATE**: File exists but contains template markers (see detection rules below)
    - **VALID**: File exists and has been customized for the project
 
@@ -349,10 +349,10 @@ The constitution establishes immutable principles that guide all development:
 
 Current Status: [Missing / Template not customized]
 
-Required Action: Please create your project constitution at `.isdlc/constitution.md`
+Required Action: Please create your project constitution at `docs/isdlc/constitution.md`
 
 How to Create:
-1. Copy the template: `cp .isdlc/constitution.md .isdlc/constitution.md`
+1. Copy the template: `cp docs/isdlc/constitution.md docs/isdlc/constitution.md`
    (Or if already copied, edit the existing file)
 2. Customize the preamble with your project name
 3. Review each article - keep, modify, or remove based on your needs
@@ -360,7 +360,7 @@ How to Create:
 5. Remove all template instructions and "Customize" guidance sections
 6. Get team agreement on the principles
 
-Template Location: .isdlc/constitution.md
+Template Location: docs/isdlc/constitution.md
 Documentation: docs/CONSTITUTION-GUIDE.md
 
 Once your constitution is ready, invoke me again to begin the SDLC workflow.
@@ -655,7 +655,7 @@ When GATE-01 passes AND the active workflow type is `feature`, `fix`, or `full-l
    - Read `active_workflow` from state.json (type, phases, artifact_folder)
    - Read Phase 01 artifacts from the appropriate docs folder
    - Load `.isdlc/templates/workflow-tasks-template.md`
-   - Generate `.isdlc/tasks.md` with:
+   - Generate `docs/isdlc/tasks.md` with:
      - Sequential `TNNNN` task IDs across all phases
      - All Phase 01 tasks marked `[X]` (already complete)
      - All other tasks marked `[ ]`
@@ -1020,7 +1020,7 @@ When advancing between phases, output:
 ════════════════════════════════════════════════════════════════
 ```
 
-If `.isdlc/tasks.md` exists, read the file and count `[X]` (completed) vs `[ ]` (pending) checkboxes to populate the Progress line. If `tasks.md` does not exist, omit the Progress line.
+If `docs/isdlc/tasks.md` exists, read the file and count `[X]` (completed) vs `[ ]` (pending) checkboxes to populate the Progress line. If `tasks.md` does not exist, omit the Progress line.
 
 ### Announcement Rules
 
@@ -1219,7 +1219,7 @@ Gate validation checklist:
 
 For each gate:
 - Verify ALL required artifacts exist and are complete
-- **Validate constitutional compliance** against `.isdlc/constitution.md`:
+- **Validate constitutional compliance** against `docs/isdlc/constitution.md`:
   - Article I: Specifications serve as source of truth
   - Article II: Tests written before implementation
   - Article III: Security considerations documented
@@ -1446,7 +1446,7 @@ As the SDLC Orchestrator, you are the primary enforcer of the project constituti
 
 ## Constitutional Responsibilities
 
-1. **Read Constitution First**: At project start, read `.isdlc/constitution.md` to understand all constitutional articles
+1. **Read Constitution First**: At project start, read `docs/isdlc/constitution.md` to understand all constitutional articles
 2. **Validate Compliance**: At each quality gate, verify that phase outputs comply with all constitutional articles
 3. **Report Violations**: Document constitutional violations in `gate-validation.json`
 4. **Enforce Remediation**: Return work to agents if constitutional violations exist

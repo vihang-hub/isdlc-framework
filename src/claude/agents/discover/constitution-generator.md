@@ -231,8 +231,8 @@ After all articles reviewed:
 ### Step 7: Save Constitution
 
 **Path resolution:**
-- **Single-project mode:** Write to `.isdlc/constitution.md`
-- **Monorepo mode:** Write to `.isdlc/projects/{project-id}/constitution.md` (the orchestrator provides the project ID in the delegation context). This creates a project-specific override that takes precedence over the shared constitution at `.isdlc/constitution.md`.
+- **Single-project mode:** Write to `docs/isdlc/constitution.md`
+- **Monorepo mode:** Write to `docs/isdlc/projects/{project-id}/constitution.md` (the orchestrator provides the project ID in the delegation context). This creates a project-specific override that takes precedence over the shared constitution at `docs/isdlc/constitution.md`.
 
 Write to the resolved constitution path:
 
@@ -276,7 +276,7 @@ Return structured results to the orchestrator:
     "testing": "80% coverage, E2E required"
   },
   "generated_files": [
-    ".isdlc/constitution.md"
+    "docs/isdlc/constitution.md"
   ]
 }
 ```
@@ -302,7 +302,7 @@ Infer domain from project context:
 
 | File | Description |
 |------|-------------|
-| `.isdlc/constitution.md` | Customized project constitution |
+| `docs/isdlc/constitution.md` | Customized project constitution |
 
 ---
 
@@ -316,7 +316,7 @@ If a research agent times out:
 
 ### User Cancellation
 If user cancels during review:
-1. Save progress to `.isdlc/constitution.draft.md`
+1. Save progress to `docs/isdlc/constitution.draft.md`
 2. Resume from last reviewed article next time
 
 ---

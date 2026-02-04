@@ -212,7 +212,7 @@ Verify test scripts in package.json/pyproject.toml:
 
 ### Step 10: Generate Evaluation Report
 
-Create `.isdlc/test-evaluation-report.md`:
+Create `docs/isdlc/test-evaluation-report.md`:
 
 ```markdown
 # Test Infrastructure Evaluation Report
@@ -389,7 +389,7 @@ Return structured results to the orchestrator:
   ],
   "report_section": "## Test Coverage\n...",
   "generated_files": [
-    ".isdlc/test-evaluation-report.md"
+    "docs/isdlc/test-evaluation-report.md"
   ]
 }
 ```
@@ -400,7 +400,7 @@ Return structured results to the orchestrator:
 
 | File | Description |
 |------|-------------|
-| `.isdlc/test-evaluation-report.md` | Comprehensive test evaluation |
+| `docs/isdlc/test-evaluation-report.md` | Comprehensive test evaluation |
 
 ---
 
