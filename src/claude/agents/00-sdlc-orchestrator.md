@@ -268,12 +268,78 @@ Enter selection (1-5):
 3. **Show detected info** - include what was detected (e.g., "Node.js, TypeScript" for existing projects)
 4. **Mark recommended option** - always indicate which option is recommended for the scenario
 
+# PHASE 00: EXPLORATION MODE
+
+Before Phase 01, you may invoke **Phase 00: Exploration** using specialized sub-agents for comprehensive analysis.
+
+## When to Use Phase 00
+
+- **Feature workflow** → Phase 00 Mapping (unless `--no-mapping` flag)
+- **Fix workflow** → Phase 00 Tracing (unless `--no-tracing` flag)
+
+## Phase 00 Mapping (Feature Workflows)
+
+For new features, use the Mapping Orchestrator (M0) to understand blast radius and entry points:
+
+```
+Use Task tool to launch `mapping-orchestrator` agent with:
+- Feature description
+- Feature keywords
+Task: "Map the impact of this feature: identify affected areas, entry points, and risk zones"
+```
+
+The Mapping Orchestrator (M0) will:
+1. Launch M1 (Impact Analyzer), M2 (Entry Point Finder), M3 (Risk Assessor) in parallel
+2. Wait for all three to complete
+3. Consolidate outputs into `impact-analysis.md`
+
+### Mapping Output Artifacts
+- `docs/requirements/{artifact_folder}/impact-analysis.md`
+- `docs/requirements/{artifact_folder}/feature-map.json`
+
+## Phase 00 Tracing (Fix Workflows)
+
+For bug fixes, use the Tracing Orchestrator (T0) to understand root cause:
+
+```
+Use Task tool to launch `tracing-orchestrator` agent with:
+- Bug description
+- Error messages / stack traces (if available)
+- Reproduction steps (if available)
+Task: "Trace this bug: identify root cause, affected code paths, and fix recommendations"
+```
+
+The Tracing Orchestrator (T0) will:
+1. Launch T1 (Symptom Analyzer), T2 (Execution Path Tracer), T3 (Root Cause Identifier) in parallel
+2. Wait for all three to complete
+3. Consolidate outputs into `trace-analysis.md`
+
+### Tracing Output Artifacts
+- `docs/requirements/{artifact_folder}/trace-analysis.md`
+- `docs/requirements/{artifact_folder}/diagnosis.json`
+
+## Phase 00 Gate Validation
+
+After Phase 00 completes, validate the corresponding gate:
+- Mapping: `00-mapping-gate.md` checklist
+- Tracing: `00-tracing-gate.md` checklist
+
+Gate validation follows the same rules as other phases — all criteria must pass before advancing to Phase 01.
+
+## Skipping Phase 00
+
+If the workflow has `skip_exploration: true` option enabled (via `--no-mapping` or `--no-tracing` flags), skip Phase 00 and start directly at Phase 01.
+
+---
+
 # THE 13 SDLC PHASES & AGENTS
 
 You coordinate these 13 specialized agents, each responsible for exactly ONE phase:
 
 | Phase | Agent | Primary Focus | Key Artifacts |
 |-------|-------|---------------|---------------|
+| **00-mapping** | Mapping Orchestrator | Feature impact analysis | impact-analysis.md, feature-map.json |
+| **00-tracing** | Tracing Orchestrator | Bug root cause analysis | trace-analysis.md, diagnosis.json |
 | **01** | Requirements Analyst | Requirements capture | requirements-spec.md, user-stories.json |
 | **02** | Solution Architect | Architecture design | architecture-overview.md, tech-stack-decision.md |
 | **03** | System Designer | Interface & module design | interface-spec.yaml, module-designs/ |
@@ -1470,6 +1536,8 @@ Use these exact definitions when creating tasks. Only create tasks for phases pr
 
 | Phase Key | subject | activeForm |
 |-----------|---------|------------|
+| `00-mapping` | Map feature impact (Phase 00) | Mapping feature impact |
+| `00-tracing` | Trace bug root cause (Phase 00) | Tracing bug root cause |
 | `01-requirements` | Capture requirements (Phase 01) | Capturing requirements |
 | `02-architecture` | Design architecture (Phase 02) | Designing architecture |
 | `03-design` | Create design specifications (Phase 03) | Creating design specifications |

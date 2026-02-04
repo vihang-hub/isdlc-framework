@@ -1,7 +1,7 @@
 {
-  "version": "2.3.0",
-  "generated": "2026-02-02",
-  "total_skills": 188,
+  "version": "2.4.0",
+  "generated": "2026-02-04",
+  "total_skills": 218,
   "enforcement_mode": "strict",
   "ownership": {
     "sdlc-orchestrator": {
@@ -87,6 +87,54 @@
       "phase": "R4-atdd-bridge",
       "skill_count": 3,
       "skills": ["RE-301", "RE-302", "RE-303"]
+    },
+    "mapping-orchestrator": {
+      "agent_id": "M0",
+      "phase": "00-mapping",
+      "skill_count": 3,
+      "skills": ["MAP-001", "MAP-002", "MAP-003"]
+    },
+    "impact-analyzer": {
+      "agent_id": "M1",
+      "phase": "00-mapping",
+      "skill_count": 4,
+      "skills": ["MAP-101", "MAP-102", "MAP-103", "MAP-104"]
+    },
+    "entry-point-finder": {
+      "agent_id": "M2",
+      "phase": "00-mapping",
+      "skill_count": 4,
+      "skills": ["MAP-201", "MAP-202", "MAP-203", "MAP-204"]
+    },
+    "risk-assessor": {
+      "agent_id": "M3",
+      "phase": "00-mapping",
+      "skill_count": 4,
+      "skills": ["MAP-301", "MAP-302", "MAP-303", "MAP-304"]
+    },
+    "tracing-orchestrator": {
+      "agent_id": "T0",
+      "phase": "00-tracing",
+      "skill_count": 3,
+      "skills": ["TRACE-001", "TRACE-002", "TRACE-003"]
+    },
+    "symptom-analyzer": {
+      "agent_id": "T1",
+      "phase": "00-tracing",
+      "skill_count": 4,
+      "skills": ["TRACE-101", "TRACE-102", "TRACE-103", "TRACE-104"]
+    },
+    "execution-path-tracer": {
+      "agent_id": "T2",
+      "phase": "00-tracing",
+      "skill_count": 4,
+      "skills": ["TRACE-201", "TRACE-202", "TRACE-203", "TRACE-204"]
+    },
+    "root-cause-identifier": {
+      "agent_id": "T3",
+      "phase": "00-tracing",
+      "skill_count": 4,
+      "skills": ["TRACE-301", "TRACE-302", "TRACE-303", "TRACE-304"]
     },
     "requirements-analyst": {
       "agent_id": "01",
@@ -174,6 +222,36 @@
     }
   },
   "skill_lookup": {
+    "MAP-001": "mapping-orchestrator",
+    "MAP-002": "mapping-orchestrator",
+    "MAP-003": "mapping-orchestrator",
+    "MAP-101": "impact-analyzer",
+    "MAP-102": "impact-analyzer",
+    "MAP-103": "impact-analyzer",
+    "MAP-104": "impact-analyzer",
+    "MAP-201": "entry-point-finder",
+    "MAP-202": "entry-point-finder",
+    "MAP-203": "entry-point-finder",
+    "MAP-204": "entry-point-finder",
+    "MAP-301": "risk-assessor",
+    "MAP-302": "risk-assessor",
+    "MAP-303": "risk-assessor",
+    "MAP-304": "risk-assessor",
+    "TRACE-001": "tracing-orchestrator",
+    "TRACE-002": "tracing-orchestrator",
+    "TRACE-003": "tracing-orchestrator",
+    "TRACE-101": "symptom-analyzer",
+    "TRACE-102": "symptom-analyzer",
+    "TRACE-103": "symptom-analyzer",
+    "TRACE-104": "symptom-analyzer",
+    "TRACE-201": "execution-path-tracer",
+    "TRACE-202": "execution-path-tracer",
+    "TRACE-203": "execution-path-tracer",
+    "TRACE-204": "execution-path-tracer",
+    "TRACE-301": "root-cause-identifier",
+    "TRACE-302": "root-cause-identifier",
+    "TRACE-303": "root-cause-identifier",
+    "TRACE-304": "root-cause-identifier",
     "ORCH-001": "sdlc-orchestrator",
     "ORCH-002": "sdlc-orchestrator",
     "ORCH-003": "sdlc-orchestrator",

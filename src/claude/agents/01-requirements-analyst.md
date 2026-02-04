@@ -119,6 +119,57 @@ Your choice: _
 
 ---
 
+# PRE-PHASE CHECK: EXPLORATION CONTEXT
+
+Before starting requirements capture, check if Phase 00 exploration was performed.
+
+## Check for Exploration Artifacts
+
+1. **For feature scope**: Check if `impact-analysis.md` exists in the artifact folder
+2. **For bug-report scope**: Check if `trace-analysis.md` exists in the artifact folder
+
+## If Exploration Artifacts Exist
+
+Read and incorporate the exploration context:
+
+### Feature (impact-analysis.md)
+- Extract affected files and modules
+- Note blast radius (low/medium/high)
+- Review identified entry points (APIs, UIs, jobs, events)
+- Consider risk zones and complexity scores
+- Use this to pre-populate Step 1 (Project Discovery) with known context
+
+### Bug Fix (trace-analysis.md)
+- Extract confirmed root cause
+- Note affected code paths and files
+- Review fix recommendations
+- Use diagnosis to pre-populate Bug Step 1 with known context
+
+## Context Integration
+
+When exploration context exists:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 **EXPLORATION CONTEXT DETECTED**
+
+Phase 00 analysis found:
+- Blast Radius: {low/medium/high}
+- Affected Files: {count}
+- Entry Points: {list}
+- Risk Level: {overall risk}
+
+I'll incorporate this into our requirements discovery.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Then proceed with the normal workflow, but use the exploration context to:
+- Pre-fill technical context (Stage 1.4)
+- Inform quality and risk discussions (Stage 1.5)
+- Guide feature scoping decisions
+
+---
+
 # SCOPE DETECTION
 
 The requirements workflow adapts based on the `scope` modifier from the active workflow.

@@ -4,12 +4,12 @@
 
 <h3><em>Structured AI-powered software development, from requirements to production.</em></h3>
 
-<p><strong>A comprehensive SDLC framework for Claude Code with 28 agents, 170 skills, 14 quality gates, and monorepo support.</strong></p>
+<p><strong>A comprehensive SDLC framework for Claude Code with 36 agents, 200 skills, 16 quality gates, and monorepo support.</strong></p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Agents](https://img.shields.io/badge/Agents-28-purple.svg)](#the-sdlc-agents)
-[![Skills](https://img.shields.io/badge/Skills-170-green.svg)](#skills-system)
-[![Gates](https://img.shields.io/badge/Quality%20Gates-14-orange.svg)](#quality-gates)
+[![Agents](https://img.shields.io/badge/Agents-36-purple.svg)](#the-sdlc-agents)
+[![Skills](https://img.shields.io/badge/Skills-200-green.svg)](#skills-system)
+[![Gates](https://img.shields.io/badge/Quality%20Gates-16-orange.svg)](#quality-gates)
 [![Hooks](https://img.shields.io/badge/Hooks-5-red.svg)](#deterministic-iteration-enforcement)
 
 </div>
@@ -33,10 +33,12 @@
 
 ## What is iSDLC?
 
-The iSDLC (integrated Software Development Lifecycle) framework provides **28 specialized AI agents** organized into three groups:
+The iSDLC (integrated Software Development Lifecycle) framework provides **36 specialized AI agents** organized into five groups:
 
 - **15 SDLC agents** (1 orchestrator + 14 phase agents) — implement a 1-to-1 mapping between SDLC phases and agents, each owning exactly one phase from requirements through operations and upgrades
 - **9 Discover agents** — analyze existing projects or elicit vision for new ones before development begins
+- **4 Mapping agents** — analyze feature impact, entry points, and risk zones before requirements capture (Phase 00)
+- **4 Tracing agents** — trace bug symptoms, execution paths, and root causes before fix requirements (Phase 00)
 - **4 Reverse Engineer agents** — extract acceptance criteria and generate characterization tests from existing codebases
 
 The framework is designed to be installed **into your existing project**. It provides structured multi-agent workflows, quality gates between every phase, and standardized processes for building software using AI-powered development with Claude Code.
@@ -104,8 +106,8 @@ The installer copies agents, skills, hooks, and configuration into your project,
 ```
 your-project/
 ├── .claude/           # Agent definitions, skills, hooks
-│   ├── agents/        # 28 agents (15 SDLC + 9 discover + 4 reverse-engineer)
-│   ├── skills/        # 170 skills across 12 categories
+│   ├── agents/        # 36 agents (15 SDLC + 9 discover + 4 mapping + 4 tracing + 4 reverse-engineer)
+│   ├── skills/        # 200 skills across 14 categories
 │   ├── hooks/         # Runtime enforcement hooks
 │   └── settings.json
 ├── .isdlc/            # Framework runtime state (gitignored)
@@ -156,7 +158,35 @@ claude                                    # 1. Start Claude Code
 
 ## The SDLC Agents
 
-The framework's 28 agents are organized into three groups: 15 SDLC agents that execute development phases, 9 Discover agents that analyze projects before development begins, and 4 Reverse Engineer agents that extract knowledge from existing code.
+The framework's 36 agents are organized into five groups: 15 SDLC agents that execute development phases, 9 Discover agents that analyze projects before development begins, 4 Mapping agents that analyze feature impact, 4 Tracing agents that trace bug root causes, and 4 Reverse Engineer agents that extract knowledge from existing code.
+
+### Exploration Agents (Phase 00)
+
+Before requirements capture, the framework can invoke specialized exploration agents to understand the scope and impact of changes.
+
+#### Mapping Agents (Feature Workflows)
+
+For new features, the Mapping Orchestrator (M0) coordinates three parallel sub-agents to produce `impact-analysis.md`:
+
+| ID | Agent | Responsibility |
+|----|-------|----------------|
+| **M0** | **Mapping Orchestrator** | Coordinates mapping, consolidates impact analysis |
+| **M1** | **Impact Analyzer** | Affected files, module dependencies, change propagation |
+| **M2** | **Entry Point Finder** | API endpoints, UI components, jobs, event handlers |
+| **M3** | **Risk Assessor** | Complexity scoring, coverage gaps, technical debt, risk zones |
+
+#### Tracing Agents (Bug Fix Workflows)
+
+For bug fixes, the Tracing Orchestrator (T0) coordinates three parallel sub-agents to produce `trace-analysis.md`:
+
+| ID | Agent | Responsibility |
+|----|-------|----------------|
+| **T0** | **Tracing Orchestrator** | Coordinates tracing, consolidates diagnosis |
+| **T1** | **Symptom Analyzer** | Error parsing, stack traces, reproduction steps, patterns |
+| **T2** | **Execution Path Tracer** | Call chain, data flow, state mutations, branch points |
+| **T3** | **Root Cause Identifier** | Hypotheses, evidence correlation, fix recommendations |
+
+### SDLC Agents
 
 | Phase | Agent | Responsibility | Key Artifacts |
 |-------|-------|----------------|---------------|
@@ -266,8 +296,8 @@ The orchestrator provides focused workflows via `/sdlc` and `/discover` commands
 | Command | Workflow | Phases | Branch |
 |---------|----------|--------|--------|
 | `/discover` | Project Discovery | D1-D8 sub-agents analyze tech stack, tests, data models, features | No |
-| `/sdlc feature "desc"` | New Feature | Requirements → Architecture → Design → Test Strategy → Implementation → Local Testing → Integration Testing → CI/CD → Code Review | Yes |
-| `/sdlc fix "desc"` | Bug Fix (TDD) | Requirements → Test Strategy → Implementation → Local Testing → Integration Testing → CI/CD → Code Review | Yes |
+| `/sdlc feature "desc"` | New Feature | **Mapping** → Requirements → Architecture → Design → Test Strategy → Implementation → Local Testing → Integration Testing → CI/CD → Code Review | Yes |
+| `/sdlc fix "desc"` | Bug Fix (TDD) | **Tracing** → Requirements → Test Strategy → Implementation → Local Testing → Integration Testing → CI/CD → Code Review | Yes |
 | `/sdlc test run` | Run Tests | Local Testing → Integration Testing | No |
 | `/sdlc test generate` | Generate Tests | Test Strategy → Implementation → Local Testing → Integration Testing → Code Review | No |
 | `/sdlc start` | Full Lifecycle | All 14 phases (Requirements through Operations) | Yes |
@@ -282,7 +312,7 @@ The orchestrator provides focused workflows via `/sdlc` and `/discover` commands
 
 - [**Monorepo Support**](#monorepo-support) — Multi-project management from a single installation
 - [**Project Constitution**](#project-constitution) — Customizable governance principles enforced at every quality gate
-- [**Skills System**](#skills-system) — 170 specialized skills across 12 categories with exclusive ownership
+- [**Skills System**](#skills-system) — 170 specialized skills across 14 categories with exclusive ownership
 - [**Quality Gates**](#quality-gates) — 14 validation gates with three-layer enforcement
 - [**Skill Enforcement**](#skill-enforcement) — Runtime ownership validation and audit logging
 - [**Autonomous Iteration**](#autonomous-iteration) — Self-correcting agents that iterate until tests pass
@@ -366,7 +396,7 @@ See [docs/CONSTITUTION-GUIDE.md](docs/CONSTITUTION-GUIDE.md) for the full guide.
 
 ### Skills System
 
-The framework includes **170 specialized skills** distributed across 12 categories:
+The framework includes **170 specialized skills** distributed across 14 categories:
 
 | Category | Skills | Primary Agents |
 |----------|--------|----------------|
@@ -419,7 +449,7 @@ Gates cannot be skipped or bypassed. When iteration limits are exceeded, the sys
 
 ### Skill Enforcement
 
-Each of the 170 skills has exactly ONE owner agent, with runtime validation and audit logging.
+Each of the 200 skills has exactly ONE owner agent, with runtime validation and audit logging.
 
 - **Pre-Execution Validation**: Before using a skill, the agent validates ownership
 - **Audit Trail**: All skill usage (authorized and unauthorized) is logged to state.json
@@ -551,7 +581,7 @@ deployment:
 
 ### Completed
 - 28 agent definitions (15 SDLC + 9 discover + 4 reverse-engineer)
-- 170 skills organized into 12 categories
+- 200 skills organized into 14 categories
 - 14 phase gate checklists
 - 7 document templates
 - Configuration system and utility scripts
@@ -584,6 +614,6 @@ MIT License
 
 <div align="center">
 
-**iSDLC Framework** v2.2.0 — 28 agents, 170 skills, 14 gates, 5 hooks, 8 enhancements
+**iSDLC Framework** v2.3.0 — 36 agents, 200 skills, 16 gates, 5 hooks, 8 enhancements, Phase 00 Exploration Mode
 
 </div>

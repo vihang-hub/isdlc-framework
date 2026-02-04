@@ -6,9 +6,9 @@
 # If an agent needs functionality from another agent's skill, it must
 # delegate to that agent via the orchestrator.
 
-version: "2.0.0"
-generated: "2026-01-17"
-total_skills: 164
+version: "2.1.0"
+generated: "2026-02-04"
+total_skills: 194
 enforcement_mode: strict  # strict | warn | audit
 
 # =============================================================================
@@ -247,6 +247,184 @@ ownership:
       - id: DISC-804
         name: directory-scaffolding
         path: discover/directory-scaffolding
+
+  # ---------------------------------------------------------------------------
+  # Mapping Orchestrator (M0)
+  # Phase: 00-mapping (Feature Exploration)
+  # Category: mapping/
+  # ---------------------------------------------------------------------------
+  mapping-orchestrator:
+    agent_id: "M0"
+    phase: "00-mapping"
+    skill_count: 3
+    skills:
+      - id: MAP-001
+        name: mapping-delegation
+        path: mapping/mapping-delegation
+      - id: MAP-002
+        name: impact-consolidation
+        path: mapping/impact-consolidation
+      - id: MAP-003
+        name: scope-estimation
+        path: mapping/scope-estimation
+
+  # ---------------------------------------------------------------------------
+  # Impact Analyzer (M1)
+  # Phase: 00-mapping (Feature Exploration)
+  # Category: mapping/
+  # ---------------------------------------------------------------------------
+  impact-analyzer:
+    agent_id: "M1"
+    phase: "00-mapping"
+    skill_count: 4
+    skills:
+      - id: MAP-101
+        name: file-impact-detection
+        path: mapping/file-impact-detection
+      - id: MAP-102
+        name: module-dependency-mapping
+        path: mapping/module-dependency-mapping
+      - id: MAP-103
+        name: coupling-analysis
+        path: mapping/coupling-analysis
+      - id: MAP-104
+        name: change-propagation-estimation
+        path: mapping/change-propagation-estimation
+
+  # ---------------------------------------------------------------------------
+  # Entry Point Finder (M2)
+  # Phase: 00-mapping (Feature Exploration)
+  # Category: mapping/
+  # ---------------------------------------------------------------------------
+  entry-point-finder:
+    agent_id: "M2"
+    phase: "00-mapping"
+    skill_count: 4
+    skills:
+      - id: MAP-201
+        name: api-endpoint-discovery
+        path: mapping/api-endpoint-discovery
+      - id: MAP-202
+        name: ui-component-discovery
+        path: mapping/ui-component-discovery
+      - id: MAP-203
+        name: job-handler-discovery
+        path: mapping/job-handler-discovery
+      - id: MAP-204
+        name: event-listener-discovery
+        path: mapping/event-listener-discovery
+
+  # ---------------------------------------------------------------------------
+  # Risk Assessor (M3)
+  # Phase: 00-mapping (Feature Exploration)
+  # Category: mapping/
+  # ---------------------------------------------------------------------------
+  risk-assessor:
+    agent_id: "M3"
+    phase: "00-mapping"
+    skill_count: 4
+    skills:
+      - id: MAP-301
+        name: complexity-scoring
+        path: mapping/complexity-scoring
+      - id: MAP-302
+        name: coverage-gap-detection
+        path: mapping/coverage-gap-detection
+      - id: MAP-303
+        name: technical-debt-identification
+        path: mapping/technical-debt-identification
+      - id: MAP-304
+        name: risk-zone-mapping
+        path: mapping/risk-zone-mapping
+
+  # ---------------------------------------------------------------------------
+  # Tracing Orchestrator (T0)
+  # Phase: 00-tracing (Bug Exploration)
+  # Category: tracing/
+  # ---------------------------------------------------------------------------
+  tracing-orchestrator:
+    agent_id: "T0"
+    phase: "00-tracing"
+    skill_count: 3
+    skills:
+      - id: TRACE-001
+        name: tracing-delegation
+        path: tracing/tracing-delegation
+      - id: TRACE-002
+        name: trace-consolidation
+        path: tracing/trace-consolidation
+      - id: TRACE-003
+        name: diagnosis-summary
+        path: tracing/diagnosis-summary
+
+  # ---------------------------------------------------------------------------
+  # Symptom Analyzer (T1)
+  # Phase: 00-tracing (Bug Exploration)
+  # Category: tracing/
+  # ---------------------------------------------------------------------------
+  symptom-analyzer:
+    agent_id: "T1"
+    phase: "00-tracing"
+    skill_count: 4
+    skills:
+      - id: TRACE-101
+        name: error-message-parsing
+        path: tracing/error-message-parsing
+      - id: TRACE-102
+        name: stack-trace-analysis
+        path: tracing/stack-trace-analysis
+      - id: TRACE-103
+        name: reproduction-step-extraction
+        path: tracing/reproduction-step-extraction
+      - id: TRACE-104
+        name: symptom-pattern-matching
+        path: tracing/symptom-pattern-matching
+
+  # ---------------------------------------------------------------------------
+  # Execution Path Tracer (T2)
+  # Phase: 00-tracing (Bug Exploration)
+  # Category: tracing/
+  # ---------------------------------------------------------------------------
+  execution-path-tracer:
+    agent_id: "T2"
+    phase: "00-tracing"
+    skill_count: 4
+    skills:
+      - id: TRACE-201
+        name: call-chain-reconstruction
+        path: tracing/call-chain-reconstruction
+      - id: TRACE-202
+        name: data-flow-tracing
+        path: tracing/data-flow-tracing
+      - id: TRACE-203
+        name: state-mutation-tracking
+        path: tracing/state-mutation-tracking
+      - id: TRACE-204
+        name: branch-point-identification
+        path: tracing/branch-point-identification
+
+  # ---------------------------------------------------------------------------
+  # Root Cause Identifier (T3)
+  # Phase: 00-tracing (Bug Exploration)
+  # Category: tracing/
+  # ---------------------------------------------------------------------------
+  root-cause-identifier:
+    agent_id: "T3"
+    phase: "00-tracing"
+    skill_count: 4
+    skills:
+      - id: TRACE-301
+        name: hypothesis-generation
+        path: tracing/hypothesis-generation
+      - id: TRACE-302
+        name: evidence-correlation
+        path: tracing/evidence-correlation
+      - id: TRACE-303
+        name: root-cause-confirmation
+        path: tracing/root-cause-confirmation
+      - id: TRACE-304
+        name: fix-recommendation
+        path: tracing/fix-recommendation
 
   # ---------------------------------------------------------------------------
   # Agent 01: Requirements Analyst
@@ -756,6 +934,40 @@ additional_assignments:
 # =============================================================================
 # Quick reference: skill_id -> agent
 skill_lookup:
+  # Mapping (Phase 00)
+  MAP-001: mapping-orchestrator
+  MAP-002: mapping-orchestrator
+  MAP-003: mapping-orchestrator
+  MAP-101: impact-analyzer
+  MAP-102: impact-analyzer
+  MAP-103: impact-analyzer
+  MAP-104: impact-analyzer
+  MAP-201: entry-point-finder
+  MAP-202: entry-point-finder
+  MAP-203: entry-point-finder
+  MAP-204: entry-point-finder
+  MAP-301: risk-assessor
+  MAP-302: risk-assessor
+  MAP-303: risk-assessor
+  MAP-304: risk-assessor
+
+  # Tracing (Phase 00)
+  TRACE-001: tracing-orchestrator
+  TRACE-002: tracing-orchestrator
+  TRACE-003: tracing-orchestrator
+  TRACE-101: symptom-analyzer
+  TRACE-102: symptom-analyzer
+  TRACE-103: symptom-analyzer
+  TRACE-104: symptom-analyzer
+  TRACE-201: execution-path-tracer
+  TRACE-202: execution-path-tracer
+  TRACE-203: execution-path-tracer
+  TRACE-204: execution-path-tracer
+  TRACE-301: root-cause-identifier
+  TRACE-302: root-cause-identifier
+  TRACE-303: root-cause-identifier
+  TRACE-304: root-cause-identifier
+
   # Orchestration
   ORCH-001: sdlc-orchestrator
   ORCH-002: sdlc-orchestrator
@@ -946,6 +1158,40 @@ skill_lookup:
 # =============================================================================
 # Quick reference: path -> agent
 path_lookup:
+  # Mapping (Phase 00)
+  mapping/mapping-delegation: mapping-orchestrator
+  mapping/impact-consolidation: mapping-orchestrator
+  mapping/scope-estimation: mapping-orchestrator
+  mapping/file-impact-detection: impact-analyzer
+  mapping/module-dependency-mapping: impact-analyzer
+  mapping/coupling-analysis: impact-analyzer
+  mapping/change-propagation-estimation: impact-analyzer
+  mapping/api-endpoint-discovery: entry-point-finder
+  mapping/ui-component-discovery: entry-point-finder
+  mapping/job-handler-discovery: entry-point-finder
+  mapping/event-listener-discovery: entry-point-finder
+  mapping/complexity-scoring: risk-assessor
+  mapping/coverage-gap-detection: risk-assessor
+  mapping/technical-debt-identification: risk-assessor
+  mapping/risk-zone-mapping: risk-assessor
+
+  # Tracing (Phase 00)
+  tracing/tracing-delegation: tracing-orchestrator
+  tracing/trace-consolidation: tracing-orchestrator
+  tracing/diagnosis-summary: tracing-orchestrator
+  tracing/error-message-parsing: symptom-analyzer
+  tracing/stack-trace-analysis: symptom-analyzer
+  tracing/reproduction-step-extraction: symptom-analyzer
+  tracing/symptom-pattern-matching: symptom-analyzer
+  tracing/call-chain-reconstruction: execution-path-tracer
+  tracing/data-flow-tracing: execution-path-tracer
+  tracing/state-mutation-tracking: execution-path-tracer
+  tracing/branch-point-identification: execution-path-tracer
+  tracing/hypothesis-generation: root-cause-identifier
+  tracing/evidence-correlation: root-cause-identifier
+  tracing/root-cause-confirmation: root-cause-identifier
+  tracing/fix-recommendation: root-cause-identifier
+
   # Orchestration
   orchestration/workflow-management: sdlc-orchestrator
   orchestration/task-decomposition: sdlc-orchestrator

@@ -8,6 +8,7 @@
       "command": "/sdlc feature",
       "description": "Implement a new feature end-to-end",
       "phases": [
+        "00-mapping",
         "01-requirements",
         "02-architecture",
         "03-design",
@@ -24,10 +25,24 @@
           "description": "Enable ATDD with test.skip() scaffolds and Given-When-Then AC mapping",
           "default": false,
           "flag": "--atdd"
+        },
+        "skip_exploration": {
+          "description": "Skip Phase 00 Mapping for simple features",
+          "default": false,
+          "flag": "--no-mapping"
         }
       },
       "agent_modifiers": {
-        "01-requirements": { "scope": "feature", "artifact_prefix": "REQ" },
+        "00-mapping": {
+          "scope": "feature-exploration",
+          "run_parallel_subagents": true,
+          "generate_impact_analysis": true
+        },
+        "01-requirements": {
+          "scope": "feature",
+          "artifact_prefix": "REQ",
+          "read_impact_analysis": true
+        },
         "02-architecture": { "scope": "impact-assessment" },
         "04-test-strategy": {
           "_when_atdd_mode": {
@@ -53,6 +68,7 @@
       "command": "/sdlc fix",
       "description": "Fix a bug or defect with TDD",
       "phases": [
+        "00-tracing",
         "01-requirements",
         "04-test-strategy",
         "05-implementation",
@@ -67,13 +83,24 @@
           "description": "Enable ATDD with test.skip() scaffolds and Given-When-Then AC mapping",
           "default": false,
           "flag": "--atdd"
+        },
+        "skip_exploration": {
+          "description": "Skip Phase 00 Tracing for simple bugs",
+          "default": false,
+          "flag": "--no-tracing"
         }
       },
       "agent_modifiers": {
+        "00-tracing": {
+          "scope": "bug-exploration",
+          "run_parallel_subagents": true,
+          "generate_trace_analysis": true
+        },
         "01-requirements": {
           "scope": "bug-report",
           "artifact_prefix": "BUG",
-          "require_external_id": true
+          "require_external_id": true,
+          "read_trace_analysis": true
         },
         "04-test-strategy": {
           "_when_atdd_mode": {
