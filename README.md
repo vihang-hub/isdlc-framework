@@ -29,6 +29,8 @@ The framework installs **into your existing project**, providing structured mult
 
 **Key principles**: Clear ownership (one agent per phase), exclusive skill ownership, quality gates at every boundary, artifact traceability, and adaptive workflows.
 
+**Licensing**: This framework is **free and open source** (MIT License). You provide your own LLM access — either a Claude Code subscription, API keys for cloud providers (Anthropic, Groq, etc.), or local models via Ollama.
+
 → [Full agent documentation](docs/AGENTS.md)
 
 ---
@@ -98,7 +100,7 @@ Five hooks intercept tool calls and enforce iteration requirements:
 
 ### Multi-Provider LLM Support
 
-Use different LLM providers based on your needs:
+Use different LLM providers based on your needs. **You provide your own LLM access** — the framework is free:
 
 | Mode | Provider | Best For |
 |------|----------|----------|
