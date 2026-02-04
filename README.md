@@ -217,6 +217,6 @@ MIT License
 
 <div align="center">
 
-**iSDLC Framework** v2.5.0 — 36 agents, 200 skills, 16 gates, 5 hooks, cross-platform npm package
+**iSDLC Framework** v0.1.0-alpha — 36 agents, 200 skills, 16 gates, 5 hooks, cross-platform npm package
 
 </div>
