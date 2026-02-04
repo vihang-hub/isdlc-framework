@@ -189,7 +189,7 @@ In hybrid mode, different phases use different providers based on complexity:
 | Phase | Default Provider | Rationale |
 |-------|-----------------|-----------|
 | 00-mapping | Ollama | Pattern-based code search |
-| 00-tracing | Ollama | Execution path tracing |
+| 02-tracing | Ollama | Execution path tracing |
 | 01-requirements | Anthropic | Stakeholder reasoning |
 | 02-architecture | Anthropic Opus | High-stakes decisions |
 | 03-design | Anthropic | Consistency with architecture |

@@ -114,25 +114,25 @@
     },
     "tracing-orchestrator": {
       "agent_id": "T0",
-      "phase": "00-tracing",
+      "phase": "02-tracing",
       "skill_count": 3,
       "skills": ["TRACE-001", "TRACE-002", "TRACE-003"]
     },
     "symptom-analyzer": {
       "agent_id": "T1",
-      "phase": "00-tracing",
+      "phase": "02-tracing",
       "skill_count": 4,
       "skills": ["TRACE-101", "TRACE-102", "TRACE-103", "TRACE-104"]
     },
     "execution-path-tracer": {
       "agent_id": "T2",
-      "phase": "00-tracing",
+      "phase": "02-tracing",
       "skill_count": 4,
       "skills": ["TRACE-201", "TRACE-202", "TRACE-203", "TRACE-204"]
     },
     "root-cause-identifier": {
       "agent_id": "T3",
-      "phase": "00-tracing",
+      "phase": "02-tracing",
       "skill_count": 4,
       "skills": ["TRACE-301", "TRACE-302", "TRACE-303", "TRACE-304"]
     },

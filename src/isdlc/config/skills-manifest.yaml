@@ -339,12 +339,12 @@ ownership:
 
   # ---------------------------------------------------------------------------
   # Tracing Orchestrator (T0)
-  # Phase: 00-tracing (Bug Exploration)
+  # Phase: 02-tracing (Bug Exploration)
   # Category: tracing/
   # ---------------------------------------------------------------------------
   tracing-orchestrator:
     agent_id: "T0"
-    phase: "00-tracing"
+    phase: "02-tracing"
     skill_count: 3
     skills:
       - id: TRACE-001
@@ -359,12 +359,12 @@ ownership:
 
   # ---------------------------------------------------------------------------
   # Symptom Analyzer (T1)
-  # Phase: 00-tracing (Bug Exploration)
+  # Phase: 02-tracing (Bug Exploration)
   # Category: tracing/
   # ---------------------------------------------------------------------------
   symptom-analyzer:
     agent_id: "T1"
-    phase: "00-tracing"
+    phase: "02-tracing"
     skill_count: 4
     skills:
       - id: TRACE-101
@@ -382,12 +382,12 @@ ownership:
 
   # ---------------------------------------------------------------------------
   # Execution Path Tracer (T2)
-  # Phase: 00-tracing (Bug Exploration)
+  # Phase: 02-tracing (Bug Exploration)
   # Category: tracing/
   # ---------------------------------------------------------------------------
   execution-path-tracer:
     agent_id: "T2"
-    phase: "00-tracing"
+    phase: "02-tracing"
     skill_count: 4
     skills:
       - id: TRACE-201
@@ -405,12 +405,12 @@ ownership:
 
   # ---------------------------------------------------------------------------
   # Root Cause Identifier (T3)
-  # Phase: 00-tracing (Bug Exploration)
+  # Phase: 02-tracing (Bug Exploration)
   # Category: tracing/
   # ---------------------------------------------------------------------------
   root-cause-identifier:
     agent_id: "T3"
-    phase: "00-tracing"
+    phase: "02-tracing"
     skill_count: 4
     skills:
       - id: TRACE-301

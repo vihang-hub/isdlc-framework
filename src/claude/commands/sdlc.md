@@ -233,7 +233,7 @@ Enter selection (1-5):
 ```
 1. Validate constitution exists and is not a template
 2. Check no active workflow
-3. Initialize `active_workflow` with type `"fix"` and phases `["01-requirements", "05-implementation", "06-testing", "09-cicd", "07-code-review"]`
+3. Initialize `active_workflow` with type `"fix"` and phases `["01-requirements", "02-tracing", "04-test-strategy", "05-implementation", "10-local-testing", "06-testing", "09-cicd", "07-code-review"]`
 4. If `--link` provided, pass it to Agent 01 as the external bug URL
 5. Delegate to Requirements Analyst (Phase 01) with `scope: "bug-report"`
 6. Agent 01 extracts external ID from URL and creates `BUG-NNNN-{external-id}/` folder
@@ -684,7 +684,7 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 | Command | Workflow | Phases | Gate Mode | Branch |
 |---------|----------|--------|-----------|--------|
 | `/sdlc feature` | feature | 01 → 02 → 03 → 05 → 10 → 06 → 09 → 07 | strict | `feature/REQ-NNNN-...` |
-| `/sdlc fix` | fix | 01 → 05 → 10 → 06 → 09 → 07 | strict | `bugfix/BUG-NNNN-...` |
+| `/sdlc fix` | fix | 01 → 02 → 04 → 05 → 10 → 06 → 09 → 07 | strict | `bugfix/BUG-NNNN-...` |
 | `/sdlc test run` | test-run | 10 → 06 | strict | none |
 | `/sdlc test generate` | test-generate | 04 → 05 → 10 → 06 → 07 | strict | none |
 | `/sdlc start` | full-lifecycle | 01 → ... → 05 → 10 → 06 → ... → 10(remote) → 11 → ... → 13 | strict | `feature/REQ-NNNN-...` |

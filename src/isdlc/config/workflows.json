@@ -68,8 +68,8 @@
       "command": "/sdlc fix",
       "description": "Fix a bug or defect with TDD",
       "phases": [
-        "00-tracing",
         "01-requirements",
+        "02-tracing",
         "04-test-strategy",
         "05-implementation",
         "10-local-testing",
@@ -85,22 +85,22 @@
           "flag": "--atdd"
         },
         "skip_exploration": {
-          "description": "Skip Phase 00 Tracing for simple bugs",
+          "description": "Skip Phase 02 Tracing for simple bugs",
           "default": false,
           "flag": "--no-tracing"
         }
       },
       "agent_modifiers": {
-        "00-tracing": {
-          "scope": "bug-exploration",
-          "run_parallel_subagents": true,
-          "generate_trace_analysis": true
-        },
         "01-requirements": {
           "scope": "bug-report",
           "artifact_prefix": "BUG",
-          "require_external_id": true,
-          "read_trace_analysis": true
+          "require_external_id": true
+        },
+        "02-tracing": {
+          "scope": "bug-exploration",
+          "run_parallel_subagents": true,
+          "generate_trace_analysis": true,
+          "read_bug_report": true
         },
         "04-test-strategy": {
           "_when_atdd_mode": {

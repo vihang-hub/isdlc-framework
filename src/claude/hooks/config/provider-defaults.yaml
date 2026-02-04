@@ -276,7 +276,7 @@ phase_routing:
     fallback:
       - "anthropic:sonnet"
 
-  "00-tracing":
+  "02-tracing":
     provider: "ollama"
     model: "qwen-coder"
     rationale: "Execution path tracing is pattern-based"

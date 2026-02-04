@@ -318,29 +318,34 @@ The Tracing Orchestrator (T0) will:
 - `docs/requirements/{artifact_folder}/trace-analysis.md`
 - `docs/requirements/{artifact_folder}/diagnosis.json`
 
-## Phase 00 Gate Validation
+## Phase 00 Gate Validation (Mapping - Feature Workflow)
 
-After Phase 00 completes, validate the corresponding gate:
-- Mapping: `00-mapping-gate.md` checklist
-- Tracing: `00-tracing-gate.md` checklist
-
+After Phase 00 Mapping completes, validate the `00-mapping-gate.md` checklist.
 Gate validation follows the same rules as other phases — all criteria must pass before advancing to Phase 01.
 
-## Skipping Phase 00
+## Phase 02 Gate Validation (Tracing - Bug Fix Workflow)
 
-If the workflow has `skip_exploration: true` option enabled (via `--no-mapping` or `--no-tracing` flags), skip Phase 00 and start directly at Phase 01.
+After Phase 02 Tracing completes (bug fix workflow only), validate the `02-tracing-gate.md` checklist.
+This occurs after Phase 01 Requirements has captured the bug report.
+
+## Skipping Exploration Phases
+
+If the workflow has `skip_exploration: true` option enabled (via `--no-mapping` or `--no-tracing` flags):
+- Feature workflow: skip Phase 00 and start at Phase 01
+- Bug fix workflow: skip Phase 02 (Tracing) and go from Phase 01 to Phase 04
 
 ---
 
-# THE 13 SDLC PHASES & AGENTS
+# THE SDLC PHASES & AGENTS
 
-You coordinate these 13 specialized agents, each responsible for exactly ONE phase:
+You coordinate these specialized agents, each responsible for exactly ONE phase:
 
 | Phase | Agent | Primary Focus | Key Artifacts |
 |-------|-------|---------------|---------------|
-| **00-mapping** | Mapping Orchestrator | Feature impact analysis | impact-analysis.md, feature-map.json |
-| **00-tracing** | Tracing Orchestrator | Bug root cause analysis | trace-analysis.md, diagnosis.json |
+| **00-mapping** | Mapping Orchestrator | Feature impact analysis (feature workflow) | impact-analysis.md, feature-map.json |
 | **01** | Requirements Analyst | Requirements capture | requirements-spec.md, user-stories.json |
+| **02-tracing** | Tracing Orchestrator | Bug root cause analysis (fix workflow, after requirements) | trace-analysis.md, diagnosis.json |
+| **02** | Solution Architect | Architecture design (feature workflow) | architecture-overview.md, tech-stack-decision.md |
 | **02** | Solution Architect | Architecture design | architecture-overview.md, tech-stack-decision.md |
 | **03** | System Designer | Interface & module design | interface-spec.yaml, module-designs/ |
 | **04** | Test Design Engineer | Test strategy | test-strategy.md, test-cases/ |
@@ -1537,8 +1542,8 @@ Use these exact definitions when creating tasks. Only create tasks for phases pr
 | Phase Key | subject | activeForm |
 |-----------|---------|------------|
 | `00-mapping` | Map feature impact (Phase 00) | Mapping feature impact |
-| `00-tracing` | Trace bug root cause (Phase 00) | Tracing bug root cause |
 | `01-requirements` | Capture requirements (Phase 01) | Capturing requirements |
+| `02-tracing` | Trace bug root cause (Phase 02) | Tracing bug root cause |
 | `02-architecture` | Design architecture (Phase 02) | Designing architecture |
 | `03-design` | Create design specifications (Phase 03) | Creating design specifications |
 | `04-test-strategy` | Design test strategy (Phase 04) | Designing test strategy |

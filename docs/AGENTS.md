@@ -42,11 +42,11 @@ The 15 SDLC agents implement a 1-to-1 mapping between phases and agents. Each ag
 
 ---
 
-## Exploration Agents (Phase 00)
+## Exploration Agents
 
-Before requirements capture, the framework can invoke specialized exploration agents to understand the scope and impact of changes.
+Exploration agents help understand the scope and impact of changes through specialized analysis.
 
-### Mapping Agents (Phase 00)
+### Mapping Agents (Phase 00 - Feature Workflow)
 
 For new features, the Mapping Orchestrator (M0) coordinates three parallel sub-agents to produce `impact-analysis.md`:
 
@@ -61,9 +61,9 @@ For new features, the Mapping Orchestrator (M0) coordinates three parallel sub-a
 
 **Output**: `docs/isdlc/impact-analysis.md`, `feature-map.json`
 
-### Tracing Agents (Phase 00)
+### Tracing Agents (Phase 02 - Bug Fix Workflow)
 
-For bug fixes, the Tracing Orchestrator (T0) coordinates three parallel sub-agents to produce `trace-analysis.md`:
+For bug fixes, **after Phase 01 captures the bug report**, the Tracing Orchestrator (T0) coordinates three parallel sub-agents to produce `trace-analysis.md`:
 
 | ID | Agent | Responsibility |
 |----|-------|----------------|
@@ -72,9 +72,13 @@ For bug fixes, the Tracing Orchestrator (T0) coordinates three parallel sub-agen
 | **T2** | **Execution Path Tracer** | Call chain, data flow, state mutations, branch points |
 | **T3** | **Root Cause Identifier** | Hypotheses, evidence correlation, fix recommendations |
 
+**Workflow Position**: Phase 02 (after Requirements, before Test Strategy)
+
 **Invoked by**: `/sdlc fix "description"` (automatic, or skip with `--no-tracing`)
 
-**Output**: `docs/isdlc/trace-analysis.md`, `diagnosis.json`
+**Input**: Bug report from Phase 01 (`bug-report.md`, `requirements-spec.md`)
+
+**Output**: `trace-analysis.md`, `diagnosis.json` (in bug artifact folder)
 
 ---
 

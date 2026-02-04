@@ -279,7 +279,7 @@ phase_routing:
     rationale: "Pattern-based code search, no complex reasoning needed"
     fallback: ["anthropic:sonnet"]
 
-  "00-tracing":
+  "02-tracing":
     provider: "ollama"
     model: "qwen-coder"
     rationale: "Execution path tracing is pattern-based"
@@ -500,8 +500,8 @@ environment:
 | Phase | Complexity | Reasoning Required | Local Viable | Recommended |
 |-------|------------|-------------------|--------------|-------------|
 | 00-mapping | Low | Pattern matching | ✅ Yes | Ollama |
-| 00-tracing | Low | Code traversal | ✅ Yes | Ollama |
 | 01-requirements | High | Stakeholder understanding | ⚠️ Degraded | Anthropic |
+| 02-tracing | Low | Code traversal | ✅ Yes | Ollama |
 | 02-architecture | Critical | System design | ❌ No | Anthropic Opus |
 | 03-design | Medium | Consistency | ⚠️ Degraded | Anthropic |
 | 04-test-strategy | Low | Template generation | ✅ Yes | Ollama |
