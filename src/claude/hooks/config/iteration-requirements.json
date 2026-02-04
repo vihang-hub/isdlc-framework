@@ -313,6 +313,22 @@
         "max_iterations": 5,
         "articles": ["VIII", "IX", "XII"]
       }
+    },
+
+    "15-upgrade": {
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": true,
+        "max_iterations": 5,
+        "circuit_breaker_threshold": 3
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 3,
+        "articles": ["I", "VII", "IX", "X"]
+      }
     }
   },
 

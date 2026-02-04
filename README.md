@@ -11,7 +11,7 @@
 [![Agents](https://img.shields.io/badge/Agents-36-purple.svg)](docs/AGENTS.md)
 [![Skills](https://img.shields.io/badge/Skills-200-green.svg)](docs/DETAILED-SKILL-ALLOCATION.md)
 [![Gates](https://img.shields.io/badge/Quality%20Gates-16-orange.svg)](#quality-gates)
-[![Hooks](https://img.shields.io/badge/Hooks-5-red.svg)](#enforcement-hooks)
+[![Hooks](https://img.shields.io/badge/Hooks-8-red.svg)](#enforcement-hooks)
 
 </div>
 
@@ -113,7 +113,7 @@ Gates cannot be skipped. When iteration limits are exceeded, the system escalate
 
 ### Enforcement Hooks
 
-Five hooks intercept tool calls and enforce iteration requirements:
+Eight hooks intercept tool calls and enforce iteration requirements:
 
 | Hook | Purpose |
 |------|---------|
@@ -122,6 +122,9 @@ Five hooks intercept tool calls and enforce iteration requirements:
 | `constitution-validator.js` | Blocks until constitutional validation complete |
 | `menu-tracker.js` | Tracks stakeholder elicitation progress |
 | `model-provider-router.js` | Routes to appropriate LLM provider by phase |
+| `skill-validator.js` | Validates skill ownership before execution |
+| `iteration-corridor.js` | Enforces iteration limits per phase |
+| `log-skill-usage.js` | Tracks skill usage for analytics |
 
 ### Multi-Provider LLM Support
 
@@ -185,7 +188,7 @@ Customizable governance principles enforced at every quality gate:
 ## Project Status
 
 **Completed** (10 enhancements):
-- 36 agents, 200 skills, 16 gates, 5 hooks
+- 36 agents, 200 skills, 16 gates, 8 hooks
 - Project Constitution, Adaptive Workflow, Autonomous Iteration
 - Skill Enforcement, Deterministic Hooks, Monorepo Support
 - Task Planning, Phase 00 Exploration Mode, Multi-Provider LLM Support
@@ -217,6 +220,6 @@ MIT License
 
 <div align="center">
 
-**iSDLC Framework** v0.1.0-alpha — 36 agents, 200 skills, 16 gates, 5 hooks, cross-platform npm package
+**iSDLC Framework** v0.1.0-alpha — 36 agents, 200 skills, 16 gates, 8 hooks, cross-platform npm package
 
 </div>
