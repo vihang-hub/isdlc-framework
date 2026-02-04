@@ -10,8 +10,9 @@ The framework's 36 agents are organized into five groups:
 |-------|-------|---------|
 | [SDLC Agents](#sdlc-agents) | 15 | Execute development phases (1 orchestrator + 14 phase agents) |
 | [Discover Agents](#discover-agents) | 9 | Analyze projects before development begins |
-| [Mapping Agents](#mapping-agents-phase-00) | 4 | Analyze feature impact before requirements capture |
-| [Tracing Agents](#tracing-agents-phase-00) | 4 | Trace bug root causes before fix requirements |
+| [Quick Scan Agent](#quick-scan-agent-phase-00) | 1 | Lightweight scope estimation before requirements |
+| [Impact Analysis Agents](#impact-analysis-agents-phase-02) | 4 | Full feature impact analysis after requirements |
+| [Tracing Agents](#tracing-agents-phase-02) | 4 | Trace bug root causes after requirements |
 | [Reverse Engineer Agents](#reverse-engineer-agents) | 4 | Extract knowledge from existing code |
 
 ---
@@ -24,19 +25,19 @@ The 15 SDLC agents implement a 1-to-1 mapping between phases and agents. Each ag
 |-------|-------|----------------|---------------|
 | **00** | **SDLC Orchestrator** | Workflow coordination, phase gates, conflict resolution | workflow-state.json, gate-validation.json |
 | **01** | **Requirements Analyst** | Requirements capture, user stories, NFRs | requirements-spec.md, user-stories.json, nfr-matrix.md |
-| **02** | **Solution Architect** | System architecture, tech stack, database design | architecture-overview.md, tech-stack-decision.md, ADRs |
-| **03** | **System Designer** | API contracts, module design, UI/UX wireframes | openapi.yaml, module-designs/, wireframes/ |
-| **04** | **Test Design Engineer** | Test strategy, test cases, traceability | test-strategy.md, test-cases/, traceability-matrix.csv |
-| **05** | **Software Developer** | Implementation (TDD), unit tests, coding standards | source-code/, unit-tests/, coverage-report.html |
-| **06** | **Integration Tester** | Integration testing, E2E testing, API contract tests | integration-tests/, e2e-tests/, test-execution-report.md |
-| **07** | **QA Engineer** | Code review, quality metrics, QA sign-off | code-review-report.md, quality-metrics.md, qa-sign-off.md |
-| **08** | **Security & Compliance Auditor** | Security scanning, penetration testing, compliance | security-scan-report.md, compliance-checklist.md |
-| **09** | **CI/CD Engineer** | Pipeline automation, build configuration | ci-config.yaml, cd-config.yaml, Dockerfile |
-| **10** | **Environment Builder** | Environment build & launch for testing | testing_environment in state.json, build-log.md |
-| **11** | **Deployment Engineer (Staging)** | Staging deployment, smoke tests, rollback | deployment-log-staging.md, smoke-test-results.md |
-| **12** | **Release Manager** | Production deployment, release coordination | release-notes.md, post-deployment-report.md |
-| **13** | **Site Reliability Engineer** | Operations, monitoring, incident response, SLAs | monitoring-config/, alert-rules.yaml, sla-tracking.md |
-| **14** | **Upgrade Engineer** | Dependency/tool upgrades with regression testing | upgrade-analysis.md, upgrade-summary.md |
+| **03** | **Solution Architect** | System architecture, tech stack, database design | architecture-overview.md, tech-stack-decision.md, ADRs |
+| **04** | **System Designer** | API contracts, module design, UI/UX wireframes | openapi.yaml, module-designs/, wireframes/ |
+| **05** | **Test Design Engineer** | Test strategy, test cases, traceability | test-strategy.md, test-cases/, traceability-matrix.csv |
+| **06** | **Software Developer** | Implementation (TDD), unit tests, coding standards | source-code/, unit-tests/, coverage-report.html |
+| **07** | **Integration Tester** | Integration testing, E2E testing, API contract tests | integration-tests/, e2e-tests/, test-execution-report.md |
+| **08** | **QA Engineer** | Code review, quality metrics, QA sign-off | code-review-report.md, quality-metrics.md, qa-sign-off.md |
+| **09** | **Security & Compliance Auditor** | Security scanning, penetration testing, compliance | security-scan-report.md, compliance-checklist.md |
+| **10** | **CI/CD Engineer** | Pipeline automation, build configuration | ci-config.yaml, cd-config.yaml, Dockerfile |
+| **11** | **Environment Builder** | Local environment build & launch for testing | testing_environment in state.json, build-log.md |
+| **13** | **Deployment Engineer (Staging)** | Staging deployment, smoke tests, rollback | deployment-log-staging.md, smoke-test-results.md |
+| **14** | **Release Manager** | Production deployment, release coordination | release-notes.md, post-deployment-report.md |
+| **15** | **Site Reliability Engineer** | Operations, monitoring, incident response, SLAs | monitoring-config/, alert-rules.yaml, sla-tracking.md |
+| **16** | **Upgrade Engineer** | Dependency/tool upgrades with regression testing | upgrade-analysis.md, upgrade-summary.md |
 
 **1-to-1 Mapping**: Each phase has exactly ONE dedicated agent with clear entry/exit criteria. No overlapping responsibilities — conflicts only occur at phase boundaries and are handled by the Orchestrator.
 
@@ -46,20 +47,40 @@ The 15 SDLC agents implement a 1-to-1 mapping between phases and agents. Each ag
 
 Exploration agents help understand the scope and impact of changes through specialized analysis.
 
-### Mapping Agents (Phase 00 - Feature Workflow)
+### Quick Scan Agent (Phase 00 - Feature Workflow)
 
-For new features, the Mapping Orchestrator (M0) coordinates three parallel sub-agents to produce `impact-analysis.md`:
+For new features, the Quick Scan Agent performs a **lightweight** scope estimation BEFORE requirements gathering. This provides just enough context for the Requirements Analyst without over-investing in analysis that may change after requirements clarification.
 
 | ID | Agent | Responsibility |
 |----|-------|----------------|
-| **M0** | **Mapping Orchestrator** | Coordinates mapping, consolidates impact analysis |
-| **M1** | **Impact Analyzer** | Affected files, module dependencies, change propagation |
-| **M2** | **Entry Point Finder** | API endpoints, UI components, jobs, event handlers |
-| **M3** | **Risk Assessor** | Complexity scoring, coverage gaps, technical debt, risk zones |
+| **QS** | **Quick Scan Agent** | Keyword extraction, file count estimation, scope estimation (small/medium/large) |
 
-**Invoked by**: `/sdlc feature "description"` (automatic, or skip with `--no-mapping`)
+**Invoked by**: `/sdlc feature "description"` (automatic, or skip with `--no-scan`)
 
-**Output**: `docs/isdlc/impact-analysis.md`, `feature-map.json`
+**Output**: `quick-scan.md` (lightweight scope estimate, keyword matches, file count)
+
+**Note**: Quick Scan uses the haiku model for fast, lightweight analysis.
+
+### Impact Analysis Agents (Phase 02 - Feature Workflow)
+
+For new features, **after Phase 01 captures and clarifies the requirements**, the Impact Analysis Orchestrator (IA0) coordinates three parallel sub-agents to produce a comprehensive `impact-analysis.md`:
+
+| ID | Agent | Responsibility |
+|----|-------|----------------|
+| **IA0** | **Impact Analysis Orchestrator** | Coordinates analysis, consolidates impact report |
+| **IA1** | **Impact Analyzer** | Affected files per AC, module dependencies, change propagation |
+| **IA2** | **Entry Point Finder** | API endpoints per AC, UI components, implementation order |
+| **IA3** | **Risk Assessor** | Risk per AC, coverage gaps, technical debt, blocking risks |
+
+**Workflow Position**: Phase 02 (after Requirements)
+
+**Invoked by**: `/sdlc feature "description"` (automatic, after Phase 01)
+
+**Input**: Requirements document from Phase 01, Quick Scan from Phase 00
+
+**Output**: `impact-analysis.md` (comprehensive, based on finalized requirements)
+
+**Key Design Decision**: Impact Analysis runs AFTER requirements gathering. This ensures analysis is based on clarified, finalized requirements rather than initial descriptions.
 
 ### Tracing Agents (Phase 02 - Bug Fix Workflow)
 
@@ -127,51 +148,75 @@ The `/sdlc reverse-engineer` command uses 4 specialized sub-agents to extract ac
 
 ## Development Phases
 
-The framework implements a linear 14-phase workflow with quality gates between each phase.
+The framework implements a workflow with quality gates between each phase.
 
+### Feature Workflow
 ```
+Phase 00: Quick Scan
+    | (Quick Scan Agent)
+    v GATE-00: Scope estimated
 Phase 01: Requirements Capture
     | (Requirements Analyst)
-    v GATE-01: Requirements validation
-Phase 02: Architecture & Blueprint
+    v GATE-01: Requirements validated
+Phase 02: Impact Analysis
+    | (Impact Analysis Orchestrator)
+    v GATE-02: Impact analysis complete
+Phase 03: Architecture & Blueprint
     | (Solution Architect)
-    v GATE-02: Architecture review
-Phase 03: Design & API Contracts
+    v GATE-03: Architecture review
+Phase 04: Design & API Contracts
     | (System Designer)
-    v GATE-03: Design approval
-Phase 04: Test Strategy & Design
+    v GATE-04: Design approval
+Phase 05: Test Strategy & Design
     | (Test Design Engineer)
-    v GATE-04: Test strategy approval
-Phase 05: Implementation
+    v GATE-05: Test strategy approval
+Phase 06: Implementation
     | (Software Developer)
-    v GATE-05: Code complete + unit tests pass
-Phase 06: Integration & Testing
+    v GATE-06: Code complete + unit tests pass
+Phase 07: Integration & Testing
     | (Integration Tester)
-    v GATE-06: Integration tests pass
-Phase 07: Code Review & QA
+    v GATE-07: Integration tests pass
+Phase 08: Code Review & QA
     | (QA Engineer)
-    v GATE-07: QA sign-off
-Phase 08: Independent Validation
+    v GATE-08: QA sign-off
+Phase 09: Independent Validation
     | (Security & Compliance Auditor)
-    v GATE-08: Security sign-off
-Phase 09: Version Control & CI/CD
+    v GATE-09: Security sign-off
+Phase 10: Version Control & CI/CD
     | (CI/CD Engineer)
-    v GATE-09: Pipeline operational
-Phase 10: Local Development & Testing
+    v GATE-10: Pipeline operational
+Phase 11: Local Development & Testing
     | (Environment Builder)
-    v GATE-10: Dev environment validated
-Phase 11: Test Environment Deployment
+    v GATE-11: Local environment validated
+Phase 13: Test Environment Deployment
     | (Deployment Engineer - Staging)
-    v GATE-11: Staging deployment verified
-Phase 12: Production Deployment
+    v GATE-13: Staging deployment verified
+Phase 14: Production Deployment
     | (Release Manager)
-    v GATE-12: Production go-live complete
-Phase 13: Production Operations
+    v GATE-14: Production go-live complete
+Phase 15: Production Operations
     | (Site Reliability Engineer)
-    v GATE-13: Operations stable
-Phase 14: Upgrades
+    v GATE-15: Operations stable
+Phase 16: Upgrades
     | (Upgrade Engineer)
-    v GATE-14: Upgrade complete, zero regressions
+    v GATE-16: Upgrade complete, zero regressions
+```
+
+### Bug Fix Workflow
+```
+Phase 01: Requirements (Bug Report)
+    | (Requirements Analyst)
+    v GATE-01: Bug report captured
+Phase 02: Tracing
+    | (Tracing Orchestrator)
+    v GATE-02: Root cause identified
+Phase 05: Test Strategy & Design
+    | (Test Design Engineer)
+    v GATE-05: Test strategy for fix
+Phase 06: Implementation (TDD)
+    | (Software Developer)
+    v GATE-06: Fix implemented, tests pass
+... (remaining phases as needed)
 ```
 
 ---
@@ -184,38 +229,35 @@ Agent definitions are located in `.claude/agents/`:
 .claude/agents/
 ├── 00-sdlc-orchestrator.md
 ├── 01-requirements-analyst.md
-├── 02-solution-architect.md
-├── 03-system-designer.md
-├── 04-test-design-engineer.md
-├── 05-software-developer.md
-├── 06-integration-tester.md
-├── 07-qa-engineer.md
-├── 08-security-compliance-auditor.md
-├── 09-cicd-engineer.md
-├── 10-environment-builder.md
-├── 11-deployment-engineer-staging.md
-├── 12-release-manager.md
-├── 13-site-reliability-engineer.md
-├── 14-upgrade-engineer.md
-├── D0-discover-orchestrator.md
-├── D1-architecture-analyzer.md
-├── D2-test-evaluator.md
-├── D3-constitution-generator.md
-├── D4-skills-researcher.md
-├── D5-data-model-analyzer.md
-├── D6-feature-mapper.md
-├── D7-product-analyst.md
-├── D8-architecture-designer.md
-├── M0-mapping-orchestrator.md
-├── M1-impact-analyzer.md
-├── M2-entry-point-finder.md
-├── M3-risk-assessor.md
-├── T0-tracing-orchestrator.md
-├── T1-symptom-analyzer.md
-├── T2-execution-path-tracer.md
-├── T3-root-cause-identifier.md
-├── R1-behavior-analyzer.md
-├── R2-characterization-test-generator.md
-├── R3-artifact-integration.md
-└── R4-atdd-bridge.md
+├── 03-solution-architect.md
+├── 04-system-designer.md
+├── 05-test-design-engineer.md
+├── 06-software-developer.md
+├── 07-integration-tester.md
+├── 08-qa-engineer.md
+├── 09-security-compliance-auditor.md
+├── 10-cicd-engineer.md
+├── 11-dev-environment-engineer.md
+├── 13-deployment-engineer-staging.md
+├── 14-release-manager.md
+├── 15-site-reliability-engineer.md
+├── 16-upgrade-engineer.md
+├── quick-scan/
+│   └── quick-scan-agent.md
+├── impact-analysis/
+│   ├── impact-analysis-orchestrator.md
+│   ├── impact-analyzer.md
+│   ├── entry-point-finder.md
+│   └── risk-assessor.md
+├── tracing/
+│   ├── tracing-orchestrator.md
+│   ├── symptom-analyzer.md
+│   ├── execution-path-tracer.md
+│   └── root-cause-identifier.md
+├── discover/
+│   └── (discover agent files)
+├── mapping/
+│   └── (legacy - now impact-analysis)
+└── reverse-engineer/
+    └── (reverse engineer agent files)
 ```

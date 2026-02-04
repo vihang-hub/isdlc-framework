@@ -1,7 +1,7 @@
-# Phase 3: Design Gate Checklist
+# Phase 04: Design Gate Checklist
 
 **Phase**: Design & Specifications
-**Primary Agent**: System Designer (Agent 03)
+**Primary Agent**: System Designer (Agent 04)
 
 ---
 

@@ -1,7 +1,7 @@
-# Phase 14: Upgrade Gate Checklist
+# Phase 16: Upgrade Gate Checklist
 
 **Phase**: Dependency/Tool Upgrade
-**Primary Agent**: Upgrade Engineer (Agent 14)
+**Primary Agent**: Upgrade Engineer (Agent 16)
 
 ---
 

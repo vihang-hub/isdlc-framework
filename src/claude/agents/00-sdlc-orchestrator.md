@@ -342,23 +342,23 @@ You coordinate these specialized agents, each responsible for exactly ONE phase:
 
 | Phase | Agent | Primary Focus | Key Artifacts |
 |-------|-------|---------------|---------------|
-| **00-mapping** | Mapping Orchestrator | Feature impact analysis (feature workflow) | impact-analysis.md, feature-map.json |
+| **00-quick-scan** | Quick Scan Agent | Lightweight scope estimation (feature workflow) | quick-scan.md |
 | **01** | Requirements Analyst | Requirements capture | requirements-spec.md, user-stories.json |
+| **02-impact-analysis** | Impact Analysis Orchestrator | Full feature impact analysis (after requirements) | impact-analysis.md |
 | **02-tracing** | Tracing Orchestrator | Bug root cause analysis (fix workflow, after requirements) | trace-analysis.md, diagnosis.json |
-| **02** | Solution Architect | Architecture design (feature workflow) | architecture-overview.md, tech-stack-decision.md |
-| **02** | Solution Architect | Architecture design | architecture-overview.md, tech-stack-decision.md |
-| **03** | System Designer | Interface & module design | interface-spec.yaml, module-designs/ |
-| **04** | Test Design Engineer | Test strategy | test-strategy.md, test-cases/ |
-| **05** | Software Developer | Implementation (TDD) | source-code/, unit-tests/ |
-| **06** | Integration Tester | Integration testing | integration-tests/, e2e-tests/ |
-| **07** | QA Engineer | Code review & QA | code-review-report.md, quality-metrics.md |
-| **08** | Security & Compliance Auditor | Security validation | security-scan-report.md, penetration-test-report.md |
-| **09** | CI/CD Engineer | Pipeline automation | ci-config.yaml, cd-config.yaml |
-| **10** | Environment Builder | Environment build & launch | testing_environment in state.json, build-log.md |
-| **11** | Deployment Engineer (Staging) | Staging deployment | deployment-log-staging.md, smoke-test-results.md |
-| **12** | Release Manager | Production release | deployment-log-production.md, release-notes.md |
-| **13** | Site Reliability Engineer | Operations & monitoring | monitoring-config/, alert-rules.yaml |
-| **14** | Upgrade Engineer | Dependency/tool upgrades | upgrade-analysis.md, upgrade-summary.md |
+| **03** | Solution Architect | Architecture design | architecture-overview.md, tech-stack-decision.md |
+| **04** | System Designer | Interface & module design | interface-spec.yaml, module-designs/ |
+| **05** | Test Design Engineer | Test strategy | test-strategy.md, test-cases/ |
+| **06** | Software Developer | Implementation (TDD) | source-code/, unit-tests/ |
+| **07** | Integration Tester | Integration testing | integration-tests/, e2e-tests/ |
+| **08** | QA Engineer | Code review & QA | code-review-report.md, quality-metrics.md |
+| **09** | Security & Compliance Auditor | Security validation | security-scan-report.md, penetration-test-report.md |
+| **10** | CI/CD Engineer | Pipeline automation | ci-config.yaml, cd-config.yaml |
+| **11** | Environment Builder | Local environment build & launch | testing_environment in state.json, build-log.md |
+| **13** | Deployment Engineer (Staging) | Staging deployment | deployment-log-staging.md, smoke-test-results.md |
+| **14** | Release Manager | Production release | deployment-log-production.md, release-notes.md |
+| **15** | Site Reliability Engineer | Operations & monitoring | monitoring-config/, alert-rules.yaml |
+| **16** | Upgrade Engineer | Dependency/tool upgrades | upgrade-analysis.md, upgrade-summary.md |
 
 # CORE RESPONSIBILITIES
 

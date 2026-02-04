@@ -8,16 +8,17 @@
       "command": "/sdlc feature",
       "description": "Implement a new feature end-to-end",
       "phases": [
-        "00-mapping",
+        "00-quick-scan",
         "01-requirements",
-        "02-architecture",
-        "03-design",
-        "04-test-strategy",
-        "05-implementation",
-        "10-local-testing",
-        "06-testing",
-        "09-cicd",
-        "07-code-review"
+        "02-impact-analysis",
+        "03-architecture",
+        "04-design",
+        "05-test-strategy",
+        "06-implementation",
+        "11-local-testing",
+        "07-testing",
+        "10-cicd",
+        "08-code-review"
       ],
       "gate_mode": "strict",
       "options": {
@@ -27,38 +28,44 @@
           "flag": "--atdd"
         },
         "skip_exploration": {
-          "description": "Skip Phase 00 Mapping for simple features",
+          "description": "Skip Phase 00 Quick Scan for simple features",
           "default": false,
-          "flag": "--no-mapping"
+          "flag": "--no-scan"
         }
       },
       "agent_modifiers": {
-        "00-mapping": {
-          "scope": "feature-exploration",
-          "run_parallel_subagents": true,
-          "generate_impact_analysis": true
+        "00-quick-scan": {
+          "scope": "lightweight-scan",
+          "generate_scope_estimate": true,
+          "output": ["estimated_scope", "keyword_matches", "file_count_estimate"]
         },
         "01-requirements": {
           "scope": "feature",
           "artifact_prefix": "REQ",
-          "read_impact_analysis": true
+          "read_quick_scan": true
         },
-        "02-architecture": { "scope": "impact-assessment" },
-        "04-test-strategy": {
+        "02-impact-analysis": {
+          "scope": "full-impact-analysis",
+          "run_parallel_subagents": true,
+          "generate_impact_analysis": true,
+          "read_requirements": true
+        },
+        "03-architecture": { "scope": "impact-assessment" },
+        "05-test-strategy": {
           "_when_atdd_mode": {
             "generate_skipped_tests": true,
             "require_given_when_then_ac": true,
             "create_atdd_checklist": true
           }
         },
-        "05-implementation": {
+        "06-implementation": {
           "_when_atdd_mode": {
             "track_red_green_transitions": true,
             "require_priority_order": true,
             "all_priorities_must_pass": true
           }
         },
-        "10-local-testing": { "scope": "local" }
+        "11-local-testing": { "scope": "local" }
       },
       "requires_branch": true
     },
@@ -70,12 +77,12 @@
       "phases": [
         "01-requirements",
         "02-tracing",
-        "04-test-strategy",
-        "05-implementation",
-        "10-local-testing",
-        "06-testing",
-        "09-cicd",
-        "07-code-review"
+        "05-test-strategy",
+        "06-implementation",
+        "11-local-testing",
+        "07-testing",
+        "10-cicd",
+        "08-code-review"
       ],
       "gate_mode": "strict",
       "options": {
@@ -102,14 +109,14 @@
           "generate_trace_analysis": true,
           "read_bug_report": true
         },
-        "04-test-strategy": {
+        "05-test-strategy": {
           "_when_atdd_mode": {
             "generate_skipped_tests": true,
             "require_given_when_then_ac": true,
             "create_atdd_checklist": true
           }
         },
-        "05-implementation": {
+        "06-implementation": {
           "require_failing_test_first": true,
           "_when_atdd_mode": {
             "track_red_green_transitions": true,
@@ -117,7 +124,7 @@
             "all_priorities_must_pass": true
           }
         },
-        "10-local-testing": { "scope": "local" }
+        "11-local-testing": { "scope": "local" }
       },
       "requires_branch": true
     },
@@ -127,12 +134,12 @@
       "command": "/sdlc test run",
       "description": "Execute existing automation tests",
       "phases": [
-        "10-local-testing",
-        "06-testing"
+        "11-local-testing",
+        "07-testing"
       ],
       "gate_mode": "strict",
       "agent_modifiers": {
-        "10-local-testing": { "scope": "local" }
+        "11-local-testing": { "scope": "local" }
       },
       "options": {
         "test_type": {
@@ -149,15 +156,15 @@
       "command": "/sdlc test generate",
       "description": "Create new tests for existing code",
       "phases": [
-        "04-test-strategy",
-        "05-implementation",
-        "10-local-testing",
-        "06-testing",
-        "07-code-review"
+        "05-test-strategy",
+        "06-implementation",
+        "11-local-testing",
+        "07-testing",
+        "08-code-review"
       ],
       "gate_mode": "strict",
       "agent_modifiers": {
-        "10-local-testing": { "scope": "local" }
+        "11-local-testing": { "scope": "local" }
       },
       "options": {
         "test_type": {
@@ -175,24 +182,24 @@
       "description": "Complete SDLC for new projects or major work",
       "phases": [
         "01-requirements",
-        "02-architecture",
-        "03-design",
-        "04-test-strategy",
-        "05-implementation",
-        "10-local-testing",
-        "06-testing",
-        "07-code-review",
-        "08-validation",
-        "09-cicd",
-        "10-remote-build",
-        "11-test-deploy",
-        "12-production",
-        "13-operations"
+        "03-architecture",
+        "04-design",
+        "05-test-strategy",
+        "06-implementation",
+        "11-local-testing",
+        "07-testing",
+        "08-code-review",
+        "09-validation",
+        "10-cicd",
+        "12-remote-build",
+        "13-test-deploy",
+        "14-production",
+        "15-operations"
       ],
       "gate_mode": "strict",
       "agent_modifiers": {
-        "10-local-testing": { "scope": "local" },
-        "10-remote-build": { "scope": "remote" }
+        "11-local-testing": { "scope": "local" },
+        "12-remote-build": { "scope": "remote" }
       },
       "requires_branch": true
     },
@@ -202,9 +209,9 @@
       "command": "/sdlc upgrade <name>",
       "description": "Upgrade a dependency, runtime, framework, or tool with full impact analysis and regression testing",
       "phases": [
-        "14-upgrade-plan",
-        "14-upgrade-execute",
-        "07-code-review"
+        "16-upgrade-plan",
+        "16-upgrade-execute",
+        "08-code-review"
       ],
       "gate_mode": "strict",
       "options": {
@@ -220,9 +227,9 @@
         }
       },
       "agent_modifiers": {
-        "14-upgrade-plan": { "scope": "analysis", "require_user_approval": true },
-        "14-upgrade-execute": { "scope": "execution", "max_iterations": 10 },
-        "07-code-review": { "scope": "upgrade-review" }
+        "16-upgrade-plan": { "scope": "analysis", "require_user_approval": true },
+        "16-upgrade-execute": { "scope": "execution", "max_iterations": 10 },
+        "08-code-review": { "scope": "upgrade-review" }
       },
       "requires_branch": true
     },
