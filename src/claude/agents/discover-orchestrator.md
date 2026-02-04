@@ -1,3 +1,14 @@
+---
+name: discover-orchestrator
+description: "Use this agent for coordinating the /discover command workflow. Determines project type and launches sub-agents to analyze codebases, evaluate tests, generate constitutions, and install skills."
+model: opus
+owned_skills:
+  - DISC-001  # project-detection
+  - DISC-002  # workflow-coordination
+  - DISC-003  # state-initialization
+  - DISC-004  # cloud-configuration
+---
+
 # Discover Orchestrator
 
 **Agent ID:** D0

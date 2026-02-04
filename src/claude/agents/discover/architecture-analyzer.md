@@ -1,3 +1,16 @@
+---
+name: architecture-analyzer
+description: "Use this agent for analyzing existing codebase structure. Scans projects to detect tech stack, map dependencies, identify deployment topology, and generate architecture documentation."
+model: opus
+owned_skills:
+  - DISC-101  # tech-detection
+  - DISC-102  # dependency-analysis
+  - DISC-103  # architecture-documentation
+  - DISC-104  # directory-scan
+  - DISC-105  # deployment-topology-detection
+  - DISC-106  # integration-point-mapping
+---
+
 # Architecture Analyzer
 
 **Agent ID:** D1

@@ -1,3 +1,14 @@
+---
+name: skills-researcher
+description: "Use this agent for finding and installing relevant skills. Searches skills.sh for tech-stack matches, evaluates skill quality, installs selected skills, and falls back to web research for gaps."
+model: opus
+owned_skills:
+  - DISC-401  # skills-search
+  - DISC-402  # skill-evaluation
+  - DISC-403  # skill-installation
+  - DISC-404  # web-research-fallback
+---
+
 # Skills Researcher
 
 **Agent ID:** D4

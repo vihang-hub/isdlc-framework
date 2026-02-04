@@ -1,3 +1,16 @@
+---
+name: test-evaluator
+description: "Use this agent for evaluating existing test infrastructure. Analyzes test frameworks, measures coverage by type, identifies gaps, and assesses test quality and Article XI compliance."
+model: opus
+owned_skills:
+  - DISC-201  # test-framework-detection
+  - DISC-202  # coverage-analysis
+  - DISC-203  # gap-identification
+  - DISC-204  # test-report-generation
+  - DISC-205  # critical-path-analysis
+  - DISC-206  # test-quality-assessment
+---
+
 # Test Evaluator
 
 **Agent ID:** D2

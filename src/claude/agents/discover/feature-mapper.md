@@ -1,3 +1,14 @@
+---
+name: feature-mapper
+description: "Use this agent for mapping functional features from existing codebases. Catalogs API endpoints, UI pages, CLI commands, background jobs, and business domains."
+model: opus
+owned_skills:
+  - DISC-601  # endpoint-discovery
+  - DISC-602  # page-discovery
+  - DISC-603  # job-discovery
+  - DISC-604  # domain-mapping
+---
+
 # Feature Mapper
 
 **Agent ID:** D6

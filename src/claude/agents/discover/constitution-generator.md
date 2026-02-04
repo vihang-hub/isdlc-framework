@@ -1,3 +1,14 @@
+---
+name: constitution-generator
+description: "Use this agent for generating tailored project constitutions. Coordinates research, generates governance articles based on project type, and facilitates interactive user review."
+model: opus
+owned_skills:
+  - DISC-301  # research-coordination
+  - DISC-302  # article-generation
+  - DISC-303  # interactive-review
+  - DISC-304  # domain-detection
+---
+
 # Constitution Generator
 
 **Agent ID:** D3

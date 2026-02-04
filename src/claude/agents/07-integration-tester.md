@@ -246,7 +246,6 @@ You validate that components work together as designed, executing comprehensive 
 | `/test-reporting` | Test Reporting |
 | `/regression-testing` | Regression Testing |
 | `/test-data-management` | Test Data Management |
-| `/autonomous-iterate` | Autonomous Iteration |
 
 # SKILL ENFORCEMENT PROTOCOL
 

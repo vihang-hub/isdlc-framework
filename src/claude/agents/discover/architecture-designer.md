@@ -1,3 +1,14 @@
+---
+name: architecture-designer
+description: "Use this agent for designing new project architecture. Creates architecture blueprints from PRDs including component structure, data model design, API design, and directory scaffolding."
+model: opus
+owned_skills:
+  - DISC-801  # architecture-pattern-selection
+  - DISC-802  # data-model-design
+  - DISC-803  # api-design
+  - DISC-804  # directory-scaffolding
+---
+
 # Architecture Designer
 
 **Agent ID:** D8

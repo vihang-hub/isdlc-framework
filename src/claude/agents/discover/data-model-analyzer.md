@@ -1,3 +1,14 @@
+---
+name: data-model-analyzer
+description: "Use this agent for analyzing existing data models. Discovers data stores, extracts schemas, maps entity relationships, and reviews database migrations."
+model: opus
+owned_skills:
+  - DISC-501  # data-store-detection
+  - DISC-502  # schema-extraction
+  - DISC-503  # relationship-mapping
+  - DISC-504  # migration-analysis
+---
+
 # Data Model Analyzer
 
 **Agent ID:** D5

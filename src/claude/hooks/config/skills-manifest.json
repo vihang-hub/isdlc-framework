@@ -1,14 +1,14 @@
 {
-  "version": "2.4.0",
+  "version": "2.5.0",
   "generated": "2026-02-04",
-  "total_skills": 218,
+  "total_skills": 219,
   "enforcement_mode": "strict",
   "ownership": {
     "sdlc-orchestrator": {
       "agent_id": "00",
       "phase": "all",
-      "skill_count": 11,
-      "skills": ["ORCH-001", "ORCH-002", "ORCH-003", "ORCH-004", "ORCH-005", "ORCH-006", "ORCH-007", "ORCH-008", "ORCH-009", "ORCH-010", "ORCH-011"]
+      "skill_count": 12,
+      "skills": ["ORCH-001", "ORCH-002", "ORCH-003", "ORCH-004", "ORCH-005", "ORCH-006", "ORCH-007", "ORCH-008", "ORCH-009", "ORCH-010", "ORCH-011", "ORCH-012"]
     },
     "discover-orchestrator": {
       "agent_id": "D0",
@@ -88,29 +88,35 @@
       "skill_count": 3,
       "skills": ["RE-301", "RE-302", "RE-303"]
     },
-    "mapping-orchestrator": {
-      "agent_id": "M0",
-      "phase": "00-mapping",
+    "quick-scan-agent": {
+      "agent_id": "QS",
+      "phase": "00-quick-scan",
       "skill_count": 3,
-      "skills": ["MAP-001", "MAP-002", "MAP-003"]
+      "skills": ["QS-001", "QS-002", "QS-003"]
+    },
+    "impact-analysis-orchestrator": {
+      "agent_id": "IA0",
+      "phase": "02-impact-analysis",
+      "skill_count": 3,
+      "skills": ["IA-001", "IA-002", "IA-003"]
     },
     "impact-analyzer": {
-      "agent_id": "M1",
-      "phase": "00-mapping",
+      "agent_id": "IA1",
+      "phase": "02-impact-analysis",
       "skill_count": 4,
-      "skills": ["MAP-101", "MAP-102", "MAP-103", "MAP-104"]
+      "skills": ["IA-101", "IA-102", "IA-103", "IA-104"]
     },
     "entry-point-finder": {
-      "agent_id": "M2",
-      "phase": "00-mapping",
+      "agent_id": "IA2",
+      "phase": "02-impact-analysis",
       "skill_count": 4,
-      "skills": ["MAP-201", "MAP-202", "MAP-203", "MAP-204"]
+      "skills": ["IA-201", "IA-202", "IA-203", "IA-204"]
     },
     "risk-assessor": {
-      "agent_id": "M3",
-      "phase": "00-mapping",
+      "agent_id": "IA3",
+      "phase": "02-impact-analysis",
       "skill_count": 4,
-      "skills": ["MAP-301", "MAP-302", "MAP-303", "MAP-304"]
+      "skills": ["IA-301", "IA-302", "IA-303", "IA-304"]
     },
     "tracing-orchestrator": {
       "agent_id": "T0",
@@ -144,99 +150,102 @@
     },
     "solution-architect": {
       "agent_id": "02",
-      "phase": "02-architecture",
+      "phase": "03-architecture",
       "skill_count": 13,
       "skills": ["ARCH-001", "ARCH-002", "ARCH-003", "ARCH-004", "ARCH-005", "ARCH-006", "ARCH-007", "ARCH-008", "ARCH-009", "ARCH-010", "ARCH-011", "ARCH-012", "DOC-009"]
     },
     "system-designer": {
       "agent_id": "03",
-      "phase": "03-design",
+      "phase": "04-design",
       "skill_count": 11,
       "skills": ["DES-001", "DES-002", "DES-003", "DES-004", "DES-005", "DES-006", "DES-007", "DES-008", "DES-009", "DES-010", "DOC-010"]
     },
     "test-design-engineer": {
       "agent_id": "04",
-      "phase": "04-test-strategy",
+      "phase": "05-test-strategy",
       "skill_count": 9,
       "skills": ["TEST-001", "TEST-002", "TEST-003", "TEST-004", "TEST-005", "TEST-014", "TEST-015", "TEST-016", "TEST-017"]
     },
     "software-developer": {
       "agent_id": "05",
-      "phase": "05-implementation",
+      "phase": "06-implementation",
       "skill_count": 14,
       "skills": ["DEV-001", "DEV-002", "DEV-003", "DEV-004", "DEV-005", "DEV-006", "DEV-007", "DEV-008", "DEV-009", "DEV-010", "DEV-011", "DEV-012", "DEV-013", "DEV-014"]
     },
     "integration-tester": {
       "agent_id": "06",
-      "phase": "06-testing",
+      "phase": "07-testing",
       "skill_count": 8,
       "skills": ["TEST-006", "TEST-007", "TEST-008", "TEST-009", "TEST-010", "TEST-011", "TEST-012", "TEST-013"]
     },
     "qa-engineer": {
       "agent_id": "07",
-      "phase": "07-code-review",
+      "phase": "08-code-review",
       "skill_count": 1,
       "skills": ["DEV-015"]
     },
     "security-compliance-auditor": {
       "agent_id": "08",
-      "phase": "08-validation",
+      "phase": "09-validation",
       "skill_count": 13,
       "skills": ["SEC-001", "SEC-002", "SEC-003", "SEC-004", "SEC-005", "SEC-006", "SEC-007", "SEC-008", "SEC-009", "SEC-010", "SEC-011", "SEC-012", "SEC-013"]
     },
     "cicd-engineer": {
       "agent_id": "09",
-      "phase": "09-cicd",
+      "phase": "10-cicd",
       "skill_count": 6,
       "skills": ["OPS-001", "OPS-002", "OPS-003", "OPS-004", "OPS-005", "OPS-006"]
     },
     "environment-builder": {
       "agent_id": "10",
-      "phase": "10-local-testing",
+      "phase": "11-local-testing",
       "skill_count": 7,
       "skills": ["OPS-007", "OPS-008", "OPS-015", "OPS-016", "DOC-001", "DOC-002", "DOC-003"]
     },
     "deployment-engineer-staging": {
       "agent_id": "11",
-      "phase": "11-test-deploy",
+      "phase": "12-test-deploy",
       "skill_count": 4,
       "skills": ["OPS-009", "OPS-010", "OPS-011", "DOC-004"]
     },
     "release-manager": {
       "agent_id": "12",
-      "phase": "12-production",
+      "phase": "13-production",
       "skill_count": 5,
       "skills": ["OPS-012", "OPS-013", "OPS-014", "DOC-005", "DOC-006"]
     },
     "site-reliability-engineer": {
       "agent_id": "13",
-      "phase": "13-operations",
+      "phase": "14-operations",
       "skill_count": 14,
       "skills": ["SRE-001", "SRE-002", "SRE-003", "SRE-004", "SRE-005", "SRE-006", "SRE-007", "SRE-008", "SRE-009", "SRE-010", "SRE-011", "SRE-012", "DOC-007", "DOC-008"]
     },
     "upgrade-engineer": {
       "agent_id": "14",
-      "phase": "14-upgrade",
+      "phase": "15-upgrade",
       "skill_count": 6,
       "skills": ["UPG-001", "UPG-002", "UPG-003", "UPG-004", "UPG-005", "UPG-006"]
     }
   },
   "skill_lookup": {
-    "MAP-001": "mapping-orchestrator",
-    "MAP-002": "mapping-orchestrator",
-    "MAP-003": "mapping-orchestrator",
-    "MAP-101": "impact-analyzer",
-    "MAP-102": "impact-analyzer",
-    "MAP-103": "impact-analyzer",
-    "MAP-104": "impact-analyzer",
-    "MAP-201": "entry-point-finder",
-    "MAP-202": "entry-point-finder",
-    "MAP-203": "entry-point-finder",
-    "MAP-204": "entry-point-finder",
-    "MAP-301": "risk-assessor",
-    "MAP-302": "risk-assessor",
-    "MAP-303": "risk-assessor",
-    "MAP-304": "risk-assessor",
+    "QS-001": "quick-scan-agent",
+    "QS-002": "quick-scan-agent",
+    "QS-003": "quick-scan-agent",
+    "IA-001": "impact-analysis-orchestrator",
+    "IA-002": "impact-analysis-orchestrator",
+    "IA-003": "impact-analysis-orchestrator",
+    "IA-101": "impact-analyzer",
+    "IA-102": "impact-analyzer",
+    "IA-103": "impact-analyzer",
+    "IA-104": "impact-analyzer",
+    "IA-201": "entry-point-finder",
+    "IA-202": "entry-point-finder",
+    "IA-203": "entry-point-finder",
+    "IA-204": "entry-point-finder",
+    "IA-301": "risk-assessor",
+    "IA-302": "risk-assessor",
+    "IA-303": "risk-assessor",
+    "IA-304": "risk-assessor",
     "TRACE-001": "tracing-orchestrator",
     "TRACE-002": "tracing-orchestrator",
     "TRACE-003": "tracing-orchestrator",
@@ -263,6 +272,7 @@
     "ORCH-009": "sdlc-orchestrator",
     "ORCH-010": "sdlc-orchestrator",
     "ORCH-011": "sdlc-orchestrator",
+    "ORCH-012": "sdlc-orchestrator",
     "REQ-001": "requirements-analyst",
     "REQ-002": "requirements-analyst",
     "REQ-003": "requirements-analyst",
@@ -459,6 +469,7 @@
     "orchestration/assess-complexity.md": "sdlc-orchestrator",
     "orchestration/skill-validation": "sdlc-orchestrator",
     "orchestration/autonomous-constitution-validate.md": "sdlc-orchestrator",
+    "orchestration/generate-plan": "sdlc-orchestrator",
     "requirements/elicitation": "requirements-analyst",
     "requirements/user-stories": "requirements-analyst",
     "requirements/classification": "requirements-analyst",
@@ -615,6 +626,24 @@
     "discover/data-model-design": "architecture-designer",
     "discover/api-design": "architecture-designer",
     "discover/directory-scaffolding": "architecture-designer",
+    "quick-scan/quick-scope-estimation": "quick-scan-agent",
+    "quick-scan/keyword-search": "quick-scan-agent",
+    "quick-scan/file-count-estimation": "quick-scan-agent",
+    "impact-analysis/impact-delegation": "impact-analysis-orchestrator",
+    "impact-analysis/impact-consolidation": "impact-analysis-orchestrator",
+    "impact-analysis/scope-refinement": "impact-analysis-orchestrator",
+    "impact-analysis/file-impact-detection": "impact-analyzer",
+    "impact-analysis/module-dependency-mapping": "impact-analyzer",
+    "impact-analysis/coupling-analysis": "impact-analyzer",
+    "impact-analysis/change-propagation-estimation": "impact-analyzer",
+    "impact-analysis/api-endpoint-discovery": "entry-point-finder",
+    "impact-analysis/ui-component-discovery": "entry-point-finder",
+    "impact-analysis/job-handler-discovery": "entry-point-finder",
+    "impact-analysis/event-listener-discovery": "entry-point-finder",
+    "impact-analysis/complexity-scoring": "risk-assessor",
+    "impact-analysis/coverage-gap-detection": "risk-assessor",
+    "impact-analysis/technical-debt-identification": "risk-assessor",
+    "impact-analysis/risk-zone-mapping": "risk-assessor",
     "reverse-engineer/code-behavior-extraction": "behavior-analyzer",
     "reverse-engineer/ac-generation-from-code": "behavior-analyzer",
     "reverse-engineer/precondition-inference": "behavior-analyzer",
