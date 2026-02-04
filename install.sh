@@ -579,7 +579,7 @@ fi
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 cat > .isdlc/state.json << EOF
 {
-  "framework_version": "2.0.0",
+  "framework_version": "2.5.0",
   "project": {
     "name": "$PROJECT_NAME",
     "created": "$TIMESTAMP",
@@ -786,7 +786,7 @@ MONOREPOEOF
         # Create per-project state.json
         cat > ".isdlc/projects/$PROJ_NAME/state.json" << PROJSTATEEOF
 {
-  "framework_version": "2.0.0",
+  "framework_version": "2.5.0",
   "project": {
     "name": "$PROJ_NAME",
     "path": "$PROJ_PATH",
@@ -1029,7 +1029,7 @@ if [ -f "$PROJECT_ROOT/.claude/settings.json" ]; then
 fi
 
 # Build JSON manifest
-MANIFEST_JSON='{"version":"1.0.0","created":"'"$TIMESTAMP"'","framework_version":"2.0.0","files":['
+MANIFEST_JSON='{"version":"1.0.0","created":"'"$TIMESTAMP"'","framework_version":"2.5.0","files":['
 FIRST_FILE=true
 for file in "${INSTALLED_FILES[@]}"; do
     if [ "$FIRST_FILE" = false ]; then
