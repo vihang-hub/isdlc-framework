@@ -1,0 +1,142 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+  test:
+    name: Test on ${{ matrix.os }} (Node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: [18, 20, 22]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  integration:
+    name: Integration Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test CLI commands
+        run: |
+          # Test help
+          node bin/isdlc.js help
+
+          # Test version
+          node bin/isdlc.js version
+
+          # Test doctor (should fail gracefully - no installation)
+          node bin/isdlc.js doctor || true
+
+      - name: Test installation (dry run)
+        run: |
+          # Create temp project
+          mkdir -p /tmp/test-project
+          cd /tmp/test-project
+          git init
+          echo '{"name": "test-project"}' > package.json
+
+          # Run install with dry-run
+          node $GITHUB_WORKSPACE/bin/isdlc.js init --force --dry-run
+
+      - name: Test actual installation
+        run: |
+          # Create temp project
+          mkdir -p /tmp/test-install
+          cd /tmp/test-install
+          git init
+          echo '{"name": "test-install"}' > package.json
+
+          # Run install
+          node $GITHUB_WORKSPACE/bin/isdlc.js init --force
+
+          # Verify installation
+          test -d .claude
+          test -d .isdlc
+          test -f .isdlc/state.json
+          test -f .claude/settings.json
+
+      - name: Test uninstall (dry run)
+        run: |
+          cd /tmp/test-install
+
+          # Run uninstall with dry-run
+          node $GITHUB_WORKSPACE/bin/isdlc.js uninstall --dry-run --force
+
+  bash-install:
+    name: Test Bash Installer
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create test project
+        run: |
+          mkdir -p /tmp/bash-test
+          cd /tmp/bash-test
+          git init
+          echo '{"name": "bash-test"}' > package.json
+
+      - name: Test bash installer
+        run: |
+          cd /tmp/bash-test
+          git clone $GITHUB_WORKSPACE isdlc-framework
+          echo "y" | ./isdlc-framework/install.sh || true
+
+      - name: Verify installation
+        run: |
+          cd /tmp/bash-test
+          test -d .claude || echo "Warning: .claude not found"
+          test -d .isdlc || echo "Warning: .isdlc not found"

@@ -1,0 +1,53 @@
+{
+  "name": "isdlc",
+  "version": "2.5.0",
+  "type": "module",
+  "description": "Structured AI-powered software development lifecycle framework for Claude Code - 36 agents, 200 skills, 16 quality gates",
+  "keywords": [
+    "sdlc",
+    "ai",
+    "claude",
+    "claude-code",
+    "development",
+    "agents",
+    "framework",
+    "quality-gates",
+    "automation"
+  ],
+  "author": "iSDLC Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/isdlc.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/isdlc/issues"
+  },
+  "homepage": "https://github.com/your-org/isdlc#readme",
+  "bin": {
+    "isdlc": "./bin/isdlc.js"
+  },
+  "main": "lib/cli.js",
+  "files": [
+    "bin/",
+    "lib/",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "test": "node --test lib/**/*.test.js",
+    "lint": "echo 'No linter configured'",
+    "prepare": "echo 'Package ready'"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "fs-extra": "^11.2.0",
+    "prompts": "^2.4.2",
+    "semver": "^7.6.0"
+  },
+  "devDependencies": {}
+}

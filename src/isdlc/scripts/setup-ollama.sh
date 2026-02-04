@@ -153,6 +153,17 @@ detect_gpu() {
             elif command -v lspci &> /dev/null; then
                 gpu_info=$(lspci | grep -i "vga\|3d\|display" | head -1 | cut -d: -f3 | xargs)
             fi
+
+            # Fallback: use system RAM for CPU-only inference
+            if [ "$vram_gb" -eq 0 ] && [ -f "/proc/meminfo" ]; then
+                local total_mem_kb=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+                if [ -n "$total_mem_kb" ]; then
+                    local total_mem_gb=$((total_mem_kb / 1024 / 1024))
+                    # Use ~50% of RAM for CPU inference
+                    vram_gb=$((total_mem_gb / 2))
+                    gpu_info="${gpu_info:-CPU-only} (${vram_gb}GB RAM available)"
+                fi
+            fi
             ;;
     esac
 

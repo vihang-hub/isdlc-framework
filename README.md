@@ -6,6 +6,7 @@
 
 <p><strong>A comprehensive SDLC framework for Claude Code with 36 agents, 200 skills, 16 quality gates, and monorepo support.</strong></p>
 
+[![npm version](https://img.shields.io/npm/v/isdlc.svg)](https://www.npmjs.com/package/isdlc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Agents](https://img.shields.io/badge/Agents-36-purple.svg)](docs/AGENTS.md)
 [![Skills](https://img.shields.io/badge/Skills-200-green.svg)](docs/DETAILED-SKILL-ALLOCATION.md)
@@ -22,7 +23,7 @@ The iSDLC (integrated Software Development Lifecycle) framework provides **36 sp
 
 - **15 SDLC agents** — 1 orchestrator + 14 phase agents (requirements → operations)
 - **9 Discover agents** — analyze existing projects or elicit vision for new ones
-- **8 Exploration agents** — 4 mapping (features) + 4 tracing (bugs) for Phase 00
+- **8 Exploration agents** — 4 mapping (Phase 00 for features) + 4 tracing (Phase 02 for bugs)
 - **4 Reverse Engineer agents** — extract acceptance criteria from existing code
 
 The framework installs **into your existing project**, providing structured multi-agent workflows, quality gates between every phase, and standardized processes for AI-powered development.
@@ -39,11 +40,35 @@ The framework installs **into your existing project**, providing structured mult
 
 ### Installation
 
+**Option 1: npx (recommended for one-time use)**
+```bash
+cd /path/to/your-project
+npx isdlc init
+```
+
+**Option 2: Global install (recommended for frequent use)**
+```bash
+npm install -g isdlc
+cd /path/to/your-project
+isdlc init
+```
+
+**Option 3: Bash installer (macOS/Linux fallback)**
 ```bash
 cd /path/to/your-project
 git clone <repo-url> isdlc-framework
 ./isdlc-framework/install.sh
 ```
+
+### CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `isdlc init` | Initialize framework in current project |
+| `isdlc init --monorepo` | Force monorepo mode |
+| `isdlc doctor` | Check installation health |
+| `isdlc uninstall` | Remove framework from project |
+| `isdlc version` | Show installed version |
 
 ### Commands
 
@@ -159,15 +184,24 @@ Customizable governance principles enforced at every quality gate:
 
 ## Project Status
 
-**Completed** (9 enhancements):
+**Completed** (10 enhancements):
 - 36 agents, 200 skills, 16 gates, 5 hooks
 - Project Constitution, Adaptive Workflow, Autonomous Iteration
 - Skill Enforcement, Deterministic Hooks, Monorepo Support
 - Task Planning, Phase 00 Exploration Mode, Multi-Provider LLM Support
+- **Cross-platform npm package** with auto-update notifications
 
 **In Progress**: Integration testing, real project validation
 
 **Planned**: Agent metrics, workflow visualization, portfolio dashboard
+
+---
+
+## System Requirements
+
+- **Node.js 18+** (required)
+- **Claude Code** (CLI tool from Anthropic)
+- **macOS, Linux, or Windows** (all platforms supported)
 
 ---
 
@@ -183,6 +217,6 @@ MIT License
 
 <div align="center">
 
-**iSDLC Framework** v2.4.0 — 36 agents, 200 skills, 16 gates, 5 hooks, 9 enhancements
+**iSDLC Framework** v2.5.0 — 36 agents, 200 skills, 16 gates, 5 hooks, cross-platform npm package
 
 </div>
