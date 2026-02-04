@@ -172,16 +172,17 @@ The framework supports managing multiple projects from a single installation. Wh
 - **`.isdlc/projects/{id}/constitution.md`** — optional per-project constitution overrides
 - **`.isdlc/projects/{id}/skills/external/`** — per-project external skills (isolated from other projects)
 - **`.isdlc/projects/{id}/external-skills-manifest.json`** — registry of installed external skills
-- **`docs/{id}/`** — per-project documentation (requirements, architecture, design)
+- **Per-project docs** — location depends on `docs_location` in monorepo.json: `docs/{id}/` (root mode, default) or `{project-path}/docs/` (project mode)
 
 ### How It Works
 
 1. **Detection**: `install.sh` auto-detects monorepos via workspace indicators (pnpm-workspace.yaml, turbo.json, nx.json, etc.) or directory patterns (apps/, packages/, services/)
 2. **Project Selection**: Use `--project {id}` flag, or let CWD-based detection auto-select when running from inside a project directory, or set `default_project` in monorepo.json
-3. **Independent Workflows**: Each project can have its own active workflow with separate counters and state
-4. **Shared Resources**: Agents, framework skills, hooks, config, and checklists are shared across all projects
-5. **External Skills Isolation**: Tech-stack skills installed by `/discover` are scoped per-project, preventing cross-project overwrites
-6. **Branch Naming**: Monorepo branches are prefixed with project ID: `{project-id}/feature/REQ-0001-name`
+3. **Docs Location**: `docs_location` in monorepo.json controls where project docs live — `"root"` (default) centralizes at `docs/{id}/`, `"project"` keeps docs local at `{project-path}/docs/`
+4. **Independent Workflows**: Each project can have its own active workflow with separate counters and state
+5. **Shared Resources**: Agents, framework skills, hooks, config, and checklists are shared across all projects
+6. **External Skills Isolation**: Tech-stack skills installed by `/discover` are scoped per-project, preventing cross-project overwrites
+7. **Branch Naming**: Monorepo branches are prefixed with project ID: `{project-id}/feature/REQ-0001-name`
 
 ### Backward Compatibility
 
