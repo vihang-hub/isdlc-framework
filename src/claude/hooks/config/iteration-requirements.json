@@ -328,6 +328,43 @@
         "enabled": true,
         "max_iterations": 3,
         "articles": ["I", "VII", "IX", "X"]
+      },
+      "sub_phases": {
+        "15-upgrade-preliminary-analysis": {
+          "_comment": "Always runs - changelog fetch and quick risk assessment",
+          "interactive_elicitation": {
+            "enabled": false
+          },
+          "test_iteration": {
+            "enabled": false
+          },
+          "constitutional_validation": {
+            "enabled": false
+          }
+        },
+        "15-upgrade-impact-analysis": {
+          "_comment": "Conditional - runs when user chooses comprehensive analysis",
+          "trigger": "user_choice",
+          "trigger_options": ["quick", "comprehensive", "skip"],
+          "when_comprehensive": {
+            "delegates_to": "impact-analysis-orchestrator",
+            "workflow_context": "upgrade",
+            "sub_agents": ["M1-impact-analyzer", "M2-entry-point-finder", "M3-risk-assessor"],
+            "timeout_minutes": 10
+          },
+          "interactive_elicitation": {
+            "enabled": true,
+            "min_menu_interactions": 1,
+            "required_final_selection": ["quick", "comprehensive", "skip"],
+            "timeout_minutes": 5
+          },
+          "test_iteration": {
+            "enabled": false
+          },
+          "constitutional_validation": {
+            "enabled": false
+          }
+        }
       }
     }
   },

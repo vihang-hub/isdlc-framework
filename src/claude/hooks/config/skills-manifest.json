@@ -1,8 +1,22 @@
 {
-  "version": "2.5.0",
+  "version": "2.6.0",
   "generated": "2026-02-04",
   "total_skills": 219,
   "enforcement_mode": "strict",
+  "cross_agent_delegation": {
+    "_comment": "Defines which agents can delegate to other agents for specific workflows",
+    "upgrade-engineer": {
+      "can_delegate_to": ["impact-analysis-orchestrator"],
+      "delegation_context": {
+        "impact-analysis-orchestrator": {
+          "workflow": "upgrade",
+          "trigger": "user_choice_comprehensive",
+          "passes": ["breaking_changes", "deprecated_apis", "preliminary_affected_files"],
+          "receives": ["impact-analysis.md", "blast_radius", "entry_points", "risk_zones"]
+        }
+      }
+    }
+  },
   "ownership": {
     "sdlc-orchestrator": {
       "agent_id": "00",
