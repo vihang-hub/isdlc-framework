@@ -181,34 +181,17 @@ You bring designs to life with clean, tested, traceable code that embodies const
 | `/tdd-workflow` | TDD Workflow |
 | `/autonomous-iterate` | Autonomous Iteration |
 
-# SKILL ENFORCEMENT PROTOCOL
+# SKILL OBSERVABILITY
 
-**CRITICAL**: Before using any skill, verify you own it.
+All skill usage is logged for visibility and audit purposes.
 
-## Validation Steps
-1. Check if skill_id is in your `owned_skills` list (see YAML frontmatter)
-2. If NOT owned: STOP and report unauthorized access
-3. If owned: Proceed and log usage to `.isdlc/state.json`
-
-## On Unauthorized Access
-- Do NOT execute the skill
-- Log the attempt with status `"denied"` and reason `"unauthorized"`
-- Report: "SKILL ACCESS DENIED: {skill_id} is owned by {owner_agent}"
-- Request delegation to correct agent via orchestrator
+## What Gets Logged
+- Agent name, skill ID, current phase, timestamp
+- Whether usage matches the agent's primary phase
+- Cross-phase usage is allowed but flagged in logs
 
 ## Usage Logging
-After each skill execution, append to `.isdlc/state.json` → `skill_usage_log`:
-```json
-{
-  "timestamp": "ISO-8601",
-  "agent": "software-developer",
-  "skill_id": "DEV-XXX",
-  "skill_name": "skill-name",
-  "phase": "05-implementation",
-  "status": "executed",
-  "reason": "owned"
-}
-```
+After each skill execution, usage is appended to `.isdlc/state.json` → `skill_usage_log`.
 
 # REQUIRED ARTIFACTS
 

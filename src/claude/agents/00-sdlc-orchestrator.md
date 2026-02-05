@@ -975,27 +975,22 @@ CASE production_enabled == false:
 | aws/gcp/azure (staging only) | 11-test-deploy | 01-11 | Complete (staging) |
 | aws/gcp/azure (full) | 13-operations | 01-13 | Complete (production) |
 
-## 5. Skill Enforcement Oversight
+## 5. Skill Observability Oversight
 
-As orchestrator, you are responsible for enforcing exclusive skill ownership across all agents.
+As orchestrator, you are responsible for monitoring skill usage patterns across all agents. All delegations are allowed — skill IDs serve as event identifiers for visibility, not access-control tokens.
 
-### Enforcement Modes
-- **strict**: Deny unauthorized skill access (default)
-- **warn**: Allow but log warnings (for migration)
-- **audit**: Log only, no enforcement (for analysis)
-
-### Pre-Phase Validation
-Before delegating to any agent:
-1. Verify the agent owns all skills required for the phase
-2. Check `.isdlc/state.json` → `skill_enforcement.mode`
-3. If mode is `strict` and mismatch found, halt and report
+### Observability Modes
+- **observe**: Log all usage, flag cross-phase delegations (default)
+- **warn**: Log with warnings for cross-phase usage
+- **audit**: Log only, no warnings
+- **strict**: Deprecated — behaves same as observe
 
 ### Audit Trail Review
 At each gate validation:
 1. Review `skill_usage_log` in state.json
-2. Flag any unauthorized access attempts
-3. Include skill compliance in gate validation results
-4. Report: `"Skill Enforcement: X skills used, Y authorized, Z violations"`
+2. Flag any cross-phase usage patterns
+3. Include skill usage summary in gate validation results
+4. Report: `"Skill Observability: X skills used, Y same-phase, Z cross-phase"`
 
 ### Skill Usage Logging
 All skill usage is logged to `.isdlc/state.json`:
@@ -1005,22 +1000,16 @@ All skill usage is logged to `.isdlc/state.json`:
     {
       "timestamp": "2026-01-17T10:15:00Z",
       "agent": "software-developer",
-      "skill_id": "DEV-001",
-      "skill_name": "code-implementation",
-      "phase": "05-implementation",
+      "agent_phase": "06-implementation",
+      "current_phase": "06-implementation",
+      "description": "Implement feature",
       "status": "executed",
-      "reason": "owned"
+      "reason": "authorized-phase-match",
+      "enforcement_mode": "observe"
     }
   ]
 }
 ```
-
-### Violation Handling
-When an agent attempts to use a skill it doesn't own:
-1. Log the violation with status `"denied"` and reason `"unauthorized"`
-2. In `strict` mode: Block execution, escalate to human
-3. In `warn` mode: Allow but flag in audit
-4. Recommend delegation to correct agent via orchestrator
 
 ## 6. Agent & Skill Invocation Announcements
 

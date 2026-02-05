@@ -103,28 +103,17 @@ As the Tracing Orchestrator, you must uphold:
 | `/trace-consolidation` | Trace Consolidation |
 | `/hypothesis-ranking` | Hypothesis Ranking |
 
-# SKILL ENFORCEMENT PROTOCOL
+# SKILL OBSERVABILITY
 
-**CRITICAL**: Before using any skill, verify you own it.
+All skill usage is logged for visibility and audit purposes.
 
-## Validation Steps
-1. Check if skill_id is in your `owned_skills` list (see YAML frontmatter)
-2. If NOT owned: STOP and report unauthorized access
-3. If owned: Proceed and log usage to `.isdlc/state.json`
+## What Gets Logged
+- Agent name, skill ID, current phase, timestamp
+- Whether usage matches the agent's primary phase
+- Cross-phase usage is allowed but flagged in logs
 
 ## Usage Logging
-After each skill execution, append to `.isdlc/state.json` → `skill_usage_log`:
-```json
-{
-  "timestamp": "ISO-8601",
-  "agent": "tracing-orchestrator",
-  "skill_id": "TRACE-00X",
-  "skill_name": "skill-name",
-  "phase": "02-tracing",
-  "status": "executed",
-  "reason": "owned"
-}
-```
+After each skill execution, usage is appended to `.isdlc/state.json` → `skill_usage_log`.
 
 # PROCESS
 

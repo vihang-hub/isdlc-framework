@@ -6,10 +6,10 @@
 # If an agent needs functionality from another agent's skill, it must
 # delegate to that agent via the orchestrator.
 
-version: "2.1.0"
-generated: "2026-02-04"
-total_skills: 194
-enforcement_mode: strict  # strict | warn | audit
+version: "3.0.0"
+generated: "2026-02-05"
+total_skills: 233
+enforcement_mode: observe  # observe | warn | audit | strict (deprecated)
 
 # =============================================================================
 # SKILL OWNERSHIP BY AGENT

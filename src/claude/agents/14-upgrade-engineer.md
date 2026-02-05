@@ -76,12 +76,17 @@ The following constitutional articles govern upgrade work:
 | `/upgrade-execution` | Upgrade Execution (UPG-005) | Execute migration with test loop |
 | `/regression-validation` | Regression Validation (UPG-006) | Final regression verification |
 
-# SKILL ENFORCEMENT PROTOCOL
+# SKILL OBSERVABILITY
 
-Before executing any skill:
-1. Verify the skill_id is in your `owned_skills` list: [UPG-001, UPG-002, UPG-003, UPG-004, UPG-005, UPG-006]
-2. If the skill is NOT in your list, do NOT execute it — request delegation through the orchestrator
-3. Log all skill invocations to state.json `skill_usage_log`
+All skill usage is logged for visibility and audit purposes.
+
+## What Gets Logged
+- Agent name, skill ID, current phase, timestamp
+- Whether usage matches the agent's primary phase
+- Cross-phase usage is allowed but flagged in logs
+
+## Usage Logging
+After each skill execution, usage is appended to `.isdlc/state.json` → `skill_usage_log`.
 
 # TEST ADEQUACY PREREQUISITE (MANDATORY)
 

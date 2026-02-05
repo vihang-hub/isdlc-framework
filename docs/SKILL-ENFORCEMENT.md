@@ -1,34 +1,32 @@
-# Skill Enforcement (Enhancement #4)
+# Skill Observability (formerly Skill Enforcement)
 
 **Status**: Complete
-**Date Implemented**: 2026-01-18
-**Version**: 2.0.0 (with Runtime Hooks)
+**Date Implemented**: 2026-01-18 (v1.0), 2026-02-05 (v3.0 — Observability Model)
+**Version**: 3.0.0
 
 ---
 
 ## Overview
 
-Skill Enforcement implements exclusive skill ownership where each of the 163 skills belongs to exactly one agent. This is now enforced at **runtime** using Claude Code hooks that intercept Task tool calls and validate agent authorization before execution.
+Skill Observability provides visibility into agent delegation patterns. Each of the 233 skills has a **primary agent**, and all usage is logged for audit and visibility. Cross-phase delegations are allowed but flagged in logs.
+
+**Key change in v3.0**: Skill IDs are now **event identifiers** for logging/visibility, not access-control tokens. The PreToolUse hook never blocks — it only observes.
 
 ---
 
 ## What Problem Does This Solve?
 
-### Before Skill Enforcement (v1.0)
-- Skills were documented but not enforced
-- Any agent could theoretically use any skill
+### Before Skill Observability (v1.0)
+- Skills were documented but not tracked
 - No audit trail of skill usage
-- No accountability for skill misuse
-- Unclear ownership for troubleshooting
-- Enforcement was purely prompt-based (honor system)
+- No visibility into cross-phase delegation patterns
 
-### After Skill Enforcement (v2.0)
-- Each skill has exactly ONE owner agent
-- **Runtime enforcement via Claude Code hooks**
-- Ownership is validated before execution
+### After Skill Observability (v3.0)
+- Each skill has a **primary agent** (documented, not enforced)
+- **Runtime observability via Claude Code hooks**
 - All usage is logged to state.json automatically
-- Violations are blocked (strict mode) or flagged (warn/audit modes)
-- Clear accountability and traceability
+- Cross-phase usage is allowed but flagged in logs
+- Clear visibility and audit trail for gate reviews
 
 ---
 
@@ -36,17 +34,17 @@ Skill Enforcement implements exclusive skill ownership where each of the 163 ski
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    ENFORCEMENT FLOW                          │
+│                    OBSERVABILITY FLOW                          │
 ├─────────────────────────────────────────────────────────────┤
 │  1. Agent invokes Task tool to delegate to another agent     │
-│  2. PreToolUse hook (skill-validator.sh) intercepts          │
-│  3. Hook script validates:                                   │
+│  2. PreToolUse hook (skill-validator.js) observes            │
+│  3. Hook script checks:                                      │
 │     - Which agent is being invoked                           │
 │     - Which phase is active                                  │
-│     - Whether agent owns skills for that phase               │
-│  4. If unauthorized (strict): Block with JSON response       │
-│  5. If authorized: Allow and proceed                         │
-│  6. PostToolUse hook (log-skill-usage.sh) logs all calls     │
+│     - Whether agent matches the current phase                │
+│  4. Always allows — exit 0 with no output                    │
+│  5. PostToolUse hook (log-skill-usage.js) logs all calls     │
+│  6. Cross-phase usage flagged as "cross-phase-usage" in log  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -54,8 +52,8 @@ Skill Enforcement implements exclusive skill ownership where each of the 163 ski
 
 | File | Purpose |
 |------|---------|
-| `.claude/hooks/skill-validator.js` | PreToolUse hook - validates agent authorization |
-| `.claude/hooks/log-skill-usage.js` | PostToolUse hook - logs all Task tool usage |
+| `.claude/hooks/skill-validator.js` | PreToolUse observability hook — always allows |
+| `.claude/hooks/log-skill-usage.js` | PostToolUse hook — logs all Task tool usage |
 | `.claude/hooks/lib/common.js` | Shared utilities (JSON parsing, manifest lookup) |
 | `.claude/settings.json` | Hook configuration (matchers, timeouts) |
 | `config/skills-manifest.json` | JSON manifest for runtime lookup |
@@ -101,9 +99,9 @@ The hooks are configured in `.claude/settings.json`:
 
 ## How It Works
 
-### 1. Ownership Definition
+### 1. Primary Agent Definition
 
-Each agent's YAML frontmatter includes an `owned_skills` array:
+Each agent's YAML frontmatter includes an `owned_skills` array (documenting primary skills):
 
 ```yaml
 ---
@@ -117,7 +115,7 @@ owned_skills:
 ---
 ```
 
-Each skill's YAML frontmatter includes an `owner` field:
+Each skill's YAML frontmatter includes an `owner` field (primary agent):
 
 ```yaml
 ---
@@ -129,44 +127,42 @@ owner: software-developer
 
 ### 2. Central Manifest
 
-The `skills-manifest.yaml` provides authoritative skill-to-agent mappings:
+The `skills-manifest.json` provides authoritative skill-to-agent mappings:
 
-```yaml
-# src/isdlc/config/skills-manifest.yaml
-version: "2.0.0"
-total_skills: 163
-enforcement_mode: strict
-
-skill_lookup:
-  DEV-001: software-developer
-  DEV-002: software-developer
-  SEC-001: security-compliance-auditor
-  # ...
+```json
+{
+  "version": "3.0.0",
+  "total_skills": 233,
+  "enforcement_mode": "observe"
+}
 ```
 
-### 3. Validation Protocol
+### 3. Observability Logging
 
-Before using any skill, agents must:
-
-1. Check if the skill_id is in their `owned_skills` list
-2. If NOT owned: Stop and report unauthorized access
-3. If owned: Proceed and log usage
-
-### 4. Usage Logging
-
-All skill usage is logged to `.isdlc/state.json`:
+All agent delegations are logged to `.isdlc/state.json`:
 
 ```json
 {
   "skill_usage_log": [
     {
-      "timestamp": "2026-01-18T10:15:00Z",
+      "timestamp": "2026-02-05T10:15:00.000Z",
       "agent": "software-developer",
-      "skill_id": "DEV-001",
-      "skill_name": "code-implementation",
-      "phase": "05-implementation",
+      "agent_phase": "06-implementation",
+      "current_phase": "06-implementation",
+      "description": "Implement feature",
       "status": "executed",
-      "reason": "owned"
+      "reason": "authorized-phase-match",
+      "enforcement_mode": "observe"
+    },
+    {
+      "timestamp": "2026-02-05T10:20:00.000Z",
+      "agent": "requirements-analyst",
+      "agent_phase": "01-requirements",
+      "current_phase": "06-implementation",
+      "description": "Clarify requirement",
+      "status": "observed",
+      "reason": "cross-phase-usage",
+      "enforcement_mode": "observe"
     }
   ]
 }
@@ -174,62 +170,76 @@ All skill usage is logged to `.isdlc/state.json`:
 
 ---
 
-## Enforcement Modes
+## Observability Modes
 
-### Strict Mode (Default)
-- Unauthorized access is **blocked**
-- Violation logged with status `"denied"`
-- Escalation to human triggered
-- **Use for**: Production projects, compliance-critical work
+### Observe Mode (Default)
+- All access is **allowed**
+- Cross-phase usage logged with status `"observed"`, reason `"cross-phase-usage"`
+- Same-phase usage logged with status `"executed"`, reason `"authorized-phase-match"`
+- **Use for**: All projects (recommended default)
 
 ### Warn Mode
-- Unauthorized access is **allowed with warning**
-- Violation logged with status `"warned"`
+- All access is **allowed**
+- Cross-phase usage logged with status `"warned"`
 - Flagged for review at phase gate
-- **Use for**: Migration period, testing enforcement
+- **Use for**: Projects wanting visibility into cross-phase patterns
 
 ### Audit Mode
 - All access is **allowed**
 - All usage logged for analysis only
-- No enforcement, observation only
-- **Use for**: Initial rollout, usage pattern analysis
+- No warnings, observation only
+- **Use for**: Silent monitoring
+
+### Strict Mode (Deprecated)
+- **Behaves same as observe mode** in v3.0
+- Kept for backward compatibility — existing projects with `mode: 'strict'` will silently switch to observability behavior
+- No blocking occurs
 
 Configure in `.isdlc/state.json`:
 ```json
 {
   "skill_enforcement": {
     "enabled": true,
-    "mode": "strict",
+    "mode": "observe",
     "fail_behavior": "allow",
-    "manifest_version": "2.0.0"
+    "manifest_version": "3.0.0"
   }
 }
 ```
 
-### Fail Behavior Configuration
+---
 
-The `fail_behavior` setting controls what happens when the hook encounters errors:
+## Gate Integration
 
-| Value | Behavior |
-|-------|----------|
-| **allow** | If hook errors or times out, allow the operation (prioritize workflow) |
-| **block** | If hook errors or times out, block the operation (prioritize security) |
+At each phase gate, skill usage is reviewed:
 
-Default is `allow` to ensure workflow continuity.
+1. **Review skill_usage_log** for the completed phase
+2. **Summarize patterns**: Same-phase vs cross-phase usage
+3. **Include in gate report**:
+   ```
+   Skill Observability Summary:
+   - Total delegations: 15
+   - Same-phase: 12 (80%)
+   - Cross-phase: 3 (flagged in log)
+     - requirements-analyst used during 06-implementation
+     - security-compliance-auditor used during 06-implementation
+     - test-design-engineer used during 06-implementation
+   ```
+4. **Gate decision**: Cross-phase usage does NOT fail gates — it is informational
 
 ---
 
 ## Skill Distribution
 
-### By Agent (163 skills across 23 agents)
+### By Agent (233 skills across 37 agents)
 
 | Agent | Skills | Categories |
 |-------|--------|------------|
-| 00 - SDLC Orchestrator | 11 | orchestration/ |
+| 00 - SDLC Orchestrator | 12 | orchestration/ |
 | 01 - Requirements Analyst | 11 | requirements/ |
 | 02 - Solution Architect | 13 | architecture/, documentation/ |
 | 03 - System Designer | 11 | design/, documentation/ |
-| 04 - Test Design Engineer | 5 | testing/ (planning) |
+| 04 - Test Design Engineer | 9 | testing/ (planning) |
 | 05 - Software Developer | 14 | development/ |
 | 06 - Integration Tester | 8 | testing/ (execution) |
 | 07 - QA Engineer | 1 | development/ (code-review) |
@@ -239,177 +249,56 @@ Default is `allow` to ensure workflow continuity.
 | 11 - Deployment Engineer (Staging) | 4 | devops/, documentation/ |
 | 12 - Release Manager | 5 | devops/, documentation/ |
 | 13 - Site Reliability Engineer | 14 | operations/, documentation/ |
-
-### Skill ID Prefixes
-
-| Prefix | Category | Owner Agents |
-|--------|----------|--------------|
-| ORCH-* | Orchestration | Agent 00 |
-| REQ-* | Requirements | Agent 01 |
-| ARCH-* | Architecture | Agent 02 |
-| DES-* | Design | Agent 03 |
-| TEST-* | Testing | Agents 04, 06 |
-| DEV-* | Development | Agents 05, 07 |
-| SEC-* | Security | Agent 08 |
-| OPS-* | DevOps | Agents 09-12 |
-| SRE-* | Operations | Agent 13 |
-| DOC-* | Documentation | Agents 02, 03, 10-13 |
+| 14 - Upgrade Engineer | 6 | upgrade/ |
 
 ---
 
-## Gate Integration
+## Files
 
-At each phase gate, skill enforcement is validated:
-
-1. **Review skill_usage_log** for the completed phase
-2. **Count violations**: Entries with `reason: "unauthorized"`
-3. **Include in gate report**:
-   ```
-   Skill Enforcement Summary:
-   - Total skills used: 15
-   - Authorized: 14 (93.3%)
-   - Violations: 1
-     - DEV-015 used by software-developer (owned by qa-engineer)
-   ```
-4. **Gate decision**: In strict mode, violations may fail the gate
-
----
-
-## Files Changed
-
-### New Files (v2.0 - Runtime Hooks, Node.js)
+### Hook Files (v3.0 - Observability, Node.js)
 
 | File | Purpose | Lines |
 |------|---------|-------|
-| `.claude/hooks/skill-validator.js` | PreToolUse validation hook (Node.js) | ~170 |
+| `.claude/hooks/skill-validator.js` | PreToolUse observability hook (Node.js) | ~170 |
 | `.claude/hooks/log-skill-usage.js` | PostToolUse logging hook (Node.js) | ~130 |
 | `.claude/hooks/lib/common.js` | Shared utilities (Node.js) | ~250 |
 | `.claude/settings.json` | Hook configuration | ~25 |
-| `config/skills-manifest.json` | JSON manifest for runtime | ~250 |
-| `scripts/convert-manifest.sh` | YAML→JSON converter | ~250 |
-| `.claude/hooks/tests/test-skill-validator.js` | Test suite (Node.js) | ~350 |
-| `.claude/hooks/tests/test-scenarios/*.json` | Test scenarios | ~50 |
-
-### Original Files (v1.0)
-
-- `config/skills-manifest.yaml` (~800 lines)
-  - Central ownership manifest with skill_lookup and path_lookup
-- `.claude/skills/orchestration/skill-validation/SKILL.md` (~300 lines)
-  - Validation skill for orchestrator
-
-### Modified Files
-
-**Agent Files (14)**
-All `.claude/agents/*.md` files updated with:
-- `owned_skills` array in YAML frontmatter
-- `SKILL ENFORCEMENT PROTOCOL` section
-
-**Skill Files (118)**
-All `.claude/skills/**/SKILL.md` files updated with:
-- `owner` field set to actual agent name
-
-**init-project.sh**
-Added:
-- Hook setup and copying
-- Manifest JSON conversion
-- `skill_enforcement.fail_behavior` configuration
-- `skill_usage_log` array in state.json
+| `config/skills-manifest.json` | JSON manifest for runtime | ~700 |
+| `.claude/hooks/tests/test-skill-validator.js` | Test suite (Node.js) | ~470 |
 
 ---
 
 ## Usage Examples
 
-### Example 1: Authorized Access
+### Example 1: Same-Phase Usage
 ```
 Agent: software-developer
-Skill: DEV-001 (code-implementation)
-Phase: 05-implementation
+Phase: 06-implementation
+Current Phase: 06-implementation
 
-Result: AUTHORIZED
-- DEV-001 is in software-developer's owned_skills
-- Execution proceeds
-- Logged with status: "executed", reason: "owned"
+Result: ALLOWED (same-phase match)
+Logged: status: "executed", reason: "authorized-phase-match"
 ```
 
-### Example 2: Unauthorized Access (Strict Mode)
+### Example 2: Cross-Phase Usage
 ```
-Agent: software-developer
-Skill: SEC-001 (security-architecture-review)
-Phase: 05-implementation
+Agent: requirements-analyst
+Phase: 01-requirements
+Current Phase: 06-implementation
 
-Result: UNAUTHORIZED
-- SEC-001 is owned by security-compliance-auditor
-- Execution blocked
-- Logged with status: "denied", reason: "unauthorized"
-- Message: "SKILL ACCESS DENIED: SEC-001 is owned by
-  security-compliance-auditor. Delegate via orchestrator."
+Result: ALLOWED (cross-phase — observed)
+Logged: status: "observed", reason: "cross-phase-usage"
 ```
 
-### Example 3: Cross-Agent Delegation
-When an agent needs functionality from a skill it doesn't own:
-
-1. Agent recognizes need for skill outside its ownership
-2. Agent requests orchestrator to delegate to owning agent
-3. Orchestrator delegates task to correct agent
-4. Owning agent executes skill, logs usage
-5. Results returned to requesting agent
-
----
-
-## Metrics
-
-Track enforcement effectiveness:
-
-| Metric | Description |
-|--------|-------------|
-| Compliance Rate | % of skill uses that are authorized |
-| Violation Count | Total unauthorized attempts |
-| Violations by Agent | Which agents attempt unauthorized access |
-| Violations by Skill | Which skills are commonly misused |
-| Mode Usage | Distribution of strict/warn/audit |
-
----
-
-## Best Practices
-
-### Do's
-- **Do** check `owned_skills` before using any skill
-- **Do** delegate to the correct agent for skills you don't own
-- **Do** log all skill usage, even in audit mode
-- **Do** review skill_usage_log at phase gates
-- **Do** escalate violations in strict mode
-
-### Don'ts
-- **Don't** attempt to use skills you don't own
-- **Don't** disable enforcement without project lead approval
-- **Don't** modify skill ownership without updating manifest
-- **Don't** skip logging in any enforcement mode
-- **Don't** ignore violations flagged at gates
-
----
-
-## Troubleshooting
-
-### "Skill Not Found"
+### Example 3: Orchestrator
 ```
-Error: Unknown skill_id: XYZ-999
-```
-- Check skills-manifest.yaml for correct skill_id
-- Verify skill file exists in .claude/skills/
+Agent: sdlc-orchestrator
+Phase: all
+Current Phase: 06-implementation
 
-### "Enforcement Disabled"
+Result: ALLOWED (orchestrator — always authorized)
+Logged: status: "executed", reason: "authorized-orchestrator"
 ```
-Warning: skill_enforcement.enabled is false
-```
-- Check .isdlc/state.json configuration
-- Enabled by default in new projects
-
-### "Manifest Version Mismatch"
-```
-Warning: manifest_version mismatch (2.0.0 vs 1.0.0)
-```
-- Update project state.json to match current manifest
-- Re-run init-project.sh if needed
 
 ---
 
@@ -430,100 +319,10 @@ node .claude/hooks/tests/test-skill-validator.js --verbose
 | Test Area | Tests |
 |-----------|-------|
 | common.js utilities | 7 |
-| skill-validator.js | 7 |
+| skill-validator.js | 8 |
 | log-skill-usage.js | 4 |
 | Integration | 1 |
-| **Total** | **19** |
-
-### Manual Testing
-
-Test strict mode blocking:
-```bash
-# Set current phase to 05-implementation in state.json
-# Then try to invoke requirements-analyst
-# Should see: SKILL ENFORCEMENT: Agent 'requirements-analyst' not authorized...
-```
-
-Test warn mode:
-```bash
-# Update state.json: "mode": "warn"
-# Unauthorized agents will be allowed but logged with status: "warned"
-```
-
-Test audit mode:
-```bash
-# Update state.json: "mode": "audit"
-# All agents allowed, all usage logged with status: "audited"
-```
-
----
-
-## Related Resources
-
-- **Skills Manifest (YAML)**: `config/skills-manifest.yaml`
-- **Skills Manifest (JSON)**: `config/skills-manifest.json`
-- **Hook Scripts**: `.claude/hooks/`
-- **Hook Tests**: `.claude/hooks/tests/`
-- **Validation Skill**: `.claude/skills/orchestration/skill-validation/SKILL.md`
-- **Orchestrator**: `.claude/agents/00-sdlc-orchestrator.md`
-- **Init Script**: `init-project.sh`
-
----
-
-## Dependencies
-
-| Dependency | Required | Purpose |
-|------------|----------|---------|
-| `Node.js` | Yes | Hook script execution (cross-platform) |
-| `jq` | No | Used in init-project.sh for settings merge |
-| `yq` or Python+PyYAML | No | YAML→JSON conversion (has fallback) |
-
-### Platform Support
-
-| Platform | Status |
-|----------|--------|
-| macOS | ✓ Full support |
-| Linux | ✓ Full support |
-| Windows | ✓ Full support (with Node.js) |
-| WSL | ✓ Full support |
-
----
-
-## Troubleshooting
-
-### Hook Not Executing
-
-1. Check `.claude/settings.json` exists and has correct hook configuration
-2. Verify hook scripts are executable: `chmod +x .claude/hooks/*.sh`
-3. Check `$CLAUDE_PROJECT_DIR` is set correctly
-
-### Node.js Not Found
-
-The hooks require Node.js. Install from https://nodejs.org/ or:
-
-```bash
-# macOS (via Homebrew)
-brew install node
-
-# Ubuntu/Debian
-apt-get install nodejs
-
-# Windows (via Chocolatey)
-choco install nodejs
-```
-
-### Manifest Not Found
-
-Run the converter script:
-```bash
-./scripts/convert-manifest.sh
-```
-
-### Unexpected Blocking
-
-1. Check enforcement mode in `.isdlc/state.json`
-2. Verify current phase matches agent's designated phase
-3. Check `skill_usage_log` for recent entries
+| **Total** | **20** |
 
 ---
 
@@ -535,10 +334,21 @@ Run the converter script:
 | #2 | Scale-Adaptive Tracks | Complete |
 | #3 | Autonomous Iteration | Complete |
 | #4 | Skill Enforcement (Prompt-based) | Complete |
-| **#4b** | **Skill Enforcement (Runtime Hooks)** | **Complete** |
+| #4b | Skill Enforcement (Runtime Hooks) | Complete |
+| **#4c** | **Skill Observability (v3.0)** | **Complete** |
 
 ---
 
-**Version**: 2.0.0
-**Last Updated**: 2026-01-21
+## Migration from v2.0 (Enforcement) to v3.0 (Observability)
+
+Projects upgrading from v2.0:
+1. Update `skills-manifest.json` → `enforcement_mode: "observe"` (or leave as `strict` — it now behaves the same)
+2. Update `state.json` → `skill_enforcement.mode: "observe"`
+3. No code changes needed — hooks handle the transition automatically
+4. Cross-phase usage that was previously blocked will now be allowed and logged
+
+---
+
+**Version**: 3.0.0
+**Last Updated**: 2026-02-05
 **Author**: iSDLC Framework

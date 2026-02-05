@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 /**
- * iSDLC Skill Enforcement - PreToolUse Validation Hook
- * =====================================================
- * Intercepts Task tool calls and validates agent authorization
+ * iSDLC Skill Observability - PreToolUse Observability Hook
+ * =========================================================
+ * Intercepts Task tool calls and observes agent delegation patterns.
+ * All delegations are allowed — skill IDs serve as event identifiers
+ * for logging and visibility, not access-control tokens.
  * Cross-platform Node.js implementation
  *
  * This hook receives JSON input via stdin with the structure:
@@ -16,10 +18,9 @@
  * }
  *
  * Output:
- * - Exit 0 with no output: Allow the tool call
- * - Exit 0 with JSON output: Block with {"continue": false, "stopReason": "..."}
+ * - Exit 0 with no output: Allow the tool call (always)
  *
- * Version: 2.0.0
+ * Version: 3.0.0
  */
 
 const {
@@ -159,33 +160,35 @@ async function main() {
             process.exit(0);
         }
 
-        // Unauthorized access detected
-        debugLog('Authorization: DENIED');
+        // Cross-phase usage detected — observe but always allow
+        debugLog('Authorization: CROSS-PHASE (observed, allowed)');
 
         switch (enforcementMode) {
+            case 'observe':
+                debugLog('OBSERVE: Agent allowed (observability mode)');
+                process.exit(0);
+                break;
+
             case 'strict':
-                // Block the operation
-                const stopReason = `SKILL ENFORCEMENT: Agent '${targetAgent}' (phase: ${agentPhase}) is not authorized for current phase '${currentPhase}'. Delegate to the appropriate agent via the orchestrator.`;
-                outputBlockResponse(stopReason);
+                // Legacy strict mode now behaves same as observe
+                debugLog('OBSERVE: Agent allowed (strict mode — now observability-only)');
                 process.exit(0);
                 break;
 
             case 'warn':
-                // Allow with warning (logged in PostToolUse)
-                debugLog('WARNING: Unauthorized access allowed (warn mode)');
+                // Allow (logged in PostToolUse)
+                debugLog('OBSERVE: Agent allowed (warn mode)');
                 process.exit(0);
                 break;
 
             case 'audit':
-                // Allow silently (logged in PostToolUse)
-                debugLog('AUDIT: Unauthorized access recorded (audit mode)');
+                // Allow (logged in PostToolUse)
+                debugLog('OBSERVE: Agent allowed (audit mode)');
                 process.exit(0);
                 break;
 
             default:
-                // Unknown mode, default to strict
-                const defaultStopReason = `SKILL ENFORCEMENT: Agent '${targetAgent}' is not authorized for phase '${currentPhase}'.`;
-                outputBlockResponse(defaultStopReason);
+                debugLog('OBSERVE: Agent allowed (observability mode)');
                 process.exit(0);
         }
 

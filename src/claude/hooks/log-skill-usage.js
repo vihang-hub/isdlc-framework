@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * iSDLC Skill Enforcement - PostToolUse Logging Hook
- * ===================================================
+ * iSDLC Skill Observability - PostToolUse Logging Hook
+ * ====================================================
  * Logs all Task tool invocations to skill_usage_log in state.json
  * Cross-platform Node.js implementation
  *
@@ -16,7 +16,7 @@
  *   "tool_result": "..."
  * }
  *
- * Version: 2.0.0
+ * Version: 3.0.0
  */
 
 const {
@@ -116,20 +116,28 @@ async function main() {
             } else if (agentPhase === currentPhase) {
                 reason = 'authorized-phase-match';
             } else {
-                // Unauthorized access (but allowed in warn/audit mode)
+                // Cross-phase usage — allowed in all modes (observability model)
                 switch (enforcementMode) {
+                    case 'observe':
+                        status = 'observed';
+                        reason = 'cross-phase-usage';
+                        break;
                     case 'warn':
                         status = 'warned';
-                        reason = 'unauthorized-phase-mismatch';
+                        reason = 'cross-phase-usage';
                         break;
                     case 'audit':
                         status = 'audited';
-                        reason = 'unauthorized-phase-mismatch';
+                        reason = 'cross-phase-usage';
+                        break;
+                    case 'strict':
+                        // Legacy strict mode — now observability-only
+                        status = 'observed';
+                        reason = 'cross-phase-usage';
                         break;
                     default:
-                        // In strict mode, this shouldn't be reached as PreToolUse would block
-                        status = 'executed';
-                        reason = 'authorized';
+                        status = 'observed';
+                        reason = 'cross-phase-usage';
                 }
             }
         }

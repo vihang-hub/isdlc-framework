@@ -123,9 +123,9 @@ Eight hooks intercept tool calls and enforce iteration requirements:
 | `constitution-validator.js` | Blocks until constitutional validation complete |
 | `menu-tracker.js` | Tracks stakeholder elicitation progress |
 | `model-provider-router.js` | Routes to appropriate LLM provider by phase |
-| `skill-validator.js` | Validates skill ownership before execution |
+| `skill-validator.js` | Observes skill usage patterns (never blocks) |
 | `iteration-corridor.js` | Enforces iteration limits per phase |
-| `log-skill-usage.js` | Tracks skill usage for analytics |
+| `log-skill-usage.js` | Logs skill usage for observability |
 
 ### Multi-Provider LLM Support
 
@@ -181,7 +181,7 @@ Customizable governance principles enforced at every quality gate:
 | [CONSTITUTION-GUIDE.md](docs/CONSTITUTION-GUIDE.md) | Project governance principles |
 | [MONOREPO-GUIDE.md](docs/MONOREPO-GUIDE.md) | Multi-project setup |
 | [AUTONOMOUS-ITERATION.md](docs/AUTONOMOUS-ITERATION.md) | Self-correcting agent behavior |
-| [SKILL-ENFORCEMENT.md](docs/SKILL-ENFORCEMENT.md) | Runtime ownership validation |
+| [SKILL-ENFORCEMENT.md](docs/SKILL-ENFORCEMENT.md) | Runtime skill observability |
 | [MULTI-PROVIDER-SUPPORT-DESIGN.md](docs/designs/MULTI-PROVIDER-SUPPORT-DESIGN.md) | LLM provider configuration |
 
 ---
@@ -191,7 +191,7 @@ Customizable governance principles enforced at every quality gate:
 **Completed** (10 enhancements):
 - 37 agents, 233 skills, 16 gates, 8 hooks
 - Project Constitution, Adaptive Workflow, Autonomous Iteration
-- Skill Enforcement, Deterministic Hooks, Monorepo Support
+- Skill Observability, Deterministic Hooks, Monorepo Support
 - Task Planning, Phase 00 Exploration Mode, Multi-Provider LLM Support
 - **Cross-platform npm package** with auto-update notifications
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * iSDLC Skill Enforcement - Test Suite (Node.js)
- * ===============================================
+ * iSDLC Skill Observability - Test Suite (Node.js)
+ * =================================================
  * Unit tests for skill-validator.js and log-skill-usage.js hooks
  *
  * Usage: node test-skill-validator.js [--verbose]
  *
- * Version: 2.0.0
+ * Version: 3.0.0
  */
 
 const fs = require('fs');
@@ -253,16 +253,16 @@ async function testSkillValidator() {
     }
     cleanupTestEnv();
 
-    // Test 4: Wrong phase agent should be blocked in strict mode
+    // Test 4: Cross-phase agent is observed but allowed (observability mode)
     setupTestEnv();
     result = await runHook(hookPath, {
         tool_name: 'Task',
         tool_input: { subagent_type: 'requirements-analyst', description: 'Test' }
     });
-    if (result.stdout.includes('"continue":false') || result.stdout.includes('"continue": false')) {
-        pass('requirements-analyst blocked in 05-implementation phase (strict)');
+    if (result.stdout === '') {
+        pass('requirements-analyst allowed in 05-implementation phase (observability — no blocking)');
     } else {
-        fail('requirements-analyst blocked in 05-implementation phase', 'JSON with continue:false', result.stdout);
+        fail('requirements-analyst allowed in 05-implementation phase (observability)', 'empty output', result.stdout);
     }
     cleanupTestEnv();
 
@@ -317,6 +317,24 @@ async function testSkillValidator() {
         pass('All agents allowed when enforcement disabled');
     } else {
         fail('All agents allowed when enforcement disabled', 'empty output', result.stdout);
+    }
+    cleanupTestEnv();
+
+    // Test 8: Observe mode should allow cross-phase agents
+    setupTestEnv();
+    writeState({
+        skill_enforcement: { enabled: true, mode: 'observe', fail_behavior: 'allow', manifest_version: '3.0.0' },
+        current_phase: '05-implementation',
+        skill_usage_log: []
+    });
+    result = await runHook(hookPath, {
+        tool_name: 'Task',
+        tool_input: { subagent_type: 'requirements-analyst', description: 'Test' }
+    });
+    if (result.stdout === '') {
+        pass('requirements-analyst allowed in observe mode');
+    } else {
+        fail('requirements-analyst allowed in observe mode', 'empty output', result.stdout);
     }
     cleanupTestEnv();
 }
@@ -399,9 +417,15 @@ async function testIntegration() {
     const validatorPath = path.resolve(__dirname, '../skill-validator.js');
     const loggerPath = path.resolve(__dirname, '../log-skill-usage.js');
 
+    // Use 06-implementation to match software-developer's manifest phase
     setupTestEnv();
+    writeState({
+        skill_enforcement: { enabled: true, mode: 'observe', fail_behavior: 'allow', manifest_version: '3.0.0' },
+        current_phase: '06-implementation',
+        skill_usage_log: []
+    });
 
-    // Test: Full flow - allowed agent
+    // Test: Full flow - same-phase agent
     const input = {
         tool_name: 'Task',
         tool_input: { subagent_type: 'software-developer', description: 'Implement feature' }

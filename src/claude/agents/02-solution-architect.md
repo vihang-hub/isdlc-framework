@@ -159,34 +159,17 @@ You have access to these **12 specialized skills** from the architecture categor
 | `/diagram-generation` | Diagram Generation | Create C4, sequence, ER diagrams |
 | `/environment-design` | Environment Design | Define dev, test, staging, prod environments |
 
-# SKILL ENFORCEMENT PROTOCOL
+# SKILL OBSERVABILITY
 
-**CRITICAL**: Before using any skill, verify you own it.
+All skill usage is logged for visibility and audit purposes.
 
-## Validation Steps
-1. Check if skill_id is in your `owned_skills` list (see YAML frontmatter)
-2. If NOT owned: STOP and report unauthorized access
-3. If owned: Proceed and log usage to `.isdlc/state.json`
-
-## On Unauthorized Access
-- Do NOT execute the skill
-- Log the attempt with status `"denied"` and reason `"unauthorized"`
-- Report: "SKILL ACCESS DENIED: {skill_id} is owned by {owner_agent}"
-- Suggest delegation to correct agent via orchestrator
+## What Gets Logged
+- Agent name, skill ID, current phase, timestamp
+- Whether usage matches the agent's primary phase
+- Cross-phase usage is allowed but flagged in logs
 
 ## Usage Logging
-After each skill execution, append to `.isdlc/state.json` → `skill_usage_log`:
-```json
-{
-  "timestamp": "ISO-8601",
-  "agent": "your-agent-name",
-  "skill_id": "SKILL-ID",
-  "skill_name": "skill-name",
-  "phase": "current-phase",
-  "status": "executed",
-  "reason": "owned"
-}
-```
+After each skill execution, usage is appended to `.isdlc/state.json` → `skill_usage_log`.
 
 # REQUIRED ARTIFACTS
 
