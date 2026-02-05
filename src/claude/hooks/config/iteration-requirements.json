@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Deterministic iteration requirements per phase - enforced by hooks",
 
   "phase_requirements": {
@@ -76,6 +76,19 @@
       }
     },
 
+    "00-quick-scan": {
+      "_comment": "Lightweight scope estimation - runs before requirements gathering",
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": false
+      },
+      "constitutional_validation": {
+        "enabled": false
+      }
+    },
+
     "01-requirements": {
       "interactive_elicitation": {
         "enabled": true,
@@ -90,6 +103,36 @@
         "enabled": true,
         "max_iterations": 5,
         "articles": ["I", "IV", "VII", "IX", "XII"]
+      }
+    },
+
+    "02-impact-analysis": {
+      "_comment": "Full impact analysis for features - runs after requirements are finalized",
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": false
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 3,
+        "articles": ["IV", "VII", "IX"]
+      }
+    },
+
+    "02-tracing": {
+      "_comment": "Root cause tracing for bug fixes - runs after bug report is captured",
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": false
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 3,
+        "articles": ["IV", "VII", "IX"]
       }
     },
 

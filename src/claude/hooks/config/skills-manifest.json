@@ -147,8 +147,8 @@
     "execution-path-tracer": {
       "agent_id": "T2",
       "phase": "02-tracing",
-      "skill_count": 4,
-      "skills": ["TRACE-201", "TRACE-202", "TRACE-203", "TRACE-204"]
+      "skill_count": 5,
+      "skills": ["TRACE-201", "TRACE-202", "TRACE-203", "TRACE-204", "TRACE-205"]
     },
     "root-cause-identifier": {
       "agent_id": "T3",
@@ -271,6 +271,7 @@
     "TRACE-202": "execution-path-tracer",
     "TRACE-203": "execution-path-tracer",
     "TRACE-204": "execution-path-tracer",
+    "TRACE-205": "execution-path-tracer",
     "TRACE-301": "root-cause-identifier",
     "TRACE-302": "root-cause-identifier",
     "TRACE-303": "root-cause-identifier",
