@@ -12,6 +12,9 @@
 .idea/
 .vscode/
 
+# Dependencies
+node_modules/
+
 # =============================================================================
 # RUNTIME DIRECTORIES (created when framework is installed into projects)
 # =============================================================================
@@ -43,6 +46,11 @@ docs/SESSION-*.md
 
 # Archive of old documentation
 docs/archive/
+
+# Generated mapping docs (development-only)
+docs/agent-skill-manifest-mapping.csv
+docs/agent-skill-manifest-mapping.md
+docs/agent-skill-mapping.md
 
 # Local setup scripts
 setup-remotes.sh
