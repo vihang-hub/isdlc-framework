@@ -177,7 +177,7 @@ The requirements workflow adapts based on the `scope` modifier from the active w
 | Scope | Workflow | Folder Prefix | Counter Key | Flow |
 |-------|----------|---------------|-------------|------|
 | `feature` | feature, full-lifecycle | `REQ` | `counters.next_req_id` | Full 7-step discovery (Steps 1-7) |
-| `bug-report` | fix | `BUG` | `counters.next_bug_id` | Streamlined 4-step bug report flow |
+| `bug-report` | fix | `BUG` | `counters.next_bug_id` | Streamlined 4-step flow with sufficiency check |
 
 **Counter & Folder Naming:**
 1. Read the appropriate counter from the project's `state.json` (single-project: `.isdlc/state.json`, monorepo: `.isdlc/projects/{project-id}/state.json` — the orchestrator provides the correct path in the delegation context)
@@ -195,7 +195,7 @@ The requirements workflow adapts based on the `scope` modifier from the active w
 
 # BUG REPORT FLOW (scope: "bug-report")
 
-A streamlined 4-step flow for bug fixes. Replaces the full 7-step discovery.
+A streamlined 4-step flow with sufficiency check for bug fixes. Replaces the full 7-step discovery.
 
 ## Bug Step 1: Bug Identification
 
@@ -218,6 +218,46 @@ Please share what you have.
 **🛑 STOP. Wait for user response.**
 
 If the orchestrator passed a `--link` URL, pre-populate the bug link and skip asking for it.
+
+## Bug Step 1b: Sufficiency Check
+
+Before proceeding, evaluate the user's response against these **3 required fields**:
+
+| Field | Required? | How to Detect |
+|-------|-----------|---------------|
+| Expected behavior | Yes | User described what SHOULD happen |
+| Actual behavior | Yes | User described what DOES happen instead |
+| Reproduction steps | Yes | User provided steps, code snippet, or scenario to trigger the bug |
+| Bug link | No | Nice-to-have, not required for sufficiency |
+
+**Logic:**
+- **All 3 present** → proceed to Bug Step 2
+- **1-2 missing** → show follow-up prompt listing ONLY the missing fields
+- **After 2 follow-up attempts still missing** → proceed with incompleteness warning appended to bug report
+
+### Follow-Up Prompt (if fields missing)
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ Missing Bug Details
+
+I need a bit more to create an effective bug report. Please provide:
+
+{list only the missing fields}
+
+This information helps the tracing phase identify the root cause efficiently.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**🛑 STOP. Wait for user response.**
+
+Re-evaluate the response. If fields are still missing after the second follow-up, proceed to Bug Step 2 and flag the incompleteness:
+
+### Incompleteness Note (appended to draft in Step 3 if fields still missing)
+
+```
+⚠️ Incomplete Report: Missing {field(s)}. Tracing phase may require additional investigation.
+```
 
 ## Bug Step 2: Extract External ID
 
@@ -256,6 +296,9 @@ Present the structured bug report for review:
 1. {step 1}
 2. {step 2}
 3. {step 3}
+
+{if Step 1b flagged missing fields after 2 attempts, insert:}
+⚠️ Incomplete Report: Missing {field(s)}. Tracing phase may require additional investigation.
 
 **Environment:** {if mentioned}
 **Severity:** {Critical/High/Medium/Low — based on impact}
@@ -1428,6 +1471,7 @@ Before completing this phase, validate:
 ### Bug Report Scope (Relaxed Gate)
 
 When `scope: "bug-report"`, the gate uses relaxed criteria. Only these are required:
+- [ ] Sufficiency check completed (expected/actual/repro steps present or incompleteness noted)
 - [ ] `bug-report.md` exists with expected vs actual behavior
 - [ ] Steps to reproduce documented
 - [ ] Bug ID assigned (BUG-NNNN format)
@@ -1480,9 +1524,10 @@ Create these tasks at the start of the bug report workflow:
 | # | subject | activeForm |
 |---|---------|------------|
 | 1 | Identify bug and gather details | Gathering bug details |
-| 2 | Extract external ID from tracker | Extracting external ID |
-| 3 | Draft bug report for review | Drafting bug report |
-| 4 | Save bug report artifacts | Saving bug report artifacts |
+| 2 | Validate bug report sufficiency | Validating bug report sufficiency |
+| 3 | Extract external ID from tracker | Extracting external ID |
+| 4 | Draft bug report for review | Drafting bug report |
+| 5 | Save bug report artifacts | Saving bug report artifacts |
 
 ### Scope Detection
 
