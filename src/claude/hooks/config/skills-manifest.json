@@ -1,7 +1,7 @@
 {
   "version": "2.6.0",
   "generated": "2026-02-04",
-  "total_skills": 228,
+  "total_skills": 233,
   "enforcement_mode": "strict",
   "cross_agent_delegation": {
     "_comment": "Defines which agents can delegate to other agents for specific workflows",

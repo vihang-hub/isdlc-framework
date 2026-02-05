@@ -1,10 +1,10 @@
 # iSDLC Agents
 
-This document provides detailed information about all 36 agents in the iSDLC framework.
+This document provides detailed information about all 37 agents in the iSDLC framework.
 
 ## Overview
 
-The framework's 36 agents are organized into five groups:
+The framework's 37 agents are organized into six groups:
 
 | Group | Count | Purpose |
 |-------|-------|---------|
@@ -34,10 +34,10 @@ The 15 SDLC agents implement a 1-to-1 mapping between phases and agents. Each ag
 | **09** | **Security & Compliance Auditor** | Security scanning, penetration testing, compliance | security-scan-report.md, compliance-checklist.md |
 | **10** | **CI/CD Engineer** | Pipeline automation, build configuration | ci-config.yaml, cd-config.yaml, Dockerfile |
 | **11** | **Environment Builder** | Local environment build & launch for testing | testing_environment in state.json, build-log.md |
-| **13** | **Deployment Engineer (Staging)** | Staging deployment, smoke tests, rollback | deployment-log-staging.md, smoke-test-results.md |
-| **14** | **Release Manager** | Production deployment, release coordination | release-notes.md, post-deployment-report.md |
+| **11** | **Deployment Engineer (Staging)** | Staging deployment, smoke tests, rollback | deployment-log-staging.md, smoke-test-results.md |
+| **12** | **Release Manager** | Production deployment, release coordination | release-notes.md, post-deployment-report.md |
+| **14** | **Upgrade Engineer** | Dependency/tool upgrades with regression testing | upgrade-analysis.md, upgrade-summary.md |
 | **15** | **Site Reliability Engineer** | Operations, monitoring, incident response, SLAs | monitoring-config/, alert-rules.yaml, sla-tracking.md |
-| **16** | **Upgrade Engineer** | Dependency/tool upgrades with regression testing | upgrade-analysis.md, upgrade-summary.md |
 
 **1-to-1 Mapping**: Each phase has exactly ONE dedicated agent with clear entry/exit criteria. No overlapping responsibilities — conflicts only occur at phase boundaries and are handled by the Orchestrator.
 
@@ -185,21 +185,21 @@ Phase 09: Independent Validation
 Phase 10: Version Control & CI/CD
     | (CI/CD Engineer)
     v GATE-10: Pipeline operational
-Phase 11: Local Development & Testing
+Phase 10: Local Development & Testing
     | (Environment Builder)
-    v GATE-11: Local environment validated
-Phase 13: Test Environment Deployment
+    v GATE-10: Local environment validated
+Phase 11: Test Environment Deployment
     | (Deployment Engineer - Staging)
-    v GATE-13: Staging deployment verified
-Phase 14: Production Deployment
+    v GATE-11: Staging deployment verified
+Phase 12: Production Deployment
     | (Release Manager)
-    v GATE-14: Production go-live complete
+    v GATE-12: Production go-live complete
+Phase 14: Upgrades
+    | (Upgrade Engineer)
+    v GATE-14: Upgrade complete, zero regressions
 Phase 15: Production Operations
     | (Site Reliability Engineer)
     v GATE-15: Operations stable
-Phase 16: Upgrades
-    | (Upgrade Engineer)
-    v GATE-16: Upgrade complete, zero regressions
 ```
 
 ### Bug Fix Workflow
@@ -237,11 +237,11 @@ Agent definitions are located in `.claude/agents/`:
 ├── 08-qa-engineer.md
 ├── 09-security-compliance-auditor.md
 ├── 10-cicd-engineer.md
-├── 11-dev-environment-engineer.md
-├── 13-deployment-engineer-staging.md
-├── 14-release-manager.md
+├── 10-dev-environment-engineer.md
+├── 11-deployment-engineer-staging.md
+├── 12-release-manager.md
+├── 14-upgrade-engineer.md
 ├── 15-site-reliability-engineer.md
-├── 16-upgrade-engineer.md
 ├── quick-scan/
 │   └── quick-scan-agent.md
 ├── impact-analysis/
@@ -256,8 +256,6 @@ Agent definitions are located in `.claude/agents/`:
 │   └── root-cause-identifier.md
 ├── discover/
 │   └── (discover agent files)
-├── mapping/
-│   └── (legacy - now impact-analysis)
 └── reverse-engineer/
     └── (reverse engineer agent files)
 ```

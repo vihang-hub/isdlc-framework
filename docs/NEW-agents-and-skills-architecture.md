@@ -5,7 +5,7 @@
 
 ## Overview
 
-This framework implements a **1-to-1 mapping** between SDLC phases and specialized AI agents. The 15 core SDLC phases (including Phase 00 for Mapping/Tracing exploration) each have dedicated agents, plus 9 Discover agents and 4 Reverse Engineer agents, totaling 36 agents. This creates clear ownership, simplified workflows, and streamlined handoffs.
+This framework implements a **1-to-1 mapping** between SDLC phases and specialized AI agents. The 16 core SDLC phases each have dedicated agents, plus 9 Discover agents, 1 Quick Scan agent, 4 Impact Analysis agents, 4 Tracing agents, and 4 Reverse Engineer agents, totaling 37 agents. This creates clear ownership, simplified workflows, and streamlined handoffs.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐

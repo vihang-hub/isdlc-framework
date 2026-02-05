@@ -4,12 +4,12 @@
 
 <h3><em>Structured AI-powered software development, from requirements to production.</em></h3>
 
-<p><strong>A comprehensive SDLC framework for Claude Code with 36 agents, 200 skills, 16 quality gates, and monorepo support.</strong></p>
+<p><strong>A comprehensive SDLC framework for Claude Code with 37 agents, 233 skills, 16 quality gates, and monorepo support.</strong></p>
 
 [![npm version](https://img.shields.io/npm/v/isdlc.svg)](https://www.npmjs.com/package/isdlc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Agents](https://img.shields.io/badge/Agents-36-purple.svg)](docs/AGENTS.md)
-[![Skills](https://img.shields.io/badge/Skills-200-green.svg)](docs/DETAILED-SKILL-ALLOCATION.md)
+[![Agents](https://img.shields.io/badge/Agents-37-purple.svg)](docs/AGENTS.md)
+[![Skills](https://img.shields.io/badge/Skills-228-green.svg)](docs/DETAILED-SKILL-ALLOCATION.md)
 [![Gates](https://img.shields.io/badge/Quality%20Gates-16-orange.svg)](#quality-gates)
 [![Hooks](https://img.shields.io/badge/Hooks-8-red.svg)](#enforcement-hooks)
 
@@ -19,11 +19,12 @@
 
 ## What is iSDLC?
 
-The iSDLC (integrated Software Development Lifecycle) framework provides **36 specialized AI agents** that guide software development from requirements through production:
+The iSDLC (integrated Software Development Lifecycle) framework provides **37 specialized AI agents** that guide software development from requirements through production:
 
-- **15 SDLC agents** — 1 orchestrator + 14 phase agents (requirements → operations)
+- **16 SDLC agents** — 1 orchestrator + 15 phase agents (requirements → operations → upgrades)
 - **9 Discover agents** — analyze existing projects or elicit vision for new ones
-- **8 Exploration agents** — 4 mapping (Phase 00 for features) + 4 tracing (Phase 02 for bugs)
+- **5 Exploration agents** — 1 quick scan (Phase 00) + 4 impact analysis (Phase 02 for features)
+- **4 Tracing agents** — trace bug root causes (Phase 02 for bugs)
 - **4 Reverse Engineer agents** — extract acceptance criteria from existing code
 
 The framework installs **into your existing project**, providing structured multi-agent workflows, quality gates between every phase, and standardized processes for AI-powered development.
@@ -175,8 +176,8 @@ Customizable governance principles enforced at every quality gate:
 
 | Document | Description |
 |----------|-------------|
-| [AGENTS.md](docs/AGENTS.md) | All 36 agents with responsibilities and artifacts |
-| [DETAILED-SKILL-ALLOCATION.md](docs/DETAILED-SKILL-ALLOCATION.md) | 200 skills organized by category |
+| [AGENTS.md](docs/AGENTS.md) | All 37 agents with responsibilities and artifacts |
+| [DETAILED-SKILL-ALLOCATION.md](docs/DETAILED-SKILL-ALLOCATION.md) | 233 skills organized by category |
 | [CONSTITUTION-GUIDE.md](docs/CONSTITUTION-GUIDE.md) | Project governance principles |
 | [MONOREPO-GUIDE.md](docs/MONOREPO-GUIDE.md) | Multi-project setup |
 | [AUTONOMOUS-ITERATION.md](docs/AUTONOMOUS-ITERATION.md) | Self-correcting agent behavior |
@@ -188,7 +189,7 @@ Customizable governance principles enforced at every quality gate:
 ## Project Status
 
 **Completed** (10 enhancements):
-- 36 agents, 200 skills, 16 gates, 8 hooks
+- 37 agents, 233 skills, 16 gates, 8 hooks
 - Project Constitution, Adaptive Workflow, Autonomous Iteration
 - Skill Enforcement, Deterministic Hooks, Monorepo Support
 - Task Planning, Phase 00 Exploration Mode, Multi-Provider LLM Support
@@ -220,6 +221,6 @@ MIT License
 
 <div align="center">
 
-**iSDLC Framework** v0.1.0-alpha — 36 agents, 200 skills, 16 gates, 8 hooks, cross-platform npm package
+**iSDLC Framework** v0.1.0-alpha — 37 agents, 233 skills, 16 gates, 8 hooks, cross-platform npm package
 
 </div>

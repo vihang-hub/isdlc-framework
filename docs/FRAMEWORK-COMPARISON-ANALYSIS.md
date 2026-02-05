@@ -3,7 +3,7 @@
 
 **Date**: 2026-02-04
 **Purpose**: Identify gaps in iSDLC framework and recommend minimal enhancements
-**Updated**: Reflects current state with 36 agents, 200 skills, 16 gates
+**Updated**: Reflects current state with 37 agents, 233 skills, 16 gates
 
 ---
 
@@ -21,12 +21,12 @@ After analyzing Ralph Wiggum, GitHub Spec Kit, and BMAD-METHOD against your iSDL
 
 | Capability | iSDLC | Ralph Wiggum | Spec Kit | BMAD | Gap? |
 |------------|-------|--------------|----------|------|------|
-| **Specialized Agents** | ✅ 36 agents | ❌ None | ❌ None | ✅ 26 agents | ✅ Better |
+| **Specialized Agents** | ✅ 37 agents | ❌ None | ❌ None | ✅ 26 agents | ✅ Better |
 | **Phase-Gate System** | ✅ 16 gates | ❌ None | ⚠️ Implicit | ⚠️ 4 phases | ✅ Better |
 | **Autonomous Loops** | ❌ Manual | ✅ Self-referential | ❌ Manual | ⚠️ Workflow | ⛔ **MISSING** |
 | **Constitution/Principles** | ❌ None | ❌ None | ✅ 9 articles | ⚠️ Implicit | ⛔ **MISSING** |
 | **Scale Adaptation** | ❌ Fixed | ❌ Fixed | ❌ Fixed | ✅ 5 levels | ⛔ **MISSING** |
-| **Skills System** | ✅ 200 skills | ❌ None | ⚠️ 5 commands | ✅ 68 workflows | ✅ Better |
+| **Skills System** | ✅ 233 skills | ❌ None | ⚠️ 5 commands | ✅ 68 workflows | ✅ Better |
 | **Artifact Templates** | ✅ 7 templates | ❌ None | ✅ Templates | ✅ 537 docs | ✅ Equal |
 | **Traceability** | ✅ Full | ❌ None | ✅ Yes | ⚠️ Partial | ✅ Better |
 | **State Management** | ✅ state.json | ❌ None | ❌ Git-based | ✅ Manifest | ✅ Better |
@@ -99,7 +99,7 @@ After analyzing Ralph Wiggum, GitHub Spec Kit, and BMAD-METHOD against your iSDL
 4. **Regeneration Capability** - Can't easily regenerate code from specs
 
 **Relevant to iSDLC**: ⭐⭐⭐⭐ (HIGH)
-- A constitution would enforce consistency across all 36 agents
+- A constitution would enforce consistency across all 37 agents
 - Prevents architectural drift during long projects
 - Example: Article III of Spec Kit: "Test-first is NON-NEGOTIABLE"
 
@@ -323,7 +323,7 @@ To avoid clutter while gaining critical capabilities, add **only these 3 enhance
    ```
 
 3. **Agent Integration**:
-   - All 36 agents read constitution at invocation
+   - All 37 agents read constitution at invocation
    - Orchestrator validates against constitution at gates
    - Gate validation checks constitutional compliance
 
@@ -422,7 +422,7 @@ To avoid clutter while gaining critical capabilities, add **only these 3 enhance
 ## What NOT to Add (Avoid Clutter)
 
 ### ❌ Don't Add: BMAD's 26 Agents
-**Why**: Your 36 agents already cover the SDLC comprehensively and now exceed BMAD's count. BMAD's extras (game design, creative intelligence) are domain-specific.
+**Why**: Your 37 agents already cover the SDLC comprehensively and now exceed BMAD's count. BMAD's extras (game design, creative intelligence) are domain-specific.
 
 **Your Framework**: Better focused on general software development
 
@@ -432,7 +432,7 @@ To avoid clutter while gaining critical capabilities, add **only these 3 enhance
 **Your Framework**: Better phase separation and gate validation
 
 ### ❌ Don't Add: BMAD's 68 Workflows
-**Why**: Your 200 skills are more modular. BMAD's workflows are opinionated sequences; your skills are composable.
+**Why**: Your 233 skills are more modular. BMAD's workflows are opinionated sequences; your skills are composable.
 
 **Your Framework**: Better skill modularity
 
@@ -466,7 +466,7 @@ Your framework has **significant advantages** over the others:
 **Winner**: iSDLC
 
 ### 2. ✅ Agent Specialization
-- **iSDLC**: 36 agents (15 SDLC + 9 Discover + 4 Mapping + 4 Tracing + 4 Reverse Engineer)
+- **iSDLC**: 37 agents (16 SDLC + 9 Discover + 1 Quick Scan + 4 Impact Analysis + 4 Tracing + 4 Reverse Engineer)
 - **BMAD**: 26 agents (includes game dev, overkill)
 - **Spec Kit**: No agents (manual)
 - **Ralph**: No agents (iteration tool)
@@ -482,7 +482,7 @@ Your framework has **significant advantages** over the others:
 **Winner**: iSDLC
 
 ### 4. ✅ Skills System
-- **iSDLC**: 200 skills across 14 categories
+- **iSDLC**: 233 skills across 14 categories
 - **BMAD**: 68 workflows (less modular)
 - **Spec Kit**: 5 commands (too simple)
 - **Ralph**: None
