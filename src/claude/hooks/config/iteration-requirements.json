@@ -93,7 +93,7 @@
       }
     },
 
-    "02-architecture": {
+    "03-architecture": {
       "interactive_elicitation": {
         "enabled": false
       },
@@ -107,7 +107,7 @@
       }
     },
 
-    "03-design": {
+    "04-design": {
       "interactive_elicitation": {
         "enabled": false
       },
@@ -121,7 +121,7 @@
       }
     },
 
-    "04-test-strategy": {
+    "05-test-strategy": {
       "interactive_elicitation": {
         "enabled": false
       },
@@ -142,7 +142,7 @@
       }
     },
 
-    "05-implementation": {
+    "06-implementation": {
       "interactive_elicitation": {
         "enabled": false
       },
@@ -174,7 +174,7 @@
       }
     },
 
-    "06-testing": {
+    "07-testing": {
       "interactive_elicitation": {
         "enabled": false
       },
@@ -211,7 +211,7 @@
       }
     },
 
-    "07-code-review": {
+    "08-code-review": {
       "interactive_elicitation": {
         "enabled": false
       },
@@ -225,7 +225,7 @@
       }
     },
 
-    "08-validation": {
+    "09-validation": {
       "interactive_elicitation": {
         "enabled": false
       },
@@ -239,7 +239,7 @@
       }
     },
 
-    "09-cicd": {
+    "10-cicd": {
       "interactive_elicitation": {
         "enabled": false
       },
@@ -259,7 +259,7 @@
       }
     },
 
-    "10-local-testing": {
+    "11-local-testing": {
       "interactive_elicitation": {
         "enabled": false
       },
@@ -273,7 +273,7 @@
       }
     },
 
-    "11-test-deploy": {
+    "12-test-deploy": {
       "interactive_elicitation": {
         "enabled": false
       },
@@ -287,7 +287,7 @@
       }
     },
 
-    "12-production": {
+    "13-production": {
       "interactive_elicitation": {
         "enabled": false
       },
@@ -301,7 +301,7 @@
       }
     },
 
-    "13-operations": {
+    "14-operations": {
       "interactive_elicitation": {
         "enabled": false
       },

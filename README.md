@@ -9,7 +9,7 @@
 [![npm version](https://img.shields.io/npm/v/isdlc.svg)](https://www.npmjs.com/package/isdlc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Agents](https://img.shields.io/badge/Agents-37-purple.svg)](docs/AGENTS.md)
-[![Skills](https://img.shields.io/badge/Skills-228-green.svg)](docs/DETAILED-SKILL-ALLOCATION.md)
+[![Skills](https://img.shields.io/badge/Skills-233-green.svg)](docs/DETAILED-SKILL-ALLOCATION.md)
 [![Gates](https://img.shields.io/badge/Quality%20Gates-16-orange.svg)](#quality-gates)
 [![Hooks](https://img.shields.io/badge/Hooks-8-red.svg)](#enforcement-hooks)
 

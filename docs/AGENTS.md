@@ -34,10 +34,10 @@ The 15 SDLC agents implement a 1-to-1 mapping between phases and agents. Each ag
 | **09** | **Security & Compliance Auditor** | Security scanning, penetration testing, compliance | security-scan-report.md, compliance-checklist.md |
 | **10** | **CI/CD Engineer** | Pipeline automation, build configuration | ci-config.yaml, cd-config.yaml, Dockerfile |
 | **11** | **Environment Builder** | Local environment build & launch for testing | testing_environment in state.json, build-log.md |
-| **11** | **Deployment Engineer (Staging)** | Staging deployment, smoke tests, rollback | deployment-log-staging.md, smoke-test-results.md |
-| **12** | **Release Manager** | Production deployment, release coordination | release-notes.md, post-deployment-report.md |
-| **14** | **Upgrade Engineer** | Dependency/tool upgrades with regression testing | upgrade-analysis.md, upgrade-summary.md |
-| **15** | **Site Reliability Engineer** | Operations, monitoring, incident response, SLAs | monitoring-config/, alert-rules.yaml, sla-tracking.md |
+| **12** | **Deployment Engineer (Staging)** | Staging deployment, smoke tests, rollback | deployment-log-staging.md, smoke-test-results.md |
+| **13** | **Release Manager** | Production deployment, release coordination | release-notes.md, post-deployment-report.md |
+| **14** | **Site Reliability Engineer** | Operations, monitoring, incident response, SLAs | monitoring-config/, alert-rules.yaml, sla-tracking.md |
+| **15** | **Upgrade Engineer** | Dependency/tool upgrades with regression testing | upgrade-analysis.md, upgrade-summary.md |
 
 **1-to-1 Mapping**: Each phase has exactly ONE dedicated agent with clear entry/exit criteria. No overlapping responsibilities — conflicts only occur at phase boundaries and are handled by the Orchestrator.
 
@@ -191,15 +191,15 @@ Phase 10: Local Development & Testing
 Phase 11: Test Environment Deployment
     | (Deployment Engineer - Staging)
     v GATE-11: Staging deployment verified
-Phase 12: Production Deployment
+Phase 13: Production Deployment
     | (Release Manager)
-    v GATE-12: Production go-live complete
-Phase 14: Upgrades
-    | (Upgrade Engineer)
-    v GATE-14: Upgrade complete, zero regressions
-Phase 15: Production Operations
+    v GATE-13: Production go-live complete
+Phase 14: Production Operations
     | (Site Reliability Engineer)
-    v GATE-15: Operations stable
+    v GATE-14: Operations stable
+Phase 15: Upgrades
+    | (Upgrade Engineer)
+    v GATE-15: Upgrade complete, zero regressions
 ```
 
 ### Bug Fix Workflow
@@ -229,19 +229,19 @@ Agent definitions are located in `.claude/agents/`:
 .claude/agents/
 ├── 00-sdlc-orchestrator.md
 ├── 01-requirements-analyst.md
-├── 03-solution-architect.md
-├── 04-system-designer.md
-├── 05-test-design-engineer.md
-├── 06-software-developer.md
-├── 07-integration-tester.md
-├── 08-qa-engineer.md
-├── 09-security-compliance-auditor.md
-├── 10-cicd-engineer.md
+├── 02-solution-architect.md
+├── 03-system-designer.md
+├── 04-test-design-engineer.md
+├── 05-software-developer.md
+├── 06-integration-tester.md
+├── 07-qa-engineer.md
+├── 08-security-compliance-auditor.md
+├── 09-cicd-engineer.md
 ├── 10-dev-environment-engineer.md
 ├── 11-deployment-engineer-staging.md
 ├── 12-release-manager.md
+├── 13-site-reliability-engineer.md
 ├── 14-upgrade-engineer.md
-├── 15-site-reliability-engineer.md
 ├── quick-scan/
 │   └── quick-scan-agent.md
 ├── impact-analysis/
