@@ -326,6 +326,191 @@ node .claude/hooks/tests/test-skill-validator.js --verbose
 
 ---
 
+## Future: Skill Usage Enforcement at Gates
+
+### Problem Statement
+
+Today, skill observability logs which **agents** were delegated to, but there is no mechanism to verify that agents actually exercised their **skills**. An agent could be invoked, do nothing meaningful, and the gate would still pass. The `gate-blocker.js` hook checks three requirements (test iteration, constitutional validation, interactive elicitation) but does **not** check skill usage.
+
+The gap is structural:
+- The `skill_usage_log` records agent-level delegations (e.g., `software-developer` was invoked)
+- No log entry records which specific skill IDs (e.g., DEV-001, DEV-007) were used
+- The manifest maps agents to skill IDs, but this mapping is never validated at runtime
+- An agent could be invoked and immediately return without performing any of its documented skills
+
+**Intent**: Agents MUST use their skills. Cross-phase sharing is fine, but skipping skills is not.
+
+### Candidate Approaches
+
+#### Option A: Agent Self-Reporting to state.json
+
+Each agent writes its used skill IDs to `state.json` after executing skills. The gate-blocker reads this data and compares it against the manifest.
+
+**How it works:**
+1. Agent instructions (markdown) are updated to include: "Before requesting gate advancement, write `phases[phase].skills_used` to state.json"
+2. Agent writes an array like `["REQ-001", "REQ-004", "REQ-007"]` to state under the current phase
+3. `gate-blocker.js` adds a 4th check: `checkSkillUsageRequirement()`
+   - Reads `skills_used` from the phase state
+   - Loads the manifest to get required skill IDs for the phase's agent
+   - Compares the two sets and reports coverage percentage
+
+**Config changes:**
+```json
+// .isdlc/state.json — new field per phase
+{
+  "phases": {
+    "06-implementation": {
+      "skills_used": ["DEV-001", "DEV-003", "DEV-007"],
+      "skills_coverage": "3/14 (21%)"
+    }
+  }
+}
+```
+
+**Hook changes:**
+```javascript
+// gate-blocker.js — new check function
+function checkSkillUsageRequirement(state, phase) {
+  const skillsUsed = state.phases?.[phase]?.skills_used || [];
+  const manifest = loadManifest();
+  const agent = manifest.phase_agents[phase];
+  const required = manifest.agents[agent]?.skills || [];
+  const missing = required.filter(s => !skillsUsed.includes(s));
+  return { passed: missing.length === 0, used: skillsUsed, missing };
+}
+```
+
+**Agent changes:** Add self-reporting instruction block to all 21 phase agents.
+
+**Trade-offs:**
+| Pro | Con |
+|-----|-----|
+| Simple to implement | Relies on agent compliance (AI follows instructions but could hallucinate) |
+| No new hooks needed | Agent could report skills it didn't actually use |
+| Clear per-phase audit trail | Requires updating 21 agent markdown files |
+| Skill-level granularity | No independent verification of reported skills |
+
+---
+
+#### Option B: Orchestrator Validates on Delegation
+
+The orchestrator already logs which agent it delegated to (via `skill_usage_log`). The gate check verifies that the expected agent was invoked at least once during the phase.
+
+**How it works:**
+1. No agent changes needed — the existing `log-skill-usage.js` PostToolUse hook already records every delegation
+2. `gate-blocker.js` adds a check: scan `skill_usage_log` for entries where `agent_phase` matches the current phase
+3. If at least one entry exists for the expected agent, the check passes
+4. Gate assumes: if the correct agent ran for the phase, its skills were available and used
+
+**Config changes:** None — existing `skill_usage_log` data is sufficient.
+
+**Hook changes:**
+```javascript
+// gate-blocker.js — new check function
+function checkAgentDelegationRequirement(state, phase) {
+  const log = state.skill_usage_log || [];
+  const phaseEntries = log.filter(e => e.agent_phase === phase);
+  return { passed: phaseEntries.length > 0, delegations: phaseEntries.length };
+}
+```
+
+**Agent changes:** None.
+
+**Trade-offs:**
+| Pro | Con |
+|-----|-----|
+| Zero agent changes needed | Coarsest check — agent-level, not skill-level |
+| Data already exists in state.json | Doesn't verify individual skills were used |
+| Can implement immediately | Agent could be invoked and do nothing meaningful |
+| Minimal code changes | No skill-level audit trail |
+
+---
+
+#### Option C: Structured Skill Invocation Protocol
+
+Agents explicitly report each skill invocation with evidence (artifact paths, line counts, etc.) to a structured array in state.json. The gate validates full skill-level coverage.
+
+**How it works:**
+1. Define a `/skill-report` mechanism or structured write to `skill_invocations` in state.json
+2. Each agent, after performing a skill, writes an entry:
+   ```json
+   {
+     "skill_id": "DEV-001",
+     "agent": "software-developer",
+     "phase": "06-implementation",
+     "evidence": { "files_modified": ["src/auth.js"], "lines_changed": 142 },
+     "timestamp": "2026-02-06T10:30:00Z"
+   }
+   ```
+3. `gate-blocker.js` validates: all required skill IDs for the phase appear in `skill_invocations`
+4. Optionally define `required_skills` vs `optional_skills` per phase in `iteration-requirements.json`
+
+**Config changes:**
+```json
+// iteration-requirements.json — optional required/optional split
+{
+  "06-implementation": {
+    "required_skills": ["DEV-001", "DEV-002", "DEV-003"],
+    "optional_skills": ["DEV-004", "DEV-005"]
+  }
+}
+```
+
+```json
+// .isdlc/state.json — new skill_invocations array
+{
+  "skill_invocations": [
+    {
+      "skill_id": "DEV-001",
+      "agent": "software-developer",
+      "phase": "06-implementation",
+      "evidence": { "files_modified": ["src/auth.js"], "lines_changed": 142 },
+      "timestamp": "2026-02-06T10:30:00Z"
+    }
+  ]
+}
+```
+
+**Hook changes:**
+```javascript
+// gate-blocker.js — new check function
+function checkSkillInvocationsRequirement(state, phase, iterReqs) {
+  const invocations = state.skill_invocations || [];
+  const phaseInvocations = invocations.filter(i => i.phase === phase);
+  const invokedIds = [...new Set(phaseInvocations.map(i => i.skill_id))];
+  const required = iterReqs[phase]?.required_skills || [];
+  const missing = required.filter(s => !invokedIds.includes(s));
+  return { passed: missing.length === 0, invoked: invokedIds, missing };
+}
+```
+
+**Agent changes:** All 21 phase agents updated with skill invocation reporting protocol.
+
+**Trade-offs:**
+| Pro | Con |
+|-----|-----|
+| Most rigorous — true skill-level audit trail | Heaviest implementation (21 agents + hooks + config) |
+| Evidence-based verification | Significant complexity increase |
+| Supports required vs optional skill distinction | Agents must produce structured evidence per skill |
+| Full traceability from skill to artifact | Highest risk of agent compliance issues |
+
+---
+
+### Recommendation
+
+**Decision pending evaluation.** The three options represent a spectrum from pragmatic to rigorous:
+
+- **Option B** is a **quick win** — it can be implemented immediately with minimal code changes as a baseline check (was the right agent invoked at all?)
+- **Option A** is the **simplest skill-level approach** — it provides skill-level granularity with moderate implementation effort, though it relies on agent self-reporting
+- **Option C** is the **most rigorous** — it provides a true skill-level audit trail with evidence, but requires the largest implementation investment
+
+A phased rollout is recommended:
+1. **Immediate**: Implement Option B as a baseline gate check
+2. **Next iteration**: Layer Option A on top for skill-level visibility
+3. **Future**: Evaluate whether Option C's evidence-based approach is warranted based on real-world agent compliance data from Options A and B
+
+---
+
 ## Enhancement History
 
 | Enhancement | Description | Status |
@@ -336,6 +521,7 @@ node .claude/hooks/tests/test-skill-validator.js --verbose
 | #4 | Skill Enforcement (Prompt-based) | Complete |
 | #4b | Skill Enforcement (Runtime Hooks) | Complete |
 | **#4c** | **Skill Observability (v3.0)** | **Complete** |
+| #4d | Skill Usage Enforcement at Gates | Planned |
 
 ---
 

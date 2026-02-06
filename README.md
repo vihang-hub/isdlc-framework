@@ -29,7 +29,7 @@ The iSDLC (integrated Software Development Lifecycle) framework provides **37 sp
 
 The framework installs **into your existing project**, providing structured multi-agent workflows, quality gates between every phase, and standardized processes for AI-powered development.
 
-**Key principles**: Clear ownership (one agent per phase), exclusive skill ownership, quality gates at every boundary, artifact traceability, and adaptive workflows.
+**Key principles**: Clear ownership (one agent per phase), skill usage tracking with gate enforcement (planned), quality gates at every boundary, artifact traceability, and adaptive workflows.
 
 **Licensing**: This framework is **free and open source** (MIT License). You provide your own LLM access — either a Claude Code subscription, API keys for cloud providers (Anthropic, Groq, etc.), or local models via Ollama.
 
