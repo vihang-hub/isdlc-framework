@@ -1103,6 +1103,22 @@ Use Task tool to launch `requirements-analyst` agent with:
 - Project brief or feature description
 - Stakeholder information
 - CRITICAL: Include the INTERACTIVE PROTOCOL instruction below
+- CONDITIONAL: Include DISCOVERY CONTEXT block (see below)
+
+Before building the Task prompt, check state.json → project.discovery_completed:
+  IF true:
+    Read docs/project-discovery-report.md for tech stack, architecture, features, coverage
+    Read docs/isdlc/constitution.md for constitutional constraints
+    Append this block to the Task prompt:
+    """
+    DISCOVERY CONTEXT:
+    - Discovery Report: docs/project-discovery-report.md
+    - Constitution: docs/isdlc/constitution.md
+    - Tech Stack: {language} + {framework} + {database}
+    - Is New Project: {true|false}
+    """
+  IF false or state.json missing:
+    Omit DISCOVERY CONTEXT block entirely. Agent proceeds normally.
 
 Task prompt MUST include this instruction for interactive elicitation:
 """
@@ -1132,6 +1148,28 @@ After user responds, follow the A/R/C menu pattern for each step:
 Use Task tool to launch `solution-architect` agent with:
 - Completed requirements-spec.md
 - NFR matrix
+- CONDITIONAL: Include DISCOVERY CONTEXT block (see below)
+
+Before building the Task prompt, check state.json → project.discovery_completed:
+  IF true:
+    Read docs/project-discovery-report.md for tech stack, architecture, data model, features
+    Read docs/isdlc/constitution.md for constitutional constraints
+    Read docs/isdlc/test-evaluation-report.md for existing test coverage
+    Append this block to the Task prompt:
+    """
+    DISCOVERY CONTEXT:
+    - Discovery Report: docs/project-discovery-report.md
+    - Constitution: docs/isdlc/constitution.md
+    - Test Evaluation: docs/isdlc/test-evaluation-report.md
+    - Tech Stack: {language} + {framework} + {database}
+    - Is New Project: {true|false}
+
+    IMPORTANT: Use discovery as your baseline. Extend existing architecture —
+    do not redesign from scratch. Justify any deviations from detected patterns.
+    """
+  IF false or state.json missing:
+    Omit DISCOVERY CONTEXT block entirely. Agent proceeds with greenfield evaluation.
+
 Task: "Design system architecture, select tech stack, design database schema"
 ```
 
@@ -1140,6 +1178,26 @@ Task: "Design system architecture, select tech stack, design database schema"
 Use Task tool to launch `system-designer` agent with:
 - Architecture overview
 - Database design
+- CONDITIONAL: Include DISCOVERY CONTEXT block (see below)
+
+Before building the Task prompt, check state.json → project.discovery_completed:
+  IF true:
+    Read docs/project-discovery-report.md for API patterns, module structure, naming conventions
+    Read docs/isdlc/constitution.md for constitutional constraints
+    Append this block to the Task prompt:
+    """
+    DISCOVERY CONTEXT:
+    - Discovery Report: docs/project-discovery-report.md
+    - Constitution: docs/isdlc/constitution.md
+    - Tech Stack: {language} + {framework} + {database}
+    - Is New Project: {true|false}
+
+    IMPORTANT: Use discovery as your baseline. New designs must follow existing
+    patterns (API structure, naming conventions, error handling). Justify deviations.
+    """
+  IF false or state.json missing:
+    Omit DISCOVERY CONTEXT block entirely. Agent designs from scratch.
+
 Task: "Create interface specifications and detailed module designs"
 ```
 

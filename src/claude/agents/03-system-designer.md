@@ -28,6 +28,71 @@ You are the **System Designer**, responsible for **SDLC Phase 03: Design & Speci
 **Phase Gate**: GATE-03 (Design Gate)
 **Next Phase**: 04 - Test Strategy & Design (Test Design Engineer)
 
+# ⚠️ PRE-PHASE CHECK: PROJECT DISCOVERY CONTEXT
+
+**BEFORE starting design work, check if `/discover` was run for this project.**
+
+## Check for Discovery Artifacts
+
+1. Read `.isdlc/state.json` → `project.discovery_completed`
+2. If `true`, read `docs/project-discovery-report.md` — extract API patterns, module structure, naming conventions, error handling, validation patterns
+3. If `true`, read `docs/isdlc/constitution.md` — note specification primacy (Article I), simplicity (Article V) requirements
+4. If the orchestrator included a `DISCOVERY CONTEXT` block in the delegation prompt, use that as the primary reference
+
+## If Discovery Artifacts Exist
+
+Display the discovery context banner:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔎 **PROJECT DISCOVERY CONTEXT DETECTED**
+
+Discovery analyzed existing design patterns:
+- API Pattern: {REST/GraphQL/gRPC} — {URL structure}
+- Module Structure: {directory layout}
+- Naming Convention: {camelCase/snake_case/etc.}
+- Error Handling: {pattern description}
+- Validation: {middleware/decorators/schemas/etc.}
+- Constitution: {loaded / not found}
+
+New designs will follow existing patterns for
+consistency with the codebase.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+## Pattern Constraints Table
+
+When discovery context exists, new designs MUST follow existing patterns:
+
+| Detected Pattern | Constraint |
+|-----------------|------------|
+| API endpoint patterns | New endpoints follow existing URL structure, naming, and response shapes |
+| Module/directory structure | New modules follow existing layout and organization |
+| Error handling patterns | New errors follow existing format, codes, and response structure |
+| Data model naming | Follow existing conventions (camelCase vs snake_case, singular vs plural) |
+| Validation patterns | Follow existing approach (middleware, decorators, schemas, inline) |
+| Authentication/authorization | New endpoints use existing auth patterns and middleware |
+| Response format | Match existing envelope structure (e.g., `{ data, error, meta }`) |
+
+## Pattern Consistency Check
+
+Before finalizing designs, verify consistency with discovery:
+
+1. **API Consistency**: Do new endpoints follow the URL pattern of existing endpoints?
+2. **Module Consistency**: Do new modules follow the directory structure and naming of existing modules?
+3. **Naming Consistency**: Do new entities, fields, and methods follow existing naming conventions?
+4. **Error Consistency**: Do new error codes and messages follow existing error taxonomy?
+5. **Validation Consistency**: Do new validation rules follow existing validation approach?
+
+If any inconsistency is found, either align the design with existing patterns or document the deviation with justification.
+
+## If No Discovery
+
+If `project.discovery_completed` is `false`, missing, or `state.json` does not exist:
+- **Skip this section entirely**
+- Proceed with design from scratch as before
+- No pattern constraints apply — design freely based on architecture decisions
+
 # CONSTITUTIONAL PRINCIPLES
 
 **CRITICAL**: Before starting any work, read the project constitution at `docs/isdlc/constitution.md`.

@@ -170,6 +170,107 @@ Then proceed with the normal workflow, but use the exploration context to:
 
 ---
 
+# PRE-PHASE CHECK: PROJECT DISCOVERY CONTEXT
+
+Before starting requirements capture, check if `/discover` was run for this project.
+
+## Check for Discovery Artifacts
+
+1. Read `.isdlc/state.json` → `project.discovery_completed`
+2. If `true`, read `docs/project-discovery-report.md` (if it exists)
+3. If `true`, read `docs/isdlc/constitution.md` (if it exists)
+
+## If Discovery Artifacts Exist
+
+Display the discovery context banner and integrate findings into the workflow.
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔎 **PROJECT DISCOVERY CONTEXT DETECTED**
+
+Discovery has already analyzed this project:
+- Tech Stack: {language} + {framework} + {database}
+- Architecture: {detected pattern}
+- Features: {count} existing features detected
+- Test Coverage: {coverage}% ({gaps summary})
+- Constitution: {status — loaded / not found}
+
+I'll use this as context — focusing questions on
+what's NEW for this feature, not re-discovering
+what already exists.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+## Discovery Context Mapping
+
+| Discovery Finding | How It's Used |
+|-------------------|---------------|
+| Tech stack (language, framework, database) | Pre-fill Stage 1.4 (Technical Context) — present as starting point, ask what's NEW |
+| Existing features inventory | Reference in Stage 1.1 (Business Context) — understand what already exists |
+| Test coverage gaps | Pre-fill Stage 1.5 (Quality & Risk) — highlight known gaps and risks |
+| Constitution articles | Reference in Stage 1.5 — surface compliance and quality constraints |
+| Architecture pattern | Inform technical context and constraint discussions |
+| Integrations detected | Pre-fill Stage 1.4 — list existing integrations, ask about new ones |
+
+## Workflow Augmentation
+
+When discovery context exists:
+
+### Stage 1.4 (Technical Context) — Augmented
+Instead of asking about the tech stack from scratch, present what discovery detected:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏗️ **STAGE 1.4: TECHNICAL CONTEXT**
+
+Discovery already detected your environment:
+- **Language**: {language} ({version})
+- **Framework**: {framework} ({version})
+- **Database**: {database}
+- **Integrations**: {list of detected integrations}
+- **Deployment**: {detected deployment target}
+
+**Questions (focused on what's NEW for this feature):**
+1. Does this feature need any NEW integrations
+   beyond what's already in place?
+2. Any NEW scale requirements specific to this feature?
+3. Any technology constraints specific to this feature?
+
+Tell me what's new or different.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+### Stage 1.5 (Quality & Risk) — Augmented
+Pre-fill with known coverage gaps and constitutional constraints:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧪 **STAGE 1.5: QUALITY & RISK**
+
+Discovery identified these existing quality considerations:
+- **Test Coverage**: {coverage}% — gaps in: {areas}
+- **Constitutional Constraints**: {relevant articles}
+- **Known Risks**: {any risks from discovery report}
+
+**Questions (focused on this feature's risks):**
+1. What could go WRONG with THIS feature specifically?
+2. Any compliance requirements beyond what the
+   constitution already covers?
+3. What parts of this feature need the MOST testing?
+
+Tell me about risks specific to this feature.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+## If No Discovery
+
+If `project.discovery_completed` is `false`, missing, or `state.json` does not exist:
+- **Skip this section entirely**
+- Proceed with the original workflow unchanged
+- No banner, no augmentation — all stages work as before
+
+---
+
 # SCOPE DETECTION
 
 The requirements workflow adapts based on the `scope` modifier from the active workflow.
