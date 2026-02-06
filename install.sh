@@ -299,6 +299,36 @@ else
 fi
 echo ""
 
+# ============================================================================
+# Provider mode selection
+# ============================================================================
+echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║             LLM PROVIDER MODE SELECTION                    ║${NC}"
+echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "${YELLOW}Select your LLM provider mode:${NC}"
+echo ""
+echo "  1) Free      — Free-tier cloud (Groq, Together, Google) — no GPU needed"
+echo "  2) Budget    — Ollama locally if available, free cloud fallback"
+echo "  3) Quality   — Anthropic everywhere (best results, requires API key)"
+echo "  4) Local     — Ollama only (offline/air-gapped, requires GPU)"
+echo "  5) Hybrid    — Smart per-phase routing (advanced)"
+echo ""
+read -p "Choice [1]: " PROVIDER_MODE_ANSWER
+PROVIDER_MODE_ANSWER=${PROVIDER_MODE_ANSWER:-1}
+
+case "$PROVIDER_MODE_ANSWER" in
+    1) PROVIDER_MODE="free" ;;
+    2) PROVIDER_MODE="budget" ;;
+    3) PROVIDER_MODE="quality" ;;
+    4) PROVIDER_MODE="local" ;;
+    5) PROVIDER_MODE="hybrid" ;;
+    *) PROVIDER_MODE="free"
+       echo -e "${YELLOW}  Invalid choice — defaulting to free mode${NC}" ;;
+esac
+echo -e "${GREEN}  ✓ Provider mode: $PROVIDER_MODE${NC}"
+echo ""
+
 echo -e "${CYAN}After installation, run:${NC}"
 echo -e "  1. ${GREEN}claude${NC} to start Claude Code"
 echo -e "  2. ${GREEN}/discover${NC} to set up your project"
@@ -573,6 +603,26 @@ fi
 if [ -f "$FRAMEWORK_DIR/isdlc/templates/constitution.md" ]; then
     cp "$FRAMEWORK_DIR/isdlc/templates/constitution.md" "docs/isdlc/constitution.md"
     echo -e "${GREEN}  ✓ Copied constitution${NC}"
+fi
+
+# Generate providers.yaml from template
+PROVIDERS_TARGET=".isdlc/providers.yaml"
+if [ -f "$PROVIDERS_TARGET" ]; then
+    echo -e "${YELLOW}  providers.yaml already exists — skipping (use /provider set to change mode)${NC}"
+else
+    PROVIDERS_TEMPLATE="$FRAMEWORK_DIR/isdlc/templates/providers.yaml.template"
+    if [ -f "$PROVIDERS_TEMPLATE" ]; then
+        cp "$PROVIDERS_TEMPLATE" "$PROVIDERS_TARGET"
+        # Replace active_mode in the generated file (handle both macOS and Linux sed)
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' "s/^active_mode: \"[^\"]*\"/active_mode: \"$PROVIDER_MODE\"/" "$PROVIDERS_TARGET"
+        else
+            sed -i "s/^active_mode: \"[^\"]*\"/active_mode: \"$PROVIDER_MODE\"/" "$PROVIDERS_TARGET"
+        fi
+        echo -e "${GREEN}  ✓ Generated providers.yaml (mode: $PROVIDER_MODE)${NC}"
+    else
+        echo -e "${YELLOW}  providers.yaml.template not found — skipping provider config${NC}"
+    fi
 fi
 
 # Create state.json
@@ -1080,6 +1130,19 @@ echo "  .claude/           - Agent definitions and skills"
 echo "  .isdlc/            - Project state and framework resources"
 echo "  docs/              - Documentation"
 echo ""
+echo -e "${CYAN}Provider Configuration:${NC}"
+echo -e "  Mode:   ${GREEN}$PROVIDER_MODE${NC}"
+case "$PROVIDER_MODE" in
+    free)    echo "  Info:   Free-tier cloud providers (Groq, Together, Google) — requires free API keys" ;;
+    budget)  echo "  Info:   Ollama locally, free cloud fallback — minimal cost" ;;
+    quality) echo "  Info:   Anthropic everywhere — best results, requires ANTHROPIC_API_KEY" ;;
+    local)   echo "  Info:   Ollama only — offline/air-gapped, requires GPU with 12GB+ VRAM" ;;
+    hybrid)  echo "  Info:   Smart per-phase routing — advanced, configure in providers.yaml" ;;
+esac
+echo "  Config: .isdlc/providers.yaml"
+echo -e "  Change: ${GREEN}/provider set <mode>${NC}"
+echo ""
+
 echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${CYAN}║                    NEXT STEPS                              ║${NC}"
 echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
