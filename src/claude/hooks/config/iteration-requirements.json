@@ -1,5 +1,5 @@
 {
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Deterministic iteration requirements per phase - enforced by hooks",
 
   "phase_requirements": {
@@ -103,6 +103,9 @@
         "enabled": true,
         "max_iterations": 5,
         "articles": ["I", "IV", "VII", "IX", "XII"]
+      },
+      "agent_delegation_validation": {
+        "enabled": true
       }
     },
 
@@ -118,6 +121,9 @@
         "enabled": true,
         "max_iterations": 3,
         "articles": ["IV", "VII", "IX"]
+      },
+      "agent_delegation_validation": {
+        "enabled": true
       }
     },
 
@@ -133,6 +139,9 @@
         "enabled": true,
         "max_iterations": 3,
         "articles": ["IV", "VII", "IX"]
+      },
+      "agent_delegation_validation": {
+        "enabled": true
       }
     },
 
@@ -147,6 +156,9 @@
         "enabled": true,
         "max_iterations": 5,
         "articles": ["III", "IV", "V", "VII", "IX", "X"]
+      },
+      "agent_delegation_validation": {
+        "enabled": true
       }
     },
 
@@ -161,6 +173,9 @@
         "enabled": true,
         "max_iterations": 5,
         "articles": ["I", "IV", "V", "VII", "IX"]
+      },
+      "agent_delegation_validation": {
+        "enabled": true
       }
     },
 
@@ -182,6 +197,9 @@
         "requires": ["atdd_checklist_generated", "all_ac_have_tests", "all_tests_have_priorities"],
         "artifacts": ["docs/isdlc/atdd-checklist.json", "tests/acceptance/"],
         "gate_block_on_failure": true
+      },
+      "agent_delegation_validation": {
+        "enabled": true
       }
     },
 
@@ -214,6 +232,9 @@
           "block_on_incomplete_priority": true
         },
         "gate_block_on_failure": true
+      },
+      "agent_delegation_validation": {
+        "enabled": true
       }
     },
 
@@ -244,6 +265,9 @@
         "scan_directories": ["tests/acceptance/", "src/test/java/acceptance/"],
         "gate_block_on_failure": true
       },
+      "agent_delegation_validation": {
+        "enabled": true
+      },
       "on_gate_pass": {
         "trigger_cloud_config": {
           "enabled": true,
@@ -265,6 +289,9 @@
         "enabled": true,
         "max_iterations": 5,
         "articles": ["V", "VI", "VII", "VIII", "IX"]
+      },
+      "agent_delegation_validation": {
+        "enabled": true
       }
     },
 
@@ -279,6 +306,9 @@
         "enabled": true,
         "max_iterations": 5,
         "articles": ["III", "IX", "X", "XII"]
+      },
+      "agent_delegation_validation": {
+        "enabled": true
       }
     },
 
@@ -299,6 +329,9 @@
         "enabled": true,
         "max_iterations": 5,
         "articles": ["II", "IX"]
+      },
+      "agent_delegation_validation": {
+        "enabled": true
       }
     },
 
@@ -313,6 +346,9 @@
         "enabled": true,
         "max_iterations": 5,
         "articles": ["VIII", "IX"]
+      },
+      "agent_delegation_validation": {
+        "enabled": true
       }
     },
 
@@ -327,6 +363,9 @@
         "enabled": true,
         "max_iterations": 5,
         "articles": ["IX", "X"]
+      },
+      "agent_delegation_validation": {
+        "enabled": true
       }
     },
 
@@ -341,6 +380,9 @@
         "enabled": true,
         "max_iterations": 5,
         "articles": ["IX", "X"]
+      },
+      "agent_delegation_validation": {
+        "enabled": true
       }
     },
 
@@ -355,6 +397,9 @@
         "enabled": true,
         "max_iterations": 5,
         "articles": ["VIII", "IX", "XII"]
+      },
+      "agent_delegation_validation": {
+        "enabled": true
       }
     },
 
@@ -371,6 +416,9 @@
         "enabled": true,
         "max_iterations": 3,
         "articles": ["I", "VII", "IX", "X"]
+      },
+      "agent_delegation_validation": {
+        "enabled": true
       },
       "sub_phases": {
         "15-upgrade-preliminary-analysis": {
@@ -416,6 +464,7 @@
     "block_on_incomplete_test_iteration": true,
     "block_on_incomplete_constitutional": true,
     "block_on_incomplete_elicitation": true,
+    "block_on_missing_agent_delegation": true,
     "allow_escalation_override": true
   },
 

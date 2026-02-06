@@ -62,8 +62,8 @@ function setupTestEnv() {
     fs.mkdirSync(path.join(testDir, '.claude', 'hooks', 'config'), { recursive: true });
 
     // Copy manifest to .claude/hooks/config/ (where hooks expect it)
-    const projectRoot = path.resolve(__dirname, '../../..');
-    const manifestSrc = path.join(projectRoot, '.claude', 'hooks', 'config', 'skills-manifest.json');
+    const hooksConfigDir = path.resolve(__dirname, '..', 'config');
+    const manifestSrc = path.join(hooksConfigDir, 'skills-manifest.json');
     if (fs.existsSync(manifestSrc)) {
         fs.copyFileSync(manifestSrc, path.join(testDir, '.claude', 'hooks', 'config', 'skills-manifest.json'));
     }
@@ -452,6 +452,141 @@ async function testIntegration() {
 }
 
 // =============================================================================
+// GATE-BLOCKER AGENT DELEGATION TESTS
+// =============================================================================
+
+function setupGateTestEnv() {
+    setupTestEnv();
+
+    // Copy iteration-requirements.json to test env (resolve relative to hooks dir, not project root)
+    const hooksConfigDir = path.resolve(__dirname, '..', 'config');
+    const iterReqSrc = path.join(hooksConfigDir, 'iteration-requirements.json');
+    if (fs.existsSync(iterReqSrc)) {
+        fs.copyFileSync(iterReqSrc, path.join(testDir, '.claude', 'hooks', 'config', 'iteration-requirements.json'));
+    }
+}
+
+// Gate advancement input that triggers the gate-blocker
+const gateAdvanceInput = {
+    tool_name: 'Task',
+    tool_input: {
+        subagent_type: 'sdlc-orchestrator',
+        prompt: 'advance to next phase',
+        description: 'Gate advancement'
+    }
+};
+
+async function testGateBlockerDelegation() {
+    console.log('\nTesting gate-blocker.js agent delegation...');
+    console.log('=============================================');
+
+    const hookPath = path.resolve(__dirname, '../gate-blocker.js');
+
+    // Test 1: Delegation check passes when matching log entry exists
+    setupGateTestEnv();
+    writeState({
+        iteration_enforcement: { enabled: true },
+        current_phase: '06-implementation',
+        phases: {
+            '06-implementation': {
+                iteration_requirements: {
+                    test_iteration: { completed: true, status: 'passed', last_test_result: 'passed', current_iteration: 1, max_iterations: 10 }
+                },
+                constitutional_validation: { completed: true, status: 'compliant' }
+            }
+        },
+        skill_usage_log: [
+            {
+                timestamp: '2026-02-06T10:00:00.000Z',
+                agent: 'software-developer',
+                agent_phase: '06-implementation',
+                current_phase: '06-implementation',
+                description: 'Implement feature',
+                status: 'executed',
+                reason: 'authorized-phase-match'
+            }
+        ]
+    });
+    let result = await runHook(hookPath, gateAdvanceInput);
+    if (result.stdout === '') {
+        pass('Delegation check passes when matching log entry exists');
+    } else {
+        fail('Delegation check passes when matching log entry exists', 'empty (no block)', result.stdout);
+    }
+    cleanupTestEnv();
+
+    // Test 2: Delegation check fails when no log entries for phase
+    setupGateTestEnv();
+    writeState({
+        iteration_enforcement: { enabled: true },
+        current_phase: '06-implementation',
+        phases: {
+            '06-implementation': {
+                iteration_requirements: {
+                    test_iteration: { completed: true, status: 'passed', last_test_result: 'passed', current_iteration: 1, max_iterations: 10 }
+                },
+                constitutional_validation: { completed: true, status: 'compliant' }
+            }
+        },
+        skill_usage_log: []
+    });
+    result = await runHook(hookPath, gateAdvanceInput);
+    if (result.stdout !== '' && result.stdout.includes('agent_delegation')) {
+        pass('Delegation check fails when no log entries for phase');
+    } else {
+        fail('Delegation check fails when no log entries for phase', 'block with agent_delegation', result.stdout || '(empty)');
+    }
+    cleanupTestEnv();
+
+    // Test 3: Delegation check returns not_required when disabled
+    setupGateTestEnv();
+    // Override the iteration-requirements.json to disable agent_delegation_validation for 00-quick-scan
+    writeState({
+        iteration_enforcement: { enabled: true },
+        current_phase: '00-quick-scan',
+        phases: {},
+        skill_usage_log: []
+    });
+    result = await runHook(hookPath, gateAdvanceInput);
+    // 00-quick-scan has no agent_delegation_validation (or it's not present), so should not block on delegation
+    if (result.stdout === '' || !result.stdout.includes('agent_delegation')) {
+        pass('Delegation check returns not_required when disabled (00-quick-scan)');
+    } else {
+        fail('Delegation check returns not_required when disabled', 'no agent_delegation block', result.stdout);
+    }
+    cleanupTestEnv();
+
+    // Test 4: Delegation check handles missing manifest gracefully (fail-open)
+    setupGateTestEnv();
+    // Remove the manifest to test fail-open behavior
+    const manifestPath = path.join(testDir, '.claude', 'hooks', 'config', 'skills-manifest.json');
+    if (fs.existsSync(manifestPath)) {
+        fs.unlinkSync(manifestPath);
+    }
+    writeState({
+        iteration_enforcement: { enabled: true },
+        current_phase: '06-implementation',
+        phases: {
+            '06-implementation': {
+                iteration_requirements: {
+                    test_iteration: { completed: true, status: 'passed', last_test_result: 'passed', current_iteration: 1, max_iterations: 10 }
+                },
+                constitutional_validation: { completed: true, status: 'compliant' }
+            }
+        },
+        skill_usage_log: []
+    });
+    result = await runHook(hookPath, gateAdvanceInput);
+    // Without manifest, delegation check should fail-open (no block on delegation)
+    if (result.stdout === '' || !result.stdout.includes('agent_delegation')) {
+        pass('Delegation check handles missing manifest gracefully (fail-open)');
+    } else {
+        fail('Delegation check handles missing manifest gracefully', 'no agent_delegation block', result.stdout);
+    }
+    cleanupTestEnv();
+}
+
+// =============================================================================
 // MAIN
 // =============================================================================
 
@@ -466,6 +601,7 @@ async function main() {
         await testSkillValidator();
         await testLogSkillUsage();
         await testIntegration();
+        await testGateBlockerDelegation();
     } catch (error) {
         console.error(`${colors.red}Test error:${colors.reset}`, error);
         process.exit(1);

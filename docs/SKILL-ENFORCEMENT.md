@@ -322,7 +322,8 @@ node .claude/hooks/tests/test-skill-validator.js --verbose
 | skill-validator.js | 8 |
 | log-skill-usage.js | 4 |
 | Integration | 1 |
-| **Total** | **20** |
+| gate-blocker delegation | 4 |
+| **Total** | **24** |
 
 ---
 
@@ -498,14 +499,16 @@ function checkSkillInvocationsRequirement(state, phase, iterReqs) {
 
 ### Recommendation
 
-**Decision pending evaluation.** The three options represent a spectrum from pragmatic to rigorous:
+**Option B has been implemented as the baseline** (Enhancement #4d). The `gate-blocker.js` hook now includes a 4th check — `checkAgentDelegationRequirement()` — that verifies the expected phase agent was delegated to at least once before allowing gate advancement. This uses existing `skill_usage_log` data written by `log-skill-usage.js`, requiring zero agent changes.
 
-- **Option B** is a **quick win** — it can be implemented immediately with minimal code changes as a baseline check (was the right agent invoked at all?)
+The three options represent a spectrum from pragmatic to rigorous:
+
+- **Option B** (Implemented) is the **baseline check** — was the right agent invoked at all? Zero agent changes, uses existing log data.
 - **Option A** is the **simplest skill-level approach** — it provides skill-level granularity with moderate implementation effort, though it relies on agent self-reporting
 - **Option C** is the **most rigorous** — it provides a true skill-level audit trail with evidence, but requires the largest implementation investment
 
-A phased rollout is recommended:
-1. **Immediate**: Implement Option B as a baseline gate check
+Phased rollout:
+1. **Complete**: Option B implemented as a baseline gate check
 2. **Next iteration**: Layer Option A on top for skill-level visibility
 3. **Future**: Evaluate whether Option C's evidence-based approach is warranted based on real-world agent compliance data from Options A and B
 
@@ -521,7 +524,7 @@ A phased rollout is recommended:
 | #4 | Skill Enforcement (Prompt-based) | Complete |
 | #4b | Skill Enforcement (Runtime Hooks) | Complete |
 | **#4c** | **Skill Observability (v3.0)** | **Complete** |
-| #4d | Skill Usage Enforcement at Gates | Planned |
+| #4d | Skill Usage Enforcement at Gates (Option B) | Complete |
 
 ---
 

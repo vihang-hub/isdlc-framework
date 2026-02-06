@@ -18,7 +18,8 @@ const {
     outputBlockResponse,
     debugLog,
     getProjectRoot,
-    getTimestamp
+    getTimestamp,
+    loadManifest
 } = require('./lib/common.js');
 
 const fs = require('fs');
@@ -312,6 +313,55 @@ function checkElicitationRequirement(phaseState, phaseRequirements) {
 }
 
 /**
+ * Check if agent delegation requirement is satisfied
+ * Verifies the expected agent for the current phase was invoked at least once
+ */
+function checkAgentDelegationRequirement(phaseState, phaseRequirements, state, currentPhase) {
+    const delegationReq = phaseRequirements.agent_delegation_validation;
+    if (!delegationReq || !delegationReq.enabled) {
+        return { satisfied: true, reason: 'not_required' };
+    }
+
+    const manifest = loadManifest();
+    if (!manifest || !manifest.ownership) {
+        return { satisfied: true, reason: 'no_manifest' };
+    }
+
+    // Find agent that owns this phase
+    let expectedAgent = null;
+    for (const [agent, info] of Object.entries(manifest.ownership)) {
+        if (info.phase === currentPhase) {
+            expectedAgent = agent;
+            break;
+        }
+    }
+
+    if (!expectedAgent) {
+        return { satisfied: true, reason: 'no_agent_for_phase' };
+    }
+
+    // Check skill_usage_log for delegation to expected agent
+    const log = state.skill_usage_log || [];
+    const phaseEntries = log.filter(e => e.agent === expectedAgent && e.agent_phase === currentPhase);
+
+    if (phaseEntries.length > 0) {
+        return {
+            satisfied: true,
+            reason: 'agent_delegated',
+            agent: expectedAgent,
+            delegations: phaseEntries.length
+        };
+    }
+
+    return {
+        satisfied: false,
+        reason: `Phase agent '${expectedAgent}' was not delegated to during phase '${currentPhase}'. The orchestrator must delegate to the phase agent before gate advancement.`,
+        action_required: 'DELEGATE_TO_PHASE_AGENT',
+        expected_agent: expectedAgent
+    };
+}
+
+/**
  * Main validation logic
  */
 async function main() {
@@ -451,6 +501,15 @@ async function main() {
             checks.push({
                 requirement: 'interactive_elicitation',
                 ...elicitCheck
+            });
+        }
+
+        // 4. Agent delegation check
+        const delegationCheck = checkAgentDelegationRequirement(phaseState, phaseReq, state, currentPhase);
+        if (!delegationCheck.satisfied) {
+            checks.push({
+                requirement: 'agent_delegation',
+                ...delegationCheck
             });
         }
 
