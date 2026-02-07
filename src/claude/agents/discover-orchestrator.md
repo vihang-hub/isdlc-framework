@@ -37,9 +37,12 @@ The Discover Orchestrator coordinates the `/discover` command workflow. It deter
 | `constitution-generator` | D3 | Create tailored constitution with research | Both |
 | `skills-researcher` | D4 | Find and install skills from skills.sh | Both |
 | `data-model-analyzer` | D5 | Discover data stores, schemas, entity relationships | Existing projects |
-| `feature-mapper` | D6 | Map API endpoints, UI pages, background jobs, business domains | Existing projects |
+| `feature-mapper` | D6 | Map endpoints, pages, jobs, domains + extract behavior AC | Existing projects |
 | `product-analyst` | D7 | Vision elicitation, brainstorming, PRD generation | New projects |
 | `architecture-designer` | D8 | Design architecture from PRD and tech stack | New projects |
+| `characterization-test-generator` | — | Generate test.skip() scaffolds from extracted AC | Existing (non-shallow) |
+| `artifact-integration` | — | Link AC to features, generate traceability matrix | Existing (non-shallow) |
+| `atdd-bridge` | — | Create ATDD checklists, tag AC for workflow integration | Existing (--atdd-ready) |
 
 ---
 
@@ -573,7 +576,14 @@ PHASE 8: Finalize                                    [Complete ✓]
 
 ## EXISTING PROJECT FLOW (is_new_project: false)
 
-For existing projects, run comprehensive analysis with 4 sub-agents in parallel, then assemble a unified discovery report.
+For existing projects, run comprehensive analysis with 4 sub-agents in parallel, extract behavior as acceptance criteria, optionally generate characterization tests and traceability, then assemble a unified discovery report.
+
+**Options handling:**
+- `--shallow`: Skip behavior extraction (D6 produces feature catalog only, Phases 1b/1c/1d skipped)
+- `--scope {all|module|endpoint|domain}`: Pass to D6 for narrowing behavior extraction scope
+- `--target {name}`: Pass to D6 with --scope for targeting specific features
+- `--priority {all|critical|high|medium}`: Pass to D6 for filtering by risk priority
+- `--atdd-ready`: Run Phase 1d (ATDD Bridge) after Phase 1c
 
 ### Step 1: Display Welcome and Present Plan
 
@@ -594,12 +604,35 @@ Here's what will happen:
 │     integration points                                       │
 │ □ Data Model (D5)                                            │
 │   → Schemas, entities, relationships, migrations             │
-│ □ Functional Features (D6)                                   │
+│ □ Functional Features + Behavior Extraction (D6)             │
 │   → API endpoints, UI pages, background jobs,                │
-│     business domains                                         │
+│     business domains, Given/When/Then AC                     │
 │ □ Test Coverage (D2)                                         │
 │   → Coverage by type, critical untested paths,               │
 │     test quality                                             │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 1b: Characterization Tests (sequential)                │
+├──────────────────────────────────────────────────────────────┤
+│ □ Generate test.skip() scaffolds from extracted AC           │
+│ □ Create fixtures and golden files                           │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 1c: Artifact Integration (sequential)                  │
+├──────────────────────────────────────────────────────────────┤
+│ □ Link AC to feature map entries                             │
+│ □ Generate traceability matrix                               │
+│ □ Generate reverse-engineer report                           │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
+│ PHASE 1d: ATDD Bridge (only if --atdd-ready)                 │
+├──────────────────────────────────────────────────────────────┤
+│ □ Generate ATDD checklists per domain                        │
+│ □ Tag AC as captured behavior                                │
+│ □ Generate migration guide                                   │
 └──────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────┐
@@ -635,6 +668,8 @@ Here's what will happen:
 
 Ready to proceed? [Y] Yes / [N] No, I have questions
 ```
+
+If `--shallow` was passed, omit Phases 1b, 1c, 1d from the display. Show "Functional Features (D6)" without "Behavior Extraction".
 
 **Wait for user approval before executing.**
 
@@ -675,10 +710,21 @@ Launch in a SINGLE message with 4 parallel Task tool calls:
 // Task 3
 {
   "subagent_type": "feature-mapper",
-  "prompt": "Map functional features: catalog API endpoints, UI pages, CLI commands, background jobs, and business domains",
-  "description": "Functional feature mapping"
+  "prompt": "Map functional features and extract behavior: catalog API endpoints, UI pages, CLI commands, background jobs, business domains, then extract Given/When/Then acceptance criteria with priority scoring. {scope_target_priority_options}",
+  "description": "Feature mapping and behavior extraction"
 }
 ```
+
+If `--shallow` was passed, use instead:
+```json
+{
+  "subagent_type": "feature-mapper",
+  "prompt": "Map functional features: catalog API endpoints, UI pages, CLI commands, background jobs, and business domains. SHALLOW MODE — skip behavior extraction.",
+  "description": "Functional feature mapping (shallow)"
+}
+```
+
+Pass any `--scope`, `--target`, and `--priority` options in the prompt to D6.
 
 ```json
 // Task 4
@@ -725,6 +771,96 @@ PHASE 1: Project Analysis                            [Complete ✓]
     → 3 high-risk untested paths, 2 flaky tests
 ```
 
+### Step 2b: Execute PHASE 1b - Characterization Tests (Sequential, Non-Shallow Only)
+
+**Skip this step if `--shallow` was passed or if D6 returned no `ac_generated` field.**
+
+After Phase 1 completes, if D6 produced AC files (`ac_generated > 0`), launch characterization test generator:
+
+```json
+{
+  "subagent_type": "characterization-test-generator",
+  "prompt": "Generate characterization tests from the reverse-engineered acceptance criteria in docs/requirements/reverse-engineered/. Use the test framework detected in the discovery report.",
+  "description": "Generate characterization tests from AC"
+}
+```
+
+**Show progress:**
+```
+PHASE 1b: Characterization Tests                    [In Progress]
+├─ ◐ Generate test.skip() scaffolds                  (running)
+├─ □ Create fixtures                                 (pending)
+└─ □ Create golden files                             (pending)
+```
+
+**On completion:**
+```
+PHASE 1b: Characterization Tests                    [Complete ✓]
+├─ ✓ Generate test.skip() scaffolds
+│   → {test_count} tests in tests/characterization/
+├─ ✓ Create fixtures
+└─ ✓ Create golden files
+```
+
+### Step 2c: Execute PHASE 1c - Artifact Integration (Sequential, Non-Shallow Only)
+
+**Skip this step if `--shallow` was passed or if Phase 1b was skipped.**
+
+```json
+{
+  "subagent_type": "artifact-integration",
+  "prompt": "Link generated AC and characterization tests to the feature map. Create traceability matrix and reverse-engineer report.",
+  "description": "Artifact integration and traceability"
+}
+```
+
+**Show progress:**
+```
+PHASE 1c: Artifact Integration                      [In Progress]
+├─ ◐ Link AC to feature map                          (running)
+├─ □ Generate traceability matrix                    (pending)
+└─ □ Generate reverse-engineer report                (pending)
+```
+
+**On completion:**
+```
+PHASE 1c: Artifact Integration                      [Complete ✓]
+├─ ✓ Link AC to feature map
+├─ ✓ Generate traceability matrix
+│   → docs/isdlc/ac-traceability.csv
+└─ ✓ Generate reverse-engineer report
+    → docs/isdlc/reverse-engineer-report.md
+```
+
+### Step 2d: Execute PHASE 1d - ATDD Bridge (Conditional, --atdd-ready Only)
+
+**Skip this step unless `--atdd-ready` was passed.**
+
+```json
+{
+  "subagent_type": "atdd-bridge",
+  "prompt": "Prepare reverse-engineered artifacts for ATDD workflow integration. Generate ATDD checklists, tag AC as captured behavior, create migration guide.",
+  "description": "ATDD bridge preparation"
+}
+```
+
+**Show progress:**
+```
+PHASE 1d: ATDD Bridge                               [In Progress]
+├─ ◐ Generate ATDD checklists                        (running)
+├─ □ Tag AC as captured behavior                     (pending)
+└─ □ Generate migration guide                        (pending)
+```
+
+**On completion:**
+```
+PHASE 1d: ATDD Bridge                               [Complete ✓]
+├─ ✓ Generate ATDD checklists
+├─ ✓ Tag AC as captured behavior
+└─ ✓ Generate migration guide
+    → docs/isdlc/atdd-migration-guide.md
+```
+
 ### Step 3: Execute PHASE 2 - Assemble Discovery Report
 
 Compile results from all 4 sub-agents into a single unified report.
@@ -760,6 +896,15 @@ Create `docs/project-discovery-report.md` by assembling the `report_section` fro
 
 ## Test Coverage
 {from D2 test-evaluator: coverage by type, critical paths, quality, gaps}
+
+## Reverse-Engineered Acceptance Criteria
+{from D6 feature-mapper: AC count, priority breakdown, confidence levels — omit if --shallow}
+
+## Characterization Tests
+{from characterization-test-generator: test count, fixture count, golden files — omit if --shallow}
+
+## Traceability Matrix
+{from artifact-integration: linked AC count, linked test count, orphan counts — omit if --shallow}
 
 ---
 
@@ -960,10 +1105,15 @@ Update `.isdlc/state.json`:
       "framework": "nestjs",
       "database": "postgresql"
     },
-    "discovered_at": "2026-01-24T..."
+    "discovered_at": "2026-01-24T...",
+    "behavior_extraction_completed": true,
+    "ac_count": 87,
+    "test_count": 45
   }
 }
 ```
+
+If `--shallow` was used, omit `behavior_extraction_completed`, `ac_count`, and `test_count`.
 
 **On completion:**
 ```
@@ -989,12 +1139,26 @@ PHASE 1: Project Analysis                            [Complete ✓]
 ├─ ✓ Data Model (D5)
 │   → 6 entities, PostgreSQL + Redis
 │   → 24 migrations, Prisma ORM
-├─ ✓ Functional Features (D6)
+├─ ✓ Functional Features + Behavior Extraction (D6)
 │   → 32 API endpoints, 12 UI pages, 3 jobs
 │   → 6 business domains
+│   → 87 acceptance criteria extracted
 └─ ✓ Test Coverage (D2)
     → 67% coverage (unit 72%, integration 58%, E2E 0%)
     → 3 high-risk untested paths
+
+PHASE 1b: Characterization Tests                     [Complete ✓]
+├─ ✓ Generate test.skip() scaffolds
+│   → 45 tests in tests/characterization/
+├─ ✓ Create fixtures
+└─ ✓ Create golden files
+
+PHASE 1c: Artifact Integration                       [Complete ✓]
+├─ ✓ Link AC to feature map
+├─ ✓ Generate traceability matrix
+│   → docs/isdlc/ac-traceability.csv
+└─ ✓ Generate reverse-engineer report
+    → docs/isdlc/reverse-engineer-report.md
 
 PHASE 2: Discovery Report                            [Complete ✓]
 ├─ ✓ Assemble unified discovery report
@@ -1032,17 +1196,24 @@ PHASE 5: Finalize                                    [Complete ✓]
     ✓ docs/isdlc/test-evaluation-report.md
     ✓ docs/isdlc/constitution.md
     ✓ docs/isdlc/skill-customization-report.md
+    ✓ docs/requirements/reverse-engineered/ (acceptance criteria)
+    ✓ tests/characterization/ (characterization tests)
+    ✓ docs/isdlc/ac-traceability.csv (traceability matrix)
+    ✓ docs/isdlc/reverse-engineer-report.md
 
   Next Steps:
     1. Review discovery report: cat docs/project-discovery-report.md
-    2. Review constitution: cat docs/isdlc/constitution.md
-    3. Start a workflow:
+    2. Review AC: cat docs/requirements/reverse-engineered/index.md
+    3. Review constitution: cat docs/isdlc/constitution.md
+    4. Start a workflow:
        /sdlc feature  — Build a new feature
        /sdlc fix      — Fix a bug
        /sdlc test run — Run existing tests
 
 ════════════════════════════════════════════════════════════════
 ```
+
+If `--shallow` was used, omit Phases 1b, 1c, and the RE artifacts from the completion display.
 
 ---
 

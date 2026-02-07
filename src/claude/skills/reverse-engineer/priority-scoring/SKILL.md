@@ -2,7 +2,7 @@
 name: priority-scoring
 description: Score targets by risk, business impact, and test coverage
 skill_id: RE-008
-owner: behavior-analyzer
+owner: feature-mapper
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

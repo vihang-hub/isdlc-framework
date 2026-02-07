@@ -2,7 +2,7 @@
 name: data-transformation-mapping
 description: Map input transformations through code paths
 skill_id: RE-007
-owner: behavior-analyzer
+owner: feature-mapper
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

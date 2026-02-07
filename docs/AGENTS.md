@@ -1,19 +1,18 @@
 # iSDLC Agents
 
-This document provides detailed information about all 37 agents in the iSDLC framework.
+This document provides detailed information about all 36 agents in the iSDLC framework.
 
 ## Overview
 
-The framework's 37 agents are organized into six groups:
+The framework's 36 agents are organized into five groups:
 
 | Group | Count | Purpose |
 |-------|-------|---------|
 | [SDLC Agents](#sdlc-agents) | 15 | Execute development phases (1 orchestrator + 14 phase agents) |
-| [Discover Agents](#discover-agents) | 9 | Analyze projects before development begins |
+| [Discover Agents](#discover-agents) | 12 | Analyze projects before development begins |
 | [Quick Scan Agent](#quick-scan-agent-phase-00) | 1 | Lightweight scope estimation before requirements |
 | [Impact Analysis Agents](#impact-analysis-agents-phase-02) | 4 | Full feature impact analysis after requirements |
 | [Tracing Agents](#tracing-agents-phase-02) | 4 | Trace bug root causes after requirements |
-| [Reverse Engineer Agents](#reverse-engineer-agents) | 4 | Extract knowledge from existing code |
 
 ---
 
@@ -105,9 +104,9 @@ For bug fixes, **after Phase 01 captures the bug report**, the Tracing Orchestra
 
 ## Discover Agents
 
-The `/discover` command uses 9 specialized sub-agents to analyze projects before SDLC workflows begin.
+The `/discover` command uses 12 specialized sub-agents to analyze projects before SDLC workflows begin.
 
-**For existing projects**: D1, D2, D5, and D6 run in parallel to produce a unified `docs/project-discovery-report.md`.
+**For existing projects**: D1, D2, D5, and D6 run in parallel (Phase 1), then sequential phases extract behavior, generate characterization tests, and build traceability (Phases 1b–1d).
 
 **For new projects**: D7 guides vision elicitation and D8 designs the architecture blueprint.
 
@@ -119,30 +118,18 @@ The `/discover` command uses 9 specialized sub-agents to analyze projects before
 | **D3** | **Constitution Generator** | Generates project constitution from analysis |
 | **D4** | **Skills Researcher** | Researches best practices for detected tech stack |
 | **D5** | **Data Model Analyzer** | Database schemas, ORM models, migrations, relationships |
-| **D6** | **Feature Mapper** | API endpoints, UI pages, CLI commands, business domains |
+| **D6** | **Feature Mapper** | API endpoints, UI pages, CLI commands, business domains, **behavior extraction & AC generation** |
 | **D7** | **Product Analyst** | Vision elicitation, brainstorming, PRD generation (new projects) |
 | **D8** | **Architecture Designer** | Architecture blueprint from PRD and tech stack (new projects) |
+| — | **Characterization Test Generator** | Generate tests that capture current behavior as executable specifications |
+| — | **Artifact Integration** | Link extracted AC to feature maps, generate traceability matrices |
+| — | **ATDD Bridge** | Prepare extracted AC for ATDD workflow integration with priority tagging |
 
 **Invoked by**: `/discover`
 
-**Output**: `docs/project-discovery-report.md`, `docs/isdlc/constitution.md`
+**Output**: `docs/project-discovery-report.md`, `docs/isdlc/constitution.md`, `docs/requirements/reverse-engineered/`, `tests/characterization/`, `docs/isdlc/ac-traceability.csv`
 
----
-
-## Reverse Engineer Agents
-
-The `/sdlc reverse-engineer` command uses 4 specialized sub-agents to extract acceptance criteria and generate characterization tests from existing code.
-
-| ID | Agent | Responsibility |
-|----|-------|----------------|
-| **R1** | **Behavior Analyzer** | Extract behavioral contracts, side effects, and implicit AC from source code |
-| **R2** | **Characterization Test Generator** | Generate tests that capture current behavior as executable specifications |
-| **R3** | **Artifact Integration** | Link extracted AC to feature maps, generate traceability matrices |
-| **R4** | **ATDD Bridge** | Prepare extracted AC for ATDD workflow integration with priority tagging |
-
-**Invoked by**: `/sdlc reverse-engineer`
-
-**Output**: Acceptance criteria documents, characterization tests, traceability matrices
+**Note**: D6 now includes behavior extraction (formerly the Behavior Analyzer agent). Use `--shallow` to skip behavior extraction and get only the feature catalog. Use `--atdd-ready` to enable ATDD Bridge integration.
 
 ---
 
@@ -254,8 +241,17 @@ Agent definitions are located in `.claude/agents/`:
 │   ├── symptom-analyzer.md
 │   ├── execution-path-tracer.md
 │   └── root-cause-identifier.md
-├── discover/
-│   └── (discover agent files)
-└── reverse-engineer/
-    └── (reverse engineer agent files)
+└── discover/
+    ├── discover-orchestrator.md
+    ├── architecture-analyzer.md
+    ├── test-evaluator.md
+    ├── constitution-generator.md
+    ├── skills-researcher.md
+    ├── data-model-analyzer.md
+    ├── feature-mapper.md
+    ├── product-analyst.md
+    ├── architecture-designer.md
+    ├── characterization-test-generator.md
+    ├── artifact-integration.md
+    └── atdd-bridge.md
 ```

@@ -2,7 +2,7 @@
 name: postcondition-inference
 description: Identify expected outcomes from return statements and mutations
 skill_id: RE-004
-owner: behavior-analyzer
+owner: feature-mapper
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

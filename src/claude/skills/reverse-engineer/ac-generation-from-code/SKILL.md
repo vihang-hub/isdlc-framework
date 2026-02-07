@@ -2,7 +2,7 @@
 name: ac-generation-from-code
 description: Convert code behavior patterns to Given-When-Then acceptance criteria
 skill_id: RE-002
-owner: behavior-analyzer
+owner: feature-mapper
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

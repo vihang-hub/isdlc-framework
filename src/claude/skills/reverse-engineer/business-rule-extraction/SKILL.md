@@ -2,7 +2,7 @@
 name: business-rule-extraction
 description: Extract business logic rules from conditionals and validations
 skill_id: RE-006
-owner: behavior-analyzer
+owner: feature-mapper
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

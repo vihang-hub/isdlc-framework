@@ -21,11 +21,16 @@ The `/discover` command is the universal entry point for setting up a project wi
 | `--project {id}` | Target a specific project in monorepo mode |
 | `--skip-tests` | Skip test infrastructure evaluation |
 | `--skip-skills` | Skip skills.sh integration |
+| `--shallow` | Skip behavior extraction (feature catalog only, no AC/tests) |
+| `--scope {value}` | Analysis scope: `all`, `module`, `endpoint`, `domain` (default: all) |
+| `--target {name}` | Target name (required when scope is module/endpoint/domain) |
+| `--priority {value}` | Filter by risk priority: `all`, `critical`, `high`, `medium` (default: all) |
+| `--atdd-ready` | Prepare AC for ATDD workflow integration |
 | `--help` | Show this help message |
 
 ### Examples
 ```bash
-# Auto-detect project type (recommended)
+# Auto-detect project type (recommended — full analysis with behavior extraction)
 /discover
 
 # Force new project setup
@@ -36,6 +41,21 @@ The `/discover` command is the universal entry point for setting up a project wi
 
 # Discover a specific project in a monorepo
 /discover --project api-service
+
+# Quick catalog only (no behavior extraction)
+/discover --shallow
+
+# Focus on specific domain
+/discover --scope domain --target "payments"
+
+# Only critical paths (payment, auth, core business)
+/discover --priority critical
+
+# Prepare for ATDD workflow
+/discover --atdd-ready
+
+# Analyze specific endpoint
+/discover --scope endpoint --target "/api/users/register"
 ```
 
 ### What It Does
@@ -54,23 +74,32 @@ The `/discover` command is the universal entry point for setting up a project wi
 1. **Project Analysis** (4 agents in parallel)
    - **Architecture & Tech Stack** (D1) — Structure, frameworks, dependencies, deployment topology, integrations
    - **Data Model** (D5) — Database schemas, entities, relationships, migrations
-   - **Functional Features** (D6) — API endpoints, UI pages, background jobs, business domains
+   - **Functional Features + Behavior Extraction** (D6) — API endpoints, UI pages, background jobs, business domains, Given/When/Then AC
    - **Test Coverage** (D2) — Coverage by type, critical untested paths, test quality
-2. **Discovery Report** — Assemble unified report from all analysis
+1b. **Characterization Tests** — Generate test.skip() scaffolds from extracted AC
+1c. **Artifact Integration** — Link AC to features, generate traceability matrix and report
+1d. **ATDD Bridge** (only if `--atdd-ready`) — Create ATDD checklists, tag AC
+2. **Discovery Report** — Assemble unified report including RE artifacts
 3. **Generate constitution** — Informed by discovery findings
 4. **Install skills** — From skills.sh for your tech stack
 5. **Fill testing gaps** — Add missing test infrastructure
 6. **Configure cloud** — Optional deployment setup
 
+With `--shallow`, steps 1b, 1c, and 1d are skipped and D6 produces only the feature catalog.
+
 ### Output
 After completion, you'll have:
 
 **Existing projects:**
-- `docs/project-discovery-report.md` - Unified discovery report (tech stack, architecture, data model, features, test coverage)
+- `docs/project-discovery-report.md` - Unified discovery report (tech stack, architecture, data model, features, test coverage, RE summary)
 - `docs/architecture/architecture-overview.md` - Detailed architecture documentation
 - `docs/isdlc/test-evaluation-report.md` - Test analysis with per-type coverage and quality assessment
 - `docs/isdlc/constitution.md` - Tailored project constitution
 - `docs/isdlc/skill-customization-report.md` - Installed skills report
+- `docs/requirements/reverse-engineered/` - Acceptance criteria by domain (unless `--shallow`)
+- `tests/characterization/` - Characterization test scaffolds (unless `--shallow`)
+- `docs/isdlc/ac-traceability.csv` - Code → AC → Test mapping (unless `--shallow`)
+- `docs/isdlc/reverse-engineer-report.md` - RE execution summary (unless `--shallow`)
 
 **New projects:**
 - `docs/project-brief.md` - Problem statement, users, features, constraints
@@ -119,11 +148,15 @@ When this command is invoked:
    - `constitution-generator` (D3) - Creates tailored constitution with research
    - `skills-researcher` (D4) - Finds and installs relevant skills
    - `data-model-analyzer` (D5) - Database schemas, entities, relationships, migrations
-   - `feature-mapper` (D6) - API endpoints, UI pages, background jobs, business domains
+   - `feature-mapper` (D6) - API endpoints, UI pages, background jobs, domains + behavior extraction
    - `product-analyst` (D7) - Vision elicitation, brainstorming, PRD generation (new projects)
    - `architecture-designer` (D8) - Architecture blueprint from PRD and tech stack (new projects)
+   - `characterization-test-generator` - Generate test.skip() scaffolds from AC (Phase 1b)
+   - `artifact-integration` - Link AC to features, traceability matrix (Phase 1c)
+   - `atdd-bridge` - ATDD checklists and AC tagging (Phase 1d, --atdd-ready only)
 
    For existing projects, D1, D2, D5, and D6 run **in parallel** during Phase 1.
+   Phases 1b, 1c, 1d run **sequentially** after Phase 1 (skipped with `--shallow`).
    For new projects, D7 handles vision + PRD, D8 handles architecture blueprint.
 
 ### Related Commands

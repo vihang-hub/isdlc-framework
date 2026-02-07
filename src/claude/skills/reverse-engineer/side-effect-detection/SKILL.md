@@ -2,7 +2,7 @@
 name: side-effect-detection
 description: Detect database, API, queue, file, and other side effects
 skill_id: RE-005
-owner: behavior-analyzer
+owner: feature-mapper
 collaborators: []
 project: sdlc-framework
 version: 1.0.0

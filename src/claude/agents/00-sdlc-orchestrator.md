@@ -1117,6 +1117,13 @@ Before building the Task prompt, check state.json → project.discovery_complete
     - Tech Stack: {language} + {framework} + {database}
     - Is New Project: {true|false}
     """
+    IF docs/requirements/reverse-engineered/index.md exists:
+      Append to DISCOVERY CONTEXT:
+      """
+    - Reverse-Engineered AC: docs/requirements/reverse-engineered/index.md
+    - Traceability Matrix: docs/isdlc/ac-traceability.csv
+    - Characterization Tests: tests/characterization/
+      """
   IF false or state.json missing:
     Omit DISCOVERY CONTEXT block entirely. Agent proceeds normally.
 
@@ -1167,6 +1174,13 @@ Before building the Task prompt, check state.json → project.discovery_complete
     IMPORTANT: Use discovery as your baseline. Extend existing architecture —
     do not redesign from scratch. Justify any deviations from detected patterns.
     """
+    IF docs/requirements/reverse-engineered/index.md exists:
+      Append to DISCOVERY CONTEXT:
+      """
+    - Reverse-Engineered AC: docs/requirements/reverse-engineered/index.md
+    - Traceability Matrix: docs/isdlc/ac-traceability.csv
+    - Characterization Tests: tests/characterization/
+      """
   IF false or state.json missing:
     Omit DISCOVERY CONTEXT block entirely. Agent proceeds with greenfield evaluation.
 
@@ -1195,6 +1209,13 @@ Before building the Task prompt, check state.json → project.discovery_complete
     IMPORTANT: Use discovery as your baseline. New designs must follow existing
     patterns (API structure, naming conventions, error handling). Justify deviations.
     """
+    IF docs/requirements/reverse-engineered/index.md exists:
+      Append to DISCOVERY CONTEXT:
+      """
+    - Reverse-Engineered AC: docs/requirements/reverse-engineered/index.md
+    - Traceability Matrix: docs/isdlc/ac-traceability.csv
+    - Characterization Tests: tests/characterization/
+      """
   IF false or state.json missing:
     Omit DISCOVERY CONTEXT block entirely. Agent designs from scratch.
 
