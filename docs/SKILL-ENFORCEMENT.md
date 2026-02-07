@@ -8,7 +8,7 @@
 
 ## Overview
 
-Skill Observability provides visibility into agent delegation patterns. Each of the 233 skills has a **primary agent**, and all usage is logged for audit and visibility. Cross-phase delegations are allowed but flagged in logs.
+Skill Observability provides visibility into agent delegation patterns. Each of the 229 skills has a **primary agent**, and all usage is logged for audit and visibility. Cross-phase delegations are allowed but flagged in logs.
 
 **Key change in v3.0**: Skill IDs are now **event identifiers** for logging/visibility, not access-control tokens. The PreToolUse hook never blocks — it only observes.
 
@@ -71,11 +71,18 @@ The hooks are configured in `.claude/settings.json`:
       {
         "matcher": "Task",
         "hooks": [
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/skill-validator.js",
-            "timeout": 10000
-          }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/model-provider-router.js", "timeout": 10000 },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/iteration-corridor.js", "timeout": 10000 },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/skill-validator.js", "timeout": 10000 },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/gate-blocker.js", "timeout": 10000 },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/constitution-validator.js", "timeout": 10000 }
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/iteration-corridor.js", "timeout": 10000 },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/gate-blocker.js", "timeout": 10000 }
         ]
       }
     ],
@@ -83,11 +90,14 @@ The hooks are configured in `.claude/settings.json`:
       {
         "matcher": "Task",
         "hooks": [
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/log-skill-usage.js",
-            "timeout": 5000
-          }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/log-skill-usage.js", "timeout": 5000 },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/menu-tracker.js", "timeout": 5000 }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/test-watcher.js", "timeout": 10000 }
         ]
       }
     ]
@@ -131,8 +141,8 @@ The `skills-manifest.json` provides authoritative skill-to-agent mappings:
 
 ```json
 {
-  "version": "3.0.0",
-  "total_skills": 233,
+  "version": "4.0.0",
+  "total_skills": 229,
   "enforcement_mode": "observe"
 }
 ```
@@ -202,7 +212,7 @@ Configure in `.isdlc/state.json`:
     "enabled": true,
     "mode": "observe",
     "fail_behavior": "allow",
-    "manifest_version": "3.0.0"
+    "manifest_version": "4.0.0"
   }
 }
 ```
@@ -231,40 +241,72 @@ At each phase gate, skill usage is reviewed:
 
 ## Skill Distribution
 
-### By Agent (233 skills across 37 agents)
+### By Agent (229 skills across 36 agents)
 
-| Agent | Skills | Categories |
-|-------|--------|------------|
-| 00 - SDLC Orchestrator | 12 | orchestration/ |
-| 01 - Requirements Analyst | 11 | requirements/ |
-| 02 - Solution Architect | 13 | architecture/, documentation/ |
-| 03 - System Designer | 11 | design/, documentation/ |
-| 04 - Test Design Engineer | 9 | testing/ (planning) |
-| 05 - Software Developer | 14 | development/ |
-| 06 - Integration Tester | 8 | testing/ (execution) |
-| 07 - QA Engineer | 1 | development/ (code-review) |
-| 08 - Security & Compliance Auditor | 13 | security/ |
-| 09 - CI/CD Engineer | 6 | devops/ (pipelines) |
-| 10 - Environment Builder | 7 | devops/, documentation/ |
-| 11 - Deployment Engineer (Staging) | 4 | devops/, documentation/ |
-| 12 - Release Manager | 5 | devops/, documentation/ |
-| 13 - Site Reliability Engineer | 14 | operations/, documentation/ |
-| 14 - Upgrade Engineer | 6 | upgrade/ |
+| Group | Agent | Skills | Phase |
+|-------|-------|--------|-------|
+| Core | 00 - SDLC Orchestrator | 12 | all |
+| Core | 01 - Requirements Analyst | 11 | 01-requirements |
+| Core | 02 - Solution Architect | 13 | 03-architecture |
+| Core | 03 - System Designer | 11 | 04-design |
+| Core | 04 - Test Design Engineer | 9 | 05-test-strategy |
+| Core | 05 - Software Developer | 14 | 06-implementation |
+| Core | 06 - Integration Tester | 8 | 07-testing |
+| Core | 07 - QA Engineer | 1 | 08-code-review |
+| Core | 08 - Security & Compliance Auditor | 13 | 09-validation |
+| Core | 09 - CI/CD Engineer | 6 | 10-cicd |
+| Core | 10 - Environment Builder | 7 | 11-local-testing |
+| Core | 11 - Deployment Engineer (Staging) | 4 | 12-test-deploy |
+| Core | 12 - Release Manager | 5 | 13-production |
+| Core | 13 - Site Reliability Engineer | 14 | 14-operations |
+| Core | 14 - Upgrade Engineer | 6 | 15-upgrade |
+| Discovery | D0 - Discover Orchestrator | 4 | setup |
+| Discovery | D1 - Architecture Analyzer | 6 | setup |
+| Discovery | D2 - Test Evaluator | 6 | setup |
+| Discovery | D3 - Constitution Generator | 4 | setup |
+| Discovery | D4 - Skills Researcher | 4 | setup |
+| Discovery | D5 - Data Model Analyzer | 4 | setup |
+| Discovery | D6 - Feature Mapper | 12 | setup |
+| Discovery | D7 - Product Analyst | 4 | setup |
+| Discovery | D8 - Architecture Designer | 4 | setup |
+| Discovery | R2 - Characterization Test Generator | 7 | setup |
+| Discovery | R3 - Artifact Integration | 3 | setup |
+| Discovery | R4 - ATDD Bridge | 3 | setup |
+| Utility | QS - Quick-Scan Agent | 3 | 00-quick-scan |
+| Utility | IA0 - Impact Analysis Orchestrator | 3 | 02-impact-analysis |
+| Utility | IA1 - Impact Analyzer | 4 | 02-impact-analysis |
+| Utility | IA2 - Entry Point Finder | 4 | 02-impact-analysis |
+| Utility | IA3 - Risk Assessor | 4 | 02-impact-analysis |
+| Utility | T0 - Tracing Orchestrator | 3 | 02-tracing |
+| Utility | T1 - Symptom Analyzer | 4 | 02-tracing |
+| Utility | T2 - Execution Path Tracer | 5 | 02-tracing |
+| Utility | T3 - Root Cause Identifier | 4 | 02-tracing |
 
 ---
 
 ## Files
 
-### Hook Files (v3.0 - Observability, Node.js)
+### Hook Files (8 hooks, Node.js)
 
-| File | Purpose | Lines |
-|------|---------|-------|
-| `.claude/hooks/skill-validator.js` | PreToolUse observability hook (Node.js) | ~170 |
-| `.claude/hooks/log-skill-usage.js` | PostToolUse logging hook (Node.js) | ~130 |
-| `.claude/hooks/lib/common.js` | Shared utilities (Node.js) | ~250 |
-| `.claude/settings.json` | Hook configuration | ~25 |
-| `config/skills-manifest.json` | JSON manifest for runtime | ~700 |
-| `.claude/hooks/tests/test-skill-validator.js` | Test suite (Node.js) | ~470 |
+| File | Trigger | Purpose |
+|------|---------|---------|
+| `.claude/hooks/model-provider-router.js` | PreToolUse (Task) | Routes to configured LLM provider |
+| `.claude/hooks/iteration-corridor.js` | PreToolUse (Task, Skill) | Enforces iteration limits per phase |
+| `.claude/hooks/skill-validator.js` | PreToolUse (Task) | Observability hook — always allows |
+| `.claude/hooks/gate-blocker.js` | PreToolUse (Task, Skill) | Blocks gate advancement if requirements unmet |
+| `.claude/hooks/constitution-validator.js` | PreToolUse (Task) | Validates constitutional compliance |
+| `.claude/hooks/log-skill-usage.js` | PostToolUse (Task) | Logs all Task tool delegations |
+| `.claude/hooks/menu-tracker.js` | PostToolUse (Task) | Tracks menu/command usage |
+| `.claude/hooks/test-watcher.js` | PostToolUse (Bash) | Monitors test execution results |
+
+**Supporting files:**
+
+| File | Purpose |
+|------|---------|
+| `.claude/hooks/lib/common.js` | Shared utilities (JSON parsing, manifest lookup) |
+| `.claude/hooks/config/skills-manifest.json` | JSON manifest for runtime lookup |
+| `.claude/hooks/config/iteration-requirements.json` | Phase iteration requirements |
+| `.claude/hooks/tests/test-skill-validator.js` | Test suite (24 tests) |
 
 ---
 
@@ -538,6 +580,6 @@ Projects upgrading from v2.0:
 
 ---
 
-**Version**: 3.0.0
-**Last Updated**: 2026-02-05
+**Version**: 4.0.0
+**Last Updated**: 2026-02-07
 **Author**: iSDLC Framework

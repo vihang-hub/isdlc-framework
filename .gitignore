@@ -50,5 +50,11 @@ docs/archive/
 # Generated mapping docs (development-only)
 docs/agent-skill-mapping.md
 
+# SDLC workflow artifacts (dogfooding — not for end users)
+docs/requirements/
+docs/architecture/
+docs/design/
+docs/isdlc/
+
 # Local setup scripts
 setup-remotes.sh

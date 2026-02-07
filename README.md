@@ -4,12 +4,12 @@
 
 <h3><em>Structured AI-powered software development, from requirements to production.</em></h3>
 
-<p><strong>A comprehensive SDLC framework for Claude Code with 36 agents, 233 skills, 16 quality gates, and deterministic hook enforcement.</strong></p>
+<p><strong>A comprehensive SDLC framework for Claude Code with 36 agents, 229 skills, 16 quality gates, and deterministic hook enforcement.</strong></p>
 
 [![npm version](https://img.shields.io/npm/v/isdlc.svg)](https://www.npmjs.com/package/isdlc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Agents](https://img.shields.io/badge/Agents-36-purple.svg)](docs/AGENTS.md)
-[![Skills](https://img.shields.io/badge/Skills-233-green.svg)](docs/DETAILED-SKILL-ALLOCATION.md)
+[![Skills](https://img.shields.io/badge/Skills-229-green.svg)](docs/DETAILED-SKILL-ALLOCATION.md)
 [![Gates](https://img.shields.io/badge/Quality%20Gates-16-orange.svg)](docs/ARCHITECTURE.md#quality-gates-16)
 [![Hooks](https://img.shields.io/badge/Hooks-8-red.svg)](docs/ARCHITECTURE.md#hooks-8)
 
@@ -290,7 +290,7 @@ AI coding assistants are powerful but have well-known failure modes. The iSDLC f
 |----------|-------------|
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture, hooks, agents, state management, end-to-end flow |
 | [AGENTS.md](docs/AGENTS.md) | All 36 agents with responsibilities and artifacts |
-| [DETAILED-SKILL-ALLOCATION.md](docs/DETAILED-SKILL-ALLOCATION.md) | 233 skills organized by category |
+| [DETAILED-SKILL-ALLOCATION.md](docs/DETAILED-SKILL-ALLOCATION.md) | 229 skills organized by category |
 | [CONSTITUTION-GUIDE.md](docs/CONSTITUTION-GUIDE.md) | Project governance principles |
 | [MONOREPO-GUIDE.md](docs/MONOREPO-GUIDE.md) | Multi-project setup |
 | [AUTONOMOUS-ITERATION.md](docs/AUTONOMOUS-ITERATION.md) | Self-correcting agent behavior |
@@ -302,7 +302,7 @@ AI coding assistants are powerful but have well-known failure modes. The iSDLC f
 ## Project Status
 
 **Completed** (10 enhancements):
-- 36 agents, 233 skills, 16 gates, 8 hooks
+- 36 agents, 229 skills, 16 gates, 8 hooks
 - Project Constitution, Adaptive Workflow, Autonomous Iteration
 - Skill Observability, Deterministic Hooks, Monorepo Support
 - Task Planning, Phase 00 Exploration Mode, Multi-Provider LLM Support
@@ -334,6 +334,6 @@ MIT License
 
 <div align="center">
 
-**iSDLC Framework** v0.1.0-alpha — 36 agents, 233 skills, 16 gates, 8 hooks, cross-platform npm package
+**iSDLC Framework** v0.1.0-alpha — 36 agents, 229 skills, 16 gates, 8 hooks, cross-platform npm package
 
 </div>
