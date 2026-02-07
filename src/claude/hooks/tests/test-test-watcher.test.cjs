@@ -1,0 +1,567 @@
+'use strict';
+
+/**
+ * iSDLC Test Watcher - Test Suite (CJS)
+ * =======================================
+ * Unit tests for src/claude/hooks/test-watcher.js
+ *
+ * The test-watcher hook is a PostToolUse hook that monitors Bash tool executions
+ * for test commands. When a test command is detected, it parses the result for
+ * pass/fail, updates the iteration counter in state.json, checks for circuit
+ * breaker conditions, and outputs guidance to the agent.
+ *
+ * IMPORTANT: PostToolUse hooks receive tool_result in the input JSON:
+ * {
+ *   "tool_name": "Bash",
+ *   "tool_input": { "command": "npm test" },
+ *   "tool_result": "output of the command..."
+ * }
+ *
+ * IMPORTANT: Hooks use CommonJS require() but the project package.json has
+ * "type": "module". We copy the hook + lib/common.js to the temp test directory
+ * (which is outside the ESM package scope) so Node treats .js files as CJS.
+ *
+ * Run: node --test src/claude/hooks/tests/test-test-watcher.test.cjs
+ */
+
+const { describe, it, beforeEach, afterEach } = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('fs');
+const path = require('path');
+const {
+    setupTestEnv,
+    cleanupTestEnv,
+    getTestDir,
+    writeState,
+    readState,
+    runHook
+} = require('./hook-test-utils.cjs');
+
+/** Source paths */
+const hookSrcPath = path.resolve(__dirname, '..', 'test-watcher.js');
+const commonSrcPath = path.resolve(__dirname, '..', 'lib', 'common.js');
+
+/**
+ * Copy the hook file and its lib/common.js dependency into the temp test dir.
+ * Returns the absolute path to the copied hook file.
+ */
+function installHook() {
+    const testDir = getTestDir();
+    const libDir = path.join(testDir, 'lib');
+    if (!fs.existsSync(libDir)) {
+        fs.mkdirSync(libDir, { recursive: true });
+    }
+    fs.copyFileSync(commonSrcPath, path.join(libDir, 'common.js'));
+    const hookDest = path.join(testDir, 'test-watcher.js');
+    fs.copyFileSync(hookSrcPath, hookDest);
+    return hookDest;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a PostToolUse Bash input with command and result.
+ * @param {string} command - The bash command
+ * @param {string} output - The command output (tool_result)
+ * @param {number} [exitCode] - Optional exit code embedded in result
+ */
+function bashTestInput(command, output, exitCode) {
+    const input = {
+        tool_name: 'Bash',
+        tool_input: { command }
+    };
+    if (exitCode !== undefined) {
+        // Embed exit code in a structured result object
+        input.tool_result = { output, exitCode };
+    } else {
+        input.tool_result = output;
+    }
+    return input;
+}
+
+/**
+ * Base state for a phase with test_iteration enabled.
+ * Uses phase 06-implementation which has test_iteration.enabled: true in the
+ * iteration-requirements.json config.
+ */
+function baseTestState(extras) {
+    return {
+        current_phase: '06-implementation',
+        iteration_enforcement: { enabled: true },
+        phases: {
+            '06-implementation': {
+                status: 'in_progress',
+                ...((extras && extras.phase) || {})
+            }
+        }
+    };
+}
+
+/**
+ * State with an existing test_iteration that has failed N times.
+ */
+function failedIterationState(iteration, maxIter, extras) {
+    return baseTestState({
+        phase: {
+            iteration_requirements: {
+                test_iteration: {
+                    required: true,
+                    completed: false,
+                    current_iteration: iteration || 1,
+                    max_iterations: maxIter || 10,
+                    failures_count: iteration || 1,
+                    identical_failure_count: 0,
+                    last_test_result: 'failed',
+                    last_test_command: 'npm test',
+                    history: [],
+                    started_at: '2026-01-01T00:00:00.000Z',
+                    ...((extras && extras.test_iteration) || {})
+                }
+            }
+        }
+    });
+}
+
+// ---------------------------------------------------------------------------
+// Test Suite
+// ---------------------------------------------------------------------------
+
+describe('test-watcher.js', () => {
+    let hookPath;
+
+    beforeEach(() => {
+        setupTestEnv();
+        hookPath = installHook();
+    });
+
+    afterEach(() => {
+        cleanupTestEnv();
+    });
+
+    // -----------------------------------------------------------------------
+    // 1. Non-Bash tool passes through
+    // -----------------------------------------------------------------------
+    it('passes through non-Bash tools (e.g., Task)', async () => {
+        cleanupTestEnv();
+        setupTestEnv(baseTestState());
+        hookPath = installHook();
+
+        const result = await runHook(hookPath, {
+            tool_name: 'Task',
+            tool_input: { prompt: 'Run the test suite' },
+            tool_result: 'Done'
+        });
+        assert.equal(result.code, 0);
+        assert.equal(result.stdout, '', 'Non-Bash tool should pass through silently');
+    });
+
+    // -----------------------------------------------------------------------
+    // 2. Bash command that's not a test
+    // -----------------------------------------------------------------------
+    it('passes through Bash commands that are not test commands (e.g., npm install)', async () => {
+        cleanupTestEnv();
+        setupTestEnv(baseTestState());
+        hookPath = installHook();
+
+        const result = await runHook(hookPath, bashTestInput('npm install', 'added 150 packages'));
+        assert.equal(result.code, 0);
+        assert.equal(result.stdout, '', 'Non-test Bash command should pass through');
+    });
+
+    // -----------------------------------------------------------------------
+    // 3. npm test with passing output - records success
+    // -----------------------------------------------------------------------
+    it('records success in state when npm test passes', async () => {
+        cleanupTestEnv();
+        setupTestEnv(baseTestState());
+        hookPath = installHook();
+
+        const output = 'Test Suites: 5 passed, 5 total\nTests: 20 passed, 0 failed, 20 total\nAll tests passed';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+        assert.ok(result.stdout.includes('TESTS PASSED'), 'Should output success message');
+
+        const state = readState();
+        const iterState = state.phases['06-implementation'].iteration_requirements.test_iteration;
+        assert.ok(iterState, 'test_iteration state should be created');
+        assert.equal(iterState.completed, true);
+        assert.equal(iterState.status, 'success');
+        assert.equal(iterState.last_test_result, 'passed');
+    });
+
+    // -----------------------------------------------------------------------
+    // 4. npm test with failing output - records failure
+    // -----------------------------------------------------------------------
+    it('records failure in state when npm test fails', async () => {
+        cleanupTestEnv();
+        setupTestEnv(baseTestState());
+        hookPath = installHook();
+
+        const output = 'Tests: 3 failed, 17 passed, 20 total\nFAIL src/auth.test.js\nError: Expected true to be false';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+        assert.ok(result.stdout.includes('TESTS FAILED'), 'Should output failure message');
+
+        const state = readState();
+        const iterState = state.phases['06-implementation'].iteration_requirements.test_iteration;
+        assert.equal(iterState.completed, false);
+        assert.equal(iterState.last_test_result, 'failed');
+        assert.ok(iterState.failures_count >= 1);
+    });
+
+    // -----------------------------------------------------------------------
+    // 5. pytest detected as test command
+    // -----------------------------------------------------------------------
+    it('detects pytest as a test command', async () => {
+        cleanupTestEnv();
+        setupTestEnv(baseTestState());
+        hookPath = installHook();
+
+        const output = '5 passed in 2.1s\nAll tests passed';
+        const result = await runHook(hookPath, bashTestInput('pytest tests/', output));
+        assert.equal(result.code, 0);
+        assert.ok(result.stdout.includes('TESTS PASSED'), 'pytest should be detected as test command');
+    });
+
+    // -----------------------------------------------------------------------
+    // 6. go test detected as test command
+    // -----------------------------------------------------------------------
+    it('detects go test as a test command', async () => {
+        cleanupTestEnv();
+        setupTestEnv(baseTestState());
+        hookPath = installHook();
+
+        const output = 'ok  \tgithub.com/user/repo\t0.5s\n3 passing\nPASSED';
+        const result = await runHook(hookPath, bashTestInput('go test ./...', output));
+        assert.equal(result.code, 0);
+        assert.ok(result.stdout.includes('TESTS PASSED'), 'go test should be detected');
+    });
+
+    // -----------------------------------------------------------------------
+    // 7. cargo test detected as test command
+    // -----------------------------------------------------------------------
+    it('detects cargo test as a test command', async () => {
+        cleanupTestEnv();
+        setupTestEnv(baseTestState());
+        hookPath = installHook();
+
+        const output = 'test result: ok. 10 passed; 0 failed; 0 ignored\nAll tests passed';
+        const result = await runHook(hookPath, bashTestInput('cargo test', output));
+        assert.equal(result.code, 0);
+        assert.ok(result.stdout.includes('TESTS PASSED'), 'cargo test should be detected');
+    });
+
+    // -----------------------------------------------------------------------
+    // 8. jest detected as test command
+    // -----------------------------------------------------------------------
+    it('detects jest as a test command', async () => {
+        cleanupTestEnv();
+        setupTestEnv(baseTestState());
+        hookPath = installHook();
+
+        const output = 'Tests: 8 passed, 0 failed, 8 total\nAll tests passed';
+        const result = await runHook(hookPath, bashTestInput('jest --coverage', output));
+        assert.equal(result.code, 0);
+        assert.ok(result.stdout.includes('TESTS PASSED'), 'jest should be detected');
+    });
+
+    // -----------------------------------------------------------------------
+    // 9. First failure creates iteration state
+    // -----------------------------------------------------------------------
+    it('creates iteration state on first test failure', async () => {
+        cleanupTestEnv();
+        setupTestEnv(baseTestState());
+        hookPath = installHook();
+
+        const output = 'FAIL src/app.test.js\n1 failed, 4 passed\nError: assertion failed';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+
+        const state = readState();
+        const iterState = state.phases['06-implementation'].iteration_requirements.test_iteration;
+        assert.ok(iterState, 'test_iteration should be created');
+        assert.equal(iterState.current_iteration, 1);
+        assert.equal(iterState.completed, false);
+        assert.equal(iterState.last_test_result, 'failed');
+        assert.ok(iterState.started_at, 'Should have started_at timestamp');
+        assert.ok(Array.isArray(iterState.history), 'Should have history array');
+        assert.equal(iterState.history.length, 1);
+        assert.equal(iterState.history[0].result, 'FAILED');
+    });
+
+    // -----------------------------------------------------------------------
+    // 10. Second failure increments iteration counter
+    // -----------------------------------------------------------------------
+    it('increments iteration counter on subsequent failures', async () => {
+        cleanupTestEnv();
+        setupTestEnv(failedIterationState(2, 10));
+        hookPath = installHook();
+
+        const output = 'FAIL src/app.test.js\n1 failed\nTypeError: Cannot read property';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+
+        const state = readState();
+        const iterState = state.phases['06-implementation'].iteration_requirements.test_iteration;
+        assert.equal(iterState.current_iteration, 3, 'Should increment from 2 to 3');
+        assert.equal(iterState.completed, false);
+    });
+
+    // -----------------------------------------------------------------------
+    // 11. Success after failure marks completed=true, status="success"
+    // -----------------------------------------------------------------------
+    it('marks iteration as completed with status "success" after passing tests', async () => {
+        cleanupTestEnv();
+        setupTestEnv(failedIterationState(3, 10));
+        hookPath = installHook();
+
+        const output = 'All tests passed\nTests: 10 passed, 0 failed, 10 total';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+        assert.ok(result.stdout.includes('TESTS PASSED'), 'Should announce success');
+
+        const state = readState();
+        const iterState = state.phases['06-implementation'].iteration_requirements.test_iteration;
+        assert.equal(iterState.completed, true);
+        assert.equal(iterState.status, 'success');
+        assert.equal(iterState.last_test_result, 'passed');
+        assert.ok(iterState.completed_at, 'Should have completed_at timestamp');
+    });
+
+    // -----------------------------------------------------------------------
+    // 12. Max iterations exceeded triggers escalation
+    // -----------------------------------------------------------------------
+    it('escalates when max iterations are exceeded', async () => {
+        // Set current_iteration to 9, max_iterations to 10 -- next failure will be #10 = max
+        cleanupTestEnv();
+        setupTestEnv(failedIterationState(9, 10));
+        hookPath = installHook();
+
+        const output = 'FAIL\n1 failed\nError: Something broken';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+        assert.ok(result.stdout.includes('MAX ITERATIONS EXCEEDED'), 'Should announce max iterations');
+
+        const state = readState();
+        const iterState = state.phases['06-implementation'].iteration_requirements.test_iteration;
+        assert.equal(iterState.completed, true);
+        assert.equal(iterState.status, 'escalated');
+        assert.equal(iterState.escalation_reason, 'max_iterations');
+    });
+
+    // -----------------------------------------------------------------------
+    // 13. Enforcement disabled - no state changes
+    // -----------------------------------------------------------------------
+    it('passes through without state changes when enforcement is disabled', async () => {
+        cleanupTestEnv();
+        setupTestEnv({
+            current_phase: '06-implementation',
+            iteration_enforcement: { enabled: false },
+            phases: {
+                '06-implementation': { status: 'in_progress' }
+            }
+        });
+        hookPath = installHook();
+
+        const output = 'FAIL\n3 failed\nError: bad';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+        assert.equal(result.stdout, '', 'Should be silent when enforcement disabled');
+
+        const state = readState();
+        // Should NOT have created iteration_requirements
+        assert.ok(
+            !state.phases['06-implementation'].iteration_requirements,
+            'Should not create iteration state when enforcement disabled'
+        );
+    });
+
+    // -----------------------------------------------------------------------
+    // 14. Exit code extraction from structured tool_result
+    // -----------------------------------------------------------------------
+    it('detects failure from exitCode in structured tool_result', async () => {
+        cleanupTestEnv();
+        setupTestEnv(baseTestState());
+        hookPath = installHook();
+
+        // No output but exit code 1 -- should be detected as failure
+        const result = await runHook(hookPath, bashTestInput('npm test', '', 1));
+        assert.equal(result.code, 0);
+
+        const state = readState();
+        const iterState = state.phases['06-implementation'].iteration_requirements.test_iteration;
+        assert.equal(iterState.last_test_result, 'failed', 'Should detect failure from exit code');
+    });
+
+    // -----------------------------------------------------------------------
+    // 15. Output with "FAIL" keyword detected as failure
+    // -----------------------------------------------------------------------
+    it('detects failure from FAIL keyword in output', async () => {
+        cleanupTestEnv();
+        setupTestEnv(baseTestState());
+        hookPath = installHook();
+
+        const output = 'FAIL src/components/Button.test.js\n  Expected: true\n  Received: false';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+
+        const state = readState();
+        const iterState = state.phases['06-implementation'].iteration_requirements.test_iteration;
+        assert.equal(iterState.last_test_result, 'failed', 'Should detect FAIL keyword');
+    });
+
+    // -----------------------------------------------------------------------
+    // 16. Output with "Tests: 5 passed, 0 failed" detected as success
+    // -----------------------------------------------------------------------
+    it('detects success from "Tests: N passed, 0 failed" pattern', async () => {
+        cleanupTestEnv();
+        setupTestEnv(baseTestState());
+        hookPath = installHook();
+
+        const output = 'Tests: 5 passed, 0 failed, 5 total\nTime: 2.5s';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+        assert.ok(result.stdout.includes('TESTS PASSED'), 'Should detect success pattern');
+
+        const state = readState();
+        const iterState = state.phases['06-implementation'].iteration_requirements.test_iteration;
+        assert.equal(iterState.last_test_result, 'passed');
+        assert.equal(iterState.completed, true);
+        assert.equal(iterState.status, 'success');
+    });
+
+    // -----------------------------------------------------------------------
+    // 17. No state.json - passes through silently
+    // -----------------------------------------------------------------------
+    it('passes through when state.json does not exist', async () => {
+        cleanupTestEnv();
+        const testDir = setupTestEnv();
+        hookPath = installHook();
+        fs.unlinkSync(path.join(testDir, '.isdlc', 'state.json'));
+
+        const output = 'FAIL\n1 failed';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+        assert.equal(result.stdout, '', 'Should pass through when no state');
+    });
+
+    // -----------------------------------------------------------------------
+    // 18. vitest detected as test command
+    // -----------------------------------------------------------------------
+    it('detects vitest as a test command', async () => {
+        cleanupTestEnv();
+        setupTestEnv(baseTestState());
+        hookPath = installHook();
+
+        const output = 'Tests: 12 passed, 0 failed\nAll tests passed';
+        const result = await runHook(hookPath, bashTestInput('vitest run', output));
+        assert.equal(result.code, 0);
+        assert.ok(result.stdout.includes('TESTS PASSED'), 'vitest should be detected');
+    });
+
+    // -----------------------------------------------------------------------
+    // 19. mvn test detected as test command
+    // -----------------------------------------------------------------------
+    it('detects mvn test as a test command', async () => {
+        cleanupTestEnv();
+        setupTestEnv(baseTestState());
+        hookPath = installHook();
+
+        const output = 'BUILD SUCCESS\nTests run: 25, Failures: 0, Errors: 0';
+        const result = await runHook(hookPath, bashTestInput('mvn test', output));
+        assert.equal(result.code, 0);
+        assert.ok(result.stdout.includes('TESTS PASSED'), 'mvn test should be detected');
+    });
+
+    // -----------------------------------------------------------------------
+    // 20. History entry is recorded for each test run
+    // -----------------------------------------------------------------------
+    it('records history entry with correct fields for each test run', async () => {
+        cleanupTestEnv();
+        setupTestEnv(baseTestState());
+        hookPath = installHook();
+
+        const output = 'FAIL src/app.test.js\n2 failed\nError: assertion failed';
+        await runHook(hookPath, bashTestInput('npm test', output));
+
+        const state = readState();
+        const iterState = state.phases['06-implementation'].iteration_requirements.test_iteration;
+        assert.equal(iterState.history.length, 1);
+        const entry = iterState.history[0];
+        assert.equal(entry.iteration, 1);
+        assert.equal(entry.result, 'FAILED');
+        assert.equal(entry.command, 'npm test');
+        assert.ok(entry.timestamp, 'History entry should have timestamp');
+        assert.ok(entry.error, 'History entry should have error');
+    });
+
+    // -----------------------------------------------------------------------
+    // 21. Phase without test_iteration enabled passes through
+    // -----------------------------------------------------------------------
+    it('passes through for a phase with test_iteration disabled', async () => {
+        cleanupTestEnv();
+        setupTestEnv({
+            current_phase: '01-requirements',
+            iteration_enforcement: { enabled: true },
+            phases: {
+                '01-requirements': { status: 'in_progress' }
+            }
+        });
+        hookPath = installHook();
+
+        const output = 'FAIL\n1 failed';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+        assert.equal(result.stdout, '', 'Phase without test_iteration enabled should pass through');
+    });
+
+    // -----------------------------------------------------------------------
+    // 22. Exit code in string format "exited with code 1"
+    // -----------------------------------------------------------------------
+    it('extracts exit code from string "exited with code 1" in tool_result', async () => {
+        cleanupTestEnv();
+        setupTestEnv(baseTestState());
+        hookPath = installHook();
+
+        const output = 'npm test exited with code 1';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+
+        const state = readState();
+        const iterState = state.phases['06-implementation'].iteration_requirements.test_iteration;
+        assert.equal(iterState.last_test_result, 'failed', 'Should detect failure from "exited with code 1"');
+    });
+
+    // -----------------------------------------------------------------------
+    // 23. Failure output message contains remaining iterations
+    // -----------------------------------------------------------------------
+    it('failure output includes remaining iterations count', async () => {
+        cleanupTestEnv();
+        setupTestEnv(failedIterationState(3, 10));
+        hookPath = installHook();
+
+        const output = 'FAIL\n1 failed\nError: broken';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+        // current_iteration was 3, will become 4, remaining = 10-4 = 6
+        assert.ok(result.stdout.includes('4/10'), 'Should show iteration 4/10');
+        assert.ok(result.stdout.includes('Remaining iterations: 6'), 'Should show remaining iterations');
+    });
+
+    // -----------------------------------------------------------------------
+    // 24. Success output mentions constitutional validation next step
+    // -----------------------------------------------------------------------
+    it('success output mentions constitutional validation as next step', async () => {
+        cleanupTestEnv();
+        setupTestEnv(baseTestState());
+        hookPath = installHook();
+
+        const output = 'All tests passed\nTests: 5 passed, 0 failed';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+        assert.ok(result.stdout.includes('Constitutional validation required'),
+            'Success message should mention constitutional validation as next step');
+    });
+});
