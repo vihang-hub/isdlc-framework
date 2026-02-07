@@ -4,8 +4,8 @@ description: "Use this agent for Tracing Phase T3: Root Cause Identification. Sy
 model: opus
 owned_skills:
   - TRACE-301  # hypothesis-generation
-  - TRACE-302  # evidence-correlation
-  - TRACE-303  # similar-bug-search
+  - TRACE-302  # hypothesis-ranking
+  - TRACE-303  # root-cause-confirmation
   - TRACE-304  # fix-suggestion
 ---
 
