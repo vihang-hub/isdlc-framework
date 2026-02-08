@@ -1,0 +1,54 @@
+Test Case ID,Test Case Title,Functional Req,Acceptance Criteria,NFR,ADR,Automation,Priority
+TC-I-001,Fresh install on empty project,REQ-001,AC-001-01,NFR-002,ADR-006,CI,Must Have
+TC-I-002,Install with existing .claude/ folder,REQ-001,AC-001-02,NFR-002,ADR-002,Manual,Must Have
+TC-I-003,Install with -Force (non-interactive),REQ-006,AC-005-01;AC-005-02,NFR-002,ADR-006,CI,Must Have
+TC-I-004,Monorepo detection and setup,REQ-001,AC-002-01;AC-002-02,NFR-002,,Manual,Must Have
+TC-I-005,Manual monorepo entry with invalid dirs,REQ-001,AC-002-03,NFR-002,,Manual,Should Have
+TC-I-006,Provider selection (6 options),REQ-001,AC-001-05,NFR-002,,Manual,Should Have
+TC-I-007,Forward-slash paths in generated JSON,REQ-004,,NFR-002,ADR-003,CI,Must Have
+TC-I-008,UTF-8 LF no BOM in generated files,REQ-004,,NFR-002,ADR-004,CI,Must Have
+TC-I-009,Manifest completeness,REQ-001,,NFR-002,ADR-003,CI,Must Have
+TC-I-010,Framework folder cleanup after install,REQ-001,AC-001-04,NFR-002,,CI,Must Have
+TC-I-011,State.json correctness,REQ-001,AC-001-03,NFR-002,ADR-002,CI,Must Have
+TC-I-012,Settings.json deep merge correctness,REQ-001,,NFR-002;NFR-005,ADR-002,Manual,Must Have
+TC-I-013,No external module dependencies,CON-002,,NFR-007,,CI,Must Have
+TC-I-014,Execution policy header documentation,REQ-005,,,ADR-007,CI,Should Have
+TC-I-015,ConvertTo-Json depth prevents truncation,REQ-001,,NFR-002,ADR-002,CI,Must Have
+TC-I-016,Claude Code detection messaging,REQ-001,,NFR-006,,Manual,Should Have
+TC-I-017,Tour prompt and options,REQ-001,,,,Manual,Should Have
+TC-I-018,YAML manifest handling,REQ-001,,NFR-007,ADR-001,CI,Should Have
+TC-U-001,Standard uninstall (manifest files only),REQ-002,AC-003-01,NFR-004,,Manual,Must Have
+TC-U-002,Custom agents preserved,REQ-002,AC-003-02,NFR-004,,Manual,Must Have
+TC-U-003,-DryRun mode (nothing deleted),REQ-002,AC-003-04,NFR-004,,CI,Must Have
+TC-U-004,-Backup mode (archive created),REQ-002,AC-003-03,,,Manual,Must Have
+TC-U-005,-PurgeAll mode (user artifacts removed),REQ-002,,NFR-004,,Manual,Must Have
+TC-U-006,Preserved files check,REQ-002,AC-003-05,NFR-004;NFR-005,,Manual,Must Have
+TC-U-007,Empty directory cleanup,REQ-002,,NFR-004,,Manual,Should Have
+TC-U-008,Settings.json hook/permission stripping,REQ-002,,NFR-004,,Manual,Must Have
+TC-U-009,No installation detected (fatal error),REQ-002,,NFR-006,ADR-005,CI,Must Have
+TC-U-010,Monorepo state preservation,REQ-002,,NFR-004;NFR-005,,Manual,Should Have
+TC-UP-001,Standard update (version bumped),REQ-003,AC-004-01,NFR-002;NFR-005,,Manual,Must Have
+TC-UP-002,Settings.json deep merge (user keys preserved),REQ-003,AC-004-02,NFR-005,ADR-002,Manual,Must Have
+TC-UP-003,Obsolete file cleanup,REQ-003,AC-004-03,NFR-005,,Manual,Must Have
+TC-UP-004,-DryRun mode (no files modified),REQ-003,AC-004-04,NFR-005,,CI,Must Have
+TC-UP-005,-Force mode (skip version check),REQ-003;REQ-006,,NFR-002,,Manual,Must Have
+TC-UP-006,Monorepo per-project state update,REQ-003,AC-004-05,NFR-005,,Manual,Must Have
+TC-UP-007,Preservation rules (constitution etc.),REQ-003,,NFR-005,,Manual,Must Have
+TC-UP-008,No existing installation (fatal error),REQ-003,,NFR-006,ADR-005,CI,Must Have
+TC-UP-009,-Backup mode,REQ-003,,,,Manual,Should Have
+TC-UP-010,Manifest regeneration after update,REQ-003,,NFR-002,ADR-003,Manual,Must Have
+TC-UP-011,State.json history append,REQ-003,,NFR-005,,Manual,Must Have
+TC-UP-012,Missing state.json (fatal error),REQ-003,,NFR-006,ADR-005,Manual,Must Have
+TC-UP-013,Skills manifest update,REQ-003,,NFR-002,,Manual,Should Have
+TC-CC-001,PS 5.1 compatibility,CON-001,,NFR-001,ADR-007,CI,Must Have
+TC-CC-002,Forward-slash paths in ALL generated JSON,REQ-004,,NFR-002,ADR-003,CI,Must Have
+TC-CC-003,UTF-8 LF no BOM in ALL generated files,REQ-004,,NFR-002,ADR-004,CI,Must Have
+TC-CC-004,Error handling (stop on error),REQ-001;REQ-002;REQ-003,,NFR-006,ADR-005,CI,Must Have
+TC-CC-005,-Force flag across all scripts,REQ-006,AC-005-01;AC-005-02;AC-005-03,NFR-002,,CI,Must Have
+TC-CC-006,No external module dependencies,CON-002,,NFR-007,,CI,Must Have
+TC-CC-007,Helper function duplication consistency,,,NFR-002,ADR-001,Manual,Should Have
+TC-CC-008,CmdletBinding and parameter declarations,REQ-001;REQ-002;REQ-003,,NFR-001,,CI,Must Have
+TC-CC-009,Cross-platform manifest compatibility,REQ-004,,NFR-002,ADR-003,Manual,Must Have
+TC-CC-010,ConvertTo-Json -Depth 10 consistency,,,,ADR-002,CI,Must Have
+TC-CC-011,Script header documentation,REQ-005,,NFR-001,ADR-007,CI,Should Have
+TC-CC-012,Exit codes follow convention,,,NFR-006,ADR-005,CI,Must Have
