@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(rm -rf ~)",
+      "Bash(rm -rf .)",
+      "Bash(sudo *)",
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
+      "Bash(git reset --hard *)",
+      "Bash(curl * | bash *)",
+      "Bash(curl * | sh *)"
+    ],
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(npm ci *)",
+      "Bash(npx *)",
+      "Bash(git push *)",
+      "Bash(bash *)",
+      "Bash(sh *)",
+      "Bash(source *)",
+      "Bash(rm *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Bash(chmod *)",
+      "Bash(curl *)",
+      "Bash(wget *)"
+    ]
+  }
+}

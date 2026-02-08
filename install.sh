@@ -300,43 +300,70 @@ fi
 echo ""
 
 # ============================================================================
-# Provider mode selection
+# Claude Code detection
 # ============================================================================
 echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║             LLM PROVIDER MODE SELECTION                    ║${NC}"
+echo -e "${CYAN}║             CLAUDE CODE DETECTION                          ║${NC}"
 echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "${YELLOW}Select your LLM provider mode:${NC}"
+
+CLAUDE_CODE_FOUND=false
+CLAUDE_CODE_VERSION=""
+
+if command -v claude &> /dev/null; then
+    CLAUDE_CODE_VERSION=$(claude --version 2>/dev/null || echo "unknown")
+    CLAUDE_CODE_FOUND=true
+    echo -e "${GREEN}  ✓ Claude Code detected: ${CLAUDE_CODE_VERSION}${NC}"
+else
+    echo -e "${RED}  ✗ Claude Code CLI not found on PATH${NC}"
+    echo ""
+    echo -e "${YELLOW}  iSDLC is a framework designed for Claude Code.${NC}"
+    echo -e "${YELLOW}  It requires the 'claude' CLI to function.${NC}"
+    echo ""
+    echo -e "${CYAN}  Install Claude Code:${NC}"
+    echo -e "    ${GREEN}https://docs.anthropic.com/en/docs/claude-code/overview${NC}"
+    echo ""
+    read -p "  Continue anyway? Framework files will be ready when you install Claude Code. [y/N]: " CLAUDE_CONTINUE
+    CLAUDE_CONTINUE=${CLAUDE_CONTINUE:-N}
+    if [[ ! "$CLAUDE_CONTINUE" =~ ^[Yy]$ ]]; then
+        echo -e "${RED}Installation cancelled. Install Claude Code first, then re-run.${NC}"
+        exit 0
+    fi
+fi
 echo ""
-echo "  1) Free      — Free-tier cloud (Groq, Together, Google) — no GPU needed"
-echo "  2) Budget    — Ollama locally if available, free cloud fallback"
-echo "  3) Quality   — Anthropic everywhere (best results, requires API key)"
-echo "  4) Local     — Ollama only (offline/air-gapped, requires GPU)"
-echo "  5) Hybrid    — Smart per-phase routing (advanced)"
+
+# ============================================================================
+# Agent model configuration (sub-agent routing)
+# ============================================================================
+echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║           AGENT MODEL CONFIGURATION                        ║${NC}"
+echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "${YELLOW}Claude Code is your primary AI assistant.${NC}"
+echo -e "${YELLOW}This setting controls which models are used when Claude Code${NC}"
+echo -e "${YELLOW}delegates work to sub-agents (Task tool).${NC}"
+echo ""
+echo "  1) Claude Code — Use Claude Code for everything (Recommended)"
+echo "  2) Quality     — Anthropic API everywhere (best results, requires API key)"
+echo "  3) Free        — Free-tier cloud (Groq, Together, Google) — no GPU needed"
+echo "  4) Budget      — Ollama locally if available, free cloud fallback"
+echo "  5) Local       — Ollama only (offline/air-gapped, requires GPU)"
+echo "  6) Hybrid      — Smart per-phase routing (advanced)"
 echo ""
 read -p "Choice [1]: " PROVIDER_MODE_ANSWER
 PROVIDER_MODE_ANSWER=${PROVIDER_MODE_ANSWER:-1}
 
 case "$PROVIDER_MODE_ANSWER" in
-    1) PROVIDER_MODE="free" ;;
-    2) PROVIDER_MODE="budget" ;;
-    3) PROVIDER_MODE="quality" ;;
-    4) PROVIDER_MODE="local" ;;
-    5) PROVIDER_MODE="hybrid" ;;
-    *) PROVIDER_MODE="free"
-       echo -e "${YELLOW}  Invalid choice — defaulting to free mode${NC}" ;;
+    1) PROVIDER_MODE="claude-code" ;;
+    2) PROVIDER_MODE="quality" ;;
+    3) PROVIDER_MODE="free" ;;
+    4) PROVIDER_MODE="budget" ;;
+    5) PROVIDER_MODE="local" ;;
+    6) PROVIDER_MODE="hybrid" ;;
+    *) PROVIDER_MODE="claude-code"
+       echo -e "${YELLOW}  Invalid choice — defaulting to Claude Code${NC}" ;;
 esac
-echo -e "${GREEN}  ✓ Provider mode: $PROVIDER_MODE${NC}"
-echo ""
-
-echo -e "${CYAN}After installation, run:${NC}"
-echo -e "  1. ${GREEN}claude${NC} to start Claude Code"
-echo -e "  2. ${GREEN}/discover${NC} to set up your project"
-echo ""
-echo -e "${YELLOW}The discover command will:${NC}"
-echo "  • Analyze your project (or ask about it if new)"
-echo "  • Research best practices for your stack"
-echo "  • Guide you through creating a project constitution"
+echo -e "${GREEN}  ✓ Sub-agent model routing: $PROVIDER_MODE${NC}"
 echo ""
 
 # Workflow track is determined by orchestrator at runtime based on task complexity
@@ -396,10 +423,22 @@ if [ -d ".claude" ]; then
         echo -e "${GREEN}  ✓ Copied skills/${NC}"
     fi
 
-    # Copy settings if they don't exist
-    if [ -f "$FRAMEWORK_CLAUDE/settings.local.json" ] && [ ! -f ".claude/settings.local.json" ]; then
-        cp "$FRAMEWORK_CLAUDE/settings.local.json" ".claude/"
-        echo -e "${GREEN}  ✓ Copied settings.local.json${NC}"
+    # Copy or merge settings.local.json
+    if [ -f "$FRAMEWORK_CLAUDE/settings.local.json" ]; then
+        if [ -f ".claude/settings.local.json" ]; then
+            if command -v jq &> /dev/null; then
+                tmp_file=$(mktemp)
+                jq -s '.[0] * .[1]' ".claude/settings.local.json" "$FRAMEWORK_CLAUDE/settings.local.json" > "$tmp_file"
+                mv "$tmp_file" ".claude/settings.local.json"
+                echo -e "${GREEN}  ✓ Merged settings.local.json${NC}"
+            else
+                echo -e "${YELLOW}  Warning: jq not found, settings.local.json may need manual merge${NC}"
+                cp "$FRAMEWORK_CLAUDE/settings.local.json" ".claude/settings.local.json.new"
+            fi
+        else
+            cp "$FRAMEWORK_CLAUDE/settings.local.json" ".claude/"
+            echo -e "${GREEN}  ✓ Copied settings.local.json${NC}"
+        fi
     fi
 else
     echo -e "${YELLOW}  Creating new .claude folder...${NC}"
@@ -421,6 +460,10 @@ else
 
     echo -e "${GREEN}  ✓ Created .claude/${NC}"
 fi
+
+# Permission review warning
+echo ""
+echo -e "${YELLOW}  ⚠  Review .claude/settings.local.json permissions — adjust if your security requirements differ${NC}"
 
 # ============================================================================
 # Step 1b: Setup skill enforcement hooks (Node.js - Cross-Platform)
@@ -542,12 +585,17 @@ mkdir -p ".claude/hooks/config"
 if [ -f "$FRAMEWORK_DIR/isdlc/config/skills-manifest.yaml" ]; then
     cp "$FRAMEWORK_DIR/isdlc/config/skills-manifest.yaml" ".claude/hooks/config/"
 
-    # Convert skills manifest from YAML to JSON for runtime hooks
-    # Check for yq
-    if command -v yq &> /dev/null; then
+    # Copy pre-built JSON manifest for runtime hooks (hooks only read JSON)
+    if [ -f "$FRAMEWORK_CLAUDE/hooks/config/skills-manifest.json" ]; then
+        cp "$FRAMEWORK_CLAUDE/hooks/config/skills-manifest.json" ".claude/hooks/config/"
+        echo -e "${GREEN}  ✓ Copied skills manifest to hooks/config/${NC}"
+    elif [ -f "$FRAMEWORK_DIR/isdlc/config/skills-manifest.json" ]; then
+        cp "$FRAMEWORK_DIR/isdlc/config/skills-manifest.json" ".claude/hooks/config/"
+        echo -e "${GREEN}  ✓ Copied skills manifest to hooks/config/${NC}"
+    # Fallback: convert YAML to JSON if pre-built JSON is missing
+    elif command -v yq &> /dev/null; then
         yq -o=json ".claude/hooks/config/skills-manifest.yaml" > ".claude/hooks/config/skills-manifest.json"
-        echo -e "${GREEN}  ✓ Copied and converted skills manifest to hooks/config/${NC}"
-    # Check for Python with PyYAML
+        echo -e "${GREEN}  ✓ Converted skills manifest to hooks/config/ (yq)${NC}"
     elif command -v python3 &> /dev/null && python3 -c "import yaml, json" 2>/dev/null; then
         python3 -c "
 import yaml, json
@@ -556,18 +604,7 @@ with open('.claude/hooks/config/skills-manifest.yaml') as f:
 with open('.claude/hooks/config/skills-manifest.json', 'w') as f:
     json.dump(data, f, indent=2)
 " 2>/dev/null
-        echo -e "${GREEN}  ✓ Copied and converted skills manifest to hooks/config/ (Python)${NC}"
-    # Use scripts/convert-manifest.sh if available
-    elif [ -f "$FRAMEWORK_DIR/isdlc/scripts/convert-manifest.sh" ]; then
-        mkdir -p "scripts"
-        cp "$FRAMEWORK_DIR/isdlc/scripts/convert-manifest.sh" "scripts/"
-        chmod +x "scripts/convert-manifest.sh"
-        "./scripts/convert-manifest.sh" --input ".claude/hooks/config/skills-manifest.yaml" --output ".claude/hooks/config/skills-manifest.json" >/dev/null 2>&1
-        echo -e "${GREEN}  ✓ Copied and converted skills manifest to hooks/config/ (embedded)${NC}"
-    # Fallback: copy pre-converted JSON if available
-    elif [ -f "$FRAMEWORK_DIR/isdlc/config/skills-manifest.json" ]; then
-        cp "$FRAMEWORK_DIR/isdlc/config/skills-manifest.json" ".claude/hooks/config/"
-        echo -e "${GREEN}  ✓ Copied skills manifest (JSON) to hooks/config/${NC}"
+        echo -e "${GREEN}  ✓ Converted skills manifest to hooks/config/ (Python)${NC}"
     else
         echo -e "${YELLOW}  Warning: Could not convert manifest. Install yq or Python+PyYAML.${NC}"
     fi
@@ -670,7 +707,7 @@ cat > .isdlc/state.json << EOF
   },
   "skill_enforcement": {
     "enabled": true,
-    "mode": "strict",
+    "mode": "observe",
     "fail_behavior": "allow",
     "manifest_version": "2.0.0"
   },
@@ -852,7 +889,7 @@ MONOREPOEOF
   },
   "skill_enforcement": {
     "enabled": true,
-    "mode": "strict",
+    "mode": "observe",
     "fail_behavior": "allow",
     "manifest_version": "2.0.0"
   },
@@ -1105,6 +1142,18 @@ echo -e "${YELLOW}    This manifest enables safe uninstall - user files will be 
 # ============================================================================
 echo -e "${BLUE}[6/6]${NC} Cleaning up installation files..."
 
+# Copy uninstall and update scripts before removing the framework folder
+if [ -f "$SCRIPT_DIR/uninstall.sh" ]; then
+    cp "$SCRIPT_DIR/uninstall.sh" ".isdlc/scripts/"
+    chmod +x ".isdlc/scripts/uninstall.sh"
+    echo -e "${GREEN}  ✓ Copied uninstall.sh to .isdlc/scripts/${NC}"
+fi
+if [ -f "$SCRIPT_DIR/update.sh" ]; then
+    cp "$SCRIPT_DIR/update.sh" ".isdlc/scripts/"
+    chmod +x ".isdlc/scripts/update.sh"
+    echo -e "${GREEN}  ✓ Copied update.sh to .isdlc/scripts/${NC}"
+fi
+
 # Store the script dir before we delete it
 CLEANUP_DIR="$SCRIPT_DIR"
 
@@ -1130,29 +1179,221 @@ echo "  .claude/           - Agent definitions and skills"
 echo "  .isdlc/            - Project state and framework resources"
 echo "  docs/              - Documentation"
 echo ""
-echo -e "${CYAN}Provider Configuration:${NC}"
-echo -e "  Mode:   ${GREEN}$PROVIDER_MODE${NC}"
+echo -e "${CYAN}Agent Model Configuration:${NC}"
+echo -e "  Primary:  ${GREEN}Claude Code${NC}$( [ "$CLAUDE_CODE_FOUND" = true ] && echo " ($CLAUDE_CODE_VERSION)" )"
+echo -e "  Routing:  ${GREEN}$PROVIDER_MODE${NC}"
 case "$PROVIDER_MODE" in
-    free)    echo "  Info:   Free-tier cloud providers (Groq, Together, Google) — requires free API keys" ;;
-    budget)  echo "  Info:   Ollama locally, free cloud fallback — minimal cost" ;;
-    quality) echo "  Info:   Anthropic everywhere — best results, requires ANTHROPIC_API_KEY" ;;
-    local)   echo "  Info:   Ollama only — offline/air-gapped, requires GPU with 12GB+ VRAM" ;;
-    hybrid)  echo "  Info:   Smart per-phase routing — advanced, configure in providers.yaml" ;;
+    claude-code) echo "  Info:     Claude Code handles all agent work — no extra configuration needed" ;;
+    free)        echo "  Info:     Free-tier cloud providers (Groq, Together, Google) — requires free API keys" ;;
+    budget)      echo "  Info:     Ollama locally, free cloud fallback — minimal cost" ;;
+    quality)     echo "  Info:     Anthropic API everywhere — best results, requires ANTHROPIC_API_KEY" ;;
+    local)       echo "  Info:     Ollama only — offline/air-gapped, requires GPU with 12GB+ VRAM" ;;
+    hybrid)      echo "  Info:     Smart per-phase routing — advanced, configure in providers.yaml" ;;
 esac
-echo "  Config: .isdlc/providers.yaml"
-echo -e "  Change: ${GREEN}/provider set <mode>${NC}"
+echo "  Config:   .isdlc/providers.yaml"
+echo -e "  Change:   ${GREEN}/provider set <mode>${NC}"
 echo ""
+
+# ============================================================================
+# Tour: Optional onboarding introduction
+# ============================================================================
+
+# Skip tour if stdin is not a terminal (non-interactive / piped)
+if [ -t 0 ]; then
+
+echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║              GET TO KNOW iSDLC                             ║${NC}"
+echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+echo "Would you like a quick introduction to the framework?"
+echo ""
+echo "  1) Light intro     — 5-minute overview of commands, agents, and workflow"
+echo "  2) Full tour       — 15-minute walkthrough of all framework features"
+echo "  3) Skip            — Go straight to next steps (you can run /tour later)"
+echo ""
+read -p "Choice [1]: " TOUR_CHOICE
+TOUR_CHOICE=${TOUR_CHOICE:-1}
+
+# ---------------------------------------------------------------------------
+# Tour content functions
+# ---------------------------------------------------------------------------
+
+print_tour_section_1() {
+    echo ""
+    echo -e "${CYAN}━━━ 1. What is iSDLC? ━━━${NC}"
+    echo ""
+    echo "  iSDLC (integrated Software Development Lifecycle) is a framework of"
+    echo "  36 AI agents that guide development from requirements capture through"
+    echo "  production deployment. Each SDLC phase has a dedicated agent, quality"
+    echo "  gates between phases enforce completion before advancement, and"
+    echo "  deterministic hooks enforce rules at runtime."
+    echo ""
+}
+
+print_tour_section_2() {
+    echo -e "${CYAN}━━━ 2. Core Commands ━━━${NC}"
+    echo ""
+    echo -e "  ${GREEN}/discover${NC}                — Analyze your project or describe a new one"
+    echo -e "  ${GREEN}/sdlc feature \"desc\"${NC}    — Develop a feature end-to-end through all phases"
+    echo -e "  ${GREEN}/sdlc fix \"desc\"${NC}        — Fix a bug with TDD and tracing agents"
+    echo -e "  ${GREEN}/provider${NC}               — Configure which LLM models power sub-agents"
+    echo ""
+}
+
+print_tour_section_3() {
+    echo -e "${CYAN}━━━ 3. How the Workflow Works ━━━${NC}"
+    echo ""
+    echo "  The SDLC orchestrator assesses task complexity, selects which phases"
+    echo "  to run, then delegates to phase agents in order. Each agent produces"
+    echo "  artifacts that feed the next. Quality gates block advancement until"
+    echo "  requirements are met. Iteration loops allow agents to retry failed"
+    echo "  phases (with circuit breakers to prevent infinite loops)."
+    echo ""
+}
+
+print_tour_section_4() {
+    echo -e "${CYAN}━━━ 4. The Constitution ━━━${NC}"
+    echo ""
+    echo "  Your project's constitution (docs/isdlc/constitution.md) defines"
+    echo "  governance rules: testing thresholds, security requirements, coding"
+    echo "  standards. Created during /discover and enforced by hooks throughout"
+    echo "  every phase. It persists across sessions."
+    echo ""
+}
+
+print_tour_section_5() {
+    echo -e "${CYAN}━━━ 5. What to Do Next ━━━${NC}"
+    echo ""
+    echo -e "  • Run ${GREEN}/discover${NC} to analyze your project"
+    echo -e "  • Run ${GREEN}/sdlc feature${NC} or ${GREEN}/sdlc fix${NC} to start developing"
+    echo -e "  • Run ${GREEN}/tour${NC} in Claude Code anytime for the full walkthrough"
+    echo ""
+}
+
+print_tour_section_6() {
+    echo -e "${CYAN}━━━ 6. The 16 Phases ━━━${NC}"
+    echo ""
+    echo "  Phase  Agent                        Purpose"
+    echo "  ─────  ───────────────────────────   ──────────────────────────────"
+    echo "  00     Quick Scan                    Lightweight scope estimate"
+    echo "  01     Requirements Analyst          Capture & structure requirements"
+    echo "  02     Solution Architect            Architecture & tech decisions"
+    echo "  03     System Designer               Interface & module design"
+    echo "  04     Test Design Engineer           Test strategy & case design"
+    echo "  05     Software Developer            TDD implementation"
+    echo "  06     Integration Tester            Integration & E2E testing"
+    echo "  07     QA Engineer                   Code review & quality metrics"
+    echo "  08     Security Compliance Auditor   Security scanning & validation"
+    echo "  09     CI/CD Engineer                Pipeline configuration"
+    echo "  10     Environment Builder           Build & health-check services"
+    echo "  11     Deployment Engineer           Staging deployment & smoke tests"
+    echo "  12     Release Manager               Production release coordination"
+    echo "  13     Site Reliability Engineer     Monitoring & incident response"
+    echo ""
+    echo "  Plus 14 specialized agents: Discover (6), Exploration (4), Tracing (4)"
+    echo "  Not all phases run for every task — the orchestrator selects by complexity."
+    echo ""
+}
+
+print_tour_section_7() {
+    echo -e "${CYAN}━━━ 7. Quality Gates & Hooks ━━━${NC}"
+    echo ""
+    echo "  Each phase has a gate checklist that must pass before advancing."
+    echo "  The gate-blocker hook enforces this deterministically — checking:"
+    echo "    • Required artifacts exist"
+    echo "    • Iteration requirements met (min iterations, test evidence)"
+    echo "    • Constitution validated"
+    echo "    • Phase agent was delegated to"
+    echo ""
+    echo "  10 hooks run automatically (all deterministic, no LLM calls):"
+    echo "    skill-validator, log-skill-usage, iteration-corridor,"
+    echo "    constitution-validator, test-watcher, menu-tracker,"
+    echo "    model-provider-router, gate-blocker,"
+    echo "    skill-delegation-enforcer, delegation-gate"
+    echo ""
+}
+
+print_tour_section_8() {
+    echo -e "${CYAN}━━━ 8. Workflow Example ━━━${NC}"
+    echo ""
+    echo -e "  Running ${GREEN}/sdlc feature \"Add user auth\"${NC}:"
+    echo ""
+    echo "    1. Orchestrator assesses complexity → selects phases"
+    echo "    2. Requirements Analyst captures user stories → requirements-spec.md"
+    echo "    3. Solution Architect designs auth system → architecture-overview.md"
+    echo "    4. System Designer creates API contracts → interface-spec.yaml"
+    echo "    5. Test Design Engineer creates test plan → test-strategy.md"
+    echo "    6. Software Developer writes code (TDD) → source code + tests"
+    echo "    7. Integration Tester runs full suite → test reports"
+    echo "    8. QA Engineer reviews code quality → review report"
+    echo "    9. Security Auditor validates auth → security report"
+    echo ""
+    echo "  Each gate must pass before the next phase begins."
+    echo ""
+}
+
+# ---------------------------------------------------------------------------
+# Print selected tour
+# ---------------------------------------------------------------------------
+
+if [ "$TOUR_CHOICE" = "1" ]; then
+    print_tour_section_1
+    print_tour_section_2
+    print_tour_section_3
+    print_tour_section_4
+    print_tour_section_5
+elif [ "$TOUR_CHOICE" = "2" ]; then
+    TOUR_CONTINUE="Y"
+    TOUR_SECTIONS=(1 2 3 4 5 6 7 8)
+    for SECTION_NUM in "${TOUR_SECTIONS[@]}"; do
+        "print_tour_section_$SECTION_NUM"
+        if [ "$SECTION_NUM" -lt 8 ]; then
+            read -p "  Continue to next topic? [Y/skip/done]: " TOUR_CONTINUE
+            TOUR_CONTINUE=${TOUR_CONTINUE:-Y}
+            if [[ "$TOUR_CONTINUE" =~ ^[Dd] ]]; then
+                echo ""
+                echo -e "${GREEN}  Tour ended. Run /tour in Claude Code anytime to revisit.${NC}"
+                echo ""
+                break
+            fi
+            # skip → just shows next section title (handled by continuing loop)
+        fi
+    done
+    if [[ ! "$TOUR_CONTINUE" =~ ^[Dd] ]]; then
+        echo -e "${GREEN}  Tour complete! You're ready to start.${NC}"
+        echo ""
+    fi
+else
+    echo ""
+    echo -e "${YELLOW}  Skipped. Run /tour in Claude Code anytime for the introduction.${NC}"
+    echo ""
+fi
+
+fi  # end interactive check
 
 echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${CYAN}║                    NEXT STEPS                              ║${NC}"
 echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "  1. Run ${GREEN}claude${NC} to start Claude Code"
-echo -e "  2. Run ${GREEN}/discover${NC} to:"
-echo "     • Analyze your project (or describe it if new)"
-echo "     • Research best practices for your stack"
-echo "     • Create a tailored constitution interactively"
-echo -e "  3. Run ${GREEN}/sdlc start${NC} to begin your workflow"
+if [ "$CLAUDE_CODE_FOUND" = false ]; then
+    echo -e "  1. ${YELLOW}Install Claude Code:${NC}"
+    echo -e "     ${GREEN}https://docs.anthropic.com/en/docs/claude-code/overview${NC}"
+    echo -e "  2. Run ${GREEN}claude${NC} to start Claude Code"
+    echo -e "  3. Run ${GREEN}/discover${NC} to:"
+    echo "     • Analyze your project (or describe it if new)"
+    echo "     • Research best practices for your stack"
+    echo "     • Create a tailored constitution interactively"
+    echo -e "  4. Run ${GREEN}/sdlc start${NC} to begin your workflow"
+    echo -e "  5. Run ${GREEN}/tour${NC} anytime to revisit the framework introduction"
+else
+    echo -e "  1. Run ${GREEN}claude${NC} to start Claude Code"
+    echo -e "  2. Run ${GREEN}/discover${NC} to:"
+    echo "     • Analyze your project (or describe it if new)"
+    echo "     • Research best practices for your stack"
+    echo "     • Create a tailored constitution interactively"
+    echo -e "  3. Run ${GREEN}/sdlc start${NC} to begin your workflow"
+    echo -e "  4. Run ${GREEN}/tour${NC} anytime to revisit the framework introduction"
+fi
 echo ""
 if [ "$IS_EXISTING_PROJECT" = true ]; then
     echo -e "${YELLOW}Note: Your existing project structure was not modified.${NC}"

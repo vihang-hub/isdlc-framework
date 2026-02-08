@@ -21,7 +21,7 @@
 #   - Framework keys (hooks, permissions) from .claude/settings.json
 #   - Framework config in .isdlc/ (config/, templates/, scripts/, installed-files.json)
 #   - Empty docs/ scaffolding (only if no user content exists)
-#   - scripts/convert-manifest.sh (install fallback)
+#   - scripts/convert-manifest.sh (legacy install fallback, if present)
 #
 # What is ALWAYS preserved:
 #   - User-created agents, skills, commands, hooks (not in manifest)
