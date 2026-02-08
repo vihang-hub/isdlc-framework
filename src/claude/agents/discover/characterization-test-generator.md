@@ -69,7 +69,7 @@ This is a self-enforced requirement:
    ```
    ERROR: AC artifacts or test infrastructure not found.
    Ensure feature-mapper (D6) completed with behavior extraction
-   and /sdlc discover has been run (not in --shallow mode).
+   and /discover has been run.
    ```
 
 # CONSTITUTIONAL PRINCIPLES

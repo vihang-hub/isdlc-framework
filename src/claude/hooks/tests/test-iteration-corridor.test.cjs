@@ -497,4 +497,50 @@ describe('iteration-corridor.js', () => {
         assert.equal(result.code, 0);
         assert.equal(result.stdout, '', 'Should allow Skill with setup keyword "discover" in args');
     });
+
+    // -----------------------------------------------------------------------
+    // 21. iteration_config in state does not break TEST_CORRIDOR
+    // -----------------------------------------------------------------------
+    it('TEST_CORRIDOR: still blocks advance when iteration_config is present in state', async () => {
+        cleanupTestEnv();
+        const stateWithIterConfig = testCorridorState();
+        stateWithIterConfig.iteration_config = {
+            implementation_max: 3,
+            testing_max: 3,
+            circuit_breaker_threshold: 2,
+            escalation_behavior: 'pause',
+            configured_at: '2026-02-07T14:30:00Z'
+        };
+        setupTestEnv(stateWithIterConfig);
+        hookPath = installHook();
+
+        const result = await runHook(hookPath, taskInput('advance to next phase'));
+        assert.equal(result.code, 0);
+        const block = parseBlock(result.stdout);
+        assert.ok(block, 'Should produce block output');
+        assert.equal(block.continue, false);
+        assert.ok(block.stopReason.includes('ITERATION CORRIDOR'), 'Should still enforce corridor with iteration_config present');
+    });
+
+    // -----------------------------------------------------------------------
+    // 22. iteration_config without configured_at is ignored (no regression)
+    // -----------------------------------------------------------------------
+    it('TEST_CORRIDOR: ignores iteration_config without configured_at', async () => {
+        cleanupTestEnv();
+        const stateWithPartialConfig = testCorridorState();
+        stateWithPartialConfig.iteration_config = {
+            implementation_max: 3,
+            testing_max: 3
+            // No configured_at — should be treated as unconfigured
+        };
+        setupTestEnv(stateWithPartialConfig);
+        hookPath = installHook();
+
+        const result = await runHook(hookPath, taskInput('advance to next phase'));
+        assert.equal(result.code, 0);
+        const block = parseBlock(result.stdout);
+        assert.ok(block, 'Should produce block output');
+        assert.equal(block.continue, false);
+        assert.ok(block.stopReason.includes('ITERATION CORRIDOR'), 'Should still enforce corridor when config is incomplete');
+    });
 });

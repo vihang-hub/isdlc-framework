@@ -484,7 +484,6 @@ When invoked, display this message and redirect:
 NOTE: /sdlc reverse-engineer is now integrated into /discover.
 Running: /discover --existing {forwarded options}
 
-Use /discover --shallow if you only want the feature catalog without behavior extraction.
 ```
 
 All options (`--scope`, `--target`, `--priority`, `--atdd-ready`) are forwarded to `/discover`.

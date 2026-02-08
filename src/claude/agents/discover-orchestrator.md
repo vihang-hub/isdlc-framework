@@ -37,11 +37,11 @@ The Discover Orchestrator coordinates the `/discover` command workflow. It deter
 | `constitution-generator` | D3 | Create tailored constitution with research | Both |
 | `skills-researcher` | D4 | Find and install skills from skills.sh | Both |
 | `data-model-analyzer` | D5 | Discover data stores, schemas, entity relationships | Existing projects |
-| `feature-mapper` | D6 | Map endpoints, pages, jobs, domains + extract behavior AC | Existing projects |
+| `feature-mapper` | D6 | Map endpoints, pages, jobs, domains + extract behavior AC + agent orchestration catalog | Existing projects |
 | `product-analyst` | D7 | Vision elicitation, brainstorming, PRD generation | New projects |
 | `architecture-designer` | D8 | Design architecture from PRD and tech stack | New projects |
-| `characterization-test-generator` | — | Generate test.skip() scaffolds from extracted AC | Existing (non-shallow) |
-| `artifact-integration` | — | Link AC to features, generate traceability matrix | Existing (non-shallow) |
+| `characterization-test-generator` | — | Generate test.skip() scaffolds from extracted AC | Existing |
+| `artifact-integration` | — | Link AC to features, generate traceability matrix | Existing |
 | `atdd-bridge` | — | Create ATDD checklists, tag AC for workflow integration | Existing (--atdd-ready) |
 
 ---
@@ -483,6 +483,51 @@ PHASE 7: Project Structure                           [Complete ✓]
 
 ### Step 9: Execute PHASE 8 — Finalize
 
+#### Write Discovery Context Envelope
+
+Before writing the final state update, assemble and write the `discovery_context` envelope to state.json. This structured envelope enables seamless handover to subsequent /sdlc workflows.
+
+Read the current state.json and add/update the `discovery_context` key:
+
+```json
+{
+  "discovery_context": {
+    "completed_at": "{current ISO-8601 timestamp}",
+    "version": "1.0",
+    "tech_stack": {
+      "primary_language": "{from tech stack selection}",
+      "runtime": "{from tech stack selection}",
+      "frameworks": ["{from tech stack selection}"],
+      "test_runner": "{from project structure setup}",
+      "package_manager": "{from tech stack selection}"
+    },
+    "coverage_summary": {
+      "unit_test_pct": 0,
+      "integration_test_pct": 0,
+      "critical_path_coverage": 0,
+      "total_tests": 0,
+      "meets_constitution": false,
+      "high_priority_gaps": 0
+    },
+    "architecture_summary": "{1-line summary from architecture blueprint}",
+    "constitution_path": "docs/isdlc/constitution.md",
+    "discovery_report_path": "",
+    "re_artifacts": {
+      "ac_count": 0,
+      "domains": 0,
+      "traceability_csv": ""
+    },
+    "permissions_reviewed": false,
+    "walkthrough_completed": false,
+    "user_next_action": "{from Step 10 selection: 'start', 'feature', or 'done'}"
+  }
+}
+```
+
+Populate each field from the results already collected during the new project setup phases. For new projects, coverage fields default to 0, re_artifacts fields default to 0/empty (no existing code to analyze), and walkthrough fields default to false (new projects do not have the interactive walkthrough).
+
+#### Update Project State
+
 Update `.isdlc/state.json`:
 ```json
 {
@@ -579,7 +624,6 @@ PHASE 8: Finalize                                    [Complete ✓]
 For existing projects, run comprehensive analysis with 4 sub-agents in parallel, extract behavior as acceptance criteria, optionally generate characterization tests and traceability, then assemble a unified discovery report.
 
 **Options handling:**
-- `--shallow`: Skip behavior extraction (D6 produces feature catalog only, Phases 1b/1c/1d skipped)
 - `--scope {all|module|endpoint|domain}`: Pass to D6 for narrowing behavior extraction scope
 - `--target {name}`: Pass to D6 with --scope for targeting specific features
 - `--priority {all|critical|high|medium}`: Pass to D6 for filtering by risk priority
@@ -660,6 +704,17 @@ Here's what will happen:
 └──────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────┐
+│ WALKTHROUGH: Interactive Review (you'll guide each step)      │
+├──────────────────────────────────────────────────────────────┤
+│ □ Constitution review (mandatory)                             │
+│ □ Architecture & tech stack review (opt-in)                   │
+│ □ Permission audit (opt-in)                                   │
+│ □ Test coverage gaps (opt-in)                                 │
+│ □ Iteration configuration (opt-in)                            │
+│ □ Smart next steps (mandatory)                                │
+└──────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────┐
 │ PHASE 5: Finalize                                            │
 ├──────────────────────────────────────────────────────────────┤
 │ □ Update project state                                       │
@@ -668,8 +723,6 @@ Here's what will happen:
 
 Ready to proceed? [Y] Yes / [N] No, I have questions
 ```
-
-If `--shallow` was passed, omit Phases 1b, 1c, 1d from the display. Show "Functional Features (D6)" without "Behavior Extraction".
 
 **Wait for user approval before executing.**
 
@@ -686,13 +739,15 @@ PHASE 1: Project Analysis                            [In Progress]
 └─ ◐ Test Coverage (D2)                                (running)
 ```
 
-Launch in a SINGLE message with 4 parallel Task tool calls:
+Launch in a SINGLE message with 4 parallel Task tool calls.
+
+**IMPORTANT:** Each delegation prompt MUST include the instruction to return a 1-line summary. This enables incremental progress display as agents complete.
 
 ```json
 // Task 1
 {
   "subagent_type": "architecture-analyzer",
-  "prompt": "Analyze project architecture, tech stack, dependency versions, deployment topology, and integration points",
+  "prompt": "Analyze project architecture, tech stack, dependency versions, deployment topology, and integration points. IMPORTANT: Along with your full results, return a field 'one_line_summary' containing a single line (under 60 chars) summarizing your key finding, e.g. 'TypeScript + NestJS 10.x, Docker, 5 integrations'.",
   "description": "Architecture and tech stack analysis"
 }
 ```
@@ -701,7 +756,7 @@ Launch in a SINGLE message with 4 parallel Task tool calls:
 // Task 2
 {
   "subagent_type": "data-model-analyzer",
-  "prompt": "Analyze project data model: discover data stores, extract schemas, map entity relationships, review migrations",
+  "prompt": "Analyze project data model: discover data stores, extract schemas, map entity relationships, review migrations. IMPORTANT: Along with your full results, return a field 'one_line_summary' containing a single line (under 60 chars) summarizing your key finding, e.g. '6 entities, PostgreSQL + Redis, 24 migrations'.",
   "description": "Data model analysis"
 }
 ```
@@ -710,17 +765,8 @@ Launch in a SINGLE message with 4 parallel Task tool calls:
 // Task 3
 {
   "subagent_type": "feature-mapper",
-  "prompt": "Map functional features and extract behavior: catalog API endpoints, UI pages, CLI commands, background jobs, business domains, then extract Given/When/Then acceptance criteria with priority scoring. {scope_target_priority_options}",
-  "description": "Feature mapping and behavior extraction"
-}
-```
-
-If `--shallow` was passed, use instead:
-```json
-{
-  "subagent_type": "feature-mapper",
-  "prompt": "Map functional features: catalog API endpoints, UI pages, CLI commands, background jobs, and business domains. SHALLOW MODE — skip behavior extraction.",
-  "description": "Functional feature mapping (shallow)"
+  "prompt": "Map functional features and extract behavior: catalog API endpoints, UI pages, CLI commands, background jobs, business domains, then extract Given/When/Then acceptance criteria with priority scoring. Also analyze markdown agent/command definitions for orchestration catalog and AC (Step 9). {scope_target_priority_options}. IMPORTANT: Along with your full results, return a field 'one_line_summary' containing a single line (under 60 chars) summarizing your key finding, e.g. '32 endpoints, 12 pages, 6 domains, 87 AC'.",
+  "description": "Feature mapping, behavior extraction, and agent orchestration analysis"
 }
 ```
 
@@ -730,12 +776,24 @@ Pass any `--scope`, `--target`, and `--priority` options in the prompt to D6.
 // Task 4
 {
   "subagent_type": "test-evaluator",
-  "prompt": "Evaluate test infrastructure: coverage by type, critical untested paths, test quality assessment, gap identification",
+  "prompt": "Evaluate test infrastructure: coverage by type, critical untested paths, test quality assessment, gap identification. IMPORTANT: Along with your full results, return a field 'one_line_summary' containing a single line (under 60 chars) summarizing your key finding, e.g. '67% coverage, 0 E2E tests, 3 high-risk gaps'.",
   "description": "Test coverage evaluation"
 }
 ```
 
 **IMPORTANT:** These 4 agents run in parallel. Wait for ALL to complete before proceeding.
+
+**Incremental progress display:** As each parallel analysis agent completes, display its result immediately. Do NOT wait for all four to finish before showing any output. Update the progress block each time an agent returns:
+
+```
+Phase 1: Parallel Analysis
+  ✓ Architecture & Tech Stack    — {one_line_summary from D1}
+  ✓ Data Model                   — {one_line_summary from D5}
+  ◐ Functional Features          — Scanning source files...
+  ◐ Test Coverage                — Evaluating tests...
+```
+
+Use ✓ for completed agents (with their 1-line summary) and ◐ for agents still in progress. Update the display as each agent completes.
 
 **As each completes, update progress:**
 ```
@@ -771,9 +829,9 @@ PHASE 1: Project Analysis                            [Complete ✓]
     → 3 high-risk untested paths, 2 flaky tests
 ```
 
-### Step 2b: Execute PHASE 1b - Characterization Tests (Sequential, Non-Shallow Only)
+### Step 2b: Execute PHASE 1b - Characterization Tests (Sequential)
 
-**Skip this step if `--shallow` was passed or if D6 returned no `ac_generated` field.**
+**Skip this step if D6 returned no `ac_generated` field.**
 
 After Phase 1 completes, if D6 produced AC files (`ac_generated > 0`), launch characterization test generator:
 
@@ -802,9 +860,9 @@ PHASE 1b: Characterization Tests                    [Complete ✓]
 └─ ✓ Create golden files
 ```
 
-### Step 2c: Execute PHASE 1c - Artifact Integration (Sequential, Non-Shallow Only)
+### Step 2c: Execute PHASE 1c - Artifact Integration (Sequential)
 
-**Skip this step if `--shallow` was passed or if Phase 1b was skipped.**
+**Skip this step if Phase 1b was skipped.**
 
 ```json
 {
@@ -872,7 +930,19 @@ PHASE 2: Discovery Report                            [In Progress]
 └─ □ Present summary for review                        (pending)
 ```
 
-Create `docs/project-discovery-report.md` by assembling the `report_section` from each sub-agent:
+Create `docs/project-discovery-report.md` by assembling the `report_section` from each sub-agent.
+
+The discovery report MUST follow this structure:
+
+1. **Executive Summary** (5 lines max) — What was analyzed, key findings, top concern
+2. **Architecture Overview** — Table format showing layers, not prose paragraphs
+3. **Tech Stack** — Table: component | technology | version | notes
+4. **Test Health Dashboard** — Metrics table: type | count | coverage | status
+5. **Behavior Extraction Summary** — AC count by domain, coverage percentages
+6. **Action Items** — Numbered, prioritized, with effort estimate (S/M/L)
+7. **Detailed Findings** — Full analysis organized by domain
+
+Use this template:
 
 ```markdown
 # Project Discovery Report
@@ -882,44 +952,78 @@ Create `docs/project-discovery-report.md` by assembling the `report_section` fro
 
 ---
 
-## Tech Stack
-{from D1 architecture-analyzer: languages, frameworks, versions, runtime}
+## 1. Executive Summary
 
-## Architecture
-{from D1 architecture-analyzer: patterns, structure, entry points, deployment, integrations}
+{1-2 sentences on what was analyzed}
+{1-2 sentences on key findings}
+{1 sentence on top concern or recommendation}
 
-## Data Model
+## 2. Architecture Overview
+
+| Layer | Components | Pattern | Notes |
+|-------|------------|---------|-------|
+| Presentation | {from D1} | {pattern} | {notes} |
+| Business Logic | {from D1} | {pattern} | {notes} |
+| Data Access | {from D1/D5} | {pattern} | {notes} |
+| Infrastructure | {from D1} | {pattern} | {notes} |
+
+## 3. Tech Stack
+
+| Component | Technology | Version | Notes |
+|-----------|------------|---------|-------|
+| Language | {from D1} | {version} | {notes} |
+| Framework | {from D1} | {version} | {notes} |
+| Database | {from D5} | {version} | {notes} |
+| ORM | {from D5} | {version} | {notes} |
+| {additional} | {from D1} | {version} | {notes} |
+
+## 4. Test Health Dashboard
+
+| Type | Count | Coverage | Status |
+|------|-------|----------|--------|
+| Unit | {from D2} | {percentage} | {OK/Warning/Critical} |
+| Integration | {from D2} | {percentage} | {OK/Warning/Critical} |
+| E2E | {from D2} | {percentage} | {OK/Warning/Critical} |
+| Total | {from D2} | {percentage} | {overall status} |
+
+## 5. Behavior Extraction Summary
+
+| Domain | AC Count | Covered | Partial | Uncovered |
+|--------|----------|---------|---------|-----------|
+| {from D6 domains} | {count} | {count} | {count} | {count} |
+| **Total** | {from D6 ac_generated} | {total} | {total} | {total} |
+
+## 6. Action Items
+
+| # | Action | Priority | Effort | Rationale |
+|---|--------|----------|--------|-----------|
+| 1 | {synthesized from all agents} | {P0-P3} | {S/M/L} | {why} |
+| 2 | {synthesized from all agents} | {P0-P3} | {S/M/L} | {why} |
+| 3 | {synthesized from all agents} | {P0-P3} | {S/M/L} | {why} |
+| ... | | | | |
+
+## 7. Detailed Findings
+
+### 7.1 Functional Features
+{from D6 feature-mapper: endpoints, pages, jobs, domains — full tables}
+
+### 7.2 Data Model
 {from D5 data-model-analyzer: stores, entities, relationships, migrations}
 
-## Functional Features
-{from D6 feature-mapper: endpoints, pages, jobs, domains}
+### 7.3 Reverse-Engineered Acceptance Criteria
+{from D6 feature-mapper: AC count, priority breakdown, confidence levels}
 
-## Test Coverage
-{from D2 test-evaluator: coverage by type, critical paths, quality, gaps}
+### 7.4 Characterization Tests
+{from characterization-test-generator: test count, fixture count, golden files}
 
-## Reverse-Engineered Acceptance Criteria
-{from D6 feature-mapper: AC count, priority breakdown, confidence levels — omit if --shallow}
-
-## Characterization Tests
-{from characterization-test-generator: test count, fixture count, golden files — omit if --shallow}
-
-## Traceability Matrix
-{from artifact-integration: linked AC count, linked test count, orphan counts — omit if --shallow}
-
----
-
-## Summary
-
-| Area | Key Findings |
-|------|-------------|
-| Tech Stack | {language} + {framework} + {database} |
-| Architecture | {pattern}, {deployment topology} |
-| Data Model | {entity_count} entities across {store_count} stores |
-| Features | {endpoint_count} endpoints, {page_count} pages, {job_count} jobs |
-| Test Coverage | {coverage}% ({type breakdown}), {gap_count} gaps |
+### 7.5 Traceability Matrix
+{from artifact-integration: linked AC count, linked test count, orphan counts}
 ```
 
-**Present summary to user:**
+**Present summary to user using this structured dashboard format:**
+
+After all analysis phases complete, present findings in this structured format:
+
 ```
 PHASE 2: Discovery Report                            [Complete ✓]
 ├─ ✓ Assemble unified discovery report
@@ -927,20 +1031,51 @@ PHASE 2: Discovery Report                            [Complete ✓]
 └─ ✓ Present summary for review
 
 ═══════════════════════════════════════════════════════════════
-  DISCOVERY REPORT SUMMARY
+  DISCOVERY SUMMARY
 ═══════════════════════════════════════════════════════════════
 
-  Tech Stack:     TypeScript + NestJS 10.x + PostgreSQL
-  Architecture:   Modular monolith, Docker, GitHub Actions
-  Data Model:     6 entities (Prisma ORM), 24 migrations
-  Features:       32 endpoints, 12 pages, 3 background jobs
-                  6 business domains
-  Test Coverage:  67% overall (unit 72%, integration 58%, E2E 0%)
-                  3 high-risk untested paths
+  Tech Stack          {primary language} | {frameworks}
+  Architecture        {architecture summary from D1}
+  Data Model          {data model summary from D5}
+  Source Files        {file count} production files, {line count} lines
+  Test Coverage       {test count} tests — {coverage estimate}
+
+═══════════════════════════════════════════════════════════════
+  BEHAVIOR EXTRACTION
+═══════════════════════════════════════════════════════════════
+
+  Total AC            {count} across {domain count} domains
+  Coverage            {covered} covered | {partial} partial | {uncovered} uncovered
+
+  Top gaps:
+  1. {highest priority gap}
+  2. {second priority gap}
+  3. {third priority gap}
+
+═══════════════════════════════════════════════════════════════
+  RECOMMENDATIONS
+═══════════════════════════════════════════════════════════════
+
+  1. {most impactful recommendation}
+  2. {second recommendation}
+  3. {third recommendation}
+  {4. optional fourth recommendation}
+  {5. optional fifth recommendation}
 
   Full report: docs/project-discovery-report.md
 ═══════════════════════════════════════════════════════════════
 ```
+
+Populate each field from the sub-agent results:
+- **Tech Stack**: from D1 `tech_stack` field — primary language, then pipe-separated frameworks
+- **Architecture**: from D1 `architecture` field — pattern name + deployment topology
+- **Data Model**: from D5 `summary` field — entity count, store types, ORM
+- **Source Files**: from D1 `source_stats` — count production files (exclude tests, configs)
+- **Test Coverage**: from D2 `coverage` field — test count and percentage estimate
+- **Total AC**: from D6 `ac_generated` and domain count
+- **Coverage**: from D6 `confidence_breakdown` mapped to covered/partial/uncovered
+- **Top gaps**: derive from D2 `gaps` and D6 `by_priority` — list highest-risk uncovered areas
+- **Recommendations**: synthesize from all agents — prioritize by impact (e.g., "Add E2E tests for payment flow", "Increase unit coverage for OrderService")
 
 ### Step 4: Execute PHASE 3 - Constitution Generation
 
@@ -1083,14 +1218,384 @@ Cloud Configuration                                  [Complete ✓]
 └─ ✓ Updated state.json
 ```
 
+### Step 7.5: WALKTHROUGH PHASE (Interactive — Post-Analysis, Pre-Finalize)
+
+This phase runs AFTER constitution generation, skill installation, test gap filling, and cloud configuration — but BEFORE the final state.json update and completion display. It gives the user a guided review of everything discovered and configured, with opportunities to correct, customize, and decide next steps.
+
+**Show progress:**
+```
+WALKTHROUGH PHASE                                    [Starting]
+├─ □ Step 1: Constitution Review (mandatory)
+├─ □ Step 2: Architecture & Tech Stack Review
+├─ □ Step 2.5: Permission Audit
+├─ □ Step 3: Test Coverage Gaps
+├─ □ Step 3.5: Iteration Configuration
+└─ □ Step 4: Smart Next Steps (mandatory)
+```
+
+#### Walkthrough Step 1: Constitution Review
+
+This step is MANDATORY. Do NOT skip it.
+
+Present each constitution article to the user with a 1-line summary. Group them:
+
+**Universal Articles (I-XI):**
+For each article, display:
+```
+Article {N}: {Title}
+  {1-line summary of the principle}
+```
+
+After presenting all universal articles, ask:
+```
+Any universal articles you'd like to modify, remove, or add to?
+[1] Looks good, continue
+[2] I want to change something
+```
+
+If [2]: Ask which article and what change. Apply the change to `docs/isdlc/constitution.md` using the Edit tool. Then re-present the modified article for confirmation. Repeat until the user selects [1].
+
+**Domain-Specific Articles (XII+):**
+Same pattern -- present each with a 1-line summary, then ask:
+```
+Any domain-specific articles you'd like to modify, remove, or add to?
+[1] Looks good, continue
+[2] I want to change something
+```
+
+If [2]: Apply changes the same way as universal articles.
+
+After all articles are reviewed, confirm:
+```
+Constitution review complete.
+```
+
+**Update progress:**
+```
+WALKTHROUGH PHASE                                    [In Progress]
+├─ ✓ Step 1: Constitution Review                      (done)
+├─ ◐ Step 2: Architecture & Tech Stack Review         (next)
+├─ □ Step 2.5: Permission Audit
+├─ □ Step 3: Test Coverage Gaps
+├─ □ Step 3.5: Iteration Configuration
+└─ □ Step 4: Smart Next Steps
+```
+
+#### Walkthrough Step 2: Architecture & Tech Stack Review
+
+Ask the user:
+```
+Would you like to review the detected architecture and tech stack?
+[1] Yes, walk me through it
+[2] Skip -- I'll review the report later
+```
+
+If [1]:
+- Present the architecture layers in a table format (from the discovery report / D1 results)
+- Present the tech stack summary (language, framework, database, ORM, etc.)
+- Present the data model summary (entity count, relationships, stores)
+- Highlight any concerns, for example:
+  - "No database detected -- is this intentional?"
+  - "Multiple frameworks detected -- {framework_a} and {framework_b}"
+  - "No CI/CD pipeline found"
+- Allow the user to correct any misdetections. If the user provides corrections, update the discovery report and state accordingly.
+
+If [2]: Skip to next step.
+
+**Update progress:**
+```
+WALKTHROUGH PHASE                                    [In Progress]
+├─ ✓ Step 1: Constitution Review                      (done)
+├─ ✓ Step 2: Architecture & Tech Stack Review         (done/skipped)
+├─ ◐ Step 2.5: Permission Audit                       (next)
+├─ □ Step 3: Test Coverage Gaps
+├─ □ Step 3.5: Iteration Configuration
+└─ □ Step 4: Smart Next Steps
+```
+
+#### Walkthrough Step 2.5: Permission Audit
+
+Ask the user:
+```
+Would you like me to review your Claude Code permissions for this tech stack?
+[1] Yes, review permissions
+[2] Skip
+```
+
+If [1]:
+Read `.claude/settings.json` and check the `allowedTools` or permissions section.
+
+Use this tech-stack-to-permissions recommendation map:
+
+**Node.js/TypeScript:**
+  Recommended additions: `npm test`, `npm run lint`, `npm run build`, `npx tsc --noEmit`
+  Review: `npm install *` (consider restricting to specific packages)
+
+**Python:**
+  Recommended additions: `pytest`, `python -m pytest`, `pip install -r requirements.txt`, `python -m mypy`
+  Review: `pip install *`
+
+**Go:**
+  Recommended additions: `go test ./...`, `go vet ./...`, `go build ./...`
+
+**Java:**
+  Recommended additions: `mvn test`, `gradle test`, `mvn compile`
+
+Present:
+```
+Current permissions: {count} allowed commands
+Recommended additions for {detected stack}:
+  + {command} -- {reason}
+  + {command} -- {reason}
+
+Permissions to review:
+  ? {command} -- {concern}
+
+[1] Apply recommended additions
+[2] Let me review each one
+[3] Skip -- I'll manage permissions manually
+```
+
+If [1]: Add all recommended commands to `.claude/settings.json` `allowedTools` array using the Edit tool.
+If [2]: Present each recommendation individually with accept/reject. Apply only accepted commands.
+If [3]: Skip without changes.
+
+**Update progress:**
+```
+WALKTHROUGH PHASE                                    [In Progress]
+├─ ✓ Step 1: Constitution Review                      (done)
+├─ ✓ Step 2: Architecture & Tech Stack Review         (done/skipped)
+├─ ✓ Step 2.5: Permission Audit                       (done/skipped)
+├─ ◐ Step 3: Test Coverage Gaps                       (next)
+├─ □ Step 3.5: Iteration Configuration
+└─ □ Step 4: Smart Next Steps
+```
+
+#### Walkthrough Step 3: Test Coverage Gaps
+
+Ask the user:
+```
+Would you like to review the test coverage gaps?
+[1] Yes, show me the gaps
+[2] Skip
+```
+
+If [1]:
+- Present high-priority coverage gaps from the test evaluation (D2 results)
+- Show the current coverage vs constitution thresholds (Article II: unit >= 80%, integration >= 70%, critical paths = 100%)
+- For each gap, show: module name, current coverage, required coverage, recommendation
+
+Example format:
+```
+Test Coverage vs Constitution Thresholds:
+
+| Type        | Current | Required | Status   |
+|-------------|---------|----------|----------|
+| Unit        | {actual}% | >= 80%   | {OK/GAP} |
+| Integration | {actual}% | >= 70%   | {OK/GAP} |
+| Critical    | {actual}% | 100%     | {OK/GAP} |
+
+High-Priority Gaps:
+  1. {module} -- {current}% coverage, requires {required}%
+     Recommendation: {what to test}
+  2. {module} -- {current}% coverage, requires {required}%
+     Recommendation: {what to test}
+```
+
+Ask:
+```
+Want me to create a test plan for these gaps?
+This would start a /sdlc test generate workflow.
+[1] Yes, after we finish here
+[2] No, I'll handle testing separately
+```
+
+Record the user's answer for Smart Next Steps (Step 4).
+
+If [2]: Skip.
+
+**Update progress:**
+```
+WALKTHROUGH PHASE                                    [In Progress]
+├─ ✓ Step 1: Constitution Review                      (done)
+├─ ✓ Step 2: Architecture & Tech Stack Review         (done/skipped)
+├─ ✓ Step 2.5: Permission Audit                       (done/skipped)
+├─ ✓ Step 3: Test Coverage Gaps                       (done/skipped)
+├─ ◐ Step 3.5: Iteration Configuration                (next)
+└─ □ Step 4: Smart Next Steps
+```
+
+#### Walkthrough Step 3.5: Iteration Configuration
+
+Present iteration awareness:
+```
+During feature development and bug fixes, iSDLC uses implement-test
+loops. The agent writes code, runs tests, and iterates until all
+tests pass.
+
+Current settings:
+  Max iterations (implementation):  5
+  Max iterations (testing):         5
+  Circuit breaker:                  3 identical failures -> escalate
+  Escalation behavior:              Pause and ask for human help
+
+Would you like to adjust these?
+[1] Keep defaults (Recommended)
+[2] Customize iteration limits
+```
+
+If [2]:
+- Ask for implementation max (default 5, range 1-20)
+- Ask for testing max (default 5, range 1-20)
+- Ask for circuit breaker threshold (default 3, range 1-10)
+
+Write to `.isdlc/state.json` under `iteration_config`:
+```json
+{
+  "iteration_config": {
+    "implementation_max": "{value}",
+    "testing_max": "{value}",
+    "circuit_breaker_threshold": "{value}",
+    "escalation_behavior": "pause",
+    "configured_at": "{ISO-8601 timestamp}"
+  }
+}
+```
+
+If [1]: Do NOT write `iteration_config` (hooks use their defaults).
+
+**Update progress:**
+```
+WALKTHROUGH PHASE                                    [In Progress]
+├─ ✓ Step 1: Constitution Review                      (done)
+├─ ✓ Step 2: Architecture & Tech Stack Review         (done/skipped)
+├─ ✓ Step 2.5: Permission Audit                       (done/skipped)
+├─ ✓ Step 3: Test Coverage Gaps                       (done/skipped)
+├─ ✓ Step 3.5: Iteration Configuration                (done)
+└─ ◐ Step 4: Smart Next Steps                         (next)
+```
+
+#### Walkthrough Step 4: Smart Next Steps
+
+This step is MANDATORY. Present a context-aware menu based on project type and test coverage status.
+
+**Determine context:**
+1. Read the test coverage from the discovery results (D2 output)
+2. Read the constitution Article II thresholds (unit: >= 80%, integration: >= 70%, critical: 100%)
+3. Determine if coverage meets thresholds
+
+**For EXISTING projects where coverage is BELOW thresholds:**
+
+```
+Test coverage gap detected:
+  Current: {actual}% unit coverage (constitution requires >= 80%)
+  Missing: {count} critical paths have 0% coverage
+
+Strong recommendation: Generate tests BEFORE starting new features.
+Untested code makes feature development riskier -- bugs are harder
+to catch and regressions are invisible.
+
+[1] Generate tests for gaps (Recommended)  -> /sdlc test generate
+[2] Start a new feature                    -> /sdlc feature
+[3] Fix a bug                              -> /sdlc fix
+[4] I'm done for now
+```
+
+**For EXISTING projects where coverage MEETS thresholds:**
+
+```
+Test coverage meets constitution thresholds.
+
+What would you like to do next?
+[1] Start a new feature      -> /sdlc feature
+[2] Fix a bug                -> /sdlc fix
+[3] Generate more tests      -> /sdlc test generate
+[4] I'm done for now
+```
+
+**IMPORTANT: Do NOT offer "/sdlc start" (Full lifecycle) for existing projects.** It is only appropriate after `/discover --new`.
+
+**For NEW projects:**
+
+```
+What would you like to do next?
+[1] Start full lifecycle (Recommended)  -> /sdlc start
+[2] Start a new feature                 -> /sdlc feature
+[3] I'm done for now
+```
+
+Record the user's selection in `.isdlc/state.json` under `discovery_context.user_next_action`. Use the command string (e.g., `/sdlc test generate`, `/sdlc feature`, `/sdlc fix`, `/sdlc start`, or `none`).
+
+**Update progress:**
+```
+WALKTHROUGH PHASE                                    [Complete ✓]
+├─ ✓ Step 1: Constitution Review
+├─ ✓ Step 2: Architecture & Tech Stack Review         (done/skipped)
+├─ ✓ Step 2.5: Permission Audit                       (done/skipped)
+├─ ✓ Step 3: Test Coverage Gaps                       (done/skipped)
+├─ ✓ Step 3.5: Iteration Configuration                (done)
+└─ ✓ Step 4: Smart Next Steps
+    -> User selected: {selection description}
+```
+
+If the user selected an action other than "I'm done for now", proceed to finalize state and then launch the selected workflow. If the user selected "I'm done for now", proceed to finalize state and display completion.
+
+---
+
 ### Step 8: Execute PHASE 5 - Finalize
 
 **Show progress:**
 ```
 PHASE 5: Finalize                                    [In Progress]
-├─ ◐ Update project state                              (running)
+├─ ◐ Write discovery context envelope                   (running)
+├─ □ Update project state                              (pending)
 └─ □ Generate setup summary                            (pending)
 ```
+
+#### Write Discovery Context Envelope
+
+Before writing the final state update, assemble and write the `discovery_context` envelope to state.json. This structured envelope enables seamless handover to subsequent /sdlc workflows.
+
+Read the current state.json and add/update the `discovery_context` key:
+
+```json
+{
+  "discovery_context": {
+    "completed_at": "{current ISO-8601 timestamp}",
+    "version": "1.0",
+    "tech_stack": {
+      "primary_language": "{from D1 results}",
+      "runtime": "{from D1 results}",
+      "frameworks": ["{from D1 results}"],
+      "test_runner": "{from D2 results}",
+      "package_manager": "{from D1 results}"
+    },
+    "coverage_summary": {
+      "unit_test_pct": {from D2 results, number},
+      "integration_test_pct": {from D2 results, number},
+      "critical_path_coverage": {from D2 results, number},
+      "total_tests": {from D2 results, number},
+      "meets_constitution": {boolean — compare against Article II thresholds},
+      "high_priority_gaps": {count from D2 results}
+    },
+    "architecture_summary": "{1-line summary from D1}",
+    "constitution_path": "docs/isdlc/constitution.md",
+    "discovery_report_path": "docs/project-discovery-report.md",
+    "re_artifacts": {
+      "ac_count": {from D6 results},
+      "domains": {from D6 results},
+      "traceability_csv": "docs/isdlc/ac-traceability.csv"
+    },
+    "permissions_reviewed": {boolean — true if walkthrough Step 2.5 was completed},
+    "walkthrough_completed": {boolean — true if walkthrough reached Step 4},
+    "user_next_action": "{from walkthrough Step 4 selection: 'test-generate', 'feature', 'fix', 'start', or 'done'}"
+  }
+}
+```
+
+Populate each field from the results already collected during the discovery phases. If a field cannot be determined, use sensible defaults (0 for numbers, false for booleans, empty string for strings).
+
+#### Update Project State
 
 Update `.isdlc/state.json`:
 ```json
@@ -1113,7 +1618,6 @@ Update `.isdlc/state.json`:
 }
 ```
 
-If `--shallow` was used, omit `behavior_extraction_completed`, `ac_count`, and `test_count`.
 
 **On completion:**
 ```
@@ -1179,6 +1683,15 @@ PHASE 4: Skills & Testing Setup                      [Complete ✓]
 └─ ✓ Fill testing gaps
     → Added Playwright, Stryker
 
+WALKTHROUGH PHASE                                    [Complete ✓]
+├─ ✓ Step 1: Constitution Review
+├─ ✓ Step 2: Architecture & Tech Stack Review         ({reviewed/skipped})
+├─ ✓ Step 2.5: Permission Audit                       ({reviewed/skipped})
+├─ ✓ Step 3: Test Coverage Gaps                       ({reviewed/skipped})
+├─ ✓ Step 3.5: Iteration Configuration                ({defaults/customized})
+└─ ✓ Step 4: Smart Next Steps
+    → User selected: {selection description}
+
 PHASE 5: Finalize                                    [Complete ✓]
 ├─ ✓ Update project state
 └─ ✓ Generate setup summary
@@ -1201,19 +1714,11 @@ PHASE 5: Finalize                                    [Complete ✓]
     ✓ docs/isdlc/ac-traceability.csv (traceability matrix)
     ✓ docs/isdlc/reverse-engineer-report.md
 
-  Next Steps:
-    1. Review discovery report: cat docs/project-discovery-report.md
-    2. Review AC: cat docs/requirements/reverse-engineered/index.md
-    3. Review constitution: cat docs/isdlc/constitution.md
-    4. Start a workflow:
-       /sdlc feature  — Build a new feature
-       /sdlc fix      — Fix a bug
-       /sdlc test run — Run existing tests
+  Next action: {user's walkthrough selection, e.g. "/sdlc feature"}
 
 ════════════════════════════════════════════════════════════════
 ```
 
-If `--shallow` was used, omit Phases 1b, 1c, and the RE artifacts from the completion display.
 
 ---
 

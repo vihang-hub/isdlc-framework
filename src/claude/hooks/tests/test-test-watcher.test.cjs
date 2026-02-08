@@ -564,4 +564,182 @@ describe('test-watcher.js', () => {
         assert.ok(result.stdout.includes('Constitutional validation required'),
             'Success message should mention constitutional validation as next step');
     });
+
+    // -----------------------------------------------------------------------
+    // 25. iteration_config.testing_max overrides max_iterations from requirements
+    // -----------------------------------------------------------------------
+    it('uses iteration_config.testing_max from state.json when present', async () => {
+        cleanupTestEnv();
+        // Set iteration_config with testing_max=3 (lower than default 10)
+        setupTestEnv({
+            ...baseTestState(),
+            iteration_config: {
+                implementation_max: 5,
+                testing_max: 3,
+                circuit_breaker_threshold: 2,
+                escalation_behavior: 'pause',
+                configured_at: '2026-02-07T14:30:00Z'
+            }
+        });
+        hookPath = installHook();
+
+        // First failure — should create state with max_iterations=3
+        const output = 'FAIL src/app.test.js\n1 failed\nError: assertion failed';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+
+        const state = readState();
+        const iterState = state.phases['06-implementation'].iteration_requirements.test_iteration;
+        assert.equal(iterState.max_iterations, 3, 'max_iterations should be 3 from iteration_config.testing_max');
+        assert.ok(result.stdout.includes('1/3'), 'Output should show iteration 1/3');
+        assert.ok(result.stdout.includes('Remaining iterations: 2'), 'Should show 2 remaining');
+    });
+
+    // -----------------------------------------------------------------------
+    // 26. iteration_config.circuit_breaker_threshold overrides requirements
+    // -----------------------------------------------------------------------
+    it('uses iteration_config.circuit_breaker_threshold from state.json', async () => {
+        cleanupTestEnv();
+        // Set circuit_breaker_threshold=2 (lower than default 3)
+        // Set up state with 1 identical failure already recorded, threshold=2 means next identical triggers
+        setupTestEnv({
+            ...failedIterationState(1, 10, {
+                test_iteration: {
+                    identical_failure_count: 1,
+                    history: [
+                        { iteration: 1, result: 'FAILED', error: 'TypeError: x is not a function' }
+                    ]
+                }
+            }),
+            iteration_config: {
+                implementation_max: 5,
+                testing_max: 10,
+                circuit_breaker_threshold: 2,
+                escalation_behavior: 'pause',
+                configured_at: '2026-02-07T14:30:00Z'
+            }
+        });
+        hookPath = installHook();
+
+        // Same error repeated — should trigger circuit breaker at threshold=2
+        const output = 'FAIL\n1 failed\nTypeError: x is not a function';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+        assert.ok(result.stdout.includes('CIRCUIT BREAKER TRIGGERED'),
+            'Circuit breaker should trigger at threshold=2 from iteration_config');
+
+        const state = readState();
+        const iterState = state.phases['06-implementation'].iteration_requirements.test_iteration;
+        assert.equal(iterState.status, 'escalated');
+        assert.equal(iterState.escalation_reason, 'circuit_breaker');
+    });
+
+    // -----------------------------------------------------------------------
+    // 27. Without iteration_config, falls back to iteration-requirements.json
+    // -----------------------------------------------------------------------
+    it('falls back to iteration-requirements.json when iteration_config is absent', async () => {
+        cleanupTestEnv();
+        // No iteration_config in state — should use default from requirements (10)
+        setupTestEnv(baseTestState());
+        hookPath = installHook();
+
+        const output = 'FAIL src/app.test.js\n1 failed\nError: something broke';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+
+        const state = readState();
+        const iterState = state.phases['06-implementation'].iteration_requirements.test_iteration;
+        // Default from iteration-requirements.json for 06-implementation is 10
+        assert.equal(iterState.max_iterations, 10,
+            'Should use max_iterations from iteration-requirements.json when no iteration_config');
+    });
+
+    // -----------------------------------------------------------------------
+    // 28. iteration_config without configured_at is ignored
+    // -----------------------------------------------------------------------
+    it('ignores iteration_config without configured_at timestamp', async () => {
+        cleanupTestEnv();
+        // iteration_config present but missing configured_at — should be treated as absent
+        setupTestEnv({
+            ...baseTestState(),
+            iteration_config: {
+                implementation_max: 2,
+                testing_max: 2,
+                circuit_breaker_threshold: 1
+                // No configured_at — getIterationConfig returns null
+            }
+        });
+        hookPath = installHook();
+
+        const output = 'FAIL src/app.test.js\n1 failed\nError: assertion failed';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+
+        const state = readState();
+        const iterState = state.phases['06-implementation'].iteration_requirements.test_iteration;
+        // Should NOT use testing_max=2, should fall back to requirements default (10)
+        assert.equal(iterState.max_iterations, 10,
+            'Should ignore iteration_config without configured_at and use requirements default');
+    });
+
+    // -----------------------------------------------------------------------
+    // 29. Max iterations escalation respects iteration_config.testing_max
+    // -----------------------------------------------------------------------
+    it('escalates at iteration_config.testing_max instead of requirements max', async () => {
+        cleanupTestEnv();
+        // testing_max=3, current_iteration=2 — next failure (#3) should trigger max exceeded
+        setupTestEnv({
+            ...failedIterationState(2, 3),
+            iteration_config: {
+                implementation_max: 5,
+                testing_max: 3,
+                circuit_breaker_threshold: 5,
+                escalation_behavior: 'pause',
+                configured_at: '2026-02-07T14:30:00Z'
+            }
+        });
+        hookPath = installHook();
+
+        const output = 'FAIL\n1 failed\nError: Something broken';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+        assert.ok(result.stdout.includes('MAX ITERATIONS EXCEEDED'),
+            'Should escalate at testing_max=3');
+
+        const state = readState();
+        const iterState = state.phases['06-implementation'].iteration_requirements.test_iteration;
+        assert.equal(iterState.completed, true);
+        assert.equal(iterState.status, 'escalated');
+        assert.equal(iterState.escalation_reason, 'max_iterations');
+    });
+
+    // -----------------------------------------------------------------------
+    // 30. Existing iteration state max_iterations is preserved (not overwritten)
+    // -----------------------------------------------------------------------
+    it('does not overwrite max_iterations on existing iteration state', async () => {
+        cleanupTestEnv();
+        // Pre-existing iterState has max_iterations=10, iteration_config has testing_max=3
+        // Since iterState already exists, max_iterations should stay at 10
+        setupTestEnv({
+            ...failedIterationState(2, 10),
+            iteration_config: {
+                implementation_max: 5,
+                testing_max: 3,
+                circuit_breaker_threshold: 2,
+                escalation_behavior: 'pause',
+                configured_at: '2026-02-07T14:30:00Z'
+            }
+        });
+        hookPath = installHook();
+
+        const output = 'FAIL\n1 failed\nError: another failure';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+
+        const state = readState();
+        const iterState = state.phases['06-implementation'].iteration_requirements.test_iteration;
+        // max_iterations should remain 10 because iterState already existed
+        assert.equal(iterState.max_iterations, 10,
+            'Should preserve existing max_iterations when iterState already exists');
+    });
 });

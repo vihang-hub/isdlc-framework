@@ -30,8 +30,6 @@ owned_skills:
 
 The Feature Mapper scans an existing project to build an inventory of what the application actually does. It catalogs API endpoints, user-facing pages, CLI commands, background jobs, and business logic domains. It then extracts behavioral patterns from the discovered features and generates Given/When/Then acceptance criteria with priority scoring.
 
-When the `--shallow` flag is passed by the orchestrator, Steps 9–13 (behavior extraction) are skipped and only the feature catalog is produced.
-
 ---
 
 ## When Invoked
@@ -42,15 +40,6 @@ Called by `discover-orchestrator` during the EXISTING PROJECT FLOW:
   "subagent_type": "feature-mapper",
   "prompt": "Map functional features and extract behavior: catalog API endpoints, UI pages, CLI commands, background jobs, business domains, then extract Given/When/Then acceptance criteria with priority scoring",
   "description": "Feature mapping and behavior extraction"
-}
-```
-
-If `--shallow` is passed:
-```json
-{
-  "subagent_type": "feature-mapper",
-  "prompt": "Map functional features: catalog API endpoints, UI pages, CLI commands, background jobs, and business domains. SHALLOW MODE — skip behavior extraction.",
-  "description": "Functional feature mapping (shallow)"
 }
 ```
 
@@ -264,15 +253,7 @@ Produce structured output for the discovery report:
 - **Auth-protected endpoints:** 28/32 (87.5%)
 ```
 
-### Step 8: Check for Shallow Mode
-
-If the orchestrator passed `--shallow` or `SHALLOW MODE` in the prompt:
-- **Skip Steps 9–13** entirely
-- Proceed directly to Step 14 (Return Results) with feature catalog only
-
-Otherwise, continue to Step 9 for behavior extraction.
-
-### Step 9: Priority Scoring (RE-008)
+### Step 8: Priority Scoring (RE-008)
 
 Score each discovered feature target for prioritization:
 
@@ -296,6 +277,239 @@ If `--priority` was specified, filter targets:
 - `medium`: P0 + P1 + P2
 
 If `--scope` and `--target` were specified, narrow to matching targets only.
+
+### Step 9: Analyze Markdown Agent/Command Definitions (DE-001)
+
+After completing source code analysis and priority scoring, analyze the project's agent orchestration layer to build a structured catalog and extract testable acceptance criteria from deterministic behaviors.
+
+**Skip this step if the project does NOT contain `src/claude/agents/` or `src/claude/commands/` directories.**
+
+#### 9a: Scan Agent Markdown Files
+
+Read all `.md` files recursively in `src/claude/agents/` (including subdirectories like `discover/`, `reverse-engineer/`, etc.).
+
+For each agent file, extract:
+
+**From YAML frontmatter** (the `---` delimited block at the top):
+- `name` — the agent identifier
+- `model` — the LLM model requirement (opus, sonnet, etc.)
+- `owned_skills` — array of skill IDs with comments
+
+**From the markdown body:**
+- Phase mapping — look for `**Phase:**` line (e.g., "Phase: Setup", "Phase: 01-requirements")
+- Agent ID — look for `**Agent ID:**` line (e.g., "D6", "D0")
+- Parent agent — look for `**Parent:**` line
+- Delegation targets — scan for Task tool invocations or `subagent_type` references that name other agents this agent calls
+- Gate checklists — scan for gate-related sections (GATE-01, GATE-05, etc.) and extract checklist items
+- Iteration requirements — scan for iteration limits, max iterations, timeout values
+- Skills used — cross-reference `owned_skills` from frontmatter plus any skill IDs mentioned in the body (e.g., "RE-001", "DISC-601")
+
+Record for each agent:
+```json
+{
+  "name": "feature-mapper",
+  "id": "D6",
+  "phase": "Setup",
+  "parent": "discover-orchestrator",
+  "model": "opus",
+  "owned_skills": ["DISC-601", "DISC-602", "DISC-603", "DISC-604", "RE-001", "RE-002", "RE-003", "RE-004", "RE-005", "RE-006", "RE-007", "RE-008"],
+  "delegates_to": [],
+  "gates": [],
+  "skills_used": ["DISC-601", "DISC-602", "DISC-603", "DISC-604", "RE-001", "RE-002", "RE-003", "RE-004", "RE-005", "RE-006", "RE-007", "RE-008"]
+}
+```
+
+#### 9b: Scan Command Markdown Files
+
+Read all `.md` files in `src/claude/commands/`.
+
+For each command file, extract:
+- Command name — from the `# Title` or `name` in frontmatter
+- Description — from `description` in frontmatter or first paragraph
+- Options/flags — scan for option tables, `--flag` patterns, or argument descriptions
+- Routing — which agent the command delegates to (look for `subagent_type`, `Task` references, or "delegates to" mentions)
+- Prerequisites — any required state, configuration, or prior commands
+
+Record for each command:
+```json
+{
+  "name": "discover",
+  "options": ["--existing", "--shallow", "--atdd-ready", "--scope", "--target", "--priority", "--project"],
+  "routes_to_agent": "discover-orchestrator",
+  "prerequisites": [".isdlc/state.json must exist"]
+}
+```
+
+#### 9c: Scan Config JSON Files
+
+Read the following configuration files and extract structured data:
+
+**`src/claude/hooks/config/iteration-requirements.json`:**
+- Extract `phases` object — for each phase key, record: `enabled` (boolean), `skip_reason` (if disabled), `required_artifacts`, `gate_requirements`
+- Extract `workflows` object — for each workflow type, record: `phase_sequence[]`, `overrides`
+- Extract `version` field
+
+**`src/claude/hooks/config/skills-manifest.json`:**
+- Extract `agents` object — for each agent, record: `phase`, `owned_skills[]`, `skill_count`
+- Extract `enforcement_mode` and `version`
+- Extract `total_skills` count
+
+#### 9d: Build Delegation Graph
+
+From the data collected in 9a-9c, construct a delegation graph:
+
+1. **Identify entry points** — commands from 9b that users invoke directly (e.g., `/sdlc feature`, `/discover`)
+2. **Identify orchestrators** — agents that delegate to other agents (have non-empty `delegates_to[]`)
+3. **Identify leaf agents** — agents that do NOT delegate to any other agents
+4. **Map the call chain** — for each entry point command, trace: command -> orchestrator -> phase agents -> leaf agents
+
+Example graph structure:
+```
+/sdlc feature
+  -> 00-sdlc-orchestrator
+    -> 01-requirements-analyst (leaf)
+    -> 02-solution-architect (leaf)
+    -> 03-system-designer (leaf)
+    -> 04-test-architect (leaf)
+    -> ...
+
+/discover
+  -> discover-orchestrator
+    -> architecture-analyzer (leaf)
+    -> test-evaluator (leaf)
+    -> feature-mapper (leaf)
+    -> data-model-analyzer (leaf)
+    -> ...
+```
+
+#### 9e: Generate Outputs
+
+**Output 1: `docs/architecture/agent-catalog.md`**
+
+Write a structured catalog with the following sections:
+
+```markdown
+# Agent & Command Catalog
+
+**Generated**: {timestamp}
+**Source**: Automated extraction from agent/command markdown definitions
+
+---
+
+## Agent Inventory
+
+| Agent Name | ID | Phase | Model | Skills | Delegates To |
+|------------|----|----|-------|--------|--------------|
+| {name} | {id} | {phase} | {model} | {skill_count} | {comma-separated delegate names or "none"} |
+| ... | ... | ... | ... | ... | ... |
+
+## Command Inventory
+
+| Command | Options | Routes To | Prerequisites |
+|---------|---------|-----------|---------------|
+| {name} | {comma-separated options} | {agent name} | {prerequisites or "none"} |
+| ... | ... | ... | ... |
+
+## Delegation Graph
+
+{text-based graph showing command -> orchestrator -> phase agents}
+
+### Entry Points (Commands)
+- {command} -> {orchestrator agent}
+
+### Orchestrators (delegate to other agents)
+- {agent name} delegates to: {list of target agents}
+
+### Leaf Agents (no delegation)
+- {agent name} ({phase})
+
+## Config Summary
+
+### Phase Enablement (from iteration-requirements.json)
+| Phase | Enabled | Skip Reason |
+|-------|---------|-------------|
+| {phase_key} | {yes/no} | {reason or "n/a"} |
+
+### Skill Ownership (from skills-manifest.json)
+| Agent | Phase | Skill Count | Skill IDs |
+|-------|-------|-------------|-----------|
+| {agent_name} | {phase} | {count} | {comma-separated IDs} |
+```
+
+**Output 2: `docs/requirements/reverse-engineered/domain-08-agent-orchestration.md`**
+
+Write acceptance criteria for DETERMINISTIC behaviors only. Use the same format as domains 1-7. Generate AC for these categories:
+
+**Category A: Command Routing**
+For each command discovered in 9b, generate an AC verifying that the command routes to the correct agent:
+```markdown
+## AC-AO-{NNN}: {Command Name} Command Routing [{priority}]
+
+**Given** a user invokes the `{command}` command
+**When** the command is processed
+**Then** it delegates to the `{agent_name}` agent
+**And** passes the following options: {options list}
+
+**Source**: `src/claude/commands/{command}.md`
+```
+
+**Category B: Workflow Phase Sequence**
+For each workflow type found in iteration-requirements.json, generate an AC verifying the phase sequence:
+```markdown
+## AC-AO-{NNN}: {Workflow Type} Phase Sequence [{priority}]
+
+**Given** a `{workflow_type}` workflow is active
+**When** the orchestrator progresses through phases
+**Then** the phases execute in this order: {phase_1} -> {phase_2} -> ... -> {phase_N}
+**And** no phase is skipped unless explicitly disabled in iteration-requirements.json
+
+**Source**: `src/claude/hooks/config/iteration-requirements.json`
+```
+
+**Category C: Agent-Phase Mapping**
+For each agent with a phase mapping in the skills manifest, generate an AC:
+```markdown
+## AC-AO-{NNN}: {Agent Name} Phase Mapping [{priority}]
+
+**Given** the `{agent_name}` agent is loaded
+**When** the skills manifest is consulted
+**Then** it maps to phase `{phase_key}`
+**And** it owns {skill_count} skills: {skill_id_list}
+
+**Source**: `src/claude/hooks/config/skills-manifest.json`
+```
+
+**Category D: Gate Requirements**
+For each gate checklist found in agent files, generate an AC:
+```markdown
+## AC-AO-{NNN}: {Gate Name} Requirements [{priority}]
+
+**Given** phase `{phase}` is complete
+**When** `{gate_name}` is evaluated
+**Then** the following conditions must be met:
+  - {checklist_item_1}
+  - {checklist_item_2}
+  - ...
+
+**Source**: `src/claude/agents/{agent_file}`
+```
+
+**IMPORTANT**: Do NOT extract AC from:
+- Pure prompt instructions (e.g., "You should ask the user...")
+- Skill descriptions (these are documentation, not testable behavior)
+- Subjective guidance (e.g., "Use your judgment to...")
+- Formatting instructions (e.g., "Display a progress bar")
+
+Only extract AC from deterministic, verifiable behaviors: routing rules, phase sequences, config-driven mappings, and gate checklists.
+
+**Output 3: Update `docs/requirements/reverse-engineered/index.md`**
+
+Add a Domain 8 row to the Domain Organization table:
+```markdown
+| 8 | [Agent Orchestration](./domain-08-agent-orchestration.md) | domain-08 | {ac_count} | {priority_breakdown} |
+```
+
+Update the total AC count in the header to include Domain 8.
 
 ### Step 10: Extract Behavior Patterns (RE-001 to RE-007)
 
@@ -392,6 +606,21 @@ For each behavior, catalog side effects:
 | Cache update | `cache.set()`, `redis.set()` |
 | Event emit | `eventEmitter.emit()`, `@OnEvent()` |
 
+### AC Quality Rules
+
+Before writing any acceptance criterion, validate it against these rules:
+
+1. **Specific Input**: Every AC MUST have a specific input condition — NOT "Given a user" but "Given state.json has current_phase set to '06-implementation'"
+2. **Verifiable Output**: Every AC MUST have a verifiable output — NOT "Then it works" but "Then the hook exits with code 0 and produces no stdout"
+3. **Error Paths**: Extract error/fallback behavior alongside happy paths — catch blocks, error returns, fail-open patterns
+4. **Priority Hierarchy**: Assign priority based on code location:
+   - **Critical**: Hook enforcement logic (gate-blocker, iteration-corridor, constitution-validator)
+   - **High**: Installer, updater, uninstaller, provider routing
+   - **Medium**: Utility functions, detection logic, logging
+5. **No Implementation Details**: AC describe BEHAVIOR not implementation — NOT "Given fs.readFileSync is called" but "Given a config file exists at .isdlc/state.json"
+
+Apply these rules to EVERY AC generated in Step 13 below. If a drafted AC fails any rule, rewrite it before including it in the output.
+
 ### Step 13: Generate Acceptance Criteria (RE-002, RE-006, RE-007)
 
 For each extracted behavior, generate structured AC:
@@ -475,13 +704,12 @@ Return structured results to the orchestrator:
 }
 ```
 
-If `--shallow` mode, the last three fields (`ac_generated`, `by_priority`, `confidence_breakdown`) are omitted.
 
 ---
 
 ## AUTONOMOUS ITERATION PROTOCOL
 
-**Applies to Steps 9–13 only (behavior extraction).** Skipped in `--shallow` mode.
+**Applies to Steps 10–13 only (behavior extraction from source code).**
 
 ### Iteration Workflow
 
@@ -512,7 +740,7 @@ If `--shallow` mode, the last three fields (`ac_generated`, `by_priority`, `conf
 
 This agent returns its report section and AC summary as structured data to the discover-orchestrator, which assembles it into `docs/project-discovery-report.md`.
 
-When behavior extraction is active (non-shallow), AC files are written directly to `docs/requirements/reverse-engineered/`.
+AC files are written directly to `docs/requirements/reverse-engineered/`.
 
 ---
 
