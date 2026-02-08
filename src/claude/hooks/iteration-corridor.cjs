@@ -22,7 +22,9 @@ const {
     readStdin,
     outputBlockResponse,
     debugLog,
-    getProjectRoot
+    getProjectRoot,
+    getTimestamp,
+    writePendingEscalation
 } = require('./lib/common.cjs');
 
 const fs = require('fs');
@@ -285,25 +287,37 @@ async function main() {
             // TEST_CORRIDOR: Block Task delegation and Skill advancement
             if (toolName === 'Task' && taskHasAdvanceKeywords(toolInput)) {
                 const d = corridorState.details;
-                outputBlockResponse(
-                    `ITERATION CORRIDOR: Tests are failing (iteration ${d.current_iteration}/${d.max_iterations}). ` +
+                const stopReason = `ITERATION CORRIDOR: Tests are failing (iteration ${d.current_iteration}/${d.max_iterations}). ` +
                     `Fix the code and re-run tests before doing anything else.\n\n` +
                     `Last error: ${d.last_error}\n` +
                     `Last test command: ${d.last_command || 'unknown'}\n\n` +
-                    `Blocked action: ${toolName} (detected advance/delegate keywords)`
-                );
+                    `Blocked action: ${toolName} (detected advance/delegate keywords)`;
+                outputBlockResponse(stopReason);
+                writePendingEscalation({
+                    type: 'corridor_blocked',
+                    hook: 'iteration-corridor',
+                    phase: currentPhase,
+                    detail: stopReason,
+                    timestamp: getTimestamp()
+                });
                 process.exit(0);
             }
 
             if (toolName === 'Skill' && skillIsAdvanceAttempt(toolInput)) {
                 const d = corridorState.details;
-                outputBlockResponse(
-                    `ITERATION CORRIDOR: Tests are failing (iteration ${d.current_iteration}/${d.max_iterations}). ` +
+                const stopReason = `ITERATION CORRIDOR: Tests are failing (iteration ${d.current_iteration}/${d.max_iterations}). ` +
                     `Fix the code and re-run tests before doing anything else.\n\n` +
                     `Last error: ${d.last_error}\n` +
                     `Last test command: ${d.last_command || 'unknown'}\n\n` +
-                    `Blocked action: ${toolName} (gate advancement not allowed during test iteration)`
-                );
+                    `Blocked action: ${toolName} (gate advancement not allowed during test iteration)`;
+                outputBlockResponse(stopReason);
+                writePendingEscalation({
+                    type: 'corridor_blocked',
+                    hook: 'iteration-corridor',
+                    phase: currentPhase,
+                    detail: stopReason,
+                    timestamp: getTimestamp()
+                });
                 process.exit(0);
             }
         }
@@ -313,24 +327,36 @@ async function main() {
             if (toolName === 'Task' && taskHasAdvanceKeywords(toolInput)) {
                 const d = corridorState.details;
                 const articleList = d.articles.join(', ');
-                outputBlockResponse(
-                    `ITERATION CORRIDOR: Constitutional validation in progress for Articles [${articleList}]. ` +
+                const stopReason = `ITERATION CORRIDOR: Constitutional validation in progress for Articles [${articleList}]. ` +
                     `Validate and fix artifacts before proceeding.\n\n` +
                     `Status: ${d.status} (iteration ${d.iterations_used}/${d.max_iterations})\n\n` +
-                    `Blocked action: ${toolName} (detected advance/delegate keywords)`
-                );
+                    `Blocked action: ${toolName} (detected advance/delegate keywords)`;
+                outputBlockResponse(stopReason);
+                writePendingEscalation({
+                    type: 'corridor_blocked',
+                    hook: 'iteration-corridor',
+                    phase: currentPhase,
+                    detail: stopReason,
+                    timestamp: getTimestamp()
+                });
                 process.exit(0);
             }
 
             if (toolName === 'Skill' && skillIsAdvanceAttempt(toolInput)) {
                 const d = corridorState.details;
                 const articleList = d.articles.join(', ');
-                outputBlockResponse(
-                    `ITERATION CORRIDOR: Constitutional validation in progress for Articles [${articleList}]. ` +
+                const stopReason = `ITERATION CORRIDOR: Constitutional validation in progress for Articles [${articleList}]. ` +
                     `Validate and fix artifacts before proceeding.\n\n` +
                     `Status: ${d.status} (iteration ${d.iterations_used}/${d.max_iterations})\n\n` +
-                    `Blocked action: ${toolName} (gate advancement not allowed during constitutional validation)`
-                );
+                    `Blocked action: ${toolName} (gate advancement not allowed during constitutional validation)`;
+                outputBlockResponse(stopReason);
+                writePendingEscalation({
+                    type: 'corridor_blocked',
+                    hook: 'iteration-corridor',
+                    phase: currentPhase,
+                    detail: stopReason,
+                    timestamp: getTimestamp()
+                });
                 process.exit(0);
             }
         }

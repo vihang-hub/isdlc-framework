@@ -19,7 +19,8 @@ const {
     debugLog,
     getProjectRoot,
     getTimestamp,
-    loadManifest
+    loadManifest,
+    writePendingEscalation
 } = require('./lib/common.cjs');
 
 const fs = require('fs');
@@ -564,6 +565,16 @@ async function main() {
         writeState(state);
 
         outputBlockResponse(stopReason);
+
+        // Write escalation for phase-loop controller visibility
+        writePendingEscalation({
+            type: 'gate_blocked',
+            hook: 'gate-blocker',
+            phase: currentPhase,
+            detail: stopReason,
+            timestamp: getTimestamp()
+        });
+
         process.exit(0);
 
     } catch (error) {

@@ -1083,6 +1083,87 @@ When `/sdlc cancel` is invoked AND `active_workflow.git_branch` exists:
 
 When `requires_branch` is `false` (test-run, test-generate): skip all git branch operations. No `git_branch` field is added to `active_workflow` in state.json.
 
+## 3c. Execution Modes
+
+The orchestrator supports multiple execution modes controlled by a `MODE` parameter in the Task prompt. This enables the **phase-loop controller** pattern where the calling command (`sdlc.md`) manages foreground task visibility while the orchestrator handles individual phases.
+
+### Mode Parameter
+
+The calling agent passes MODE as a structured parameter in the Task prompt:
+
+```
+MODE: init-and-phase-01
+MODE: single-phase PHASE: 05-implementation
+MODE: finalize
+```
+
+If no MODE parameter is present, the orchestrator runs in **full-workflow mode** (original behavior, backward compatible).
+
+### Mode Definitions
+
+| Mode | Scope | Returns |
+|------|-------|---------|
+| `init-and-phase-01` | Initialize workflow + run Phase 01 + validate GATE-01 + create branch | Structured result (see below) |
+| `single-phase` | Run one phase (specified by PHASE param) + validate its gate + update state.json | Structured result (see below) |
+| `finalize` | Human Review Checkpoint (if enabled) + merge branch + clear workflow | Structured result (see below) |
+| _(none)_ | Full workflow (backward compatible) | Original behavior — runs all phases autonomously |
+
+### Structured Return Formats
+
+**init-and-phase-01 returns:**
+```json
+{
+  "status": "phase_01_complete",
+  "phases": ["01-requirements", "02-architecture", "03-design", "05-implementation", "10-local-testing", "06-testing", "09-cicd", "07-code-review"],
+  "artifact_folder": "REQ-0001-feature-name",
+  "workflow_type": "feature",
+  "next_phase_index": 1
+}
+```
+
+**single-phase returns:**
+```json
+{
+  "status": "passed",
+  "phase_completed": "05-implementation",
+  "gate_result": "GATE-05 PASSED",
+  "blockers": []
+}
+```
+
+On hook block:
+```json
+{
+  "status": "blocked_by_hook",
+  "phase_completed": null,
+  "gate_result": null,
+  "blockers": [{"hook": "gate-blocker", "detail": "..."}]
+}
+```
+
+**finalize returns:**
+```json
+{
+  "status": "completed",
+  "merged": true,
+  "pr_url": "https://github.com/..."
+}
+```
+
+### Mode Behavior Rules
+
+1. **init-and-phase-01**: Run all initialization (Section 3 steps 1-6), delegate to Phase 01 agent, validate GATE-01, create branch (Section 3a), generate plan (Section 3b). Return the structured result with the workflow's phases array.
+
+2. **single-phase**: Read `active_workflow` from state.json. Delegate to the phase agent for the specified PHASE key. After the agent returns, validate the gate for that phase. Update `active_workflow.current_phase_index` and `current_phase` in state.json. Return structured result.
+
+3. **finalize**: Run the Human Review Checkpoint (Section 3b, if `code_review.enabled`). Merge the branch back to main (Section 3a). Clear `active_workflow` from state.json. Return structured result.
+
+4. **No mode (full workflow)**: Original behavior. All phases run autonomously within a single orchestrator invocation.
+
+### Task List Suppression in Controlled Modes
+
+When running in `init-and-phase-01`, `single-phase`, or `finalize` mode, do **NOT** create TaskCreate tasks — the phase-loop controller has already created them in the foreground. Only create TaskCreate tasks when no MODE parameter is present (full-workflow backward compatibility).
+
 ## 4. Workflow Phase Advancement
 
 Manage progression through the workflow's phase array (NOT the fixed 13-phase sequence).
@@ -1967,9 +2048,11 @@ See the "Applicable Articles by Phase" table in Section 9 (Constitutional Iterat
 
 **CRITICAL**: When initializing a workflow, you MUST create a visible task list using `TaskCreate` so the user can see overall workflow progress.
 
+**EXCEPTION — Controlled Execution Modes**: When running in `init-and-phase-01`, `single-phase`, or `finalize` mode (see Section 3c), do **NOT** create TaskCreate tasks. The phase-loop controller in `sdlc.md` has already created them in the foreground where the user can see them. Only create tasks when no MODE parameter is present (full-workflow mode).
+
 ## Workflow Task List Creation
 
-Immediately after writing `active_workflow` to state.json (Section 3, step 3), create one task per phase in the workflow using `TaskCreate`. Use the workflow's `phases` array to determine which tasks to create.
+Immediately after writing `active_workflow` to state.json (Section 3, step 3), **and only when no MODE parameter is present**, create one task per phase in the workflow using `TaskCreate`. Use the workflow's `phases` array to determine which tasks to create.
 
 ### Task Definitions by Workflow Phase
 

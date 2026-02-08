@@ -19,7 +19,8 @@ const {
     outputBlockResponse,
     debugLog,
     getProjectRoot,
-    getTimestamp
+    getTimestamp,
+    writePendingEscalation
 } = require('./lib/common.cjs');
 
 const fs = require('fs');
@@ -312,6 +313,16 @@ DO NOT skip articles or mark compliant without actually checking.
 Iteration ${iterationsUsed}/${maxIterations} — you have ${remaining} attempts remaining.`;
 
         outputBlockResponse(stopReason);
+
+        // Write escalation for phase-loop controller visibility
+        writePendingEscalation({
+            type: 'constitution_blocked',
+            hook: 'constitution-validator',
+            phase: currentPhase,
+            detail: stopReason,
+            timestamp: getTimestamp()
+        });
+
         process.exit(0);
 
     } catch (error) {

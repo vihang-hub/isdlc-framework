@@ -851,6 +851,47 @@ function outputBlockResponse(stopReason) {
 }
 
 // =========================================================================
+// Pending Escalation Tracking
+// =========================================================================
+
+/**
+ * Write a pending escalation entry to state.json.
+ * Appends to state.pending_escalations[] array.
+ * @param {object} entry - { type, hook, phase, detail, timestamp }
+ */
+function writePendingEscalation(entry) {
+    const state = readState();
+    if (!state) return;
+    if (!Array.isArray(state.pending_escalations)) {
+        state.pending_escalations = [];
+    }
+    state.pending_escalations.push(entry);
+    writeState(state);
+}
+
+/**
+ * Read pending_escalations from state.json.
+ * @returns {Array|null} The pending_escalations array, or null if none/empty
+ */
+function readPendingEscalations() {
+    const state = readState();
+    if (!state) return null;
+    const escalations = state.pending_escalations;
+    if (!Array.isArray(escalations) || escalations.length === 0) return null;
+    return escalations;
+}
+
+/**
+ * Clear pending_escalations from state.json (set to empty array).
+ */
+function clearPendingEscalations() {
+    const state = readState();
+    if (!state) return;
+    state.pending_escalations = [];
+    writeState(state);
+}
+
+// =========================================================================
 // Pending Delegation Tracking
 // =========================================================================
 
@@ -952,6 +993,10 @@ module.exports = {
     isAgentAuthorizedForPhase,
     readStdin,
     outputBlockResponse,
+    // Pending escalation tracking
+    writePendingEscalation,
+    readPendingEscalations,
+    clearPendingEscalations,
     // Pending delegation tracking
     readPendingDelegation,
     writePendingDelegation,

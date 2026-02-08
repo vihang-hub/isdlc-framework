@@ -691,21 +691,134 @@ When this command is invoked:
 2. Pass explicit instruction: "Action is {feature|fix} but no description provided. Run the BACKLOG PICKER in {feature|fix} mode to let the user select from pending items or describe a new one."
 3. The orchestrator scans CLAUDE.md and state.json, presents the backlog picker, waits for selection, then proceeds with the chosen description
 
-**If action argument provided with description (`/sdlc <action> "description"`):**
-1. Use the Task tool to launch the `sdlc-orchestrator` agent
-2. Pass the action, description, and `--project` flag (if present) to the agent
-3. The orchestrator will coordinate the appropriate workflow (skips backlog picker)
+**If action is a NON-WORKFLOW command** (cancel, status, gate-check, constitution, configure-cloud, or any unrecognized action):
+1. Use the Task tool to launch the `sdlc-orchestrator` agent (single invocation)
+2. Pass the action and any flags to the agent
+3. The orchestrator handles it and returns
+
+**If action is a WORKFLOW command** (feature, fix, test-run, test-generate, start, upgrade) **with description:**
+
+Use the **Phase-Loop Controller** protocol. This runs phases one at a time in the foreground, giving the user visible task progress and immediate hook-blocker escalation.
+
+#### STEP 1: INIT — Launch orchestrator for init + Phase 01
 
 ```
-/sdlc (no args)    → Task tool → sdlc-orchestrator → Interactive Menu → User Selection → Action
-/sdlc feature      → Task tool → sdlc-orchestrator → Backlog Picker (feature) → User Selection → Workflow
-/sdlc fix          → Task tool → sdlc-orchestrator → Backlog Picker (fix) → User Selection → Workflow
-/sdlc feature ...  → Task tool → sdlc-orchestrator → Initialize feature workflow → Phase agents
-/sdlc fix ...      → Task tool → sdlc-orchestrator → Initialize fix workflow → Phase agents
-/sdlc test run     → Task tool → sdlc-orchestrator → Initialize test-run workflow → Phase 06 agent
-/sdlc test generate → Task tool → sdlc-orchestrator → Initialize test-generate workflow → Phase agents
-/sdlc start ...    → Task tool → sdlc-orchestrator → Initialize full-lifecycle workflow → Phase agents
-/sdlc upgrade ...  → Task tool → sdlc-orchestrator → Initialize upgrade workflow → Agent 14 (analysis) → Agent 14 (execution) → Agent 07
-/sdlc cancel       → Task tool → sdlc-orchestrator → Cancel active workflow
-/sdlc <action>     → Task tool → sdlc-orchestrator → Execute Action
+Use Task tool → sdlc-orchestrator with:
+  MODE: init-and-phase-01
+  ACTION: {feature|fix|test-run|test-generate|start|upgrade}
+  DESCRIPTION: "{user description}"
+  (include MONOREPO CONTEXT if applicable)
+```
+
+The orchestrator initializes the workflow, runs Phase 01 (requirements/bug-report), validates GATE-01, creates the branch, generates the plan, and returns a structured result:
+```json
+{
+  "status": "phase_01_complete",
+  "phases": ["01-requirements", "02-architecture", ...],
+  "artifact_folder": "REQ-0001-feature-name",
+  "workflow_type": "feature",
+  "next_phase_index": 1
+}
+```
+
+If Phase 01 fails or is cancelled, stop here.
+
+#### STEP 2: FOREGROUND TASKS — Create visible task list
+
+Using the `phases[]` array from the init result, create one `TaskCreate` per phase using these definitions:
+
+| Phase Key | subject | activeForm |
+|-----------|---------|------------|
+| `00-mapping` | Map feature impact (Phase 00) | Mapping feature impact |
+| `01-requirements` | Capture requirements (Phase 01) | Capturing requirements |
+| `02-tracing` | Trace bug root cause (Phase 02) | Tracing bug root cause |
+| `02-architecture` | Design architecture (Phase 02) | Designing architecture |
+| `03-design` | Create design specifications (Phase 03) | Creating design specifications |
+| `04-test-strategy` | Design test strategy (Phase 04) | Designing test strategy |
+| `05-implementation` | Implement features (Phase 05) | Implementing features |
+| `10-local-testing` | Build and launch local environment (Phase 10) | Building local environment |
+| `06-testing` | Run integration and E2E tests (Phase 06) | Running integration tests |
+| `07-code-review` | Perform code review and QA (Phase 07) | Performing code review |
+| `08-validation` | Validate security and compliance (Phase 08) | Validating security |
+| `09-cicd` | Configure CI/CD pipelines (Phase 09) | Configuring CI/CD |
+| `10-remote-build` | Build and deploy remote environment (Phase 10) | Building remote environment |
+| `11-test-deploy` | Deploy to staging (Phase 11) | Deploying to staging |
+| `12-production` | Deploy to production (Phase 12) | Deploying to production |
+| `13-operations` | Configure monitoring and operations (Phase 13) | Configuring operations |
+| `14-upgrade-plan` | Analyze upgrade impact and generate plan (Phase 14) | Analyzing upgrade impact |
+| `14-upgrade-execute` | Execute upgrade with regression testing (Phase 14) | Executing upgrade |
+
+For `description`, use: `"Phase {NN} of {workflow_type} workflow"`
+
+Mark Phase 01's task as `completed` immediately (it already passed in Step 1).
+
+The user now sees the full task list in their terminal.
+
+#### STEP 3: PHASE LOOP — Execute remaining phases one at a time
+
+For each phase from `next_phase_index` through the end of `phases[]`:
+
+**3a.** Mark the phase task as `in_progress` using `TaskUpdate` (user sees spinner).
+
+**3b.** Read `.isdlc/state.json` and check for `pending_escalations[]`.
+
+**3c.** If escalations exist, display the blocker banner and ask the user:
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║  BLOCKER — Phase {NN}: {Phase Name}                        ║
+╠══════════════════════════════════════════════════════════════╣
+║  Hook: {hook_name}                                         ║
+║  Detail: {description}                                     ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+Use `AskUserQuestion` with options:
+- **Retry phase** — Clear escalations, re-run the phase
+- **Skip (override)** — Clear escalations, mark task completed, continue
+- **Cancel workflow** — Launch orchestrator with cancel action, stop loop
+
+Clear `pending_escalations` after handling.
+
+**3d.** Launch the orchestrator for this single phase:
+
+```
+Use Task tool → sdlc-orchestrator with:
+  MODE: single-phase
+  PHASE: {phase_key}
+  (include MONOREPO CONTEXT if applicable)
+```
+
+**3e.** On return, check the result status:
+- `"passed"` → Mark task as `completed`, continue to next phase
+- `"blocked_by_hook"` → Display blocker banner (same format as 3c), use `AskUserQuestion` for Retry/Skip/Cancel
+- Any other error → Display error, use `AskUserQuestion` for Retry/Skip/Cancel
+
+#### STEP 4: FINALIZE — Complete the workflow
+
+After all phases complete:
+
+```
+Use Task tool → sdlc-orchestrator with:
+  MODE: finalize
+  (include MONOREPO CONTEXT if applicable)
+```
+
+The orchestrator runs the Human Review Checkpoint (if code_review.enabled), merges the branch, and clears the workflow.
+
+#### Flow Summary
+
+```
+/sdlc (no args)    → Task → orchestrator → Interactive Menu → User Selection → Action
+/sdlc feature      → Task → orchestrator → Backlog Picker (feature) → Phase-Loop Controller
+/sdlc fix          → Task → orchestrator → Backlog Picker (fix) → Phase-Loop Controller
+/sdlc feature ...  → Phase-Loop Controller (init → tasks → loop → finalize)
+/sdlc fix ...      → Phase-Loop Controller (init → tasks → loop → finalize)
+/sdlc test run     → Phase-Loop Controller (init → tasks → loop → finalize)
+/sdlc test generate → Phase-Loop Controller (init → tasks → loop → finalize)
+/sdlc start ...    → Phase-Loop Controller (init → tasks → loop → finalize)
+/sdlc upgrade ...  → Phase-Loop Controller (init → tasks → loop → finalize)
+/sdlc cancel       → Task → orchestrator → Cancel active workflow
+/sdlc status       → Task → orchestrator → Show status
+/sdlc <action>     → Task → orchestrator → Execute Action
 ```
