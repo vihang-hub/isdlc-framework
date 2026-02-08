@@ -21,7 +21,6 @@ The `/discover` command is the universal entry point for setting up a project wi
 | `--project {id}` | Target a specific project in monorepo mode |
 | `--skip-tests` | Skip test infrastructure evaluation |
 | `--skip-skills` | Skip skills.sh integration |
-| `--shallow` | Skip behavior extraction (feature catalog only, no AC/tests) |
 | `--scope {value}` | Analysis scope: `all`, `module`, `endpoint`, `domain` (default: all) |
 | `--target {name}` | Target name (required when scope is module/endpoint/domain) |
 | `--priority {value}` | Filter by risk priority: `all`, `critical`, `high`, `medium` (default: all) |
@@ -41,9 +40,6 @@ The `/discover` command is the universal entry point for setting up a project wi
 
 # Discover a specific project in a monorepo
 /discover --project api-service
-
-# Quick catalog only (no behavior extraction)
-/discover --shallow
 
 # Focus on specific domain
 /discover --scope domain --target "payments"
@@ -84,8 +80,7 @@ The `/discover` command is the universal entry point for setting up a project wi
 4. **Install skills** — From skills.sh for your tech stack
 5. **Fill testing gaps** — Add missing test infrastructure
 6. **Configure cloud** — Optional deployment setup
-
-With `--shallow`, steps 1b, 1c, and 1d are skipped and D6 produces only the feature catalog.
+7. **Interactive Walkthrough** — Constitution review (mandatory), architecture review, permission audit, test gap review, iteration configuration, smart next steps
 
 ### Output
 After completion, you'll have:
@@ -96,10 +91,10 @@ After completion, you'll have:
 - `docs/isdlc/test-evaluation-report.md` - Test analysis with per-type coverage and quality assessment
 - `docs/isdlc/constitution.md` - Tailored project constitution
 - `docs/isdlc/skill-customization-report.md` - Installed skills report
-- `docs/requirements/reverse-engineered/` - Acceptance criteria by domain (unless `--shallow`)
-- `tests/characterization/` - Characterization test scaffolds (unless `--shallow`)
-- `docs/isdlc/ac-traceability.csv` - Code → AC → Test mapping (unless `--shallow`)
-- `docs/isdlc/reverse-engineer-report.md` - RE execution summary (unless `--shallow`)
+- `docs/requirements/reverse-engineered/` - Acceptance criteria by domain
+- `tests/characterization/` - Characterization test scaffolds
+- `docs/isdlc/ac-traceability.csv` - Code → AC → Test mapping
+- `docs/isdlc/reverse-engineer-report.md` - RE execution summary
 
 **New projects:**
 - `docs/project-brief.md` - Problem statement, users, features, constraints
@@ -118,6 +113,9 @@ After completion, you'll have:
 - External skills install to `.isdlc/projects/{project-id}/skills/external/` (not shared `.claude/skills/external/`)
 - External skills manifest at `docs/isdlc/projects/{project-id}/external-skills-manifest.json`
 - Skill report at `docs/isdlc/projects/{project-id}/skill-customization-report.md`
+
+**Context Handover:**
+- `discovery_context` envelope written to `.isdlc/state.json` -- enables seamless transition to `/sdlc feature`, `/sdlc fix`, or `/sdlc test generate` workflows without re-scanning
 
 **CWD-based project resolution** (when `--project` not provided):
 - If CWD is inside a registered project path, that project is auto-selected
@@ -156,7 +154,7 @@ When this command is invoked:
    - `atdd-bridge` - ATDD checklists and AC tagging (Phase 1d, --atdd-ready only)
 
    For existing projects, D1, D2, D5, and D6 run **in parallel** during Phase 1.
-   Phases 1b, 1c, 1d run **sequentially** after Phase 1 (skipped with `--shallow`).
+   Phases 1b, 1c, 1d run **sequentially** after Phase 1.
    For new projects, D7 handles vision + PRD, D8 handles architecture blueprint.
 
 ### Related Commands

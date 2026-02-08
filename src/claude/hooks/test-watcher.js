@@ -201,6 +201,18 @@ function extractErrorMessage(output) {
 }
 
 /**
+ * Extract user-configured iteration config from state.json.
+ * Returns null if not present or not configured (no configured_at timestamp).
+ * @param {object} state - Parsed state.json
+ * @returns {object|null} iteration_config or null
+ */
+function getIterationConfig(state) {
+    const config = state && state.iteration_config;
+    if (!config || !config.configured_at) return null;
+    return config;
+}
+
+/**
  * Load iteration requirements
  */
 function loadIterationRequirements() {
@@ -396,13 +408,18 @@ async function main() {
         }
 
         // Get or initialize test iteration state
+        // Priority chain: state.json iteration_config > iteration-requirements.json > hardcoded default
+        const iterConfig = getIterationConfig(state);
         let iterState = state.phases[currentPhase].iteration_requirements.test_iteration;
         if (!iterState) {
+            const maxIter = (iterConfig && iterConfig.testing_max) ||
+                            (phaseReq && phaseReq.test_iteration && phaseReq.test_iteration.max_iterations) ||
+                            10;
             iterState = {
                 required: true,
                 completed: false,
                 current_iteration: 0,
-                max_iterations: phaseReq.test_iteration.max_iterations || 10,
+                max_iterations: maxIter,
                 failures_count: 0,
                 identical_failure_count: 0,
                 history: [],
@@ -477,7 +494,10 @@ async function main() {
             iterState.failures_count = (iterState.failures_count || 0) + 1;
 
             // Check circuit breaker
-            const circuitBreakerThreshold = phaseReq.test_iteration.circuit_breaker_threshold || 3;
+            // Priority chain: state.json iteration_config > iteration-requirements.json > hardcoded default
+            const circuitBreakerThreshold = (iterConfig && iterConfig.circuit_breaker_threshold) ||
+                                            (phaseReq && phaseReq.test_iteration && phaseReq.test_iteration.circuit_breaker_threshold) ||
+                                            3;
             if (isIdenticalFailure(testResult.error, iterState.history)) {
                 iterState.identical_failure_count = (iterState.identical_failure_count || 0) + 1;
             } else {

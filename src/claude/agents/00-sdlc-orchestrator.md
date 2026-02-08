@@ -1105,27 +1105,65 @@ Use Task tool to launch `requirements-analyst` agent with:
 - CRITICAL: Include the INTERACTIVE PROTOCOL instruction below
 - CONDITIONAL: Include DISCOVERY CONTEXT block (see below)
 
-Before building the Task prompt, check state.json → project.discovery_completed:
-  IF true:
-    Read docs/project-discovery-report.md for tech stack, architecture, features, coverage
-    Read docs/isdlc/constitution.md for constitutional constraints
-    Append this block to the Task prompt:
-    """
-    DISCOVERY CONTEXT:
-    - Discovery Report: docs/project-discovery-report.md
-    - Constitution: docs/isdlc/constitution.md
-    - Tech Stack: {language} + {framework} + {database}
-    - Is New Project: {true|false}
-    """
-    IF docs/requirements/reverse-engineered/index.md exists:
-      Append to DISCOVERY CONTEXT:
-      """
-    - Reverse-Engineered AC: docs/requirements/reverse-engineered/index.md
-    - Traceability Matrix: docs/isdlc/ac-traceability.csv
-    - Characterization Tests: tests/characterization/
-      """
-  IF false or state.json missing:
-    Omit DISCOVERY CONTEXT block entirely. Agent proceeds normally.
+**DISCOVERY CONTEXT (Enhanced)**
+
+Check state.json for `discovery_context` envelope:
+
+1. **If `discovery_context` exists AND `discovery_context.completed_at` is within 24 hours:**
+   Inject structured context directly from the envelope:
+   - Tech stack: `discovery_context.tech_stack`
+   - Coverage: `discovery_context.coverage_summary`
+   - Architecture: `discovery_context.architecture_summary`
+   - AC artifacts: `discovery_context.re_artifacts`
+
+   Include in the delegation prompt:
+   ```
+   DISCOVERY CONTEXT (from structured envelope, {hours} hours ago):
+   Tech Stack: {tech_stack.primary_language} / {tech_stack.runtime} / {tech_stack.frameworks}
+   Test Runner: {tech_stack.test_runner}
+   Test Coverage: {coverage_summary.unit_test_pct}% unit, {coverage_summary.total_tests} tests
+   Meets Constitution: {coverage_summary.meets_constitution}
+   Architecture: {architecture_summary}
+   Acceptance Criteria: {re_artifacts.ac_count} AC across {re_artifacts.domains} domains
+   Constitution: {constitution_path}
+   Discovery Report: {discovery_report_path}
+   ```
+
+2. **If `discovery_context` exists BUT `completed_at` is MORE than 24 hours old:**
+   Warn the user:
+   ```
+   Warning: Discovery was run {N} days ago. Project state may have changed.
+   Consider re-running /discover to refresh the analysis.
+   ```
+   Still inject the context (stale data is better than no data), but mark as stale in the prompt:
+   ```
+   DISCOVERY CONTEXT (STALE — from structured envelope, {N} days ago):
+   ```
+   Then include the same fields as case 1.
+
+3. **If `discovery_context` does NOT exist, fall back to existing behavior:**
+   Check `project.discovery_completed` boolean in state.json:
+   IF true:
+     Read docs/project-discovery-report.md for tech stack, architecture, features, coverage
+     Read docs/isdlc/constitution.md for constitutional constraints
+     Append this block to the Task prompt:
+     """
+     DISCOVERY CONTEXT:
+     - Discovery Report: docs/project-discovery-report.md
+     - Constitution: docs/isdlc/constitution.md
+     - Tech Stack: {language} + {framework} + {database}
+     - Is New Project: {true|false}
+     """
+     IF docs/requirements/reverse-engineered/index.md exists:
+       Append to DISCOVERY CONTEXT:
+       """
+     - Reverse-Engineered AC: docs/requirements/reverse-engineered/index.md
+     - Traceability Matrix: docs/isdlc/ac-traceability.csv
+     - Characterization Tests: tests/characterization/
+       """
+
+4. **If neither exists (discovery never run):**
+   Omit DISCOVERY CONTEXT block entirely. Agent proceeds normally.
 
 Task prompt MUST include this instruction for interactive elicitation:
 """
@@ -1157,32 +1195,74 @@ Use Task tool to launch `solution-architect` agent with:
 - NFR matrix
 - CONDITIONAL: Include DISCOVERY CONTEXT block (see below)
 
-Before building the Task prompt, check state.json → project.discovery_completed:
-  IF true:
-    Read docs/project-discovery-report.md for tech stack, architecture, data model, features
-    Read docs/isdlc/constitution.md for constitutional constraints
-    Read docs/isdlc/test-evaluation-report.md for existing test coverage
-    Append this block to the Task prompt:
-    """
-    DISCOVERY CONTEXT:
-    - Discovery Report: docs/project-discovery-report.md
-    - Constitution: docs/isdlc/constitution.md
-    - Test Evaluation: docs/isdlc/test-evaluation-report.md
-    - Tech Stack: {language} + {framework} + {database}
-    - Is New Project: {true|false}
+**DISCOVERY CONTEXT (Enhanced)**
 
-    IMPORTANT: Use discovery as your baseline. Extend existing architecture —
-    do not redesign from scratch. Justify any deviations from detected patterns.
-    """
-    IF docs/requirements/reverse-engineered/index.md exists:
-      Append to DISCOVERY CONTEXT:
-      """
-    - Reverse-Engineered AC: docs/requirements/reverse-engineered/index.md
-    - Traceability Matrix: docs/isdlc/ac-traceability.csv
-    - Characterization Tests: tests/characterization/
-      """
-  IF false or state.json missing:
-    Omit DISCOVERY CONTEXT block entirely. Agent proceeds with greenfield evaluation.
+Check state.json for `discovery_context` envelope:
+
+1. **If `discovery_context` exists AND `discovery_context.completed_at` is within 24 hours:**
+   Inject structured context directly from the envelope:
+   - Tech stack: `discovery_context.tech_stack`
+   - Coverage: `discovery_context.coverage_summary`
+   - Architecture: `discovery_context.architecture_summary`
+   - AC artifacts: `discovery_context.re_artifacts`
+
+   Include in the delegation prompt:
+   ```
+   DISCOVERY CONTEXT (from structured envelope, {hours} hours ago):
+   Tech Stack: {tech_stack.primary_language} / {tech_stack.runtime} / {tech_stack.frameworks}
+   Test Runner: {tech_stack.test_runner}
+   Test Coverage: {coverage_summary.unit_test_pct}% unit, {coverage_summary.total_tests} tests
+   Meets Constitution: {coverage_summary.meets_constitution}
+   Architecture: {architecture_summary}
+   Acceptance Criteria: {re_artifacts.ac_count} AC across {re_artifacts.domains} domains
+   Constitution: {constitution_path}
+   Discovery Report: {discovery_report_path}
+   Test Evaluation: docs/isdlc/test-evaluation-report.md
+
+   IMPORTANT: Use discovery as your baseline. Extend existing architecture —
+   do not redesign from scratch. Justify any deviations from detected patterns.
+   ```
+
+2. **If `discovery_context` exists BUT `completed_at` is MORE than 24 hours old:**
+   Warn the user:
+   ```
+   Warning: Discovery was run {N} days ago. Project state may have changed.
+   Consider re-running /discover to refresh the analysis.
+   ```
+   Still inject the context (stale data is better than no data), but mark as stale in the prompt:
+   ```
+   DISCOVERY CONTEXT (STALE — from structured envelope, {N} days ago):
+   ```
+   Then include the same fields as case 1.
+
+3. **If `discovery_context` does NOT exist, fall back to existing behavior:**
+   Check `project.discovery_completed` boolean in state.json:
+   IF true:
+     Read docs/project-discovery-report.md for tech stack, architecture, data model, features
+     Read docs/isdlc/constitution.md for constitutional constraints
+     Read docs/isdlc/test-evaluation-report.md for existing test coverage
+     Append this block to the Task prompt:
+     """
+     DISCOVERY CONTEXT:
+     - Discovery Report: docs/project-discovery-report.md
+     - Constitution: docs/isdlc/constitution.md
+     - Test Evaluation: docs/isdlc/test-evaluation-report.md
+     - Tech Stack: {language} + {framework} + {database}
+     - Is New Project: {true|false}
+
+     IMPORTANT: Use discovery as your baseline. Extend existing architecture —
+     do not redesign from scratch. Justify any deviations from detected patterns.
+     """
+     IF docs/requirements/reverse-engineered/index.md exists:
+       Append to DISCOVERY CONTEXT:
+       """
+     - Reverse-Engineered AC: docs/requirements/reverse-engineered/index.md
+     - Traceability Matrix: docs/isdlc/ac-traceability.csv
+     - Characterization Tests: tests/characterization/
+       """
+
+4. **If neither exists (discovery never run):**
+   Omit DISCOVERY CONTEXT block entirely. Agent proceeds with greenfield evaluation.
 
 Task: "Design system architecture, select tech stack, design database schema"
 ```
@@ -1194,30 +1274,71 @@ Use Task tool to launch `system-designer` agent with:
 - Database design
 - CONDITIONAL: Include DISCOVERY CONTEXT block (see below)
 
-Before building the Task prompt, check state.json → project.discovery_completed:
-  IF true:
-    Read docs/project-discovery-report.md for API patterns, module structure, naming conventions
-    Read docs/isdlc/constitution.md for constitutional constraints
-    Append this block to the Task prompt:
-    """
-    DISCOVERY CONTEXT:
-    - Discovery Report: docs/project-discovery-report.md
-    - Constitution: docs/isdlc/constitution.md
-    - Tech Stack: {language} + {framework} + {database}
-    - Is New Project: {true|false}
+**DISCOVERY CONTEXT (Enhanced)**
 
-    IMPORTANT: Use discovery as your baseline. New designs must follow existing
-    patterns (API structure, naming conventions, error handling). Justify deviations.
-    """
-    IF docs/requirements/reverse-engineered/index.md exists:
-      Append to DISCOVERY CONTEXT:
-      """
-    - Reverse-Engineered AC: docs/requirements/reverse-engineered/index.md
-    - Traceability Matrix: docs/isdlc/ac-traceability.csv
-    - Characterization Tests: tests/characterization/
-      """
-  IF false or state.json missing:
-    Omit DISCOVERY CONTEXT block entirely. Agent designs from scratch.
+Check state.json for `discovery_context` envelope:
+
+1. **If `discovery_context` exists AND `discovery_context.completed_at` is within 24 hours:**
+   Inject structured context directly from the envelope:
+   - Tech stack: `discovery_context.tech_stack`
+   - Coverage: `discovery_context.coverage_summary`
+   - Architecture: `discovery_context.architecture_summary`
+   - AC artifacts: `discovery_context.re_artifacts`
+
+   Include in the delegation prompt:
+   ```
+   DISCOVERY CONTEXT (from structured envelope, {hours} hours ago):
+   Tech Stack: {tech_stack.primary_language} / {tech_stack.runtime} / {tech_stack.frameworks}
+   Test Runner: {tech_stack.test_runner}
+   Test Coverage: {coverage_summary.unit_test_pct}% unit, {coverage_summary.total_tests} tests
+   Meets Constitution: {coverage_summary.meets_constitution}
+   Architecture: {architecture_summary}
+   Acceptance Criteria: {re_artifacts.ac_count} AC across {re_artifacts.domains} domains
+   Constitution: {constitution_path}
+   Discovery Report: {discovery_report_path}
+
+   IMPORTANT: Use discovery as your baseline. New designs must follow existing
+   patterns (API structure, naming conventions, error handling). Justify deviations.
+   ```
+
+2. **If `discovery_context` exists BUT `completed_at` is MORE than 24 hours old:**
+   Warn the user:
+   ```
+   Warning: Discovery was run {N} days ago. Project state may have changed.
+   Consider re-running /discover to refresh the analysis.
+   ```
+   Still inject the context (stale data is better than no data), but mark as stale in the prompt:
+   ```
+   DISCOVERY CONTEXT (STALE — from structured envelope, {N} days ago):
+   ```
+   Then include the same fields as case 1.
+
+3. **If `discovery_context` does NOT exist, fall back to existing behavior:**
+   Check `project.discovery_completed` boolean in state.json:
+   IF true:
+     Read docs/project-discovery-report.md for API patterns, module structure, naming conventions
+     Read docs/isdlc/constitution.md for constitutional constraints
+     Append this block to the Task prompt:
+     """
+     DISCOVERY CONTEXT:
+     - Discovery Report: docs/project-discovery-report.md
+     - Constitution: docs/isdlc/constitution.md
+     - Tech Stack: {language} + {framework} + {database}
+     - Is New Project: {true|false}
+
+     IMPORTANT: Use discovery as your baseline. New designs must follow existing
+     patterns (API structure, naming conventions, error handling). Justify deviations.
+     """
+     IF docs/requirements/reverse-engineered/index.md exists:
+       Append to DISCOVERY CONTEXT:
+       """
+     - Reverse-Engineered AC: docs/requirements/reverse-engineered/index.md
+     - Traceability Matrix: docs/isdlc/ac-traceability.csv
+     - Characterization Tests: tests/characterization/
+       """
+
+4. **If neither exists (discovery never run):**
+   Omit DISCOVERY CONTEXT block entirely. Agent designs from scratch.
 
 Task: "Create interface specifications and detailed module designs"
 ```

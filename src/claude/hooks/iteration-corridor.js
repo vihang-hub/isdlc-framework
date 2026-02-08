@@ -63,6 +63,18 @@ const ADVANCE_PATTERNS = [
 ];
 
 /**
+ * Extract user-configured iteration config from state.json.
+ * Returns null if not present or not configured (no configured_at timestamp).
+ * @param {object} state - Parsed state.json
+ * @returns {object|null} iteration_config or null
+ */
+function getIterationConfig(state) {
+    const config = state && state.iteration_config;
+    if (!config || !config.configured_at) return null;
+    return config;
+}
+
+/**
  * Load iteration requirements config
  */
 function loadIterationRequirements() {
