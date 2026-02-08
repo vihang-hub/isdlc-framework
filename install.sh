@@ -300,22 +300,57 @@ fi
 echo ""
 
 # ============================================================================
-# Provider mode selection
+# Claude Code detection
 # ============================================================================
 echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║             LLM PROVIDER MODE SELECTION                    ║${NC}"
+echo -e "${CYAN}║             CLAUDE CODE DETECTION                          ║${NC}"
 echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "${YELLOW}Select your LLM provider mode:${NC}"
+
+CLAUDE_CODE_FOUND=false
+CLAUDE_CODE_VERSION=""
+
+if command -v claude &> /dev/null; then
+    CLAUDE_CODE_VERSION=$(claude --version 2>/dev/null || echo "unknown")
+    CLAUDE_CODE_FOUND=true
+    echo -e "${GREEN}  ✓ Claude Code detected: ${CLAUDE_CODE_VERSION}${NC}"
+else
+    echo -e "${RED}  ✗ Claude Code CLI not found on PATH${NC}"
+    echo ""
+    echo -e "${YELLOW}  iSDLC is a framework designed for Claude Code.${NC}"
+    echo -e "${YELLOW}  It requires the 'claude' CLI to function.${NC}"
+    echo ""
+    echo -e "${CYAN}  Install Claude Code:${NC}"
+    echo -e "    ${GREEN}https://docs.anthropic.com/en/docs/claude-code/overview${NC}"
+    echo ""
+    read -p "  Continue anyway? Framework files will be ready when you install Claude Code. [y/N]: " CLAUDE_CONTINUE
+    CLAUDE_CONTINUE=${CLAUDE_CONTINUE:-N}
+    if [[ ! "$CLAUDE_CONTINUE" =~ ^[Yy]$ ]]; then
+        echo -e "${RED}Installation cancelled. Install Claude Code first, then re-run.${NC}"
+        exit 0
+    fi
+fi
+echo ""
+
+# ============================================================================
+# Agent model configuration (sub-agent routing)
+# ============================================================================
+echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║           AGENT MODEL CONFIGURATION                        ║${NC}"
+echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "${YELLOW}Claude Code is your primary AI assistant.${NC}"
+echo -e "${YELLOW}This setting controls which models are used when Claude Code${NC}"
+echo -e "${YELLOW}delegates work to sub-agents (Task tool).${NC}"
 echo ""
 echo "  1) Free      — Free-tier cloud (Groq, Together, Google) — no GPU needed"
 echo "  2) Budget    — Ollama locally if available, free cloud fallback"
-echo "  3) Quality   — Anthropic everywhere (best results, requires API key)"
+echo "  3) Quality   — Anthropic everywhere (best results, requires API key) (Recommended)"
 echo "  4) Local     — Ollama only (offline/air-gapped, requires GPU)"
 echo "  5) Hybrid    — Smart per-phase routing (advanced)"
 echo ""
-read -p "Choice [1]: " PROVIDER_MODE_ANSWER
-PROVIDER_MODE_ANSWER=${PROVIDER_MODE_ANSWER:-1}
+read -p "Choice [3]: " PROVIDER_MODE_ANSWER
+PROVIDER_MODE_ANSWER=${PROVIDER_MODE_ANSWER:-3}
 
 case "$PROVIDER_MODE_ANSWER" in
     1) PROVIDER_MODE="free" ;;
@@ -323,20 +358,10 @@ case "$PROVIDER_MODE_ANSWER" in
     3) PROVIDER_MODE="quality" ;;
     4) PROVIDER_MODE="local" ;;
     5) PROVIDER_MODE="hybrid" ;;
-    *) PROVIDER_MODE="free"
-       echo -e "${YELLOW}  Invalid choice — defaulting to free mode${NC}" ;;
+    *) PROVIDER_MODE="quality"
+       echo -e "${YELLOW}  Invalid choice — defaulting to quality mode${NC}" ;;
 esac
-echo -e "${GREEN}  ✓ Provider mode: $PROVIDER_MODE${NC}"
-echo ""
-
-echo -e "${CYAN}After installation, run:${NC}"
-echo -e "  1. ${GREEN}claude${NC} to start Claude Code"
-echo -e "  2. ${GREEN}/discover${NC} to set up your project"
-echo ""
-echo -e "${YELLOW}The discover command will:${NC}"
-echo "  • Analyze your project (or ask about it if new)"
-echo "  • Research best practices for your stack"
-echo "  • Guide you through creating a project constitution"
+echo -e "${GREEN}  ✓ Sub-agent model routing: $PROVIDER_MODE${NC}"
 echo ""
 
 # Workflow track is determined by orchestrator at runtime based on task complexity
@@ -686,7 +711,7 @@ cat > .isdlc/state.json << EOF
   },
   "skill_enforcement": {
     "enabled": true,
-    "mode": "strict",
+    "mode": "observe",
     "fail_behavior": "allow",
     "manifest_version": "2.0.0"
   },
@@ -868,7 +893,7 @@ MONOREPOEOF
   },
   "skill_enforcement": {
     "enabled": true,
-    "mode": "strict",
+    "mode": "observe",
     "fail_behavior": "allow",
     "manifest_version": "2.0.0"
   },
@@ -1146,29 +1171,41 @@ echo "  .claude/           - Agent definitions and skills"
 echo "  .isdlc/            - Project state and framework resources"
 echo "  docs/              - Documentation"
 echo ""
-echo -e "${CYAN}Provider Configuration:${NC}"
-echo -e "  Mode:   ${GREEN}$PROVIDER_MODE${NC}"
+echo -e "${CYAN}Agent Model Configuration:${NC}"
+echo -e "  Primary:  ${GREEN}Claude Code${NC}$( [ "$CLAUDE_CODE_FOUND" = true ] && echo " ($CLAUDE_CODE_VERSION)" )"
+echo -e "  Routing:  ${GREEN}$PROVIDER_MODE${NC}"
 case "$PROVIDER_MODE" in
-    free)    echo "  Info:   Free-tier cloud providers (Groq, Together, Google) — requires free API keys" ;;
-    budget)  echo "  Info:   Ollama locally, free cloud fallback — minimal cost" ;;
-    quality) echo "  Info:   Anthropic everywhere — best results, requires ANTHROPIC_API_KEY" ;;
-    local)   echo "  Info:   Ollama only — offline/air-gapped, requires GPU with 12GB+ VRAM" ;;
-    hybrid)  echo "  Info:   Smart per-phase routing — advanced, configure in providers.yaml" ;;
+    free)    echo "  Info:     Free-tier cloud providers (Groq, Together, Google) — requires free API keys" ;;
+    budget)  echo "  Info:     Ollama locally, free cloud fallback — minimal cost" ;;
+    quality) echo "  Info:     Anthropic everywhere — best results, requires ANTHROPIC_API_KEY" ;;
+    local)   echo "  Info:     Ollama only — offline/air-gapped, requires GPU with 12GB+ VRAM" ;;
+    hybrid)  echo "  Info:     Smart per-phase routing — advanced, configure in providers.yaml" ;;
 esac
-echo "  Config: .isdlc/providers.yaml"
-echo -e "  Change: ${GREEN}/provider set <mode>${NC}"
+echo "  Config:   .isdlc/providers.yaml"
+echo -e "  Change:   ${GREEN}/provider set <mode>${NC}"
 echo ""
 
 echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${CYAN}║                    NEXT STEPS                              ║${NC}"
 echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "  1. Run ${GREEN}claude${NC} to start Claude Code"
-echo -e "  2. Run ${GREEN}/discover${NC} to:"
-echo "     • Analyze your project (or describe it if new)"
-echo "     • Research best practices for your stack"
-echo "     • Create a tailored constitution interactively"
-echo -e "  3. Run ${GREEN}/sdlc start${NC} to begin your workflow"
+if [ "$CLAUDE_CODE_FOUND" = false ]; then
+    echo -e "  1. ${YELLOW}Install Claude Code:${NC}"
+    echo -e "     ${GREEN}https://docs.anthropic.com/en/docs/claude-code/overview${NC}"
+    echo -e "  2. Run ${GREEN}claude${NC} to start Claude Code"
+    echo -e "  3. Run ${GREEN}/discover${NC} to:"
+    echo "     • Analyze your project (or describe it if new)"
+    echo "     • Research best practices for your stack"
+    echo "     • Create a tailored constitution interactively"
+    echo -e "  4. Run ${GREEN}/sdlc start${NC} to begin your workflow"
+else
+    echo -e "  1. Run ${GREEN}claude${NC} to start Claude Code"
+    echo -e "  2. Run ${GREEN}/discover${NC} to:"
+    echo "     • Analyze your project (or describe it if new)"
+    echo "     • Research best practices for your stack"
+    echo "     • Create a tailored constitution interactively"
+    echo -e "  3. Run ${GREEN}/sdlc start${NC} to begin your workflow"
+fi
 echo ""
 if [ "$IS_EXISTING_PROJECT" = true ]; then
     echo -e "${YELLOW}Note: Your existing project structure was not modified.${NC}"
