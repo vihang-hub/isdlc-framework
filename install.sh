@@ -585,12 +585,17 @@ mkdir -p ".claude/hooks/config"
 if [ -f "$FRAMEWORK_DIR/isdlc/config/skills-manifest.yaml" ]; then
     cp "$FRAMEWORK_DIR/isdlc/config/skills-manifest.yaml" ".claude/hooks/config/"
 
-    # Convert skills manifest from YAML to JSON for runtime hooks
-    # Check for yq
-    if command -v yq &> /dev/null; then
+    # Copy pre-built JSON manifest for runtime hooks (hooks only read JSON)
+    if [ -f "$FRAMEWORK_CLAUDE/hooks/config/skills-manifest.json" ]; then
+        cp "$FRAMEWORK_CLAUDE/hooks/config/skills-manifest.json" ".claude/hooks/config/"
+        echo -e "${GREEN}  ✓ Copied skills manifest to hooks/config/${NC}"
+    elif [ -f "$FRAMEWORK_DIR/isdlc/config/skills-manifest.json" ]; then
+        cp "$FRAMEWORK_DIR/isdlc/config/skills-manifest.json" ".claude/hooks/config/"
+        echo -e "${GREEN}  ✓ Copied skills manifest to hooks/config/${NC}"
+    # Fallback: convert YAML to JSON if pre-built JSON is missing
+    elif command -v yq &> /dev/null; then
         yq -o=json ".claude/hooks/config/skills-manifest.yaml" > ".claude/hooks/config/skills-manifest.json"
-        echo -e "${GREEN}  ✓ Copied and converted skills manifest to hooks/config/${NC}"
-    # Check for Python with PyYAML
+        echo -e "${GREEN}  ✓ Converted skills manifest to hooks/config/ (yq)${NC}"
     elif command -v python3 &> /dev/null && python3 -c "import yaml, json" 2>/dev/null; then
         python3 -c "
 import yaml, json
@@ -599,18 +604,7 @@ with open('.claude/hooks/config/skills-manifest.yaml') as f:
 with open('.claude/hooks/config/skills-manifest.json', 'w') as f:
     json.dump(data, f, indent=2)
 " 2>/dev/null
-        echo -e "${GREEN}  ✓ Copied and converted skills manifest to hooks/config/ (Python)${NC}"
-    # Use scripts/convert-manifest.sh if available
-    elif [ -f "$FRAMEWORK_DIR/isdlc/scripts/convert-manifest.sh" ]; then
-        mkdir -p "scripts"
-        cp "$FRAMEWORK_DIR/isdlc/scripts/convert-manifest.sh" "scripts/"
-        chmod +x "scripts/convert-manifest.sh"
-        "./scripts/convert-manifest.sh" --input ".claude/hooks/config/skills-manifest.yaml" --output ".claude/hooks/config/skills-manifest.json" >/dev/null 2>&1
-        echo -e "${GREEN}  ✓ Copied and converted skills manifest to hooks/config/ (embedded)${NC}"
-    # Fallback: copy pre-converted JSON if available
-    elif [ -f "$FRAMEWORK_DIR/isdlc/config/skills-manifest.json" ]; then
-        cp "$FRAMEWORK_DIR/isdlc/config/skills-manifest.json" ".claude/hooks/config/"
-        echo -e "${GREEN}  ✓ Copied skills manifest (JSON) to hooks/config/${NC}"
+        echo -e "${GREEN}  ✓ Converted skills manifest to hooks/config/ (Python)${NC}"
     else
         echo -e "${YELLOW}  Warning: Could not convert manifest. Install yq or Python+PyYAML.${NC}"
     fi
