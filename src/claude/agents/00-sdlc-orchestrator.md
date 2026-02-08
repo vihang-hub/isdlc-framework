@@ -1855,8 +1855,8 @@ Ensure phase agents maintain this structure:
             "result": "COMPLIANT"
           }
         ],
-        "final_status": "compliant",
-        "total_iterations": 2
+        "status": "compliant",
+        "iterations_used": 2
       }
     }
   }

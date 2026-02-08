@@ -8,7 +8,7 @@
  * - Task tool calls to orchestrator with "advance", "gate-check", "gate" in prompt
  * - Skill tool calls with /sdlc advance
  *
- * Version: 2.0.0
+ * Version: 3.0.0
  */
 
 const {
@@ -19,7 +19,8 @@ const {
     debugLog,
     getProjectRoot,
     getTimestamp,
-    loadManifest
+    loadManifest,
+    validateSchema
 } = require('./lib/common.cjs');
 
 const fs = require('fs');
@@ -170,6 +171,15 @@ function checkTestIterationRequirement(phaseState, phaseRequirements) {
     }
 
     const iterState = phaseState?.iteration_requirements?.test_iteration;
+
+    // Schema validation (fail-open)
+    if (iterState) {
+        const schemaResult = validateSchema(iterState, 'test-iteration');
+        if (!schemaResult.valid) {
+            debugLog('Test iteration schema errors:', schemaResult.errors);
+        }
+    }
+
     if (!iterState) {
         return {
             satisfied: false,
@@ -224,6 +234,15 @@ function checkConstitutionalRequirement(phaseState, phaseRequirements) {
     }
 
     const constState = phaseState?.constitutional_validation;
+
+    // Schema validation (fail-open: invalid schema data logs warning but does not block)
+    if (constState) {
+        const schemaResult = validateSchema(constState, 'constitutional-validation');
+        if (!schemaResult.valid) {
+            debugLog('Constitutional validation schema errors:', schemaResult.errors);
+        }
+    }
+
     if (!constState) {
         return {
             satisfied: false,
@@ -279,6 +298,15 @@ function checkElicitationRequirement(phaseState, phaseRequirements) {
     }
 
     const elicitState = phaseState?.iteration_requirements?.interactive_elicitation;
+
+    // Schema validation (fail-open)
+    if (elicitState) {
+        const schemaResult = validateSchema(elicitState, 'interactive-elicitation');
+        if (!schemaResult.valid) {
+            debugLog('Interactive elicitation schema errors:', schemaResult.errors);
+        }
+    }
+
     if (!elicitState) {
         return {
             satisfied: false,

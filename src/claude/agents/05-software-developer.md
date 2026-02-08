@@ -305,7 +305,7 @@ Track each iteration in `.isdlc/state.json`:
             "fix_applied": "Added null check for user object"
           }
         ],
-        "final_status": "success"
+        "status": "success"
       }
     }
   }
