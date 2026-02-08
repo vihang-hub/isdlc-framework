@@ -1148,6 +1148,18 @@ echo -e "${YELLOW}    This manifest enables safe uninstall - user files will be 
 # ============================================================================
 echo -e "${BLUE}[6/6]${NC} Cleaning up installation files..."
 
+# Copy uninstall and update scripts before removing the framework folder
+if [ -f "$SCRIPT_DIR/uninstall.sh" ]; then
+    cp "$SCRIPT_DIR/uninstall.sh" ".isdlc/scripts/"
+    chmod +x ".isdlc/scripts/uninstall.sh"
+    echo -e "${GREEN}  ✓ Copied uninstall.sh to .isdlc/scripts/${NC}"
+fi
+if [ -f "$SCRIPT_DIR/update.sh" ]; then
+    cp "$SCRIPT_DIR/update.sh" ".isdlc/scripts/"
+    chmod +x ".isdlc/scripts/update.sh"
+    echo -e "${GREEN}  ✓ Copied update.sh to .isdlc/scripts/${NC}"
+fi
+
 # Store the script dir before we delete it
 CLEANUP_DIR="$SCRIPT_DIR"
 
