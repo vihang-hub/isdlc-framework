@@ -70,6 +70,24 @@ git clone <repo-url> isdlc-framework
 ./isdlc-framework/install.sh
 ```
 
+**Option 3b: Git clone on Windows (PowerShell)**
+```powershell
+cd C:\path\to\your-project
+git clone <repo-url> isdlc-framework
+.\isdlc-framework\install.ps1
+```
+
+If blocked by execution policy:
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\isdlc-framework\install.ps1
+```
+
+Non-interactive (CI/CD):
+```powershell
+.\isdlc-framework\install.ps1 -Force
+```
+
 The installer runs a 6-step process: detect project type → check for monorepo → confirm installation → copy framework files (agents, skills, hooks, settings) → set up `.isdlc/` state directory → generate docs structure. See [Installation Flow](docs/ARCHITECTURE.md#installation-flow) for details.
 
 ### Step 2: Choose Your LLM Provider
