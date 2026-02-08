@@ -325,6 +325,35 @@ if [ -f "$FRAMEWORK_CLAUDE/settings.json" ]; then
         fi
     fi
 fi
+
+# Merge settings.local.json (preserve user overrides, update framework defaults)
+if [ -f "$FRAMEWORK_CLAUDE/settings.local.json" ]; then
+    if [ -f "$PROJECT_ROOT/.claude/settings.local.json" ]; then
+        if command -v jq &> /dev/null; then
+            if [ "$DRY_RUN" = true ]; then
+                echo -e "${YELLOW}  [dry-run] Would merge settings.local.json${NC}"
+            else
+                tmp_file=$(mktemp)
+                jq -s '.[0] * .[1]' "$PROJECT_ROOT/.claude/settings.local.json" "$FRAMEWORK_CLAUDE/settings.local.json" > "$tmp_file"
+                mv "$tmp_file" "$PROJECT_ROOT/.claude/settings.local.json"
+                echo -e "${GREEN}  ✓ Merged settings.local.json${NC}"
+            fi
+        else
+            echo -e "${YELLOW}  Warning: jq not found — settings.local.json may need manual merge${NC}"
+            if [ "$DRY_RUN" = false ]; then
+                cp "$FRAMEWORK_CLAUDE/settings.local.json" "$PROJECT_ROOT/.claude/settings.local.json.new"
+                echo -e "${YELLOW}  Saved new settings to .claude/settings.local.json.new — please merge manually${NC}"
+            fi
+        fi
+    else
+        if [ "$DRY_RUN" = true ]; then
+            echo -e "${YELLOW}  [dry-run] Would copy settings.local.json${NC}"
+        else
+            cp "$FRAMEWORK_CLAUDE/settings.local.json" "$PROJECT_ROOT/.claude/settings.local.json"
+            echo -e "${GREEN}  ✓ Copied settings.local.json${NC}"
+        fi
+    fi
+fi
 echo ""
 
 # ============================================================================

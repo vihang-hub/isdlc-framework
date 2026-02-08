@@ -396,10 +396,22 @@ if [ -d ".claude" ]; then
         echo -e "${GREEN}  ✓ Copied skills/${NC}"
     fi
 
-    # Copy settings if they don't exist
-    if [ -f "$FRAMEWORK_CLAUDE/settings.local.json" ] && [ ! -f ".claude/settings.local.json" ]; then
-        cp "$FRAMEWORK_CLAUDE/settings.local.json" ".claude/"
-        echo -e "${GREEN}  ✓ Copied settings.local.json${NC}"
+    # Copy or merge settings.local.json
+    if [ -f "$FRAMEWORK_CLAUDE/settings.local.json" ]; then
+        if [ -f ".claude/settings.local.json" ]; then
+            if command -v jq &> /dev/null; then
+                tmp_file=$(mktemp)
+                jq -s '.[0] * .[1]' ".claude/settings.local.json" "$FRAMEWORK_CLAUDE/settings.local.json" > "$tmp_file"
+                mv "$tmp_file" ".claude/settings.local.json"
+                echo -e "${GREEN}  ✓ Merged settings.local.json${NC}"
+            else
+                echo -e "${YELLOW}  Warning: jq not found, settings.local.json may need manual merge${NC}"
+                cp "$FRAMEWORK_CLAUDE/settings.local.json" ".claude/settings.local.json.new"
+            fi
+        else
+            cp "$FRAMEWORK_CLAUDE/settings.local.json" ".claude/"
+            echo -e "${GREEN}  ✓ Copied settings.local.json${NC}"
+        fi
     fi
 else
     echo -e "${YELLOW}  Creating new .claude folder...${NC}"
@@ -421,6 +433,10 @@ else
 
     echo -e "${GREEN}  ✓ Created .claude/${NC}"
 fi
+
+# Permission review warning
+echo ""
+echo -e "${YELLOW}  ⚠  Review .claude/settings.local.json permissions — adjust if your security requirements differ${NC}"
 
 # ============================================================================
 # Step 1b: Setup skill enforcement hooks (Node.js - Cross-Platform)
