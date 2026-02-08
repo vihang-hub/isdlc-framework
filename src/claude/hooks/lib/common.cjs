@@ -908,6 +908,159 @@ function readCodeReviewConfig(projectId) {
     return { enabled: false, team_size: 1 };
 }
 
+// =========================================================================
+// Schema Validation
+// =========================================================================
+
+/**
+ * Schema cache to avoid re-reading schema files on every call.
+ * @type {Map<string, object|null>}
+ */
+const _schemaCache = new Map();
+
+/**
+ * Load a JSON schema file by ID from the config/schemas/ directory.
+ * Returns the parsed schema object or null if the file is missing/invalid.
+ * Results are cached after first load.
+ *
+ * @param {string} schemaId - Schema ID (filename without .schema.json)
+ * @returns {object|null} Parsed schema or null
+ */
+function loadSchema(schemaId) {
+    if (_schemaCache.has(schemaId)) {
+        return _schemaCache.get(schemaId);
+    }
+
+    const projectRoot = getProjectRoot();
+    const schemaPaths = [
+        path.join(projectRoot, '.claude', 'hooks', 'config', 'schemas', `${schemaId}.schema.json`),
+        path.join(projectRoot, '.isdlc', 'config', 'schemas', `${schemaId}.schema.json`)
+    ];
+
+    for (const schemaPath of schemaPaths) {
+        if (fs.existsSync(schemaPath)) {
+            try {
+                const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'));
+                _schemaCache.set(schemaId, schema);
+                return schema;
+            } catch (e) {
+                debugLog(`Schema parse error for ${schemaId}:`, e.message);
+                _schemaCache.set(schemaId, null);
+                return null;
+            }
+        }
+    }
+
+    _schemaCache.set(schemaId, null);
+    return null;
+}
+
+/**
+ * Validate data against a JSON schema (lightweight inline validator).
+ * Supports: type checking, required fields, enum values, minimum for integers.
+ * Does NOT support: $ref, allOf, oneOf, anyOf, patternProperties, format.
+ *
+ * Fail-open: returns { valid: true } if schema is missing or validation errors occur.
+ *
+ * @param {*} data - The data to validate
+ * @param {string} schemaId - Schema ID to validate against
+ * @returns {{ valid: boolean, errors?: string[] }}
+ */
+function validateSchema(data, schemaId) {
+    try {
+        const schema = loadSchema(schemaId);
+        if (!schema) {
+            // Fail-open: missing schema means validation passes
+            return { valid: true };
+        }
+
+        const errors = [];
+        _validateObject(data, schema, '', errors);
+
+        if (errors.length === 0) {
+            return { valid: true };
+        }
+        return { valid: false, errors };
+    } catch (e) {
+        // Fail-open: validation errors mean pass
+        debugLog(`Schema validation error for ${schemaId}:`, e.message);
+        return { valid: true };
+    }
+}
+
+/**
+ * Internal recursive validator for a single object against a schema.
+ * @param {*} data
+ * @param {object} schema
+ * @param {string} path - JSON path for error messages
+ * @param {string[]} errors - accumulator
+ */
+function _validateObject(data, schema, jsonPath, errors) {
+    // Type check
+    if (schema.type) {
+        const actualType = _getJsonType(data);
+        if (schema.type === 'integer') {
+            if (typeof data !== 'number' || !Number.isInteger(data)) {
+                errors.push(`${jsonPath || '(root)'}: expected integer, got ${actualType}`);
+                return; // stop checking further if type is wrong
+            }
+        } else if (actualType !== schema.type) {
+            errors.push(`${jsonPath || '(root)'}: expected ${schema.type}, got ${actualType}`);
+            return;
+        }
+    }
+
+    // Required fields
+    if (schema.required && Array.isArray(schema.required) && typeof data === 'object' && data !== null) {
+        for (const field of schema.required) {
+            if (!(field in data)) {
+                errors.push(`${jsonPath || '(root)'}: missing required field '${field}'`);
+            }
+        }
+    }
+
+    // Enum check
+    if (schema.enum && Array.isArray(schema.enum)) {
+        if (!schema.enum.includes(data)) {
+            errors.push(`${jsonPath || '(root)'}: value '${data}' not in enum [${schema.enum.join(', ')}]`);
+        }
+    }
+
+    // Minimum check for numbers
+    if (schema.minimum !== undefined && typeof data === 'number') {
+        if (data < schema.minimum) {
+            errors.push(`${jsonPath || '(root)'}: value ${data} is below minimum ${schema.minimum}`);
+        }
+    }
+
+    // Properties check (recurse into object properties)
+    if (schema.properties && typeof data === 'object' && data !== null) {
+        for (const [key, propSchema] of Object.entries(schema.properties)) {
+            if (key in data) {
+                _validateObject(data[key], propSchema, `${jsonPath}.${key}`, errors);
+            }
+        }
+    }
+
+    // Array items check
+    if (schema.items && Array.isArray(data)) {
+        for (let i = 0; i < data.length; i++) {
+            _validateObject(data[i], schema.items, `${jsonPath}[${i}]`, errors);
+        }
+    }
+}
+
+/**
+ * Get JSON type name for a value.
+ * @param {*} value
+ * @returns {string}
+ */
+function _getJsonType(value) {
+    if (value === null) return 'null';
+    if (Array.isArray(value)) return 'array';
+    return typeof value;
+}
+
 /**
  * Debug log (only when SKILL_VALIDATOR_DEBUG=true)
  * @param {...any} args - Arguments to log
@@ -958,5 +1111,8 @@ module.exports = {
     clearPendingDelegation,
     // Code review configuration
     readCodeReviewConfig,
+    // Schema validation
+    loadSchema,
+    validateSchema,
     debugLog
 };
