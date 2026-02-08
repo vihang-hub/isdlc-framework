@@ -890,9 +890,111 @@ When GATE-01 passes AND the active workflow type is `feature`, `fix`, or `full-l
 
 **Skip** for `test-run` and `test-generate` workflows (too few phases; TaskCreate spinners are sufficient).
 
+### Human Review Checkpoint (Before Merge)
+
+When the final phase gate in a workflow passes AND the workflow has `requires_branch: true`, check whether a human review pause is needed.
+
+#### Review Activation Check
+
+1. Read `code_review` from state.json
+2. IF `code_review.enabled == false` OR `code_review` section is missing: skip to Branch Merge below
+3. IF `code_review.enabled == true`: proceed with review pause
+
+#### Review Summary Generation
+
+1. Create `docs/requirements/{artifact_folder}/review-summary.md` containing:
+   - Feature/fix description (from `active_workflow.description`)
+   - Workflow type and all phases completed
+   - All artifacts produced (collected from `phases[].artifacts` in state.json)
+   - Changed files list (via `git diff main...HEAD --name-only`)
+   - Test results summary (from latest test phase output)
+   - Constitutional compliance status (all phase validations)
+2. Display the summary to the user
+
+#### PR Creation (Git Projects Only)
+
+1. Check: `git rev-parse --is-inside-work-tree`
+   - FAIL: generate `docs/requirements/{artifact_folder}/review-request.md` instead (non-git path). Skip PR.
+2. Check: `which gh` (or `gh --version`)
+   - FAIL: inform user to create PR manually. Log to state.json history. Continue with document-only review.
+3. Run: `gh pr create --title "[{artifact_prefix}-{NNNN}] {description}" --body-file docs/requirements/{artifact_folder}/review-summary.md --base main --head {branch_name}`
+   - SUCCESS: record PR URL in `active_workflow.review.pr_url`
+   - FAIL: log error to state.json history, inform user to create PR manually. Continue with document-only review.
+
+#### Review Menu
+
+Present to the user:
+```
+════════════════════════════════════════════════════════════════
+  HUMAN REVIEW CHECKPOINT
+════════════════════════════════════════════════════════════════
+  Workflow:  {type} — {description}
+  Branch:    {git_branch.name}
+  PR:        {pr_url or "N/A — create manually"}
+  Summary:   docs/requirements/{artifact_folder}/review-summary.md
+
+  All phase gates have passed. Please review the changes.
+
+  [A] Approve   — Proceed to merge
+  [B] Bypass    — Skip review with mandatory comment
+  [R] Reject    — Cancel the workflow
+════════════════════════════════════════════════════════════════
+```
+
+STOP and wait for user input.
+
+#### Menu Handling
+
+**[A] Approve:**
+1. Set `active_workflow.review.outcome = "approved"`
+2. Set `active_workflow.review.completed_at = ISO-8601 timestamp`
+3. Log approval to `state.json.history[]`
+4. Proceed to Branch Merge below
+
+**[B] Bypass:**
+1. Prompt: "Enter bypass reason (minimum 10 characters):"
+2. Validate: `len >= 10`. If too short, re-prompt with: "Bypass reason must be at least 10 characters. Please try again:"
+3. Set `active_workflow.review.bypass_reason = reason`
+4. Set `active_workflow.review.outcome = "bypassed"`
+5. Set `active_workflow.review.completed_at = ISO-8601 timestamp`
+6. Append bypass reason to review-summary.md:
+   ```
+   ## Review Bypass
+   **Bypassed at**: {timestamp}
+   **Reason**: {reason}
+   ```
+7. Log bypass event to `state.json.history[]`
+8. Proceed to Branch Merge below
+
+**[R] Reject:**
+1. Execute workflow cancellation with reason: `"rejected at human review"`
+2. Branch is preserved (not deleted) -- follows existing Branch on Cancellation flow
+3. Workflow moved to `workflow_history` with `status: "cancelled"`
+4. Do NOT proceed to merge
+
+#### Review State in state.json
+
+When the review pause activates, add `review` to `active_workflow`:
+```json
+{
+  "active_workflow": {
+    "review": {
+      "status": "awaiting_human_review",
+      "activated_at": "ISO-8601",
+      "review_summary_path": "docs/requirements/{artifact_folder}/review-summary.md",
+      "pr_url": "https://github.com/...",
+      "pr_creation_failed": false,
+      "bypass_reason": null,
+      "completed_at": null,
+      "outcome": null
+    }
+  }
+}
+```
+
 ### Branch Merge (Workflow Completion)
 
-When the final phase gate passes AND `active_workflow.git_branch` exists:
+When the final phase gate passes AND `active_workflow.git_branch` exists (and human review checkpoint has been passed or was skipped):
 
 1. **Pre-merge**: Commit any uncommitted changes on the branch:
    ```
@@ -1006,8 +1108,9 @@ When advancing:
 ### Workflow Completion
 
 When the last phase in the workflow completes:
-1. If `active_workflow.git_branch` exists: execute branch merge (Section 3a)
+1. If `active_workflow.git_branch` exists: execute Human Review Checkpoint (Section 3a-pre) first, then branch merge (Section 3a)
    - On merge conflict: **STOP**, escalate to human, do NOT complete the workflow
+   - On review rejection: cancel workflow, do NOT merge
 2. Mark the workflow as completed
 3. Move to `workflow_history` with `status: "completed"` (include `git_branch` info)
 4. Set `active_workflow` to `null`
@@ -1039,8 +1142,11 @@ All validation criteria met:
 → Primary Agent: Integration Tester
 ```
 
-### Exception: Human Escalation Only
-The ONLY time to pause and ask is when:
+### Exception: Human Review Checkpoint
+The human review pause (Section 3a-pre) is the ONLY permitted interactive prompt during automated workflow execution (besides Phase 01 elicitation). It occurs AFTER all phase gates have passed but BEFORE the merge step. It is not a phase transition -- it is a merge pre-condition. When `code_review.enabled == true` in state.json and the workflow has `requires_branch: true`, the orchestrator MUST present the A/B/R menu and wait for user input before merging.
+
+### Exception: Human Escalation
+The other time to pause and ask is when:
 - Gate fails twice consecutively
 - Blocker duration exceeds 4 hours
 - Security critical issue discovered
