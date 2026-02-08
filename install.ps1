@@ -539,43 +539,46 @@ if (-not $ClaudeCodeFound) {
 Write-Host ""
 
 # ── Step 0g: Agent Model Configuration ───────────────────────
-
-Write-Banner "AGENT MODEL CONFIGURATION"
-
-Write-Warn "Claude Code is your primary AI assistant."
-Write-Warn "This setting controls which models are used when Claude Code"
-Write-Warn "delegates work to sub-agents (Task tool)."
-Write-Host ""
-Write-Host "  1) Claude Code -- Use Claude Code for everything (Recommended)"
-Write-Host "  2) Quality     -- Anthropic API everywhere (best results, requires API key)"
-Write-Host "  3) Free        -- Free-tier cloud (Groq, Together, Google) -- no GPU needed"
-Write-Host "  4) Budget      -- Ollama locally if available, free cloud fallback"
-Write-Host "  5) Local       -- Ollama only (offline/air-gapped, requires GPU)"
-Write-Host "  6) Hybrid      -- Smart per-phase routing (advanced)"
-Write-Host ""
-
-if (-not $Force) {
-    $providerAnswer = Read-Host "  Choice [1]"
-    if ([string]::IsNullOrEmpty($providerAnswer)) { $providerAnswer = "1" }
-}
-else {
-    $providerAnswer = "1"
-}
-
-switch ($providerAnswer) {
-    "1" { $ProviderMode = "claude-code" }
-    "2" { $ProviderMode = "quality" }
-    "3" { $ProviderMode = "free" }
-    "4" { $ProviderMode = "budget" }
-    "5" { $ProviderMode = "local" }
-    "6" { $ProviderMode = "hybrid" }
-    default {
-        $ProviderMode = "claude-code"
-        Write-Warn "Invalid choice -- defaulting to Claude Code"
-    }
-}
-Write-Success "Sub-agent model routing: $ProviderMode"
-Write-Host ""
+# NOTE: Provider selection is disabled -- framework is Claude Code-specific.
+# Multi-provider support may be re-enabled in a future release.
+# ──────────────────────────────────────────────────────────────────────────────
+# Write-Banner "AGENT MODEL CONFIGURATION"
+#
+# Write-Warn "Claude Code is your primary AI assistant."
+# Write-Warn "This setting controls which models are used when Claude Code"
+# Write-Warn "delegates work to sub-agents (Task tool)."
+# Write-Host ""
+# Write-Host "  1) Claude Code -- Use Claude Code for everything (Recommended)"
+# Write-Host "  2) Quality     -- Anthropic API everywhere (best results, requires API key)"
+# Write-Host "  3) Free        -- Free-tier cloud (Groq, Together, Google) -- no GPU needed"
+# Write-Host "  4) Budget      -- Ollama locally if available, free cloud fallback"
+# Write-Host "  5) Local       -- Ollama only (offline/air-gapped, requires GPU)"
+# Write-Host "  6) Hybrid      -- Smart per-phase routing (advanced)"
+# Write-Host ""
+#
+# if (-not $Force) {
+#     $providerAnswer = Read-Host "  Choice [1]"
+#     if ([string]::IsNullOrEmpty($providerAnswer)) { $providerAnswer = "1" }
+# }
+# else {
+#     $providerAnswer = "1"
+# }
+#
+# switch ($providerAnswer) {
+#     "1" { $ProviderMode = "claude-code" }
+#     "2" { $ProviderMode = "quality" }
+#     "3" { $ProviderMode = "free" }
+#     "4" { $ProviderMode = "budget" }
+#     "5" { $ProviderMode = "local" }
+#     "6" { $ProviderMode = "hybrid" }
+#     default {
+#         $ProviderMode = "claude-code"
+#         Write-Warn "Invalid choice -- defaulting to Claude Code"
+#     }
+# }
+# Write-Success "Sub-agent model routing: $ProviderMode"
+# Write-Host ""
+$ProviderMode = "claude-code"
 
 # Workflow track is determined by orchestrator at runtime
 $Track = "auto"
@@ -901,22 +904,23 @@ if (Test-Path $fwConstitution) {
 }
 
 # Generate providers.yaml from template
-$providersTarget = Join-Path $isdlcDir "providers.yaml"
-if (Test-Path $providersTarget) {
-    Write-Warn "providers.yaml already exists -- skipping (use /provider set to change mode)"
-}
-else {
-    $providersTemplate = Join-Path (Join-Path $FrameworkIsdlc "templates") "providers.yaml.template"
-    if (Test-Path $providersTemplate) {
-        $providersContent = Get-Content $providersTemplate -Raw
-        $providersContent = $providersContent -replace 'active_mode: "[^"]*"', "active_mode: `"$ProviderMode`""
-        Write-Utf8NoBom -Path $providersTarget -Content $providersContent
-        Write-Success "Generated providers.yaml (mode: $ProviderMode)"
-    }
-    else {
-        Write-Warn "providers.yaml.template not found -- skipping provider config"
-    }
-}
+# NOTE: Disabled -- framework is Claude Code-specific. No providers.yaml needed.
+# $providersTarget = Join-Path $isdlcDir "providers.yaml"
+# if (Test-Path $providersTarget) {
+#     Write-Warn "providers.yaml already exists -- skipping (use /provider set to change mode)"
+# }
+# else {
+#     $providersTemplate = Join-Path (Join-Path $FrameworkIsdlc "templates") "providers.yaml.template"
+#     if (Test-Path $providersTemplate) {
+#         $providersContent = Get-Content $providersTemplate -Raw
+#         $providersContent = $providersContent -replace 'active_mode: "[^"]*"', "active_mode: `"$ProviderMode`""
+#         Write-Utf8NoBom -Path $providersTarget -Content $providersContent
+#         Write-Success "Generated providers.yaml (mode: $ProviderMode)"
+#     }
+#     else {
+#         Write-Warn "providers.yaml.template not found -- skipping provider config"
+#     }
+# }
 
 # Create state.json
 $isNewProject = -not $IsExistingProject
@@ -1411,25 +1415,11 @@ Write-Host "    .isdlc/            - Project state and framework resources"
 Write-Host "    docs/              - Documentation"
 Write-Host ""
 
-Write-Host "  Agent Model Configuration:" -ForegroundColor Cyan
+Write-Host "  AI Assistant:" -ForegroundColor Cyan
 $versionSuffix = ""
 if ($ClaudeCodeFound) { $versionSuffix = " ($ClaudeCodeVersion)" }
-Write-Host "    Primary:  " -ForegroundColor Blue -NoNewline
+Write-Host "    Engine:   " -ForegroundColor Blue -NoNewline
 Write-Host "Claude Code$versionSuffix" -ForegroundColor Green
-Write-Host "    Routing:  " -ForegroundColor Blue -NoNewline
-Write-Host $ProviderMode -ForegroundColor Green
-
-switch ($ProviderMode) {
-    "claude-code" { Write-Host "    Info:     Claude Code handles all agent work -- no extra configuration needed" }
-    "free"        { Write-Host "    Info:     Free-tier cloud providers (Groq, Together, Google) -- requires free API keys" }
-    "budget"      { Write-Host "    Info:     Ollama locally, free cloud fallback -- minimal cost" }
-    "quality"     { Write-Host "    Info:     Anthropic API everywhere -- best results, requires ANTHROPIC_API_KEY" }
-    "local"       { Write-Host "    Info:     Ollama only -- offline/air-gapped, requires GPU with 12GB+ VRAM" }
-    "hybrid"      { Write-Host "    Info:     Smart per-phase routing -- advanced, configure in providers.yaml" }
-}
-Write-Host "    Config:   .isdlc/providers.yaml"
-Write-Host "    Change:   " -NoNewline
-Write-Host "/provider set <mode>" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================================

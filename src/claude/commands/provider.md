@@ -1,8 +1,12 @@
 ---
 name: provider
-description: Manage LLM provider configuration for iSDLC multi-provider support
-user_invocable: true
+description: Manage LLM provider configuration for iSDLC multi-provider support (currently disabled — framework is Claude Code-specific)
+user_invocable: false
 ---
+
+<!-- NOTE: This command is disabled. The framework is currently Claude Code-specific.
+     Multi-provider support may be re-enabled in a future release.
+     Set user_invocable back to true when ready. -->
 
 # /provider - LLM Provider Management
 

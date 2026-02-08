@@ -153,11 +153,6 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/model-provider-router.cjs",
-            "timeout": 10000
-          },
-          {
-            "type": "command",
             "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/iteration-corridor.cjs",
             "timeout": 10000
           },

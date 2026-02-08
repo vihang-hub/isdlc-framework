@@ -30,7 +30,7 @@ The framework installs **into your existing project**, providing structured mult
 
 **Key principles**: Clear ownership (one agent per phase), deterministic hook enforcement, quality gates at every boundary, artifact traceability, and adaptive workflows.
 
-**Licensing**: This framework is **free and open source** (MIT License). You provide your own LLM access — either a Claude Code subscription, free API keys from cloud providers (Groq, Google AI Studio), or local models via Ollama.
+**Licensing**: This framework is **free and open source** (MIT License). You provide your own LLM access via a Claude Code subscription.
 
 > [Full agent documentation](docs/AGENTS.md) | [System architecture](docs/ARCHITECTURE.md)
 
@@ -90,75 +90,7 @@ Non-interactive (CI/CD):
 
 The installer runs a 6-step process: detect project type → check for monorepo → confirm installation → copy framework files (agents, skills, hooks, settings) → set up `.isdlc/` state directory → generate docs structure. See [Installation Flow](docs/ARCHITECTURE.md#installation-flow) for details.
 
-### Step 2: Choose Your LLM Provider
-
-During installation, you'll see a provider selection prompt:
-
-```
-Select LLM provider mode:
-  Free    — Free-tier cloud (Groq, Together, Google) — no GPU needed
-  Budget  — Ollama locally if available, free cloud fallback
-  Quality — Anthropic everywhere (best results, requires API key)
-  Local   — Ollama only (offline/air-gapped, requires GPU)
-  Hybrid  — Smart per-phase routing (advanced)
-```
-
-#### Free Providers (No Cost, No GPU)
-
-Get started without spending anything. Sign up for a free API key and set the environment variable:
-
-| Provider | Free Tier | Sign Up | Environment Variable |
-|----------|-----------|---------|---------------------|
-| **Groq** | 1,000 req/day, Llama 3.3 70B | [console.groq.com](https://console.groq.com) | `GROQ_API_KEY` |
-| **Together AI** | $1 free credit, Qwen/Llama/DeepSeek | [api.together.ai](https://api.together.ai) | `TOGETHER_API_KEY` |
-| **Google AI Studio** | 60 req/min, Gemini 2.0 Flash | [aistudio.google.com](https://aistudio.google.com) | `GOOGLE_API_KEY` |
-
-```bash
-# Example: Set up Groq
-export GROQ_API_KEY="gsk_..."
-```
-
-#### Ollama (Local / Offline)
-
-Run models locally with no cloud calls. Requires a GPU with 12-24GB VRAM.
-
-```bash
-# macOS
-brew install ollama
-
-# Linux
-curl -fsSL https://ollama.com/install.sh | sh
-
-# Pull a coding model (choose based on your VRAM)
-ollama pull codellama:7b            # 8GB VRAM minimum
-ollama pull deepseek-coder-v2:16b   # 16GB VRAM minimum
-ollama pull qwen3-coder             # 24GB VRAM minimum (best quality)
-
-# Start the server
-ollama serve
-```
-
-#### Anthropic (Best Quality)
-
-For the highest quality output, use Anthropic's Claude models directly:
-
-```bash
-export ANTHROPIC_API_KEY="sk-ant-..."
-```
-
-#### Changing Provider Later
-
-```bash
-/provider set free      # Switch to free cloud providers
-/provider set local     # Switch to Ollama only
-/provider set quality   # Switch to Anthropic
-/provider set hybrid    # Smart per-phase routing
-/provider status        # Check provider health
-```
-
-> [Full provider configuration guide](docs/designs/MULTI-PROVIDER-SUPPORT-DESIGN.md)
-
-### Step 3: Start Using the Framework
+### Step 2: Start Using the Framework
 
 ```bash
 claude                                    # Start Claude Code
@@ -178,7 +110,7 @@ Once discovery is complete, `/sdlc` presents a context-aware menu based on your 
 | **Generate test suite** | `/sdlc test generate` |
 | **Upgrade dependency** | `/sdlc upgrade "Node.js 22"` |
 | **Full lifecycle** | `/sdlc start` |
-| **Configure LLM provider** | `/provider` |
+<!-- | **Configure LLM provider** | `/provider` | -->
 
 ---
 
@@ -313,7 +245,7 @@ AI coding assistants are powerful but have well-known failure modes. The iSDLC f
 | [MONOREPO-GUIDE.md](docs/MONOREPO-GUIDE.md) | Multi-project setup |
 | [AUTONOMOUS-ITERATION.md](docs/AUTONOMOUS-ITERATION.md) | Self-correcting agent behavior |
 | [SKILL-ENFORCEMENT.md](docs/SKILL-ENFORCEMENT.md) | Runtime skill observability |
-| [MULTI-PROVIDER-SUPPORT-DESIGN.md](docs/designs/MULTI-PROVIDER-SUPPORT-DESIGN.md) | LLM provider configuration |
+<!-- | [MULTI-PROVIDER-SUPPORT-DESIGN.md](docs/designs/MULTI-PROVIDER-SUPPORT-DESIGN.md) | LLM provider configuration | -->
 
 ---
 
