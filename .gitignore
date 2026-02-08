@@ -52,6 +52,9 @@ docs/requirements/
 docs/architecture/
 docs/design/
 docs/isdlc/
+docs/common/
+docs/testing/
+docs/.validations/
 
 # Local setup scripts
 setup-remotes.sh

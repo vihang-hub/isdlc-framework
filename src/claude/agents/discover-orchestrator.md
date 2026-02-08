@@ -94,9 +94,19 @@ If NOT in monorepo mode, skip the preamble entirely and proceed to the no-argume
 
 ### NO-ARGUMENT MENU (Before Fast Path Check)
 
-**CRITICAL**: When invoked via `/discover` with NO flags or options (no `--new`, `--existing`, `--scope`, `--target`, `--priority`, `--atdd-ready`, `--skip-tests`, `--skip-skills`, `--project`), present a discovery mode selection menu BEFORE proceeding to the FAST PATH CHECK.
+**CRITICAL**: When invoked via `/discover` with NO flags or options (no `--new`, `--existing`, `--atdd-ready`, `--skip-tests`, `--skip-skills`, `--project`), present a discovery mode selection menu BEFORE proceeding to the FAST PATH CHECK.
 
 **If any flags/options ARE provided**, skip this menu entirely and proceed directly to the FAST PATH CHECK (or directly to the appropriate flow if `--new` or `--existing` is specified).
+
+#### Pre-Menu Auto-Detect
+
+Before rendering the menu, silently determine the recommended option:
+
+1. Read `.isdlc/state.json` -> `project.is_new_project`
+2. If `false` (or if `src/`, `lib/`, `app/`, `package.json`, etc. exist): recommend [2]
+3. If `true` (or no code detected): recommend [1]
+
+This determines where the "(Recommended)" badge appears.
 
 #### Menu Presentation
 
@@ -109,46 +119,57 @@ Use AskUserQuestion to present:
 
 Select a discovery mode:
 
-[1] Discover (auto-detect) (Recommended)
-    Auto-detect new vs existing project and run full analysis
+[1] New Project Setup
+    Define your project, select tech stack, and create constitution
 
-[2] New Project Setup
-    Force new project flow (define project, tech stack, constitution)
+[2] Existing Project Analysis (Recommended)
+    Full codebase analysis with behavior extraction
 
-[3] Existing Project Analysis
-    Force existing project analysis (architecture, tests, features)
+[3] Chat / Explore
+    Explore the project, discuss functionality, review backlog, ask questions
 
-[4] Scoped Analysis
-    Focus on a specific domain, module, or endpoint
+Enter selection (1-3):
 ```
+
+Note: "(Recommended)" shown on [2] by default. Move to [1] when no existing code is detected.
 
 #### After Selection
 
 | Selection | Action |
 |-----------|--------|
-| [1] Auto-detect | Continue to FAST PATH CHECK below (standard auto-detection) |
-| [2] New Project | Skip FAST PATH CHECK, go directly to **NEW PROJECT FLOW** |
-| [3] Existing Project | Skip FAST PATH CHECK, go directly to **EXISTING PROJECT FLOW** |
-| [4] Scoped Analysis | Ask follow-up questions (see below), then go to **EXISTING PROJECT FLOW** with scope options |
+| [1] New Project | Skip FAST PATH CHECK, go directly to **NEW PROJECT FLOW** |
+| [2] Existing Project | Skip FAST PATH CHECK, go directly to **EXISTING PROJECT FLOW** |
+| [3] Chat / Explore | Enter **CHAT / EXPLORE MODE** (see below) |
 
-#### Option [4] Follow-up
+#### Chat / Explore Mode
 
-If the user selects Scoped Analysis, ask two follow-up questions:
+When the user selects [3] Chat / Explore, enter a conversational mode:
 
-1. **Scope type:**
-   ```
-   What type of scoped analysis?
-   [1] Module     — Focus on a specific module/package
-   [2] Endpoint   — Focus on a specific API endpoint
-   [3] Domain     — Focus on a business domain
-   ```
+**Behavior:**
+- Answer questions about the project's codebase, architecture, and functionality
+- Read and summarize existing discovery artifacts (discovery report, constitution, state.json) if they exist
+- Read and discuss codebase files on demand
+- Discuss project backlog (CLAUDE.md unchecked items, workflow history from state.json)
+- Provide architectural explanations and code walkthroughs
 
-2. **Target name:**
-   ```
-   Enter the target name (e.g., "payments", "/api/users/register", "auth-module"):
-   ```
+**Constraints (STRICT):**
+- DO NOT modify state.json
+- DO NOT generate or modify the constitution
+- DO NOT install skills
+- DO NOT launch discovery sub-agents (D1-D8)
+- DO NOT write any files
 
-Then proceed to EXISTING PROJECT FLOW with the equivalent of `--scope {type} --target {name}` applied to all sub-agent delegations.
+**Exit conditions:**
+- User says "exit", "done", "back", or "back to menu"
+- User invokes another command (/discover --new, /sdlc, etc.)
+
+**On exit**, display:
+```
+Chat session ended. To run a full analysis, use:
+  /discover --new       (new project)
+  /discover --existing  (existing project)
+Or run /discover again to see the menu.
+```
 
 ---
 

@@ -1,204 +1,183 @@
 # Project Discovery Report
 
-**Generated**: 2026-02-07 (updated with full behavior extraction)
-**Analyzed by**: iSDLC Discover (full deep analysis)
-**Project**: iSDLC Framework v0.1.0-alpha
+**Generated:** 2026-02-08T11:00:00Z
+**Analyzed by:** iSDLC Discover (full deep analysis, auto-detect mode)
+**Project:** iSDLC Framework v0.1.0-alpha
 
 ---
 
-## Tech Stack
+## 1. Executive Summary
 
-| Component | Technology | Version |
-|-----------|-----------|---------|
-| Language | JavaScript (ES2022+) | ESM (lib/) + CJS (hooks/) |
-| Runtime | Node.js | >= 18.0.0 |
-| Package Manager | npm | 10.x |
-| Dependencies | chalk, fs-extra, prompts, semver | 4 total |
-| Module System | Dual: ESM (`"type": "module"`) for CLI, CJS for hooks | v3.0.0 |
+The iSDLC framework is a JavaScript/Node.js CLI tool that installs an AI-powered software development lifecycle into any project via Claude Code integration. It consists of 24 production JavaScript files (8,235 lines), 315 markdown agent/skill/command definitions (61,153 lines), and 3 shell scripts (2,609 lines). The hook runtime system (10 CJS hooks, 4,669 lines) is well-tested with 284 passing tests, but the ESM CLI library tests are currently blocked by missing `node_modules/` dependencies. The top concern is the broken ESM test suite -- `npm ci` has not been run, so all 8 lib test files fail with `ERR_MODULE_NOT_FOUND` for `chalk`.
 
-**No database, no framework, no build step.** Pure Node.js CLI with runtime hooks.
+## 2. Architecture Overview
 
----
+| Layer | Components | Pattern | Notes |
+|-------|------------|---------|-------|
+| CLI Entry | `bin/isdlc.js` -> `lib/cli.js` | ESM command router | 6 commands: init, update, version, doctor, uninstall, help |
+| Business Logic | `lib/*.js` (8 modules) | Procedural with async/await | installer (845L), updater (550L), uninstaller (514L), doctor (238L) |
+| Utilities | `lib/utils/*.js` (3 modules) | Shared helpers | fs-helpers, logger, prompts |
+| Runtime Hooks | `src/claude/hooks/*.cjs` (10 hooks) | CJS stdin/stdout JSON protocol | Intercept Claude Code tool calls bidirectionally |
+| Hook Lib | `src/claude/hooks/lib/*.cjs` (2 modules) | Shared CJS utilities | common.cjs (937L), provider-utils.cjs (894L) |
+| Agent Definitions | `src/claude/agents/*.md` (36 files) | Markdown specification | SDLC phases, discover, tracing, impact-analysis, quick-scan |
+| Skill Definitions | `src/claude/skills/**/*.md` (229 files) | Markdown SKILL.md per skill | 16 categories |
+| Shell Scripts | `install.sh`, `uninstall.sh`, `update.sh` | Bash (macOS/Linux) | Parallel to Node.js CLI for non-npm users |
+| CI/CD | `.github/workflows/` (2 files) | GitHub Actions | 3-OS x 3-Node matrix, integration tests, bash installer |
 
-## Architecture
+## 3. Tech Stack
 
-| Aspect | Details |
-|--------|---------|
-| Pattern | Plugin-based agent framework with symlink installation |
-| Entry Point | `bin/isdlc.js` -> `lib/cli.js` (ESM dynamic import) |
-| Deployment | npm package (`npx isdlc init`) + shell script (`install.sh`) |
-| Installation Model | Copies framework files into target project's `.claude/` and `.isdlc/` |
-| Runtime Model | 8 hooks intercept Claude Code tool calls via stdin JSON, process, and respond |
-| State Model | JSON files on filesystem (`.isdlc/state.json`) -- no database |
-| CI/CD | GitHub Actions (multi-platform matrix: Ubuntu/macOS/Windows x Node 18/20/22) |
+| Component | Technology | Version | Notes |
+|-----------|------------|---------|-------|
+| Language | JavaScript (ES2022+) | ESM + CJS dual-module | `"type": "module"` in package.json |
+| Runtime | Node.js | >= 18.0.0 | Tested on 18, 20, 22 in CI |
+| Package Manager | npm | lockfile v3 | 4 runtime dependencies |
+| Test Runner | node:test | Built-in | No external test framework |
+| Dep: chalk | Terminal colors | ^5.3.0 | ESM-only |
+| Dep: fs-extra | File operations | ^11.2.0 | |
+| Dep: prompts | Interactive CLI | ^2.4.2 | |
+| Dep: semver | Version comparison | ^7.6.0 | Used by updater |
+| CI/CD | GitHub Actions | v4 actions | ci.yml + publish.yml |
+| Shell | Bash | 3.2+ | install/uninstall/update scripts |
 
-### Directory Structure
+## 4. Test Health Dashboard
 
-```
-isdlc/
-  bin/isdlc.js              # CLI entry point (ESM)
-  lib/                       # CLI modules (7 modules, ESM)
-    cli.js                   # Command router (233 lines)
-    installer.js             # Cross-platform installer (845 lines)
-    updater.js               # In-place updater (550 lines)
-    uninstaller.js           # Safe uninstaller (514 lines)
-    doctor.js                # Health checker (238 lines)
-    project-detector.js      # Project type detection (277 lines)
-    monorepo-handler.js      # Monorepo detection (247 lines)
-    utils/                   # Shared utilities
-      fs-helpers.js          # File system operations (250 lines)
-      logger.js              # Structured colored output (137 lines)
-      prompts.js             # Interactive prompts (110 lines)
-  src/claude/
-    agents/                  # 36 agent definitions (.md)
-    skills/                  # 229 skill definitions (.md)
-    hooks/                   # 8 runtime hooks (CJS)
-      gate-blocker.js        # Gate advancement blocker (575 lines)
-      iteration-corridor.js  # Iteration corridor enforcement (337 lines)
-      skill-validator.js     # Skill observability (202 lines)
-      log-skill-usage.js     # Skill usage logger (175 lines)
-      constitution-validator.js  # Constitutional validation (323 lines)
-      menu-tracker.js        # Menu interaction tracker (261 lines)
-      test-watcher.js        # Test result watcher (545 lines)
-      model-provider-router.js   # Provider router (153 lines)
-      lib/common.js          # Shared hook utilities (898 lines)
-      lib/provider-utils.js  # Provider routing utilities (894 lines)
-      config/                # Skills manifest, iteration requirements
-    commands/                # Slash commands
-  install.sh                 # Shell-based installer (1,162 lines)
-  uninstall.sh               # Shell-based uninstaller (867 lines)
-  update.sh                  # Shell-based updater (580 lines)
-```
+| Type | Count | Coverage | Status |
+|------|-------|----------|--------|
+| Unit (CJS hooks) | 284 | ~95% of hook code | OK - All passing |
+| Unit (ESM lib) | ~302 (expected) | ~90% of lib code | CRITICAL - All failing (missing deps) |
+| Characterization | 7 files (~100 skips) | Scaffold only | Warning - All test.skip() |
+| Integration (CI) | 5 steps | CLI commands | OK - In CI workflow |
+| E2E | 0 | 0% | Warning - None exist |
+| Mutation | 0 | 0% | Warning - Not configured |
+| **Total** | **284 passing** | **~50% effective** | **DEGRADED** |
 
-### Integration Points
+### Root Cause of ESM Test Failures
 
-| Integration | Type | Direction |
-|-------------|------|-----------|
-| Claude Code | Runtime hooks (PreToolUse/PostToolUse) | Bidirectional |
-| npm Registry | Version check, package distribution | Outbound |
-| skills.sh | Skill discovery and installation | Outbound |
-| Ollama | Local LLM provider (optional) | Outbound |
-| OpenRouter | Cloud LLM routing (optional) | Outbound |
+`node_modules/` does not exist in the working directory. The `chalk` package (ESM-only) cannot be resolved. Running `npm ci` or `npm install` would restore all ~302 ESM tests. This is an environment issue, not a code defect.
 
----
+## 5. Behavior Extraction Summary
 
-## Data Model
+| Domain | AC Count | Covered | Partial | Uncovered |
+|--------|----------|---------|---------|-----------|
+| Workflow Orchestration | 14 | 9 | 2 | 3 |
+| Installation & Lifecycle | 16 | 12 | 1 | 3 |
+| Iteration Enforcement | 18 | 14 | 2 | 2 |
+| Skill Observability | 10 | 7 | 1 | 2 |
+| Multi-Provider LLM Routing | 9 | 5 | 1 | 3 |
+| Constitution Management | 8 | 5 | 1 | 2 |
+| Monorepo & Project Detection | 12 | 6 | 1 | 5 |
+| **Total** | **87** | **58 (66.7%)** | **9 (10.3%)** | **20 (23.0%)** |
 
-### Primary Data Store: `.isdlc/state.json`
+## 6. Action Items
 
-| Field | Type | Purpose |
-|-------|------|---------|
-| framework_version | string | Installed version |
-| project | object | Name, created, description, is_new_project, discovery_completed |
-| complexity_assessment | object | 6-dimension complexity scoring |
-| workflow | object | Track type, required/optional/skipped phases |
-| constitution | object | Enforced flag, path, validated_at |
-| autonomous_iteration | object | Enabled, max_iterations, timeout, circuit_breaker |
-| skill_enforcement | object | Mode (observe), fail_behavior, manifest_version |
-| cloud_configuration | object | Provider, credentials, deployment config |
-| iteration_enforcement | object | Enabled flag |
-| skill_usage_log | array | Append-only delegation log |
-| phases | object | 13 phases with status, started, completed, gate_passed, artifacts |
-| history | array | Append-only action log |
+| # | Action | Priority | Effort | Rationale |
+|---|--------|----------|--------|-----------|
+| 1 | Run `npm ci` to restore node_modules and ESM test suite | P0 | S | 302 tests blocked by missing dependencies |
+| 2 | Add E2E tests for install -> doctor -> update -> uninstall lifecycle | P1 | M | No end-to-end coverage of primary user journey |
+| 3 | Cover 20 uncovered AC with new unit tests | P1 | L | 23% of acceptance criteria have zero test coverage |
+| 4 | Add mutation testing (Stryker) to measure test effectiveness | P2 | M | High test count does not guarantee effectiveness |
+| 5 | Generate constitution from discovery findings | P1 | M | No constitution exists yet (docs/isdlc/constitution.md missing) |
+| 6 | Activate the 9 partially-covered AC tests | P2 | S | test.skip() scaffolds exist but are not activated |
+| 7 | Add permission audit for settings.json allowed tools | P2 | S | Current permissions are read-heavy, missing npm test/lint |
+| 8 | Split large files: installer.js (845L), common.cjs (937L) | P3 | M | Maintainability -- noted in CLAUDE.md backlog |
 
-### Configuration Files
+## 7. Detailed Findings
 
-| File | Format | Purpose |
-|------|--------|---------|
-| skills-manifest.json | JSON | Agent-to-skill ownership mapping (v4.0.0) |
-| iteration-requirements.json | JSON | Per-phase gate requirements (v2.0.0) |
-| providers.yaml | YAML | LLM provider configuration |
-| workflows.json | JSON | Workflow type definitions |
+### 7.1 Functional Features
 
-### Entity Count: 4 JSON stores, 0 databases, 0 migrations
+#### CLI Commands (6)
 
----
+| Command | Module | Description |
+|---------|--------|-------------|
+| `init` | installer.js | Install framework into target project |
+| `update` | updater.js | In-place update with manifest-based cleanup |
+| `version` | cli.js | Display installed version |
+| `doctor` | doctor.js | 8-step installation health check |
+| `uninstall` | uninstaller.js | Safe removal with purge options |
+| `help` | cli.js | Display usage information |
 
-## Functional Features
+#### Runtime Hooks (10)
 
-### By Category
+| Hook | Event | Purpose |
+|------|-------|---------|
+| model-provider-router.cjs | PreToolUse[Task] | Route to LLM provider based on phase/mode |
+| iteration-corridor.cjs | PreToolUse[Task] | Restrict actions during test/validation loops |
+| skill-validator.cjs | PreToolUse[Task] | Observe agent delegation patterns |
+| gate-blocker.cjs | PreToolUse[Task,Skill] | Block gate advancement until requirements met |
+| constitution-validator.cjs | PreToolUse[Task] | Block phase completion until articles validated |
+| log-skill-usage.cjs | PostToolUse[Task] | Log delegations to skill_usage_log |
+| menu-tracker.cjs | PostToolUse[Task] | Track A/R/C menu interactions |
+| skill-delegation-enforcer.cjs | PostToolUse[Skill] | Write pending_delegation on /sdlc or /discover |
+| test-watcher.cjs | PostToolUse[Bash] | Monitor test runs, track iterations, circuit breaker |
+| delegation-gate.cjs | Stop | Verify orchestrator delegation occurred |
 
-| Category | Count |
-|----------|-------|
-| CLI Commands | 6 (init, update, version, doctor, uninstall, help) |
-| Runtime Hooks | 8 (4 PreToolUse, 4 PostToolUse) |
-| Agent Definitions | 36 |
-| Skill Definitions | 229 |
-| Shell Scripts | 3 (install, uninstall, update) |
-| Gate Checklists | 16 |
+#### Slash Commands (3)
 
-### 8 Runtime Hooks
+| Command | Definition | Purpose |
+|---------|-----------|---------|
+| /sdlc | commands/sdlc.md | SDLC workflow orchestration |
+| /discover | commands/discover.md | Project discovery and setup |
+| /provider | commands/provider.md | LLM provider management |
 
-| Hook | Type | Purpose |
-|------|------|---------|
-| gate-blocker | PreToolUse | Blocks gate advancement until 4 requirements met |
-| iteration-corridor | PreToolUse | Restricts actions during active test/validation loops |
-| skill-validator | PreToolUse | Observes agent delegation patterns (never blocks) |
-| constitution-validator | PreToolUse | Blocks phase completion until articles validated |
-| model-provider-router | PreToolUse | Routes Task calls to appropriate LLM provider |
-| test-watcher | PostToolUse | Monitors test commands, tracks iteration state, circuit breaker |
-| log-skill-usage | PostToolUse | Logs all Task delegations to skill_usage_log |
-| menu-tracker | PostToolUse | Tracks A/R/C menu interactions for Phase 01 |
+#### Agent Inventory (36)
 
-### 7 Business Domains
+| Category | Agents | Files |
+|----------|--------|-------|
+| SDLC Phases (00-14) | 15 | src/claude/agents/00-*.md through 14-*.md |
+| Discover | 12 | src/claude/agents/discover/*.md + discover-orchestrator.md |
+| Impact Analysis | 4 | src/claude/agents/impact-analysis/*.md |
+| Tracing | 4 | src/claude/agents/tracing/*.md |
+| Quick Scan | 1 | src/claude/agents/quick-scan/*.md |
 
-1. **Workflow Orchestration** (14 AC) - CLI routing, phase management, workflow state
-2. **Installation & Lifecycle** (16 AC) - Install, update, uninstall, health check
-3. **Iteration Enforcement** (18 AC) - Gate blocking, corridors, test watching, menus
-4. **Skill Observability** (10 AC) - Agent delegation logging, cross-phase tracking
-5. **Multi-Provider LLM Routing** (9 AC) - Provider selection, health checks, fallback
-6. **Constitution Management** (8 AC) - Validation loops, article checking, generation
-7. **Monorepo & Project Detection** (12 AC) - Workspace detection, CWD resolution, state routing
+#### Skill Categories (16, 229 skills)
 
----
+| Category | Skill Count |
+|----------|-------------|
+| architecture | 12 |
+| design | 10 |
+| development | ~30 |
+| devops | ~15 |
+| discover | ~12 |
+| documentation | ~8 |
+| impact-analysis | 15 |
+| operations | ~10 |
+| orchestration | ~12 |
+| quick-scan | 3 |
+| requirements | ~15 |
+| reverse-engineer | ~8 |
+| security | ~12 |
+| testing | ~25 |
+| tracing | ~15 |
+| upgrade | ~7 |
 
-## Test Coverage
+### 7.2 Data Model
 
-| Test Suite | Tests | Framework | Module System |
-|------------|-------|-----------|---------------|
-| lib/*.test.js + lib/utils/*.test.js | 302 | node:test | ESM |
-| src/claude/hooks/tests/*.test.cjs | 253 | node:test | CJS (temp dir isolation) |
-| **Total** | **555** | | **All passing** |
+#### Primary State Store: `.isdlc/state.json`
 
-### Coverage by Module
+| Section | Fields | Purpose |
+|---------|--------|---------|
+| project | name, created, description, is_new_project, tech_stack | Project identity |
+| complexity_assessment | level, track, dimensions (6) | Workflow routing |
+| workflow | track, track_name, phases_required/optional/skipped | Phase configuration |
+| constitution | enforced, path, validated_at | Constitutional governance |
+| autonomous_iteration | enabled, max_iterations, timeout, circuit_breaker | Iteration limits |
+| skill_enforcement | enabled, mode, fail_behavior, manifest_version | Observability config |
+| cloud_configuration | provider, credentials, deployment | Cloud deployment (unused) |
+| phases (13) | status, started, completed, gate_passed, artifacts, iteration_tracking | Per-phase state |
+| skill_usage_log | array of entries | Append-only delegation history |
+| history | array of entries | Append-only action log |
 
-| Module | Tests | Status |
-|--------|-------|--------|
-| cli.js | ~40 | COVERED |
-| installer.js | ~35 | COVERED |
-| updater.js | ~30 | COVERED |
-| uninstaller.js | ~25 | COVERED |
-| doctor.js | ~45 | COVERED |
-| project-detector.js | ~60 | COVERED |
-| monorepo-handler.js | ~50 | COVERED |
-| fs-helpers.js | ~30 | COVERED |
-| logger.js | ~15 | COVERED |
-| prompts.js | ~10 | COVERED |
-| gate-blocker.js | ~24 | COVERED |
-| iteration-corridor.js | ~20 | COVERED |
-| test-watcher.js | ~21 | COVERED |
-| skill-validator.js | ~15 | COVERED |
-| log-skill-usage.js | ~12 | COVERED |
-| constitution-validator.js | ~18 | COVERED |
-| menu-tracker.js | ~15 | COVERED |
-| model-provider-router.js | ~12 | COVERED |
-| provider-utils.js | ~15 | COVERED |
-| common.js | ~20 | COVERED |
+#### Configuration Files
 
-### Coverage Gaps (Prioritized)
+| File | Format | Purpose | Location |
+|------|--------|---------|----------|
+| providers.yaml | YAML | 6 LLM provider definitions + mode routing | .isdlc/ |
+| skills-manifest.json | JSON | Agent-to-skill ownership (v4.0.0) | Installed to .claude/hooks/config/ |
+| iteration-requirements.json | JSON | Per-phase gate requirements (v2.0.0) | Installed to .claude/hooks/config/ |
 
-| Gap | Risk | AC Reference |
-|-----|------|--------------|
-| Workflow override deep merging | High | AC-WO-010 |
-| ATDD skipped test detection | Medium | AC-IE-015 |
-| Provider fallback chain integration | Medium | AC-PR-003 |
-| Last workflow phase detection | High | AC-WO-014 |
-| Obsolete file cleanup | Medium | AC-IL-009 |
-| Environment override injection | Medium | AC-PR-005 |
+#### Entity Summary: 3 config stores, 1 state file, 0 databases, 0 migrations
 
----
-
-## Reverse-Engineered Acceptance Criteria
+### 7.3 Reverse-Engineered Acceptance Criteria
 
 | Metric | Value |
 |--------|-------|
@@ -211,36 +190,25 @@ isdlc/
 | AC Partially Covered | 9 (10.3%) |
 | AC Uncovered | 20 (23.0%) |
 
-### Characterization Tests
+### 7.4 Characterization Tests
 
 | Metric | Value |
 |--------|-------|
-| Test Files Generated | 7 |
-| test.skip() Scaffolds | ~100 |
+| Test Files | 7 |
+| Total Lines | 522 |
 | Framework | node:test (ESM) |
 | Location | tests/characterization/ |
+| Status | All test.skip() scaffolds -- none activated |
 
-### Artifacts
+Test files:
+- `constitution-management.test.js`
+- `installation-lifecycle.test.js`
+- `iteration-enforcement.test.js`
+- `monorepo-detection.test.js`
+- `provider-routing.test.js`
+- `skill-observability.test.js`
+- `workflow-orchestration.test.js`
 
-| Artifact | Location |
-|----------|----------|
-| AC Index | docs/requirements/reverse-engineered/index.md |
-| Domain Files (7) | docs/requirements/reverse-engineered/domain-*.md |
-| Characterization Tests (7) | tests/characterization/*.test.js |
-| Traceability Matrix | docs/isdlc/ac-traceability.csv |
-| Reverse-Engineer Report | docs/isdlc/reverse-engineer-report.md |
+### 7.5 Traceability Matrix
 
----
-
-## Summary
-
-| Area | Key Findings |
-|------|-------------|
-| Tech Stack | JavaScript ES2022+ (ESM + CJS), Node.js >= 18, 4 deps |
-| Architecture | Plugin-based agent framework, symlink installation, JSON state |
-| Data Model | 4 JSON config stores, 0 databases |
-| Features | 6 CLI commands, 8 hooks, 36 agents, 229 skills |
-| Test Coverage | 555 tests (302 ESM + 253 CJS), all passing |
-| Domains | 7 business domains mapped |
-| AC Extracted | 87 Given/When/Then acceptance criteria |
-| Characterization Tests | 7 scaffold files with ~100 test.skip() entries |
+Prior traceability artifacts (ac-traceability.csv, reverse-engineer-report.md) are not present on disk. The AC index and domain files referenced in the previous report are also missing from `docs/requirements/reverse-engineered/`. These artifacts need to be regenerated.

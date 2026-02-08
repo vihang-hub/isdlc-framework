@@ -276,8 +276,6 @@ If `--priority` was specified, filter targets:
 - `high`: P0 + P1
 - `medium`: P0 + P1 + P2
 
-If `--scope` and `--target` were specified, narrow to matching targets only.
-
 ### Step 9: Analyze Markdown Agent/Command Definitions (DE-001)
 
 After completing source code analysis and priority scoring, analyze the project's agent orchestration layer to build a structured catalog and extract testable acceptance criteria from deterministic behaviors.
@@ -334,7 +332,7 @@ Record for each command:
 ```json
 {
   "name": "discover",
-  "options": ["--existing", "--shallow", "--atdd-ready", "--scope", "--target", "--priority", "--project"],
+  "options": ["--existing", "--new", "--atdd-ready", "--project", "--skip-tests", "--skip-skills"],
   "routes_to_agent": "discover-orchestrator",
   "prerequisites": [".isdlc/state.json must exist"]
 }

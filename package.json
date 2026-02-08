@@ -41,7 +41,9 @@
   "scripts": {
     "test": "node --test lib/*.test.js lib/utils/*.test.js",
     "test:hooks": "node --test src/claude/hooks/tests/*.test.cjs",
-    "test:all": "npm test && npm run test:hooks",
+    "test:char": "node --test tests/characterization/*.test.js",
+    "test:e2e": "node --test tests/e2e/*.test.js",
+    "test:all": "npm test && npm run test:hooks && npm run test:char && npm run test:e2e",
     "lint": "echo 'No linter configured'",
     "prepare": "echo 'Package ready'"
   },
