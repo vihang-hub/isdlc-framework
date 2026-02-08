@@ -1195,177 +1195,42 @@ echo -e "  Change:   ${GREEN}/provider set <mode>${NC}"
 echo ""
 
 # ============================================================================
-# Tour: Optional onboarding introduction
+# Tour: Optional onboarding overview
 # ============================================================================
 
 # Skip tour if stdin is not a terminal (non-interactive / piped)
 if [ -t 0 ]; then
 
-echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║              GET TO KNOW iSDLC                             ║${NC}"
-echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
-echo "Would you like a quick introduction to the framework?"
-echo ""
-echo "  1) Light intro     — 5-minute overview of commands, agents, and workflow"
-echo "  2) Full tour       — 15-minute walkthrough of all framework features"
-echo "  3) Skip            — Go straight to next steps (you can run /tour later)"
-echo ""
-read -p "Choice [1]: " TOUR_CHOICE
-TOUR_CHOICE=${TOUR_CHOICE:-1}
+read -p "Show a quick overview of the framework? [Y/n]: " TOUR_CHOICE
+TOUR_CHOICE=${TOUR_CHOICE:-Y}
 
-# ---------------------------------------------------------------------------
-# Tour content functions
-# ---------------------------------------------------------------------------
-
-print_tour_section_1() {
+if [[ "$TOUR_CHOICE" =~ ^[Yy] ]]; then
     echo ""
-    echo -e "${CYAN}━━━ 1. What is iSDLC? ━━━${NC}"
+    echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║                   QUICK OVERVIEW                           ║${NC}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
     echo ""
-    echo "  iSDLC (integrated Software Development Lifecycle) is a framework of"
-    echo "  36 AI agents that guide development from requirements capture through"
-    echo "  production deployment. Each SDLC phase has a dedicated agent, quality"
-    echo "  gates between phases enforce completion before advancement, and"
-    echo "  deterministic hooks enforce rules at runtime."
+    echo -e "${CYAN}━━━ What is iSDLC? ━━━${NC}"
     echo ""
-}
-
-print_tour_section_2() {
-    echo -e "${CYAN}━━━ 2. Core Commands ━━━${NC}"
+    echo "  iSDLC is a framework of 36 AI agents that guide development from"
+    echo "  requirements through deployment. Quality gates enforce completion"
+    echo "  between phases, and deterministic hooks enforce rules at runtime."
     echo ""
-    echo -e "  ${GREEN}/discover${NC}                — Analyze your project or describe a new one"
-    echo -e "  ${GREEN}/sdlc feature \"desc\"${NC}    — Develop a feature end-to-end through all phases"
+    echo -e "${CYAN}━━━ Core Commands ━━━${NC}"
+    echo ""
+    echo -e "  ${GREEN}/discover${NC}                — Analyze your project or set up a new one"
+    echo -e "  ${GREEN}/sdlc feature \"desc\"${NC}    — Develop a feature end-to-end"
     echo -e "  ${GREEN}/sdlc fix \"desc\"${NC}        — Fix a bug with TDD and tracing agents"
-    echo -e "  ${GREEN}/provider${NC}               — Configure which LLM models power sub-agents"
+    echo -e "  ${GREEN}/sdlc test generate${NC}     — Create tests for existing code"
+    echo -e "  ${GREEN}/sdlc upgrade \"name\"${NC}    — Upgrade a dependency or runtime"
+    echo -e "  ${GREEN}/provider${NC}               — Configure LLM model routing"
     echo ""
-}
-
-print_tour_section_3() {
-    echo -e "${CYAN}━━━ 3. How the Workflow Works ━━━${NC}"
+    echo -e "  For the full interactive guide, run ${GREEN}/tour${NC} in Claude Code."
     echo ""
-    echo "  The SDLC orchestrator assesses task complexity, selects which phases"
-    echo "  to run, then delegates to phase agents in order. Each agent produces"
-    echo "  artifacts that feed the next. Quality gates block advancement until"
-    echo "  requirements are met. Iteration loops allow agents to retry failed"
-    echo "  phases (with circuit breakers to prevent infinite loops)."
-    echo ""
-}
-
-print_tour_section_4() {
-    echo -e "${CYAN}━━━ 4. The Constitution ━━━${NC}"
-    echo ""
-    echo "  Your project's constitution (docs/isdlc/constitution.md) defines"
-    echo "  governance rules: testing thresholds, security requirements, coding"
-    echo "  standards. Created during /discover and enforced by hooks throughout"
-    echo "  every phase. It persists across sessions."
-    echo ""
-}
-
-print_tour_section_5() {
-    echo -e "${CYAN}━━━ 5. What to Do Next ━━━${NC}"
-    echo ""
-    echo -e "  • Run ${GREEN}/discover${NC} to analyze your project"
-    echo -e "  • Run ${GREEN}/sdlc feature${NC} or ${GREEN}/sdlc fix${NC} to start developing"
-    echo -e "  • Run ${GREEN}/tour${NC} in Claude Code anytime for the full walkthrough"
-    echo ""
-}
-
-print_tour_section_6() {
-    echo -e "${CYAN}━━━ 6. The 16 Phases ━━━${NC}"
-    echo ""
-    echo "  Phase  Agent                        Purpose"
-    echo "  ─────  ───────────────────────────   ──────────────────────────────"
-    echo "  00     Quick Scan                    Lightweight scope estimate"
-    echo "  01     Requirements Analyst          Capture & structure requirements"
-    echo "  02     Solution Architect            Architecture & tech decisions"
-    echo "  03     System Designer               Interface & module design"
-    echo "  04     Test Design Engineer           Test strategy & case design"
-    echo "  05     Software Developer            TDD implementation"
-    echo "  06     Integration Tester            Integration & E2E testing"
-    echo "  07     QA Engineer                   Code review & quality metrics"
-    echo "  08     Security Compliance Auditor   Security scanning & validation"
-    echo "  09     CI/CD Engineer                Pipeline configuration"
-    echo "  10     Environment Builder           Build & health-check services"
-    echo "  11     Deployment Engineer           Staging deployment & smoke tests"
-    echo "  12     Release Manager               Production release coordination"
-    echo "  13     Site Reliability Engineer     Monitoring & incident response"
-    echo ""
-    echo "  Plus 14 specialized agents: Discover (6), Exploration (4), Tracing (4)"
-    echo "  Not all phases run for every task — the orchestrator selects by complexity."
-    echo ""
-}
-
-print_tour_section_7() {
-    echo -e "${CYAN}━━━ 7. Quality Gates & Hooks ━━━${NC}"
-    echo ""
-    echo "  Each phase has a gate checklist that must pass before advancing."
-    echo "  The gate-blocker hook enforces this deterministically — checking:"
-    echo "    • Required artifacts exist"
-    echo "    • Iteration requirements met (min iterations, test evidence)"
-    echo "    • Constitution validated"
-    echo "    • Phase agent was delegated to"
-    echo ""
-    echo "  10 hooks run automatically (all deterministic, no LLM calls):"
-    echo "    skill-validator, log-skill-usage, iteration-corridor,"
-    echo "    constitution-validator, test-watcher, menu-tracker,"
-    echo "    model-provider-router, gate-blocker,"
-    echo "    skill-delegation-enforcer, delegation-gate"
-    echo ""
-}
-
-print_tour_section_8() {
-    echo -e "${CYAN}━━━ 8. Workflow Example ━━━${NC}"
-    echo ""
-    echo -e "  Running ${GREEN}/sdlc feature \"Add user auth\"${NC}:"
-    echo ""
-    echo "    1. Orchestrator assesses complexity → selects phases"
-    echo "    2. Requirements Analyst captures user stories → requirements-spec.md"
-    echo "    3. Solution Architect designs auth system → architecture-overview.md"
-    echo "    4. System Designer creates API contracts → interface-spec.yaml"
-    echo "    5. Test Design Engineer creates test plan → test-strategy.md"
-    echo "    6. Software Developer writes code (TDD) → source code + tests"
-    echo "    7. Integration Tester runs full suite → test reports"
-    echo "    8. QA Engineer reviews code quality → review report"
-    echo "    9. Security Auditor validates auth → security report"
-    echo ""
-    echo "  Each gate must pass before the next phase begins."
-    echo ""
-}
-
-# ---------------------------------------------------------------------------
-# Print selected tour
-# ---------------------------------------------------------------------------
-
-if [ "$TOUR_CHOICE" = "1" ]; then
-    print_tour_section_1
-    print_tour_section_2
-    print_tour_section_3
-    print_tour_section_4
-    print_tour_section_5
-elif [ "$TOUR_CHOICE" = "2" ]; then
-    TOUR_CONTINUE="Y"
-    TOUR_SECTIONS=(1 2 3 4 5 6 7 8)
-    for SECTION_NUM in "${TOUR_SECTIONS[@]}"; do
-        "print_tour_section_$SECTION_NUM"
-        if [ "$SECTION_NUM" -lt 8 ]; then
-            read -p "  Continue to next topic? [Y/skip/done]: " TOUR_CONTINUE
-            TOUR_CONTINUE=${TOUR_CONTINUE:-Y}
-            if [[ "$TOUR_CONTINUE" =~ ^[Dd] ]]; then
-                echo ""
-                echo -e "${GREEN}  Tour ended. Run /tour in Claude Code anytime to revisit.${NC}"
-                echo ""
-                break
-            fi
-            # skip → just shows next section title (handled by continuing loop)
-        fi
-    done
-    if [[ ! "$TOUR_CONTINUE" =~ ^[Dd] ]]; then
-        echo -e "${GREEN}  Tour complete! You're ready to start.${NC}"
-        echo ""
-    fi
 else
     echo ""
-    echo -e "${YELLOW}  Skipped. Run /tour in Claude Code anytime for the introduction.${NC}"
+    echo -e "${YELLOW}  Skipped. Run /tour in Claude Code for the interactive guide.${NC}"
     echo ""
 fi
 

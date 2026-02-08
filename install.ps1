@@ -1433,239 +1433,48 @@ Write-Host "/provider set <mode>" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================================
-# Tour: Optional onboarding introduction
+# Tour: Optional onboarding overview
 # ============================================================================
 
 $isInteractive = [Environment]::UserInteractive -and -not $Force
 
 if ($isInteractive) {
-    Write-Banner "GET TO KNOW iSDLC"
-
-    Write-Host "  Would you like a quick introduction to the framework?"
     Write-Host ""
-    Write-Host "    1) Light intro     -- 5-minute overview of commands, agents, and workflow"
-    Write-Host "    2) Full tour       -- 15-minute walkthrough of all framework features"
-    Write-Host "    3) Skip            -- Go straight to next steps (you can run /tour later)"
-    Write-Host ""
-    $tourChoice = Read-Host "  Choice [1]"
-    if ([string]::IsNullOrEmpty($tourChoice)) { $tourChoice = "1" }
+    $tourChoice = Read-Host "  Show a quick overview of the framework? [Y/n]"
+    if ([string]::IsNullOrEmpty($tourChoice)) { $tourChoice = "Y" }
 
-    if ($tourChoice -eq "1") {
-        # Light intro: sections 1-5
+    if ($tourChoice -match '^[Yy]') {
+        Write-Banner "QUICK OVERVIEW"
+
+        Write-Host "  --- What is iSDLC? ---" -ForegroundColor Cyan
         Write-Host ""
-        Write-Host "  --- 1. What is iSDLC? ---" -ForegroundColor Cyan
+        Write-Host "    iSDLC is a framework of 36 AI agents that guide development from"
+        Write-Host "    requirements through deployment. Quality gates enforce completion"
+        Write-Host "    between phases, and deterministic hooks enforce rules at runtime."
         Write-Host ""
-        Write-Host "    iSDLC (integrated Software Development Lifecycle) is a framework of"
-        Write-Host "    36 AI agents that guide development from requirements capture through"
-        Write-Host "    production deployment. Each SDLC phase has a dedicated agent, quality"
-        Write-Host "    gates between phases enforce completion before advancement, and"
-        Write-Host "    deterministic hooks enforce rules at runtime."
-        Write-Host ""
-        Write-Host "  --- 2. Core Commands ---" -ForegroundColor Cyan
+        Write-Host "  --- Core Commands ---" -ForegroundColor Cyan
         Write-Host ""
         Write-Host "    /discover               " -ForegroundColor Green -NoNewline
-        Write-Host "-- Analyze your project or describe a new one"
+        Write-Host "-- Analyze your project or set up a new one"
         Write-Host "    /sdlc feature `"desc`"   " -ForegroundColor Green -NoNewline
-        Write-Host "-- Develop a feature end-to-end through all phases"
+        Write-Host "-- Develop a feature end-to-end"
         Write-Host "    /sdlc fix `"desc`"       " -ForegroundColor Green -NoNewline
         Write-Host "-- Fix a bug with TDD and tracing agents"
+        Write-Host "    /sdlc test generate    " -ForegroundColor Green -NoNewline
+        Write-Host "-- Create tests for existing code"
+        Write-Host "    /sdlc upgrade `"name`"   " -ForegroundColor Green -NoNewline
+        Write-Host "-- Upgrade a dependency or runtime"
         Write-Host "    /provider              " -ForegroundColor Green -NoNewline
-        Write-Host "-- Configure which LLM models power sub-agents"
+        Write-Host "-- Configure LLM model routing"
         Write-Host ""
-        Write-Host "  --- 3. How the Workflow Works ---" -ForegroundColor Cyan
-        Write-Host ""
-        Write-Host "    The SDLC orchestrator assesses task complexity, selects which phases"
-        Write-Host "    to run, then delegates to phase agents in order. Each agent produces"
-        Write-Host "    artifacts that feed the next. Quality gates block advancement until"
-        Write-Host "    requirements are met. Iteration loops allow agents to retry failed"
-        Write-Host "    phases (with circuit breakers to prevent infinite loops)."
-        Write-Host ""
-        Write-Host "  --- 4. The Constitution ---" -ForegroundColor Cyan
-        Write-Host ""
-        Write-Host "    Your project's constitution (docs/isdlc/constitution.md) defines"
-        Write-Host "    governance rules: testing thresholds, security requirements, coding"
-        Write-Host "    standards. Created during /discover and enforced by hooks throughout"
-        Write-Host "    every phase. It persists across sessions."
-        Write-Host ""
-        Write-Host "  --- 5. What to Do Next ---" -ForegroundColor Cyan
-        Write-Host ""
-        Write-Host "    * Run " -NoNewline
-        Write-Host "/discover" -ForegroundColor Green -NoNewline
-        Write-Host " to analyze your project"
-        Write-Host "    * Run " -NoNewline
-        Write-Host "/sdlc feature" -ForegroundColor Green -NoNewline
-        Write-Host " or " -NoNewline
-        Write-Host "/sdlc fix" -ForegroundColor Green -NoNewline
-        Write-Host " to start developing"
-        Write-Host "    * Run " -NoNewline
+        Write-Host "    For the full interactive guide, run " -NoNewline
         Write-Host "/tour" -ForegroundColor Green -NoNewline
-        Write-Host " in Claude Code anytime for the full walkthrough"
+        Write-Host " in Claude Code."
         Write-Host ""
-    }
-    elseif ($tourChoice -eq "2") {
-        # Full tour: sections 1-8
-        $tourSections = @(
-            @{
-                Title = "1. What is iSDLC?"
-                Content = @"
-
-    iSDLC (integrated Software Development Lifecycle) is a framework of
-    36 AI agents that guide development from requirements capture through
-    production deployment. Each SDLC phase has a dedicated agent, quality
-    gates between phases enforce completion before advancement, and
-    deterministic hooks enforce rules at runtime.
-"@
-            },
-            @{
-                Title = "2. Core Commands"
-                Content = "COMMANDS"
-            },
-            @{
-                Title = "3. How the Workflow Works"
-                Content = @"
-
-    The SDLC orchestrator assesses task complexity, selects which phases
-    to run, then delegates to phase agents in order. Each agent produces
-    artifacts that feed the next. Quality gates block advancement until
-    requirements are met. Iteration loops allow agents to retry failed
-    phases (with circuit breakers to prevent infinite loops).
-"@
-            },
-            @{
-                Title = "4. The Constitution"
-                Content = @"
-
-    Your project's constitution (docs/isdlc/constitution.md) defines
-    governance rules: testing thresholds, security requirements, coding
-    standards. Created during /discover and enforced by hooks throughout
-    every phase. It persists across sessions.
-"@
-            },
-            @{
-                Title = "5. What to Do Next"
-                Content = "NEXTSTEPS"
-            },
-            @{
-                Title = "6. The 16 Phases"
-                Content = @"
-
-    Phase  Agent                        Purpose
-    -----  ---------------------------  --------------------------------
-    00     Quick Scan                    Lightweight scope estimate
-    01     Requirements Analyst          Capture & structure requirements
-    02     Solution Architect            Architecture & tech decisions
-    03     System Designer               Interface & module design
-    04     Test Design Engineer           Test strategy & case design
-    05     Software Developer            TDD implementation
-    06     Integration Tester            Integration & E2E testing
-    07     QA Engineer                   Code review & quality metrics
-    08     Security Compliance Auditor   Security scanning & validation
-    09     CI/CD Engineer                Pipeline configuration
-    10     Environment Builder           Build & health-check services
-    11     Deployment Engineer           Staging deployment & smoke tests
-    12     Release Manager               Production release coordination
-    13     Site Reliability Engineer     Monitoring & incident response
-
-    Plus 14 specialized agents: Discover (6), Exploration (4), Tracing (4)
-    Not all phases run for every task -- the orchestrator selects by complexity.
-"@
-            },
-            @{
-                Title = "7. Quality Gates & Hooks"
-                Content = @"
-
-    Each phase has a gate checklist that must pass before advancing.
-    The gate-blocker hook enforces this deterministically -- checking:
-      * Required artifacts exist
-      * Iteration requirements met (min iterations, test evidence)
-      * Constitution validated
-      * Phase agent was delegated to
-
-    10 hooks run automatically (all deterministic, no LLM calls):
-      skill-validator, log-skill-usage, iteration-corridor,
-      constitution-validator, test-watcher, menu-tracker,
-      model-provider-router, gate-blocker,
-      skill-delegation-enforcer, delegation-gate
-"@
-            },
-            @{
-                Title = "8. Workflow Example"
-                Content = @"
-
-    Running /sdlc feature "Add user auth":
-
-      1. Orchestrator assesses complexity -> selects phases
-      2. Requirements Analyst captures user stories -> requirements-spec.md
-      3. Solution Architect designs auth system -> architecture-overview.md
-      4. System Designer creates API contracts -> interface-spec.yaml
-      5. Test Design Engineer creates test plan -> test-strategy.md
-      6. Software Developer writes code (TDD) -> source code + tests
-      7. Integration Tester runs full suite -> test reports
-      8. QA Engineer reviews code quality -> review report
-      9. Security Auditor validates auth -> security report
-
-    Each gate must pass before the next phase begins.
-"@
-            }
-        )
-
-        $tourDone = $false
-        for ($i = 0; $i -lt $tourSections.Count; $i++) {
-            $section = $tourSections[$i]
-            Write-Host ""
-            Write-Host "  --- $($section.Title) ---" -ForegroundColor Cyan
-
-            if ($section.Content -eq "COMMANDS") {
-                Write-Host ""
-                Write-Host "    /discover               " -ForegroundColor Green -NoNewline
-                Write-Host "-- Analyze your project or describe a new one"
-                Write-Host "    /sdlc feature `"desc`"   " -ForegroundColor Green -NoNewline
-                Write-Host "-- Develop a feature end-to-end through all phases"
-                Write-Host "    /sdlc fix `"desc`"       " -ForegroundColor Green -NoNewline
-                Write-Host "-- Fix a bug with TDD and tracing agents"
-                Write-Host "    /provider              " -ForegroundColor Green -NoNewline
-                Write-Host "-- Configure which LLM models power sub-agents"
-                Write-Host ""
-            }
-            elseif ($section.Content -eq "NEXTSTEPS") {
-                Write-Host ""
-                Write-Host "    * Run " -NoNewline
-                Write-Host "/discover" -ForegroundColor Green -NoNewline
-                Write-Host " to analyze your project"
-                Write-Host "    * Run " -NoNewline
-                Write-Host "/sdlc feature" -ForegroundColor Green -NoNewline
-                Write-Host " or " -NoNewline
-                Write-Host "/sdlc fix" -ForegroundColor Green -NoNewline
-                Write-Host " to start developing"
-                Write-Host "    * Run " -NoNewline
-                Write-Host "/tour" -ForegroundColor Green -NoNewline
-                Write-Host " in Claude Code anytime for the full walkthrough"
-                Write-Host ""
-            }
-            else {
-                Write-Host $section.Content
-            }
-
-            if ($i -lt ($tourSections.Count - 1)) {
-                $tourContinue = Read-Host "    Continue to next topic? [Y/skip/done]"
-                if ([string]::IsNullOrEmpty($tourContinue)) { $tourContinue = "Y" }
-                if ($tourContinue -match '^[Dd]') {
-                    Write-Host ""
-                    Write-Success "Tour ended. Run /tour in Claude Code anytime to revisit."
-                    Write-Host ""
-                    $tourDone = $true
-                    break
-                }
-            }
-        }
-        if (-not $tourDone) {
-            Write-Success "Tour complete! You're ready to start."
-            Write-Host ""
-        }
     }
     else {
         Write-Host ""
-        Write-Warn "Skipped. Run /tour in Claude Code anytime for the introduction."
+        Write-Warn "Skipped. Run /tour in Claude Code for the interactive guide."
         Write-Host ""
     }
 }
