@@ -24,33 +24,29 @@ When `/discover` is invoked without any flags or options, present a discovery mo
 
 Select a discovery mode:
 
-[1] Discover (auto-detect) (Recommended)
-    Auto-detect new vs existing project and run full analysis
+[1] New Project Setup
+    Define your project, select tech stack, and create constitution
 
-[2] New Project Setup
-    Force new project flow (define project, tech stack, constitution)
+[2] Existing Project Analysis (Recommended)
+    Full codebase analysis with behavior extraction
 
-[3] Existing Project Analysis
-    Force existing project analysis (architecture, tests, features)
+[3] Chat / Explore
+    Explore the project, discuss functionality, review backlog, ask questions
 
-[4] Scoped Analysis
-    Focus on a specific domain, module, or endpoint
-
-Enter selection (1-4):
+Enter selection (1-3):
 ```
+
+Note: "(Recommended)" is shown on [2] by default. The orchestrator dynamically moves it to [1] when no existing code is detected.
 
 **After Selection Mapping:**
 
 | Selection | Equivalent | Action |
 |-----------|------------|--------|
-| [1] | `/discover` (auto-detect) | Proceed to auto-detect flow (FAST PATH CHECK) |
-| [2] | `/discover --new` | Skip detection, go directly to NEW PROJECT FLOW |
-| [3] | `/discover --existing` | Skip detection, go directly to EXISTING PROJECT FLOW |
-| [4] | `/discover --existing --scope ...` | Ask follow-up for scope type and target, then run EXISTING PROJECT FLOW with scope |
+| [1] | `/discover --new` | Go directly to NEW PROJECT FLOW |
+| [2] | `/discover --existing` | Go directly to EXISTING PROJECT FLOW |
+| [3] | (no CLI equivalent) | Enter Chat / Explore conversational mode |
 
-**Option [4] follow-up:** Ask for scope type (module/endpoint/domain) and target name, then proceed as if `--existing --scope {type} --target {name}` were provided.
-
-**If any flags/options ARE provided** (`--new`, `--existing`, `--scope`, `--project`, etc.), skip this menu entirely and proceed directly to the appropriate flow.
+**If any flags/options ARE provided** (`--new`, `--existing`, `--project`, etc.), skip this menu entirely and proceed directly to the appropriate flow.
 
 ### Options
 | Option | Description |
@@ -60,19 +56,19 @@ Enter selection (1-4):
 | `--project {id}` | Target a specific project in monorepo mode |
 | `--skip-tests` | Skip test infrastructure evaluation |
 | `--skip-skills` | Skip skills.sh integration |
-| `--scope {value}` | Analysis scope: `all`, `module`, `endpoint`, `domain` (default: all) |
-| `--target {name}` | Target name (required when scope is module/endpoint/domain) |
-| `--priority {value}` | Filter by risk priority: `all`, `critical`, `high`, `medium` (default: all) |
 | `--atdd-ready` | Prepare AC for ATDD workflow integration |
 | `--help` | Show this help message |
 
 ### Examples
 ```bash
-# Auto-detect project type (recommended — full analysis with behavior extraction)
+# Run discovery (presents interactive menu)
 /discover
 
 # Force new project setup
 /discover --new
+
+# Analyze existing project
+/discover --existing
 
 # Analyze existing project, skip test evaluation
 /discover --existing --skip-tests
@@ -80,17 +76,8 @@ Enter selection (1-4):
 # Discover a specific project in a monorepo
 /discover --project api-service
 
-# Focus on specific domain
-/discover --scope domain --target "payments"
-
-# Only critical paths (payment, auth, core business)
-/discover --priority critical
-
 # Prepare for ATDD workflow
 /discover --atdd-ready
-
-# Analyze specific endpoint
-/discover --scope endpoint --target "/api/users/register"
 ```
 
 ### What It Does
@@ -167,7 +154,7 @@ When this command is invoked:
 **If NO flags/options provided (`/discover` alone):**
 1. Use the Task tool to launch the `discover-orchestrator` agent
 2. Pass explicit instruction: "No options specified. Present the interactive discovery mode selection menu before proceeding."
-3. The orchestrator presents the 4-option menu and waits for user selection before taking further action
+3. The orchestrator presents the 3-option menu and waits for user selection before taking further action
 
 **If flags/options ARE provided (`/discover --new`, `/discover --existing`, etc.):**
 1. **Launch discover-orchestrator agent** via the Task tool:
