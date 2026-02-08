@@ -886,6 +886,29 @@ function clearPendingDelegation() {
 }
 
 /**
+ * Read code_review configuration from state.json.
+ * Returns safe defaults if section is missing, state is unreadable, or fields are invalid.
+ * @param {string} [projectId] - Optional project ID for monorepo mode
+ * @returns {{ enabled: boolean, team_size: number }}
+ */
+function readCodeReviewConfig(projectId) {
+    try {
+        const state = readState(projectId);
+        if (state && state.code_review) {
+            return {
+                enabled: state.code_review.enabled === true,
+                team_size: typeof state.code_review.team_size === 'number'
+                    ? state.code_review.team_size
+                    : 1
+            };
+        }
+    } catch (e) {
+        // Fail-open: return disabled defaults
+    }
+    return { enabled: false, team_size: 1 };
+}
+
+/**
  * Debug log (only when SKILL_VALIDATOR_DEBUG=true)
  * @param {...any} args - Arguments to log
  */
@@ -933,5 +956,7 @@ module.exports = {
     readPendingDelegation,
     writePendingDelegation,
     clearPendingDelegation,
+    // Code review configuration
+    readCodeReviewConfig,
     debugLog
 };
