@@ -27,7 +27,7 @@ const {
 } = require('./hook-test-utils.cjs');
 
 /** Absolute path to the original hook source */
-const hookSrcPath = path.resolve(__dirname, '..', 'menu-tracker.js');
+const hookSrcPath = path.resolve(__dirname, '..', 'menu-tracker.cjs');
 
 // =============================================================================
 // Test Suite: menu-tracker.js
@@ -41,7 +41,8 @@ describe('menu-tracker.js (PostToolUse)', () => {
     beforeEach(() => {
         setupTestEnv({
             current_phase: '01-requirements',
-            iteration_enforcement: { enabled: true }
+            iteration_enforcement: { enabled: true },
+            active_workflow: { type: 'feature', current_phase: '01-requirements' }
         });
         hookPath = prepareHook(hookSrcPath);
     });
@@ -59,6 +60,7 @@ describe('menu-tracker.js (PostToolUse)', () => {
             current_phase: '06-implementation',
             skill_usage_log: [],
             iteration_enforcement: { enabled: true },
+            active_workflow: { type: 'feature', current_phase: '06-implementation' },
             phases: {}
         });
 
@@ -81,6 +83,7 @@ describe('menu-tracker.js (PostToolUse)', () => {
             current_phase: '01-requirements',
             skill_usage_log: [],
             iteration_enforcement: { enabled: false },
+            active_workflow: { type: 'feature', current_phase: '01-requirements' },
             phases: {}
         });
 
@@ -261,6 +264,7 @@ describe('menu-tracker.js (PostToolUse)', () => {
             skill_enforcement: { enabled: true, mode: 'observe', fail_behavior: 'allow', manifest_version: '4.0.0' },
             current_phase: '01-requirements',
             skill_usage_log: [],
+            active_workflow: { type: 'feature', current_phase: '01-requirements' },
             // No iteration_enforcement key at all
             phases: {}
         });

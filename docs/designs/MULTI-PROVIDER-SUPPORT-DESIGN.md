@@ -122,7 +122,7 @@ The key innovation is **phase-aware routing**: different SDLC phases can use dif
 │  ┌──────────────────┐                                                        │
 │  │   Task Tool      │◄────── PreToolUse Hook                                │
 │  │   Invocation     │        ┌─────────────────────────────────────────┐    │
-│  └────────┬─────────┘        │     model-provider-router.js            │    │
+│  └────────┬─────────┘        │     model-provider-router.cjs            │    │
 │           │                  │                                         │    │
 │           │                  │  1. Read target agent metadata          │    │
 │           │                  │  2. Get phase from state.json           │    │
@@ -579,7 +579,7 @@ environment:
 
 ```
 src/claude/hooks/
-├── model-provider-router.js       # PreToolUse hook for routing
+├── model-provider-router.cjs       # PreToolUse hook for routing
 ├── provider-health-checker.js     # Health check utility
 └── config/
     └── provider-defaults.yaml     # Default provider config template
@@ -595,13 +595,13 @@ src/claude/commands/
 └── provider.md                    # /provider command for management
 ```
 
-### Hook: model-provider-router.js
+### Hook: model-provider-router.cjs
 
 ```javascript
 #!/usr/bin/env node
 
 /**
- * model-provider-router.js
+ * model-provider-router.cjs
  *
  * PreToolUse hook that intercepts Task tool calls and injects
  * the appropriate provider/model configuration based on:
@@ -1383,7 +1383,7 @@ defaults:
 
 ```
 src/claude/hooks/
-├── model-provider-router.js          # NEW: PreToolUse routing hook
+├── model-provider-router.cjs          # NEW: PreToolUse routing hook
 ├── provider-health-checker.js        # NEW: Health check utility
 ├── lib/
 │   ├── common.js                     # EXISTING
@@ -1421,11 +1421,11 @@ Update `src/claude/settings.json`:
       {
         "matcher": "Task",
         "hooks": [
-          "node src/claude/hooks/model-provider-router.js",
-          "node src/claude/hooks/iteration-corridor.js",
-          "node src/claude/hooks/skill-validator.js",
-          "node src/claude/hooks/gate-blocker.js",
-          "node src/claude/hooks/constitution-validator.js"
+          "node src/claude/hooks/model-provider-router.cjs",
+          "node src/claude/hooks/iteration-corridor.cjs",
+          "node src/claude/hooks/skill-validator.cjs",
+          "node src/claude/hooks/gate-blocker.cjs",
+          "node src/claude/hooks/constitution-validator.cjs"
         ]
       }
     ]
@@ -1433,7 +1433,7 @@ Update `src/claude/settings.json`:
 }
 ```
 
-**Note**: `model-provider-router.js` runs FIRST so it can inject environment overrides before other hooks process.
+**Note**: `model-provider-router.cjs` runs FIRST so it can inject environment overrides before other hooks process.
 
 ---
 
@@ -1443,7 +1443,7 @@ Update `src/claude/settings.json`:
 
 | Task | Priority | Effort |
 |------|----------|--------|
-| Create `model-provider-router.js` hook | P0 | 4h |
+| Create `model-provider-router.cjs` hook | P0 | 4h |
 | Create `provider-utils.js` library | P0 | 2h |
 | Create `provider-defaults.yaml` | P0 | 1h |
 | Create `providers.yaml.template` | P0 | 1h |

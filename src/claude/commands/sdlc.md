@@ -196,8 +196,8 @@ Enter selection (1-5):
 | 1 (New, no constitution) | [2] | Display path to constitution.md and exit |
 | 2 (Existing, no constitution) | [1] | Execute `/discover` (runs EXISTING PROJECT FLOW) |
 | 2 (Existing, no constitution) | [2] | Display path to constitution.md and exit |
-| 3 (Ready, no workflow) | [1] | Execute `/sdlc feature` |
-| 3 (Ready, no workflow) | [2] | Execute `/sdlc fix` |
+| 3 (Ready, no workflow) | [1] | Execute `/sdlc feature` (no description — presents backlog picker) |
+| 3 (Ready, no workflow) | [2] | Execute `/sdlc fix` (no description — presents backlog picker) |
 | 3 (Ready, no workflow) | [3] | Execute `/sdlc test run` |
 | 3 (Ready, no workflow) | [4] | Execute `/sdlc test generate` |
 | 3 (Ready, no workflow) | [5] | Execute `/sdlc start` (full lifecycle) |
@@ -217,6 +217,7 @@ Enter selection (1-5):
 ```
 /sdlc feature "Feature description"
 /sdlc feature "Feature description" --project api-service
+/sdlc feature                        (no description — presents backlog picker)
 ```
 1. Validate constitution exists and is not a template
 2. Check no active workflow (block if one exists, suggest `/sdlc cancel` first)
@@ -225,11 +226,18 @@ Enter selection (1-5):
 5. After GATE-01: creates `feature/REQ-NNNN-description` branch from main
 6. After GATE-07: merges branch to main, deletes branch
 
+**No-description behavior:** When `/sdlc feature` is invoked without a description (no quoted text, no feature ID), the orchestrator presents a **backlog picker** instead of immediately asking for a description. The backlog picker scans:
+- `CLAUDE.md` for unchecked items (`- [ ] ...`) in the Next Session section
+- `.isdlc/state.json` → `workflow_history` for cancelled feature workflows
+- User can also choose `[O] Other` to describe a new feature manually
+See the BACKLOG PICKER section in the orchestrator agent for full details.
+
 **fix** - Fix a bug or defect with TDD
 ```
 /sdlc fix "Bug description"
 /sdlc fix "Bug description" --link https://mycompany.atlassian.net/browse/JIRA-1234
 /sdlc fix "Bug description" --project api-service
+/sdlc fix                    (no description — presents backlog picker)
 ```
 1. Validate constitution exists and is not a template
 2. Check no active workflow
@@ -241,6 +249,12 @@ Enter selection (1-5):
 8. Phase 05 requires a failing test before the fix (TDD enforcement)
 9. After GATE-01: creates `bugfix/BUG-NNNN-external-id` branch from main
 10. After GATE-07: merges branch to main, deletes branch
+
+**No-description behavior:** When `/sdlc fix` is invoked without a description, the orchestrator presents a **backlog picker** that scans:
+- `.isdlc/state.json` → `workflow_history` for cancelled fix workflows
+- `CLAUDE.md` for unchecked items containing bug-related keywords (fix, bug, broken, error, crash, regression, issue)
+- User can also choose `[O] Other` to describe a new bug manually
+See the BACKLOG PICKER section in the orchestrator agent for full details.
 
 **test run** - Execute existing automation tests
 ```
@@ -672,13 +686,20 @@ When this command is invoked:
 4. Otherwise, present the appropriate scenario menu (1-4) based on detection logic
 5. Wait for user selection before taking further action
 
-**If action argument provided (`/sdlc <action>`):**
+**If action is `feature` or `fix` WITHOUT a description (`/sdlc feature` or `/sdlc fix` alone):**
 1. Use the Task tool to launch the `sdlc-orchestrator` agent
-2. Pass the action, any arguments, and `--project` flag (if present) to the agent
-3. The orchestrator will coordinate the appropriate workflow
+2. Pass explicit instruction: "Action is {feature|fix} but no description provided. Run the BACKLOG PICKER in {feature|fix} mode to let the user select from pending items or describe a new one."
+3. The orchestrator scans CLAUDE.md and state.json, presents the backlog picker, waits for selection, then proceeds with the chosen description
+
+**If action argument provided with description (`/sdlc <action> "description"`):**
+1. Use the Task tool to launch the `sdlc-orchestrator` agent
+2. Pass the action, description, and `--project` flag (if present) to the agent
+3. The orchestrator will coordinate the appropriate workflow (skips backlog picker)
 
 ```
 /sdlc (no args)    → Task tool → sdlc-orchestrator → Interactive Menu → User Selection → Action
+/sdlc feature      → Task tool → sdlc-orchestrator → Backlog Picker (feature) → User Selection → Workflow
+/sdlc fix          → Task tool → sdlc-orchestrator → Backlog Picker (fix) → User Selection → Workflow
 /sdlc feature ...  → Task tool → sdlc-orchestrator → Initialize feature workflow → Phase agents
 /sdlc fix ...      → Task tool → sdlc-orchestrator → Initialize fix workflow → Phase agents
 /sdlc test run     → Task tool → sdlc-orchestrator → Initialize test-run workflow → Phase 06 agent

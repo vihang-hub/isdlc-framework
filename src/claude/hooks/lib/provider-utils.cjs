@@ -13,7 +13,7 @@ const path = require('path');
 const http = require('http');
 const https = require('https');
 
-const { getProjectRoot, readState, writeState } = require('./common.js');
+const { getProjectRoot, readState, writeState } = require('./common.cjs');
 
 // ============================================================================
 // YAML PARSING (Minimal implementation - no external dependency)

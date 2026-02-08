@@ -27,7 +27,7 @@ const {
 } = require('./hook-test-utils.cjs');
 
 // Source path for common.js
-const commonSrcPath = path.resolve(__dirname, '..', 'lib', 'common.js');
+const commonSrcPath = path.resolve(__dirname, '..', 'lib', 'common.cjs');
 
 /**
  * Copy common.js into the temp test directory as common.cjs so we can require()

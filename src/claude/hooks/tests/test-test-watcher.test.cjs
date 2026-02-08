@@ -38,11 +38,11 @@ const {
 } = require('./hook-test-utils.cjs');
 
 /** Source paths */
-const hookSrcPath = path.resolve(__dirname, '..', 'test-watcher.js');
-const commonSrcPath = path.resolve(__dirname, '..', 'lib', 'common.js');
+const hookSrcPath = path.resolve(__dirname, '..', 'test-watcher.cjs');
+const commonSrcPath = path.resolve(__dirname, '..', 'lib', 'common.cjs');
 
 /**
- * Copy the hook file and its lib/common.js dependency into the temp test dir.
+ * Copy the hook file and its lib/common.cjs dependency into the temp test dir.
  * Returns the absolute path to the copied hook file.
  */
 function installHook() {
@@ -51,8 +51,8 @@ function installHook() {
     if (!fs.existsSync(libDir)) {
         fs.mkdirSync(libDir, { recursive: true });
     }
-    fs.copyFileSync(commonSrcPath, path.join(libDir, 'common.js'));
-    const hookDest = path.join(testDir, 'test-watcher.js');
+    fs.copyFileSync(commonSrcPath, path.join(libDir, 'common.cjs'));
+    const hookDest = path.join(testDir, 'test-watcher.cjs');
     fs.copyFileSync(hookSrcPath, hookDest);
     return hookDest;
 }
@@ -85,11 +85,19 @@ function bashTestInput(command, output, exitCode) {
  * Base state for a phase with test_iteration enabled.
  * Uses phase 06-implementation which has test_iteration.enabled: true in the
  * iteration-requirements.json config.
+ *
+ * NOTE: active_workflow is required — test-watcher exits silently when
+ * no active workflow exists (to avoid noise during casual test runs).
  */
 function baseTestState(extras) {
     return {
         current_phase: '06-implementation',
         iteration_enforcement: { enabled: true },
+        active_workflow: {
+            type: 'feature',
+            current_phase: '06-implementation',
+            current_phase_index: 5
+        },
         phases: {
             '06-implementation': {
                 status: 'in_progress',
@@ -359,6 +367,7 @@ describe('test-watcher.js', () => {
         setupTestEnv({
             current_phase: '06-implementation',
             iteration_enforcement: { enabled: false },
+            active_workflow: { type: 'feature', current_phase: '06-implementation' },
             phases: {
                 '06-implementation': { status: 'in_progress' }
             }
@@ -448,6 +457,34 @@ describe('test-watcher.js', () => {
     });
 
     // -----------------------------------------------------------------------
+    // 17b. No active_workflow - passes through silently (no iteration noise)
+    // -----------------------------------------------------------------------
+    it('passes through silently when no active_workflow exists', async () => {
+        cleanupTestEnv();
+        setupTestEnv({
+            current_phase: '06-implementation',
+            iteration_enforcement: { enabled: true },
+            // No active_workflow — casual test run outside SDLC workflow
+            phases: {
+                '06-implementation': { status: 'in_progress' }
+            }
+        });
+        hookPath = installHook();
+
+        const output = 'FAIL\n3 failed\nError: assertion failed';
+        const result = await runHook(hookPath, bashTestInput('npm test', output));
+        assert.equal(result.code, 0);
+        assert.equal(result.stdout, '', 'Should pass through silently without active workflow');
+
+        // Should NOT modify state
+        const state = readState();
+        assert.ok(
+            !state.phases['06-implementation'].iteration_requirements,
+            'Should not create iteration state when no active workflow'
+        );
+    });
+
+    // -----------------------------------------------------------------------
     // 18. vitest detected as test command
     // -----------------------------------------------------------------------
     it('detects vitest as a test command', async () => {
@@ -505,6 +542,7 @@ describe('test-watcher.js', () => {
         setupTestEnv({
             current_phase: '01-requirements',
             iteration_enforcement: { enabled: true },
+            active_workflow: { type: 'feature', current_phase: '01-requirements' },
             phases: {
                 '01-requirements': { status: 'in_progress' }
             }

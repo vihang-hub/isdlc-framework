@@ -29,12 +29,12 @@ const {
 } = require('./hook-test-utils.cjs');
 
 // Source paths
-const commonSrcPath = path.resolve(__dirname, '..', 'lib', 'common.js');
-const providerUtilsSrcPath = path.resolve(__dirname, '..', 'lib', 'provider-utils.js');
+const commonSrcPath = path.resolve(__dirname, '..', 'lib', 'common.cjs');
+const providerUtilsSrcPath = path.resolve(__dirname, '..', 'lib', 'provider-utils.cjs');
 
 /**
- * Copy common.js and provider-utils.js into the temp dir as .cjs files.
- * Patches the require('./common.js') in provider-utils to require('./common.cjs').
+ * Copy common.cjs and provider-utils.cjs into the temp dir.
+ * Source files are already .cjs with correct require paths — no patching needed.
  * Returns the path to provider-utils.cjs.
  */
 function installProviderUtilsCjs() {
@@ -44,17 +44,12 @@ function installProviderUtilsCjs() {
         fs.mkdirSync(libDir, { recursive: true });
     }
 
-    // Copy common.js as common.cjs
+    // Copy common.cjs directly
     fs.copyFileSync(commonSrcPath, path.join(libDir, 'common.cjs'));
 
-    // Copy provider-utils.js as provider-utils.cjs, patch require path
-    let puContent = fs.readFileSync(providerUtilsSrcPath, 'utf8');
-    puContent = puContent.replace(
-        "require('./common.js')",
-        "require('./common.cjs')"
-    );
+    // Copy provider-utils.cjs directly
     const puDest = path.join(libDir, 'provider-utils.cjs');
-    fs.writeFileSync(puDest, puContent);
+    fs.copyFileSync(providerUtilsSrcPath, puDest);
 
     return puDest;
 }

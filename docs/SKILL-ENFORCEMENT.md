@@ -37,13 +37,13 @@ Skill Observability provides visibility into agent delegation patterns. Each of 
 │                    OBSERVABILITY FLOW                          │
 ├─────────────────────────────────────────────────────────────┤
 │  1. Agent invokes Task tool to delegate to another agent     │
-│  2. PreToolUse hook (skill-validator.js) observes            │
+│  2. PreToolUse hook (skill-validator.cjs) observes            │
 │  3. Hook script checks:                                      │
 │     - Which agent is being invoked                           │
 │     - Which phase is active                                  │
 │     - Whether agent matches the current phase                │
 │  4. Always allows — exit 0 with no output                    │
-│  5. PostToolUse hook (log-skill-usage.js) logs all calls     │
+│  5. PostToolUse hook (log-skill-usage.cjs) logs all calls     │
 │  6. Cross-phase usage flagged as "cross-phase-usage" in log  │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -52,9 +52,9 @@ Skill Observability provides visibility into agent delegation patterns. Each of 
 
 | File | Purpose |
 |------|---------|
-| `.claude/hooks/skill-validator.js` | PreToolUse observability hook — always allows |
-| `.claude/hooks/log-skill-usage.js` | PostToolUse hook — logs all Task tool usage |
-| `.claude/hooks/lib/common.js` | Shared utilities (JSON parsing, manifest lookup) |
+| `.claude/hooks/skill-validator.cjs` | PreToolUse observability hook — always allows |
+| `.claude/hooks/log-skill-usage.cjs` | PostToolUse hook — logs all Task tool usage |
+| `.claude/hooks/lib/common.cjs` | Shared utilities (JSON parsing, manifest lookup) |
 | `.claude/settings.json` | Hook configuration (matchers, timeouts) |
 | `config/skills-manifest.json` | JSON manifest for runtime lookup |
 
@@ -71,18 +71,18 @@ The hooks are configured in `.claude/settings.json`:
       {
         "matcher": "Task",
         "hooks": [
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/model-provider-router.js", "timeout": 10000 },
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/iteration-corridor.js", "timeout": 10000 },
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/skill-validator.js", "timeout": 10000 },
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/gate-blocker.js", "timeout": 10000 },
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/constitution-validator.js", "timeout": 10000 }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/model-provider-router.cjs", "timeout": 10000 },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/iteration-corridor.cjs", "timeout": 10000 },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/skill-validator.cjs", "timeout": 10000 },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/gate-blocker.cjs", "timeout": 10000 },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/constitution-validator.cjs", "timeout": 10000 }
         ]
       },
       {
         "matcher": "Skill",
         "hooks": [
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/iteration-corridor.js", "timeout": 10000 },
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/gate-blocker.js", "timeout": 10000 }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/iteration-corridor.cjs", "timeout": 10000 },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/gate-blocker.cjs", "timeout": 10000 }
         ]
       }
     ],
@@ -90,14 +90,14 @@ The hooks are configured in `.claude/settings.json`:
       {
         "matcher": "Task",
         "hooks": [
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/log-skill-usage.js", "timeout": 5000 },
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/menu-tracker.js", "timeout": 5000 }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/log-skill-usage.cjs", "timeout": 5000 },
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/menu-tracker.cjs", "timeout": 5000 }
         ]
       },
       {
         "matcher": "Bash",
         "hooks": [
-          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/test-watcher.js", "timeout": 10000 }
+          { "type": "command", "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/test-watcher.cjs", "timeout": 10000 }
         ]
       }
     ]
@@ -290,23 +290,23 @@ At each phase gate, skill usage is reviewed:
 
 | File | Trigger | Purpose |
 |------|---------|---------|
-| `.claude/hooks/model-provider-router.js` | PreToolUse (Task) | Routes to configured LLM provider |
-| `.claude/hooks/iteration-corridor.js` | PreToolUse (Task, Skill) | Enforces iteration limits per phase |
-| `.claude/hooks/skill-validator.js` | PreToolUse (Task) | Observability hook — always allows |
-| `.claude/hooks/gate-blocker.js` | PreToolUse (Task, Skill) | Blocks gate advancement if requirements unmet |
-| `.claude/hooks/constitution-validator.js` | PreToolUse (Task) | Validates constitutional compliance |
-| `.claude/hooks/log-skill-usage.js` | PostToolUse (Task) | Logs all Task tool delegations |
-| `.claude/hooks/menu-tracker.js` | PostToolUse (Task) | Tracks menu/command usage |
-| `.claude/hooks/test-watcher.js` | PostToolUse (Bash) | Monitors test execution results |
+| `.claude/hooks/model-provider-router.cjs` | PreToolUse (Task) | Routes to configured LLM provider |
+| `.claude/hooks/iteration-corridor.cjs` | PreToolUse (Task, Skill) | Enforces iteration limits per phase |
+| `.claude/hooks/skill-validator.cjs` | PreToolUse (Task) | Observability hook — always allows |
+| `.claude/hooks/gate-blocker.cjs` | PreToolUse (Task, Skill) | Blocks gate advancement if requirements unmet |
+| `.claude/hooks/constitution-validator.cjs` | PreToolUse (Task) | Validates constitutional compliance |
+| `.claude/hooks/log-skill-usage.cjs` | PostToolUse (Task) | Logs all Task tool delegations |
+| `.claude/hooks/menu-tracker.cjs` | PostToolUse (Task) | Tracks menu/command usage |
+| `.claude/hooks/test-watcher.cjs` | PostToolUse (Bash) | Monitors test execution results |
 
 **Supporting files:**
 
 | File | Purpose |
 |------|---------|
-| `.claude/hooks/lib/common.js` | Shared utilities (JSON parsing, manifest lookup) |
+| `.claude/hooks/lib/common.cjs` | Shared utilities (JSON parsing, manifest lookup) |
 | `.claude/hooks/config/skills-manifest.json` | JSON manifest for runtime lookup |
 | `.claude/hooks/config/iteration-requirements.json` | Phase iteration requirements |
-| `.claude/hooks/tests/test-skill-validator.js` | Test suite (24 tests) |
+| `.claude/hooks/tests/test-skill-validator.cjs` | Test suite (24 tests) |
 
 ---
 
@@ -350,10 +350,10 @@ Logged: status: "executed", reason: "authorized-orchestrator"
 
 ```bash
 # Run the test suite (Node.js - cross-platform)
-node .claude/hooks/tests/test-skill-validator.js
+node .claude/hooks/tests/test-skill-validator.cjs
 
 # Run with verbose output
-node .claude/hooks/tests/test-skill-validator.js --verbose
+node .claude/hooks/tests/test-skill-validator.cjs --verbose
 ```
 
 ### Test Coverage
@@ -361,8 +361,8 @@ node .claude/hooks/tests/test-skill-validator.js --verbose
 | Test Area | Tests |
 |-----------|-------|
 | common.js utilities | 7 |
-| skill-validator.js | 8 |
-| log-skill-usage.js | 4 |
+| skill-validator.cjs | 8 |
+| log-skill-usage.cjs | 4 |
 | Integration | 1 |
 | gate-blocker delegation | 4 |
 | **Total** | **24** |
@@ -373,7 +373,7 @@ node .claude/hooks/tests/test-skill-validator.js --verbose
 
 ### Problem Statement
 
-Today, skill observability logs which **agents** were delegated to, but there is no mechanism to verify that agents actually exercised their **skills**. An agent could be invoked, do nothing meaningful, and the gate would still pass. The `gate-blocker.js` hook checks three requirements (test iteration, constitutional validation, interactive elicitation) but does **not** check skill usage.
+Today, skill observability logs which **agents** were delegated to, but there is no mechanism to verify that agents actually exercised their **skills**. An agent could be invoked, do nothing meaningful, and the gate would still pass. The `gate-blocker.cjs` hook checks three requirements (test iteration, constitutional validation, interactive elicitation) but does **not** check skill usage.
 
 The gap is structural:
 - The `skill_usage_log` records agent-level delegations (e.g., `software-developer` was invoked)
@@ -392,7 +392,7 @@ Each agent writes its used skill IDs to `state.json` after executing skills. The
 **How it works:**
 1. Agent instructions (markdown) are updated to include: "Before requesting gate advancement, write `phases[phase].skills_used` to state.json"
 2. Agent writes an array like `["REQ-001", "REQ-004", "REQ-007"]` to state under the current phase
-3. `gate-blocker.js` adds a 4th check: `checkSkillUsageRequirement()`
+3. `gate-blocker.cjs` adds a 4th check: `checkSkillUsageRequirement()`
    - Reads `skills_used` from the phase state
    - Loads the manifest to get required skill IDs for the phase's agent
    - Compares the two sets and reports coverage percentage
@@ -412,7 +412,7 @@ Each agent writes its used skill IDs to `state.json` after executing skills. The
 
 **Hook changes:**
 ```javascript
-// gate-blocker.js — new check function
+// gate-blocker.cjs — new check function
 function checkSkillUsageRequirement(state, phase) {
   const skillsUsed = state.phases?.[phase]?.skills_used || [];
   const manifest = loadManifest();
@@ -440,8 +440,8 @@ function checkSkillUsageRequirement(state, phase) {
 The orchestrator already logs which agent it delegated to (via `skill_usage_log`). The gate check verifies that the expected agent was invoked at least once during the phase.
 
 **How it works:**
-1. No agent changes needed — the existing `log-skill-usage.js` PostToolUse hook already records every delegation
-2. `gate-blocker.js` adds a check: scan `skill_usage_log` for entries where `agent_phase` matches the current phase
+1. No agent changes needed — the existing `log-skill-usage.cjs` PostToolUse hook already records every delegation
+2. `gate-blocker.cjs` adds a check: scan `skill_usage_log` for entries where `agent_phase` matches the current phase
 3. If at least one entry exists for the expected agent, the check passes
 4. Gate assumes: if the correct agent ran for the phase, its skills were available and used
 
@@ -449,7 +449,7 @@ The orchestrator already logs which agent it delegated to (via `skill_usage_log`
 
 **Hook changes:**
 ```javascript
-// gate-blocker.js — new check function
+// gate-blocker.cjs — new check function
 function checkAgentDelegationRequirement(state, phase) {
   const log = state.skill_usage_log || [];
   const phaseEntries = log.filter(e => e.agent_phase === phase);
@@ -485,7 +485,7 @@ Agents explicitly report each skill invocation with evidence (artifact paths, li
      "timestamp": "2026-02-06T10:30:00Z"
    }
    ```
-3. `gate-blocker.js` validates: all required skill IDs for the phase appear in `skill_invocations`
+3. `gate-blocker.cjs` validates: all required skill IDs for the phase appear in `skill_invocations`
 4. Optionally define `required_skills` vs `optional_skills` per phase in `iteration-requirements.json`
 
 **Config changes:**
@@ -516,7 +516,7 @@ Agents explicitly report each skill invocation with evidence (artifact paths, li
 
 **Hook changes:**
 ```javascript
-// gate-blocker.js — new check function
+// gate-blocker.cjs — new check function
 function checkSkillInvocationsRequirement(state, phase, iterReqs) {
   const invocations = state.skill_invocations || [];
   const phaseInvocations = invocations.filter(i => i.phase === phase);
@@ -541,7 +541,7 @@ function checkSkillInvocationsRequirement(state, phase, iterReqs) {
 
 ### Recommendation
 
-**Option B has been implemented as the baseline** (Enhancement #4d). The `gate-blocker.js` hook now includes a 4th check — `checkAgentDelegationRequirement()` — that verifies the expected phase agent was delegated to at least once before allowing gate advancement. This uses existing `skill_usage_log` data written by `log-skill-usage.js`, requiring zero agent changes.
+**Option B has been implemented as the baseline** (Enhancement #4d). The `gate-blocker.cjs` hook now includes a 4th check — `checkAgentDelegationRequirement()` — that verifies the expected phase agent was delegated to at least once before allowing gate advancement. This uses existing `skill_usage_log` data written by `log-skill-usage.cjs`, requiring zero agent changes.
 
 The three options represent a spectrum from pragmatic to rigorous:
 

@@ -23,7 +23,7 @@ const {
     outputBlockResponse,
     debugLog,
     getProjectRoot
-} = require('./lib/common.js');
+} = require('./lib/common.cjs');
 
 const fs = require('fs');
 const path = require('path');

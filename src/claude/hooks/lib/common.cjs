@@ -850,6 +850,41 @@ function outputBlockResponse(stopReason) {
     }));
 }
 
+// =========================================================================
+// Pending Delegation Tracking
+// =========================================================================
+
+/**
+ * Read pending_delegation from state.json.
+ * @returns {object|null} The pending_delegation entry, or null if none
+ */
+function readPendingDelegation() {
+    const state = readState();
+    if (!state) return null;
+    return state.pending_delegation || null;
+}
+
+/**
+ * Write a pending_delegation entry to state.json.
+ * @param {object} entry - The delegation entry { skill, invoked_at, args }
+ */
+function writePendingDelegation(entry) {
+    const state = readState();
+    if (!state) return;
+    state.pending_delegation = entry;
+    writeState(state);
+}
+
+/**
+ * Clear pending_delegation from state.json (set to null).
+ */
+function clearPendingDelegation() {
+    const state = readState();
+    if (!state) return;
+    state.pending_delegation = null;
+    writeState(state);
+}
+
 /**
  * Debug log (only when SKILL_VALIDATOR_DEBUG=true)
  * @param {...any} args - Arguments to log
@@ -894,5 +929,9 @@ module.exports = {
     isAgentAuthorizedForPhase,
     readStdin,
     outputBlockResponse,
+    // Pending delegation tracking
+    readPendingDelegation,
+    writePendingDelegation,
+    clearPendingDelegation,
     debugLog
 };

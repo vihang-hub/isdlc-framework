@@ -20,7 +20,7 @@ const {
     getProjectRoot,
     getTimestamp,
     loadManifest
-} = require('./lib/common.js');
+} = require('./lib/common.cjs');
 
 const fs = require('fs');
 const path = require('path');

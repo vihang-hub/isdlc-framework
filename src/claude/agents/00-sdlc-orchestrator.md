@@ -225,8 +225,8 @@ What would you like to do?
 Enter selection (1-7):
 ```
 
-- Option [1] → Ask user to describe the feature, then execute `/sdlc feature "<description>"`
-- Option [2] → Ask user to describe the bug, then execute `/sdlc fix "<description>"`
+- Option [1] → Execute the **BACKLOG PICKER** in feature mode (see BACKLOG PICKER section below)
+- Option [2] → Execute the **BACKLOG PICKER** in fix mode (see BACKLOG PICKER section below)
 - Option [3] → Execute `/sdlc test run` (presents test type selection)
 - Option [4] → Execute `/sdlc test generate` (presents test type selection)
 - Option [5] → Ask user to describe the project, then execute `/sdlc start "<description>"`
@@ -267,6 +267,147 @@ Enter selection (1-5):
 2. **Never skip detection** - always check constitution, workflow, and project status first
 3. **Show detected info** - include what was detected (e.g., "Node.js, TypeScript" for existing projects)
 4. **Mark recommended option** - always indicate which option is recommended for the scenario
+
+# BACKLOG PICKER (No-Description Feature/Fix)
+
+When `/sdlc feature` or `/sdlc fix` is invoked **WITHOUT a description string** (no quoted text after the command), present a backlog picker instead of immediately asking for a description.
+
+## Trigger Conditions
+
+The backlog picker activates when:
+- `/sdlc feature` (no description after the command)
+- `/sdlc fix` (no description after the command)
+- Scenario 3 menu option [1] (New Feature) — since no description is provided
+- Scenario 3 menu option [2] (Fix) — since no description is provided
+
+**Skip condition:** If a description IS provided (e.g., `/sdlc feature "Build auth system"` or `/sdlc fix "Login broken"`), skip the backlog picker entirely and proceed directly to workflow initialization.
+
+## Backlog Scanning (Feature Mode)
+
+Scan these sources for pending work items:
+
+### Source 1: CLAUDE.md Unchecked Items
+
+1. Read the project-root `CLAUDE.md` file
+2. Scan the entire file for unchecked markdown task items matching the pattern `- [ ] <text>` (also accept `- [] <text>` without the space)
+3. Each matching item becomes a selectable option in the backlog list
+4. Strip the `- [ ] ` or `- [] ` prefix — the remaining text is the item description
+5. Preserve sub-items (indented `- ` lines immediately following a `- [ ]` item) as context but do NOT show them as separate selectable options
+
+### Source 2: Cancelled Feature Workflows (state.json)
+
+1. Read `.isdlc/state.json` → `workflow_history` array
+2. Filter for entries where `status == "cancelled"` AND `type` is `"feature"` or `"full-lifecycle"`
+3. Deduplicate by `description` — if the same feature was cancelled multiple times, show only the most recent entry
+4. Each cancelled workflow becomes a selectable option showing:
+   - Description from `workflow_history[].description`
+   - Cancelled phase from `workflow_history[].cancelled_at_phase`
+   - Cancellation reason from `workflow_history[].cancellation_reason`
+
+### Presentation (Feature Mode)
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║  iSDLC Framework - Select Feature to Implement               ║
+╚══════════════════════════════════════════════════════════════╝
+
+Pending items from CLAUDE.md:
+[1] {first unchecked item text}
+[2] {second unchecked item text}
+[3] {third unchecked item text}
+...
+
+Previously cancelled features:                    ← only if cancelled workflows exist
+[N+1] {description} (cancelled at Phase {phase})
+...
+
+[O] Other — Describe a new feature
+
+Enter selection:
+```
+
+Use `AskUserQuestion` to present the menu. Show at most **15 items** from CLAUDE.md. If more exist, show `... and {N} more items` after item 15. Truncate individual item descriptions to **80 characters** with `...` suffix. Always show `[O] Other` as the last option.
+
+**Empty state:** If CLAUDE.md has no unchecked items AND `workflow_history` has no cancelled feature workflows, skip the menu entirely and prompt directly:
+```
+No pending items found in CLAUDE.md or workflow history.
+Describe the feature you want to build:
+```
+
+### After Selection (Feature Mode)
+
+| Selection | Action |
+|-----------|--------|
+| [1-N] CLAUDE.md item | Use the item text as the feature description. Proceed to workflow initialization with that description. |
+| [N+1...] Cancelled workflow | Use the cancelled workflow's description. Proceed to workflow initialization. The new workflow is independent — it does NOT resume the cancelled one. |
+| [O] Other | Prompt: "Describe the feature you want to build:" — wait for user input, then proceed with that description. |
+
+## Backlog Scanning (Fix Mode)
+
+Scan these sources for pending fix items:
+
+### Source 1: Cancelled Fix Workflows (state.json)
+
+1. Read `.isdlc/state.json` → `workflow_history` array
+2. Filter for entries where `status == "cancelled"` AND `type == "fix"`
+3. Deduplicate by `description` — most recent entry only
+4. Each cancelled fix becomes a selectable option
+
+### Source 2: CLAUDE.md Bug-Related Items (Secondary)
+
+Unlike feature mode, CLAUDE.md items are NOT shown for fix mode by default since `- [ ]` items are typically feature requests. However, if any unchecked item text contains bug-related keywords, include those items:
+- Keywords: `fix`, `bug`, `broken`, `error`, `crash`, `regression`, `issue`, `defect`, `fail`
+- Case-insensitive matching
+
+### Presentation (Fix Mode)
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║  iSDLC Framework - Select Bug to Fix                         ║
+╚══════════════════════════════════════════════════════════════╝
+
+Previously cancelled fixes:                       ← only if cancelled fix workflows exist
+[1] {description} (cancelled at Phase {phase})
+...
+
+Bug-related items from CLAUDE.md:                 ← only if bug-keyword items exist
+[N+1] {item text}
+...
+
+[O] Other — Describe a new bug
+
+Enter selection:
+```
+
+Use `AskUserQuestion` to present the menu. Same truncation/limit rules as feature mode.
+
+**Empty state:** If no cancelled fix workflows AND no bug-related CLAUDE.md items, skip the menu and prompt directly:
+```
+No pending bugs found in workflow history or CLAUDE.md.
+Describe the bug you want to fix:
+```
+
+### After Selection (Fix Mode)
+
+| Selection | Action |
+|-----------|--------|
+| [1-N] Cancelled fix | Use the cancelled fix's description. Proceed to fix workflow initialization. |
+| [N+1...] CLAUDE.md bug item | Use the item text as the bug description. Proceed to fix workflow initialization. |
+| [O] Other | Prompt: "Describe the bug you want to fix:" — wait for user input, then proceed with that description. |
+
+## Backlog Picker Presentation Rules
+
+1. **Always use AskUserQuestion tool** to present the backlog picker options
+2. **Number items sequentially** starting from [1]
+3. **Truncate long item descriptions** to 80 characters with `...` suffix
+4. **Show at most 15 items** from CLAUDE.md (if more exist, show `... and {N} more items`)
+5. **Always show [O] Other** as the last option for manual entry
+6. **Cancelled workflows show context** — include the phase where it was cancelled
+7. **CLAUDE.md items come first**, cancelled workflows come second (feature mode)
+8. **Cancelled workflows come first** for fix mode (since they are more relevant to bug fixing)
+9. **After selection**, the chosen text becomes the feature/fix description and flows into the standard workflow initialization (Section 3)
+
+---
 
 # PHASE 00: EXPLORATION MODE
 

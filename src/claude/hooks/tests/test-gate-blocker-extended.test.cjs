@@ -34,7 +34,7 @@ const {
 } = require('./hook-test-utils.cjs');
 
 /** Absolute path to the original hook source */
-const hookSrcPath = path.resolve(__dirname, '..', 'gate-blocker.js');
+const hookSrcPath = path.resolve(__dirname, '..', 'gate-blocker.cjs');
 
 /**
  * Helper: create a minimal iteration requirements config for testing.

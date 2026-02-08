@@ -90,7 +90,67 @@ If `--project {id}` was passed, or if `.isdlc/monorepo.json` exists (at the reso
    - Constitution: {resolved constitution path}
    ```
 
-If NOT in monorepo mode, skip the preamble entirely and proceed to the fast path check.
+If NOT in monorepo mode, skip the preamble entirely and proceed to the no-argument menu check.
+
+### NO-ARGUMENT MENU (Before Fast Path Check)
+
+**CRITICAL**: When invoked via `/discover` with NO flags or options (no `--new`, `--existing`, `--scope`, `--target`, `--priority`, `--atdd-ready`, `--skip-tests`, `--skip-skills`, `--project`), present a discovery mode selection menu BEFORE proceeding to the FAST PATH CHECK.
+
+**If any flags/options ARE provided**, skip this menu entirely and proceed directly to the FAST PATH CHECK (or directly to the appropriate flow if `--new` or `--existing` is specified).
+
+#### Menu Presentation
+
+Use AskUserQuestion to present:
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║  iSDLC Framework - Discovery Mode Selection                  ║
+╚══════════════════════════════════════════════════════════════╝
+
+Select a discovery mode:
+
+[1] Discover (auto-detect) (Recommended)
+    Auto-detect new vs existing project and run full analysis
+
+[2] New Project Setup
+    Force new project flow (define project, tech stack, constitution)
+
+[3] Existing Project Analysis
+    Force existing project analysis (architecture, tests, features)
+
+[4] Scoped Analysis
+    Focus on a specific domain, module, or endpoint
+```
+
+#### After Selection
+
+| Selection | Action |
+|-----------|--------|
+| [1] Auto-detect | Continue to FAST PATH CHECK below (standard auto-detection) |
+| [2] New Project | Skip FAST PATH CHECK, go directly to **NEW PROJECT FLOW** |
+| [3] Existing Project | Skip FAST PATH CHECK, go directly to **EXISTING PROJECT FLOW** |
+| [4] Scoped Analysis | Ask follow-up questions (see below), then go to **EXISTING PROJECT FLOW** with scope options |
+
+#### Option [4] Follow-up
+
+If the user selects Scoped Analysis, ask two follow-up questions:
+
+1. **Scope type:**
+   ```
+   What type of scoped analysis?
+   [1] Module     — Focus on a specific module/package
+   [2] Endpoint   — Focus on a specific API endpoint
+   [3] Domain     — Focus on a business domain
+   ```
+
+2. **Target name:**
+   ```
+   Enter the target name (e.g., "payments", "/api/users/register", "auth-module"):
+   ```
+
+Then proceed to EXISTING PROJECT FLOW with the equivalent of `--scope {type} --target {name}` applied to all sub-agent delegations.
+
+---
 
 ### FAST PATH CHECK (Must complete in <5 seconds)
 

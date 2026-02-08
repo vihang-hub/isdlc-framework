@@ -20,7 +20,7 @@ const {
     debugLog,
     getProjectRoot,
     getTimestamp
-} = require('./lib/common.js');
+} = require('./lib/common.cjs');
 
 const fs = require('fs');
 const path = require('path');
@@ -372,8 +372,14 @@ async function main() {
             process.exit(0);
         }
 
-        // Determine current phase — prefer active_workflow if present
+        // Only track test iterations during an active SDLC workflow.
+        // Casual test runs outside a workflow should not produce iteration
+        // guidance or modify state.json — this avoids confusing users.
         const activeWorkflow = state.active_workflow;
+        if (!activeWorkflow) {
+            debugLog('No active workflow, skipping test iteration tracking');
+            process.exit(0);
+        }
         const currentPhase = (activeWorkflow && activeWorkflow.current_phase) || state.current_phase;
         if (!currentPhase) {
             process.exit(0);

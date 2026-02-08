@@ -18,7 +18,7 @@ const {
     readStdin,
     debugLog,
     getTimestamp
-} = require('./lib/common.js');
+} = require('./lib/common.cjs');
 
 /**
  * Menu patterns to detect in output
@@ -145,8 +145,11 @@ async function main() {
             process.exit(0);
         }
 
-        // Only track for Phase 01
-        const currentPhase = state.current_phase;
+        // Only track during active workflows in Phase 01
+        if (!state.active_workflow) {
+            process.exit(0);
+        }
+        const currentPhase = (state.active_workflow && state.active_workflow.current_phase) || state.current_phase;
         if (currentPhase !== '01-requirements') {
             process.exit(0);
         }

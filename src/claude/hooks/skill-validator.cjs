@@ -31,7 +31,7 @@ const {
     readStdin,
     outputBlockResponse,
     debugLog
-} = require('./lib/common.js');
+} = require('./lib/common.cjs');
 
 async function main() {
     try {

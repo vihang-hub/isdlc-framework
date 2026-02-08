@@ -13,6 +13,45 @@ The `/discover` command is the universal entry point for setting up a project wi
 
 **For existing projects:** Produces a comprehensive discovery report (tech stack, architecture, data model, functional features, test coverage), then generates a tailored constitution.
 
+### No-Argument Behavior (Interactive Menu)
+
+When `/discover` is invoked without any flags or options, present a discovery mode selection menu before running any analysis:
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║  iSDLC Framework - Discovery Mode Selection                  ║
+╚══════════════════════════════════════════════════════════════╝
+
+Select a discovery mode:
+
+[1] Discover (auto-detect) (Recommended)
+    Auto-detect new vs existing project and run full analysis
+
+[2] New Project Setup
+    Force new project flow (define project, tech stack, constitution)
+
+[3] Existing Project Analysis
+    Force existing project analysis (architecture, tests, features)
+
+[4] Scoped Analysis
+    Focus on a specific domain, module, or endpoint
+
+Enter selection (1-4):
+```
+
+**After Selection Mapping:**
+
+| Selection | Equivalent | Action |
+|-----------|------------|--------|
+| [1] | `/discover` (auto-detect) | Proceed to auto-detect flow (FAST PATH CHECK) |
+| [2] | `/discover --new` | Skip detection, go directly to NEW PROJECT FLOW |
+| [3] | `/discover --existing` | Skip detection, go directly to EXISTING PROJECT FLOW |
+| [4] | `/discover --existing --scope ...` | Ask follow-up for scope type and target, then run EXISTING PROJECT FLOW with scope |
+
+**Option [4] follow-up:** Ask for scope type (module/endpoint/domain) and target name, then proceed as if `--existing --scope {type} --target {name}` were provided.
+
+**If any flags/options ARE provided** (`--new`, `--existing`, `--scope`, `--project`, etc.), skip this menu entirely and proceed directly to the appropriate flow.
+
 ### Options
 | Option | Description |
 |--------|-------------|
@@ -125,12 +164,18 @@ After completion, you'll have:
 
 When this command is invoked:
 
+**If NO flags/options provided (`/discover` alone):**
+1. Use the Task tool to launch the `discover-orchestrator` agent
+2. Pass explicit instruction: "No options specified. Present the interactive discovery mode selection menu before proceeding."
+3. The orchestrator presents the 4-option menu and waits for user selection before taking further action
+
+**If flags/options ARE provided (`/discover --new`, `/discover --existing`, etc.):**
 1. **Launch discover-orchestrator agent** via the Task tool:
    ```
    Task tool → discover-orchestrator agent
    ```
 
-2. **Pass arguments** (if any) to the orchestrator:
+2. **Pass arguments** to the orchestrator:
    ```json
    {
      "subagent_type": "discover-orchestrator",

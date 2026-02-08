@@ -363,13 +363,13 @@ else
         # Enactor agents
         "enactor-*.md"
         # Hook files
-        "gate-blocker.js"
-        "test-watcher.js"
-        "constitution-validator.js"
-        "menu-tracker.js"
-        "skill-validator.js"
-        "log-skill-usage.js"
-        "common.js"
+        "gate-blocker.cjs"
+        "test-watcher.cjs"
+        "constitution-validator.cjs"
+        "menu-tracker.cjs"
+        "skill-validator.cjs"
+        "log-skill-usage.cjs"
+        "common.cjs"
     )
 
     for DIR in agents skills commands hooks; do

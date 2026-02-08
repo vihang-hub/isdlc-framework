@@ -240,19 +240,12 @@ function writeIterationRequirements(config) {
 const HOOKS_SRC_DIR = path.resolve(__dirname, '..');
 
 /**
- * Copies a hook and its lib/ dependencies to the test directory as .cjs files.
+ * Copies a hook and its lib/ dependencies to the test directory.
  *
- * Hooks use CommonJS `require()` but the project package.json has
- * `"type": "module"`, which causes Node to treat `.js` files as ESM.
- * By copying to a temp directory (outside the project scope) with a `.cjs`
- * extension, Node always treats them as CommonJS.
+ * Source hooks are now .cjs files natively, so no extension renaming or
+ * require-path patching is needed — files are copied as-is.
  *
- * Require paths inside the copied files are patched:
- *   - `require('./lib/common.js')` -> `require('./lib/common.cjs')`
- *   - `require('./lib/provider-utils.js')` -> `require('./lib/provider-utils.cjs')`
- *   - `require('./common.js')` -> `require('./common.cjs')` (inside lib files)
- *
- * @param {string} hookPath - Absolute path to the original hook .js file
+ * @param {string} hookPath - Absolute path to the original hook .cjs file
  * @returns {string} Absolute path to the prepared .cjs hook in the test dir
  */
 function prepareHook(hookPath) {
@@ -260,8 +253,8 @@ function prepareHook(hookPath) {
         throw new Error('prepareHook called before setupTestEnv');
     }
 
-    const hookBasename = path.basename(hookPath, '.js');
-    const hookDest = path.join(testDir, hookBasename + '.cjs');
+    const hookBasename = path.basename(hookPath);
+    const hookDest = path.join(testDir, hookBasename);
 
     // Ensure lib/ directory exists in test dir
     const libDir = path.join(testDir, 'lib');
@@ -270,24 +263,17 @@ function prepareHook(hookPath) {
     }
 
     // Copy lib files if not already done
-    const libFiles = ['common.js', 'provider-utils.js'];
+    const libFiles = ['common.cjs', 'provider-utils.cjs'];
     for (const libFile of libFiles) {
         const src = path.join(HOOKS_SRC_DIR, 'lib', libFile);
-        const dest = path.join(libDir, libFile.replace('.js', '.cjs'));
+        const dest = path.join(libDir, libFile);
         if (fs.existsSync(src) && !fs.existsSync(dest)) {
-            let content = fs.readFileSync(src, 'utf8');
-            // Patch internal require paths: ./common.js -> ./common.cjs
-            content = content.replace(/require\('\.\/common\.js'\)/g, "require('./common.cjs')");
-            content = content.replace(/require\('\.\/provider-utils\.js'\)/g, "require('./provider-utils.cjs')");
-            fs.writeFileSync(dest, content);
+            fs.copyFileSync(src, dest);
         }
     }
 
-    // Copy hook file as .cjs, patching require paths
-    let hookContent = fs.readFileSync(hookPath, 'utf8');
-    hookContent = hookContent.replace(/require\('\.\/lib\/common\.js'\)/g, "require('./lib/common.cjs')");
-    hookContent = hookContent.replace(/require\('\.\/lib\/provider-utils\.js'\)/g, "require('./lib/provider-utils.cjs')");
-    fs.writeFileSync(hookDest, hookContent);
+    // Copy hook file directly
+    fs.copyFileSync(hookPath, hookDest);
 
     return hookDest;
 }

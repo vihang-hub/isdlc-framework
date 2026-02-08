@@ -124,8 +124,8 @@ Each SDLC phase has exactly ONE dedicated agent:
 ### Quality Gates
 Each phase ends with a quality gate (GATE-01 through GATE-14) with specific validation criteria. Gates are enforced through three layers:
 1. **Artifact validation** — The orchestrator checks that all required phase artifacts exist and meet quality criteria
-2. **Constitutional compliance** — Agents iterate against applicable constitutional articles; the `constitution-validator.js` hook blocks phase completion until validation passes
-3. **Deterministic hook enforcement** — The `gate-blocker.js` hook intercepts any gate advancement attempt and blocks it unless all iteration requirements are satisfied
+2. **Constitutional compliance** — Agents iterate against applicable constitutional articles; the `constitution-validator.cjs` hook blocks phase completion until validation passes
+3. **Deterministic hook enforcement** — The `gate-blocker.cjs` hook intercepts any gate advancement attempt and blocks it unless all iteration requirements are satisfied
 
 Gates cannot be skipped or bypassed. When iteration limits are exceeded, the system escalates to a human rather than auto-passing.
 

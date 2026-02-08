@@ -81,27 +81,27 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/model-provider-router.js",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/model-provider-router.cjs",
             "timeout": 10000
           },
           {
             "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/iteration-corridor.js",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/iteration-corridor.cjs",
             "timeout": 10000
           },
           {
             "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/skill-validator.js",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/skill-validator.cjs",
             "timeout": 10000
           },
           {
             "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/gate-blocker.js",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/gate-blocker.cjs",
             "timeout": 10000
           },
           {
             "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/constitution-validator.js",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/constitution-validator.cjs",
             "timeout": 10000
           }
         ]
@@ -111,12 +111,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/iteration-corridor.js",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/iteration-corridor.cjs",
             "timeout": 10000
           },
           {
             "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/gate-blocker.js",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/gate-blocker.cjs",
             "timeout": 10000
           }
         ]
@@ -128,12 +128,22 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/log-skill-usage.js",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/log-skill-usage.cjs",
             "timeout": 5000
           },
           {
             "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/menu-tracker.js",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/menu-tracker.cjs",
+            "timeout": 5000
+          }
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/skill-delegation-enforcer.cjs",
             "timeout": 5000
           }
         ]
@@ -143,8 +153,19 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/test-watcher.js",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/test-watcher.cjs",
             "timeout": 10000
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/delegation-gate.cjs",
+            "timeout": 5000
           }
         ]
       }

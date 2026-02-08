@@ -187,12 +187,12 @@ AI coding assistants are powerful but have well-known failure modes. The iSDLC f
 
 **How iSDLC solves it**:
 - The **Project Constitution** (generated during `/discover`) codifies real patterns, dependencies, and constraints as ground truth
-- `constitution-validator.js` intercepts phase completion attempts and blocks advancement until artifacts are validated against constitutional articles
+- `constitution-validator.cjs` intercepts phase completion attempts and blocks advancement until artifacts are validated against constitutional articles
 - Article I (Specification Primacy) ensures code serves specifications, not the other way around
 - Article VII (Artifact Traceability) requires every output to trace back to a documented input
 - Discovery constraints provide verified architecture facts, so agents don't need to guess
 
-> *Mechanism*: `constitution-validator.js`, `docs/isdlc/constitution.md`, Articles I & VII
+> *Mechanism*: `constitution-validator.cjs`, `docs/isdlc/constitution.md`, Articles I & VII
 
 ### 3. Context Rot
 
@@ -213,11 +213,11 @@ AI coding assistants are powerful but have well-known failure modes. The iSDLC f
 **How iSDLC solves it**:
 - `/discover` for existing projects runs D7 (Dependency Mapper) and D8 (Convention Detector) to capture implicit knowledge
 - Phase 01 (Requirements Analyst) uses interactive A/R/C elicitation — presenting menus where the user can **A**djust, **R**efine, or **C**ontinue
-- `menu-tracker.js` tracks elicitation progress and requires a minimum of 3 menu interactions before allowing phase advancement
+- `menu-tracker.cjs` tracks elicitation progress and requires a minimum of 3 menu interactions before allowing phase advancement
 - Bug reports include a **sufficiency check** — the requirements analyst validates expected behavior, actual behavior, and reproduction steps, with up to 2 follow-up prompts
 - For greenfield projects, discover agents (D7, D8) elicit tech stack preferences and architectural constraints interactively
 
-> *Mechanism*: `menu-tracker.js` (min 3 interactions), bug sufficiency check in `01-requirements-analyst.md`, A/R/C menus
+> *Mechanism*: `menu-tracker.cjs` (min 3 interactions), bug sufficiency check in `01-requirements-analyst.md`, A/R/C menus
 
 ### 5. Missing Traceability
 
@@ -228,21 +228,21 @@ AI coding assistants are powerful but have well-known failure modes. The iSDLC f
 - Each phase produces typed artifacts with explicit input/output relationships (requirements → architecture → design → tests → code)
 - Gate validation checks that required artifacts exist and reference their predecessors
 - The test design phase produces `ac-traceability.csv` mapping acceptance criteria → test cases → implementation files
-- `gate-blocker.js` blocks phase advancement unless traceability artifacts are present
+- `gate-blocker.cjs` blocks phase advancement unless traceability artifacts are present
 
-> *Mechanism*: Article VII, `ac-traceability.csv`, `gate-blocker.js` artifact validation, typed phase artifacts
+> *Mechanism*: Article VII, `ac-traceability.csv`, `gate-blocker.cjs` artifact validation, typed phase artifacts
 
 ### 6. Deviation from Instructions
 
 **The problem**: AI assistants drift from instructions over time — they skip steps, take shortcuts, ignore constraints mentioned earlier in the conversation, or escape iteration loops when stuck.
 
 **How iSDLC solves it**:
-- `iteration-corridor.js` enforces TEST and CONST corridors — when tests are failing, the agent can only fix code and re-run tests (no delegation, no gate advancement)
-- `gate-blocker.js` performs 4 checks before allowing phase advancement: iteration requirements, workflow validation, phase sequencing, and agent delegation verification
-- `constitution-validator.js` blocks phase completion until constitutional compliance is verified
+- `iteration-corridor.cjs` enforces TEST and CONST corridors — when tests are failing, the agent can only fix code and re-run tests (no delegation, no gate advancement)
+- `gate-blocker.cjs` performs 4 checks before allowing phase advancement: iteration requirements, workflow validation, phase sequencing, and agent delegation verification
+- `constitution-validator.cjs` blocks phase completion until constitutional compliance is verified
 - All 8 hooks run as separate Node.js processes outside the LLM context — the AI cannot override, ignore, or negotiate with them
 
-> *Mechanism*: `iteration-corridor.js` (TEST/CONST corridors), `gate-blocker.js` (4 checks), `constitution-validator.js`
+> *Mechanism*: `iteration-corridor.cjs` (TEST/CONST corridors), `gate-blocker.cjs` (4 checks), `constitution-validator.cjs`
 
 ### 7. Poor Quality / Incomplete Output
 
@@ -250,12 +250,12 @@ AI coding assistants are powerful but have well-known failure modes. The iSDLC f
 
 **How iSDLC solves it**:
 - **16 quality gates** between every phase, each with specific requirements (artifacts, tests, coverage)
-- `test-watcher.js` monitors test executions, tracks up to 10 iterations per phase, and enforces 80% coverage minimum
+- `test-watcher.cjs` monitors test executions, tracks up to 10 iterations per phase, and enforces 80% coverage minimum
 - **Circuit breaker**: 3 identical test failures in a row triggers an automatic stop — the agent cannot continue making the same mistake
 - When iteration limits are exceeded, the system **escalates to a human** rather than allowing the agent to proceed
 - Gate failures require remediation — they cannot be skipped or waived
 
-> *Mechanism*: `test-watcher.js` (10 iterations, 80% coverage, circuit breaker at 3), `gate-blocker.js`, human escalation
+> *Mechanism*: `test-watcher.cjs` (10 iterations, 80% coverage, circuit breaker at 3), `gate-blocker.cjs`, human escalation
 
 ### 8. Inconsistent Implementation
 

@@ -31,11 +31,11 @@ const {
 } = require('./hook-test-utils.cjs');
 
 /** Source paths */
-const hookSrcPath = path.resolve(__dirname, '..', 'constitution-validator.js');
-const commonSrcPath = path.resolve(__dirname, '..', 'lib', 'common.js');
+const hookSrcPath = path.resolve(__dirname, '..', 'constitution-validator.cjs');
+const commonSrcPath = path.resolve(__dirname, '..', 'lib', 'common.cjs');
 
 /**
- * Copy the hook file and its lib/common.js dependency into the temp test dir.
+ * Copy the hook file and its lib/common.cjs dependency into the temp test dir.
  * Returns the absolute path to the copied hook file.
  */
 function installHook() {
@@ -44,8 +44,8 @@ function installHook() {
     if (!fs.existsSync(libDir)) {
         fs.mkdirSync(libDir, { recursive: true });
     }
-    fs.copyFileSync(commonSrcPath, path.join(libDir, 'common.js'));
-    const hookDest = path.join(testDir, 'constitution-validator.js');
+    fs.copyFileSync(commonSrcPath, path.join(libDir, 'common.cjs'));
+    const hookDest = path.join(testDir, 'constitution-validator.cjs');
     fs.copyFileSync(hookSrcPath, hookDest);
     return hookDest;
 }

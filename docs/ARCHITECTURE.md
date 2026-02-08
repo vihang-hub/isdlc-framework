@@ -118,15 +118,17 @@ your-project/
 │   │   ├── ...                 (15 skill categories)
 │   │   └── upgrade/            (UPG-001 to UPG-008)
 │   ├── hooks/
-│   │   ├── gate-blocker.js
-│   │   ├── test-watcher.js
-│   │   ├── constitution-validator.js
-│   │   ├── iteration-corridor.js
-│   │   ├── menu-tracker.js
-│   │   ├── model-provider-router.js
-│   │   ├── skill-validator.js
-│   │   ├── log-skill-usage.js
-│   │   ├── lib/common.js
+│   │   ├── gate-blocker.cjs
+│   │   ├── test-watcher.cjs
+│   │   ├── constitution-validator.cjs
+│   │   ├── iteration-corridor.cjs
+│   │   ├── menu-tracker.cjs
+│   │   ├── model-provider-router.cjs
+│   │   ├── skill-validator.cjs
+│   │   ├── log-skill-usage.cjs
+│   │   ├── skill-delegation-enforcer.cjs
+│   │   ├── delegation-gate.cjs
+│   │   ├── lib/common.cjs
 │   │   └── config/
 │   │       ├── skills-manifest.json
 │   │       ├── iteration-requirements.json
@@ -269,7 +271,7 @@ owned_skills:
 ```
 
 - `name` — matches the `subagent_type` used in Task tool calls
-- `model` — LLM model preference (overridable by `model-provider-router.js`)
+- `model` — LLM model preference (overridable by `model-provider-router.cjs`)
 - `owned_skills` — skill IDs documented as the agent's primary capabilities (observed, not enforced)
 
 ### Discover Agents (Deep Dive)
@@ -325,8 +327,8 @@ Skills are **documented capabilities** — each skill has a `SKILL.md` file desc
 
 Skills use an **observe** model, not an enforcement model:
 
-- `skill-validator.js` (PreToolUse) — observes which agent is being delegated to, but **never blocks**. All modes exit 0 with no output.
-- `log-skill-usage.js` (PostToolUse) — logs every Task tool invocation to `state.json`'s `skill_usage_log` array, recording agent name, skills used, phase, and timestamp. Cross-phase usage is logged as `observed`/`cross-phase-usage`.
+- `skill-validator.cjs` (PreToolUse) — observes which agent is being delegated to, but **never blocks**. All modes exit 0 with no output.
+- `log-skill-usage.cjs` (PostToolUse) — logs every Task tool invocation to `state.json`'s `skill_usage_log` array, recording agent name, skills used, phase, and timestamp. Cross-phase usage is logged as `observed`/`cross-phase-usage`.
 
 This means skills serve as **event identifiers** for logging and visibility, not access-control tokens. Any agent can use any skill — the system just records what happened.
 
@@ -381,18 +383,18 @@ From `.claude/settings.json`:
       {
         "matcher": "Task",
         "hooks": [
-          "node .claude/hooks/model-provider-router.js",
-          "node .claude/hooks/iteration-corridor.js",
-          "node .claude/hooks/skill-validator.js",
-          "node .claude/hooks/gate-blocker.js",
-          "node .claude/hooks/constitution-validator.js"
+          "node .claude/hooks/model-provider-router.cjs",
+          "node .claude/hooks/iteration-corridor.cjs",
+          "node .claude/hooks/skill-validator.cjs",
+          "node .claude/hooks/gate-blocker.cjs",
+          "node .claude/hooks/constitution-validator.cjs"
         ]
       },
       {
         "matcher": "Skill",
         "hooks": [
-          "node .claude/hooks/iteration-corridor.js",
-          "node .claude/hooks/gate-blocker.js"
+          "node .claude/hooks/iteration-corridor.cjs",
+          "node .claude/hooks/gate-blocker.cjs"
         ]
       }
     ],
@@ -400,14 +402,27 @@ From `.claude/settings.json`:
       {
         "matcher": "Task",
         "hooks": [
-          "node .claude/hooks/log-skill-usage.js",
-          "node .claude/hooks/menu-tracker.js"
+          "node .claude/hooks/log-skill-usage.cjs",
+          "node .claude/hooks/menu-tracker.cjs"
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          "node .claude/hooks/skill-delegation-enforcer.cjs"
         ]
       },
       {
         "matcher": "Bash",
         "hooks": [
-          "node .claude/hooks/test-watcher.js"
+          "node .claude/hooks/test-watcher.cjs"
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          "node .claude/hooks/delegation-gate.cjs"
         ]
       }
     ]
@@ -417,7 +432,7 @@ From `.claude/settings.json`:
 
 ### Hook Deep Dives
 
-#### `gate-blocker.js` (PreToolUse → Task, Skill)
+#### `gate-blocker.cjs` (PreToolUse → Task, Skill)
 
 Blocks gate advancement unless all iteration requirements are met. Performs 4 checks:
 
@@ -426,7 +441,7 @@ Blocks gate advancement unless all iteration requirements are met. Performs 4 ch
 3. **Phase sequencing** — prevents skipping phases (must advance sequentially through the workflow's phase list)
 4. **Agent delegation validation** — verifies that the correct phase agent was delegated to (introduced in v2.0.0, fail-open if manifest missing)
 
-#### `test-watcher.js` (PostToolUse → Bash)
+#### `test-watcher.cjs` (PostToolUse → Bash)
 
 Monitors Bash tool executions for test commands and tracks iteration state:
 
@@ -438,7 +453,7 @@ Monitors Bash tool executions for test commands and tracks iteration state:
 - Maximum 10 iterations per phase (configurable)
 - Detects orphan `skip`/`only` patterns in test files
 
-#### `constitution-validator.js` (PreToolUse → Task)
+#### `constitution-validator.cjs` (PreToolUse → Task)
 
 Intercepts phase completion declarations and validates constitutional compliance:
 
@@ -447,7 +462,7 @@ Intercepts phase completion declarations and validates constitutional compliance
 - Blocks advancement if constitutional validation hasn't been performed
 - Maximum 5 validation iterations per phase
 
-#### `iteration-corridor.js` (PreToolUse → Task, Skill)
+#### `iteration-corridor.cjs` (PreToolUse → Task, Skill)
 
 Enforces iteration corridors — restricted action spaces during active iteration:
 
@@ -459,7 +474,7 @@ Enforces iteration corridors — restricted action spaces during active iteratio
 
 This prevents agents from "escaping" iteration loops by delegating to other agents or advancing to the next phase while issues remain unresolved.
 
-#### `menu-tracker.js` (PostToolUse → Task)
+#### `menu-tracker.cjs` (PostToolUse → Task)
 
 Tracks A/R/C menu interactions during Phase 01 requirements elicitation:
 
@@ -468,7 +483,7 @@ Tracks A/R/C menu interactions during Phase 01 requirements elicitation:
 - Requires minimum 3 menu interactions before gate can pass
 - Records final selection (save/continue)
 
-#### `model-provider-router.js` (PreToolUse → Task)
+#### `model-provider-router.cjs` (PreToolUse → Task)
 
 Routes Task tool calls to the appropriate LLM provider based on phase complexity:
 
@@ -479,7 +494,7 @@ Routes Task tool calls to the appropriate LLM provider based on phase complexity
 - Injects environment variables (ANTHROPIC_BASE_URL, ANTHROPIC_API_KEY) for the selected provider
 - Tracks usage in `.isdlc/usage-log.jsonl`
 
-#### `skill-validator.js` (PreToolUse → Task)
+#### `skill-validator.cjs` (PreToolUse → Task)
 
 Observes agent delegation patterns:
 
@@ -487,7 +502,7 @@ Observes agent delegation patterns:
 - Looks up the agent in the skills manifest
 - **Never blocks** — always exits 0 with no output (observe-only mode since v3.0.0)
 
-#### `log-skill-usage.js` (PostToolUse → Task)
+#### `log-skill-usage.cjs` (PostToolUse → Task)
 
 Logs all Task tool invocations to state:
 
@@ -510,10 +525,10 @@ Phase Agent completes work
 Agent declares "phase complete"
          │
          ▼
-constitution-validator.js checks constitutional compliance
+constitution-validator.cjs checks constitutional compliance
          │ (blocks if not validated)
          ▼
-gate-blocker.js checks 4 requirements
+gate-blocker.cjs checks 4 requirements
          │ (blocks if not met)
          ▼
 Orchestrator reviews gate checklist
@@ -532,11 +547,11 @@ Each phase can enable or disable these requirement types in `iteration-requireme
 
 | Requirement | What It Checks | Enforced By |
 |-------------|---------------|-------------|
-| `interactive_elicitation` | Min menu interactions (Phase 01) | `menu-tracker.js` |
-| `test_iteration` | Tests passing, coverage ≥ threshold | `test-watcher.js` |
-| `constitutional_validation` | Artifacts comply with constitution articles | `constitution-validator.js` |
-| `agent_delegation_validation` | Correct agent was delegated to | `gate-blocker.js` |
-| `atdd_validation` | ATDD checklist, priority enforcement | `gate-blocker.js` |
+| `interactive_elicitation` | Min menu interactions (Phase 01) | `menu-tracker.cjs` |
+| `test_iteration` | Tests passing, coverage ≥ threshold | `test-watcher.cjs` |
+| `constitutional_validation` | Artifacts comply with constitution articles | `constitution-validator.cjs` |
+| `agent_delegation_validation` | Correct agent was delegated to | `gate-blocker.cjs` |
+| `atdd_validation` | ATDD checklist, priority enforcement | `gate-blocker.cjs` |
 
 ### Requirements by Phase
 
@@ -653,11 +668,11 @@ The primary state file at `.isdlc/state.json`:
 |-------|---------|------------|
 | `current_phase` | Active phase identifier | Orchestrator |
 | `active_workflow` | Workflow type and progress | Orchestrator |
-| `phases.{phase}.iteration_tracking` | Test iteration count and results | `test-watcher.js` |
+| `phases.{phase}.iteration_tracking` | Test iteration count and results | `test-watcher.cjs` |
 | `phases.{phase}.status` | Phase status (pending/in_progress/completed) | Orchestrator |
-| `skill_usage_log` | Append-only log of all agent delegations | `log-skill-usage.js` |
+| `skill_usage_log` | Append-only log of all agent delegations | `log-skill-usage.cjs` |
 | `active_agent` | Currently delegated agent | Orchestrator |
-| `constitution.validated_at` | Last constitution validation timestamp | `constitution-validator.js` |
+| `constitution.validated_at` | Last constitution validation timestamp | `constitution-validator.cjs` |
 
 ### Monorepo State
 
@@ -803,9 +818,9 @@ modes:
 Orchestrator reads state.json → no active workflow
 Orchestrator loads workflows.json → feature workflow starts with 00-quick-scan
 Orchestrator delegates to quick-scan-agent (haiku model)
-  └── PreToolUse: model-provider-router.js routes to haiku
-  └── PreToolUse: iteration-corridor.js → NO_CORRIDOR, allows
-  └── PreToolUse: gate-blocker.js → not a gate advancement, allows
+  └── PreToolUse: model-provider-router.cjs routes to haiku
+  └── PreToolUse: iteration-corridor.cjs → NO_CORRIDOR, allows
+  └── PreToolUse: gate-blocker.cjs → not a gate advancement, allows
 Quick Scan Agent:
   - Extracts keywords: "authentication", "user", "login", "session"
   - Counts matching files: 0 (new feature)
@@ -827,11 +842,11 @@ Requirements Analyst:
     - Convention: JWT tokens used in similar projects
   - Presents A/R/C menu to user:
     [A] Adjust scope  [R] Refine details  [C] Continue
-  - menu-tracker.js counts interactions: 1... 2... 3 ✓
+  - menu-tracker.cjs counts interactions: 1... 2... 3 ✓
   - Writes: requirements-spec.md, user-stories.json
   - Declares "phase complete"
-    └── constitution-validator.js checks Articles I, IV, VII, IX, XII → Pass
-    └── gate-blocker.js checks:
+    └── constitution-validator.cjs checks Articles I, IV, VII, IX, XII → Pass
+    └── gate-blocker.cjs checks:
         [1] Interactive elicitation: 3/3 ✓
         [2] Workflow: feature → 01-requirements valid ✓
         [3] Phase sequence: first phase ✓
@@ -880,25 +895,25 @@ Software Developer:
   - Runs tests: npm test
 
   Iteration 1:
-    └── test-watcher.js detects: 5 pass, 3 fail → iteration_tracking.current = 1
-    └── iteration-corridor.js → TEST_CORRIDOR active
+    └── test-watcher.cjs detects: 5 pass, 3 fail → iteration_tracking.current = 1
+    └── iteration-corridor.cjs → TEST_CORRIDOR active
     └── Agent cannot delegate or advance — must fix code
 
   Iteration 2:
-    └── test-watcher.js: 7 pass, 1 fail → current = 2
+    └── test-watcher.cjs: 7 pass, 1 fail → current = 2
     └── Still in TEST_CORRIDOR
 
   Iteration 3:
-    └── test-watcher.js: 8 pass, 0 fail, 82% coverage → current = 3
+    └── test-watcher.cjs: 8 pass, 0 fail, 82% coverage → current = 3
     └── TEST_CORRIDOR cleared
-    └── iteration-corridor.js → CONST_CORRIDOR active
+    └── iteration-corridor.cjs → CONST_CORRIDOR active
 
   Constitution validation:
-    └── constitution-validator.js checks Articles I, II, III, V, VI, VII, VIII, IX, X → Pass
+    └── constitution-validator.cjs checks Articles I, II, III, V, VI, VII, VIII, IX, X → Pass
     └── CONST_CORRIDOR cleared
 
   Agent declares "phase complete"
-    └── gate-blocker.js: all 4 checks pass ✓
+    └── gate-blocker.cjs: all 4 checks pass ✓
 
 Gate 06: Pass → Advance to Phase 07
 ```

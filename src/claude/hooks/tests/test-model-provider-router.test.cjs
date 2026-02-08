@@ -35,7 +35,7 @@ const {
 } = require('./hook-test-utils.cjs');
 
 /** Absolute path to the original hook source */
-const hookSrcPath = path.resolve(__dirname, '..', 'model-provider-router.js');
+const hookSrcPath = path.resolve(__dirname, '..', 'model-provider-router.cjs');
 
 // =============================================================================
 // Test Suite: model-provider-router.js

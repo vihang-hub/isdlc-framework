@@ -28,7 +28,7 @@ const {
 } = require('./hook-test-utils.cjs');
 
 // Absolute path to the source hook file
-const HOOK_SRC = path.resolve(__dirname, '..', 'skill-validator.js');
+const HOOK_SRC = path.resolve(__dirname, '..', 'skill-validator.cjs');
 
 /**
  * Run a hook with raw string stdin (bypasses JSON.stringify in runHook).

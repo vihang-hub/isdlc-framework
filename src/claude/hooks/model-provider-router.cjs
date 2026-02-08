@@ -25,13 +25,13 @@ const {
     getEnvironmentOverrides,
     trackUsage,
     debugLog
-} = require('./lib/provider-utils.js');
+} = require('./lib/provider-utils.cjs');
 
 const {
     readState,
     readStdin,
     outputBlockResponse
-} = require('./lib/common.js');
+} = require('./lib/common.cjs');
 
 // ============================================================================
 // MAIN HOOK LOGIC
@@ -122,18 +122,24 @@ async function main() {
             console.error(`\n[provider-router] Warning: ${selection.warning}\n`);
         }
 
-        // Output the result for Claude Code to process
-        // The environment_overrides will be applied before spawning the subagent
-        console.log(JSON.stringify({
-            continue: true,
-            environment_overrides: envOverrides,
-            provider_selection: {
-                provider: selection.provider,
-                model: selection.model,
-                source: selection.source,
-                phase: state?.current_phase || 'unknown'
-            }
-        }));
+        // Only output JSON when actual routing overrides are applied.
+        // When using default provider with no overrides, stay silent to
+        // avoid injecting noise into the conversation.
+        const hasOverrides = Object.keys(envOverrides).length > 0;
+        const hasFallback = !!selection.originalProvider;
+
+        if (hasOverrides || hasFallback) {
+            console.log(JSON.stringify({
+                continue: true,
+                environment_overrides: envOverrides,
+                provider_selection: {
+                    provider: selection.provider,
+                    model: selection.model,
+                    source: selection.source,
+                    phase: state?.current_phase || 'unknown'
+                }
+            }));
+        }
 
         process.exit(0);
 
