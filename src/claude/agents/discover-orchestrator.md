@@ -100,15 +100,15 @@ If NOT in monorepo mode, skip the preamble entirely and proceed to the no-argume
 
 #### Pre-Menu Auto-Detect
 
-Before rendering the menu, silently determine the recommended option:
+Before rendering the menu, silently check:
 
-1. Read `.isdlc/state.json` -> `project.is_new_project`
-2. If `false` (or if `src/`, `lib/`, `app/`, `package.json`, etc. exist): recommend [2]
-3. If `true` (or no code detected): recommend [1]
+1. Read `.isdlc/state.json` -> `project.discovery_completed`
+2. If `true`: use **RETURNING PROJECT MENU** (discovery already done)
+3. If `false` (or absent): use **FIRST-TIME MENU** (discovery not yet run)
 
-This determines where the "(Recommended)" badge appears.
+#### Menu A: FIRST-TIME MENU (discovery_completed is false or absent)
 
-#### Menu Presentation
+**MANDATORY: Present EXACTLY these 3 options. Do NOT improvise or substitute alternatives.**
 
 Use AskUserQuestion to present:
 
@@ -131,9 +131,7 @@ Select a discovery mode:
 Enter selection (1-3):
 ```
 
-Note: "(Recommended)" shown on [2] by default. Move to [1] when no existing code is detected.
-
-#### After Selection
+Note: "(Recommended)" shown on [2] by default. Move to [1] when `is_new_project: true` or no existing code is detected.
 
 | Selection | Action |
 |-----------|--------|
@@ -141,9 +139,110 @@ Note: "(Recommended)" shown on [2] by default. Move to [1] when no existing code
 | [2] Existing Project | Skip FAST PATH CHECK, go directly to **EXISTING PROJECT FLOW** |
 | [3] Chat / Explore | Enter **CHAT / EXPLORE MODE** (see below) |
 
+#### Menu B: RETURNING PROJECT MENU (discovery_completed is true)
+
+When discovery has already been completed, the menu adapts to offer re-discovery options alongside Chat / Explore.
+
+**MANDATORY: Present EXACTLY these 3 options. Do NOT improvise or substitute alternatives.**
+
+Read from state.json and display context before the menu:
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║  iSDLC Framework - Discovery                                 ║
+╚══════════════════════════════════════════════════════════════╝
+
+This project has already been discovered.
+
+  Project:     {project.name}
+  Tech Stack:  {project.tech_stack.language} + {project.tech_stack.framework}
+  Discovered:  {project.discovered_at, formatted as date}
+  AC:          {project.ac_count} across {project.ac_domains} domains
+  Tests:       {project.existing_test_count} existing
+
+Select an option:
+
+[1] Re-discover (full)
+    Run the complete discovery workflow from scratch.
+    Overwrites existing discovery report, re-extracts all
+    acceptance criteria, regenerates characterization tests,
+    and rebuilds the constitution.
+
+[2] Re-discover (incremental)
+    Re-run analysis phases only (D1, D2, D5, D6) to update
+    the discovery report with current codebase state. Keeps
+    existing constitution and skills.
+
+[3] Chat / Explore
+    Explore the project, discuss functionality, review backlog,
+    ask questions — without modifying any artifacts.
+
+Enter selection (1-3):
+```
+
+| Selection | Action |
+|-----------|--------|
+| [1] Re-discover (full) | Skip FAST PATH CHECK, go directly to **EXISTING PROJECT FLOW** (full run, overwrites all reports) |
+| [2] Re-discover (incremental) | Skip FAST PATH CHECK, go directly to **INCREMENTAL DISCOVERY FLOW** (see below) |
+| [3] Chat / Explore | Enter **CHAT / EXPLORE MODE** (see below) |
+
+#### INCREMENTAL DISCOVERY FLOW
+
+When the user selects [2] Re-discover (incremental), run a lighter version of the EXISTING PROJECT FLOW:
+
+**What runs:**
+1. Phase 1 parallel analysis (D1, D2, D5, D6) — re-scan codebase for changes
+2. Phase 1b characterization tests — regenerate from updated AC
+3. Phase 1c artifact integration — update traceability matrix
+4. Phase 2 discovery report — regenerate with updated findings
+5. Phase 5 finalize — update state.json with new metrics
+
+**What is SKIPPED:**
+- Phase 3 constitution generation (keep existing constitution)
+- Phase 4 skills & testing setup (keep existing skills)
+- Phase 7 cloud configuration
+- Walkthrough phase (skip — user has already reviewed)
+
+**Show progress:**
+```
+INCREMENTAL DISCOVERY                                [In Progress]
+├─ ◐ Re-analyze codebase (D1, D2, D5, D6)            (running)
+├─ □ Update characterization tests                    (pending)
+├─ □ Update traceability matrix                       (pending)
+├─ □ Regenerate discovery report                      (pending)
+└─ □ Update state.json                                (pending)
+```
+
+After completion, display a **DIFF SUMMARY** showing what changed since last discovery:
+
+```
+═══════════════════════════════════════════════════════════════
+  INCREMENTAL DISCOVERY COMPLETE
+═══════════════════════════════════════════════════════════════
+
+  Changes since last discovery ({previous_discovered_at}):
+
+  Tests:       {old_count} → {new_count} ({delta})
+  AC:          {old_count} → {new_count} ({delta})
+  Coverage:    {old_pct}% → {new_pct}%
+  New files:   {count} files added since last scan
+  Removed:     {count} files removed since last scan
+
+  Updated:
+    ✓ docs/project-discovery-report.md
+    ✓ docs/isdlc/ac-traceability.csv
+    ✓ tests/characterization/ (regenerated)
+
+  Unchanged:
+    ● docs/isdlc/constitution.md (kept)
+    ● Skills (kept)
+
+═══════════════════════════════════════════════════════════════
+```
+
 #### Chat / Explore Mode
 
-When the user selects [3] Chat / Explore, enter a conversational mode:
+When the user selects Chat / Explore (option [3] in either menu), enter a conversational mode:
 
 **Behavior:**
 - Answer questions about the project's codebase, architecture, and functionality

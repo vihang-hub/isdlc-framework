@@ -15,7 +15,9 @@ The `/discover` command is the universal entry point for setting up a project wi
 
 ### No-Argument Behavior (Interactive Menu)
 
-When `/discover` is invoked without any flags or options, present a discovery mode selection menu before running any analysis:
+When `/discover` is invoked without any flags or options, the menu adapts based on whether discovery has been completed before.
+
+#### First-Time Menu (discovery_completed is false or absent)
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
@@ -38,12 +40,40 @@ Enter selection (1-3):
 
 Note: "(Recommended)" is shown on [2] by default. The orchestrator dynamically moves it to [1] when no existing code is detected.
 
-**After Selection Mapping:**
-
 | Selection | Equivalent | Action |
 |-----------|------------|--------|
 | [1] | `/discover --new` | Go directly to NEW PROJECT FLOW |
 | [2] | `/discover --existing` | Go directly to EXISTING PROJECT FLOW |
+| [3] | (no CLI equivalent) | Enter Chat / Explore conversational mode |
+
+#### Returning Project Menu (discovery_completed is true)
+
+When the project has already been discovered, the menu shows re-discovery options:
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║  iSDLC Framework - Discovery                                 ║
+╚══════════════════════════════════════════════════════════════╝
+
+This project has already been discovered.
+  {project summary: name, tech stack, date, AC count, test count}
+
+[1] Re-discover (full)
+    Run complete discovery from scratch, overwrite all reports
+
+[2] Re-discover (incremental)
+    Re-run analysis only, keep constitution and skills
+
+[3] Chat / Explore
+    Explore the project, discuss functionality, review backlog
+
+Enter selection (1-3):
+```
+
+| Selection | Equivalent | Action |
+|-----------|------------|--------|
+| [1] | `/discover --existing` | Full EXISTING PROJECT FLOW (overwrites reports) |
+| [2] | (no CLI equivalent) | INCREMENTAL DISCOVERY FLOW (analysis + report only) |
 | [3] | (no CLI equivalent) | Enter Chat / Explore conversational mode |
 
 **If any flags/options ARE provided** (`--new`, `--existing`, `--project`, etc.), skip this menu entirely and proceed directly to the appropriate flow.
