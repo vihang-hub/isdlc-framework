@@ -343,23 +343,25 @@ echo -e "${YELLOW}Claude Code is your primary AI assistant.${NC}"
 echo -e "${YELLOW}This setting controls which models are used when Claude Code${NC}"
 echo -e "${YELLOW}delegates work to sub-agents (Task tool).${NC}"
 echo ""
-echo "  1) Free      — Free-tier cloud (Groq, Together, Google) — no GPU needed"
-echo "  2) Budget    — Ollama locally if available, free cloud fallback"
-echo "  3) Quality   — Anthropic everywhere (best results, requires API key) (Recommended)"
-echo "  4) Local     — Ollama only (offline/air-gapped, requires GPU)"
-echo "  5) Hybrid    — Smart per-phase routing (advanced)"
+echo "  1) Claude Code — Use Claude Code for everything (Recommended)"
+echo "  2) Quality     — Anthropic API everywhere (best results, requires API key)"
+echo "  3) Free        — Free-tier cloud (Groq, Together, Google) — no GPU needed"
+echo "  4) Budget      — Ollama locally if available, free cloud fallback"
+echo "  5) Local       — Ollama only (offline/air-gapped, requires GPU)"
+echo "  6) Hybrid      — Smart per-phase routing (advanced)"
 echo ""
-read -p "Choice [3]: " PROVIDER_MODE_ANSWER
-PROVIDER_MODE_ANSWER=${PROVIDER_MODE_ANSWER:-3}
+read -p "Choice [1]: " PROVIDER_MODE_ANSWER
+PROVIDER_MODE_ANSWER=${PROVIDER_MODE_ANSWER:-1}
 
 case "$PROVIDER_MODE_ANSWER" in
-    1) PROVIDER_MODE="free" ;;
-    2) PROVIDER_MODE="budget" ;;
-    3) PROVIDER_MODE="quality" ;;
-    4) PROVIDER_MODE="local" ;;
-    5) PROVIDER_MODE="hybrid" ;;
-    *) PROVIDER_MODE="quality"
-       echo -e "${YELLOW}  Invalid choice — defaulting to quality mode${NC}" ;;
+    1) PROVIDER_MODE="claude-code" ;;
+    2) PROVIDER_MODE="quality" ;;
+    3) PROVIDER_MODE="free" ;;
+    4) PROVIDER_MODE="budget" ;;
+    5) PROVIDER_MODE="local" ;;
+    6) PROVIDER_MODE="hybrid" ;;
+    *) PROVIDER_MODE="claude-code"
+       echo -e "${YELLOW}  Invalid choice — defaulting to Claude Code${NC}" ;;
 esac
 echo -e "${GREEN}  ✓ Sub-agent model routing: $PROVIDER_MODE${NC}"
 echo ""
@@ -1175,11 +1177,12 @@ echo -e "${CYAN}Agent Model Configuration:${NC}"
 echo -e "  Primary:  ${GREEN}Claude Code${NC}$( [ "$CLAUDE_CODE_FOUND" = true ] && echo " ($CLAUDE_CODE_VERSION)" )"
 echo -e "  Routing:  ${GREEN}$PROVIDER_MODE${NC}"
 case "$PROVIDER_MODE" in
-    free)    echo "  Info:     Free-tier cloud providers (Groq, Together, Google) — requires free API keys" ;;
-    budget)  echo "  Info:     Ollama locally, free cloud fallback — minimal cost" ;;
-    quality) echo "  Info:     Anthropic everywhere — best results, requires ANTHROPIC_API_KEY" ;;
-    local)   echo "  Info:     Ollama only — offline/air-gapped, requires GPU with 12GB+ VRAM" ;;
-    hybrid)  echo "  Info:     Smart per-phase routing — advanced, configure in providers.yaml" ;;
+    claude-code) echo "  Info:     Claude Code handles all agent work — no extra configuration needed" ;;
+    free)        echo "  Info:     Free-tier cloud providers (Groq, Together, Google) — requires free API keys" ;;
+    budget)      echo "  Info:     Ollama locally, free cloud fallback — minimal cost" ;;
+    quality)     echo "  Info:     Anthropic API everywhere — best results, requires ANTHROPIC_API_KEY" ;;
+    local)       echo "  Info:     Ollama only — offline/air-gapped, requires GPU with 12GB+ VRAM" ;;
+    hybrid)      echo "  Info:     Smart per-phase routing — advanced, configure in providers.yaml" ;;
 esac
 echo "  Config:   .isdlc/providers.yaml"
 echo -e "  Change:   ${GREEN}/provider set <mode>${NC}"
