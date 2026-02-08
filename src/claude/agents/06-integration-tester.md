@@ -404,7 +404,7 @@ Track each iteration in `.isdlc/state.json`:
             ]
           }
         ],
-        "final_status": "success"
+        "status": "success"
       }
     }
   }
