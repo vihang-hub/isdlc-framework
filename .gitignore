@@ -58,3 +58,27 @@ docs/isdlc/
 
 # Local setup scripts
 setup-remotes.sh
+
+# =============================================================================
+# TEST FILES (development-only, not distributed to users)
+# =============================================================================
+*.test.js
+*.test.cjs
+lib/utils/test-helpers.js
+src/claude/hooks/tests/
+tests/
+
+# =============================================================================
+# BUILD ARTIFACTS (generated at install time from source YAML)
+# =============================================================================
+src/claude/hooks/config/skills-manifest.json
+src/claude/hooks/config/skills-manifest.yaml
+
+# =============================================================================
+# DOGFOODING ARTIFACTS (internal development only)
+# =============================================================================
+framework-info.md
+scripts/migrate-docs.sh
+src/isdlc/scripts/generate-report.sh
+src/isdlc/scripts/validate-state.sh
+src/isdlc/checklists/update-agents.txt

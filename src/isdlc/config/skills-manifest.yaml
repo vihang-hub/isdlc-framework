@@ -6,10 +6,10 @@
 # If an agent needs functionality from another agent's skill, it must
 # delegate to that agent via the orchestrator.
 
-version: "2.1.0"
-generated: "2026-02-04"
-total_skills: 194
-enforcement_mode: strict  # strict | warn | audit
+version: "3.0.0"
+generated: "2026-02-05"
+total_skills: 233
+enforcement_mode: observe  # observe | warn | audit | strict (deprecated)
 
 # =============================================================================
 # SKILL OWNERSHIP BY AGENT
@@ -249,113 +249,93 @@ ownership:
         path: discover/directory-scaffolding
 
   # ---------------------------------------------------------------------------
-  # Quick Scan Agent
-  # Phase: 00-quick-scan (Lightweight Feature Scan)
-  # Category: quick-scan/
+  # Mapping Orchestrator (M0)
+  # Phase: 00-mapping (Feature Exploration)
+  # Category: mapping/
   # ---------------------------------------------------------------------------
-  quick-scan-agent:
-    agent_id: "QS"
-    phase: "00-quick-scan"
+  mapping-orchestrator:
+    agent_id: "M0"
+    phase: "00-mapping"
     skill_count: 3
     skills:
-      - id: QS-001
-        name: quick-scope-estimation
-        path: quick-scan/quick-scope-estimation
-      - id: QS-002
-        name: keyword-search
-        path: quick-scan/keyword-search
-      - id: QS-003
-        name: file-count-estimation
-        path: quick-scan/file-count-estimation
-
-  # ---------------------------------------------------------------------------
-  # Impact Analysis Orchestrator
-  # Phase: 02-impact-analysis (Full Feature Analysis)
-  # Category: impact-analysis/
-  # ---------------------------------------------------------------------------
-  impact-analysis-orchestrator:
-    agent_id: "IA0"
-    phase: "02-impact-analysis"
-    skill_count: 3
-    skills:
-      - id: IA-001
-        name: impact-delegation
-        path: impact-analysis/impact-delegation
-      - id: IA-002
+      - id: MAP-001
+        name: mapping-delegation
+        path: mapping/mapping-delegation
+      - id: MAP-002
         name: impact-consolidation
-        path: impact-analysis/impact-consolidation
-      - id: IA-003
-        name: scope-refinement
-        path: impact-analysis/scope-refinement
+        path: mapping/impact-consolidation
+      - id: MAP-003
+        name: scope-estimation
+        path: mapping/scope-estimation
 
   # ---------------------------------------------------------------------------
   # Impact Analyzer (M1)
-  # Phase: 02-impact-analysis (Full Feature Analysis)
-  # Category: impact-analysis/
+  # Phase: 00-mapping (Feature Exploration)
+  # Category: mapping/
   # ---------------------------------------------------------------------------
   impact-analyzer:
-    agent_id: "IA1"
-    phase: "02-impact-analysis"
+    agent_id: "M1"
+    phase: "00-mapping"
     skill_count: 4
     skills:
-      - id: IA-101
+      - id: MAP-101
         name: file-impact-detection
-        path: impact-analysis/file-impact-detection
-      - id: IA-102
+        path: mapping/file-impact-detection
+      - id: MAP-102
         name: module-dependency-mapping
-        path: impact-analysis/module-dependency-mapping
-      - id: IA-103
+        path: mapping/module-dependency-mapping
+      - id: MAP-103
         name: coupling-analysis
-        path: impact-analysis/coupling-analysis
-      - id: IA-104
+        path: mapping/coupling-analysis
+      - id: MAP-104
         name: change-propagation-estimation
-        path: impact-analysis/change-propagation-estimation
+        path: mapping/change-propagation-estimation
 
   # ---------------------------------------------------------------------------
   # Entry Point Finder (M2)
-  # Phase: 02-impact-analysis (Full Feature Analysis)
-  # Category: impact-analysis/
+  # Phase: 00-mapping (Feature Exploration)
+  # Category: mapping/
   # ---------------------------------------------------------------------------
   entry-point-finder:
-    agent_id: "IA2"
-    phase: "02-impact-analysis"
+    agent_id: "M2"
+    phase: "00-mapping"
     skill_count: 4
     skills:
-      - id: IA-201
+      - id: MAP-201
         name: api-endpoint-discovery
-        path: impact-analysis/api-endpoint-discovery
-      - id: IA-202
+        path: mapping/api-endpoint-discovery
+      - id: MAP-202
         name: ui-component-discovery
-        path: impact-analysis/ui-component-discovery
-      - id: IA-203
+        path: mapping/ui-component-discovery
+      - id: MAP-203
         name: job-handler-discovery
-        path: impact-analysis/job-handler-discovery
-      - id: IA-204
+        path: mapping/job-handler-discovery
+      - id: MAP-204
         name: event-listener-discovery
-        path: impact-analysis/event-listener-discovery
+        path: mapping/event-listener-discovery
 
   # ---------------------------------------------------------------------------
   # Risk Assessor (M3)
-  # Phase: 02-impact-analysis (Full Feature Analysis)
-  # Category: impact-analysis/
+  # Phase: 00-mapping (Feature Exploration)
+  # Category: mapping/
   # ---------------------------------------------------------------------------
   risk-assessor:
-    agent_id: "IA3"
-    phase: "02-impact-analysis"
+    agent_id: "M3"
+    phase: "00-mapping"
     skill_count: 4
     skills:
-      - id: IA-301
+      - id: MAP-301
         name: complexity-scoring
-        path: impact-analysis/complexity-scoring
-      - id: IA-302
+        path: mapping/complexity-scoring
+      - id: MAP-302
         name: coverage-gap-detection
-        path: impact-analysis/coverage-gap-detection
-      - id: IA-303
+        path: mapping/coverage-gap-detection
+      - id: MAP-303
         name: technical-debt-identification
-        path: impact-analysis/technical-debt-identification
-      - id: IA-304
+        path: mapping/technical-debt-identification
+      - id: MAP-304
         name: risk-zone-mapping
-        path: impact-analysis/risk-zone-mapping
+        path: mapping/risk-zone-mapping
 
   # ---------------------------------------------------------------------------
   # Tracing Orchestrator (T0)
@@ -491,13 +471,13 @@ ownership:
         path: requirements/domain-research
 
   # ---------------------------------------------------------------------------
-  # Agent 03: Solution Architect
-  # Phase: 03 - Architecture & Blueprint
+  # Agent 02: Solution Architect
+  # Phase: 02 - Architecture & Blueprint
   # Category: architecture/
   # ---------------------------------------------------------------------------
   solution-architect:
-    agent_id: "03"
-    phase: "03-architecture"
+    agent_id: "02"
+    phase: "02-architecture"
     skill_count: 13
     skills:
       - id: ARCH-001
@@ -538,13 +518,13 @@ ownership:
         path: architecture/environment-design
 
   # ---------------------------------------------------------------------------
-  # Agent 04: System Designer
-  # Phase: 04 - Design & API Contracts
+  # Agent 03: System Designer
+  # Phase: 03 - Design & API Contracts
   # Category: design/
   # ---------------------------------------------------------------------------
   system-designer:
-    agent_id: "04"
-    phase: "04-design"
+    agent_id: "03"
+    phase: "03-design"
     skill_count: 11
     skills:
       - id: DES-001
@@ -579,13 +559,13 @@ ownership:
         path: design/wireframing
 
   # ---------------------------------------------------------------------------
-  # Agent 05: Test Design Engineer
-  # Phase: 05 - Test Strategy & Design
+  # Agent 04: Test Design Engineer
+  # Phase: 04 - Test Strategy & Design
   # Category: testing/ (planning subset)
   # ---------------------------------------------------------------------------
   test-design-engineer:
-    agent_id: "05"
-    phase: "05-test-strategy"
+    agent_id: "04"
+    phase: "04-test-strategy"
     skill_count: 5
     skills:
       - id: TEST-001
@@ -605,13 +585,13 @@ ownership:
         path: testing/prioritization
 
   # ---------------------------------------------------------------------------
-  # Agent 06: Software Developer
-  # Phase: 06 - Implementation
+  # Agent 05: Software Developer
+  # Phase: 05 - Implementation
   # Category: development/
   # ---------------------------------------------------------------------------
   software-developer:
-    agent_id: "06"
-    phase: "06-implementation"
+    agent_id: "05"
+    phase: "05-implementation"
     skill_count: 14
     skills:
       - id: DEV-001
@@ -658,13 +638,13 @@ ownership:
         path: development/autonomous-iterate.md
 
   # ---------------------------------------------------------------------------
-  # Agent 07: Integration Tester
-  # Phase: 07 - Integration & Testing
+  # Agent 06: Integration Tester
+  # Phase: 06 - Integration & Testing
   # Category: testing/ (execution subset)
   # ---------------------------------------------------------------------------
   integration-tester:
-    agent_id: "07"
-    phase: "07-testing"
+    agent_id: "06"
+    phase: "06-testing"
     skill_count: 8
     skills:
       - id: TEST-006
@@ -693,13 +673,13 @@ ownership:
         path: testing/security-test
 
   # ---------------------------------------------------------------------------
-  # Agent 08: QA Engineer
-  # Phase: 08 - Code Review & QA
+  # Agent 07: QA Engineer
+  # Phase: 07 - Code Review & QA
   # Category: development/ (quality subset)
   # ---------------------------------------------------------------------------
   qa-engineer:
-    agent_id: "08"
-    phase: "08-code-review"
+    agent_id: "07"
+    phase: "07-code-review"
     skill_count: 1
     skills:
       - id: DEV-015
@@ -707,13 +687,13 @@ ownership:
         path: development/code-review
 
   # ---------------------------------------------------------------------------
-  # Agent 09: Security & Compliance Auditor
-  # Phase: 09 - Independent Validation
+  # Agent 08: Security & Compliance Auditor
+  # Phase: 08 - Independent Validation
   # Category: security/
   # ---------------------------------------------------------------------------
   security-compliance-auditor:
-    agent_id: "09"
-    phase: "09-validation"
+    agent_id: "08"
+    phase: "08-validation"
     skill_count: 13
     skills:
       - id: SEC-001
@@ -757,13 +737,13 @@ ownership:
         path: security/incident-analysis
 
   # ---------------------------------------------------------------------------
-  # Agent 10: CI/CD Engineer
-  # Phase: 10 - Version Control & CI/CD
+  # Agent 09: CI/CD Engineer
+  # Phase: 09 - Version Control & CI/CD
   # Category: devops/ (pipeline subset)
   # ---------------------------------------------------------------------------
   cicd-engineer:
-    agent_id: "10"
-    phase: "10-cicd"
+    agent_id: "09"
+    phase: "09-cicd"
     skill_count: 6
     skills:
       - id: OPS-001
@@ -786,13 +766,13 @@ ownership:
         path: devops/cost-optimization
 
   # ---------------------------------------------------------------------------
-  # Agent 11: Environment Builder
-  # Phase: 11 - Local Environment Build & Launch
+  # Agent 10: Environment Builder
+  # Phase: 10 - Environment Build & Launch
   # Category: devops/ (local) + documentation/
   # ---------------------------------------------------------------------------
   environment-builder:
-    agent_id: "11"
-    phase: "11-local-testing"
+    agent_id: "10"
+    phase: "10-local-testing"
     skill_count: 7
     skills:
       - id: OPS-007
@@ -818,13 +798,13 @@ ownership:
         path: documentation/code-documentation
 
   # ---------------------------------------------------------------------------
-  # Agent 13: Deployment Engineer (Staging)
-  # Phase: 13 - Test Environment Deployment
+  # Agent 11: Deployment Engineer (Staging)
+  # Phase: 11 - Test Environment Deployment
   # Category: devops/ (staging subset)
   # ---------------------------------------------------------------------------
   deployment-engineer-staging:
-    agent_id: "13"
-    phase: "13-test-deploy"
+    agent_id: "11"
+    phase: "11-test-deploy"
     skill_count: 4
     skills:
       - id: OPS-009
@@ -841,13 +821,13 @@ ownership:
         path: documentation/diagram-creation
 
   # ---------------------------------------------------------------------------
-  # Agent 14: Release Manager
-  # Phase: 14 - Production Deployment
+  # Agent 12: Release Manager
+  # Phase: 12 - Production Deployment
   # Category: devops/ (production) + documentation/
   # ---------------------------------------------------------------------------
   release-manager:
-    agent_id: "14"
-    phase: "14-production"
+    agent_id: "12"
+    phase: "12-production"
     skill_count: 5
     skills:
       - id: OPS-012
@@ -867,13 +847,13 @@ ownership:
         path: documentation/api-documentation
 
   # ---------------------------------------------------------------------------
-  # Agent 15: Site Reliability Engineer
-  # Phase: 15 - Production Operations
+  # Agent 13: Site Reliability Engineer
+  # Phase: 13 - Production Operations
   # Category: operations/ + documentation/
   # ---------------------------------------------------------------------------
   site-reliability-engineer:
-    agent_id: "15"
-    phase: "15-operations"
+    agent_id: "13"
+    phase: "13-operations"
     skill_count: 14
     skills:
       - id: SRE-001
