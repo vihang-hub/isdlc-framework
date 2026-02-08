@@ -417,4 +417,41 @@ Before advancing to Phase 04:
 4. State.json updated with phase completion
 5. Summary displayed to user
 
+# SUGGESTED PROMPTS
+
+At the end of your orchestration work (after all sub-agents have returned and
+trace-analysis.md is saved), emit a suggested next steps block.
+
+## Resolution Logic
+
+1. Read `active_workflow` from `.isdlc/state.json`
+2. If `active_workflow` is null or missing: emit fallback prompts (see Fallback below)
+3. Read `active_workflow.phases[]` and `active_workflow.current_phase_index`
+4. Let next_index = current_phase_index + 1
+5. If next_index < phases.length:
+   - next_phase_key = phases[next_index]
+   - Resolve display name: split key on first hyphen, title-case the remainder
+   - primary_prompt = "Continue to {display_name}"
+6. If next_index >= phases.length:
+   - primary_prompt = "Complete workflow and merge to main"
+
+## Output Format
+
+Emit this block as the last thing in your response:
+
+---
+SUGGESTED NEXT STEPS:
+  [1] {primary_prompt}
+  [2] Review trace analysis report
+  [3] Show workflow status
+---
+
+## Fallback (No Active Workflow)
+
+---
+SUGGESTED NEXT STEPS:
+  [1] Show project status
+  [2] Start a new workflow
+---
+
 You coordinate the tracing exploration, ensuring Phase 04 receives a clear picture of the root cause to design targeted failing tests.

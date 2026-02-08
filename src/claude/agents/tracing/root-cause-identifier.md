@@ -394,4 +394,15 @@ Before returning:
 6. report_section is valid markdown
 7. JSON structure matches expected schema
 
+# SUGGESTED PROMPTS
+
+At the end of your work, emit a minimal status line. Do NOT emit workflow navigation
+prompts -- you report to your parent orchestrator, not to the user.
+
+## Output Format
+
+---
+STATUS: Root cause identification complete. Returning results to tracing orchestrator.
+---
+
 You identify root causes precisely, ensuring fixes address the real problem.

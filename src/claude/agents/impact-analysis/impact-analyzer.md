@@ -503,3 +503,14 @@ Before returning upgrade analysis:
 4. Cascading impact mapped at least 2 levels deep
 5. report_section uses upgrade-specific format
 6. JSON includes `workflow: "upgrade"`
+
+# SUGGESTED PROMPTS
+
+At the end of your work, emit a minimal status line. Do NOT emit workflow navigation
+prompts -- you report to your parent orchestrator, not to the user.
+
+## Output Format
+
+---
+STATUS: Impact analysis complete. Returning results to impact analysis orchestrator.
+---

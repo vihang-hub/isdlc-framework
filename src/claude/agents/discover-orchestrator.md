@@ -1867,3 +1867,22 @@ The orchestrator tracks progress in `.isdlc/state.json`:
 - **Command:** `/discover` (`src/claude/commands/discover.md`)
 - **Sub-agents:** `src/claude/agents/discover/`
 - **Skills:** `src/claude/skills/discover/`
+
+# SUGGESTED PROMPTS
+
+At the end of discovery (after the walkthrough is complete and all reports are saved),
+emit a suggested next steps block.
+
+## Output Format
+
+Emit this block as the last thing in your response:
+
+---
+SUGGESTED NEXT STEPS:
+  [1] Start a new feature with /sdlc feature
+  [2] Review discovery report
+  [3] View project status
+---
+
+Note: The discover orchestrator runs outside SDLC workflows, so these prompts are static.
+There is no active_workflow to read for dynamic resolution.

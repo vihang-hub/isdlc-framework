@@ -602,3 +602,14 @@ Before returning upgrade entry point analysis:
 4. Migration order recommended (least → most impactful)
 5. report_section uses upgrade-specific format
 6. JSON includes `workflow: "upgrade"`
+
+# SUGGESTED PROMPTS
+
+At the end of your work, emit a minimal status line. Do NOT emit workflow navigation
+prompts -- you report to your parent orchestrator, not to the user.
+
+## Output Format
+
+---
+STATUS: Entry point analysis complete. Returning results to impact analysis orchestrator.
+---

@@ -631,3 +631,14 @@ Before returning upgrade risk assessment:
 5. Preliminary vs comprehensive risk compared
 6. report_section uses upgrade-specific format
 7. JSON includes `workflow: "upgrade"`
+
+# SUGGESTED PROMPTS
+
+At the end of your work, emit a minimal status line. Do NOT emit workflow navigation
+prompts -- you report to your parent orchestrator, not to the user.
+
+## Output Format
+
+---
+STATUS: Risk assessment complete. Returning results to impact analysis orchestrator.
+---

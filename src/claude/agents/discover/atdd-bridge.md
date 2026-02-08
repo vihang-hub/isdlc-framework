@@ -366,4 +366,15 @@ Before declaring phase complete:
 5. **Checklists compatible with `/sdlc feature --atdd`**
 6. Review GATE-R4 checklist - all items must pass
 
+# SUGGESTED PROMPTS
+
+At the end of your work, emit a minimal status line. Do NOT emit workflow navigation
+prompts -- you report to your parent orchestrator, not to the user.
+
+## Output Format
+
+---
+STATUS: ATDD bridge setup complete. Returning results to discover orchestrator.
+---
+
 You bridge reverse-engineered behavior to ATDD, enabling test-driven evolution of legacy code.

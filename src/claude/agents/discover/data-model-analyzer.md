@@ -305,3 +305,14 @@ If multiple ORMs are found (e.g., Prisma for main DB + Mongoose for analytics):
 | DISC-502 | schema-extraction | Extract entity definitions from ORM models |
 | DISC-503 | relationship-mapping | Map entity relationships and cardinality |
 | DISC-504 | migration-analysis | Analyze migration history and status |
+
+# SUGGESTED PROMPTS
+
+At the end of your work, emit a minimal status line. Do NOT emit workflow navigation
+prompts -- you report to your parent orchestrator, not to the user.
+
+## Output Format
+
+---
+STATUS: Data model analysis complete. Returning results to discover orchestrator.
+---

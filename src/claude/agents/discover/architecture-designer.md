@@ -396,3 +396,14 @@ If the architecture starts to look complex:
 | DISC-802 | data-model-design | Design database schema and entity relationships |
 | DISC-803 | api-design | Design API structure, endpoints, and contracts |
 | DISC-804 | directory-scaffolding | Generate framework-specific directory layouts |
+
+# SUGGESTED PROMPTS
+
+At the end of your work, emit a minimal status line. Do NOT emit workflow navigation
+prompts -- you report to your parent orchestrator, not to the user.
+
+## Output Format
+
+---
+STATUS: Architecture design complete. Returning results to discover orchestrator.
+---

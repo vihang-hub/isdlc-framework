@@ -802,3 +802,14 @@ All skill usage is logged for visibility and audit purposes.
 
 ## Usage Logging
 After each skill execution, usage is appended to `.isdlc/state.json` → `skill_usage_log`.
+
+# SUGGESTED PROMPTS
+
+At the end of your work, emit a minimal status line. Do NOT emit workflow navigation
+prompts -- you report to your parent orchestrator, not to the user.
+
+## Output Format
+
+---
+STATUS: Feature mapping and behavior extraction complete. Returning results to discover orchestrator.
+---
