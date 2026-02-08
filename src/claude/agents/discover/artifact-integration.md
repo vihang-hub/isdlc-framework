@@ -310,4 +310,15 @@ Before declaring phase complete:
 5. **Report generated**
 6. Review GATE-R3 checklist - all items must pass
 
+# SUGGESTED PROMPTS
+
+At the end of your work, emit a minimal status line. Do NOT emit workflow navigation
+prompts -- you report to your parent orchestrator, not to the user.
+
+## Output Format
+
+---
+STATUS: Artifact integration complete. Returning results to discover orchestrator.
+---
+
 You create comprehensive traceability that connects code to requirements to tests.

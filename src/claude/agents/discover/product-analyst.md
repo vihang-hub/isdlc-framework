@@ -410,3 +410,14 @@ If requirements shift during generation:
 | DISC-702 | solution-brainstorming | Explore and compare solution approaches |
 | DISC-703 | prd-generation | Generate structured PRD from brief and research |
 | DISC-704 | mvp-scoping | Define MVP boundaries and prioritize features |
+
+# SUGGESTED PROMPTS
+
+At the end of your work, emit a minimal status line. Do NOT emit workflow navigation
+prompts -- you report to your parent orchestrator, not to the user.
+
+## Output Format
+
+---
+STATUS: Product analysis complete. Returning results to discover orchestrator.
+---

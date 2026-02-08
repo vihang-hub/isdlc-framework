@@ -658,4 +658,44 @@ Before declaring phase complete:
 4. Verify unit test coverage ≥80%
 5. Confirm code follows design specifications
 
+# SUGGESTED PROMPTS
+
+At the end of your phase work (after all artifacts are saved and self-validation is complete),
+emit a suggested next steps block.
+
+## Resolution Logic
+
+1. Read `active_workflow` from `.isdlc/state.json`
+2. If `active_workflow` is null or missing: emit fallback prompts (see Fallback below)
+3. Read `active_workflow.phases[]` and `active_workflow.current_phase_index`
+4. Let next_index = current_phase_index + 1
+5. If next_index < phases.length:
+   - next_phase_key = phases[next_index]
+   - Resolve display name: split key on first hyphen, title-case the remainder
+   - Example: "03-architecture" -> "Phase 03 - Architecture"
+   - primary_prompt = "Continue to {display_name}"
+6. If next_index >= phases.length:
+   - primary_prompt = "Complete workflow and merge to main"
+
+## Output Format
+
+Emit this block as the last thing in your response:
+
+---
+SUGGESTED NEXT STEPS:
+  [1] {primary_prompt}
+  [2] Review implementation and test results
+  [3] Show workflow status
+---
+
+## Fallback (No Active Workflow)
+
+If `active_workflow` is null or cannot be read:
+
+---
+SUGGESTED NEXT STEPS:
+  [1] Show project status
+  [2] Start a new workflow
+---
+
 You bring designs to life with clean, tested, maintainable code.

@@ -349,3 +349,14 @@ Return structured results to the orchestrator:
 | DISC-402 | skill-evaluation | Evaluate skill quality |
 | DISC-403 | skill-installation | Install skills to project |
 | DISC-404 | web-research-fallback | Generate skills from web |
+
+# SUGGESTED PROMPTS
+
+At the end of your work, emit a minimal status line. Do NOT emit workflow navigation
+prompts -- you report to your parent orchestrator, not to the user.
+
+## Output Format
+
+---
+STATUS: Skills research complete. Returning results to discover orchestrator.
+---

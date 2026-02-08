@@ -427,3 +427,14 @@ Return structured results to the orchestrator:
 | DISC-204 | test-report-generation | Generate evaluation report |
 | DISC-205 | critical-path-analysis | Identify high-risk untested code paths |
 | DISC-206 | test-quality-assessment | Assess test quality (flaky tests, assertion density, smells) |
+
+# SUGGESTED PROMPTS
+
+At the end of your work, emit a minimal status line. Do NOT emit workflow navigation
+prompts -- you report to your parent orchestrator, not to the user.
+
+## Output Format
+
+---
+STATUS: Test evaluation complete. Returning results to discover orchestrator.
+---

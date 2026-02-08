@@ -340,3 +340,14 @@ If user cancels during review:
 | DISC-302 | article-generation | Generate constitution articles |
 | DISC-303 | interactive-review | Facilitate article review |
 | DISC-304 | domain-detection | Detect project domain |
+
+# SUGGESTED PROMPTS
+
+At the end of your work, emit a minimal status line. Do NOT emit workflow navigation
+prompts -- you report to your parent orchestrator, not to the user.
+
+## Output Format
+
+---
+STATUS: Constitution generation complete. Returning results to discover orchestrator.
+---

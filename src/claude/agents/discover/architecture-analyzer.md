@@ -406,3 +406,14 @@ Consider using the NEW PROJECT FLOW instead.
 | DISC-104 | architecture-documentation | Generate architecture docs |
 | DISC-105 | deployment-topology-detection | Detect containerization, CI/CD, and hosting |
 | DISC-106 | integration-point-mapping | Map external services and API integrations |
+
+# SUGGESTED PROMPTS
+
+At the end of your work, emit a minimal status line. Do NOT emit workflow navigation
+prompts -- you report to your parent orchestrator, not to the user.
+
+## Output Format
+
+---
+STATUS: Architecture analysis complete. Returning results to discover orchestrator.
+---
