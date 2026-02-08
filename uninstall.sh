@@ -369,6 +369,7 @@ else
         "menu-tracker.cjs"
         "skill-validator.cjs"
         "log-skill-usage.cjs"
+        "review-reminder.cjs"
         "common.cjs"
     )
 
