@@ -2118,13 +2118,13 @@ Emit (cancellation):
 
 ## Workflow Task List Creation
 
-Immediately after writing `active_workflow` to state.json (Section 3, step 3), **and only when no MODE parameter is present**, create one task per phase in the workflow using `TaskCreate`. Use the workflow's `phases` array to determine which tasks to create.
+Immediately after writing `active_workflow` to state.json (Section 3, step 3), **and only when no MODE parameter is present**, create one task per phase in the workflow using `TaskCreate`. Use the workflow's `phases` array to determine which tasks to create. Assign each task a **sequential number** starting at 1, using the format `[N]` as a prefix in the subject.
 
 ### Task Definitions by Workflow Phase
 
 Use these exact definitions when creating tasks. Only create tasks for phases present in the active workflow.
 
-| Phase Key | subject | activeForm |
+| Phase Key | base subject | activeForm |
 |-----------|---------|------------|
 | `00-mapping` | Map feature impact (Phase 00) | Mapping feature impact |
 | `01-requirements` | Capture requirements (Phase 01) | Capturing requirements |
@@ -2145,13 +2145,15 @@ Use these exact definitions when creating tasks. Only create tasks for phases pr
 | `14-upgrade-plan` | Analyze upgrade impact and generate plan (Phase 14) | Analyzing upgrade impact |
 | `14-upgrade-execute` | Execute upgrade with regression testing (Phase 14) | Executing upgrade |
 
+**Subject format**: `[N] {base subject}` — e.g. `[1] Capture requirements (Phase 01)`, `[2] Design architecture (Phase 02)`
+
 For `description`, use: `"Phase {NN} of {workflow_type} workflow: {agent_name} — {brief_purpose}"`
 
 ### Task Lifecycle
 
-1. **On workflow init**: Create all phase tasks with status `pending` (the default)
+1. **On workflow init**: Create all phase tasks with status `pending` (the default). Subject uses `[N] {base subject}` format.
 2. **Before delegating to a phase agent**: Mark that phase's task as `in_progress` using `TaskUpdate`
-3. **After gate passes**: Mark that phase's task as `completed` using `TaskUpdate`
+3. **After gate passes**: Mark that phase's task as `completed` **with strikethrough** using `TaskUpdate` — update both `status` to `completed` AND `subject` to `~~[N] {base subject}~~` (wrap the original subject in `~~` markdown strikethrough)
 4. **On workflow cancellation**: Do NOT update remaining tasks (they will be discarded with the context)
 
 ### Example: Feature Workflow
@@ -2159,27 +2161,29 @@ For `description`, use: `"Phase {NN} of {workflow_type} workflow: {agent_name} �
 When `/isdlc feature` initializes, create these 8 tasks in order:
 
 ```
-TaskCreate: "Capture requirements (Phase 01)"           — pending
-TaskCreate: "Design architecture (Phase 02)"            — pending
-TaskCreate: "Create design specifications (Phase 03)"   — pending
-TaskCreate: "Implement features (Phase 05)"             — pending
-TaskCreate: "Build and launch local environment (Phase 10)" — pending
-TaskCreate: "Run integration and E2E tests (Phase 06)"  — pending
-TaskCreate: "Configure CI/CD pipelines (Phase 09)"      — pending
-TaskCreate: "Perform code review and QA (Phase 07)"     — pending
+TaskCreate: "[1] Capture requirements (Phase 01)"           — pending
+TaskCreate: "[2] Design architecture (Phase 02)"            — pending
+TaskCreate: "[3] Create design specifications (Phase 03)"   — pending
+TaskCreate: "[4] Implement features (Phase 05)"             — pending
+TaskCreate: "[5] Build and launch local environment (Phase 10)" — pending
+TaskCreate: "[6] Run integration and E2E tests (Phase 06)"  — pending
+TaskCreate: "[7] Configure CI/CD pipelines (Phase 09)"      — pending
+TaskCreate: "[8] Perform code review and QA (Phase 07)"     — pending
 ```
+
+After Phase 01 gate passes, update task 1: `subject: "~~[1] Capture requirements (Phase 01)~~"`, `status: "completed"`
 
 ### Example: Fix Workflow
 
 When `/isdlc fix` initializes, create these 6 tasks:
 
 ```
-TaskCreate: "Capture bug report (Phase 01)"             — pending
-TaskCreate: "Implement fix with TDD (Phase 05)"         — pending
-TaskCreate: "Build and launch local environment (Phase 10)" — pending
-TaskCreate: "Run integration and E2E tests (Phase 06)"  — pending
-TaskCreate: "Configure CI/CD pipelines (Phase 09)"      — pending
-TaskCreate: "Perform code review and QA (Phase 07)"     — pending
+TaskCreate: "[1] Capture bug report (Phase 01)"             — pending
+TaskCreate: "[2] Implement fix with TDD (Phase 05)"         — pending
+TaskCreate: "[3] Build and launch local environment (Phase 10)" — pending
+TaskCreate: "[4] Run integration and E2E tests (Phase 06)"  — pending
+TaskCreate: "[5] Configure CI/CD pipelines (Phase 09)"      — pending
+TaskCreate: "[6] Perform code review and QA (Phase 07)"     — pending
 ```
 
 Note: For the fix workflow, Phase 01's subject changes to "Capture bug report (Phase 01)" and activeForm to "Capturing bug report".
