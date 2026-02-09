@@ -18,6 +18,7 @@ const {
     readStdin,
     readState,
     debugLog,
+    logHookEvent,
     normalizeAgentName
 } = require('./lib/common.cjs');
 
@@ -77,6 +78,9 @@ async function main() {
         }
 
         // Warn: walkthrough not completed
+        logHookEvent('walkthrough-tracker', 'warn', {
+            reason: 'Discovery completed without constitution walkthrough'
+        });
         console.error(
             `[walkthrough-tracker] WARNING: Discovery completed without constitution walkthrough.\n` +
             `  The /discover command completed, but the constitution walkthrough step was not\n` +

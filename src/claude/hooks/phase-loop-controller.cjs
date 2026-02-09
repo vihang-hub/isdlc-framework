@@ -17,6 +17,7 @@ const {
     readState,
     outputBlockResponse,
     debugLog,
+    logHookEvent,
     detectPhaseDelegation
 } = require('./lib/common.cjs');
 
@@ -78,6 +79,11 @@ async function main() {
 
         // Block: phase status is not in_progress
         const agentLabel = delegation.agentName || delegation.targetPhase || 'unknown';
+        logHookEvent('phase-loop-controller', 'block', {
+            phase: delegation.targetPhase,
+            agent: agentLabel,
+            reason: `Phase status is '${phaseStatus || 'not set'}', expected 'in_progress'`
+        });
         outputBlockResponse(
             `PHASE DELEGATION WITHOUT PROGRESS TRACKING: You are delegating to ` +
             `phase agent '${agentLabel}' for phase '${delegation.targetPhase}', ` +

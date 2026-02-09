@@ -16,7 +16,8 @@ const {
     readStdin,
     readState,
     outputBlockResponse,
-    debugLog
+    debugLog,
+    logHookEvent
 } = require('./lib/common.cjs');
 
 const { execSync } = require('child_process');
@@ -105,6 +106,9 @@ async function main() {
         // Block commits to main/master
         if (currentBranch === 'main' || currentBranch === 'master') {
             const expectedBranch = gitBranch.name || 'feature branch';
+            logHookEvent('branch-guard', 'block', {
+                reason: `Commit to '${currentBranch}' blocked, expected branch '${expectedBranch}'`
+            });
             outputBlockResponse(
                 `COMMIT TO MAIN BLOCKED: You are attempting to commit to ` +
                 `'${currentBranch}' while an active workflow has a feature ` +

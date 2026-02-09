@@ -377,6 +377,13 @@ else
         "state-write-validator.cjs"
         "walkthrough-tracker.cjs"
         "discover-menu-guard.cjs"
+        "phase-transition-enforcer.cjs"
+        "constitutional-iteration-validator.cjs"
+        "menu-halt-enforcer.cjs"
+        "explore-readonly-enforcer.cjs"
+        "atdd-completeness-validator.cjs"
+        "output-format-validator.cjs"
+        "test-adequacy-blocker.cjs"
         "common.cjs"
     )
 

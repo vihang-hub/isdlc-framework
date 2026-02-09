@@ -17,6 +17,7 @@ const {
     readState,
     outputBlockResponse,
     debugLog,
+    logHookEvent,
     resolveTasksPath
 } = require('./lib/common.cjs');
 
@@ -86,6 +87,10 @@ async function main() {
         }
 
         // Block: implementation+ phase without task plan
+        logHookEvent('plan-surfacer', 'block', {
+            phase: currentPhase,
+            reason: `No tasks.md found at ${tasksPath}`
+        });
         outputBlockResponse(
             `TASK PLAN NOT GENERATED: The current phase '${currentPhase}' requires ` +
             `a task plan (docs/isdlc/tasks.md) to exist before proceeding. ` +
