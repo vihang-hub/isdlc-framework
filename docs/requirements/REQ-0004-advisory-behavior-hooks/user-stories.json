@@ -1,0 +1,132 @@
+{
+  "version": "1.0",
+  "feature": "REQ-0004-advisory-behavior-hooks",
+  "user_stories": [
+    {
+      "id": "US-01",
+      "title": "Phase-Loop Controller prevents invisible progress",
+      "as_a": "framework user",
+      "i_want": "the orchestrator to be blocked from delegating to a phase agent without first marking the task as in_progress",
+      "so_that": "I always see progress spinners and know which phase is being worked on",
+      "acceptance_criteria": [
+        "AC-01: Hook blocks Task calls matching phase delegation when no TaskUpdate(in_progress) was called",
+        "AC-01a: Hook allows non-phase-delegation Task calls",
+        "AC-01b: Hook allows when no active workflow exists",
+        "AC-01c: Hook fails open on state.json read errors"
+      ],
+      "priority": "P0",
+      "fr_ref": "FR-01"
+    },
+    {
+      "id": "US-02",
+      "title": "Plan is always surfaced before implementation",
+      "as_a": "framework user",
+      "i_want": "the framework to block implementation phases from starting until the task plan has been generated and shown to me",
+      "so_that": "I can review the plan before code changes begin and track progress throughout",
+      "acceptance_criteria": [
+        "AC-02: Hook blocks delegation to implementation+ phases when tasks.md is missing",
+        "AC-02a: Hook allows delegation to early phases (01-05) without tasks.md",
+        "AC-02b: Hook allows all delegations when tasks.md exists",
+        "AC-02c: Hook fails open on file system errors"
+      ],
+      "priority": "P0",
+      "fr_ref": "FR-02"
+    },
+    {
+      "id": "US-03",
+      "title": "Phases execute in strict order",
+      "as_a": "framework user",
+      "i_want": "phase delegation to be blocked if the orchestrator tries to skip ahead or go backwards in the workflow",
+      "so_that": "I can trust that quality gates are enforced and no phase is skipped",
+      "acceptance_criteria": [
+        "AC-03: Hook blocks delegation to a phase that is not the current_phase",
+        "AC-03a: Hook allows delegation to the correct current_phase",
+        "AC-03b: Hook allows non-phase-delegation Task calls",
+        "AC-03c: Hook fails open when no active workflow exists",
+        "AC-03d: Hook fails open on state.json read errors"
+      ],
+      "priority": "P0",
+      "fr_ref": "FR-03"
+    },
+    {
+      "id": "US-04",
+      "title": "Commits to main are blocked during workflow",
+      "as_a": "framework user",
+      "i_want": "git commits to main/master to be blocked when an active workflow has a feature branch",
+      "so_that": "all workflow changes are isolated on the feature branch and can be reviewed before merge",
+      "acceptance_criteria": [
+        "AC-04: Hook blocks git commit on main when active workflow has an active branch",
+        "AC-04a: Hook allows git commit on the correct feature branch",
+        "AC-04b: Hook allows git commit when no active workflow exists",
+        "AC-04c: Hook allows git commit when active workflow has no git_branch",
+        "AC-04d: Hook allows non-git-commit bash commands",
+        "AC-04e: Hook fails open on state.json or git errors"
+      ],
+      "priority": "P1",
+      "fr_ref": "FR-04"
+    },
+    {
+      "id": "US-05",
+      "title": "Fake state data is detected",
+      "as_a": "framework developer",
+      "i_want": "writes to state.json to be validated for structural correctness after they happen",
+      "so_that": "agents cannot write fake completion data (e.g., iterations_used=0 with completed=true) to bypass gates",
+      "acceptance_criteria": [
+        "AC-05: Hook detects writes to state.json paths (single-project and monorepo)",
+        "AC-05a: Hook warns on fake constitutional_validation (completed=true, iterations_used=0)",
+        "AC-05b: Hook warns on fake interactive_elicitation (completed=true, menu_interactions below min)",
+        "AC-05c: Hook warns on fake test_iteration (completed=true, current_iteration=0)",
+        "AC-05d: Hook never blocks (PostToolUse is observational only)",
+        "AC-05e: Hook fails open on read/parse errors"
+      ],
+      "priority": "P1",
+      "fr_ref": "FR-05"
+    },
+    {
+      "id": "US-06",
+      "title": "Constitution walkthrough completion is tracked",
+      "as_a": "framework user",
+      "i_want": "a warning when /discover completes without the constitution walkthrough being done",
+      "so_that": "I know the constitution has been reviewed before starting SDLC workflows",
+      "acceptance_criteria": [
+        "AC-06: Hook detects discover orchestrator task completions",
+        "AC-06a: Hook logs warning when walkthrough_completed is false after discover",
+        "AC-06b: Hook is silent when walkthrough_completed is true",
+        "AC-06c: Hook fails open on all errors"
+      ],
+      "priority": "P2",
+      "fr_ref": "FR-06"
+    },
+    {
+      "id": "US-07",
+      "title": "Discover presents correct menu",
+      "as_a": "framework user",
+      "i_want": "a warning when /discover presents the wrong menu options",
+      "so_that": "I always see the correct 3-option menu and am not confused by stale or wrong options",
+      "acceptance_criteria": [
+        "AC-07: Hook detects discover task delegations",
+        "AC-07a: Hook logs warning when incorrect menu options are detected in output",
+        "AC-07b: Hook is silent when correct 3-option menu is detected",
+        "AC-07c: Hook fails open on all errors"
+      ],
+      "priority": "P2",
+      "fr_ref": "FR-07"
+    },
+    {
+      "id": "US-08",
+      "title": "Hook registration and deployment",
+      "as_a": "framework installer",
+      "i_want": "all 7 new hooks to be registered in settings.json and deployed by the installer",
+      "so_that": "the hooks are active in any project using iSDLC without manual configuration",
+      "acceptance_criteria": [
+        "AC-08: All 7 hooks registered in src/claude/settings.json under correct matcher types",
+        "AC-08a: Installer copies all 7 .cjs files to .claude/hooks/",
+        "AC-08b: Existing hook ordering is preserved (new hooks appended)",
+        "AC-08c: Uninstaller removes the 7 new hooks",
+        "AC-08d: settings.json remains valid JSON after registration"
+      ],
+      "priority": "P0",
+      "fr_ref": "FR-01 through FR-07"
+    }
+  ]
+}

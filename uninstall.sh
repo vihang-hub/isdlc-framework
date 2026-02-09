@@ -370,6 +370,13 @@ else
         "skill-validator.cjs"
         "log-skill-usage.cjs"
         "review-reminder.cjs"
+        "phase-loop-controller.cjs"
+        "plan-surfacer.cjs"
+        "phase-sequence-guard.cjs"
+        "branch-guard.cjs"
+        "state-write-validator.cjs"
+        "walkthrough-tracker.cjs"
+        "discover-menu-guard.cjs"
         "common.cjs"
     )
 
