@@ -748,17 +748,23 @@ When the user selects a workflow (via `/isdlc feature`, `/isdlc fix`, etc.), ini
 When `/isdlc cancel` is invoked:
 1. Read current `active_workflow` from state.json
 2. Ask user for cancellation reason (required)
-3. If `active_workflow.git_branch` exists: execute branch abandonment (Section 3a)
-4. Move to `workflow_history`:
+3. Set `active_workflow.cancelled_at` to current ISO-8601 timestamp
+4. **Collect workflow progress snapshots** (REQ-0005): call `collectPhaseSnapshots(state)` from `common.cjs` to capture phase-by-phase execution data before it is lost.
+5. If `active_workflow.git_branch` exists: execute branch abandonment (Section 3a)
+6. Move to `workflow_history`:
    ```json
    {
      "type": "feature",
+     "id": "REQ-0001",
      "description": "...",
      "started_at": "...",
      "cancelled_at": "ISO-8601 timestamp",
      "cancelled_at_phase": "03-design",
      "cancellation_reason": "User-provided reason",
      "status": "cancelled",
+     "merged_commit": null,
+     "phase_snapshots": [],
+     "metrics": {},
      "git_branch": {
        "name": "feature/REQ-0001-user-auth",
        "status": "abandoned",
@@ -766,8 +772,9 @@ When `/isdlc cancel` is invoked:
      }
    }
    ```
-5. Set `active_workflow` to `null`
-6. Confirm cancellation to user (include branch preservation note if applicable)
+   Include: `phase_snapshots` and `metrics` from step 4, `id` from `artifact_prefix + "-" + zeroPad(counter_used, 4)` (null if missing), `merged_commit: null`.
+7. Set `active_workflow` to `null`
+8. Confirm cancellation to user (include branch preservation note if applicable)
 
 ## 3a. Git Branch Lifecycle Management
 
@@ -1187,12 +1194,13 @@ active_workflow.phases = ["01-requirements", "02-architecture", "03-design", "05
 
 When advancing:
 1. Validate current phase gate passes (all iteration requirements satisfied)
-2. Mark current phase as `"completed"` in `phase_status`
-3. Increment `current_phase_index`
-4. Set new `current_phase` to `phases[current_phase_index]`
-5. Mark new phase as `"in_progress"` in `phase_status`
-6. Update top-level `current_phase` in state.json for backward compatibility
-7. Delegate to the next phase's agent
+2. **Write phase summary** (REQ-0005): After gate passes, write a 1-line summary to `phases[current_phase_key].summary` (max 150 chars). The summary describes the key output of the phase (e.g., `"7 requirements, 26 AC, 4 NFRs"`, `"collectPhaseSnapshots() function + 57 tests"`, `"All 650 tests passing, zero regressions"`). This data is collected at workflow completion by `collectPhaseSnapshots()`.
+3. Mark current phase as `"completed"` in `phase_status`
+4. Increment `current_phase_index`
+5. Set new `current_phase` to `phases[current_phase_index]`
+6. Mark new phase as `"in_progress"` in `phase_status`
+7. Update top-level `current_phase` in state.json for backward compatibility
+8. Delegate to the next phase's agent
 
 ### Workflow Completion
 
@@ -1200,15 +1208,19 @@ When the last phase in the workflow completes:
 1. If `active_workflow.git_branch` exists: execute Human Review Checkpoint (Section 3a-pre) first, then branch merge (Section 3a)
    - On merge conflict: **STOP**, escalate to human, do NOT complete the workflow
    - On review rejection: cancel workflow, do NOT merge
-2. **Prune state.json** to prevent unbounded growth (BUG-0004). Read state, apply these operations, then write back:
+2. **Collect workflow progress snapshots** (REQ-0005). BEFORE pruning, call `collectPhaseSnapshots(state)` from `common.cjs`. This returns `{ phase_snapshots, metrics }`. These will be included in the `workflow_history` entry in step 5.
+3. **Prune state.json** to prevent unbounded growth (BUG-0004). Read state, apply these operations, then write back:
    - `pruneSkillUsageLog(state, 20)` — keep only the last 20 skill_usage_log entries
    - `pruneCompletedPhases(state)` — strip verbose sub-objects (iteration_requirements, constitutional_validation, gate_validation, testing_environment, verification_summary, atdd_validation) from completed/gate-passed phases
    - `pruneHistory(state, 50, 200)` — cap history at 50 entries, truncate action strings > 200 chars
    - `pruneWorkflowHistory(state, 50, 200)` — cap workflow_history at 50 entries, truncate descriptions > 200 chars, compact git_branch to name-only
-3. Mark the workflow as completed
-4. Move to `workflow_history` with `status: "completed"` (include `git_branch` info)
-5. Set `active_workflow` to `null`
-6. Display completion summary with all artifacts produced and merge status
+4. Mark the workflow as completed
+5. Move to `workflow_history` with `status: "completed"` (include `git_branch` info). Also include:
+   - `phase_snapshots` and `metrics` from the `collectPhaseSnapshots()` return value (step 2)
+   - `id`: constructed from `active_workflow.artifact_prefix + "-" + String(active_workflow.counter_used).padStart(4, '0')`. Set to `null` if `artifact_prefix` or `counter_used` is missing.
+   - `merged_commit`: the 7-char short SHA of the merge commit (from branch merge in step 1). Set to `null` if no branch merge occurred.
+6. Set `active_workflow` to `null`
+7. Display completion summary with all artifacts produced and merge status
 
 ## 4a. Automatic Phase Transitions (NO PERMISSION PROMPTS)
 

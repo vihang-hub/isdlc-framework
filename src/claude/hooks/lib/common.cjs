@@ -1319,6 +1319,226 @@ function rotateHookLog(logPath) {
 }
 
 // ---------------------------------------------------------------------------
+// Workflow progress snapshots (REQ-0005)
+// ---------------------------------------------------------------------------
+
+/**
+ * Phase-key-to-agent-name map for history[] fallback summary extraction.
+ * @type {Object<string, string>}
+ */
+const PHASE_AGENT_MAP = {
+    '01-requirements': 'requirements-analyst',
+    '02-impact-analysis': 'impact-analysis-orchestrator',
+    '02-tracing': 'tracing-orchestrator',
+    '03-architecture': 'solution-architect',
+    '04-design': 'system-designer',
+    '05-test-strategy': 'test-design-engineer',
+    '06-implementation': 'software-developer',
+    '07-testing': 'integration-tester',
+    '08-code-review': 'qa-engineer',
+    '09-validation': 'security-compliance-auditor',
+    '10-cicd': 'cicd-engineer',
+    '11-local-testing': 'environment-builder',
+    '12-remote-build': 'environment-builder',
+    '13-test-deploy': 'deployment-engineer-staging',
+    '14-production': 'release-manager',
+    '15-operations': 'site-reliability-engineer',
+    '16-upgrade-plan': 'upgrade-engineer',
+    '16-upgrade-execute': 'upgrade-engineer'
+};
+
+/**
+ * Compute duration in minutes between two ISO-8601 timestamps.
+ * Returns null if either timestamp is missing, invalid, or duration is negative.
+ * @param {string|null} started
+ * @param {string|null} completed
+ * @returns {number|null} Minutes rounded to nearest integer, or null
+ */
+function _computeDuration(started, completed) {
+    if (!started || !completed) return null;
+    const diff = Date.parse(completed) - Date.parse(started);
+    if (isNaN(diff) || diff < 0) return null;
+    return Math.round(diff / 60000);
+}
+
+/**
+ * Extract summary string for a phase snapshot.
+ * Primary: phases[key].summary. Fallback: last matching history[] entry.
+ * @param {object} phaseData - The phase object from state.phases
+ * @param {Array|undefined} history - state.history array
+ * @param {string} phaseKey - Phase key for agent lookup
+ * @returns {string|null} Summary truncated to 150 chars, or null
+ */
+function _extractSummary(phaseData, history, phaseKey) {
+    // Primary: phases[key].summary
+    if (phaseData.summary && typeof phaseData.summary === 'string') {
+        return phaseData.summary.substring(0, 150);
+    }
+
+    // Fallback: last history[] entry matching agent + timestamp range
+    if (!history || !Array.isArray(history)) return null;
+
+    const expectedAgent = PHASE_AGENT_MAP[phaseKey];
+    if (!expectedAgent) return null;
+
+    const phaseStart = Date.parse(phaseData.started);
+    const phaseEnd = Date.parse(phaseData.completed || phaseData.gate_passed);
+
+    for (let i = history.length - 1; i >= 0; i--) {
+        const entry = history[i];
+        if (entry.agent !== expectedAgent) continue;
+        const entryTime = Date.parse(entry.timestamp);
+        if (!isNaN(phaseStart) && !isNaN(phaseEnd)) {
+            if (entryTime >= phaseStart && entryTime <= phaseEnd + 60000) {
+                const action = (entry.action || '').substring(0, 150);
+                return action || null;
+            }
+        } else {
+            // No timestamp range — accept last matching agent entry
+            const action = (entry.action || '').substring(0, 150);
+            return action || null;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Extract test iteration data from a phase's iteration_requirements.
+ * Returns null if no meaningful iteration data exists.
+ * @param {object} phaseData - The phase object from state.phases
+ * @returns {{ count: number, result: string, escalated: boolean }|null}
+ */
+function _extractTestIterations(phaseData) {
+    const testIter = phaseData?.iteration_requirements?.test_iteration;
+    if (!testIter) return null;
+
+    const count = testIter.current_iteration ?? testIter.current ?? 0;
+    if (count === 0 && !testIter.completed && !testIter.escalated) {
+        return null; // No iteration data — omit field
+    }
+
+    return {
+        count: count,
+        result: testIter.completed === true ? 'passed' :
+                testIter.escalated === true ? 'escalated' : 'unknown',
+        escalated: testIter.escalated === true
+    };
+}
+
+/**
+ * Compute workflow-level metrics from snapshots and active_workflow.
+ * @param {Array} snapshots - Array of phase snapshot objects
+ * @param {object} activeWorkflow - state.active_workflow
+ * @returns {object} Metrics object
+ */
+function _computeMetrics(snapshots, activeWorkflow) {
+    const phasesCompleted = snapshots.filter(s => s.status === 'completed').length;
+
+    // Duration from workflow timestamps
+    let totalDuration = null;
+    const startedAt = activeWorkflow.started_at;
+    const completedAt = activeWorkflow.completed_at || activeWorkflow.cancelled_at;
+    if (startedAt && completedAt) {
+        const diff = Date.parse(completedAt) - Date.parse(startedAt);
+        if (!isNaN(diff) && diff >= 0) {
+            totalDuration = Math.round(diff / 60000);
+        }
+    }
+
+    // Iteration counts
+    let testIterTotal = 0;
+    let gatesFirstTry = 0;
+    let gatesIteration = 0;
+    for (const snapshot of snapshots) {
+        if (snapshot.test_iterations) {
+            testIterTotal += snapshot.test_iterations.count;
+        }
+        if (snapshot.gate_passed) {
+            if (snapshot.test_iterations && snapshot.test_iterations.count > 1) {
+                gatesIteration++;
+            } else {
+                gatesFirstTry++;
+            }
+        }
+    }
+
+    return {
+        total_phases: (activeWorkflow.phases && activeWorkflow.phases.length) || 0,
+        phases_completed: phasesCompleted,
+        total_duration_minutes: totalDuration,
+        test_iterations_total: testIterTotal,
+        gates_passed_first_try: gatesFirstTry,
+        gates_required_iteration: gatesIteration
+    };
+}
+
+/**
+ * Collect phase snapshots and workflow metrics from pre-prune state.
+ * Pure function — does not mutate state.
+ *
+ * @param {Object} state - Full state.json object (pre-prune)
+ * @returns {{ phase_snapshots: Array, metrics: Object }}
+ */
+function collectPhaseSnapshots(state) {
+    const DEFAULT_METRICS = {
+        total_phases: 0,
+        phases_completed: 0,
+        total_duration_minutes: null,
+        test_iterations_total: 0,
+        gates_passed_first_try: 0,
+        gates_required_iteration: 0
+    };
+
+    // Guard: require both active_workflow and phases
+    if (!state || !state.active_workflow || !state.phases) {
+        return { phase_snapshots: [], metrics: DEFAULT_METRICS };
+    }
+
+    const activeWorkflow = state.active_workflow;
+    const workflowPhases = activeWorkflow.phases;
+    if (!Array.isArray(workflowPhases) || workflowPhases.length === 0) {
+        return { phase_snapshots: [], metrics: _computeMetrics([], activeWorkflow) };
+    }
+
+    const allPhases = state.phases;
+    const history = state.history;
+    const snapshots = [];
+
+    for (const phaseKey of workflowPhases) {
+        const phaseData = allPhases[phaseKey];
+        if (!phaseData) continue; // Phase not initialized — skip
+
+        const snapshot = {
+            key: phaseKey,
+            status: phaseData.status || 'pending',
+            started: phaseData.started || null,
+            completed: phaseData.completed || null,
+            gate_passed: phaseData.gate_passed || null,
+            duration_minutes: _computeDuration(phaseData.started, phaseData.completed),
+            summary: _extractSummary(phaseData, history, phaseKey)
+        };
+
+        // Conditional: artifacts (omit if empty — ADR-007)
+        if (phaseData.artifacts && Array.isArray(phaseData.artifacts) && phaseData.artifacts.length > 0) {
+            snapshot.artifacts = phaseData.artifacts;
+        }
+
+        // Conditional: test_iterations (omit if no data — ADR-004)
+        const testIter = _extractTestIterations(phaseData);
+        if (testIter) {
+            snapshot.test_iterations = testIter;
+        }
+
+        snapshots.push(snapshot);
+    }
+
+    const metrics = _computeMetrics(snapshots, activeWorkflow);
+
+    return { phase_snapshots: snapshots, metrics };
+}
+
+// ---------------------------------------------------------------------------
 // State pruning functions (BUG-0004)
 // ---------------------------------------------------------------------------
 
@@ -1498,6 +1718,8 @@ module.exports = {
     getHookLogPath,
     HOOK_LOG_MAX_BYTES,
     HOOK_LOG_KEEP_LINES,
+    // Workflow progress snapshots (REQ-0005)
+    collectPhaseSnapshots,
     // State pruning (BUG-0004)
     pruneSkillUsageLog,
     pruneCompletedPhases,
