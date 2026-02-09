@@ -20,7 +20,11 @@ const {
     debugLog,
     getProjectRoot,
     getTimestamp,
-    writePendingEscalation
+    writePendingEscalation,
+    normalizePhaseKey,
+    diagnoseBlockCause,
+    outputSelfHealNotification,
+    logHookEvent
 } = require('./lib/common.cjs');
 
 const fs = require('fs');
@@ -245,9 +249,16 @@ async function main() {
             process.exit(0);
         }
 
-        const currentPhase = state.current_phase;
+        let currentPhase = state.current_phase;
         if (!currentPhase) {
             process.exit(0);
+        }
+
+        // Normalize phase key (self-healing: catches alias mismatches)
+        const originalPhase = currentPhase;
+        currentPhase = normalizePhaseKey(currentPhase);
+        if (currentPhase !== originalPhase) {
+            outputSelfHealNotification('constitution-validator', `Phase key '${originalPhase}' normalized to '${currentPhase}'.`);
         }
 
         // Load requirements
@@ -255,6 +266,10 @@ async function main() {
         const phaseReq = requirements?.phase_requirements?.[currentPhase];
 
         if (!phaseReq?.constitutional_validation?.enabled) {
+            // Self-heal notification if this is due to missing requirements
+            if (!phaseReq) {
+                outputSelfHealNotification('constitution-validator', `No requirements for phase '${currentPhase}'. Allowing completion.`);
+            }
             debugLog('Constitutional validation not enabled for phase:', currentPhase);
             process.exit(0);
         }

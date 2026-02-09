@@ -18,7 +18,9 @@ const {
     readPendingDelegation,
     clearPendingDelegation,
     readStdin,
-    debugLog
+    debugLog,
+    outputSelfHealNotification,
+    logHookEvent
 } = require('./lib/common.cjs');
 
 /**
@@ -98,6 +100,18 @@ async function main() {
             debugLog(`Delegation gate: delegation to ${requiredAgent} confirmed, clearing marker`);
             clearPendingDelegation();
             process.exit(0);
+        }
+
+        // Cross-reference: check if any phase is in_progress (evidence of active work)
+        const currentPhase = state.current_phase || (state.active_workflow && state.active_workflow.current_phase);
+        if (currentPhase && state.phases && state.phases[currentPhase]) {
+            const phaseData = state.phases[currentPhase];
+            if (phaseData.status === 'in_progress') {
+                outputSelfHealNotification('delegation-gate',
+                    `Phase '${currentPhase}' is in_progress — accepting as delegation evidence.`);
+                clearPendingDelegation();
+                process.exit(0);
+            }
         }
 
         // Delegation did NOT happen — block the response

@@ -1211,7 +1211,7 @@ When the last phase in the workflow completes:
 2. **Collect workflow progress snapshots** (REQ-0005). BEFORE pruning, call `collectPhaseSnapshots(state)` from `common.cjs`. This returns `{ phase_snapshots, metrics }`. These will be included in the `workflow_history` entry in step 5.
 3. **Prune state.json** to prevent unbounded growth (BUG-0004). Read state, apply these operations, then write back:
    - `pruneSkillUsageLog(state, 20)` — keep only the last 20 skill_usage_log entries
-   - `pruneCompletedPhases(state)` — strip verbose sub-objects (iteration_requirements, constitutional_validation, gate_validation, testing_environment, verification_summary, atdd_validation) from completed/gate-passed phases
+   - `pruneCompletedPhases(state, protectedPhases)` — strip verbose sub-objects (iteration_requirements, constitutional_validation, gate_validation, testing_environment, verification_summary, atdd_validation) from completed/gate-passed phases. Pass remaining workflow phases as `protectedPhases` to prevent stripping in-flight data. Example: `pruneCompletedPhases(state, activeWorkflow.phases.slice(currentIndex))`. At workflow completion, pass `[]` (no protection needed).
    - `pruneHistory(state, 50, 200)` — cap history at 50 entries, truncate action strings > 200 chars
    - `pruneWorkflowHistory(state, 50, 200)` — cap workflow_history at 50 entries, truncate descriptions > 200 chars, compact git_branch to name-only
 4. Mark the workflow as completed
@@ -2165,11 +2165,11 @@ Use these exact definitions when creating tasks. Only create tasks for phases pr
 | `09-validation` | Validate security and compliance (Phase 09) | Validating security |
 | `10-cicd` | Configure CI/CD pipelines (Phase 10) | Configuring CI/CD |
 | `12-remote-build` | Build and deploy remote environment (Phase 12) | Building remote environment |
-| `13-test-deploy` | Deploy to staging (Phase 13) | Deploying to staging |
-| `14-production` | Deploy to production (Phase 14) | Deploying to production |
-| `15-operations` | Configure monitoring and operations (Phase 15) | Configuring operations |
-| `16-upgrade-plan` | Analyze upgrade impact and generate plan (Phase 16) | Analyzing upgrade impact |
-| `16-upgrade-execute` | Execute upgrade with regression testing (Phase 16) | Executing upgrade |
+| `12-test-deploy` | Deploy to staging (Phase 12) | Deploying to staging |
+| `13-production` | Deploy to production (Phase 13) | Deploying to production |
+| `14-operations` | Configure monitoring and operations (Phase 14) | Configuring operations |
+| `15-upgrade-plan` | Analyze upgrade impact and generate plan (Phase 15) | Analyzing upgrade impact |
+| `15-upgrade-execute` | Execute upgrade with regression testing (Phase 15) | Executing upgrade |
 
 **Subject format**: `[N] {base subject}` — e.g. `[1] Capture requirements (Phase 01)`, `[2] Analyze impact (Phase 02)`
 

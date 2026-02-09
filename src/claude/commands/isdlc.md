@@ -430,7 +430,7 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 ```
 1. Validate constitution exists and is not a template
 2. Check no active workflow (block if one exists, suggest `/isdlc cancel` first)
-3. Initialize `active_workflow` in state.json with type `"upgrade"` and phases `["16-upgrade-plan", "16-upgrade-execute", "08-code-review"]`
+3. Initialize `active_workflow` in state.json with type `"upgrade"` and phases `["15-upgrade-plan", "15-upgrade-execute", "08-code-review"]`
 4. **Validate test adequacy** — run the full test suite to confirm adequate coverage exists. If no tests exist, block the upgrade and recommend `/isdlc test generate` first. If coverage is below thresholds, warn the user and require explicit acceptance before proceeding.
 5. Delegate to Upgrade Engineer (Phase 14) with `scope: "analysis"`:
    - Detect ecosystem and current version
@@ -747,11 +747,11 @@ Look up the base subject and activeForm from this table:
 | `09-validation` | Validate security and compliance (Phase 09) | Validating security |
 | `10-cicd` | Configure CI/CD pipelines (Phase 10) | Configuring CI/CD |
 | `12-remote-build` | Build and deploy remote environment (Phase 12) | Building remote environment |
-| `13-test-deploy` | Deploy to staging (Phase 13) | Deploying to staging |
-| `14-production` | Deploy to production (Phase 14) | Deploying to production |
-| `15-operations` | Configure monitoring and operations (Phase 15) | Configuring operations |
-| `16-upgrade-plan` | Analyze upgrade impact and generate plan (Phase 16) | Analyzing upgrade impact |
-| `16-upgrade-execute` | Execute upgrade with regression testing (Phase 16) | Executing upgrade |
+| `12-test-deploy` | Deploy to staging (Phase 12) | Deploying to staging |
+| `13-production` | Deploy to production (Phase 13) | Deploying to production |
+| `14-operations` | Configure monitoring and operations (Phase 14) | Configuring operations |
+| `15-upgrade-plan` | Analyze upgrade impact and generate plan (Phase 15) | Analyzing upgrade impact |
+| `15-upgrade-execute` | Execute upgrade with regression testing (Phase 15) | Executing upgrade |
 
 **Subject format**: `[N] {base subject}` — e.g. `[1] Capture requirements (Phase 01)`, `[2] Analyze impact (Phase 02)`
 

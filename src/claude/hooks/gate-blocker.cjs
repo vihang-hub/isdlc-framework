@@ -21,7 +21,12 @@ const {
     getTimestamp,
     loadManifest,
     writePendingEscalation,
-    validateSchema
+    validateSchema,
+    normalizePhaseKey,
+    diagnoseBlockCause,
+    outputSelfHealNotification,
+    logHookEvent,
+    readPendingDelegation
 } = require('./lib/common.cjs');
 
 const fs = require('fs');
@@ -382,6 +387,32 @@ function checkAgentDelegationRequirement(phaseState, phaseRequirements, state, c
         };
     }
 
+    // Cross-reference: check pending_delegation for secondary evidence
+    const pending = state.pending_delegation;
+    if (pending && pending.required_agent) {
+        const pendingAgent = pending.required_agent.toLowerCase().replace(/[_\s]/g, '-');
+        const expected = expectedAgent.toLowerCase().replace(/[_\s]/g, '-');
+        if (pendingAgent === expected || pendingAgent.includes(expected)) {
+            return {
+                satisfied: true,
+                reason: 'agent_delegation_pending',
+                agent: expectedAgent,
+                source: 'pending_delegation'
+            };
+        }
+    }
+
+    // Cross-reference: check if phase is in_progress (tertiary evidence of delegation)
+    const phaseData = state.phases?.[currentPhase];
+    if (phaseData && phaseData.status === 'in_progress') {
+        return {
+            satisfied: true,
+            reason: 'phase_in_progress',
+            agent: expectedAgent,
+            source: 'phase_status'
+        };
+    }
+
     return {
         satisfied: false,
         reason: `Phase agent '${expectedAgent}' was not delegated to during phase '${currentPhase}'. The orchestrator must delegate to the phase agent before gate advancement.`,
@@ -485,12 +516,20 @@ async function main() {
             process.exit(0);
         }
 
+        // Normalize phase key (self-healing: catches alias mismatches)
+        const originalPhase = currentPhase;
+        currentPhase = normalizePhaseKey(currentPhase);
+        if (currentPhase !== originalPhase) {
+            outputSelfHealNotification('gate-blocker', `Phase key '${originalPhase}' normalized to '${currentPhase}'.`);
+        }
+
         debugLog('Current phase:', currentPhase);
 
         // Get base phase requirements
         let phaseReq = requirements.phase_requirements[currentPhase];
         if (!phaseReq) {
-            debugLog('No requirements defined for phase:', currentPhase);
+            // Self-heal: missing requirements is infrastructure issue, not genuine block
+            outputSelfHealNotification('gate-blocker', `No requirements defined for phase '${currentPhase}'. Allowing gate advancement.`);
             process.exit(0);
         }
 
@@ -584,9 +623,27 @@ async function main() {
             process.exit(0);
         }
 
-        // Block gate advancement
-        const blockingReqs = checks.map(c => c.requirement).join(', ');
-        const details = checks.map(c => `\n- ${c.requirement}: ${c.reason}`).join('');
+        // Diagnose each blocking check — self-heal infrastructure issues
+        const genuineChecks = [];
+        for (const check of checks) {
+            const diagnosis = diagnoseBlockCause('gate-blocker', currentPhase, check.requirement, state);
+            if (diagnosis.cause === 'infrastructure' || diagnosis.cause === 'stale') {
+                outputSelfHealNotification('gate-blocker', `${diagnosis.detail}. Action: ${diagnosis.remediation}.`);
+                logHookEvent('gate-blocker', 'self-heal', { phase: currentPhase, reason: diagnosis.detail });
+            } else {
+                genuineChecks.push(check);
+            }
+        }
+
+        // If all blocks were infrastructure, allow gate advancement
+        if (genuineChecks.length === 0) {
+            debugLog('All blocks were infrastructure issues, self-healed — allowing');
+            process.exit(0);
+        }
+
+        // Block gate advancement (genuine failures only)
+        const blockingReqs = genuineChecks.map(c => c.requirement).join(', ');
+        const details = genuineChecks.map(c => `\n- ${c.requirement}: ${c.reason}`).join('');
 
         const stopReason = `GATE BLOCKED: Iteration requirements not satisfied for phase '${currentPhase}'.\n\nBlocking requirements: ${blockingReqs}${details}\n\nComplete the required iterations before advancing.`;
 

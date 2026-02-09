@@ -24,7 +24,11 @@ const {
     debugLog,
     getProjectRoot,
     getTimestamp,
-    writePendingEscalation
+    writePendingEscalation,
+    normalizePhaseKey,
+    diagnoseBlockCause,
+    outputSelfHealNotification,
+    logHookEvent
 } = require('./lib/common.cjs');
 
 const fs = require('fs');
@@ -247,15 +251,24 @@ async function main() {
 
         // Determine current phase — prefer active_workflow if present
         const activeWorkflow = state.active_workflow;
-        const currentPhase = (activeWorkflow && activeWorkflow.current_phase) || state.current_phase;
+        let currentPhase = (activeWorkflow && activeWorkflow.current_phase) || state.current_phase;
         if (!currentPhase) {
             process.exit(0);
+        }
+
+        // Normalize phase key (self-healing: catches alias mismatches)
+        const originalPhase = currentPhase;
+        currentPhase = normalizePhaseKey(currentPhase);
+        if (currentPhase !== originalPhase) {
+            outputSelfHealNotification('iteration-corridor', `Phase key '${originalPhase}' normalized to '${currentPhase}'.`);
         }
 
         // Load requirements and apply workflow overrides if applicable
         const requirements = loadIterationRequirements();
         let phaseReq = requirements?.phase_requirements?.[currentPhase];
         if (!phaseReq) {
+            // Self-heal: missing requirements is infrastructure issue
+            outputSelfHealNotification('iteration-corridor', `No requirements for phase '${currentPhase}'. Allowing action.`);
             process.exit(0);
         }
 

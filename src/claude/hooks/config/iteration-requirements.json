@@ -279,6 +279,22 @@
       }
     },
 
+    "12-remote-build": {
+      "_comment": "Remote environment build - no iteration requirements",
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": false
+      },
+      "constitutional_validation": {
+        "enabled": false
+      },
+      "agent_delegation_validation": {
+        "enabled": true
+      }
+    },
+
     "12-test-deploy": {
       "interactive_elicitation": {
         "enabled": false
@@ -330,6 +346,44 @@
       }
     },
 
+    "15-upgrade-plan": {
+      "_comment": "Upgrade planning phase - top-level entry for hook lookup",
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": false
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 3,
+        "articles": ["I", "VII", "IX", "X"]
+      },
+      "agent_delegation_validation": {
+        "enabled": true
+      }
+    },
+
+    "15-upgrade-execute": {
+      "_comment": "Upgrade execution phase - top-level entry for hook lookup",
+      "interactive_elicitation": {
+        "enabled": false
+      },
+      "test_iteration": {
+        "enabled": true,
+        "max_iterations": 5,
+        "circuit_breaker_threshold": 3
+      },
+      "constitutional_validation": {
+        "enabled": true,
+        "max_iterations": 3,
+        "articles": ["I", "VII", "IX", "X"]
+      },
+      "agent_delegation_validation": {
+        "enabled": true
+      }
+    },
+
     "15-upgrade": {
       "interactive_elicitation": {
         "enabled": false
@@ -348,6 +402,42 @@
         "enabled": true
       },
       "sub_phases": {
+        "15-upgrade-plan": {
+          "_comment": "Upgrade planning phase - inherits from parent 15-upgrade",
+          "interactive_elicitation": {
+            "enabled": false
+          },
+          "test_iteration": {
+            "enabled": false
+          },
+          "constitutional_validation": {
+            "enabled": true,
+            "max_iterations": 3,
+            "articles": ["I", "VII", "IX", "X"]
+          },
+          "agent_delegation_validation": {
+            "enabled": true
+          }
+        },
+        "15-upgrade-execute": {
+          "_comment": "Upgrade execution phase - inherits from parent 15-upgrade",
+          "interactive_elicitation": {
+            "enabled": false
+          },
+          "test_iteration": {
+            "enabled": true,
+            "max_iterations": 5,
+            "circuit_breaker_threshold": 3
+          },
+          "constitutional_validation": {
+            "enabled": true,
+            "max_iterations": 3,
+            "articles": ["I", "VII", "IX", "X"]
+          },
+          "agent_delegation_validation": {
+            "enabled": true
+          }
+        },
         "15-upgrade-preliminary-analysis": {
           "_comment": "Always runs - changelog fetch and quick risk assessment",
           "interactive_elicitation": {

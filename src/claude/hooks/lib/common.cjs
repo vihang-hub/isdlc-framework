@@ -856,7 +856,11 @@ function outputBlockResponse(stopReason) {
 
 /**
  * Write a pending escalation entry to state.json.
- * Appends to state.pending_escalations[] array.
+ * Appends to state.pending_escalations[] array with dedup and FIFO cap.
+ *
+ * Dedup: Skips if same hook+phase+type was written within ESCALATION_DEDUP_WINDOW_MS.
+ * Cap: FIFO eviction at MAX_ESCALATIONS entries.
+ *
  * @param {object} entry - { type, hook, phase, detail, timestamp }
  */
 function writePendingEscalation(entry) {
@@ -865,7 +869,28 @@ function writePendingEscalation(entry) {
     if (!Array.isArray(state.pending_escalations)) {
         state.pending_escalations = [];
     }
+
+    // Dedup: skip if same hook+phase+type within window
+    const now = entry.timestamp ? Date.parse(entry.timestamp) : Date.now();
+    const isDuplicate = state.pending_escalations.some(existing => {
+        if (existing.hook !== entry.hook || existing.phase !== entry.phase || existing.type !== entry.type) {
+            return false;
+        }
+        const existingTime = existing.timestamp ? Date.parse(existing.timestamp) : 0;
+        return (now - existingTime) < ESCALATION_DEDUP_WINDOW_MS;
+    });
+
+    if (isDuplicate) {
+        return; // Skip duplicate within window
+    }
+
     state.pending_escalations.push(entry);
+
+    // FIFO cap: keep only the newest MAX_ESCALATIONS entries
+    if (state.pending_escalations.length > MAX_ESCALATIONS) {
+        state.pending_escalations = state.pending_escalations.slice(-MAX_ESCALATIONS);
+    }
+
     writeState(state);
 }
 
@@ -1340,12 +1365,119 @@ const PHASE_AGENT_MAP = {
     '10-cicd': 'cicd-engineer',
     '11-local-testing': 'environment-builder',
     '12-remote-build': 'environment-builder',
-    '13-test-deploy': 'deployment-engineer-staging',
-    '14-production': 'release-manager',
-    '15-operations': 'site-reliability-engineer',
-    '16-upgrade-plan': 'upgrade-engineer',
-    '16-upgrade-execute': 'upgrade-engineer'
+    '12-test-deploy': 'deployment-engineer-staging',
+    '13-production': 'release-manager',
+    '14-operations': 'site-reliability-engineer',
+    '15-upgrade-plan': 'upgrade-engineer',
+    '15-upgrade-execute': 'upgrade-engineer'
 };
+
+// ---------------------------------------------------------------------------
+// Phase key normalization (self-healing)
+// ---------------------------------------------------------------------------
+
+/**
+ * Known phase key aliases that map to canonical keys.
+ * Catches drift between workflows.json and iteration-requirements.json.
+ * @type {Object<string, string>}
+ */
+const PHASE_KEY_ALIASES = Object.freeze({
+    // Legacy workflows.json keys → canonical iteration-requirements.json keys
+    '13-test-deploy': '12-test-deploy',
+    '14-production': '13-production',
+    '15-operations': '14-operations',
+    '16-upgrade-plan': '15-upgrade-plan',
+    '16-upgrade-execute': '15-upgrade-execute'
+});
+
+/**
+ * Normalize a phase key using the alias map.
+ * Returns the canonical key if an alias exists, otherwise returns the input unchanged.
+ * @param {string} key - Phase key (e.g., '13-test-deploy' or '12-test-deploy')
+ * @returns {string} Canonical phase key
+ */
+function normalizePhaseKey(key) {
+    if (!key || typeof key !== 'string') return key;
+    return PHASE_KEY_ALIASES[key] || key;
+}
+
+// ---------------------------------------------------------------------------
+// Self-healing diagnosis
+// ---------------------------------------------------------------------------
+
+/** Maximum pending_escalations entries (FIFO ring buffer) */
+const MAX_ESCALATIONS = 20;
+/** Dedup window for pending_escalations in milliseconds (60 seconds) */
+const ESCALATION_DEDUP_WINDOW_MS = 60000;
+
+/**
+ * Diagnose why a hook is about to block.
+ * Distinguishes genuine requirement failures from infrastructure issues.
+ *
+ * @param {string} hookName - Name of the blocking hook
+ * @param {string} phase - Current phase key
+ * @param {string} requirement - Which requirement failed (e.g., 'test_iteration')
+ * @param {object} state - Current state.json
+ * @returns {{ cause: string, detail: string, remediation: string|null }}
+ *   cause: 'genuine' | 'infrastructure' | 'stale'
+ */
+function diagnoseBlockCause(hookName, phase, requirement, state) {
+    // Check 1: Was the phase key an alias? (already normalized by caller, but check if original differed)
+    const canonical = normalizePhaseKey(phase);
+    if (canonical !== phase) {
+        return {
+            cause: 'infrastructure',
+            detail: `Phase key '${phase}' is an alias for '${canonical}'`,
+            remediation: `normalized_phase_key`
+        };
+    }
+
+    // Check 2: Is there a stale workflow? (workflow completed/cancelled but active_workflow still present)
+    const aw = state && state.active_workflow;
+    if (aw && (aw.status === 'completed' || aw.status === 'cancelled')) {
+        return {
+            cause: 'stale',
+            detail: `active_workflow has status '${aw.status}' but is still present in state`,
+            remediation: `stale_workflow_detected`
+        };
+    }
+
+    // Check 3: Phase not initialized in state.phases — only infrastructure if active workflow expects it
+    if (state && state.phases && !state.phases[phase]) {
+        // Only treat as infrastructure if an active workflow references this phase
+        // (meaning the phase SHOULD have been initialized but wasn't).
+        // Without an active workflow, missing phase state is a genuine "not started" condition.
+        const aw2 = state.active_workflow;
+        if (aw2 && aw2.current_phase === phase) {
+            return {
+                cause: 'infrastructure',
+                detail: `Phase '${phase}' has no entry in state.phases — may not be initialized`,
+                remediation: `missing_phase_state`
+            };
+        }
+    }
+
+    // Default: genuine failure — the requirement is truly not met
+    return {
+        cause: 'genuine',
+        detail: `Requirement '${requirement}' not satisfied for phase '${phase}'`,
+        remediation: null
+    };
+}
+
+/**
+ * Output a self-heal notification to stderr (not stdout, which is reserved for hook protocol JSON).
+ * Format: [SELF-HEAL] {hook}: {message}
+ * Also logs to hook-activity.log via logHookEvent.
+ *
+ * @param {string} hookName - Name of the hook performing the self-heal
+ * @param {string} message - Human-readable description of what happened
+ */
+function outputSelfHealNotification(hookName, message) {
+    const formatted = `[SELF-HEAL] ${hookName}: ${message}`;
+    console.error(formatted);
+    logHookEvent(hookName, 'self-heal', { reason: message });
+}
 
 /**
  * Compute duration in minutes between two ISO-8601 timestamps.
@@ -1562,11 +1694,17 @@ function pruneSkillUsageLog(state, maxEntries = 20) {
  * Strips: iteration_requirements, constitutional_validation, gate_validation,
  *         testing_environment, verification_summary, atdd_validation.
  * Only strips from phases that have status=completed OR gate_passed is truthy.
+ * Skips phases listed in protectedPhases (e.g., remaining workflow phases).
+ * Adds _pruned_at timestamp to stripped phases for diagnosis.
+ *
  * @param {Object} state - The state object
+ * @param {string[]} [protectedPhases=[]] - Phase keys to skip (never prune)
  * @returns {Object} The mutated state object
  */
-function pruneCompletedPhases(state) {
+function pruneCompletedPhases(state, protectedPhases = []) {
     if (!state.phases || typeof state.phases !== 'object') return state;
+
+    const protectedSet = new Set(protectedPhases);
 
     const STRIP_FIELDS = [
         'iteration_requirements',
@@ -1577,11 +1715,13 @@ function pruneCompletedPhases(state) {
         'atdd_validation'
     ];
 
-    for (const [, phase] of Object.entries(state.phases)) {
+    for (const [phaseKey, phase] of Object.entries(state.phases)) {
+        if (protectedSet.has(phaseKey)) continue;
         if (phase.status === 'completed' || phase.gate_passed) {
             for (const field of STRIP_FIELDS) {
                 delete phase[field];
             }
+            phase._pruned_at = new Date().toISOString();
         }
     }
     return state;
@@ -1720,6 +1860,13 @@ module.exports = {
     HOOK_LOG_KEEP_LINES,
     // Workflow progress snapshots (REQ-0005)
     collectPhaseSnapshots,
+    // Phase key normalization (self-healing)
+    PHASE_KEY_ALIASES,
+    normalizePhaseKey,
+    MAX_ESCALATIONS,
+    ESCALATION_DEDUP_WINDOW_MS,
+    diagnoseBlockCause,
+    outputSelfHealNotification,
     // State pruning (BUG-0004)
     pruneSkillUsageLog,
     pruneCompletedPhases,
