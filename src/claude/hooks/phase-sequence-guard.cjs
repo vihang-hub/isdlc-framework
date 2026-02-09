@@ -17,6 +17,7 @@ const {
     readState,
     outputBlockResponse,
     debugLog,
+    logHookEvent,
     detectPhaseDelegation
 } = require('./lib/common.cjs');
 
@@ -83,6 +84,11 @@ async function main() {
 
         // Block: out-of-order phase delegation
         const agentLabel = delegation.agentName || 'unknown';
+        logHookEvent('phase-sequence-guard', 'block', {
+            phase: currentPhase,
+            agent: agentLabel,
+            reason: `Target phase '${targetPhase}' does not match current '${currentPhase}'`
+        });
         outputBlockResponse(
             `OUT-OF-ORDER PHASE DELEGATION: Attempting to delegate to phase ` +
             `'${targetPhase}' (agent: ${agentLabel}), but the current workflow ` +

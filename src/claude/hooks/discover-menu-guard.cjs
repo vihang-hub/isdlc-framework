@@ -18,6 +18,7 @@
 const {
     readStdin,
     debugLog,
+    logHookEvent,
     normalizeAgentName
 } = require('./lib/common.cjs');
 
@@ -128,6 +129,9 @@ async function main() {
 
         // Warn about incorrect menu
         if (missingOptions.length > 0) {
+            logHookEvent('discover-menu-guard', 'warn', {
+                reason: `Missing menu options: ${missingOptions.join(', ')}`
+            });
             console.error(
                 `[discover-menu-guard] WARNING: Incorrect discover menu detected.\n` +
                 `  Expected 3 options: [1] New Project, [2] Existing Project, [3] Chat/Explore\n` +
@@ -137,6 +141,9 @@ async function main() {
         }
 
         if (forbiddenFound.length > 0) {
+            logHookEvent('discover-menu-guard', 'warn', {
+                reason: `Forbidden menu options found: ${forbiddenFound.join(', ')}`
+            });
             console.error(
                 `[discover-menu-guard] WARNING: Incorrect discover menu detected.\n` +
                 `  Found removed options: ${forbiddenFound.join(', ')}\n` +

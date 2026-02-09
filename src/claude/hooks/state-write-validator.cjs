@@ -17,7 +17,8 @@
 
 const {
     readStdin,
-    debugLog
+    debugLog,
+    logHookEvent
 } = require('./lib/common.cjs');
 
 const fs = require('fs');
@@ -138,6 +139,10 @@ async function main() {
             const warnings = validatePhase(phaseName, phaseData, filePath);
             for (const warning of warnings) {
                 console.error(warning);
+                logHookEvent('state-write-validator', 'warn', {
+                    phase: phaseName,
+                    reason: warning.split('\n')[0].replace('[state-write-validator] WARNING: ', '')
+                });
             }
         }
 

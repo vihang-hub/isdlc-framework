@@ -22,6 +22,9 @@ node_modules/
 .claude/
 .isdlc/
 
+# Hook activity log (generated at runtime by logHookEvent)
+hook-activity.log
+
 # =============================================================================
 # FRAMEWORK DEVELOPMENT FILES (not distributed to users)
 # =============================================================================

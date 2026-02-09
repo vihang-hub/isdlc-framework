@@ -1242,6 +1242,82 @@ function debugLog(...args) {
     }
 }
 
+// =========================================================================
+// Hook Activity Logging (REQ-0005)
+// =========================================================================
+
+const HOOK_LOG_MAX_BYTES = 1024 * 1024; // 1MB
+const HOOK_LOG_KEEP_LINES = 500;
+
+/**
+ * Get the path to the hook activity log file.
+ * @returns {string} Absolute path to hook-activity.log
+ */
+function getHookLogPath() {
+    const projectRoot = getProjectRoot();
+    return path.join(projectRoot, '.isdlc', 'hook-activity.log');
+}
+
+/**
+ * Log a structured hook event to the centralized activity log.
+ * Appends one JSONL line per event. Rotates when file exceeds 1MB.
+ * NEVER throws or crashes -- all errors are silently swallowed.
+ *
+ * @param {string} hookName - Name of the hook (e.g., 'branch-guard')
+ * @param {string} eventType - Event type: 'block', 'allow', 'warn', 'error', 'skip'
+ * @param {object} [details={}] - Additional details (phase, agent, reason)
+ */
+function logHookEvent(hookName, eventType, details = {}) {
+    try {
+        const logPath = getHookLogPath();
+        const entry = {
+            ts: new Date().toISOString(),
+            hook: hookName,
+            event: eventType,
+            phase: details.phase || null,
+            agent: details.agent || null,
+            reason: details.reason || null
+        };
+        const line = JSON.stringify(entry) + '\n';
+
+        // Ensure .isdlc directory exists
+        const dir = path.dirname(logPath);
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+
+        // Append the log entry
+        fs.appendFileSync(logPath, line, 'utf8');
+
+        // Check file size for rotation
+        try {
+            const stat = fs.statSync(logPath);
+            if (stat.size > HOOK_LOG_MAX_BYTES) {
+                rotateHookLog(logPath);
+            }
+        } catch (e) {
+            // Stat failed, skip rotation
+        }
+    } catch (e) {
+        // Logging must never fail -- silently swallow all errors
+    }
+}
+
+/**
+ * Rotate the hook activity log by keeping only the newest N lines.
+ * @param {string} logPath - Path to the log file
+ */
+function rotateHookLog(logPath) {
+    try {
+        const content = fs.readFileSync(logPath, 'utf8');
+        const lines = content.split('\n').filter(l => l.trim());
+        const kept = lines.slice(-HOOK_LOG_KEEP_LINES);
+        fs.writeFileSync(logPath, kept.join('\n') + '\n', 'utf8');
+    } catch (e) {
+        // Rotation failed, not critical
+    }
+}
+
 module.exports = {
     getProjectRoot,
     // Monorepo support
@@ -1293,5 +1369,10 @@ module.exports = {
     // Phase delegation detection (REQ-0004)
     SETUP_COMMAND_KEYWORDS,
     isSetupCommand,
-    detectPhaseDelegation
+    detectPhaseDelegation,
+    // Hook activity logging (REQ-0005)
+    logHookEvent,
+    getHookLogPath,
+    HOOK_LOG_MAX_BYTES,
+    HOOK_LOG_KEEP_LINES
 };
