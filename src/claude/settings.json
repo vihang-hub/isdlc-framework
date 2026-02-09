@@ -163,6 +163,21 @@
           },
           {
             "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/phase-loop-controller.cjs",
+            "timeout": 10000
+          },
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/plan-surfacer.cjs",
+            "timeout": 10000
+          },
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/phase-sequence-guard.cjs",
+            "timeout": 10000
+          },
+          {
+            "type": "command",
             "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/gate-blocker.cjs",
             "timeout": 10000
           },
@@ -187,6 +202,16 @@
             "timeout": 10000
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/branch-guard.cjs",
+            "timeout": 10000
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -201,6 +226,16 @@
           {
             "type": "command",
             "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/menu-tracker.cjs",
+            "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/walkthrough-tracker.cjs",
+            "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/discover-menu-guard.cjs",
             "timeout": 5000
           }
         ]
@@ -226,6 +261,26 @@
           {
             "type": "command",
             "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/review-reminder.cjs",
+            "timeout": 5000
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/state-write-validator.cjs",
+            "timeout": 5000
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/state-write-validator.cjs",
             "timeout": 5000
           }
         ]

@@ -950,6 +950,136 @@ function readCodeReviewConfig(projectId) {
 }
 
 // =========================================================================
+// Phase Delegation Detection (REQ-0004)
+// =========================================================================
+
+/**
+ * Setup commands that should NEVER be blocked by enforcement hooks.
+ * These run BEFORE workflows start or are configuration/status commands.
+ *
+ * Used by: gate-blocker, iteration-corridor, phase-loop-controller,
+ *          phase-sequence-guard, detectPhaseDelegation
+ *
+ * @type {ReadonlyArray<string>}
+ */
+const SETUP_COMMAND_KEYWORDS = Object.freeze([
+    'discover',
+    'constitution',
+    'init',
+    'setup',
+    'configure',
+    'configure-cloud',
+    'new project',
+    'project setup',
+    'install',
+    'status'
+]);
+
+/**
+ * Check if text contains any setup command keyword.
+ * Setup commands should never be blocked by enforcement hooks.
+ *
+ * @param {string} text - Text to search (case-insensitive)
+ * @returns {boolean} True if text contains a setup command keyword
+ *
+ * @example
+ *   isSetupCommand('discover the project')     // true
+ *   isSetupCommand('delegate to developer')     // false
+ *   isSetupCommand('')                          // false
+ *   isSetupCommand(null)                        // false
+ */
+function isSetupCommand(text) {
+    if (!text) return false;
+    const lower = text.toLowerCase();
+    return SETUP_COMMAND_KEYWORDS.some(keyword => lower.includes(keyword));
+}
+
+/**
+ * Detect if a Task tool call is a phase delegation.
+ *
+ * Detection algorithm (ordered by reliability):
+ *   1. If tool_name !== 'Task', return not-a-delegation.
+ *   2. If combined prompt/description text contains setup keywords, return not-a-delegation.
+ *   3. If subagent_type matches a known agent name (via normalizeAgentName + getAgentPhase),
+ *      return the detected phase. Skip agents with phase 'all' or 'setup'.
+ *   4. If subagent_type did not match, scan combined text for exact agent names from the
+ *      skills-manifest ownership map.
+ *   5. If still no match, scan for phase name patterns like "01-requirements" or "phase 01".
+ *   6. If no match, return not-a-delegation.
+ *
+ * @param {object} parsedInput - Parsed stdin JSON from Claude Code hook protocol
+ * @param {string} parsedInput.tool_name - The tool being invoked (must be 'Task')
+ * @param {object} [parsedInput.tool_input] - Tool input parameters
+ * @param {string} [parsedInput.tool_input.subagent_type] - The sub-agent type
+ * @param {string} [parsedInput.tool_input.prompt] - The task prompt
+ * @param {string} [parsedInput.tool_input.description] - The task description
+ *
+ * @returns {{
+ *   isDelegation: boolean,
+ *   targetPhase: string|null,
+ *   agentName: string|null
+ * }}
+ */
+function detectPhaseDelegation(parsedInput) {
+    const NOT_DELEGATION = { isDelegation: false, targetPhase: null, agentName: null };
+
+    // Guard: must be a Task tool call
+    if (!parsedInput || parsedInput.tool_name !== 'Task') {
+        return NOT_DELEGATION;
+    }
+
+    const toolInput = parsedInput.tool_input || {};
+    const subagentType = (toolInput.subagent_type || '').trim();
+    const prompt = toolInput.prompt || '';
+    const description = toolInput.description || '';
+    const combined = (prompt + ' ' + description).toLowerCase();
+
+    // Step 1: Check setup command whitelist
+    if (isSetupCommand(combined)) {
+        return NOT_DELEGATION;
+    }
+
+    // Also check subagent_type for setup agent names
+    if (subagentType) {
+        const normalizedSubagent = normalizeAgentName(subagentType);
+        const subagentPhase = getAgentPhase(normalizedSubagent);
+        if (subagentPhase === 'all' || subagentPhase === 'setup') {
+            return NOT_DELEGATION;
+        }
+    }
+
+    // Step 2: Match subagent_type against known agent names
+    if (subagentType) {
+        const normalized = normalizeAgentName(subagentType);
+        const phase = getAgentPhase(normalized);
+        if (phase) {
+            return { isDelegation: true, targetPhase: phase, agentName: normalized };
+        }
+    }
+
+    // Step 3: Scan prompt/description for exact agent names from manifest
+    const manifest = loadManifest();
+    if (manifest && manifest.ownership) {
+        for (const [agentName, info] of Object.entries(manifest.ownership)) {
+            if (info.phase === 'all' || info.phase === 'setup') continue;
+            if (combined.includes(agentName.toLowerCase())) {
+                return { isDelegation: true, targetPhase: info.phase, agentName };
+            }
+        }
+    }
+
+    // Step 4: Match phase name patterns (e.g., "01-requirements", "phase 06")
+    const phasePattern = /(?:phase\s+)?(\d{2})-([a-z][a-z-]*)/i;
+    const phaseMatch = combined.match(phasePattern);
+    if (phaseMatch) {
+        const phaseName = `${phaseMatch[1]}-${phaseMatch[2]}`;
+        return { isDelegation: true, targetPhase: phaseName, agentName: null };
+    }
+
+    return NOT_DELEGATION;
+}
+
+// =========================================================================
 // Schema Validation
 // =========================================================================
 
@@ -1159,5 +1289,9 @@ module.exports = {
     // Schema validation
     loadSchema,
     validateSchema,
-    debugLog
+    debugLog,
+    // Phase delegation detection (REQ-0004)
+    SETUP_COMMAND_KEYWORDS,
+    isSetupCommand,
+    detectPhaseDelegation
 };
