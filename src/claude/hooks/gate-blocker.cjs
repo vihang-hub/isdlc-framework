@@ -455,7 +455,10 @@ async function main() {
 
             // Validate phase is in the workflow sequence
             if (workflowDef) {
-                const workflowPhases = workflowDef.phases;
+                // Use active_workflow.phases (the actual subset being executed) for index checks,
+                // NOT workflowDef.phases (the canonical list which may include skipped phases).
+                // current_phase_index tracks position within active_workflow.phases.
+                const workflowPhases = activeWorkflow.phases || workflowDef.phases;
                 const phaseIndex = activeWorkflow.current_phase_index;
 
                 // Verify current phase matches expected position in workflow
@@ -498,6 +501,13 @@ async function main() {
                 debugLog('Applying workflow overrides for:', activeWorkflow.type, currentPhase);
                 phaseReq = mergeRequirements(phaseReq, overrides);
             }
+        }
+
+        // If the active workflow already marks this phase as completed, skip iteration checks.
+        // This prevents stale gate_validation blocks when the orchestrator has already advanced.
+        if (activeWorkflow?.phase_status?.[currentPhase] === 'completed') {
+            debugLog('Phase already completed in active_workflow.phase_status, skipping gate checks');
+            process.exit(0);
         }
 
         // Get phase state
