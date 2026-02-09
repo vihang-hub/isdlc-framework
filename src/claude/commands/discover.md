@@ -86,6 +86,8 @@ Enter selection (1-3):
 | `--project {id}` | Target a specific project in monorepo mode |
 | `--skip-tests` | Skip test infrastructure evaluation |
 | `--skip-skills` | Skip skills.sh integration |
+| `--party` | Force party mode for new project setup (skip mode menu) |
+| `--classic` | Force classic mode for new project setup (skip mode menu) |
 | `--atdd-ready` | Prepare AC for ATDD workflow integration |
 | `--help` | Show this help message |
 
@@ -105,6 +107,15 @@ Enter selection (1-3):
 
 # Discover a specific project in a monorepo
 /discover --project api-service
+
+# Force party mode for new project
+/discover --new --party
+
+# Force classic mode for new project
+/discover --new --classic
+
+# Party mode (auto-detects new project)
+/discover --party
 
 # Prepare for ATDD workflow
 /discover --atdd-ready
@@ -157,6 +168,7 @@ After completion, you'll have:
 - `docs/requirements/prd.md` - Product Requirements Document with MVP scope
 - `docs/architecture/architecture-overview.md` - Architecture blueprint with data model and API design
 - `docs/architecture/data-model.md` - Detailed data model (if >5 entities)
+- `docs/architecture/test-strategy-outline.md` - Test strategy outline (party mode only)
 - `docs/isdlc/constitution.md` - Tailored project constitution
 - `src/` - Project structure scaffolded from architecture blueprint
 - `tests/` - Test infrastructure (unit, integration, e2e)
