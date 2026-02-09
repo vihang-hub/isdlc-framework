@@ -1918,10 +1918,11 @@ Ensure phase agents maintain this structure:
     "05-implementation": {
       "status": "in_progress",
       "constitutional_validation": {
-        "current_iteration": 2,
+        "completed": true,
+        "status": "compliant",
+        "iterations_used": 2,
         "max_iterations": 5,
         "articles_checked": ["I", "II", "III", "VI", "VII", "VIII", "X", "XI"],
-        "status": "compliant",
         "history": [
           {
             "iteration": 1,
@@ -1935,9 +1936,7 @@ Ensure phase agents maintain this structure:
             "violations": [],
             "result": "COMPLIANT"
           }
-        ],
-        "status": "compliant",
-        "iterations_used": 2
+        ]
       }
     }
   }
