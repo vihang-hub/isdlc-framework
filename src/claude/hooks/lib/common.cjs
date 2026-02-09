@@ -1318,6 +1318,129 @@ function rotateHookLog(logPath) {
     }
 }
 
+// ---------------------------------------------------------------------------
+// State pruning functions (BUG-0004)
+// ---------------------------------------------------------------------------
+
+/**
+ * Prune skill_usage_log to keep only the last N entries.
+ * @param {Object} state - The state object
+ * @param {number} maxEntries - Maximum entries to keep (default 20)
+ * @returns {Object} The mutated state object
+ */
+function pruneSkillUsageLog(state, maxEntries = 20) {
+    if (!state.skill_usage_log || !Array.isArray(state.skill_usage_log)) return state;
+    if (state.skill_usage_log.length > maxEntries) {
+        state.skill_usage_log = state.skill_usage_log.slice(-maxEntries);
+    }
+    return state;
+}
+
+/**
+ * Strip verbose sub-objects from completed/gate-passed phases.
+ * Preserves: status, started, completed, gate_passed, artifacts, and any unknown fields.
+ * Strips: iteration_requirements, constitutional_validation, gate_validation,
+ *         testing_environment, verification_summary, atdd_validation.
+ * Only strips from phases that have status=completed OR gate_passed is truthy.
+ * @param {Object} state - The state object
+ * @returns {Object} The mutated state object
+ */
+function pruneCompletedPhases(state) {
+    if (!state.phases || typeof state.phases !== 'object') return state;
+
+    const STRIP_FIELDS = [
+        'iteration_requirements',
+        'constitutional_validation',
+        'gate_validation',
+        'testing_environment',
+        'verification_summary',
+        'atdd_validation'
+    ];
+
+    for (const [, phase] of Object.entries(state.phases)) {
+        if (phase.status === 'completed' || phase.gate_passed) {
+            for (const field of STRIP_FIELDS) {
+                delete phase[field];
+            }
+        }
+    }
+    return state;
+}
+
+/**
+ * Prune history[] with FIFO cap and action string truncation.
+ * @param {Object} state - The state object
+ * @param {number} maxEntries - Maximum entries to keep (default 50)
+ * @param {number} maxCharLen - Maximum action string length before truncation (default 200)
+ * @returns {Object} The mutated state object
+ */
+function pruneHistory(state, maxEntries = 50, maxCharLen = 200) {
+    if (!state.history || !Array.isArray(state.history)) return state;
+
+    // FIFO: keep last N
+    if (state.history.length > maxEntries) {
+        state.history = state.history.slice(-maxEntries);
+    }
+
+    // Truncate long action strings
+    for (const entry of state.history) {
+        if (entry.action && typeof entry.action === 'string' && entry.action.length > maxCharLen) {
+            entry.action = entry.action.substring(0, maxCharLen) + '...';
+        }
+    }
+    return state;
+}
+
+/**
+ * Prune workflow_history[] with FIFO cap, description truncation, and git_branch compaction.
+ * @param {Object} state - The state object
+ * @param {number} maxEntries - Maximum entries to keep (default 50)
+ * @param {number} maxCharLen - Maximum description string length before truncation (default 200)
+ * @returns {Object} The mutated state object
+ */
+function pruneWorkflowHistory(state, maxEntries = 50, maxCharLen = 200) {
+    if (!state.workflow_history || !Array.isArray(state.workflow_history)) return state;
+
+    // FIFO: keep last N
+    if (state.workflow_history.length > maxEntries) {
+        state.workflow_history = state.workflow_history.slice(-maxEntries);
+    }
+
+    for (const entry of state.workflow_history) {
+        // Truncate long descriptions
+        if (entry.description && typeof entry.description === 'string' && entry.description.length > maxCharLen) {
+            entry.description = entry.description.substring(0, maxCharLen) + '...';
+        }
+        // Compact git_branch to name only
+        if (entry.git_branch && typeof entry.git_branch === 'object') {
+            const name = entry.git_branch.name;
+            entry.git_branch = { name };
+        }
+    }
+    return state;
+}
+
+/**
+ * Reset phases for a new workflow. Clears all existing phase data and creates
+ * fresh skeleton entries for the specified workflow phases.
+ * @param {Object} state - The state object
+ * @param {string[]} workflowPhases - Array of phase keys for the new workflow
+ * @returns {Object} The mutated state object
+ */
+function resetPhasesForWorkflow(state, workflowPhases) {
+    state.phases = {};
+    for (const phaseKey of workflowPhases) {
+        state.phases[phaseKey] = {
+            status: 'pending',
+            started: null,
+            completed: null,
+            gate_passed: null,
+            artifacts: []
+        };
+    }
+    return state;
+}
+
 module.exports = {
     getProjectRoot,
     // Monorepo support
@@ -1374,5 +1497,11 @@ module.exports = {
     logHookEvent,
     getHookLogPath,
     HOOK_LOG_MAX_BYTES,
-    HOOK_LOG_KEEP_LINES
+    HOOK_LOG_KEEP_LINES,
+    // State pruning (BUG-0004)
+    pruneSkillUsageLog,
+    pruneCompletedPhases,
+    pruneHistory,
+    pruneWorkflowHistory,
+    resetPhasesForWorkflow
 };

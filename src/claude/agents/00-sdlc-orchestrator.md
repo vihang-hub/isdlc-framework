@@ -629,7 +629,15 @@ When the user selects a workflow (via `/isdlc feature`, `/isdlc fix`, etc.), ini
    workflows.workflows[workflowType]  // e.g., workflows.workflows["feature"]
    ```
 
-3. **Write `active_workflow` to state.json:**
+3. **Reset phases for the new workflow** — clear stale phase data from previous workflows before writing new state. Read state.json, replace the `phases` object with fresh skeleton entries for each phase in the workflow definition:
+   ```
+   For each phase in workflow.phases:
+     state.phases[phase] = { status: "pending", started: null, completed: null, gate_passed: null, artifacts: [] }
+   Remove any phase entries NOT in the new workflow's phases array.
+   ```
+   This corresponds to `resetPhasesForWorkflow(state, workflow.phases)` in `common.cjs`.
+
+4. **Write `active_workflow` to state.json:**
    ```json
    {
      "active_workflow": {
@@ -653,14 +661,14 @@ When the user selects a workflow (via `/isdlc feature`, `/isdlc fix`, etc.), ini
    }
    ```
 
-4. **Also update `current_phase`** at the top level of state.json for backward compatibility:
+5. **Also update `current_phase`** at the top level of state.json for backward compatibility:
    ```json
    { "current_phase": "01-requirements" }
    ```
 
-5. **Delegate to the first phase agent** with any `agent_modifiers` from the workflow definition.
+6. **Delegate to the first phase agent** with any `agent_modifiers` from the workflow definition.
 
-6. **Check `requires_branch`** from the workflow definition:
+7. **Check `requires_branch`** from the workflow definition:
    - If `true`: Branch will be created after GATE-01 passes (see Section 3a)
    - If `false`: No branch operations for this workflow
 
@@ -1192,10 +1200,15 @@ When the last phase in the workflow completes:
 1. If `active_workflow.git_branch` exists: execute Human Review Checkpoint (Section 3a-pre) first, then branch merge (Section 3a)
    - On merge conflict: **STOP**, escalate to human, do NOT complete the workflow
    - On review rejection: cancel workflow, do NOT merge
-2. Mark the workflow as completed
-3. Move to `workflow_history` with `status: "completed"` (include `git_branch` info)
-4. Set `active_workflow` to `null`
-5. Display completion summary with all artifacts produced and merge status
+2. **Prune state.json** to prevent unbounded growth (BUG-0004). Read state, apply these operations, then write back:
+   - `pruneSkillUsageLog(state, 20)` — keep only the last 20 skill_usage_log entries
+   - `pruneCompletedPhases(state)` — strip verbose sub-objects (iteration_requirements, constitutional_validation, gate_validation, testing_environment, verification_summary, atdd_validation) from completed/gate-passed phases
+   - `pruneHistory(state, 50, 200)` — cap history at 50 entries, truncate action strings > 200 chars
+   - `pruneWorkflowHistory(state, 50, 200)` — cap workflow_history at 50 entries, truncate descriptions > 200 chars, compact git_branch to name-only
+3. Mark the workflow as completed
+4. Move to `workflow_history` with `status: "completed"` (include `git_branch` info)
+5. Set `active_workflow` to `null`
+6. Display completion summary with all artifacts produced and merge status
 
 ## 4a. Automatic Phase Transitions (NO PERMISSION PROMPTS)
 
