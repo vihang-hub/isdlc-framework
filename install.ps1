@@ -1446,13 +1446,13 @@ if ($isInteractive) {
         Write-Host ""
         Write-Host "    /discover               " -ForegroundColor Green -NoNewline
         Write-Host "-- Analyze your project or set up a new one"
-        Write-Host "    /sdlc feature `"desc`"   " -ForegroundColor Green -NoNewline
+        Write-Host "    /isdlc feature `"desc`"   " -ForegroundColor Green -NoNewline
         Write-Host "-- Develop a feature end-to-end"
-        Write-Host "    /sdlc fix `"desc`"       " -ForegroundColor Green -NoNewline
+        Write-Host "    /isdlc fix `"desc`"       " -ForegroundColor Green -NoNewline
         Write-Host "-- Fix a bug with TDD and tracing agents"
-        Write-Host "    /sdlc test generate    " -ForegroundColor Green -NoNewline
+        Write-Host "    /isdlc test generate    " -ForegroundColor Green -NoNewline
         Write-Host "-- Create tests for existing code"
-        Write-Host "    /sdlc upgrade `"name`"   " -ForegroundColor Green -NoNewline
+        Write-Host "    /isdlc upgrade `"name`"   " -ForegroundColor Green -NoNewline
         Write-Host "-- Upgrade a dependency or runtime"
         Write-Host "    /provider              " -ForegroundColor Green -NoNewline
         Write-Host "-- Configure LLM model routing"
@@ -1490,7 +1490,7 @@ if (-not $ClaudeCodeFound) {
     Write-Host "     * Research best practices for your stack"
     Write-Host "     * Create a tailored constitution interactively"
     Write-Host "  4. Run " -NoNewline
-    Write-Host "/sdlc start" -ForegroundColor Green -NoNewline
+    Write-Host "/isdlc start" -ForegroundColor Green -NoNewline
     Write-Host " to begin your workflow"
     Write-Host "  5. Run " -NoNewline
     Write-Host "/tour" -ForegroundColor Green -NoNewline
@@ -1507,7 +1507,7 @@ else {
     Write-Host "     * Research best practices for your stack"
     Write-Host "     * Create a tailored constitution interactively"
     Write-Host "  3. Run " -NoNewline
-    Write-Host "/sdlc start" -ForegroundColor Green -NoNewline
+    Write-Host "/isdlc start" -ForegroundColor Green -NoNewline
     Write-Host " to begin your workflow"
     Write-Host "  4. Run " -NoNewline
     Write-Host "/tour" -ForegroundColor Green -NoNewline

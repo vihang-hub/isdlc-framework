@@ -69,7 +69,7 @@
 
 ## Bug Report Scope (Relaxed Criteria)
 
-When the workflow scope is `bug-report` (i.e., `/sdlc fix`), the gate uses these relaxed criteria instead of the full feature criteria above.
+When the workflow scope is `bug-report` (i.e., `/isdlc fix`), the gate uses these relaxed criteria instead of the full feature criteria above.
 
 ### Required Artifacts (Bug Report)
 

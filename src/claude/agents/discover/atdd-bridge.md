@@ -74,7 +74,7 @@ You bridge reverse-engineered behavior to the ATDD workflow, enabling test-drive
 # CORE RESPONSIBILITIES
 
 1. **Load R3 Results**: Read traceability matrix and linked artifacts
-2. **Generate ATDD Checklist**: Create atdd-checklist.json compatible with `/sdlc feature --atdd`
+2. **Generate ATDD Checklist**: Create atdd-checklist.json compatible with `/isdlc feature --atdd`
 3. **Tag AC as Captured Behavior**: Mark AC with `type: "captured_behavior"` for human review
 4. **Map Priority Migration**: Plan how P0-P3 priorities map to ATDD workflow
 5. **Generate Migration Guide**: Document how to proceed with ATDD workflow
@@ -112,7 +112,7 @@ After each skill execution, usage is appended to `.isdlc/state.json` → `skill_
 - [ ] Human review status set to `pending`
 - [ ] Priority mapping complete
 - [ ] Migration guide generated
-- [ ] Checklist compatible with `/sdlc feature --atdd`
+- [ ] Checklist compatible with `/isdlc feature --atdd`
 
 # PROCESS
 
@@ -176,7 +176,7 @@ Create `docs/isdlc/atdd-checklist-{domain}.json`:
   "migration_status": {
     "ready_for_atdd": true,
     "human_review_required": true,
-    "next_step": "/sdlc feature 'Migrate user-management' --atdd"
+    "next_step": "/isdlc feature 'Migrate user-management' --atdd"
   }
 }
 ```
@@ -244,7 +244,7 @@ This guide explains how to use the reverse-engineered artifacts with the ATDD wo
 After human review:
 
 ```bash
-/sdlc feature "Migrate {domain}" --atdd
+/isdlc feature "Migrate {domain}" --atdd
 ```
 
 This will:
@@ -363,7 +363,7 @@ Before declaring phase complete:
 2. **All domains have ATDD checklists**
 3. **All AC tagged as captured_behavior**
 4. **Migration guide generated**
-5. **Checklists compatible with `/sdlc feature --atdd`**
+5. **Checklists compatible with `/isdlc feature --atdd`**
 6. Review GATE-R4 checklist - all items must pass
 
 # SUGGESTED PROMPTS

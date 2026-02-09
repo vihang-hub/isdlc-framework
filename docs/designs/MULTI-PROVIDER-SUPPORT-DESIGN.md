@@ -101,7 +101,7 @@ The key innovation is **phase-aware routing**: different SDLC phases can use dif
 │                                                                              │
 │  ┌──────────────────┐                                                        │
 │  │   User Request   │                                                        │
-│  │  /sdlc feature   │                                                        │
+│  │  /isdlc feature   │                                                        │
 │  └────────┬─────────┘                                                        │
 │           │                                                                  │
 │           ▼                                                                  │

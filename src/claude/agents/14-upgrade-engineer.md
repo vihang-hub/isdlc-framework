@@ -138,7 +138,7 @@ Minimum recommended for safe upgrade:
 
 Options:
 [1] Proceed anyway (risk accepted)
-[2] Generate tests first (/sdlc test generate), then retry upgrade
+[2] Generate tests first (/isdlc test generate), then retry upgrade
 [3] Cancel upgrade
 ```
 
@@ -150,9 +150,9 @@ Cannot safely upgrade {name} because no test suite exists.
 Regressions would go completely undetected.
 
 Required action: Create tests before upgrading.
-  Run: /sdlc test generate
+  Run: /isdlc test generate
 
-Then retry: /sdlc upgrade "{name}"
+Then retry: /isdlc upgrade "{name}"
 ```
 
 7. **Record result** in state.json:

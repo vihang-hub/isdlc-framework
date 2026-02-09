@@ -192,7 +192,7 @@ monorepo/
 | `projects.{id}.path` | Relative path from monorepo root to project code |
 | `projects.{id}.registered_at` | When the project was registered |
 | `projects.{id}.discovered` | Whether the project was auto-detected |
-| `scan_paths` | Directories to scan when running `/sdlc project scan` |
+| `scan_paths` | Directories to scan when running `/isdlc project scan` |
 
 ## Working with Projects
 
@@ -202,21 +202,21 @@ There are four ways to target a project (in priority order):
 
 1. **`--project` flag** (highest priority):
    ```
-   /sdlc feature "Add auth" --project api-service
+   /isdlc feature "Add auth" --project api-service
    /discover --project web-frontend
    ```
 
 2. **CWD-based auto-detection**: If your shell is inside a registered project directory, the project is auto-selected:
    ```
    cd apps/api-service
-   /sdlc status          # Automatically targets api-service
+   /isdlc status          # Automatically targets api-service
    /discover             # Automatically scopes to api-service
    ```
    The framework matches CWD against registered project paths using longest prefix match.
 
 3. **Default project** (set in monorepo.json):
    ```
-   /sdlc project select api-service
+   /isdlc project select api-service
    ```
    Then subsequent commands without `--project` target api-service.
 
@@ -225,10 +225,10 @@ There are four ways to target a project (in priority order):
 ### Managing Projects
 
 ```
-/sdlc project list              # Show all registered projects
-/sdlc project add {id} {path}   # Register a new project manually
-/sdlc project scan              # Auto-detect projects from scan_paths
-/sdlc project select {id}       # Set default project
+/isdlc project list              # Show all registered projects
+/isdlc project add {id} {path}   # Register a new project manually
+/isdlc project scan              # Auto-detect projects from scan_paths
+/isdlc project select {id}       # Set default project
 ```
 
 ### Running Discovery
@@ -302,7 +302,7 @@ All hooks (gate-blocker, test-watcher, constitution-validator, menu-tracker, ski
 3. `default_project` from `monorepo.json`
 4. Falls back to `.isdlc/state.json` (single-project mode)
 
-CWD-based detection means that running commands from within a project subdirectory (e.g., `cd apps/api-service && /sdlc status`) automatically targets the correct project without needing `--project` or setting a default.
+CWD-based detection means that running commands from within a project subdirectory (e.g., `cd apps/api-service && /isdlc status`) automatically targets the correct project without needing `--project` or setting a default.
 
 No hook configuration changes are needed for monorepo mode.
 

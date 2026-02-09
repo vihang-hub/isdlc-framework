@@ -2,7 +2,7 @@
 /**
  * iSDLC Skill Delegation Enforcer - PostToolUse[Skill] Hook
  * ==========================================================
- * When /sdlc or /discover is loaded via the Skill tool, injects a mandatory
+ * When /isdlc or /discover is loaded via the Skill tool, injects a mandatory
  * context message requiring Claude to delegate to the orchestrator agent
  * via the Task tool.
  *
@@ -24,7 +24,7 @@ const {
  * Map of skill names to their required orchestrator agent types.
  */
 const DELEGATION_MAP = {
-    'sdlc': 'sdlc-orchestrator',
+    'isdlc': 'sdlc-orchestrator',
     'discover': 'discover-orchestrator'
 };
 
@@ -53,7 +53,7 @@ async function main() {
         const skill = (toolInput.skill || '').toLowerCase().replace(/^\//, '');
         const args = toolInput.args || '';
 
-        // Only enforce for /sdlc and /discover
+        // Only enforce for /isdlc and /discover
         const requiredAgent = DELEGATION_MAP[skill];
         if (!requiredAgent) {
             process.exit(0);

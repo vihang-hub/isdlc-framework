@@ -185,7 +185,7 @@ workflow_mapping:
     workflow_endpoint: "10-local-testing"
     phases_executed: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     phases_skipped: [11, 12, 13]
-    note: "Run /sdlc configure-cloud to continue workflow after Phase 10"
+    note: "Run /isdlc configure-cloud to continue workflow after Phase 10"
 
   aws:
     description: "Full AWS deployment workflow"
@@ -218,7 +218,7 @@ metadata:
 notes: |
   This configuration schema is used by:
   - /discover command - To collect cloud provider info during discovery
-  - /sdlc configure-cloud command - To configure cloud provider after discovery
+  - /isdlc configure-cloud command - To configure cloud provider after discovery
   - SDLC Orchestrator - To determine workflow endpoint and phase transitions
   - init-project.sh - To initialize state.json with cloud_configuration template
 

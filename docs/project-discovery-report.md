@@ -107,7 +107,7 @@ The iSDLC framework is a JavaScript/Node.js CLI tool that installs an AI-powered
 | constitution-validator.cjs | PreToolUse[Task] | Block phase completion until articles validated |
 | log-skill-usage.cjs | PostToolUse[Task] | Log delegations to skill_usage_log |
 | menu-tracker.cjs | PostToolUse[Task] | Track A/R/C menu interactions |
-| skill-delegation-enforcer.cjs | PostToolUse[Skill] | Write pending_delegation on /sdlc or /discover |
+| skill-delegation-enforcer.cjs | PostToolUse[Skill] | Write pending_delegation on /isdlc or /discover |
 | test-watcher.cjs | PostToolUse[Bash] | Monitor test runs, track iterations, circuit breaker |
 | delegation-gate.cjs | Stop | Verify orchestrator delegation occurred |
 
@@ -115,7 +115,7 @@ The iSDLC framework is a JavaScript/Node.js CLI tool that installs an AI-powered
 
 | Command | Definition | Purpose |
 |---------|-----------|---------|
-| /sdlc | commands/sdlc.md | SDLC workflow orchestration |
+| /isdlc | commands/isdlc.md | SDLC workflow orchestration |
 | /discover | commands/discover.md | Project discovery and setup |
 | /provider | commands/provider.md | LLM provider management |
 

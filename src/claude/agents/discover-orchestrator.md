@@ -66,7 +66,7 @@ If `--project {id}` was passed, or if `.isdlc/monorepo.json` exists (at the reso
    - If `--project {id}` was passed, use that ID
    - Otherwise, detect from CWD: use the **CWD-relative path** from ROOT RESOLUTION and match against registered project paths in `monorepo.json` (longest prefix match)
    - Otherwise, fall back to `default_project` in `monorepo.json`
-   - If no project resolved, present project selection menu (same as SCENARIO 0 from `/sdlc`)
+   - If no project resolved, present project selection menu (same as SCENARIO 0 from `/isdlc`)
 
 2. **Read state from project-scoped path:**
    - State file: `.isdlc/projects/{project-id}/state.json` (not root `state.json`)
@@ -260,7 +260,7 @@ When the user selects Chat / Explore (option [3] in either menu), enter a conver
 
 **Exit conditions:**
 - User says "exit", "done", "back", or "back to menu"
-- User invokes another command (/discover --new, /sdlc, etc.)
+- User invokes another command (/discover --new, /isdlc, etc.)
 
 **On exit**, display:
 ```
@@ -665,7 +665,7 @@ PHASE 7: Project Structure                           [Complete ✓]
 
 #### Write Discovery Context Envelope
 
-Before writing the final state update, assemble and write the `discovery_context` envelope to state.json. This structured envelope enables seamless handover to subsequent /sdlc workflows.
+Before writing the final state update, assemble and write the `discovery_context` envelope to state.json. This structured envelope enables seamless handover to subsequent /isdlc workflows.
 
 Read the current state.json and add/update the `discovery_context` key:
 
@@ -791,8 +791,8 @@ PHASE 8: Finalize                                    [Complete ✓]
     1. Review artifacts in docs/
     2. Review constitution: cat docs/isdlc/constitution.md
     3. Start a workflow:
-       /sdlc feature  — Build your first feature
-       /sdlc start    — Run full SDLC lifecycle
+       /isdlc feature  — Build your first feature
+       /isdlc start    — Run full SDLC lifecycle
 
 ════════════════════════════════════════════════════════════════
 ```
@@ -1585,7 +1585,7 @@ High-Priority Gaps:
 Ask:
 ```
 Want me to create a test plan for these gaps?
-This would start a /sdlc test generate workflow.
+This would start a /isdlc test generate workflow.
 [1] Yes, after we finish here
 [2] No, I'll handle testing separately
 ```
@@ -1675,9 +1675,9 @@ Strong recommendation: Generate tests BEFORE starting new features.
 Untested code makes feature development riskier -- bugs are harder
 to catch and regressions are invisible.
 
-[1] Generate tests for gaps (Recommended)  -> /sdlc test generate
-[2] Start a new feature                    -> /sdlc feature
-[3] Fix a bug                              -> /sdlc fix
+[1] Generate tests for gaps (Recommended)  -> /isdlc test generate
+[2] Start a new feature                    -> /isdlc feature
+[3] Fix a bug                              -> /isdlc fix
 [4] I'm done for now
 ```
 
@@ -1687,24 +1687,24 @@ to catch and regressions are invisible.
 Test coverage meets constitution thresholds.
 
 What would you like to do next?
-[1] Start a new feature      -> /sdlc feature
-[2] Fix a bug                -> /sdlc fix
-[3] Generate more tests      -> /sdlc test generate
+[1] Start a new feature      -> /isdlc feature
+[2] Fix a bug                -> /isdlc fix
+[3] Generate more tests      -> /isdlc test generate
 [4] I'm done for now
 ```
 
-**IMPORTANT: Do NOT offer "/sdlc start" (Full lifecycle) for existing projects.** It is only appropriate after `/discover --new`.
+**IMPORTANT: Do NOT offer "/isdlc start" (Full lifecycle) for existing projects.** It is only appropriate after `/discover --new`.
 
 **For NEW projects:**
 
 ```
 What would you like to do next?
-[1] Start full lifecycle (Recommended)  -> /sdlc start
-[2] Start a new feature                 -> /sdlc feature
+[1] Start full lifecycle (Recommended)  -> /isdlc start
+[2] Start a new feature                 -> /isdlc feature
 [3] I'm done for now
 ```
 
-Record the user's selection in `.isdlc/state.json` under `discovery_context.user_next_action`. Use the command string (e.g., `/sdlc test generate`, `/sdlc feature`, `/sdlc fix`, `/sdlc start`, or `none`).
+Record the user's selection in `.isdlc/state.json` under `discovery_context.user_next_action`. Use the command string (e.g., `/isdlc test generate`, `/isdlc feature`, `/isdlc fix`, `/isdlc start`, or `none`).
 
 **Update progress:**
 ```
@@ -1734,7 +1734,7 @@ PHASE 5: Finalize                                    [In Progress]
 
 #### Write Discovery Context Envelope
 
-Before writing the final state update, assemble and write the `discovery_context` envelope to state.json. This structured envelope enables seamless handover to subsequent /sdlc workflows.
+Before writing the final state update, assemble and write the `discovery_context` envelope to state.json. This structured envelope enables seamless handover to subsequent /isdlc workflows.
 
 Read the current state.json and add/update the `discovery_context` key:
 
@@ -1894,7 +1894,7 @@ PHASE 5: Finalize                                    [Complete ✓]
     ✓ docs/isdlc/ac-traceability.csv (traceability matrix)
     ✓ docs/isdlc/reverse-engineer-report.md
 
-  Next action: {user's walkthrough selection, e.g. "/sdlc feature"}
+  Next action: {user's walkthrough selection, e.g. "/isdlc feature"}
 
 ════════════════════════════════════════════════════════════════
 ```
@@ -1978,7 +1978,7 @@ Emit this block as the last thing in your response:
 
 ---
 SUGGESTED NEXT STEPS:
-  [1] Start a new feature with /sdlc feature
+  [1] Start a new feature with /isdlc feature
   [2] Review discovery report
   [3] View project status
 ---

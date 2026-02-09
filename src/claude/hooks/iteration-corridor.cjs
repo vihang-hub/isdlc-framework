@@ -204,7 +204,7 @@ function skillIsAdvanceAttempt(toolInput) {
         }
     }
 
-    if (skill === 'sdlc' && (args.includes('advance') || args.includes('gate'))) {
+    if (skill === 'isdlc' && (args.includes('advance') || args.includes('gate'))) {
         return true;
     }
 

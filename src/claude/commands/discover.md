@@ -171,7 +171,7 @@ After completion, you'll have:
 - Skill report at `docs/isdlc/projects/{project-id}/skill-customization-report.md`
 
 **Context Handover:**
-- `discovery_context` envelope written to `.isdlc/state.json` -- enables seamless transition to `/sdlc feature`, `/sdlc fix`, or `/sdlc test generate` workflows without re-scanning
+- `discovery_context` envelope written to `.isdlc/state.json` -- enables seamless transition to `/isdlc feature`, `/isdlc fix`, or `/isdlc test generate` workflows without re-scanning
 
 **CWD-based project resolution** (when `--project` not provided):
 - If CWD is inside a registered project path, that project is auto-selected
@@ -220,10 +220,10 @@ When this command is invoked:
    For new projects, D7 handles vision + PRD, D8 handles architecture blueprint.
 
 ### Related Commands
-- `/sdlc feature` - Build a new feature after discover completes
-- `/sdlc fix` - Fix a bug after discover completes
-- `/sdlc test run` - Run existing tests
-- `/sdlc status` - Check current project status
+- `/isdlc feature` - Build a new feature after discover completes
+- `/isdlc fix` - Fix a bug after discover completes
+- `/isdlc test run` - Run existing tests
+- `/isdlc status` - Check current project status
 
 ### Prerequisites
 - iSDLC framework must be installed (`.isdlc/` and `.claude/` folders exist)

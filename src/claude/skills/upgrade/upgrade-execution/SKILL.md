@@ -21,7 +21,7 @@ Execute the approved migration plan step by step, running the implement-test loo
 - When applying migration steps and verifying with tests
 
 ## Prerequisites
-- **Test adequacy validated** — project has runnable tests with adequate coverage (checked during analysis scope). If no tests exist, upgrade MUST be blocked until tests are created via `/sdlc test generate`
+- **Test adequacy validated** — project has runnable tests with adequate coverage (checked during analysis scope). If no tests exist, upgrade MUST be blocked until tests are created via `/isdlc test generate`
 - Migration plan approved (UPG-004)
 - Git branch created (`upgrade/{name}-v{version}`)
 - Baseline test results captured
