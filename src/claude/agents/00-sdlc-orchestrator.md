@@ -2126,26 +2126,27 @@ Use these exact definitions when creating tasks. Only create tasks for phases pr
 
 | Phase Key | base subject | activeForm |
 |-----------|---------|------------|
-| `00-mapping` | Map feature impact (Phase 00) | Mapping feature impact |
+| `00-quick-scan` | Quick scan codebase (Phase 00) | Scanning codebase |
 | `01-requirements` | Capture requirements (Phase 01) | Capturing requirements |
 | `02-tracing` | Trace bug root cause (Phase 02) | Tracing bug root cause |
-| `02-architecture` | Design architecture (Phase 02) | Designing architecture |
-| `03-design` | Create design specifications (Phase 03) | Creating design specifications |
-| `04-test-strategy` | Design test strategy (Phase 04) | Designing test strategy |
-| `05-implementation` | Implement features (Phase 05) | Implementing features |
-| `10-local-testing` | Build and launch local environment (Phase 10) | Building local environment |
-| `06-testing` | Run integration and E2E tests (Phase 06) | Running integration tests |
-| `07-code-review` | Perform code review and QA (Phase 07) | Performing code review |
-| `08-validation` | Validate security and compliance (Phase 08) | Validating security |
-| `09-cicd` | Configure CI/CD pipelines (Phase 09) | Configuring CI/CD |
-| `10-remote-build` | Build and deploy remote environment (Phase 10) | Building remote environment |
-| `11-test-deploy` | Deploy to staging (Phase 11) | Deploying to staging |
-| `12-production` | Deploy to production (Phase 12) | Deploying to production |
-| `13-operations` | Configure monitoring and operations (Phase 13) | Configuring operations |
-| `14-upgrade-plan` | Analyze upgrade impact and generate plan (Phase 14) | Analyzing upgrade impact |
-| `14-upgrade-execute` | Execute upgrade with regression testing (Phase 14) | Executing upgrade |
+| `02-impact-analysis` | Analyze impact (Phase 02) | Analyzing impact |
+| `03-architecture` | Design architecture (Phase 03) | Designing architecture |
+| `04-design` | Create design specifications (Phase 04) | Creating design specifications |
+| `05-test-strategy` | Design test strategy (Phase 05) | Designing test strategy |
+| `06-implementation` | Implement features (Phase 06) | Implementing features |
+| `11-local-testing` | Build and launch local environment (Phase 11) | Building local environment |
+| `07-testing` | Run integration and E2E tests (Phase 07) | Running integration tests |
+| `08-code-review` | Perform code review and QA (Phase 08) | Performing code review |
+| `09-validation` | Validate security and compliance (Phase 09) | Validating security |
+| `10-cicd` | Configure CI/CD pipelines (Phase 10) | Configuring CI/CD |
+| `12-remote-build` | Build and deploy remote environment (Phase 12) | Building remote environment |
+| `13-test-deploy` | Deploy to staging (Phase 13) | Deploying to staging |
+| `14-production` | Deploy to production (Phase 14) | Deploying to production |
+| `15-operations` | Configure monitoring and operations (Phase 15) | Configuring operations |
+| `16-upgrade-plan` | Analyze upgrade impact and generate plan (Phase 16) | Analyzing upgrade impact |
+| `16-upgrade-execute` | Execute upgrade with regression testing (Phase 16) | Executing upgrade |
 
-**Subject format**: `[N] {base subject}` — e.g. `[1] Capture requirements (Phase 01)`, `[2] Design architecture (Phase 02)`
+**Subject format**: `[N] {base subject}` — e.g. `[1] Capture requirements (Phase 01)`, `[2] Analyze impact (Phase 02)`
 
 For `description`, use: `"Phase {NN} of {workflow_type} workflow: {agent_name} — {brief_purpose}"`
 
@@ -2158,32 +2159,37 @@ For `description`, use: `"Phase {NN} of {workflow_type} workflow: {agent_name} �
 
 ### Example: Feature Workflow
 
-When `/isdlc feature` initializes, create these 8 tasks in order:
+When `/isdlc feature` initializes, create these 11 tasks in order (matching workflows.json `feature.phases`):
 
 ```
-TaskCreate: "[1] Capture requirements (Phase 01)"           — pending
-TaskCreate: "[2] Design architecture (Phase 02)"            — pending
-TaskCreate: "[3] Create design specifications (Phase 03)"   — pending
-TaskCreate: "[4] Implement features (Phase 05)"             — pending
-TaskCreate: "[5] Build and launch local environment (Phase 10)" — pending
-TaskCreate: "[6] Run integration and E2E tests (Phase 06)"  — pending
-TaskCreate: "[7] Configure CI/CD pipelines (Phase 09)"      — pending
-TaskCreate: "[8] Perform code review and QA (Phase 07)"     — pending
+TaskCreate: "[1] Quick scan codebase (Phase 00)"              — pending
+TaskCreate: "[2] Capture requirements (Phase 01)"              — pending
+TaskCreate: "[3] Analyze impact (Phase 02)"                    — pending
+TaskCreate: "[4] Design architecture (Phase 03)"               — pending
+TaskCreate: "[5] Create design specifications (Phase 04)"      — pending
+TaskCreate: "[6] Design test strategy (Phase 05)"              — pending
+TaskCreate: "[7] Implement features (Phase 06)"                — pending
+TaskCreate: "[8] Build and launch local environment (Phase 11)" — pending
+TaskCreate: "[9] Run integration and E2E tests (Phase 07)"     — pending
+TaskCreate: "[10] Configure CI/CD pipelines (Phase 10)"        — pending
+TaskCreate: "[11] Perform code review and QA (Phase 08)"       — pending
 ```
 
-After Phase 01 gate passes, update task 1: `subject: "~~[1] Capture requirements (Phase 01)~~"`, `status: "completed"`
+After Phase 01 gate passes, update task 2: `subject: "~~[2] Capture requirements (Phase 01)~~"`, `status: "completed"`
 
 ### Example: Fix Workflow
 
-When `/isdlc fix` initializes, create these 6 tasks:
+When `/isdlc fix` initializes, create these 8 tasks (matching workflows.json `fix.phases`):
 
 ```
-TaskCreate: "[1] Capture bug report (Phase 01)"             — pending
-TaskCreate: "[2] Implement fix with TDD (Phase 05)"         — pending
-TaskCreate: "[3] Build and launch local environment (Phase 10)" — pending
-TaskCreate: "[4] Run integration and E2E tests (Phase 06)"  — pending
-TaskCreate: "[5] Configure CI/CD pipelines (Phase 09)"      — pending
-TaskCreate: "[6] Perform code review and QA (Phase 07)"     — pending
+TaskCreate: "[1] Capture bug report (Phase 01)"                — pending
+TaskCreate: "[2] Trace bug root cause (Phase 02)"              — pending
+TaskCreate: "[3] Design test strategy (Phase 05)"              — pending
+TaskCreate: "[4] Implement fix with TDD (Phase 06)"            — pending
+TaskCreate: "[5] Build and launch local environment (Phase 11)" — pending
+TaskCreate: "[6] Run integration and E2E tests (Phase 07)"     — pending
+TaskCreate: "[7] Configure CI/CD pipelines (Phase 10)"         — pending
+TaskCreate: "[8] Perform code review and QA (Phase 08)"        — pending
 ```
 
 Note: For the fix workflow, Phase 01's subject changes to "Capture bug report (Phase 01)" and activeForm to "Capturing bug report".
@@ -2193,11 +2199,11 @@ Note: For the fix workflow, Phase 01's subject changes to "Capture bug report (P
 | Workflow | Phase | Override subject | Override activeForm |
 |----------|-------|-----------------|---------------------|
 | fix | `01-requirements` | Capture bug report (Phase 01) | Capturing bug report |
-| fix | `05-implementation` | Implement fix with TDD (Phase 05) | Implementing fix with TDD |
-| test-run | `10-local-testing` | Build environment for test run (Phase 10) | Building test environment |
-| test-run | `06-testing` | Execute test suite (Phase 06) | Executing test suite |
-| test-generate | `04-test-strategy` | Design new test cases (Phase 04) | Designing test cases |
-| test-generate | `05-implementation` | Write test implementations (Phase 05) | Writing test implementations |
+| fix | `06-implementation` | Implement fix with TDD (Phase 06) | Implementing fix with TDD |
+| test-run | `11-local-testing` | Build environment for test run (Phase 11) | Building test environment |
+| test-run | `07-testing` | Execute test suite (Phase 07) | Executing test suite |
+| test-generate | `05-test-strategy` | Design new test cases (Phase 05) | Designing test cases |
+| test-generate | `06-implementation` | Write test implementations (Phase 06) | Writing test implementations |
 
 # QUALITY STANDARDS
 

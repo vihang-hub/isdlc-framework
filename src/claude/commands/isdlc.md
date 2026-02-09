@@ -221,7 +221,7 @@ Enter selection (1-5):
 ```
 1. Validate constitution exists and is not a template
 2. Check no active workflow (block if one exists, suggest `/isdlc cancel` first)
-3. Initialize `active_workflow` in state.json with type `"feature"` and phases `["01-requirements", "02-architecture", "03-design", "05-implementation", "06-testing", "09-cicd", "07-code-review"]`
+3. Initialize `active_workflow` in state.json with type `"feature"` and phases `["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design", "05-test-strategy", "06-implementation", "11-local-testing", "07-testing", "10-cicd", "08-code-review"]`
 4. Delegate to Requirements Analyst (Phase 01) with `scope: "feature"`
 5. After GATE-01: creates `feature/REQ-NNNN-description` branch from main
 6. After GATE-07: merges branch to main, deletes branch
@@ -241,7 +241,7 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 ```
 1. Validate constitution exists and is not a template
 2. Check no active workflow
-3. Initialize `active_workflow` with type `"fix"` and phases `["01-requirements", "02-tracing", "04-test-strategy", "05-implementation", "10-local-testing", "06-testing", "09-cicd", "07-code-review"]`
+3. Initialize `active_workflow` with type `"fix"` and phases `["01-requirements", "02-tracing", "05-test-strategy", "06-implementation", "11-local-testing", "07-testing", "10-cicd", "08-code-review"]`
 4. If `--link` provided, pass it to Agent 01 as the external bug URL
 5. Delegate to Requirements Analyst (Phase 01) with `scope: "bug-report"`
 6. Agent 01 extracts external ID from URL and creates `BUG-NNNN-{external-id}/` folder
@@ -261,7 +261,7 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 /isdlc test run
 ```
 1. Present test type selection: Unit, System, E2E (multi-select)
-2. Initialize `active_workflow` with type `"test-run"` and phases `["06-testing"]`
+2. Initialize `active_workflow` with type `"test-run"` and phases `["11-local-testing", "07-testing"]`
 3. Delegate to Integration Tester (Phase 06) with selected test types
 4. Report results — does NOT fix failures (suggest `/isdlc fix` for each)
 
@@ -270,7 +270,7 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 /isdlc test generate
 ```
 1. Present test type selection: Unit, System, E2E (single-select)
-2. Initialize `active_workflow` with type `"test-generate"` and phases `["04-test-strategy", "05-implementation", "06-testing", "07-code-review"]`
+2. Initialize `active_workflow` with type `"test-generate"` and phases `["05-test-strategy", "06-implementation", "11-local-testing", "07-testing", "08-code-review"]`
 3. Phase 04: Analyze code and design test cases
 4. Phase 05: Write the test code
 5. Phase 06: Run new tests to verify they work
@@ -430,7 +430,7 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 ```
 1. Validate constitution exists and is not a template
 2. Check no active workflow (block if one exists, suggest `/isdlc cancel` first)
-3. Initialize `active_workflow` in state.json with type `"upgrade"` and phases `["14-upgrade-plan", "14-upgrade-execute", "07-code-review"]`
+3. Initialize `active_workflow` in state.json with type `"upgrade"` and phases `["16-upgrade-plan", "16-upgrade-execute", "08-code-review"]`
 4. **Validate test adequacy** — run the full test suite to confirm adequate coverage exists. If no tests exist, block the upgrade and recommend `/isdlc test generate` first. If coverage is below thresholds, warn the user and require explicit acceptance before proceeding.
 5. Delegate to Upgrade Engineer (Phase 14) with `scope: "analysis"`:
    - Detect ecosystem and current version
@@ -620,12 +620,12 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 
 | Command | Workflow | Phases | Gate Mode | Branch |
 |---------|----------|--------|-----------|--------|
-| `/isdlc feature` | feature | 01 → 02 → 03 → 05 → 10 → 06 → 09 → 07 | strict | `feature/REQ-NNNN-...` |
-| `/isdlc fix` | fix | 01 → 02 → 04 → 05 → 10 → 06 → 09 → 07 | strict | `bugfix/BUG-NNNN-...` |
-| `/isdlc test run` | test-run | 10 → 06 | strict | none |
-| `/isdlc test generate` | test-generate | 04 → 05 → 10 → 06 → 07 | strict | none |
-| `/isdlc start` | full-lifecycle | 01 → ... → 05 → 10 → 06 → ... → 10(remote) → 11 → ... → 13 | strict | `feature/REQ-NNNN-...` |
-| `/isdlc upgrade` | upgrade | 14-plan → 14-execute → 07 | strict | `upgrade/{name}-v{ver}` |
+| `/isdlc feature` | feature | 00 → 01 → 02(IA) → 03 → 04 → 05 → 06 → 11 → 07 → 10 → 08 | strict | `feature/REQ-NNNN-...` |
+| `/isdlc fix` | fix | 01 → 02(trace) → 05 → 06 → 11 → 07 → 10 → 08 | strict | `bugfix/BUG-NNNN-...` |
+| `/isdlc test run` | test-run | 11 → 07 | strict | none |
+| `/isdlc test generate` | test-generate | 05 → 06 → 11 → 07 → 08 | strict | none |
+| `/isdlc start` | full-lifecycle | 01 → 03 → 04 → 05 → 06 → 11 → 07 → 08 → 09 → 10 → 12 → 13 → 14 → 15 | strict | `feature/REQ-NNNN-...` |
+| `/isdlc upgrade` | upgrade | 16-plan → 16-execute → 08 | strict | `upgrade/{name}-v{ver}` |
 | `/isdlc reverse-engineer` | *(alias → `/discover --existing`)* | — | — | — |
 
 **Enforcement rules:**
@@ -727,30 +727,33 @@ If Phase 01 fails or is cancelled, stop here.
 
 Using the `phases[]` array from the init result, create one `TaskCreate` per phase. Assign each task a **sequential number** starting at 1, incrementing by 1 for each phase in the workflow. Use the format `[N]` as a prefix in the subject.
 
+**IMPORTANT**: The `phases[]` array from the init result uses keys from `workflows.json` (the source of truth). Use these exact keys to look up subjects in the table below. Maintain a mapping of `{phase_key → task_id}` so you can update the correct task in STEP 3.
+
 Look up the base subject and activeForm from this table:
 
 | Phase Key | base subject | activeForm |
 |-----------|---------|------------|
-| `00-mapping` | Map feature impact (Phase 00) | Mapping feature impact |
+| `00-quick-scan` | Quick scan codebase (Phase 00) | Scanning codebase |
 | `01-requirements` | Capture requirements (Phase 01) | Capturing requirements |
 | `02-tracing` | Trace bug root cause (Phase 02) | Tracing bug root cause |
-| `02-architecture` | Design architecture (Phase 02) | Designing architecture |
-| `03-design` | Create design specifications (Phase 03) | Creating design specifications |
-| `04-test-strategy` | Design test strategy (Phase 04) | Designing test strategy |
-| `05-implementation` | Implement features (Phase 05) | Implementing features |
-| `10-local-testing` | Build and launch local environment (Phase 10) | Building local environment |
-| `06-testing` | Run integration and E2E tests (Phase 06) | Running integration tests |
-| `07-code-review` | Perform code review and QA (Phase 07) | Performing code review |
-| `08-validation` | Validate security and compliance (Phase 08) | Validating security |
-| `09-cicd` | Configure CI/CD pipelines (Phase 09) | Configuring CI/CD |
-| `10-remote-build` | Build and deploy remote environment (Phase 10) | Building remote environment |
-| `11-test-deploy` | Deploy to staging (Phase 11) | Deploying to staging |
-| `12-production` | Deploy to production (Phase 12) | Deploying to production |
-| `13-operations` | Configure monitoring and operations (Phase 13) | Configuring operations |
-| `14-upgrade-plan` | Analyze upgrade impact and generate plan (Phase 14) | Analyzing upgrade impact |
-| `14-upgrade-execute` | Execute upgrade with regression testing (Phase 14) | Executing upgrade |
+| `02-impact-analysis` | Analyze impact (Phase 02) | Analyzing impact |
+| `03-architecture` | Design architecture (Phase 03) | Designing architecture |
+| `04-design` | Create design specifications (Phase 04) | Creating design specifications |
+| `05-test-strategy` | Design test strategy (Phase 05) | Designing test strategy |
+| `06-implementation` | Implement features (Phase 06) | Implementing features |
+| `11-local-testing` | Build and launch local environment (Phase 11) | Building local environment |
+| `07-testing` | Run integration and E2E tests (Phase 07) | Running integration tests |
+| `08-code-review` | Perform code review and QA (Phase 08) | Performing code review |
+| `09-validation` | Validate security and compliance (Phase 09) | Validating security |
+| `10-cicd` | Configure CI/CD pipelines (Phase 10) | Configuring CI/CD |
+| `12-remote-build` | Build and deploy remote environment (Phase 12) | Building remote environment |
+| `13-test-deploy` | Deploy to staging (Phase 13) | Deploying to staging |
+| `14-production` | Deploy to production (Phase 14) | Deploying to production |
+| `15-operations` | Configure monitoring and operations (Phase 15) | Configuring operations |
+| `16-upgrade-plan` | Analyze upgrade impact and generate plan (Phase 16) | Analyzing upgrade impact |
+| `16-upgrade-execute` | Execute upgrade with regression testing (Phase 16) | Executing upgrade |
 
-**Subject format**: `[N] {base subject}` — e.g. `[1] Capture requirements (Phase 01)`, `[2] Design architecture (Phase 02)`
+**Subject format**: `[N] {base subject}` — e.g. `[1] Capture requirements (Phase 01)`, `[2] Analyze impact (Phase 02)`
 
 For `description`, use: `"Phase {NN} of {workflow_type} workflow"`
 
@@ -809,6 +812,11 @@ Use Task tool → sdlc-orchestrator with:
 ```
 
 The orchestrator runs the Human Review Checkpoint (if code_review.enabled), merges the branch, and clears the workflow.
+
+**After the orchestrator returns from finalize**, clean up all workflow tasks:
+1. Use `TaskList` to get all tasks created during this workflow
+2. For any task still showing as `pending` or `in_progress`, mark it as `completed` with strikethrough subject
+3. This ensures the task list accurately reflects the completed workflow and no stale tasks remain visible
 
 #### Flow Summary
 
