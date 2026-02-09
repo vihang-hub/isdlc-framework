@@ -95,21 +95,21 @@ The installer runs a 6-step process: detect project type → check for monorepo 
 ```bash
 claude                                    # Start Claude Code
 /discover                                 # Analyze project (or describe if new)
-/sdlc feature "Add user authentication"   # Develop a feature end-to-end
+/isdlc feature "Add user authentication"   # Develop a feature end-to-end
 ```
 
 The `/discover` command analyzes your project's architecture, test coverage, and patterns, then generates a tailored constitution (governance rules). For new projects, it elicits your vision through interactive prompts.
 
-Once discovery is complete, `/sdlc` presents a context-aware menu based on your project state:
+Once discovery is complete, `/isdlc` presents a context-aware menu based on your project state:
 
 | Use Case | Command |
 |----------|---------|
 | **Analyze existing project** | `/discover` |
-| **Develop new feature** | `/sdlc feature "description"` |
-| **Fix a bug (TDD)** | `/sdlc fix "description"` |
-| **Generate test suite** | `/sdlc test generate` |
-| **Upgrade dependency** | `/sdlc upgrade "Node.js 22"` |
-| **Full lifecycle** | `/sdlc start` |
+| **Develop new feature** | `/isdlc feature "description"` |
+| **Fix a bug (TDD)** | `/isdlc fix "description"` |
+| **Generate test suite** | `/isdlc test generate` |
+| **Upgrade dependency** | `/isdlc upgrade "Node.js 22"` |
+| **Full lifecycle** | `/isdlc start` |
 <!-- | **Configure LLM provider** | `/provider` | -->
 
 ---

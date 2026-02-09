@@ -2,7 +2,7 @@
 /**
  * iSDLC Delegation Gate - Stop Hook
  * ===================================
- * Hard safety net: when Claude finishes its response, checks if a /sdlc or
+ * Hard safety net: when Claude finishes its response, checks if a /isdlc or
  * /discover command was loaded (via pending_delegation marker in state.json)
  * but no Task delegation to the correct orchestrator agent followed.
  *

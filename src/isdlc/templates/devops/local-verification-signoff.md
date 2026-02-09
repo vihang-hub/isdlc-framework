@@ -102,7 +102,7 @@ Current cloud_configuration.provider: [ ] aws [ ] gcp [ ] azure [ ] none [ ] und
 
 **If undecided**:
 - [ ] Workflow paused at deployment checkpoint
-- [ ] Will configure cloud later via /sdlc configure-cloud
+- [ ] Will configure cloud later via /isdlc configure-cloud
 
 ---
 
@@ -114,7 +114,7 @@ Based on cloud configuration:
 |---------------|-------------|
 | aws/gcp/azure | Advance to Phase 11: Staging Deployment |
 | none | Workflow Complete - Local-only |
-| undecided | Run /sdlc configure-cloud to continue |
+| undecided | Run /isdlc configure-cloud to continue |
 
 ---
 

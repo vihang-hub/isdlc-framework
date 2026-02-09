@@ -43,7 +43,7 @@ The iSDLC framework installs into a user's project and integrates with Claude Co
 │                                                                        │
 │  ┌─────────────────────── Runtime Flow ──────────────────────────────┐ │
 │  │                                                                    │ │
-│  │  User ──► /sdlc ──► Orchestrator ──► Phase Agent (via Task tool)  │ │
+│  │  User ──► /isdlc ──► Orchestrator ──► Phase Agent (via Task tool)  │ │
 │  │                         │                    │                      │ │
 │  │                    reads state.json     PreToolUse hooks fire       │ │
 │  │                    checks constitution  PostToolUse hooks fire      │ │
@@ -76,7 +76,7 @@ Step 3/6: Copy framework files
     ├── .claude/agents/      (36 agent definitions)
     ├── .claude/skills/      (233 skill definitions)
     ├── .claude/hooks/       (8 hooks + lib/ + config/)
-    ├── .claude/commands/    (slash commands: /sdlc, /discover, /provider)
+    ├── .claude/commands/    (slash commands: /isdlc, /discover, /provider)
     └── .claude/settings.json (hook registration, permissions)
 
 Step 4/6: Set up .isdlc/ directory
@@ -159,7 +159,7 @@ your-project/
 
 ## The Orchestrator
 
-The SDLC Orchestrator (`00-sdlc-orchestrator.md`) is the central coordination hub. It is invoked by the `/sdlc` command and manages all workflow state transitions.
+The SDLC Orchestrator (`00-sdlc-orchestrator.md`) is the central coordination hub. It is invoked by the `/isdlc` command and manages all workflow state transitions.
 
 ### Responsibilities
 
@@ -174,7 +174,7 @@ The SDLC Orchestrator (`00-sdlc-orchestrator.md`) is the central coordination hu
 
 ### Interactive Menus
 
-When `/sdlc` is invoked without arguments, the orchestrator detects project state and presents one of four scenarios:
+When `/isdlc` is invoked without arguments, the orchestrator detects project state and presents one of four scenarios:
 
 | Scenario | Condition | Menu |
 |----------|-----------|------|
@@ -190,12 +190,12 @@ The orchestrator loads workflow definitions from `.isdlc/config/workflows.json`:
 
 | Workflow | Command | Phase Sequence |
 |----------|---------|----------------|
-| **Feature** | `/sdlc feature` | 00 → 01 → 02(IA) → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 |
-| **Fix** | `/sdlc fix` | 01 → 02(T) → 05 → 06 → 07 → 08 → 09 → 10 |
-| **Test Run** | `/sdlc test run` | 10 → 06 |
-| **Test Generate** | `/sdlc test generate` | 04 → 05 → 06 → 07 → 10 |
-| **Full Lifecycle** | `/sdlc start` | 01 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11 → 12 → 13 |
-| **Upgrade** | `/sdlc upgrade` | 15(plan) → 15(execute) → 07 |
+| **Feature** | `/isdlc feature` | 00 → 01 → 02(IA) → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 |
+| **Fix** | `/isdlc fix` | 01 → 02(T) → 05 → 06 → 07 → 08 → 09 → 10 |
+| **Test Run** | `/isdlc test run` | 10 → 06 |
+| **Test Generate** | `/isdlc test generate` | 04 → 05 → 06 → 07 → 10 |
+| **Full Lifecycle** | `/isdlc start` | 01 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11 → 12 → 13 |
+| **Upgrade** | `/isdlc upgrade` | 15(plan) → 15(execute) → 07 |
 
 ### Phase Delegation
 
@@ -810,7 +810,7 @@ modes:
 
 ## End-to-End Flow Example
 
-**Scenario**: A user runs `/sdlc feature "Add user authentication"` on an existing Node.js project that has already been through `/discover`.
+**Scenario**: A user runs `/isdlc feature "Add user authentication"` on an existing Node.js project that has already been through `/discover`.
 
 ### Phase 00: Quick Scan
 

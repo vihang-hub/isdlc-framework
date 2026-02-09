@@ -49,7 +49,7 @@ Resolve the active project in this priority order:
 1. **`--project {id}` flag** — if the user passed `--project` on the command, use that project
 2. **CWD-based detection** — use the **CWD-relative path** from ROOT RESOLUTION and match against registered project paths in `monorepo.json` (longest prefix match)
 3. **`default_project` in `monorepo.json`** — use the configured default
-4. **Prompt the user** — if none of the above resolves, present project selection (SCENARIO 0 from the `/sdlc` command)
+4. **Prompt the user** — if none of the above resolves, present project selection (SCENARIO 0 from the `/isdlc` command)
 
 ## Monorepo Path Routing
 
@@ -93,7 +93,7 @@ In monorepo mode, the `single_active_workflow_per_project` rule applies:
 
 # NO-ARGUMENT INVOCATION (INTERACTIVE MENU)
 
-**CRITICAL**: When invoked via `/sdlc` with NO action argument, you MUST present a context-aware interactive menu. Do NOT immediately start workflows or ask about projects.
+**CRITICAL**: When invoked via `/isdlc` with NO action argument, you MUST present a context-aware interactive menu. Do NOT immediately start workflows or ask about projects.
 
 ## Detection Logic (Execute in Order)
 
@@ -227,11 +227,11 @@ Enter selection (1-7):
 
 - Option [1] → Execute the **BACKLOG PICKER** in feature mode (see BACKLOG PICKER section below)
 - Option [2] → Execute the **BACKLOG PICKER** in fix mode (see BACKLOG PICKER section below)
-- Option [3] → Execute `/sdlc test run` (presents test type selection)
-- Option [4] → Execute `/sdlc test generate` (presents test type selection)
-- Option [5] → Ask user to describe the project, then execute `/sdlc start "<description>"`
-- Option [6] → Execute `/sdlc status`
-- Option [7] → Ask user what to upgrade, then execute `/sdlc upgrade "<name>"`
+- Option [3] → Execute `/isdlc test run` (presents test type selection)
+- Option [4] → Execute `/isdlc test generate` (presents test type selection)
+- Option [5] → Ask user to describe the project, then execute `/isdlc start "<description>"`
+- Option [6] → Execute `/isdlc status`
+- Option [7] → Ask user what to upgrade, then execute `/isdlc upgrade "<name>"`
 
 ### SCENARIO 4: Constitution IS configured + Workflow IN PROGRESS
 
@@ -256,10 +256,10 @@ Enter selection (1-5):
 ```
 
 - Option [1] → Resume workflow at current phase (delegate to active agent)
-- Option [2] → Execute `/sdlc gate-check`
-- Option [3] → Execute `/sdlc status`
-- Option [4] → Prompt for issue description, then `/sdlc escalate`
-- Option [5] → Execute `/sdlc cancel` (prompts for cancellation reason)
+- Option [2] → Execute `/isdlc gate-check`
+- Option [3] → Execute `/isdlc status`
+- Option [4] → Prompt for issue description, then `/isdlc escalate`
+- Option [5] → Execute `/isdlc cancel` (prompts for cancellation reason)
 
 ## Menu Presentation Rules
 
@@ -270,17 +270,17 @@ Enter selection (1-5):
 
 # BACKLOG PICKER (No-Description Feature/Fix)
 
-When `/sdlc feature` or `/sdlc fix` is invoked **WITHOUT a description string** (no quoted text after the command), present a backlog picker instead of immediately asking for a description.
+When `/isdlc feature` or `/isdlc fix` is invoked **WITHOUT a description string** (no quoted text after the command), present a backlog picker instead of immediately asking for a description.
 
 ## Trigger Conditions
 
 The backlog picker activates when:
-- `/sdlc feature` (no description after the command)
-- `/sdlc fix` (no description after the command)
+- `/isdlc feature` (no description after the command)
+- `/isdlc fix` (no description after the command)
 - Scenario 3 menu option [1] (New Feature) — since no description is provided
 - Scenario 3 menu option [2] (Fix) — since no description is provided
 
-**Skip condition:** If a description IS provided (e.g., `/sdlc feature "Build auth system"` or `/sdlc fix "Login broken"`), skip the backlog picker entirely and proceed directly to workflow initialization.
+**Skip condition:** If a description IS provided (e.g., `/isdlc feature "Build auth system"` or `/isdlc fix "Login broken"`), skip the backlog picker entirely and proceed directly to workflow initialization.
 
 ## Backlog Scanning (Feature Mode)
 
@@ -605,24 +605,24 @@ Re-validate the constitution when:
 
 ## 3. Workflow Selection & Initialization
 
-When the user selects a workflow (via `/sdlc feature`, `/sdlc fix`, etc.), initialize it from the workflow definitions in `.isdlc/config/workflows.json`.
+When the user selects a workflow (via `/isdlc feature`, `/isdlc fix`, etc.), initialize it from the workflow definitions in `.isdlc/config/workflows.json`.
 
 ### Available Workflows
 
 | Command | Type | Phases | Description |
 |---------|------|--------|-------------|
-| `/sdlc feature` | feature | 01 → 02 → 03 → 05 → 10 → 06 → 09 → 07 | New feature end-to-end |
-| `/sdlc fix` | fix | 01 → 05 → 10 → 06 → 09 → 07 | Bug fix with TDD |
-| `/sdlc test run` | test-run | 10 → 06 | Execute existing tests |
-| `/sdlc test generate` | test-generate | 04 → 05 → 10 → 06 → 07 | Create new tests |
-| `/sdlc start` | full-lifecycle | 01 → ... → 05 → 10 → 06 → ... → 10(remote) → 11 → ... → 13 | Complete SDLC |
-| `/sdlc upgrade` | upgrade | 14-plan → 14-execute → 07 | Dependency/tool upgrade |
+| `/isdlc feature` | feature | 01 → 02 → 03 → 05 → 10 → 06 → 09 → 07 | New feature end-to-end |
+| `/isdlc fix` | fix | 01 → 05 → 10 → 06 → 09 → 07 | Bug fix with TDD |
+| `/isdlc test run` | test-run | 10 → 06 | Execute existing tests |
+| `/isdlc test generate` | test-generate | 04 → 05 → 10 → 06 → 07 | Create new tests |
+| `/isdlc start` | full-lifecycle | 01 → ... → 05 → 10 → 06 → ... → 10(remote) → 11 → ... → 13 | Complete SDLC |
+| `/isdlc upgrade` | upgrade | 14-plan → 14-execute → 07 | Dependency/tool upgrade |
 
 ### Initialization Process
 
 1. **Validate prerequisites:**
    - Constitution must exist and not be a template
-   - No active workflow (if one exists, inform user and suggest `/sdlc cancel`)
+   - No active workflow (if one exists, inform user and suggest `/isdlc cancel`)
 
 2. **Load workflow definition** from `.isdlc/config/workflows.json`:
    ```javascript
@@ -703,7 +703,7 @@ When the user selects a workflow (via `/sdlc feature`, `/sdlc fix`, etc.), initi
 **test-run workflow:**
 - Present test type selection (unit/system/e2e, multi-select) before initializing
 - Single-phase workflow — reports results, does NOT fix failures
-- Suggest `/sdlc fix` for each failure found
+- Suggest `/isdlc fix` for each failure found
 
 **test-generate workflow:**
 - Present test type selection (unit/system/e2e, single-select) before initializing
@@ -711,7 +711,7 @@ When the user selects a workflow (via `/sdlc feature`, `/sdlc fix`, etc.), initi
 
 **upgrade workflow:**
 - Requires `name` parameter — the dependency, runtime, framework, or tool to upgrade
-- **Test adequacy prerequisite**: Agent 14 validates that the project has runnable tests with adequate coverage before proceeding. If no tests exist, the upgrade is blocked and the user is directed to `/sdlc test generate`. If coverage is below thresholds, the user must explicitly accept the risk.
+- **Test adequacy prerequisite**: Agent 14 validates that the project has runnable tests with adequate coverage before proceeding. If no tests exist, the upgrade is blocked and the user is directed to `/isdlc test generate`. If coverage is below thresholds, the user must explicitly accept the risk.
 - Phase `14-upgrade-plan`: `scope: "analysis"`, `require_user_approval: true` — detect, research, plan
 - Phase `14-upgrade-execute`: `scope: "execution"`, `max_iterations: 10` — implement-test loop
 - Phase `07-code-review`: `scope: "upgrade-review"` — QA reviews upgrade changes
@@ -733,11 +733,11 @@ When the user selects a workflow (via `/sdlc feature`, `/sdlc fix`, etc.), initi
 1. **No halfway entry**: Workflows always start at their first phase
 2. **No phase skipping**: Phases execute in array order, no jumps
 3. **Single active workflow**: Only one workflow at a time
-4. **Cancellation requires reason**: `/sdlc cancel` prompts for a reason, logged to `workflow_history`
+4. **Cancellation requires reason**: `/isdlc cancel` prompts for a reason, logged to `workflow_history`
 
 ### Cancellation Process
 
-When `/sdlc cancel` is invoked:
+When `/isdlc cancel` is invoked:
 1. Read current `active_workflow` from state.json
 2. Ask user for cancellation reason (required)
 3. If `active_workflow.git_branch` exists: execute branch abandonment (Section 3a)
@@ -1018,7 +1018,7 @@ When the final phase gate passes AND `active_workflow.git_branch` exists (and hu
    Branch: {branch_name} → main
    Conflicting files: [list]
 
-   Action Required: Resolve conflicts manually, then run /sdlc advance to retry.
+   Action Required: Resolve conflicts manually, then run /isdlc advance to retry.
    ```
 
 4. **Post-merge** (on success):
@@ -1048,7 +1048,7 @@ When the final phase gate passes AND `active_workflow.git_branch` exists (and hu
 
 ### Branch on Cancellation
 
-When `/sdlc cancel` is invoked AND `active_workflow.git_branch` exists:
+When `/isdlc cancel` is invoked AND `active_workflow.git_branch` exists:
 
 1. **Commit uncommitted work** (preserve progress):
    ```
@@ -1275,7 +1275,7 @@ CASE provider == "none":
 CASE provider == "undecided":
     → WORKFLOW PAUSED
     → Message: "GATE-10 PASSED. WORKFLOW PAUSED - Cloud provider not configured."
-    → Message: "Run /sdlc configure-cloud to configure deployment and resume."
+    → Message: "Run /isdlc configure-cloud to configure deployment and resume."
     → Update state.json: workflow_status = "paused_at_deployment_checkpoint"
 ```
 
@@ -2012,20 +2012,20 @@ You have access to these **12 orchestration skills**:
 
 # COMMANDS YOU SUPPORT
 
-- **/sdlc feature "<description>"**: Start a new feature workflow
-- **/sdlc fix "<description>"**: Start a bug fix workflow
-- **/sdlc test run**: Execute existing automation tests
-- **/sdlc test generate**: Create new tests for existing code
-- **/sdlc start "<description>"**: Start full lifecycle workflow
-- **/sdlc status**: Provide current project status across all phases
-- **/sdlc gate-check**: Validate current phase gate requirements
-- **/sdlc advance**: Move to next phase (only if gate validation passes)
-- **/sdlc delegate <agent> "<task>"**: Assign task to named agent
-- **/sdlc escalate "<issue>"**: Escalate issue to human
-- **/sdlc cancel**: Cancel the active workflow (requires reason)
-- **/sdlc upgrade "<name>"**: Upgrade a dependency, runtime, or tool
-- **/sdlc constitution**: Generate or regenerate project constitution
-- **/sdlc configure-cloud**: Configure cloud deployment settings
+- **/isdlc feature "<description>"**: Start a new feature workflow
+- **/isdlc fix "<description>"**: Start a bug fix workflow
+- **/isdlc test run**: Execute existing automation tests
+- **/isdlc test generate**: Create new tests for existing code
+- **/isdlc start "<description>"**: Start full lifecycle workflow
+- **/isdlc status**: Provide current project status across all phases
+- **/isdlc gate-check**: Validate current phase gate requirements
+- **/isdlc advance**: Move to next phase (only if gate validation passes)
+- **/isdlc delegate <agent> "<task>"**: Assign task to named agent
+- **/isdlc escalate "<issue>"**: Escalate issue to human
+- **/isdlc cancel**: Cancel the active workflow (requires reason)
+- **/isdlc upgrade "<name>"**: Upgrade a dependency, runtime, or tool
+- **/isdlc constitution**: Generate or regenerate project constitution
+- **/isdlc configure-cloud**: Configure cloud deployment settings
 
 # CONSTITUTIONAL GOVERNANCE
 
@@ -2156,7 +2156,7 @@ For `description`, use: `"Phase {NN} of {workflow_type} workflow: {agent_name} �
 
 ### Example: Feature Workflow
 
-When `/sdlc feature` initializes, create these 8 tasks in order:
+When `/isdlc feature` initializes, create these 8 tasks in order:
 
 ```
 TaskCreate: "Capture requirements (Phase 01)"           — pending
@@ -2171,7 +2171,7 @@ TaskCreate: "Perform code review and QA (Phase 07)"     — pending
 
 ### Example: Fix Workflow
 
-When `/sdlc fix` initializes, create these 6 tasks:
+When `/isdlc fix` initializes, create these 6 tasks:
 
 ```
 TaskCreate: "Capture bug report (Phase 01)"             — pending

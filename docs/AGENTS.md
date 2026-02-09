@@ -54,7 +54,7 @@ For new features, the Quick Scan Agent performs a **lightweight** scope estimati
 |----|-------|----------------|
 | **QS** | **Quick Scan Agent** | Keyword extraction, file count estimation, scope estimation (small/medium/large) |
 
-**Invoked by**: `/sdlc feature "description"` (automatic, or skip with `--no-scan`)
+**Invoked by**: `/isdlc feature "description"` (automatic, or skip with `--no-scan`)
 
 **Output**: `quick-scan.md` (lightweight scope estimate, keyword matches, file count)
 
@@ -73,7 +73,7 @@ For new features, **after Phase 01 captures and clarifies the requirements**, th
 
 **Workflow Position**: Phase 02 (after Requirements)
 
-**Invoked by**: `/sdlc feature "description"` (automatic, after Phase 01)
+**Invoked by**: `/isdlc feature "description"` (automatic, after Phase 01)
 
 **Input**: Requirements document from Phase 01, Quick Scan from Phase 00
 
@@ -94,7 +94,7 @@ For bug fixes, **after Phase 01 captures the bug report**, the Tracing Orchestra
 
 **Workflow Position**: Phase 02 (after Requirements, before Test Strategy)
 
-**Invoked by**: `/sdlc fix "description"` (automatic, or skip with `--no-tracing`)
+**Invoked by**: `/isdlc fix "description"` (automatic, or skip with `--no-tracing`)
 
 **Input**: Bug report from Phase 01 (`bug-report.md`, `requirements-spec.md`)
 

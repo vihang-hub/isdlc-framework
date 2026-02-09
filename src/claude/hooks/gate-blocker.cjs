@@ -6,7 +6,7 @@
  *
  * Intercepts:
  * - Task tool calls to orchestrator with "advance", "gate-check", "gate" in prompt
- * - Skill tool calls with /sdlc advance
+ * - Skill tool calls with /isdlc advance
  *
  * Version: 3.0.0
  */
@@ -141,7 +141,7 @@ function isGateAdvancementAttempt(input) {
         }
     }
 
-    // Check Skill tool calls (if /sdlc advance is used)
+    // Check Skill tool calls (if /isdlc advance is used)
     if (toolName === 'Skill') {
         const skill = (toolInput.skill || '').toLowerCase();
         const args = (toolInput.args || '').toLowerCase();
@@ -154,7 +154,7 @@ function isGateAdvancementAttempt(input) {
             }
         }
 
-        if (skill === 'sdlc' && (args.includes('advance') || args.includes('gate'))) {
+        if (skill === 'isdlc' && (args.includes('advance') || args.includes('gate'))) {
             return true;
         }
     }

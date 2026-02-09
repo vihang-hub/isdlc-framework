@@ -74,7 +74,7 @@ After discovery, the framework knows your project. You only need to re-run `/dis
 
 #### 1b. Feature Development
 
-**Run:** `/sdlc feature "description of the feature"`
+**Run:** `/isdlc feature "description of the feature"`
 
 The orchestrator assesses complexity and selects which phases to run. For a typical feature:
 
@@ -95,7 +95,7 @@ Not all phases run for every feature — the orchestrator skips phases when comp
 
 #### 1c. Bug Fix
 
-**Run:** `/sdlc fix "description of the bug"`
+**Run:** `/isdlc fix "description of the bug"`
 
 Bug fixes use a TDD approach with tracing agents:
 
@@ -142,15 +142,15 @@ The only difference: the first feature often implements the core scaffolding, so
 
 Before upgrading, you need existing test coverage to verify nothing breaks. If your test suite is thin:
 
-**Run:** `/sdlc test generate` first (see Use Case 4)
+**Run:** `/isdlc test generate` first (see Use Case 4)
 
 The upgrade workflow uses an implement-test loop — it makes changes, runs tests, and iterates until all tests pass. Without tests, it has no safety net.
 
 #### 3b. Upgrade Workflow
 
-**Run:** `/sdlc upgrade "name of dependency or runtime"`
+**Run:** `/isdlc upgrade "name of dependency or runtime"`
 
-Example: `/sdlc upgrade "Node.js 22"` or `/sdlc upgrade "React 19"`
+Example: `/isdlc upgrade "Node.js 22"` or `/isdlc upgrade "React 19"`
 
 What happens:
 1. **Detection** — identifies the current version and looks up the target version
@@ -180,7 +180,7 @@ Tests are a prerequisite for:
 
 #### 4b. Test Generation Workflow
 
-**Run:** `/sdlc test generate`
+**Run:** `/isdlc test generate`
 
 What happens:
 1. **Analysis** — evaluates your codebase to understand what needs testing

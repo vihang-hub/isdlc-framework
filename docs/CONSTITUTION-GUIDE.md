@@ -49,10 +49,10 @@ The iSDLC framework provides interactive commands to create your constitution:
 ```bash
 # After running init-project.sh
 claude
-/sdlc constitution
+/isdlc constitution
 ```
 
-The `/sdlc constitution` command will:
+The `/isdlc constitution` command will:
 1. Ask "What is this project about?"
 2. Research best practices for your project type
 3. Propose relevant domain-specific articles
@@ -101,7 +101,7 @@ These are mandatory and should rarely be removed.
 
 ### Adding Domain-Specific Articles
 
-The `/discover` and `/sdlc constitution` commands will suggest domain-specific articles based on your project. You can also add them manually:
+The `/discover` and `/isdlc constitution` commands will suggest domain-specific articles based on your project. You can also add them manually:
 
 **For a Simple Internal Tool** (add after universal articles):
 ```markdown

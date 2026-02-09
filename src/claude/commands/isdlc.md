@@ -2,7 +2,7 @@
 Invoke the SDLC Orchestrator to coordinate software development lifecycle workflows.
 
 ### Usage
-`/sdlc <action> [options]`
+`/isdlc <action> [options]`
 
 ### Monorepo Support
 
@@ -15,22 +15,22 @@ When the project is a monorepo (`.isdlc/monorepo.json` exists), all commands acc
 
 **Project subcommands:**
 ```
-/sdlc project list                    — List all registered projects
-/sdlc project add {id} {path}         — Manually register a project
-/sdlc project scan                    — Auto-detect projects from scan_paths
-/sdlc project select {id}             — Set default project
+/isdlc project list                    — List all registered projects
+/isdlc project add {id} {path}         — Manually register a project
+/isdlc project scan                    — Auto-detect projects from scan_paths
+/isdlc project select {id}             — Set default project
 ```
 
 **Project flag on action commands:**
 ```
-/sdlc feature "description" --project api-service
-/sdlc fix "description" --project web-frontend
-/sdlc status --project api-service
+/isdlc feature "description" --project api-service
+/isdlc fix "description" --project web-frontend
+/isdlc status --project api-service
 ```
 
 ### No-Argument Behavior (Interactive Menu)
 
-When `/sdlc` is invoked without any action, present a context-aware menu based on project state.
+When `/isdlc` is invoked without any action, present a context-aware menu based on project state.
 
 **Detection Logic:**
 1. Check if `docs/isdlc/constitution.md` exists and is NOT a template. Template markers include:
@@ -190,24 +190,24 @@ Enter selection (1-5):
 | Scenario | Option | Action |
 |----------|--------|--------|
 | 0 (Monorepo, no project) | [1-N] | Set selected project as default, proceed to scenario 1-4 |
-| 0 (Monorepo, no project) | [P] | Execute `/sdlc project scan` |
-| 0 (Monorepo, no project) | [A] | Prompt for project ID and path, execute `/sdlc project add` |
+| 0 (Monorepo, no project) | [P] | Execute `/isdlc project scan` |
+| 0 (Monorepo, no project) | [A] | Prompt for project ID and path, execute `/isdlc project add` |
 | 1 (New, no constitution) | [1] | Execute `/discover` (runs NEW PROJECT FLOW) |
 | 1 (New, no constitution) | [2] | Display path to constitution.md and exit |
 | 2 (Existing, no constitution) | [1] | Execute `/discover` (runs EXISTING PROJECT FLOW) |
 | 2 (Existing, no constitution) | [2] | Display path to constitution.md and exit |
-| 3 (Ready, no workflow) | [1] | Execute `/sdlc feature` (no description — presents backlog picker) |
-| 3 (Ready, no workflow) | [2] | Execute `/sdlc fix` (no description — presents backlog picker) |
-| 3 (Ready, no workflow) | [3] | Execute `/sdlc test run` |
-| 3 (Ready, no workflow) | [4] | Execute `/sdlc test generate` |
-| 3 (Ready, no workflow) | [5] | Execute `/sdlc start` (full lifecycle) |
-| 3 (Ready, no workflow) | [6] | Execute `/sdlc status` |
-| 3 (Ready, no workflow) | [7] | Ask what to upgrade, then execute `/sdlc upgrade "<name>"` |
+| 3 (Ready, no workflow) | [1] | Execute `/isdlc feature` (no description — presents backlog picker) |
+| 3 (Ready, no workflow) | [2] | Execute `/isdlc fix` (no description — presents backlog picker) |
+| 3 (Ready, no workflow) | [3] | Execute `/isdlc test run` |
+| 3 (Ready, no workflow) | [4] | Execute `/isdlc test generate` |
+| 3 (Ready, no workflow) | [5] | Execute `/isdlc start` (full lifecycle) |
+| 3 (Ready, no workflow) | [6] | Execute `/isdlc status` |
+| 3 (Ready, no workflow) | [7] | Ask what to upgrade, then execute `/isdlc upgrade "<name>"` |
 | 4 (Workflow active) | [1] | Resume current workflow at active phase |
-| 4 (Workflow active) | [2] | Execute `/sdlc gate-check` |
-| 4 (Workflow active) | [3] | Execute `/sdlc status` |
-| 4 (Workflow active) | [4] | Prompt for issue description, then `/sdlc escalate` |
-| 4 (Workflow active) | [5] | Execute `/sdlc cancel` |
+| 4 (Workflow active) | [2] | Execute `/isdlc gate-check` |
+| 4 (Workflow active) | [3] | Execute `/isdlc status` |
+| 4 (Workflow active) | [4] | Prompt for issue description, then `/isdlc escalate` |
+| 4 (Workflow active) | [5] | Execute `/isdlc cancel` |
 
 ---
 
@@ -215,18 +215,18 @@ Enter selection (1-5):
 
 **feature** - Implement a new feature end-to-end
 ```
-/sdlc feature "Feature description"
-/sdlc feature "Feature description" --project api-service
-/sdlc feature                        (no description — presents backlog picker)
+/isdlc feature "Feature description"
+/isdlc feature "Feature description" --project api-service
+/isdlc feature                        (no description — presents backlog picker)
 ```
 1. Validate constitution exists and is not a template
-2. Check no active workflow (block if one exists, suggest `/sdlc cancel` first)
+2. Check no active workflow (block if one exists, suggest `/isdlc cancel` first)
 3. Initialize `active_workflow` in state.json with type `"feature"` and phases `["01-requirements", "02-architecture", "03-design", "05-implementation", "06-testing", "09-cicd", "07-code-review"]`
 4. Delegate to Requirements Analyst (Phase 01) with `scope: "feature"`
 5. After GATE-01: creates `feature/REQ-NNNN-description` branch from main
 6. After GATE-07: merges branch to main, deletes branch
 
-**No-description behavior:** When `/sdlc feature` is invoked without a description (no quoted text, no feature ID), the orchestrator presents a **backlog picker** instead of immediately asking for a description. The backlog picker scans:
+**No-description behavior:** When `/isdlc feature` is invoked without a description (no quoted text, no feature ID), the orchestrator presents a **backlog picker** instead of immediately asking for a description. The backlog picker scans:
 - `CLAUDE.md` for unchecked items (`- [ ] ...`) in the Next Session section
 - `.isdlc/state.json` → `workflow_history` for cancelled feature workflows
 - User can also choose `[O] Other` to describe a new feature manually
@@ -234,10 +234,10 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 
 **fix** - Fix a bug or defect with TDD
 ```
-/sdlc fix "Bug description"
-/sdlc fix "Bug description" --link https://mycompany.atlassian.net/browse/JIRA-1234
-/sdlc fix "Bug description" --project api-service
-/sdlc fix                    (no description — presents backlog picker)
+/isdlc fix "Bug description"
+/isdlc fix "Bug description" --link https://mycompany.atlassian.net/browse/JIRA-1234
+/isdlc fix "Bug description" --project api-service
+/isdlc fix                    (no description — presents backlog picker)
 ```
 1. Validate constitution exists and is not a template
 2. Check no active workflow
@@ -250,7 +250,7 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 9. After GATE-01: creates `bugfix/BUG-NNNN-external-id` branch from main
 10. After GATE-07: merges branch to main, deletes branch
 
-**No-description behavior:** When `/sdlc fix` is invoked without a description, the orchestrator presents a **backlog picker** that scans:
+**No-description behavior:** When `/isdlc fix` is invoked without a description, the orchestrator presents a **backlog picker** that scans:
 - `.isdlc/state.json` → `workflow_history` for cancelled fix workflows
 - `CLAUDE.md` for unchecked items containing bug-related keywords (fix, bug, broken, error, crash, regression, issue)
 - User can also choose `[O] Other` to describe a new bug manually
@@ -258,16 +258,16 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 
 **test run** - Execute existing automation tests
 ```
-/sdlc test run
+/isdlc test run
 ```
 1. Present test type selection: Unit, System, E2E (multi-select)
 2. Initialize `active_workflow` with type `"test-run"` and phases `["06-testing"]`
 3. Delegate to Integration Tester (Phase 06) with selected test types
-4. Report results — does NOT fix failures (suggest `/sdlc fix` for each)
+4. Report results — does NOT fix failures (suggest `/isdlc fix` for each)
 
 **test generate** - Create new tests for existing code
 ```
-/sdlc test generate
+/isdlc test generate
 ```
 1. Present test type selection: Unit, System, E2E (single-select)
 2. Initialize `active_workflow` with type `"test-generate"` and phases `["04-test-strategy", "05-implementation", "06-testing", "07-code-review"]`
@@ -278,7 +278,7 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 
 **start** - Run complete SDLC lifecycle (all 13 phases)
 ```
-/sdlc start "Project or feature description"
+/isdlc start "Project or feature description"
 ```
 1. Validate constitution exists and is not a template
 2. Check no active workflow
@@ -288,7 +288,7 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 
 **cancel** - Cancel the active workflow
 ```
-/sdlc cancel
+/isdlc cancel
 ```
 1. Check for active workflow (if none, inform user)
 2. Prompt for cancellation reason (required)
@@ -299,7 +299,7 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 
 **status** - Show current project status
 ```
-/sdlc status
+/isdlc status
 ```
 1. Read `.isdlc/state.json`
 2. Report current phase, active agent, blockers, and progress
@@ -307,7 +307,7 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 
 **gate-check** - Validate current phase gate
 ```
-/sdlc gate-check
+/isdlc gate-check
 ```
 1. Identify current phase from state
 2. Run gate validation checklist
@@ -316,7 +316,7 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 
 **advance** - Move to next phase (requires gate pass)
 ```
-/sdlc advance
+/isdlc advance
 ```
 1. Validate current phase gate passes
 2. Update state to next phase
@@ -324,13 +324,13 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 
 **delegate** - Assign task to specific agent
 ```
-/sdlc delegate <agent-name> "task description"
+/isdlc delegate <agent-name> "task description"
 ```
 Agents: requirements-analyst, solution-architect, system-designer, test-design-engineer, software-developer, integration-tester, qa-engineer, security-compliance-auditor, cicd-engineer, environment-builder, deployment-engineer-staging, release-manager, site-reliability-engineer
 
 **escalate** - Escalate issue to human
 ```
-/sdlc escalate "issue description"
+/isdlc escalate "issue description"
 ```
 1. Log escalation in state
 2. Pause workflow
@@ -338,7 +338,7 @@ Agents: requirements-analyst, solution-architect, system-designer, test-design-e
 
 **constitution** - Create or validate project constitution (for NEW projects)
 ```
-/sdlc constitution
+/isdlc constitution
 ```
 This command interactively creates a tailored constitution for new projects.
 
@@ -424,14 +424,14 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 
 **upgrade** - Upgrade a dependency, runtime, framework, or tool
 ```
-/sdlc upgrade "react"
-/sdlc upgrade "typescript" --project api-service
-/sdlc upgrade "node"
+/isdlc upgrade "react"
+/isdlc upgrade "typescript" --project api-service
+/isdlc upgrade "node"
 ```
 1. Validate constitution exists and is not a template
-2. Check no active workflow (block if one exists, suggest `/sdlc cancel` first)
+2. Check no active workflow (block if one exists, suggest `/isdlc cancel` first)
 3. Initialize `active_workflow` in state.json with type `"upgrade"` and phases `["14-upgrade-plan", "14-upgrade-execute", "07-code-review"]`
-4. **Validate test adequacy** — run the full test suite to confirm adequate coverage exists. If no tests exist, block the upgrade and recommend `/sdlc test generate` first. If coverage is below thresholds, warn the user and require explicit acceptance before proceeding.
+4. **Validate test adequacy** — run the full test suite to confirm adequate coverage exists. If no tests exist, block the upgrade and recommend `/isdlc test generate` first. If coverage is below thresholds, warn the user and require explicit acceptance before proceeding.
 5. Delegate to Upgrade Engineer (Phase 14) with `scope: "analysis"`:
    - Detect ecosystem and current version
    - Look up available versions from registry
@@ -451,12 +451,12 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 
 **discover** - Analyze project and create tailored constitution
 ```
-/sdlc discover
+/isdlc discover
 ```
 
 > **REDIRECTED:** This command has been moved to a dedicated `/discover` command for better separation of concerns.
 
-**Usage:** Use `/discover` instead of `/sdlc discover`.
+**Usage:** Use `/discover` instead of `/isdlc discover`.
 
 The `/discover` command provides:
 - Project type detection (new vs existing)
@@ -484,18 +484,18 @@ See `/discover --help` for full documentation.
 
 **reverse-engineer** - **(Deprecated — now integrated into `/discover`)**
 
-> **NOTE:** `/sdlc reverse-engineer` is now an alias for `/discover --existing` with the same options. Behavior extraction, characterization tests, and traceability are now built into the discover workflow.
+> **NOTE:** `/isdlc reverse-engineer` is now an alias for `/discover --existing` with the same options. Behavior extraction, characterization tests, and traceability are now built into the discover workflow.
 
 ```
-/sdlc reverse-engineer                                    →  /discover --existing
-/sdlc reverse-engineer --scope domain --target "payments" →  /discover --scope domain --target "payments"
-/sdlc reverse-engineer --priority critical                →  /discover --priority critical
-/sdlc reverse-engineer --atdd-ready                       →  /discover --atdd-ready
+/isdlc reverse-engineer                                    →  /discover --existing
+/isdlc reverse-engineer --scope domain --target "payments" →  /discover --scope domain --target "payments"
+/isdlc reverse-engineer --priority critical                →  /discover --priority critical
+/isdlc reverse-engineer --atdd-ready                       →  /discover --atdd-ready
 ```
 
 When invoked, display this message and redirect:
 ```
-NOTE: /sdlc reverse-engineer is now integrated into /discover.
+NOTE: /isdlc reverse-engineer is now integrated into /discover.
 Running: /discover --existing {forwarded options}
 
 ```
@@ -506,7 +506,7 @@ All options (`--scope`, `--target`, `--priority`, `--atdd-ready`) are forwarded 
 
 **project list** - List all registered projects in monorepo (monorepo only)
 ```
-/sdlc project list
+/isdlc project list
 ```
 1. Read `.isdlc/monorepo.json`
 2. Display all registered projects with their paths and status
@@ -514,7 +514,7 @@ All options (`--scope`, `--target`, `--priority`, `--atdd-ready`) are forwarded 
 
 **project add** - Manually register a project in monorepo (monorepo only)
 ```
-/sdlc project add {id} {path}
+/isdlc project add {id} {path}
 ```
 1. Validate the path exists
 2. Add project entry to `monorepo.json`
@@ -523,7 +523,7 @@ All options (`--scope`, `--target`, `--priority`, `--atdd-ready`) are forwarded 
 
 **project scan** - Auto-detect projects from scan_paths (monorepo only)
 ```
-/sdlc project scan
+/isdlc project scan
 ```
 1. Read `scan_paths` from `monorepo.json`
 2. Scan for projects (look for package.json, go.mod, Cargo.toml, etc. in subdirectories)
@@ -532,7 +532,7 @@ All options (`--scope`, `--target`, `--priority`, `--atdd-ready`) are forwarded 
 
 **project select** - Set the default project (monorepo only)
 ```
-/sdlc project select {id}
+/isdlc project select {id}
 ```
 1. Validate project ID exists in `monorepo.json`
 2. Update `default_project` in `monorepo.json`
@@ -542,7 +542,7 @@ All options (`--scope`, `--target`, `--priority`, `--atdd-ready`) are forwarded 
 
 **configure-cloud** - Configure or reconfigure cloud provider for deployment
 ```
-/sdlc configure-cloud
+/isdlc configure-cloud
 ```
 Use this command to configure cloud deployment settings at any time, especially:
 - After selecting "Not decided yet" during discover
@@ -612,7 +612,7 @@ Use this command to configure cloud deployment settings at any time, especially:
    Continue workflow? [Y/n]
    ```
    - If yes: Advance to Phase 11
-   - If no: Inform user to run `/sdlc advance` when ready
+   - If no: Inform user to run `/isdlc advance` when ready
 
 ### Workflows
 
@@ -620,13 +620,13 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 
 | Command | Workflow | Phases | Gate Mode | Branch |
 |---------|----------|--------|-----------|--------|
-| `/sdlc feature` | feature | 01 → 02 → 03 → 05 → 10 → 06 → 09 → 07 | strict | `feature/REQ-NNNN-...` |
-| `/sdlc fix` | fix | 01 → 02 → 04 → 05 → 10 → 06 → 09 → 07 | strict | `bugfix/BUG-NNNN-...` |
-| `/sdlc test run` | test-run | 10 → 06 | strict | none |
-| `/sdlc test generate` | test-generate | 04 → 05 → 10 → 06 → 07 | strict | none |
-| `/sdlc start` | full-lifecycle | 01 → ... → 05 → 10 → 06 → ... → 10(remote) → 11 → ... → 13 | strict | `feature/REQ-NNNN-...` |
-| `/sdlc upgrade` | upgrade | 14-plan → 14-execute → 07 | strict | `upgrade/{name}-v{ver}` |
-| `/sdlc reverse-engineer` | *(alias → `/discover --existing`)* | — | — | — |
+| `/isdlc feature` | feature | 01 → 02 → 03 → 05 → 10 → 06 → 09 → 07 | strict | `feature/REQ-NNNN-...` |
+| `/isdlc fix` | fix | 01 → 02 → 04 → 05 → 10 → 06 → 09 → 07 | strict | `bugfix/BUG-NNNN-...` |
+| `/isdlc test run` | test-run | 10 → 06 | strict | none |
+| `/isdlc test generate` | test-generate | 04 → 05 → 10 → 06 → 07 | strict | none |
+| `/isdlc start` | full-lifecycle | 01 → ... → 05 → 10 → 06 → ... → 10(remote) → 11 → ... → 13 | strict | `feature/REQ-NNNN-...` |
+| `/isdlc upgrade` | upgrade | 14-plan → 14-execute → 07 | strict | `upgrade/{name}-v{ver}` |
+| `/isdlc reverse-engineer` | *(alias → `/discover --existing`)* | — | — | — |
 
 **Enforcement rules:**
 - Workflows start at phase 1 — no `--start-at` flag
@@ -637,30 +637,30 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 ### Examples
 
 ```
-/sdlc feature "Build a REST API for user authentication"
-/sdlc feature "Add payment processing" --project api-service
-/sdlc fix "Login endpoint returns 500 on empty password"
-/sdlc fix "Login endpoint returns 500 on empty password" --link https://mycompany.atlassian.net/browse/AUTH-456
-/sdlc test run
-/sdlc test generate
-/sdlc start "New e-commerce platform"
-/sdlc status
-/sdlc status --project web-frontend
-/sdlc gate-check
-/sdlc cancel
-/sdlc configure-cloud
-/sdlc escalate "Unclear requirement about session timeout"
-/sdlc project list
-/sdlc project add shared-lib packages/shared-lib
-/sdlc project scan
-/sdlc project select api-service
-/sdlc upgrade "react"
-/sdlc upgrade "typescript" --project api-service
-/sdlc upgrade "node"
-/sdlc upgrade "express"
-/sdlc reverse-engineer
-/sdlc reverse-engineer --scope domain --target "payments"
-/sdlc reverse-engineer --priority critical --atdd-ready
+/isdlc feature "Build a REST API for user authentication"
+/isdlc feature "Add payment processing" --project api-service
+/isdlc fix "Login endpoint returns 500 on empty password"
+/isdlc fix "Login endpoint returns 500 on empty password" --link https://mycompany.atlassian.net/browse/AUTH-456
+/isdlc test run
+/isdlc test generate
+/isdlc start "New e-commerce platform"
+/isdlc status
+/isdlc status --project web-frontend
+/isdlc gate-check
+/isdlc cancel
+/isdlc configure-cloud
+/isdlc escalate "Unclear requirement about session timeout"
+/isdlc project list
+/isdlc project add shared-lib packages/shared-lib
+/isdlc project scan
+/isdlc project select api-service
+/isdlc upgrade "react"
+/isdlc upgrade "typescript" --project api-service
+/isdlc upgrade "node"
+/isdlc upgrade "express"
+/isdlc reverse-engineer
+/isdlc reverse-engineer --scope domain --target "payments"
+/isdlc reverse-engineer --priority critical --atdd-ready
 ```
 
 ### Prerequisites
@@ -679,14 +679,14 @@ When this command is invoked:
 - Include `MONOREPO CONTEXT: --project {id}` in the Task prompt passed to the orchestrator
 - The orchestrator will resolve all paths (state, docs, constitution, external skills) to that project
 
-**If NO action argument provided (`/sdlc` alone):**
+**If NO action argument provided (`/isdlc` alone):**
 1. Use the Task tool to launch the `sdlc-orchestrator` agent
 2. Pass explicit instruction: "No action specified. Present the interactive context-aware menu based on constitution status, workflow status, and existing project detection."
 3. In monorepo mode with no project resolved, the orchestrator MUST present SCENARIO 0 first
 4. Otherwise, present the appropriate scenario menu (1-4) based on detection logic
 5. Wait for user selection before taking further action
 
-**If action is `feature` or `fix` WITHOUT a description (`/sdlc feature` or `/sdlc fix` alone):**
+**If action is `feature` or `fix` WITHOUT a description (`/isdlc feature` or `/isdlc fix` alone):**
 1. Use the Task tool to launch the `sdlc-orchestrator` agent
 2. Pass explicit instruction: "Action is {feature|fix} but no description provided. Run the BACKLOG PICKER in {feature|fix} mode to let the user select from pending items or describe a new one."
 3. The orchestrator scans CLAUDE.md and state.json, presents the backlog picker, waits for selection, then proceeds with the chosen description
@@ -809,16 +809,16 @@ The orchestrator runs the Human Review Checkpoint (if code_review.enabled), merg
 #### Flow Summary
 
 ```
-/sdlc (no args)    → Task → orchestrator → Interactive Menu → User Selection → Action
-/sdlc feature      → Task → orchestrator → Backlog Picker (feature) → Phase-Loop Controller
-/sdlc fix          → Task → orchestrator → Backlog Picker (fix) → Phase-Loop Controller
-/sdlc feature ...  → Phase-Loop Controller (init → tasks → loop → finalize)
-/sdlc fix ...      → Phase-Loop Controller (init → tasks → loop → finalize)
-/sdlc test run     → Phase-Loop Controller (init → tasks → loop → finalize)
-/sdlc test generate → Phase-Loop Controller (init → tasks → loop → finalize)
-/sdlc start ...    → Phase-Loop Controller (init → tasks → loop → finalize)
-/sdlc upgrade ...  → Phase-Loop Controller (init → tasks → loop → finalize)
-/sdlc cancel       → Task → orchestrator → Cancel active workflow
-/sdlc status       → Task → orchestrator → Show status
-/sdlc <action>     → Task → orchestrator → Execute Action
+/isdlc (no args)    → Task → orchestrator → Interactive Menu → User Selection → Action
+/isdlc feature      → Task → orchestrator → Backlog Picker (feature) → Phase-Loop Controller
+/isdlc fix          → Task → orchestrator → Backlog Picker (fix) → Phase-Loop Controller
+/isdlc feature ...  → Phase-Loop Controller (init → tasks → loop → finalize)
+/isdlc fix ...      → Phase-Loop Controller (init → tasks → loop → finalize)
+/isdlc test run     → Phase-Loop Controller (init → tasks → loop → finalize)
+/isdlc test generate → Phase-Loop Controller (init → tasks → loop → finalize)
+/isdlc start ...    → Phase-Loop Controller (init → tasks → loop → finalize)
+/isdlc upgrade ...  → Phase-Loop Controller (init → tasks → loop → finalize)
+/isdlc cancel       → Task → orchestrator → Cancel active workflow
+/isdlc status       → Task → orchestrator → Show status
+/isdlc <action>     → Task → orchestrator → Execute Action
 ```

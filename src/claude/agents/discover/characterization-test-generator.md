@@ -447,7 +447,7 @@ Create these tasks at the start of the characterization test phase:
 ```
 ERROR: Could not detect test framework.
 Please ensure test evaluation report exists and contains framework information.
-Run /sdlc discover to generate test evaluation.
+Run /isdlc discover to generate test evaluation.
 ```
 
 ### AC Parsing Failed

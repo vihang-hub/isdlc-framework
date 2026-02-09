@@ -116,7 +116,7 @@ This gate validates that the application environment is built, running, and reac
 │                                                                  │
 │     IF provider == "undecided":                                  │
 │        → WORKFLOW PAUSED at Phase 10                             │
-│        → Action: Run /sdlc configure-cloud                       │
+│        → Action: Run /isdlc configure-cloud                       │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```

@@ -35,7 +35,7 @@ Before this phase can begin, the following prerequisites MUST be met:
 **If prerequisites not met:**
 - This phase is **SKIPPED automatically**
 - Workflow either completes (if provider is "none") or pauses (if provider is "undecided")
-- Run `/sdlc configure-cloud` to configure deployment and resume
+- Run `/isdlc configure-cloud` to configure deployment and resume
 
 ---
 
