@@ -725,9 +725,11 @@ If Phase 01 fails or is cancelled, stop here.
 
 #### STEP 2: FOREGROUND TASKS — Create visible task list
 
-Using the `phases[]` array from the init result, create one `TaskCreate` per phase using these definitions:
+Using the `phases[]` array from the init result, create one `TaskCreate` per phase. Assign each task a **sequential number** starting at 1, incrementing by 1 for each phase in the workflow. Use the format `[N]` as a prefix in the subject.
 
-| Phase Key | subject | activeForm |
+Look up the base subject and activeForm from this table:
+
+| Phase Key | base subject | activeForm |
 |-----------|---------|------------|
 | `00-mapping` | Map feature impact (Phase 00) | Mapping feature impact |
 | `01-requirements` | Capture requirements (Phase 01) | Capturing requirements |
@@ -748,11 +750,13 @@ Using the `phases[]` array from the init result, create one `TaskCreate` per pha
 | `14-upgrade-plan` | Analyze upgrade impact and generate plan (Phase 14) | Analyzing upgrade impact |
 | `14-upgrade-execute` | Execute upgrade with regression testing (Phase 14) | Executing upgrade |
 
+**Subject format**: `[N] {base subject}` — e.g. `[1] Capture requirements (Phase 01)`, `[2] Design architecture (Phase 02)`
+
 For `description`, use: `"Phase {NN} of {workflow_type} workflow"`
 
-Mark Phase 01's task as `completed` immediately (it already passed in Step 1).
+**Mark Phase 01's task as completed with strikethrough** immediately (it already passed in Step 1). Update both `status` to `completed` AND `subject` to `~~[1] {base subject}~~` (markdown strikethrough).
 
-The user now sees the full task list in their terminal.
+The user now sees the full task list in their terminal with sequential numbering.
 
 #### STEP 3: PHASE LOOP — Execute remaining phases one at a time
 
@@ -790,7 +794,7 @@ Use Task tool → sdlc-orchestrator with:
 ```
 
 **3e.** On return, check the result status:
-- `"passed"` → Mark task as `completed`, continue to next phase
+- `"passed"` → Mark task as `completed` **with strikethrough**: update both `status` to `completed` AND `subject` to `~~[N] {base subject}~~` (wrap the original `[N] subject` in `~~`). Continue to next phase.
 - `"blocked_by_hook"` → Display blocker banner (same format as 3c), use `AskUserQuestion` for Retry/Skip/Cancel
 - Any other error → Display error, use `AskUserQuestion` for Retry/Skip/Cancel
 
