@@ -192,7 +192,7 @@
 |-------------|---------------|
 | Database | {PostgreSQL 14+} |
 | Cache | {Redis 7+} |
-| Node Version | {18+} |
+| Node Version | {20+} |
 | Browser Support | {Chrome, Firefox, Safari, Edge} |
 
 ---
