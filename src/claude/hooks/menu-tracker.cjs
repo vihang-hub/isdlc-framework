@@ -9,13 +9,10 @@
  * - User selections
  * - Final save/continue selection
  *
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 const {
-    readState,
-    writeState,
-    readStdin,
     debugLog,
     getTimestamp
 } = require('./lib/common.cjs');
@@ -115,19 +112,16 @@ function detectMenuActivity(text) {
     return results;
 }
 
-async function main() {
+/**
+ * Dispatcher-compatible check function.
+ * @param {object} ctx - { input, state, manifest, requirements, workflows }
+ * @returns {{ decision: 'allow', stdout?: string, stateModified?: boolean }}
+ */
+function check(ctx) {
     try {
-        const inputStr = await readStdin();
-
-        if (!inputStr || !inputStr.trim()) {
-            process.exit(0);
-        }
-
-        let input;
-        try {
-            input = JSON.parse(inputStr);
-        } catch (e) {
-            process.exit(0);
+        const input = ctx.input;
+        if (!input) {
+            return { decision: 'allow' };
         }
 
         // Get the tool result text
@@ -140,29 +134,29 @@ async function main() {
         const combinedText = result + ' ' + prompt;
 
         // Load state
-        let state = readState();
+        const state = ctx.state;
         if (!state) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Only track during active workflows in Phase 01
         if (!state.active_workflow) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
         const currentPhase = (state.active_workflow && state.active_workflow.current_phase) || state.current_phase;
         if (currentPhase !== '01-requirements') {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Check if iteration enforcement is enabled
         if (state.iteration_enforcement?.enabled === false) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Detect menu activity
         const activity = detectMenuActivity(combinedText);
         if (!activity) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         debugLog('Menu activity detected:', activity);
@@ -244,21 +238,49 @@ async function main() {
             }
         }
 
-        // Save updated state
+        // Save updated state in memory
         state.phases[currentPhase].iteration_requirements.interactive_elicitation = elicitState;
-        writeState(state);
 
-        // Output message if any
-        if (outputMessage) {
-            console.log(outputMessage);
-        }
-
-        process.exit(0);
+        return {
+            decision: 'allow',
+            stdout: outputMessage || undefined,
+            stateModified: true
+        };
 
     } catch (error) {
         debugLog('Error in menu-tracker:', error.message);
-        process.exit(0);
+        return { decision: 'allow' };
     }
 }
 
-main();
+// Export check for dispatcher use
+module.exports = { check };
+
+// Standalone execution
+if (require.main === module) {
+    const { readStdin, readState, writeState: writeStateFn, loadManifest, loadIterationRequirements, loadWorkflowDefinitions } = require('./lib/common.cjs');
+
+    (async () => {
+        try {
+            const inputStr = await readStdin();
+            if (!inputStr || !inputStr.trim()) { process.exit(0); }
+            let input;
+            try { input = JSON.parse(inputStr); } catch (e) { process.exit(0); }
+
+            const state = readState();
+            const manifest = loadManifest();
+            const requirements = loadIterationRequirements();
+            const workflows = loadWorkflowDefinitions();
+            const ctx = { input, state, manifest, requirements, workflows };
+
+            const result = check(ctx);
+
+            if (result.stderr) console.error(result.stderr);
+            if (result.stdout) console.log(result.stdout);
+            if (result.stateModified && state) {
+                writeStateFn(state);
+            }
+            process.exit(0);
+        } catch (e) { process.exit(0); }
+    })();
+}

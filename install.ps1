@@ -682,8 +682,10 @@ if ($null -eq $nodeCmd) {
 # Create hooks directory structure
 $hooksDir = Join-Path $claudeDir "hooks"
 $hooksLibDir = Join-Path $hooksDir "lib"
+$hooksDispatchersDir = Join-Path $hooksDir "dispatchers"
 $hooksTestsDir = Join-Path (Join-Path $hooksDir "tests") "test-scenarios"
 New-Item $hooksLibDir -ItemType Directory -Force | Out-Null
+New-Item $hooksDispatchersDir -ItemType Directory -Force | Out-Null
 New-Item $hooksTestsDir -ItemType Directory -Force | Out-Null
 
 # Copy hook scripts from framework

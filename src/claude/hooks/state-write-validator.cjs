@@ -12,11 +12,10 @@
  * Fail-open: any error results in silent exit (exit 0, no output)
  *
  * Traces to: FR-05, AC-05, AC-05a, AC-05b, AC-05c, AC-05d, AC-05e
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 const {
-    readStdin,
     debugLog,
     logHookEvent
 } = require('./lib/common.cjs');
@@ -88,23 +87,23 @@ function validatePhase(phaseName, phaseData, filePath) {
     return warnings;
 }
 
-async function main() {
+/**
+ * Dispatcher-compatible check function.
+ * NOTE: Reads the just-written state.json file from disk via fs.readFileSync.
+ * NEVER produces stdout output.
+ * @param {object} ctx - { input, state, manifest, requirements, workflows }
+ * @returns {{ decision: 'allow', stderr?: string }}
+ */
+function check(ctx) {
     try {
-        const inputStr = await readStdin();
-        if (!inputStr || !inputStr.trim()) {
-            process.exit(0);
-        }
-
-        let input;
-        try {
-            input = JSON.parse(inputStr);
-        } catch (e) {
-            process.exit(0);
+        const input = ctx.input;
+        if (!input) {
+            return { decision: 'allow' };
         }
 
         // Only process Write and Edit tool results
         if (input.tool_name !== 'Write' && input.tool_name !== 'Edit') {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         const toolInput = input.tool_input || {};
@@ -112,7 +111,7 @@ async function main() {
 
         // Check if the file is a state.json
         if (!STATE_JSON_PATTERN.test(filePath)) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         debugLog('State.json write detected:', filePath);
@@ -124,21 +123,22 @@ async function main() {
             stateData = JSON.parse(content);
         } catch (e) {
             debugLog('Could not read/parse state.json:', e.message);
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Validate each phase
         const phases = stateData.phases;
         if (!phases || typeof phases !== 'object') {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
+        const allWarnings = [];
         for (const [phaseName, phaseData] of Object.entries(phases)) {
             if (!phaseData || typeof phaseData !== 'object') continue;
 
             const warnings = validatePhase(phaseName, phaseData, filePath);
             for (const warning of warnings) {
-                console.error(warning);
+                allWarnings.push(warning);
                 logHookEvent('state-write-validator', 'warn', {
                     phase: phaseName,
                     reason: warning.split('\n')[0].replace('[state-write-validator] WARNING: ', '')
@@ -146,13 +146,56 @@ async function main() {
             }
         }
 
+        if (allWarnings.length > 0) {
+            return { decision: 'allow', stderr: allWarnings.join('\n') };
+        }
+
         // NEVER produce stdout output
-        process.exit(0);
+        return { decision: 'allow' };
 
     } catch (error) {
         debugLog('Error in state-write-validator:', error.message);
-        process.exit(0);
+        return { decision: 'allow' };
     }
 }
 
-main();
+// Export check for dispatcher use
+module.exports = { check };
+
+// Standalone execution
+if (require.main === module) {
+    const { readStdin, readState, loadManifest, loadIterationRequirements, loadWorkflowDefinitions } = require('./lib/common.cjs');
+
+    (async () => {
+        try {
+            const inputStr = await readStdin();
+            if (!inputStr || !inputStr.trim()) {
+                process.exit(0);
+            }
+            let input;
+            try { input = JSON.parse(inputStr); } catch (e) { process.exit(0); }
+
+            const state = readState();
+            const manifest = loadManifest();
+            const requirements = loadIterationRequirements();
+            const workflows = loadWorkflowDefinitions();
+            const ctx = { input, state, manifest, requirements, workflows };
+
+            const result = check(ctx);
+
+            if (result.stderr) {
+                console.error(result.stderr);
+            }
+            if (result.stdout) {
+                console.log(result.stdout);
+            }
+            if (result.decision === 'block' && result.stopReason) {
+                const { outputBlockResponse } = require('./lib/common.cjs');
+                outputBlockResponse(result.stopReason);
+            }
+            process.exit(0);
+        } catch (e) {
+            process.exit(0);
+        }
+    })();
+}

@@ -9,12 +9,10 @@
  * Fail-open: always (PostToolUse is observational only)
  *
  * Traces to: FR-01, AC-01a through AC-01h
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 const {
-    readStdin,
-    readState,
     debugLog,
     logHookEvent
 } = require('./lib/common.cjs');
@@ -50,18 +48,16 @@ function detectPermissionAsking(text) {
     return { found: false, pattern: '' };
 }
 
-async function main() {
+/**
+ * Dispatcher-compatible check function.
+ * @param {object} ctx - { input, state, manifest, requirements, workflows }
+ * @returns {{ decision: 'allow', stderr?: string }}
+ */
+function check(ctx) {
     try {
-        const inputStr = await readStdin();
-        if (!inputStr || !inputStr.trim()) {
-            process.exit(0);
-        }
-
-        let input;
-        try {
-            input = JSON.parse(inputStr);
-        } catch (e) {
-            process.exit(0);
+        const input = ctx.input;
+        if (!input) {
+            return { decision: 'allow' };
         }
 
         // Extract task output/result text
@@ -70,20 +66,20 @@ async function main() {
                        '';
 
         if (!output || typeof output !== 'string') {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Check for permission-asking patterns
         const result = detectPermissionAsking(output);
         if (!result.found) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Only warn if there is an active workflow
-        const state = readState();
+        const state = ctx.state;
         if (!state || !state.active_workflow) {
             debugLog('Permission pattern found but no active workflow, skipping');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         const phase = (state.active_workflow && state.active_workflow.current_phase) || 'unknown';
@@ -94,17 +90,56 @@ async function main() {
             reason: `Permission-asking pattern detected: '${result.pattern}'`
         });
 
-        console.error(
+        const stderr =
             `TRANSITION WARNING: Agent asked for permission to proceed. ` +
             `Phase transitions should be automatic when gates pass. ` +
-            `Pattern detected: '${result.pattern}'`
-        );
-        process.exit(0);
+            `Pattern detected: '${result.pattern}'`;
+
+        return { decision: 'allow', stderr };
 
     } catch (error) {
         debugLog('Error in phase-transition-enforcer:', error.message);
-        process.exit(0);
+        return { decision: 'allow' };
     }
 }
 
-main();
+// Export check for dispatcher use
+module.exports = { check };
+
+// Standalone execution
+if (require.main === module) {
+    const { readStdin, readState, loadManifest, loadIterationRequirements, loadWorkflowDefinitions } = require('./lib/common.cjs');
+
+    (async () => {
+        try {
+            const inputStr = await readStdin();
+            if (!inputStr || !inputStr.trim()) {
+                process.exit(0);
+            }
+            let input;
+            try { input = JSON.parse(inputStr); } catch (e) { process.exit(0); }
+
+            const state = readState();
+            const manifest = loadManifest();
+            const requirements = loadIterationRequirements();
+            const workflows = loadWorkflowDefinitions();
+            const ctx = { input, state, manifest, requirements, workflows };
+
+            const result = check(ctx);
+
+            if (result.stderr) {
+                console.error(result.stderr);
+            }
+            if (result.stdout) {
+                console.log(result.stdout);
+            }
+            if (result.decision === 'block' && result.stopReason) {
+                const { outputBlockResponse } = require('./lib/common.cjs');
+                outputBlockResponse(result.stopReason);
+            }
+            process.exit(0);
+        } catch (e) {
+            process.exit(0);
+        }
+    })();
+}

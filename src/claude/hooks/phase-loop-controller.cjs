@@ -9,63 +9,58 @@
  * Fail-open: any error results in silent exit (exit 0, no output)
  *
  * Traces to: FR-01, AC-01, AC-01a, AC-01b, AC-01c
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 const {
-    readStdin,
-    readState,
-    outputBlockResponse,
     debugLog,
     logHookEvent,
     detectPhaseDelegation
 } = require('./lib/common.cjs');
 
-async function main() {
+/**
+ * Dispatcher-compatible check function.
+ * @param {object} ctx - { input, state, manifest, requirements, workflows }
+ * @returns {{ decision: 'allow'|'block', stopReason?: string, stderr?: string, stdout?: string, stateModified?: boolean }}
+ */
+function check(ctx) {
     try {
-        const inputStr = await readStdin();
-        if (!inputStr || !inputStr.trim()) {
-            process.exit(0);
-        }
-
-        let input;
-        try {
-            input = JSON.parse(inputStr);
-        } catch (e) {
-            process.exit(0);
+        const input = ctx.input;
+        if (!input) {
+            return { decision: 'allow' };
         }
 
         // Only intercept Task tool calls
         if (input.tool_name !== 'Task') {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Detect if this is a phase delegation
         const delegation = detectPhaseDelegation(input);
         if (!delegation.isDelegation) {
             debugLog('Not a phase delegation, allowing');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         debugLog('Phase delegation detected:', delegation.targetPhase, delegation.agentName);
 
         // Read state
-        const state = readState();
+        const state = ctx.state;
         if (!state) {
             debugLog('No state.json, allowing (fail-open)');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Check for active workflow
         if (!state.active_workflow) {
             debugLog('No active workflow, allowing');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         const currentPhase = state.active_workflow.current_phase;
         if (!currentPhase) {
             debugLog('No current phase, allowing');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Check phase status
@@ -74,7 +69,7 @@ async function main() {
 
         if (phaseStatus === 'in_progress' || phaseStatus === 'completed') {
             debugLog('Phase status is', phaseStatus, '- allowing');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Block: phase status is not in_progress
@@ -84,7 +79,8 @@ async function main() {
             agent: agentLabel,
             reason: `Phase status is '${phaseStatus || 'not set'}', expected 'in_progress'`
         });
-        outputBlockResponse(
+
+        const stopReason =
             `PHASE DELEGATION WITHOUT PROGRESS TRACKING: You are delegating to ` +
             `phase agent '${agentLabel}' for phase '${delegation.targetPhase}', ` +
             `but the phase task has not been marked as in_progress.\n\n` +
@@ -93,14 +89,53 @@ async function main() {
             `2. Call TaskUpdate to set the task status to in_progress\n\n` +
             `This ensures the user can see phase progress via spinners. The phase status ` +
             `in state.json must be "in_progress" before delegation can proceed.\n\n` +
-            `Current phase status: ${phaseStatus || 'not set'}`
-        );
-        process.exit(0);
+            `Current phase status: ${phaseStatus || 'not set'}`;
+
+        return { decision: 'block', stopReason };
 
     } catch (error) {
         debugLog('Error in phase-loop-controller:', error.message);
-        process.exit(0);
+        return { decision: 'allow' };
     }
 }
 
-main();
+// Export check for dispatcher use
+module.exports = { check };
+
+// Standalone execution
+if (require.main === module) {
+    const { readStdin, readState, loadManifest, loadIterationRequirements, loadWorkflowDefinitions } = require('./lib/common.cjs');
+
+    (async () => {
+        try {
+            const inputStr = await readStdin();
+            if (!inputStr || !inputStr.trim()) {
+                process.exit(0);
+            }
+            let input;
+            try { input = JSON.parse(inputStr); } catch (e) { process.exit(0); }
+
+            const state = readState();
+            const manifest = loadManifest();
+            const requirements = loadIterationRequirements();
+            const workflows = loadWorkflowDefinitions();
+            const ctx = { input, state, manifest, requirements, workflows };
+
+            const result = check(ctx);
+
+            if (result.stderr) {
+                console.error(result.stderr);
+            }
+            if (result.stdout) {
+                console.log(result.stdout);
+            }
+            if (result.decision === 'block' && result.stopReason) {
+                const { outputBlockResponse } = require('./lib/common.cjs');
+                outputBlockResponse(result.stopReason);
+            }
+            process.exit(0);
+        } catch (e) {
+            process.exit(0);
+        }
+    })();
+}

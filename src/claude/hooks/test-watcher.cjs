@@ -10,16 +10,13 @@
  * 3. Checks for circuit breaker (identical failures)
  * 4. Outputs iteration guidance to the agent
  *
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 const {
-    readState,
-    writeState,
-    readStdin,
     debugLog,
-    getProjectRoot,
-    getTimestamp
+    getTimestamp,
+    loadIterationRequirements: loadIterationRequirementsFromCommon
 } = require('./lib/common.cjs');
 
 const fs = require('fs');
@@ -213,9 +210,10 @@ function getIterationConfig(state) {
 }
 
 /**
- * Load iteration requirements
+ * Load iteration requirements (local fallback)
  */
 function loadIterationRequirements() {
+    const { getProjectRoot } = require('./lib/common.cjs');
     const projectRoot = getProjectRoot();
     const configPaths = [
         path.join(projectRoot, '.claude', 'hooks', 'config', 'iteration-requirements.json'),
@@ -327,24 +325,21 @@ function extractExitCode(toolResult) {
     return undefined;
 }
 
-async function main() {
+/**
+ * Dispatcher-compatible check function.
+ * @param {object} ctx - { input, state, manifest, requirements, workflows }
+ * @returns {{ decision: 'allow', stdout?: string, stateModified?: boolean }}
+ */
+function check(ctx) {
     try {
-        const inputStr = await readStdin();
-
-        if (!inputStr || !inputStr.trim()) {
-            process.exit(0);
-        }
-
-        let input;
-        try {
-            input = JSON.parse(inputStr);
-        } catch (e) {
-            process.exit(0);
+        const input = ctx.input;
+        if (!input) {
+            return { decision: 'allow' };
         }
 
         // Only process Bash tool results
         if (input.tool_name !== 'Bash') {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         const command = input.tool_input?.command;
@@ -355,38 +350,36 @@ async function main() {
 
         // Check if this is a test command
         if (!isTestCommand(command)) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         debugLog('Test command detected:', command);
 
         // Load state
-        let state = readState();
+        const state = ctx.state;
         if (!state) {
             debugLog('No state.json, skipping');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Check if iteration enforcement is enabled
         if (state.iteration_enforcement?.enabled === false) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Only track test iterations during an active SDLC workflow.
-        // Casual test runs outside a workflow should not produce iteration
-        // guidance or modify state.json — this avoids confusing users.
         const activeWorkflow = state.active_workflow;
         if (!activeWorkflow) {
             debugLog('No active workflow, skipping test iteration tracking');
-            process.exit(0);
+            return { decision: 'allow' };
         }
         const currentPhase = (activeWorkflow && activeWorkflow.current_phase) || state.current_phase;
         if (!currentPhase) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
-        // Load requirements and apply workflow overrides if applicable
-        const requirements = loadIterationRequirements();
+        // Load requirements (prefer ctx.requirements, fallback to local loader) and apply workflow overrides
+        const requirements = ctx.requirements || loadIterationRequirementsFromCommon() || loadIterationRequirements();
         let phaseReq = requirements?.phase_requirements?.[currentPhase];
         if (activeWorkflow && phaseReq && requirements.workflow_overrides) {
             const overrides = requirements.workflow_overrides[activeWorkflow.type]?.[currentPhase];
@@ -399,7 +392,7 @@ async function main() {
         }
         if (!phaseReq?.test_iteration?.enabled) {
             debugLog('Test iteration not enabled for phase:', currentPhase);
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Parse test result
@@ -551,21 +544,49 @@ async function main() {
             }
         }
 
-        // Save updated state
+        // Save updated state in memory
         state.phases[currentPhase].iteration_requirements.test_iteration = iterState;
-        writeState(state);
 
-        // Output message to agent (this will be visible in the conversation)
-        if (outputMessage) {
-            console.log(outputMessage);
-        }
-
-        process.exit(0);
+        return {
+            decision: 'allow',
+            stdout: outputMessage || undefined,
+            stateModified: true
+        };
 
     } catch (error) {
         debugLog('Error in test-watcher:', error.message);
-        process.exit(0);
+        return { decision: 'allow' };
     }
 }
 
-main();
+// Export check for dispatcher use
+module.exports = { check };
+
+// Standalone execution
+if (require.main === module) {
+    const { readStdin, readState, writeState: writeStateFn, loadManifest, loadIterationRequirements: loadReqs, loadWorkflowDefinitions } = require('./lib/common.cjs');
+
+    (async () => {
+        try {
+            const inputStr = await readStdin();
+            if (!inputStr || !inputStr.trim()) { process.exit(0); }
+            let input;
+            try { input = JSON.parse(inputStr); } catch (e) { process.exit(0); }
+
+            const state = readState();
+            const manifest = loadManifest();
+            const requirements = loadReqs();
+            const workflows = loadWorkflowDefinitions();
+            const ctx = { input, state, manifest, requirements, workflows };
+
+            const result = check(ctx);
+
+            if (result.stderr) console.error(result.stderr);
+            if (result.stdout) console.log(result.stdout);
+            if (result.stateModified && state) {
+                writeStateFn(state);
+            }
+            process.exit(0);
+        } catch (e) { process.exit(0); }
+    })();
+}

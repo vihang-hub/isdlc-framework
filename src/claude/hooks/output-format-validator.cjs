@@ -9,11 +9,10 @@
  * Fail-open: always (PostToolUse is observational only)
  *
  * Traces to: FR-06, AC-06a through AC-06g
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 const {
-    readStdin,
     debugLog,
     logHookEvent
 } = require('./lib/common.cjs');
@@ -176,41 +175,40 @@ function validateAdr(content) {
     return { valid: missing.length === 0, missing };
 }
 
-async function main() {
+/**
+ * Dispatcher-compatible check function.
+ * NOTE: Reads the just-written file from disk via fs.readFileSync.
+ * @param {object} ctx - { input, state, manifest, requirements, workflows }
+ * @returns {{ decision: 'allow', stderr?: string }}
+ */
+function check(ctx) {
     try {
-        const inputStr = await readStdin();
-        if (!inputStr || !inputStr.trim()) {
-            process.exit(0);
-        }
-
-        let input;
-        try {
-            input = JSON.parse(inputStr);
-        } catch (e) {
-            process.exit(0);
+        const input = ctx.input;
+        if (!input) {
+            return { decision: 'allow' };
         }
 
         // Get the written file path
         const filePath = (input.tool_input && input.tool_input.file_path) || '';
         if (!filePath) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Match against known artifact patterns
         const pattern = matchArtifactPattern(filePath);
         if (!pattern) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         debugLog('Artifact pattern matched:', pattern, 'for', filePath);
 
-        // Read the written file
+        // Read the written file from disk
         let content;
         try {
             content = fs.readFileSync(filePath, 'utf8');
         } catch (e) {
             debugLog('Cannot read written file, skipping:', e.message);
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Validate
@@ -226,25 +224,64 @@ async function main() {
             logHookEvent('output-format-validator', 'allow', {
                 reason: `${pattern} validated successfully`
             });
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         logHookEvent('output-format-validator', 'warn', {
             reason: `${pattern} missing: ${result.missing.join(', ')}`
         });
 
-        console.error(
+        const stderr =
             `ARTIFACT FORMAT WARNING: ${filePath}\n` +
             `Pattern: ${pattern}\n` +
             `Missing: ${result.missing.join(', ')}\n\n` +
-            `The artifact may be incomplete. Check the expected format for ${pattern}.`
-        );
-        process.exit(0);
+            `The artifact may be incomplete. Check the expected format for ${pattern}.`;
+
+        return { decision: 'allow', stderr };
 
     } catch (error) {
         debugLog('Error in output-format-validator:', error.message);
-        process.exit(0);
+        return { decision: 'allow' };
     }
 }
 
-main();
+// Export check for dispatcher use
+module.exports = { check };
+
+// Standalone execution
+if (require.main === module) {
+    const { readStdin, readState, loadManifest, loadIterationRequirements, loadWorkflowDefinitions } = require('./lib/common.cjs');
+
+    (async () => {
+        try {
+            const inputStr = await readStdin();
+            if (!inputStr || !inputStr.trim()) {
+                process.exit(0);
+            }
+            let input;
+            try { input = JSON.parse(inputStr); } catch (e) { process.exit(0); }
+
+            const state = readState();
+            const manifest = loadManifest();
+            const requirements = loadIterationRequirements();
+            const workflows = loadWorkflowDefinitions();
+            const ctx = { input, state, manifest, requirements, workflows };
+
+            const result = check(ctx);
+
+            if (result.stderr) {
+                console.error(result.stderr);
+            }
+            if (result.stdout) {
+                console.log(result.stdout);
+            }
+            if (result.decision === 'block' && result.stopReason) {
+                const { outputBlockResponse } = require('./lib/common.cjs');
+                outputBlockResponse(result.stopReason);
+            }
+            process.exit(0);
+        } catch (e) {
+            process.exit(0);
+        }
+    })();
+}

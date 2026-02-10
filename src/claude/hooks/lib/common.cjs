@@ -1806,6 +1806,123 @@ function resetPhasesForWorkflow(state, workflowPhases) {
     return state;
 }
 
+// =========================================================================
+// Dispatcher helpers (REQ-0010 Tier 1)
+// =========================================================================
+
+/**
+ * Add a pending escalation entry to an in-memory state object.
+ * Same dedup + FIFO cap logic as writePendingEscalation() but operates
+ * on the passed state object without any disk I/O.
+ *
+ * @param {object} state - The state object to mutate
+ * @param {object} entry - { type, hook, phase, detail, timestamp }
+ * @returns {boolean} True if the entry was added (not a dedup)
+ */
+function addPendingEscalation(state, entry) {
+    if (!state) return false;
+    if (!Array.isArray(state.pending_escalations)) {
+        state.pending_escalations = [];
+    }
+
+    // Dedup: skip if same hook+phase+type within window
+    const now = entry.timestamp ? Date.parse(entry.timestamp) : Date.now();
+    const isDuplicate = state.pending_escalations.some(existing => {
+        if (existing.hook !== entry.hook || existing.phase !== entry.phase || existing.type !== entry.type) {
+            return false;
+        }
+        const existingTime = existing.timestamp ? Date.parse(existing.timestamp) : 0;
+        return (now - existingTime) < ESCALATION_DEDUP_WINDOW_MS;
+    });
+
+    if (isDuplicate) {
+        return false;
+    }
+
+    state.pending_escalations.push(entry);
+
+    // FIFO cap: keep only the newest MAX_ESCALATIONS entries
+    if (state.pending_escalations.length > MAX_ESCALATIONS) {
+        state.pending_escalations = state.pending_escalations.slice(-MAX_ESCALATIONS);
+    }
+
+    return true;
+}
+
+/**
+ * Append a skill usage log entry to an in-memory state object.
+ * Operates on the passed state object without any disk I/O.
+ *
+ * @param {object} state - The state object to mutate
+ * @param {object} entry - The log entry to append
+ * @returns {boolean} True if the entry was added
+ */
+function addSkillLogEntry(state, entry) {
+    if (!state) return false;
+    if (!Array.isArray(state.skill_usage_log)) {
+        state.skill_usage_log = [];
+    }
+    state.skill_usage_log.push(entry);
+    return true;
+}
+
+/**
+ * Load iteration requirements config from the project's config directory.
+ * Checks .claude/hooks/config/ first, then .isdlc/config/ as fallback.
+ *
+ * Consolidated from 4 hooks (gate-blocker, iteration-corridor,
+ * constitution-validator, test-watcher) into common.cjs.
+ *
+ * @returns {object|null} Parsed iteration requirements or null
+ */
+function loadIterationRequirements() {
+    const projectRoot = getProjectRoot();
+    const configPaths = [
+        path.join(projectRoot, '.claude', 'hooks', 'config', 'iteration-requirements.json'),
+        path.join(projectRoot, '.isdlc', 'config', 'iteration-requirements.json')
+    ];
+
+    for (const configPath of configPaths) {
+        if (fs.existsSync(configPath)) {
+            try {
+                return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            } catch (e) {
+                debugLog('Error loading iteration requirements:', e.message);
+                return null;
+            }
+        }
+    }
+    return null;
+}
+
+/**
+ * Load workflow definitions config from the project's config directory.
+ * Checks .isdlc/config/ first, then .claude/hooks/config/ as fallback.
+ *
+ * Consolidated from gate-blocker into common.cjs.
+ *
+ * @returns {object|null} Parsed workflow definitions or null
+ */
+function loadWorkflowDefinitions() {
+    const projectRoot = getProjectRoot();
+    const configPaths = [
+        path.join(projectRoot, '.isdlc', 'config', 'workflows.json'),
+        path.join(projectRoot, '.claude', 'hooks', 'config', 'workflows.json')
+    ];
+
+    for (const configPath of configPaths) {
+        if (fs.existsSync(configPath)) {
+            try {
+                return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            } catch (e) {
+                debugLog('Error loading workflow definitions:', e.message);
+                return null;
+            }
+        }
+    }
+    return null;
+}
+
 module.exports = {
     getProjectRoot,
     // Monorepo support
@@ -1877,5 +1994,10 @@ module.exports = {
     pruneCompletedPhases,
     pruneHistory,
     pruneWorkflowHistory,
-    resetPhasesForWorkflow
+    resetPhasesForWorkflow,
+    // Dispatcher helpers (REQ-0010)
+    addPendingEscalation,
+    addSkillLogEntry,
+    loadIterationRequirements,
+    loadWorkflowDefinitions
 };

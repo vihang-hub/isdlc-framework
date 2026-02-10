@@ -9,11 +9,10 @@
  * Fail-open: always (PostToolUse is observational only)
  *
  * Traces to: FR-03, AC-03a through AC-03f
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 const {
-    readStdin,
     debugLog,
     logHookEvent
 } = require('./lib/common.cjs');
@@ -98,18 +97,16 @@ function detectMenuHaltViolation(text) {
     return { violation: false, menuType: '', extraChars: 0 };
 }
 
-async function main() {
+/**
+ * Dispatcher-compatible check function.
+ * @param {object} ctx - { input, state, manifest, requirements, workflows }
+ * @returns {{ decision: 'allow', stderr?: string }}
+ */
+function check(ctx) {
     try {
-        const inputStr = await readStdin();
-        if (!inputStr || !inputStr.trim()) {
-            process.exit(0);
-        }
-
-        let input;
-        try {
-            input = JSON.parse(inputStr);
-        } catch (e) {
-            process.exit(0);
+        const input = ctx.input;
+        if (!input) {
+            return { decision: 'allow' };
         }
 
         // Extract task output
@@ -118,29 +115,68 @@ async function main() {
                        '';
 
         if (!output) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         const result = detectMenuHaltViolation(output);
         if (!result.violation) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         logHookEvent('menu-halt-enforcer', 'warn', {
             reason: `Menu type '${result.menuType}' followed by ${result.extraChars} chars of output`
         });
 
-        console.error(
+        const stderr =
             `MENU HALT VIOLATION: Agent continued generating ${result.extraChars} characters ` +
             `of output after presenting an interactive menu (${result.menuType}). ` +
-            `The agent should STOP and wait for user input after displaying menu options.`
-        );
-        process.exit(0);
+            `The agent should STOP and wait for user input after displaying menu options.`;
+
+        return { decision: 'allow', stderr };
 
     } catch (error) {
         debugLog('Error in menu-halt-enforcer:', error.message);
-        process.exit(0);
+        return { decision: 'allow' };
     }
 }
 
-main();
+// Export check for dispatcher use
+module.exports = { check };
+
+// Standalone execution
+if (require.main === module) {
+    const { readStdin, readState, loadManifest, loadIterationRequirements, loadWorkflowDefinitions } = require('./lib/common.cjs');
+
+    (async () => {
+        try {
+            const inputStr = await readStdin();
+            if (!inputStr || !inputStr.trim()) {
+                process.exit(0);
+            }
+            let input;
+            try { input = JSON.parse(inputStr); } catch (e) { process.exit(0); }
+
+            const state = readState();
+            const manifest = loadManifest();
+            const requirements = loadIterationRequirements();
+            const workflows = loadWorkflowDefinitions();
+            const ctx = { input, state, manifest, requirements, workflows };
+
+            const result = check(ctx);
+
+            if (result.stderr) {
+                console.error(result.stderr);
+            }
+            if (result.stdout) {
+                console.log(result.stdout);
+            }
+            if (result.decision === 'block' && result.stopReason) {
+                const { outputBlockResponse } = require('./lib/common.cjs');
+                outputBlockResponse(result.stopReason);
+            }
+            process.exit(0);
+        } catch (e) {
+            process.exit(0);
+        }
+    })();
+}

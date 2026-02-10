@@ -466,46 +466,60 @@ describe('Settings.json hook path validation', () => {
         }, 'settings.json should be valid JSON');
     });
 
-    it('all new hooks are registered in settings.json', () => {
+    it('all hooks are registered in settings.json (directly or via dispatchers)', () => {
         const settingsPath = path.join(REPO_ROOT, 'src', 'claude', 'settings.json');
         const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
 
-        // Collect all referenced hook filenames
-        const registeredHooks = new Set();
+        // Collect all referenced hook/dispatcher filenames
+        const registeredEntries = new Set();
         for (const [eventType, matchers] of Object.entries(settings.hooks || {})) {
             for (const matcher of matchers) {
                 for (const hook of (matcher.hooks || [])) {
                     if (hook.command) {
                         const filename = path.basename(hook.command);
-                        registeredHooks.add(filename);
+                        registeredEntries.add(filename);
                     }
                 }
             }
         }
 
-        const expectedNewHooks = [
+        // Hooks directly registered (standalone, not in any dispatcher)
+        const expectedStandalone = [
             'branch-guard.cjs',
-            'plan-surfacer.cjs',
-            'phase-loop-controller.cjs',
-            'phase-sequence-guard.cjs',
-            'state-write-validator.cjs',
-            'walkthrough-tracker.cjs',
-            'discover-menu-guard.cjs'
+            'explore-readonly-enforcer.cjs',
+            'skill-delegation-enforcer.cjs',
+            'delegation-gate.cjs'
         ];
 
-        for (const hook of expectedNewHooks) {
+        for (const hook of expectedStandalone) {
             assert.ok(
-                registeredHooks.has(hook),
-                `New hook ${hook} should be registered in settings.json`
+                registeredEntries.has(hook),
+                `Standalone hook ${hook} should be registered directly in settings.json`
+            );
+        }
+
+        // Dispatchers should be registered
+        const expectedDispatchers = [
+            'pre-task-dispatcher.cjs',
+            'pre-skill-dispatcher.cjs',
+            'post-task-dispatcher.cjs',
+            'post-bash-dispatcher.cjs',
+            'post-write-edit-dispatcher.cjs'
+        ];
+
+        for (const dispatcher of expectedDispatchers) {
+            assert.ok(
+                registeredEntries.has(dispatcher),
+                `Dispatcher ${dispatcher} should be registered in settings.json`
             );
         }
     });
 
-    it('new hooks are registered on correct event types', () => {
+    it('hooks are registered on correct event types (directly or via dispatchers)', () => {
         const settingsPath = path.join(REPO_ROOT, 'src', 'claude', 'settings.json');
         const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
 
-        // Build a map of hook -> { events, matchers }
+        // Build a map of entry -> { events, matchers }
         const hookRegistry = {};
         for (const [eventType, matchers] of Object.entries(settings.hooks || {})) {
             for (const matcher of matchers) {
@@ -522,18 +536,23 @@ describe('Settings.json hook path validation', () => {
             }
         }
 
-        // Verify correct event/matcher assignments
+        // Verify correct event/matcher assignments for standalone hooks and dispatchers
         const expectedRegistrations = {
             'branch-guard.cjs': [{ event: 'PreToolUse', matcher: 'Bash' }],
-            'plan-surfacer.cjs': [{ event: 'PreToolUse', matcher: 'Task' }],
-            'phase-loop-controller.cjs': [{ event: 'PreToolUse', matcher: 'Task' }],
-            'phase-sequence-guard.cjs': [{ event: 'PreToolUse', matcher: 'Task' }],
-            'state-write-validator.cjs': [
+            'explore-readonly-enforcer.cjs': [
+                { event: 'PreToolUse', matcher: 'Write' },
+                { event: 'PreToolUse', matcher: 'Edit' }
+            ],
+            'pre-task-dispatcher.cjs': [{ event: 'PreToolUse', matcher: 'Task' }],
+            'pre-skill-dispatcher.cjs': [{ event: 'PreToolUse', matcher: 'Skill' }],
+            'post-task-dispatcher.cjs': [{ event: 'PostToolUse', matcher: 'Task' }],
+            'skill-delegation-enforcer.cjs': [{ event: 'PostToolUse', matcher: 'Skill' }],
+            'post-bash-dispatcher.cjs': [{ event: 'PostToolUse', matcher: 'Bash' }],
+            'post-write-edit-dispatcher.cjs': [
                 { event: 'PostToolUse', matcher: 'Write' },
                 { event: 'PostToolUse', matcher: 'Edit' }
             ],
-            'walkthrough-tracker.cjs': [{ event: 'PostToolUse', matcher: 'Task' }],
-            'discover-menu-guard.cjs': [{ event: 'PostToolUse', matcher: 'Task' }]
+            'delegation-gate.cjs': [{ event: 'Stop', matcher: 'global' }]
         };
 
         for (const [hook, expected] of Object.entries(expectedRegistrations)) {

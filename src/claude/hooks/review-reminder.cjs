@@ -8,46 +8,12 @@
  * Performance budget: < 100ms
  * Fail-open: any error results in silent exit (exit 0, no output)
  *
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 const {
-    readStdin,
-    readCodeReviewConfig,
     debugLog
 } = require('./lib/common.cjs');
-
-async function main() {
-    try {
-        const input = await readStdin();
-        if (!input) return;
-
-        let parsed;
-        try {
-            parsed = JSON.parse(input);
-        } catch (e) {
-            return; // Invalid stdin — fail-open
-        }
-
-        // Only trigger on git commit commands
-        const command = parsed?.tool_input?.command || '';
-        if (!isGitCommit(command)) return;
-
-        // Read code review configuration
-        const config = readCodeReviewConfig();
-
-        // Only warn if disabled AND team > 1
-        if (!config.enabled && config.team_size > 1) {
-            const message = 'Manual code review is currently bypassed. ' +
-                'If your team has grown beyond 1 developer, consider enabling it ' +
-                'by setting code_review.enabled to true in .isdlc/state.json.';
-            console.log(JSON.stringify({ warning: message }));
-        }
-    } catch (e) {
-        debugLog('review-reminder error:', e.message);
-        // Fail-open: exit silently
-    }
-}
 
 /**
  * Check if a command is a git commit variant
@@ -58,4 +24,97 @@ function isGitCommit(command) {
     return /\bgit\s+commit\b/.test(command);
 }
 
-main();
+/**
+ * Extract code review config from state object.
+ * @param {object} state - Parsed state.json
+ * @returns {{ enabled: boolean, team_size: number }}
+ */
+function extractCodeReviewConfig(state) {
+    if (state && state.code_review) {
+        return {
+            enabled: state.code_review.enabled === true,
+            team_size: typeof state.code_review.team_size === 'number'
+                ? state.code_review.team_size
+                : 1
+        };
+    }
+    return { enabled: false, team_size: 1 };
+}
+
+/**
+ * Dispatcher-compatible check function.
+ * @param {object} ctx - { input, state, manifest, requirements, workflows }
+ * @returns {{ decision: 'allow', stdout?: string }}
+ */
+function check(ctx) {
+    try {
+        const input = ctx.input;
+        if (!input) {
+            return { decision: 'allow' };
+        }
+
+        // Only trigger on git commit commands
+        const command = (input.tool_input && input.tool_input.command) || '';
+        if (!isGitCommit(command)) {
+            return { decision: 'allow' };
+        }
+
+        // Extract code review configuration from state
+        const config = extractCodeReviewConfig(ctx.state);
+
+        // Only warn if disabled AND team > 1
+        if (!config.enabled && config.team_size > 1) {
+            const message = 'Manual code review is currently bypassed. ' +
+                'If your team has grown beyond 1 developer, consider enabling it ' +
+                'by setting code_review.enabled to true in .isdlc/state.json.';
+            return { decision: 'allow', stdout: JSON.stringify({ warning: message }) };
+        }
+
+        return { decision: 'allow' };
+
+    } catch (e) {
+        debugLog('review-reminder error:', e.message);
+        return { decision: 'allow' };
+    }
+}
+
+// Export check for dispatcher use
+module.exports = { check };
+
+// Standalone execution
+if (require.main === module) {
+    const { readStdin, readState, loadManifest, loadIterationRequirements, loadWorkflowDefinitions } = require('./lib/common.cjs');
+
+    (async () => {
+        try {
+            const inputStr = await readStdin();
+            if (!inputStr || !inputStr.trim()) {
+                process.exit(0);
+            }
+            let input;
+            try { input = JSON.parse(inputStr); } catch (e) { process.exit(0); }
+
+            const state = readState();
+            const manifest = loadManifest();
+            const requirements = loadIterationRequirements();
+            const workflows = loadWorkflowDefinitions();
+            const ctx = { input, state, manifest, requirements, workflows };
+
+            const result = check(ctx);
+
+            if (result.stderr) {
+                console.error(result.stderr);
+            }
+            if (result.stdout) {
+                console.log(result.stdout);
+            }
+            if (result.decision === 'block' && result.stopReason) {
+                const { outputBlockResponse } = require('./lib/common.cjs');
+                outputBlockResponse(result.stopReason);
+            }
+            process.exit(0);
+        } catch (e) {
+            process.exit(0);
+        }
+    })();
+}

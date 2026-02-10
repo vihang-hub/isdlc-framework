@@ -482,6 +482,7 @@ fi
 
 # Create hooks directory structure
 mkdir -p ".claude/hooks/lib"
+mkdir -p ".claude/hooks/dispatchers"
 mkdir -p ".claude/hooks/tests/test-scenarios"
 
 # Copy hook scripts from framework (Node.js files)

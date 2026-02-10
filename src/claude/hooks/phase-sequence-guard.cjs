@@ -9,73 +9,68 @@
  * Fail-open: any error results in silent exit (exit 0, no output)
  *
  * Traces to: FR-03, AC-03, AC-03a, AC-03b, AC-03c, AC-03d
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 const {
-    readStdin,
-    readState,
-    outputBlockResponse,
     debugLog,
     logHookEvent,
     detectPhaseDelegation
 } = require('./lib/common.cjs');
 
-async function main() {
+/**
+ * Dispatcher-compatible check function.
+ * @param {object} ctx - { input, state, manifest, requirements, workflows }
+ * @returns {{ decision: 'allow'|'block', stopReason?: string, stderr?: string, stdout?: string, stateModified?: boolean }}
+ */
+function check(ctx) {
     try {
-        const inputStr = await readStdin();
-        if (!inputStr || !inputStr.trim()) {
-            process.exit(0);
-        }
-
-        let input;
-        try {
-            input = JSON.parse(inputStr);
-        } catch (e) {
-            process.exit(0);
+        const input = ctx.input;
+        if (!input) {
+            return { decision: 'allow' };
         }
 
         if (input.tool_name !== 'Task') {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Detect if this is a phase delegation
         const delegation = detectPhaseDelegation(input);
         if (!delegation.isDelegation) {
             debugLog('Not a phase delegation, allowing');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         debugLog('Phase delegation detected -> target:', delegation.targetPhase);
 
         // Read state
-        const state = readState();
+        const state = ctx.state;
         if (!state) {
             debugLog('No state.json, allowing (fail-open)');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         if (!state.active_workflow) {
             debugLog('No active workflow, allowing');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         const currentPhase = state.active_workflow.current_phase;
         if (!currentPhase) {
             debugLog('No current phase set, allowing');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         const targetPhase = delegation.targetPhase;
         if (!targetPhase) {
             debugLog('No target phase detected, allowing (fail-open)');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Allow if target matches current
         if (targetPhase === currentPhase) {
             debugLog('Target phase matches current phase, allowing');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Extract gate number from current phase (e.g., '03-architecture' -> '03')
@@ -89,7 +84,8 @@ async function main() {
             agent: agentLabel,
             reason: `Target phase '${targetPhase}' does not match current '${currentPhase}'`
         });
-        outputBlockResponse(
+
+        const stopReason =
             `OUT-OF-ORDER PHASE DELEGATION: Attempting to delegate to phase ` +
             `'${targetPhase}' (agent: ${agentLabel}), but the current workflow ` +
             `phase is '${currentPhase}'.\n\n` +
@@ -100,14 +96,53 @@ async function main() {
             `- Complete the current phase '${currentPhase}' and pass GATE-${gateNumber}\n` +
             `- Then the orchestrator will advance to the next phase automatically\n\n` +
             `Current phase: ${currentPhase}\n` +
-            `Target phase:  ${targetPhase}`
-        );
-        process.exit(0);
+            `Target phase:  ${targetPhase}`;
+
+        return { decision: 'block', stopReason };
 
     } catch (error) {
         debugLog('Error in phase-sequence-guard:', error.message);
-        process.exit(0);
+        return { decision: 'allow' };
     }
 }
 
-main();
+// Export check for dispatcher use
+module.exports = { check };
+
+// Standalone execution
+if (require.main === module) {
+    const { readStdin, readState, loadManifest, loadIterationRequirements, loadWorkflowDefinitions } = require('./lib/common.cjs');
+
+    (async () => {
+        try {
+            const inputStr = await readStdin();
+            if (!inputStr || !inputStr.trim()) {
+                process.exit(0);
+            }
+            let input;
+            try { input = JSON.parse(inputStr); } catch (e) { process.exit(0); }
+
+            const state = readState();
+            const manifest = loadManifest();
+            const requirements = loadIterationRequirements();
+            const workflows = loadWorkflowDefinitions();
+            const ctx = { input, state, manifest, requirements, workflows };
+
+            const result = check(ctx);
+
+            if (result.stderr) {
+                console.error(result.stderr);
+            }
+            if (result.stdout) {
+                console.log(result.stdout);
+            }
+            if (result.decision === 'block' && result.stopReason) {
+                const { outputBlockResponse } = require('./lib/common.cjs');
+                outputBlockResponse(result.stopReason);
+            }
+            process.exit(0);
+        } catch (e) {
+            process.exit(0);
+        }
+    })();
+}

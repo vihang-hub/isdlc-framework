@@ -153,43 +153,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/iteration-corridor.cjs",
-            "timeout": 10000
-          },
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/skill-validator.cjs",
-            "timeout": 10000
-          },
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/phase-loop-controller.cjs",
-            "timeout": 10000
-          },
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/plan-surfacer.cjs",
-            "timeout": 10000
-          },
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/phase-sequence-guard.cjs",
-            "timeout": 10000
-          },
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/gate-blocker.cjs",
-            "timeout": 10000
-          },
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/constitution-validator.cjs",
-            "timeout": 10000
-          },
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/test-adequacy-blocker.cjs",
-            "timeout": 10000
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/dispatchers/pre-task-dispatcher.cjs",
+            "timeout": 15000
           }
         ]
       },
@@ -198,18 +163,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/iteration-corridor.cjs",
-            "timeout": 10000
-          },
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/gate-blocker.cjs",
-            "timeout": 10000
-          },
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/constitutional-iteration-validator.cjs",
-            "timeout": 10000
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/dispatchers/pre-skill-dispatcher.cjs",
+            "timeout": 15000
           }
         ]
       },
@@ -250,33 +205,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/log-skill-usage.cjs",
-            "timeout": 5000
-          },
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/menu-tracker.cjs",
-            "timeout": 5000
-          },
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/walkthrough-tracker.cjs",
-            "timeout": 5000
-          },
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/discover-menu-guard.cjs",
-            "timeout": 5000
-          },
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/phase-transition-enforcer.cjs",
-            "timeout": 5000
-          },
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/menu-halt-enforcer.cjs",
-            "timeout": 5000
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/dispatchers/post-task-dispatcher.cjs",
+            "timeout": 10000
           }
         ]
       },
@@ -295,18 +225,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/test-watcher.cjs",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/dispatchers/post-bash-dispatcher.cjs",
             "timeout": 10000
-          },
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/review-reminder.cjs",
-            "timeout": 5000
-          },
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/atdd-completeness-validator.cjs",
-            "timeout": 5000
           }
         ]
       },
@@ -315,18 +235,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/state-write-validator.cjs",
-            "timeout": 5000
-          },
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/workflow-completion-enforcer.cjs",
-            "timeout": 5000
-          },
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/output-format-validator.cjs",
-            "timeout": 5000
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/dispatchers/post-write-edit-dispatcher.cjs",
+            "timeout": 10000
           }
         ]
       },
@@ -335,13 +245,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/state-write-validator.cjs",
-            "timeout": 5000
-          },
-          {
-            "type": "command",
-            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/workflow-completion-enforcer.cjs",
-            "timeout": 5000
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/dispatchers/post-write-edit-dispatcher.cjs",
+            "timeout": 10000
           }
         ]
       }

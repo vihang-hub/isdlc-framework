@@ -292,6 +292,7 @@ if [ -d "$FRAMEWORK_CLAUDE/hooks" ]; then
         echo -e "${YELLOW}  [dry-run] Would update hooks/${NC}"
     else
         mkdir -p "$PROJECT_ROOT/.claude/hooks"
+        mkdir -p "$PROJECT_ROOT/.claude/hooks/dispatchers"
         cp -r "$FRAMEWORK_CLAUDE/hooks/"* "$PROJECT_ROOT/.claude/hooks/"
         echo -e "${GREEN}  ✓ Updated hooks/${NC}"
     fi

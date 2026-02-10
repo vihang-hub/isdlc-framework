@@ -8,34 +8,31 @@
  * - Task tool calls to orchestrator with "advance", "gate-check", "gate" in prompt
  * - Skill tool calls with /isdlc advance
  *
- * Version: 3.0.0
+ * Version: 3.1.0
  */
 
 const {
-    readState,
-    writeState,
-    readStdin,
-    outputBlockResponse,
     debugLog,
-    getProjectRoot,
     getTimestamp,
     loadManifest,
-    writePendingEscalation,
     validateSchema,
     normalizePhaseKey,
     diagnoseBlockCause,
     outputSelfHealNotification,
     logHookEvent,
-    readPendingDelegation
+    addPendingEscalation,
+    loadIterationRequirements: loadIterationRequirementsFromCommon,
+    loadWorkflowDefinitions: loadWorkflowDefinitionsFromCommon
 } = require('./lib/common.cjs');
 
 const fs = require('fs');
 const path = require('path');
 
 /**
- * Load iteration requirements config
+ * Load iteration requirements config (local fallback)
  */
 function loadIterationRequirements() {
+    const { getProjectRoot } = require('./lib/common.cjs');
     const projectRoot = getProjectRoot();
     const configPaths = [
         path.join(projectRoot, '.claude', 'hooks', 'config', 'iteration-requirements.json'),
@@ -55,9 +52,10 @@ function loadIterationRequirements() {
 }
 
 /**
- * Load workflow definitions config
+ * Load workflow definitions config (local fallback)
  */
 function loadWorkflowDefinitions() {
+    const { getProjectRoot } = require('./lib/common.cjs');
     const projectRoot = getProjectRoot();
     const configPaths = [
         path.join(projectRoot, '.isdlc', 'config', 'workflows.json'),
@@ -422,84 +420,74 @@ function checkAgentDelegationRequirement(phaseState, phaseRequirements, state, c
 }
 
 /**
- * Main validation logic
+ * Dispatcher-compatible check function.
+ * @param {object} ctx - { input, state, manifest, requirements, workflows }
+ * @returns {{ decision: 'allow'|'block', stopReason?: string, stderr?: string, stdout?: string, stateModified?: boolean }}
  */
-async function main() {
+function check(ctx) {
     try {
-        const inputStr = await readStdin();
-
-        if (!inputStr || !inputStr.trim()) {
-            process.exit(0);
-        }
-
-        let input;
-        try {
-            input = JSON.parse(inputStr);
-        } catch (e) {
-            process.exit(0);
+        const input = ctx.input;
+        if (!input) {
+            return { decision: 'allow' };
         }
 
         // Only check gate advancement attempts
         if (!isGateAdvancementAttempt(input)) {
             debugLog('Not a gate advancement attempt, allowing');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         debugLog('Gate advancement attempt detected');
 
         // Load state
-        const state = readState();
+        const state = ctx.state;
         if (!state) {
             debugLog('No state.json, allowing (fail-open)');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Check if iteration enforcement is enabled
         const enforcement = state.iteration_enforcement || {};
         if (enforcement.enabled === false) {
             debugLog('Iteration enforcement disabled');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
-        // Load requirements config
-        const requirements = loadIterationRequirements();
+        // Load requirements config (prefer ctx.requirements, fallback to local loader)
+        const requirements = ctx.requirements || loadIterationRequirementsFromCommon() || loadIterationRequirements();
         if (!requirements) {
             debugLog('No iteration requirements config, allowing');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Determine current phase — workflow-aware
-        // If an active_workflow exists, use its current_phase; otherwise fall back to state.current_phase
         const activeWorkflow = state.active_workflow;
         let currentPhase;
         let workflowDef = null;
+        let stderrMessages = '';
 
         if (activeWorkflow) {
             currentPhase = activeWorkflow.current_phase || state.current_phase;
             debugLog('Active workflow:', activeWorkflow.type, '| Phase:', currentPhase);
 
-            // Load workflow definition for sequence validation
-            const workflows = loadWorkflowDefinitions();
+            // Load workflow definition for sequence validation (prefer ctx.workflows)
+            const workflows = ctx.workflows || loadWorkflowDefinitionsFromCommon() || loadWorkflowDefinitions();
             if (workflows && workflows.workflows) {
                 workflowDef = workflows.workflows[activeWorkflow.type];
             }
 
             // Validate phase is in the workflow sequence
             if (workflowDef) {
-                // Use active_workflow.phases (the actual subset being executed) for index checks,
-                // NOT workflowDef.phases (the canonical list which may include skipped phases).
-                // current_phase_index tracks position within active_workflow.phases.
                 const workflowPhases = activeWorkflow.phases || workflowDef.phases;
                 const phaseIndex = activeWorkflow.current_phase_index;
 
                 // Verify current phase matches expected position in workflow
                 if (phaseIndex != null && workflowPhases[phaseIndex] !== currentPhase) {
-                    outputBlockResponse(
+                    const stopReason =
                         `GATE BLOCKED: Workflow state mismatch. ` +
                         `Expected phase '${workflowPhases[phaseIndex]}' at index ${phaseIndex} ` +
-                        `but current is '${currentPhase}'.`
-                    );
-                    process.exit(0);
+                        `but current is '${currentPhase}'.`;
+                    return { decision: 'block', stopReason };
                 }
 
                 // Check if this is the last phase (advancement would complete the workflow)
@@ -513,14 +501,16 @@ async function main() {
 
         if (!currentPhase) {
             debugLog('No current phase set');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Normalize phase key (self-healing: catches alias mismatches)
         const originalPhase = currentPhase;
         currentPhase = normalizePhaseKey(currentPhase);
         if (currentPhase !== originalPhase) {
-            outputSelfHealNotification('gate-blocker', `Phase key '${originalPhase}' normalized to '${currentPhase}'.`);
+            const msg = `[SELF-HEAL] gate-blocker: Phase key '${originalPhase}' normalized to '${currentPhase}'.`;
+            stderrMessages += msg + '\n';
+            logHookEvent('gate-blocker', 'self-heal', { reason: `Phase key '${originalPhase}' normalized to '${currentPhase}'.` });
         }
 
         debugLog('Current phase:', currentPhase);
@@ -529,8 +519,10 @@ async function main() {
         let phaseReq = requirements.phase_requirements[currentPhase];
         if (!phaseReq) {
             // Self-heal: missing requirements is infrastructure issue, not genuine block
-            outputSelfHealNotification('gate-blocker', `No requirements defined for phase '${currentPhase}'. Allowing gate advancement.`);
-            process.exit(0);
+            const msg = `[SELF-HEAL] gate-blocker: No requirements defined for phase '${currentPhase}'. Allowing gate advancement.`;
+            stderrMessages += msg + '\n';
+            logHookEvent('gate-blocker', 'self-heal', { reason: `No requirements defined for phase '${currentPhase}'. Allowing gate advancement.` });
+            return { decision: 'allow', stderr: stderrMessages.trim() || undefined };
         }
 
         // Apply workflow-specific overrides if active
@@ -543,10 +535,9 @@ async function main() {
         }
 
         // If the active workflow already marks this phase as completed, skip iteration checks.
-        // This prevents stale gate_validation blocks when the orchestrator has already advanced.
         if (activeWorkflow?.phase_status?.[currentPhase] === 'completed') {
             debugLog('Phase already completed in active_workflow.phase_status, skipping gate checks');
-            process.exit(0);
+            return { decision: 'allow', stderr: stderrMessages.trim() || undefined };
         }
 
         // Get phase state
@@ -600,15 +591,6 @@ async function main() {
             if (onGatePass?.trigger_cloud_config?.enabled) {
                 const cloudConfig = state.cloud_configuration || {};
                 if (cloudConfig.provider === 'undecided' || !cloudConfig.provider) {
-                    // Output notification about cloud config prompt
-                    const notification = {
-                        type: 'gate_pass_trigger',
-                        phase: currentPhase,
-                        trigger: 'cloud_configuration',
-                        message: `GATE-${currentPhase.split('-')[0]} passed. Cloud configuration is pending. Prompt user for cloud provider configuration.`,
-                        action: 'prompt_cloud_configuration'
-                    };
-                    debugLog('Cloud config trigger:', notification);
                     // Write trigger to state for orchestrator to pick up
                     if (!state.pending_triggers) state.pending_triggers = [];
                     state.pending_triggers.push({
@@ -616,29 +598,30 @@ async function main() {
                         triggered_at: getTimestamp(),
                         phase: currentPhase
                     });
-                    writeState(state);
+                    return { decision: 'allow', stderr: stderrMessages.trim() || undefined, stateModified: true };
                 }
             }
 
-            process.exit(0);
+            return { decision: 'allow', stderr: stderrMessages.trim() || undefined };
         }
 
         // Diagnose each blocking check — self-heal infrastructure issues
         const genuineChecks = [];
-        for (const check of checks) {
-            const diagnosis = diagnoseBlockCause('gate-blocker', currentPhase, check.requirement, state);
+        for (const oneCheck of checks) {
+            const diagnosis = diagnoseBlockCause('gate-blocker', currentPhase, oneCheck.requirement, state);
             if (diagnosis.cause === 'infrastructure' || diagnosis.cause === 'stale') {
-                outputSelfHealNotification('gate-blocker', `${diagnosis.detail}. Action: ${diagnosis.remediation}.`);
+                const msg = `[SELF-HEAL] gate-blocker: ${diagnosis.detail}. Action: ${diagnosis.remediation}.`;
+                stderrMessages += msg + '\n';
                 logHookEvent('gate-blocker', 'self-heal', { phase: currentPhase, reason: diagnosis.detail });
             } else {
-                genuineChecks.push(check);
+                genuineChecks.push(oneCheck);
             }
         }
 
         // If all blocks were infrastructure, allow gate advancement
         if (genuineChecks.length === 0) {
             debugLog('All blocks were infrastructure issues, self-healed — allowing');
-            process.exit(0);
+            return { decision: 'allow', stderr: stderrMessages.trim() || undefined };
         }
 
         // Block gate advancement (genuine failures only)
@@ -647,7 +630,7 @@ async function main() {
 
         const stopReason = `GATE BLOCKED: Iteration requirements not satisfied for phase '${currentPhase}'.\n\nBlocking requirements: ${blockingReqs}${details}\n\nComplete the required iterations before advancing.`;
 
-        // Update state with blocking info
+        // Update state with blocking info (in memory)
         if (!state.phases) state.phases = {};
         if (!state.phases[currentPhase]) state.phases[currentPhase] = {};
 
@@ -657,12 +640,9 @@ async function main() {
             blocking_requirements: checks.map(c => c.requirement),
             details: checks
         };
-        writeState(state);
-
-        outputBlockResponse(stopReason);
 
         // Write escalation for phase-loop controller visibility
-        writePendingEscalation({
+        addPendingEscalation(state, {
             type: 'gate_blocked',
             hook: 'gate-blocker',
             phase: currentPhase,
@@ -670,12 +650,50 @@ async function main() {
             timestamp: getTimestamp()
         });
 
-        process.exit(0);
+        return {
+            decision: 'block',
+            stopReason,
+            stderr: stderrMessages.trim() || undefined,
+            stateModified: true
+        };
 
     } catch (error) {
         debugLog('Error in gate-blocker:', error.message);
-        process.exit(0);
+        return { decision: 'allow' };
     }
 }
 
-main();
+// Export check for dispatcher use
+module.exports = { check };
+
+// Standalone execution
+if (require.main === module) {
+    const { readStdin, readState, writeState: writeStateFn, loadManifest: loadManifestFn, loadIterationRequirements: loadReqs, loadWorkflowDefinitions: loadWfs, outputBlockResponse } = require('./lib/common.cjs');
+
+    (async () => {
+        try {
+            const inputStr = await readStdin();
+            if (!inputStr || !inputStr.trim()) { process.exit(0); }
+            let input;
+            try { input = JSON.parse(inputStr); } catch (e) { process.exit(0); }
+
+            const state = readState();
+            const manifest = loadManifestFn();
+            const requirements = loadReqs();
+            const workflows = loadWfs();
+            const ctx = { input, state, manifest, requirements, workflows };
+
+            const result = check(ctx);
+
+            if (result.stderr) console.error(result.stderr);
+            if (result.stdout) console.log(result.stdout);
+            if (result.decision === 'block' && result.stopReason) {
+                outputBlockResponse(result.stopReason);
+            }
+            if (result.stateModified && state) {
+                writeStateFn(state);
+            }
+            process.exit(0);
+        } catch (e) { process.exit(0); }
+    })();
+}

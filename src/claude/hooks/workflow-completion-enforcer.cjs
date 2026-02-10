@@ -12,17 +12,21 @@
  * phases array (or state.phases keys as fallback), calls collectPhaseSnapshots(),
  * then applies all 4 pruning functions.
  *
+ * SPECIAL CASE for dispatcher mode: This hook reads FRESH state from disk
+ * because the tool just wrote it. In dispatcher mode, ctx.state may be stale.
+ * This hook MUST do its own readState() and writeState() internally.
+ * Returns { decision: 'allow', stateModified: false } always.
+ *
  * NEVER produces stdout output (hook protocol).
  * Fail-open: any error results in silent exit (exit 0, no output).
  *
  * Performance budget: < 200ms
  *
  * Traces to: REQ-0005
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 const {
-    readStdin,
     readState,
     writeState,
     debugLog,
@@ -46,23 +50,27 @@ const STATE_JSON_PATTERN = /\.isdlc[/\\](?:projects[/\\][^/\\]+[/\\])?state\.jso
  */
 const STALENESS_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutes
 
-async function main() {
+/**
+ * Dispatcher-compatible check function.
+ *
+ * SPECIAL CASE: This hook reads fresh state from disk and writes back itself.
+ * It does NOT use ctx.state because the Write/Edit tool just modified state.json
+ * and ctx.state may be stale. Returns stateModified: false so the dispatcher
+ * does NOT overwrite state.json with its own (possibly stale) copy.
+ *
+ * @param {object} ctx - { input, state, manifest, requirements, workflows }
+ * @returns {{ decision: 'allow', stateModified: false }}
+ */
+function check(ctx) {
     try {
-        const inputStr = await readStdin();
-        if (!inputStr || !inputStr.trim()) {
-            process.exit(0);
-        }
-
-        let input;
-        try {
-            input = JSON.parse(inputStr);
-        } catch (e) {
-            process.exit(0);
+        const input = ctx.input;
+        if (!input) {
+            return { decision: 'allow', stateModified: false };
         }
 
         // Guard: only process Write and Edit tool results
         if (input.tool_name !== 'Write' && input.tool_name !== 'Edit') {
-            process.exit(0);
+            return { decision: 'allow', stateModified: false };
         }
 
         const toolInput = input.tool_input || {};
@@ -70,34 +78,38 @@ async function main() {
 
         // Guard: only process state.json writes
         if (!STATE_JSON_PATTERN.test(filePath)) {
-            process.exit(0);
+            return { decision: 'allow', stateModified: false };
         }
 
         debugLog('workflow-completion-enforcer: state.json write detected:', filePath);
 
-        // Read current state from disk
+        // Read FRESH state from disk (not ctx.state which may be stale)
         let state;
         try {
             state = readState();
         } catch (e) {
             debugLog('workflow-completion-enforcer: could not read state:', e.message);
-            process.exit(0);
+            return { decision: 'allow', stateModified: false };
+        }
+
+        if (!state) {
+            return { decision: 'allow', stateModified: false };
         }
 
         // Guard: if active_workflow is still present, no transition happened
         if (state.active_workflow) {
-            process.exit(0);
+            return { decision: 'allow', stateModified: false };
         }
 
         // Guard: need workflow_history with at least one entry
         if (!state.workflow_history || !Array.isArray(state.workflow_history) || state.workflow_history.length === 0) {
-            process.exit(0);
+            return { decision: 'allow', stateModified: false };
         }
 
         // Get last workflow_history entry
         const lastEntry = state.workflow_history[state.workflow_history.length - 1];
         if (!lastEntry) {
-            process.exit(0);
+            return { decision: 'allow', stateModified: false };
         }
 
         // Guard: check staleness — only remediate recent entries
@@ -107,7 +119,7 @@ async function main() {
             const now = Date.now();
             if (isNaN(entryTime) || (now - entryTime) > STALENESS_THRESHOLD_MS) {
                 debugLog('workflow-completion-enforcer: entry is stale, skipping');
-                process.exit(0);
+                return { decision: 'allow', stateModified: false };
             }
         }
 
@@ -117,7 +129,7 @@ async function main() {
             lastEntry.metrics && typeof lastEntry.metrics === 'object' &&
             Object.keys(lastEntry.metrics).length > 0
         ) {
-            process.exit(0);
+            return { decision: 'allow', stateModified: false };
         }
 
         debugLog('workflow-completion-enforcer: auto-remediating missing snapshots/metrics');
@@ -154,7 +166,7 @@ async function main() {
         pruneHistory(state, 50, 200);
         pruneWorkflowHistory(state, 50, 200);
 
-        // Write back
+        // Write back to disk (this hook manages its own I/O)
         writeState(state);
 
         // Log and notify
@@ -169,13 +181,35 @@ async function main() {
             `Added ${phase_snapshots.length} phase snapshots and metrics to workflow_history entry`
         );
 
-        // NEVER produce stdout output
-        process.exit(0);
+        // NEVER produce stdout output; stateModified: false because we wrote ourselves
+        return { decision: 'allow', stateModified: false };
 
     } catch (error) {
         debugLog('workflow-completion-enforcer: error:', error.message);
-        process.exit(0);
+        return { decision: 'allow', stateModified: false };
     }
 }
 
-main();
+// Export check for dispatcher use
+module.exports = { check };
+
+// Standalone execution
+if (require.main === module) {
+    const { readStdin } = require('./lib/common.cjs');
+
+    (async () => {
+        try {
+            const inputStr = await readStdin();
+            if (!inputStr || !inputStr.trim()) { process.exit(0); }
+            let input;
+            try { input = JSON.parse(inputStr); } catch (e) { process.exit(0); }
+
+            // This hook manages its own state I/O, so we just call check
+            const ctx = { input, state: null, manifest: null, requirements: null, workflows: null };
+            check(ctx);
+
+            // NEVER produce stdout output
+            process.exit(0);
+        } catch (e) { process.exit(0); }
+    })();
+}

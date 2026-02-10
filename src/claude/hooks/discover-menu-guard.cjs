@@ -12,11 +12,10 @@
  * Fail-open: any error results in silent exit (exit 0, no output)
  *
  * Traces to: FR-07, AC-07, AC-07a, AC-07b, AC-07c
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 const {
-    readStdin,
     debugLog,
     logHookEvent,
     normalizeAgentName
@@ -68,39 +67,38 @@ function extractText(toolResult) {
     return '';
 }
 
-async function main() {
+/**
+ * Dispatcher-compatible check function.
+ * Does NOT need ctx.state — purely inspects input.
+ * @param {object} ctx - { input, state, manifest, requirements, workflows }
+ * @returns {{ decision: 'allow', stderr?: string }}
+ */
+function check(ctx) {
     try {
-        const inputStr = await readStdin();
-        if (!inputStr || !inputStr.trim()) {
-            process.exit(0);
-        }
-
-        let input;
-        try {
-            input = JSON.parse(inputStr);
-        } catch (e) {
-            process.exit(0);
+        const input = ctx.input;
+        if (!input) {
+            return { decision: 'allow' };
         }
 
         if (input.tool_name !== 'Task') {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         if (!isDiscoverTask(input)) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Extract text from tool_result
         const text = extractText(input.tool_result);
         if (text.length < MIN_MENU_TEXT_LENGTH) {
             debugLog('Text too short to be a menu:', text.length, 'chars');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Check if this looks like a menu (has numbered options)
         if (!/\[\d+\]|\d+\.\s|option\s+\d/i.test(text)) {
             debugLog('No numbered options detected, not a menu');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         debugLog('Discover menu text detected, validating');
@@ -124,15 +122,17 @@ async function main() {
         // If all required present and no forbidden, menu is correct
         if (missingOptions.length === 0 && forbiddenFound.length === 0) {
             debugLog('Correct 3-option menu detected');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
-        // Warn about incorrect menu
+        // Build stderr warnings
+        const stderrParts = [];
+
         if (missingOptions.length > 0) {
             logHookEvent('discover-menu-guard', 'warn', {
                 reason: `Missing menu options: ${missingOptions.join(', ')}`
             });
-            console.error(
+            stderrParts.push(
                 `[discover-menu-guard] WARNING: Incorrect discover menu detected.\n` +
                 `  Expected 3 options: [1] New Project, [2] Existing Project, [3] Chat/Explore\n` +
                 `  Missing options: ${missingOptions.join(', ')}\n` +
@@ -144,7 +144,7 @@ async function main() {
             logHookEvent('discover-menu-guard', 'warn', {
                 reason: `Forbidden menu options found: ${forbiddenFound.join(', ')}`
             });
-            console.error(
+            stderrParts.push(
                 `[discover-menu-guard] WARNING: Incorrect discover menu detected.\n` +
                 `  Found removed options: ${forbiddenFound.join(', ')}\n` +
                 `  These options were removed in REQ-0001 and should not appear.\n` +
@@ -152,12 +152,51 @@ async function main() {
             );
         }
 
-        process.exit(0);
+        return { decision: 'allow', stderr: stderrParts.join('\n') };
 
     } catch (error) {
         debugLog('Error in discover-menu-guard:', error.message);
-        process.exit(0);
+        return { decision: 'allow' };
     }
 }
 
-main();
+// Export check for dispatcher use
+module.exports = { check, isDiscoverTask, extractText };
+
+// Standalone execution
+if (require.main === module) {
+    const { readStdin, readState, loadManifest, loadIterationRequirements, loadWorkflowDefinitions } = require('./lib/common.cjs');
+
+    (async () => {
+        try {
+            const inputStr = await readStdin();
+            if (!inputStr || !inputStr.trim()) {
+                process.exit(0);
+            }
+            let input;
+            try { input = JSON.parse(inputStr); } catch (e) { process.exit(0); }
+
+            const state = readState();
+            const manifest = loadManifest();
+            const requirements = loadIterationRequirements();
+            const workflows = loadWorkflowDefinitions();
+            const ctx = { input, state, manifest, requirements, workflows };
+
+            const result = check(ctx);
+
+            if (result.stderr) {
+                console.error(result.stderr);
+            }
+            if (result.stdout) {
+                console.log(result.stdout);
+            }
+            if (result.decision === 'block' && result.stopReason) {
+                const { outputBlockResponse } = require('./lib/common.cjs');
+                outputBlockResponse(result.stopReason);
+            }
+            process.exit(0);
+        } catch (e) {
+            process.exit(0);
+        }
+    })();
+}

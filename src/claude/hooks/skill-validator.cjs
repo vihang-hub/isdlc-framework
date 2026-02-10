@@ -20,7 +20,7 @@
  * Output:
  * - Exit 0 with no output: Allow the tool call (always)
  *
- * Version: 3.0.0
+ * Version: 3.1.0
  */
 
 const {
@@ -28,51 +28,42 @@ const {
     loadManifest,
     loadExternalManifest,
     normalizeAgentName,
-    readStdin,
-    outputBlockResponse,
     debugLog
 } = require('./lib/common.cjs');
 
-async function main() {
+/**
+ * Dispatcher-compatible check function.
+ * @param {object} ctx - { input, state, manifest, requirements, workflows }
+ * @returns {{ decision: 'allow' }}
+ */
+function check(ctx) {
     try {
-        // Read hook input from stdin
-        const inputStr = await readStdin();
-
-        if (!inputStr || !inputStr.trim()) {
-            debugLog('No input received, allowing');
-            process.exit(0);
+        const input = ctx.input;
+        if (!input) {
+            return { decision: 'allow' };
         }
 
-        let input;
-        try {
-            input = JSON.parse(inputStr);
-        } catch (e) {
-            debugLog('Invalid JSON input, allowing');
-            process.exit(0);
-        }
-
-        // Extract tool name
+        // Only validate Task tool calls (agent delegation)
         const toolName = input.tool_name;
         debugLog('Tool name:', toolName);
 
-        // Only validate Task tool calls (agent delegation)
         if (toolName !== 'Task') {
             debugLog('Not a Task tool call, allowing');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Extract tool_input
         const toolInput = input.tool_input;
         if (!toolInput) {
             debugLog('No tool_input, allowing');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Extract target agent from subagent_type
         let targetAgent = toolInput.subagent_type;
         if (!targetAgent) {
             debugLog('No subagent_type specified, allowing');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         debugLog('Target agent (raw):', targetAgent);
@@ -82,17 +73,17 @@ async function main() {
         debugLog('Target agent (normalized):', targetAgent);
 
         // Load state
-        const state = readState();
+        const state = ctx.state;
         if (!state) {
             debugLog('No state.json found, allowing (fail-open)');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Check if enforcement is enabled
         const enforcement = state.skill_enforcement || {};
         if (enforcement.enabled === false) {
             debugLog('Enforcement disabled, allowing');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Get enforcement mode and fail behavior
@@ -105,14 +96,11 @@ async function main() {
         debugLog('Current phase:', currentPhase);
 
         // Load manifest
-        const manifest = loadManifest();
+        const manifest = ctx.manifest;
         if (!manifest) {
             debugLog('No manifest found, allowing (fail-open per fail_behavior:', failBehavior + ')');
-            if (failBehavior === 'block') {
-                outputBlockResponse('SKILL ENFORCEMENT ERROR: skills-manifest.json not found');
-                process.exit(0);
-            }
-            process.exit(0);
+            // In observe mode, fail_behavior: 'block' is irrelevant — always allow
+            return { decision: 'allow' };
         }
 
         // Check if agent exists in manifest
@@ -125,7 +113,7 @@ async function main() {
                 debugLog(`Agent '${targetAgent}' not found in manifest`);
             }
             // Unknown agent - this might be a non-SDLC agent, allow
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Get agent's designated phase
@@ -157,7 +145,7 @@ async function main() {
         // Handle based on authorization result and enforcement mode
         if (isAuthorized) {
             debugLog('Authorization: ALLOWED');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Cross-phase usage detected — observe but always allow
@@ -166,37 +154,64 @@ async function main() {
         switch (enforcementMode) {
             case 'observe':
                 debugLog('OBSERVE: Agent allowed (observability mode)');
-                process.exit(0);
                 break;
-
             case 'strict':
-                // Legacy strict mode now behaves same as observe
                 debugLog('OBSERVE: Agent allowed (strict mode — now observability-only)');
-                process.exit(0);
                 break;
-
             case 'warn':
-                // Allow (logged in PostToolUse)
                 debugLog('OBSERVE: Agent allowed (warn mode)');
-                process.exit(0);
                 break;
-
             case 'audit':
-                // Allow (logged in PostToolUse)
                 debugLog('OBSERVE: Agent allowed (audit mode)');
-                process.exit(0);
                 break;
-
             default:
                 debugLog('OBSERVE: Agent allowed (observability mode)');
-                process.exit(0);
         }
+
+        return { decision: 'allow' };
 
     } catch (error) {
         debugLog('Error in skill-validator:', error.message);
         // Fail open on errors
-        process.exit(0);
+        return { decision: 'allow' };
     }
 }
 
-main();
+// Export check for dispatcher use
+module.exports = { check };
+
+// Standalone execution
+if (require.main === module) {
+    const { readStdin } = require('./lib/common.cjs');
+
+    (async () => {
+        try {
+            const inputStr = await readStdin();
+            if (!inputStr || !inputStr.trim()) {
+                process.exit(0);
+            }
+            let input;
+            try { input = JSON.parse(inputStr); } catch (e) { process.exit(0); }
+
+            const state = readState();
+            const manifest = loadManifest();
+            const ctx = { input, state, manifest, requirements: null, workflows: null };
+
+            const result = check(ctx);
+
+            if (result.stderr) {
+                console.error(result.stderr);
+            }
+            if (result.stdout) {
+                console.log(result.stdout);
+            }
+            if (result.decision === 'block' && result.stopReason) {
+                const { outputBlockResponse } = require('./lib/common.cjs');
+                outputBlockResponse(result.stopReason);
+            }
+            process.exit(0);
+        } catch (e) {
+            process.exit(0);
+        }
+    })();
+}

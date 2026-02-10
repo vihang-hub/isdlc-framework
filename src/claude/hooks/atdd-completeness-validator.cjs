@@ -9,12 +9,10 @@
  * Fail-open: always (PostToolUse is observational only)
  *
  * Traces to: FR-05, AC-05a through AC-05f
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 const {
-    readStdin,
-    readState,
     debugLog,
     logHookEvent
 } = require('./lib/common.cjs');
@@ -116,30 +114,28 @@ function checkPriorityViolations(results) {
     return violations;
 }
 
-async function main() {
+/**
+ * Dispatcher-compatible check function.
+ * @param {object} ctx - { input, state, manifest, requirements, workflows }
+ * @returns {{ decision: 'allow', stderr?: string }}
+ */
+function check(ctx) {
     try {
-        const inputStr = await readStdin();
-        if (!inputStr || !inputStr.trim()) {
-            process.exit(0);
-        }
-
-        let input;
-        try {
-            input = JSON.parse(inputStr);
-        } catch (e) {
-            process.exit(0);
+        const input = ctx.input;
+        if (!input) {
+            return { decision: 'allow' };
         }
 
         // Check if this was a test command
         const command = (input.tool_input && input.tool_input.command) || '';
         if (!isTestCommand(command)) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Check if ATDD mode is active
-        const state = readState();
+        const state = ctx.state;
         if (!state || !state.active_workflow) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // ATDD mode check: look in active_workflow options or agent_modifiers
@@ -147,7 +143,7 @@ async function main() {
                            (state.active_workflow.atdd_mode);
         if (!atddActive) {
             debugLog('ATDD mode not active, skipping');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         debugLog('ATDD mode active, checking priority ordering');
@@ -166,7 +162,7 @@ async function main() {
                 phase: state.active_workflow.current_phase,
                 reason: 'Priority ordering correct'
             });
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         logHookEvent('atdd-completeness-validator', 'warn', {
@@ -174,18 +170,57 @@ async function main() {
             reason: violations.join('; ')
         });
 
-        console.error(
+        const stderr =
             `ATDD PRIORITY VIOLATIONS (${violations.length}):\n` +
             violations.map((v, i) => `  ${i + 1}. ${v}`).join('\n') +
             `\n\nATDD requires strict priority ordering: P0 -> P1 -> P2 -> P3.` +
-            `\nAll tests at priority N must pass before implementing priority N+1.`
-        );
-        process.exit(0);
+            `\nAll tests at priority N must pass before implementing priority N+1.`;
+
+        return { decision: 'allow', stderr };
 
     } catch (error) {
         debugLog('Error in atdd-completeness-validator:', error.message);
-        process.exit(0);
+        return { decision: 'allow' };
     }
 }
 
-main();
+// Export check for dispatcher use
+module.exports = { check };
+
+// Standalone execution
+if (require.main === module) {
+    const { readStdin, readState, loadManifest, loadIterationRequirements, loadWorkflowDefinitions } = require('./lib/common.cjs');
+
+    (async () => {
+        try {
+            const inputStr = await readStdin();
+            if (!inputStr || !inputStr.trim()) {
+                process.exit(0);
+            }
+            let input;
+            try { input = JSON.parse(inputStr); } catch (e) { process.exit(0); }
+
+            const state = readState();
+            const manifest = loadManifest();
+            const requirements = loadIterationRequirements();
+            const workflows = loadWorkflowDefinitions();
+            const ctx = { input, state, manifest, requirements, workflows };
+
+            const result = check(ctx);
+
+            if (result.stderr) {
+                console.error(result.stderr);
+            }
+            if (result.stdout) {
+                console.log(result.stdout);
+            }
+            if (result.decision === 'block' && result.stopReason) {
+                const { outputBlockResponse } = require('./lib/common.cjs');
+                outputBlockResponse(result.stopReason);
+            }
+            process.exit(0);
+        } catch (e) {
+            process.exit(0);
+        }
+    })();
+}

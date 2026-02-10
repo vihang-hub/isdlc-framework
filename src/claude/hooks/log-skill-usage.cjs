@@ -16,36 +16,28 @@
  *   "tool_result": "..."
  * }
  *
- * Version: 3.0.0
+ * Version: 3.1.0
  */
 
 const {
-    readState,
     loadManifest,
     loadExternalManifest,
     normalizeAgentName,
-    appendSkillLog,
     getTimestamp,
-    readStdin,
-    debugLog
+    debugLog,
+    addSkillLogEntry
 } = require('./lib/common.cjs');
 
-async function main() {
+/**
+ * Dispatcher-compatible check function.
+ * @param {object} ctx - { input, state, manifest, requirements, workflows }
+ * @returns {{ decision: 'allow', stateModified?: boolean }}
+ */
+function check(ctx) {
     try {
-        // Read hook input from stdin
-        const inputStr = await readStdin();
-
-        if (!inputStr || !inputStr.trim()) {
-            debugLog('No input received, skipping');
-            process.exit(0);
-        }
-
-        let input;
-        try {
-            input = JSON.parse(inputStr);
-        } catch (e) {
-            debugLog('Invalid JSON input, skipping');
-            process.exit(0);
+        const input = ctx.input;
+        if (!input) {
+            return { decision: 'allow' };
         }
 
         // Extract tool name
@@ -53,19 +45,19 @@ async function main() {
 
         // Only log Task tool calls
         if (toolName !== 'Task') {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Extract tool_input
         const toolInput = input.tool_input;
         if (!toolInput) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Extract target agent from subagent_type
         let targetAgent = toolInput.subagent_type;
         if (!targetAgent) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Normalize agent name
@@ -75,17 +67,17 @@ async function main() {
         const description = toolInput.description || 'N/A';
 
         // Load state
-        const state = readState();
+        const state = ctx.state;
         if (!state) {
             debugLog('No state.json found, skipping logging');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Check if enforcement is enabled
         const enforcement = state.skill_enforcement || {};
         if (enforcement.enabled === false) {
             debugLog('Enforcement disabled, skipping logging');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Get enforcement mode
@@ -94,8 +86,8 @@ async function main() {
         // Get current phase
         const currentPhase = state.current_phase || '01-requirements';
 
-        // Load manifest to determine authorization
-        const manifest = loadManifest();
+        // Load manifest to determine authorization (prefer ctx.manifest)
+        const manifest = ctx.manifest || loadManifest();
 
         // Load external manifest for recognition
         const externalManifest = loadExternalManifest();
@@ -155,21 +147,50 @@ async function main() {
             external_skills_registered: externalSkillsRegistered
         };
 
-        // Append to skill_usage_log
-        if (appendSkillLog(logEntry)) {
+        // Append to skill_usage_log in memory
+        if (addSkillLogEntry(state, logEntry)) {
             debugLog(`Logged skill usage: ${targetAgent} (${status})`);
+            return { decision: 'allow', stateModified: true };
         } else {
             debugLog('Failed to log skill usage');
+            return { decision: 'allow' };
         }
-
-        // Always exit 0 - logging should never block
-        process.exit(0);
 
     } catch (error) {
         debugLog('Error in log-skill-usage:', error.message);
         // Fail silently on errors
-        process.exit(0);
+        return { decision: 'allow' };
     }
 }
 
-main();
+// Export check for dispatcher use
+module.exports = { check };
+
+// Standalone execution
+if (require.main === module) {
+    const { readStdin, readState, writeState: writeStateFn, loadManifest: loadManifestFn, loadIterationRequirements, loadWorkflowDefinitions } = require('./lib/common.cjs');
+
+    (async () => {
+        try {
+            const inputStr = await readStdin();
+            if (!inputStr || !inputStr.trim()) { process.exit(0); }
+            let input;
+            try { input = JSON.parse(inputStr); } catch (e) { process.exit(0); }
+
+            const state = readState();
+            const manifest = loadManifestFn();
+            const requirements = loadIterationRequirements();
+            const workflows = loadWorkflowDefinitions();
+            const ctx = { input, state, manifest, requirements, workflows };
+
+            const result = check(ctx);
+
+            if (result.stderr) console.error(result.stderr);
+            if (result.stdout) console.log(result.stdout);
+            if (result.stateModified && state) {
+                writeStateFn(state);
+            }
+            process.exit(0);
+        } catch (e) { process.exit(0); }
+    })();
+}

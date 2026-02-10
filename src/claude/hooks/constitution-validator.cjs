@@ -9,22 +9,17 @@
  * - Gate validation is requested
  * - Artifact finalization occurs
  *
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 const {
-    readState,
-    writeState,
-    readStdin,
-    outputBlockResponse,
     debugLog,
-    getProjectRoot,
     getTimestamp,
-    writePendingEscalation,
     normalizePhaseKey,
-    diagnoseBlockCause,
     outputSelfHealNotification,
-    logHookEvent
+    logHookEvent,
+    addPendingEscalation,
+    loadIterationRequirements: loadIterationRequirementsFromCommon
 } = require('./lib/common.cjs');
 
 const fs = require('fs');
@@ -48,9 +43,10 @@ const COMPLETION_PATTERNS = [
 ];
 
 /**
- * Load iteration requirements
+ * Load iteration requirements (local fallback)
  */
 function loadIterationRequirements() {
+    const { getProjectRoot } = require('./lib/common.cjs');
     const projectRoot = getProjectRoot();
     const configPaths = [
         path.join(projectRoot, '.claude', 'hooks', 'config', 'iteration-requirements.json'),
@@ -171,7 +167,7 @@ function checkConstitutionalStatus(phaseState, phaseReq) {
 }
 
 /**
- * Initialize constitutional validation tracking
+ * Initialize constitutional validation tracking (mutates state in-place)
  */
 function initializeConstitutionalValidation(state, currentPhase, phaseReq) {
     if (!state.phases) state.phases = {};
@@ -215,63 +211,65 @@ function getArticleDescriptions() {
     };
 }
 
-async function main() {
+/**
+ * Dispatcher-compatible check function.
+ * @param {object} ctx - { input, state, manifest, requirements, workflows }
+ * @returns {{ decision: 'allow'|'block', stopReason?: string, stderr?: string, stdout?: string, stateModified?: boolean }}
+ */
+function check(ctx) {
     try {
-        const inputStr = await readStdin();
-
-        if (!inputStr || !inputStr.trim()) {
-            process.exit(0);
-        }
-
-        let input;
-        try {
-            input = JSON.parse(inputStr);
-        } catch (e) {
-            process.exit(0);
+        const input = ctx.input;
+        if (!input) {
+            return { decision: 'allow' };
         }
 
         // Only check phase completion attempts
         if (!isPhaseCompletionAttempt(input)) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         debugLog('Phase completion attempt detected');
 
         // Load state
-        let state = readState();
+        const state = ctx.state;
         if (!state) {
             debugLog('No state.json, allowing');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Check if enforcement is enabled
         if (state.iteration_enforcement?.enabled === false) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         let currentPhase = state.current_phase;
         if (!currentPhase) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Normalize phase key (self-healing: catches alias mismatches)
+        let stderrMessages = '';
         const originalPhase = currentPhase;
         currentPhase = normalizePhaseKey(currentPhase);
         if (currentPhase !== originalPhase) {
-            outputSelfHealNotification('constitution-validator', `Phase key '${originalPhase}' normalized to '${currentPhase}'.`);
+            const msg = `[SELF-HEAL] constitution-validator: Phase key '${originalPhase}' normalized to '${currentPhase}'.`;
+            stderrMessages += msg + '\n';
+            logHookEvent('constitution-validator', 'self-heal', { reason: `Phase key '${originalPhase}' normalized to '${currentPhase}'.` });
         }
 
-        // Load requirements
-        const requirements = loadIterationRequirements();
+        // Load requirements (prefer ctx.requirements, fallback to local loader)
+        const requirements = ctx.requirements || loadIterationRequirementsFromCommon() || loadIterationRequirements();
         const phaseReq = requirements?.phase_requirements?.[currentPhase];
 
         if (!phaseReq?.constitutional_validation?.enabled) {
             // Self-heal notification if this is due to missing requirements
             if (!phaseReq) {
-                outputSelfHealNotification('constitution-validator', `No requirements for phase '${currentPhase}'. Allowing completion.`);
+                const msg = `[SELF-HEAL] constitution-validator: No requirements for phase '${currentPhase}'. Allowing completion.`;
+                stderrMessages += msg + '\n';
+                logHookEvent('constitution-validator', 'self-heal', { reason: `No requirements for phase '${currentPhase}'. Allowing completion.` });
             }
             debugLog('Constitutional validation not enabled for phase:', currentPhase);
-            process.exit(0);
+            return { decision: 'allow', stderr: stderrMessages.trim() || undefined };
         }
 
         // Get phase state
@@ -282,13 +280,15 @@ async function main() {
 
         if (status.satisfied) {
             debugLog('Constitutional validation satisfied');
-            process.exit(0);
+            return { decision: 'allow', stderr: stderrMessages.trim() || undefined };
         }
+
+        let stateModified = false;
 
         // Initialize tracking if not started
         if (status.reason === 'not_started') {
-            state = initializeConstitutionalValidation(state, currentPhase, phaseReq);
-            writeState(state);
+            initializeConstitutionalValidation(state, currentPhase, phaseReq);
+            stateModified = true;
         }
 
         // Build article descriptions with check instructions
@@ -327,10 +327,8 @@ ${articleChecklist}
 DO NOT skip articles or mark compliant without actually checking.
 Iteration ${iterationsUsed}/${maxIterations} — you have ${remaining} attempts remaining.`;
 
-        outputBlockResponse(stopReason);
-
-        // Write escalation for phase-loop controller visibility
-        writePendingEscalation({
+        // Write escalation to state in memory
+        addPendingEscalation(state, {
             type: 'constitution_blocked',
             hook: 'constitution-validator',
             phase: currentPhase,
@@ -338,12 +336,50 @@ Iteration ${iterationsUsed}/${maxIterations} — you have ${remaining} attempts 
             timestamp: getTimestamp()
         });
 
-        process.exit(0);
+        return {
+            decision: 'block',
+            stopReason,
+            stderr: stderrMessages.trim() || undefined,
+            stateModified: true
+        };
 
     } catch (error) {
         debugLog('Error in constitution-validator:', error.message);
-        process.exit(0);
+        return { decision: 'allow' };
     }
 }
 
-main();
+// Export check for dispatcher use
+module.exports = { check };
+
+// Standalone execution
+if (require.main === module) {
+    const { readStdin, readState, writeState: writeStateFn, loadManifest, loadIterationRequirements: loadReqs, loadWorkflowDefinitions, outputBlockResponse } = require('./lib/common.cjs');
+
+    (async () => {
+        try {
+            const inputStr = await readStdin();
+            if (!inputStr || !inputStr.trim()) { process.exit(0); }
+            let input;
+            try { input = JSON.parse(inputStr); } catch (e) { process.exit(0); }
+
+            const state = readState();
+            const manifest = loadManifest();
+            const requirements = loadReqs();
+            const workflows = loadWorkflowDefinitions();
+            const ctx = { input, state, manifest, requirements, workflows };
+
+            const result = check(ctx);
+
+            if (result.stderr) console.error(result.stderr);
+            if (result.stdout) console.log(result.stdout);
+            if (result.decision === 'block' && result.stopReason) {
+                outputBlockResponse(result.stopReason);
+            }
+            if (result.stateModified && state) {
+                writeStateFn(state);
+            }
+            process.exit(0);
+        } catch (e) { process.exit(0); }
+    })();
+}

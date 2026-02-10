@@ -14,21 +14,17 @@
  * - CONST_CORRIDOR: Tests passed, agent must validate constitution
  * - NO_CORRIDOR: No active iteration, all actions allowed
  *
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 const {
-    readState,
-    readStdin,
-    outputBlockResponse,
     debugLog,
-    getProjectRoot,
     getTimestamp,
-    writePendingEscalation,
     normalizePhaseKey,
-    diagnoseBlockCause,
     outputSelfHealNotification,
-    logHookEvent
+    logHookEvent,
+    addPendingEscalation,
+    loadIterationRequirements: loadIterationRequirementsFromCommon
 } = require('./lib/common.cjs');
 
 const fs = require('fs');
@@ -81,9 +77,10 @@ function getIterationConfig(state) {
 }
 
 /**
- * Load iteration requirements config
+ * Load iteration requirements config (local fallback)
  */
 function loadIterationRequirements() {
+    const { getProjectRoot } = require('./lib/common.cjs');
     const projectRoot = getProjectRoot();
     const configPaths = [
         path.join(projectRoot, '.claude', 'hooks', 'config', 'iteration-requirements.json'),
@@ -215,19 +212,16 @@ function skillIsAdvanceAttempt(toolInput) {
     return false;
 }
 
-async function main() {
+/**
+ * Dispatcher-compatible check function.
+ * @param {object} ctx - { input, state, manifest, requirements, workflows }
+ * @returns {{ decision: 'allow'|'block', stopReason?: string, stderr?: string, stdout?: string, stateModified?: boolean }}
+ */
+function check(ctx) {
     try {
-        const inputStr = await readStdin();
-
-        if (!inputStr || !inputStr.trim()) {
-            process.exit(0);
-        }
-
-        let input;
-        try {
-            input = JSON.parse(inputStr);
-        } catch (e) {
-            process.exit(0);
+        const input = ctx.input;
+        if (!input) {
+            return { decision: 'allow' };
         }
 
         const toolName = input.tool_name;
@@ -235,41 +229,46 @@ async function main() {
 
         // Only apply corridor enforcement to Task and Skill tools
         if (toolName !== 'Task' && toolName !== 'Skill') {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Load state
-        const state = readState();
+        const state = ctx.state;
         if (!state) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Check if enforcement is enabled
         if (state.iteration_enforcement?.enabled === false) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Determine current phase — prefer active_workflow if present
         const activeWorkflow = state.active_workflow;
         let currentPhase = (activeWorkflow && activeWorkflow.current_phase) || state.current_phase;
         if (!currentPhase) {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Normalize phase key (self-healing: catches alias mismatches)
+        let stderrMessages = '';
         const originalPhase = currentPhase;
         currentPhase = normalizePhaseKey(currentPhase);
         if (currentPhase !== originalPhase) {
-            outputSelfHealNotification('iteration-corridor', `Phase key '${originalPhase}' normalized to '${currentPhase}'.`);
+            const msg = `[SELF-HEAL] iteration-corridor: Phase key '${originalPhase}' normalized to '${currentPhase}'.`;
+            stderrMessages += msg + '\n';
+            logHookEvent('iteration-corridor', 'self-heal', { reason: `Phase key '${originalPhase}' normalized to '${currentPhase}'.` });
         }
 
-        // Load requirements and apply workflow overrides if applicable
-        const requirements = loadIterationRequirements();
+        // Load requirements (prefer ctx.requirements, fallback to local loader)
+        const requirements = ctx.requirements || loadIterationRequirementsFromCommon() || loadIterationRequirements();
         let phaseReq = requirements?.phase_requirements?.[currentPhase];
         if (!phaseReq) {
             // Self-heal: missing requirements is infrastructure issue
-            outputSelfHealNotification('iteration-corridor', `No requirements for phase '${currentPhase}'. Allowing action.`);
-            process.exit(0);
+            const msg = `[SELF-HEAL] iteration-corridor: No requirements for phase '${currentPhase}'. Allowing action.`;
+            stderrMessages += msg + '\n';
+            logHookEvent('iteration-corridor', 'self-heal', { reason: `No requirements for phase '${currentPhase}'. Allowing action.` });
+            return { decision: 'allow', stderr: stderrMessages.trim() || undefined };
         }
 
         if (activeWorkflow && requirements.workflow_overrides) {
@@ -290,7 +289,7 @@ async function main() {
 
         if (corridorState.corridor === 'NONE') {
             debugLog('No active corridor, allowing');
-            process.exit(0);
+            return { decision: 'allow', stderr: stderrMessages.trim() || undefined };
         }
 
         debugLog('Corridor active:', corridorState.corridor);
@@ -305,15 +304,14 @@ async function main() {
                     `Last error: ${d.last_error}\n` +
                     `Last test command: ${d.last_command || 'unknown'}\n\n` +
                     `Blocked action: ${toolName} (detected advance/delegate keywords)`;
-                outputBlockResponse(stopReason);
-                writePendingEscalation({
+                addPendingEscalation(state, {
                     type: 'corridor_blocked',
                     hook: 'iteration-corridor',
                     phase: currentPhase,
                     detail: stopReason,
                     timestamp: getTimestamp()
                 });
-                process.exit(0);
+                return { decision: 'block', stopReason, stderr: stderrMessages.trim() || undefined, stateModified: true };
             }
 
             if (toolName === 'Skill' && skillIsAdvanceAttempt(toolInput)) {
@@ -323,15 +321,14 @@ async function main() {
                     `Last error: ${d.last_error}\n` +
                     `Last test command: ${d.last_command || 'unknown'}\n\n` +
                     `Blocked action: ${toolName} (gate advancement not allowed during test iteration)`;
-                outputBlockResponse(stopReason);
-                writePendingEscalation({
+                addPendingEscalation(state, {
                     type: 'corridor_blocked',
                     hook: 'iteration-corridor',
                     phase: currentPhase,
                     detail: stopReason,
                     timestamp: getTimestamp()
                 });
-                process.exit(0);
+                return { decision: 'block', stopReason, stderr: stderrMessages.trim() || undefined, stateModified: true };
             }
         }
 
@@ -344,15 +341,14 @@ async function main() {
                     `Validate and fix artifacts before proceeding.\n\n` +
                     `Status: ${d.status} (iteration ${d.iterations_used}/${d.max_iterations})\n\n` +
                     `Blocked action: ${toolName} (detected advance/delegate keywords)`;
-                outputBlockResponse(stopReason);
-                writePendingEscalation({
+                addPendingEscalation(state, {
                     type: 'corridor_blocked',
                     hook: 'iteration-corridor',
                     phase: currentPhase,
                     detail: stopReason,
                     timestamp: getTimestamp()
                 });
-                process.exit(0);
+                return { decision: 'block', stopReason, stderr: stderrMessages.trim() || undefined, stateModified: true };
             }
 
             if (toolName === 'Skill' && skillIsAdvanceAttempt(toolInput)) {
@@ -362,27 +358,59 @@ async function main() {
                     `Validate and fix artifacts before proceeding.\n\n` +
                     `Status: ${d.status} (iteration ${d.iterations_used}/${d.max_iterations})\n\n` +
                     `Blocked action: ${toolName} (gate advancement not allowed during constitutional validation)`;
-                outputBlockResponse(stopReason);
-                writePendingEscalation({
+                addPendingEscalation(state, {
                     type: 'corridor_blocked',
                     hook: 'iteration-corridor',
                     phase: currentPhase,
                     detail: stopReason,
                     timestamp: getTimestamp()
                 });
-                process.exit(0);
+                return { decision: 'block', stopReason, stderr: stderrMessages.trim() || undefined, stateModified: true };
             }
         }
 
         // Action is allowed within the corridor
         debugLog('Action allowed within corridor');
-        process.exit(0);
+        return { decision: 'allow', stderr: stderrMessages.trim() || undefined };
 
     } catch (error) {
         // Fail-open: any errors → allow the action
         debugLog('Error in iteration-corridor:', error.message);
-        process.exit(0);
+        return { decision: 'allow' };
     }
 }
 
-main();
+// Export check for dispatcher use
+module.exports = { check };
+
+// Standalone execution
+if (require.main === module) {
+    const { readStdin, readState, writeState: writeStateFn, loadManifest, loadIterationRequirements: loadReqs, loadWorkflowDefinitions, outputBlockResponse } = require('./lib/common.cjs');
+
+    (async () => {
+        try {
+            const inputStr = await readStdin();
+            if (!inputStr || !inputStr.trim()) { process.exit(0); }
+            let input;
+            try { input = JSON.parse(inputStr); } catch (e) { process.exit(0); }
+
+            const state = readState();
+            const manifest = loadManifest();
+            const requirements = loadReqs();
+            const workflows = loadWorkflowDefinitions();
+            const ctx = { input, state, manifest, requirements, workflows };
+
+            const result = check(ctx);
+
+            if (result.stderr) console.error(result.stderr);
+            if (result.stdout) console.log(result.stdout);
+            if (result.decision === 'block' && result.stopReason) {
+                outputBlockResponse(result.stopReason);
+            }
+            if (result.stateModified && state) {
+                writeStateFn(state);
+            }
+            process.exit(0);
+        } catch (e) { process.exit(0); }
+    })();
+}

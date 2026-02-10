@@ -9,13 +9,10 @@
  * Fail-open: any error results in silent exit (exit 0, no output)
  *
  * Traces to: FR-02, AC-02a through AC-02h
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 const {
-    readStdin,
-    readState,
-    outputBlockResponse,
     debugLog,
     logHookEvent
 } = require('./lib/common.cjs');
@@ -60,49 +57,47 @@ function isGateInvocation(input) {
     return false;
 }
 
-async function main() {
+/**
+ * Dispatcher-compatible check function.
+ * @param {object} ctx - { input, state, manifest, requirements, workflows }
+ * @returns {{ decision: 'allow'|'block', stopReason?: string, stderr?: string, stdout?: string, stateModified?: boolean }}
+ */
+function check(ctx) {
     try {
-        const inputStr = await readStdin();
-        if (!inputStr || !inputStr.trim()) {
-            process.exit(0);
-        }
-
-        let input;
-        try {
-            input = JSON.parse(inputStr);
-        } catch (e) {
-            process.exit(0);
+        const input = ctx.input;
+        if (!input) {
+            return { decision: 'allow' };
         }
 
         // Only check Skill invocations
         if (input.tool_name !== 'Skill') {
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Only check gate-related invocations
         if (!isGateInvocation(input)) {
             debugLog('Not a gate invocation, allowing');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         debugLog('Gate invocation detected, checking constitutional validation');
 
         // Read state
-        const state = readState();
+        const state = ctx.state;
         if (!state) {
             debugLog('No state.json, allowing (fail-open)');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         if (!state.active_workflow) {
             debugLog('No active workflow, allowing');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         const currentPhase = state.active_workflow.current_phase;
         if (!currentPhase) {
             debugLog('No current phase, allowing');
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Check constitutional validation for current phase
@@ -113,7 +108,7 @@ async function main() {
                 phase: currentPhase,
                 reason: 'No phase data found'
             });
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         const cv = phaseData.constitutional_validation;
@@ -123,7 +118,7 @@ async function main() {
                 phase: currentPhase,
                 reason: 'No constitutional_validation section'
             });
-            process.exit(0);
+            return { decision: 'allow' };
         }
 
         // Validate fields
@@ -151,12 +146,11 @@ async function main() {
                 phase: currentPhase,
                 reason
             });
-            outputBlockResponse(
+            const stopReason =
                 `CONSTITUTIONAL VALIDATION INCOMPLETE: ${reason}.\n\n` +
                 `Complete constitutional validation before gate advancement.\n` +
-                `Required: completed=true, iterations_used>=1, status=compliant|escalated, articles_checked non-empty.`
-            );
-            process.exit(0);
+                `Required: completed=true, iterations_used>=1, status=compliant|escalated, articles_checked non-empty.`;
+            return { decision: 'block', stopReason };
         }
 
         // All checks pass
@@ -165,12 +159,42 @@ async function main() {
             phase: currentPhase,
             reason: 'Validation complete'
         });
-        process.exit(0);
+        return { decision: 'allow' };
 
     } catch (error) {
         debugLog('Error in constitutional-iteration-validator:', error.message);
-        process.exit(0);
+        return { decision: 'allow' };
     }
 }
 
-main();
+// Export check for dispatcher use
+module.exports = { check };
+
+// Standalone execution
+if (require.main === module) {
+    const { readStdin, readState, loadManifest, loadIterationRequirements, loadWorkflowDefinitions, outputBlockResponse } = require('./lib/common.cjs');
+
+    (async () => {
+        try {
+            const inputStr = await readStdin();
+            if (!inputStr || !inputStr.trim()) { process.exit(0); }
+            let input;
+            try { input = JSON.parse(inputStr); } catch (e) { process.exit(0); }
+
+            const state = readState();
+            const manifest = loadManifest();
+            const requirements = loadIterationRequirements();
+            const workflows = loadWorkflowDefinitions();
+            const ctx = { input, state, manifest, requirements, workflows };
+
+            const result = check(ctx);
+
+            if (result.stderr) console.error(result.stderr);
+            if (result.stdout) console.log(result.stdout);
+            if (result.decision === 'block' && result.stopReason) {
+                outputBlockResponse(result.stopReason);
+            }
+            process.exit(0);
+        } catch (e) { process.exit(0); }
+    })();
+}

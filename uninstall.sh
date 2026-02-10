@@ -561,7 +561,7 @@ for DIR in agents skills commands hooks; do
 done
 
 # Also clean hooks subdirectories
-for SUBDIR in lib config tests; do
+for SUBDIR in lib config dispatchers tests; do
     do_rmdir_if_empty "$PROJECT_ROOT/.claude/hooks/$SUBDIR"
 done
 
