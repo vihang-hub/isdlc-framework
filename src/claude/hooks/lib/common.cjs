@@ -781,7 +781,11 @@ function normalizeAgentName(input) {
         'd7-product-analyst': 'product-analyst',
         'd8': 'architecture-designer',
         'd8-architecture-designer': 'architecture-designer',
-        'arch-designer': 'architecture-designer'
+        'arch-designer': 'architecture-designer',
+        // Quality Loop
+        'quality-loop': 'quality-loop-engineer',
+        '16-quality-loop-engineer': 'quality-loop-engineer',
+        'ql': 'quality-loop-engineer'
     };
 
     return mappings[normalized] || normalized;
@@ -1369,7 +1373,8 @@ const PHASE_AGENT_MAP = {
     '13-production': 'release-manager',
     '14-operations': 'site-reliability-engineer',
     '15-upgrade-plan': 'upgrade-engineer',
-    '15-upgrade-execute': 'upgrade-engineer'
+    '15-upgrade-execute': 'upgrade-engineer',
+    '16-quality-loop': 'quality-loop-engineer'
 };
 
 // ---------------------------------------------------------------------------

@@ -221,7 +221,7 @@ Enter selection (1-5):
 ```
 1. Validate constitution exists and is not a template
 2. Check no active workflow (block if one exists, suggest `/isdlc cancel` first)
-3. Initialize `active_workflow` in state.json with type `"feature"` and phases `["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design", "05-test-strategy", "06-implementation", "11-local-testing", "07-testing", "10-cicd", "08-code-review"]`
+3. Initialize `active_workflow` in state.json with type `"feature"` and phases `["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]`
 4. Delegate to Requirements Analyst (Phase 01) with `scope: "feature"`
 5. After GATE-01: creates `feature/REQ-NNNN-description` branch from main
 6. After GATE-07: merges branch to main, deletes branch
@@ -241,7 +241,7 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 ```
 1. Validate constitution exists and is not a template
 2. Check no active workflow
-3. Initialize `active_workflow` with type `"fix"` and phases `["01-requirements", "02-tracing", "05-test-strategy", "06-implementation", "11-local-testing", "07-testing", "10-cicd", "08-code-review"]`
+3. Initialize `active_workflow` with type `"fix"` and phases `["01-requirements", "02-tracing", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]`
 4. If `--link` provided, pass it to Agent 01 as the external bug URL
 5. Delegate to Requirements Analyst (Phase 01) with `scope: "bug-report"`
 6. Agent 01 extracts external ID from URL and creates `BUG-NNNN-{external-id}/` folder
@@ -741,6 +741,7 @@ Look up the base subject and activeForm from this table:
 | `04-design` | Create design specifications (Phase 04) | Creating design specifications |
 | `05-test-strategy` | Design test strategy (Phase 05) | Designing test strategy |
 | `06-implementation` | Implement features (Phase 06) | Implementing features |
+| `16-quality-loop` | Run parallel quality loop (Phase 16) | Running quality loop |
 | `11-local-testing` | Build and launch local environment (Phase 11) | Building local environment |
 | `07-testing` | Run integration and E2E tests (Phase 07) | Running integration tests |
 | `08-code-review` | Perform code review and QA (Phase 08) | Performing code review |

@@ -2159,6 +2159,7 @@ Use these exact definitions when creating tasks. Only create tasks for phases pr
 | `04-design` | Create design specifications (Phase 04) | Creating design specifications |
 | `05-test-strategy` | Design test strategy (Phase 05) | Designing test strategy |
 | `06-implementation` | Implement features (Phase 06) | Implementing features |
+| `16-quality-loop` | Run parallel quality loop (Phase 16) | Running quality loop |
 | `11-local-testing` | Build and launch local environment (Phase 11) | Building local environment |
 | `07-testing` | Run integration and E2E tests (Phase 07) | Running integration tests |
 | `08-code-review` | Perform code review and QA (Phase 08) | Performing code review |
@@ -2184,37 +2185,33 @@ For `description`, use: `"Phase {NN} of {workflow_type} workflow: {agent_name} �
 
 ### Example: Feature Workflow
 
-When `/isdlc feature` initializes, create these 11 tasks in order (matching workflows.json `feature.phases`):
+When `/isdlc feature` initializes, create these 9 tasks in order (matching workflows.json `feature.phases`):
 
 ```
-TaskCreate: "[1] Quick scan codebase (Phase 00)"              — pending
-TaskCreate: "[2] Capture requirements (Phase 01)"              — pending
-TaskCreate: "[3] Analyze impact (Phase 02)"                    — pending
-TaskCreate: "[4] Design architecture (Phase 03)"               — pending
-TaskCreate: "[5] Create design specifications (Phase 04)"      — pending
-TaskCreate: "[6] Design test strategy (Phase 05)"              — pending
-TaskCreate: "[7] Implement features (Phase 06)"                — pending
-TaskCreate: "[8] Build and launch local environment (Phase 11)" — pending
-TaskCreate: "[9] Run integration and E2E tests (Phase 07)"     — pending
-TaskCreate: "[10] Configure CI/CD pipelines (Phase 10)"        — pending
-TaskCreate: "[11] Perform code review and QA (Phase 08)"       — pending
+TaskCreate: [1] Estimate scope with Quick Scan (Phase 00)
+TaskCreate: [2] Capture and validate requirements (Phase 01)
+TaskCreate: [3] Analyze impact and entry points (Phase 02)
+TaskCreate: [4] Design architecture and blueprint (Phase 03)
+TaskCreate: [5] Create API contracts and module designs (Phase 04)
+TaskCreate: [6] Design test strategy and cases (Phase 05)
+TaskCreate: [7] Implement feature with TDD (Phase 06)
+TaskCreate: [8] Run parallel quality loop (Phase 16)
+TaskCreate: [9] Perform code review (Phase 08)
 ```
 
 After Phase 01 gate passes, update task 2: `subject: "~~[2] Capture requirements (Phase 01)~~"`, `status: "completed"`
 
 ### Example: Fix Workflow
 
-When `/isdlc fix` initializes, create these 8 tasks (matching workflows.json `fix.phases`):
+When `/isdlc fix` initializes, create these 6 tasks (matching workflows.json `fix.phases`):
 
 ```
-TaskCreate: "[1] Capture bug report (Phase 01)"                — pending
-TaskCreate: "[2] Trace bug root cause (Phase 02)"              — pending
-TaskCreate: "[3] Design test strategy (Phase 05)"              — pending
-TaskCreate: "[4] Implement fix with TDD (Phase 06)"            — pending
-TaskCreate: "[5] Build and launch local environment (Phase 11)" — pending
-TaskCreate: "[6] Run integration and E2E tests (Phase 07)"     — pending
-TaskCreate: "[7] Configure CI/CD pipelines (Phase 10)"         — pending
-TaskCreate: "[8] Perform code review and QA (Phase 08)"        — pending
+TaskCreate: [1] Capture bug report and requirements (Phase 01)
+TaskCreate: [2] Trace root cause (Phase 02)
+TaskCreate: [3] Design test strategy for fix (Phase 05)
+TaskCreate: [4] Implement fix with TDD (Phase 06)
+TaskCreate: [5] Run parallel quality loop (Phase 16)
+TaskCreate: [6] Perform code review (Phase 08)
 ```
 
 Note: For the fix workflow, Phase 01's subject changes to "Capture bug report (Phase 01)" and activeForm to "Capturing bug report".

@@ -1,7 +1,6 @@
 {
   "version": "1.0.0",
   "description": "Workflow definitions for iSDLC - each workflow defines a fixed, non-skippable phase sequence",
-
   "workflows": {
     "feature": {
       "label": "New Feature",
@@ -15,9 +14,7 @@
         "04-design",
         "05-test-strategy",
         "06-implementation",
-        "11-local-testing",
-        "07-testing",
-        "10-cicd",
+        "16-quality-loop",
         "08-code-review"
       ],
       "gate_mode": "strict",
@@ -37,7 +34,11 @@
         "00-quick-scan": {
           "scope": "lightweight-scan",
           "generate_scope_estimate": true,
-          "output": ["estimated_scope", "keyword_matches", "file_count_estimate"]
+          "output": [
+            "estimated_scope",
+            "keyword_matches",
+            "file_count_estimate"
+          ]
         },
         "01-requirements": {
           "scope": "feature",
@@ -50,7 +51,9 @@
           "generate_impact_analysis": true,
           "read_requirements": true
         },
-        "03-architecture": { "scope": "impact-assessment" },
+        "03-architecture": {
+          "scope": "impact-assessment"
+        },
         "05-test-strategy": {
           "_when_atdd_mode": {
             "generate_skipped_tests": true,
@@ -65,11 +68,15 @@
             "all_priorities_must_pass": true
           }
         },
-        "11-local-testing": { "scope": "local" }
+        "16-quality-loop": {
+          "scope": "parallel-quality-check"
+        },
+        "08-code-review": {
+          "scope": "human-review-only"
+        }
       },
       "requires_branch": true
     },
-
     "fix": {
       "label": "Bug Fix",
       "command": "/isdlc fix",
@@ -79,9 +86,7 @@
         "02-tracing",
         "05-test-strategy",
         "06-implementation",
-        "11-local-testing",
-        "07-testing",
-        "10-cicd",
+        "16-quality-loop",
         "08-code-review"
       ],
       "gate_mode": "strict",
@@ -124,11 +129,15 @@
             "all_priorities_must_pass": true
           }
         },
-        "11-local-testing": { "scope": "local" }
+        "16-quality-loop": {
+          "scope": "parallel-quality-check"
+        },
+        "08-code-review": {
+          "scope": "human-review-only"
+        }
       },
       "requires_branch": true
     },
-
     "test-run": {
       "label": "Run Tests",
       "command": "/isdlc test run",
@@ -139,18 +148,23 @@
       ],
       "gate_mode": "strict",
       "agent_modifiers": {
-        "11-local-testing": { "scope": "local" }
+        "11-local-testing": {
+          "scope": "local"
+        }
       },
       "options": {
         "test_type": {
           "prompt": "Which tests do you want to run?",
-          "choices": ["unit", "system", "e2e"],
+          "choices": [
+            "unit",
+            "system",
+            "e2e"
+          ],
           "multi_select": true
         }
       },
       "requires_branch": false
     },
-
     "test-generate": {
       "label": "Generate Tests",
       "command": "/isdlc test generate",
@@ -164,18 +178,23 @@
       ],
       "gate_mode": "strict",
       "agent_modifiers": {
-        "11-local-testing": { "scope": "local" }
+        "11-local-testing": {
+          "scope": "local"
+        }
       },
       "options": {
         "test_type": {
           "prompt": "What type of tests do you want to generate?",
-          "choices": ["unit", "system", "e2e"],
+          "choices": [
+            "unit",
+            "system",
+            "e2e"
+          ],
           "multi_select": false
         }
       },
       "requires_branch": false
     },
-
     "full-lifecycle": {
       "label": "Full Lifecycle",
       "command": "/isdlc start",
@@ -198,12 +217,15 @@
       ],
       "gate_mode": "strict",
       "agent_modifiers": {
-        "11-local-testing": { "scope": "local" },
-        "12-remote-build": { "scope": "remote" }
+        "11-local-testing": {
+          "scope": "local"
+        },
+        "12-remote-build": {
+          "scope": "remote"
+        }
       },
       "requires_branch": true
     },
-
     "upgrade": {
       "label": "Dependency/Tool Upgrade",
       "command": "/isdlc upgrade <name>",
@@ -227,13 +249,20 @@
         }
       },
       "agent_modifiers": {
-        "15-upgrade-plan": { "scope": "analysis", "require_user_approval": true },
-        "15-upgrade-execute": { "scope": "execution", "max_iterations": 10 },
-        "08-code-review": { "scope": "upgrade-review" }
+        "15-upgrade-plan": {
+          "scope": "analysis",
+          "require_user_approval": true
+        },
+        "15-upgrade-execute": {
+          "scope": "execution",
+          "max_iterations": 10
+        },
+        "08-code-review": {
+          "scope": "upgrade-review"
+        }
       },
       "requires_branch": true
     },
-
     "reverse-engineer": {
       "label": "Reverse Engineer",
       "command": "/isdlc reverse-engineer",
@@ -248,17 +277,31 @@
       "options": {
         "scope": {
           "prompt": "What scope do you want to analyze?",
-          "choices": ["all", "module", "endpoint", "domain"],
+          "choices": [
+            "all",
+            "module",
+            "endpoint",
+            "domain"
+          ],
           "default": "all"
         },
         "target": {
           "prompt": "Specify target name (module, endpoint path, or domain name)",
           "type": "string",
-          "required_when": ["scope:module", "scope:endpoint", "scope:domain"]
+          "required_when": [
+            "scope:module",
+            "scope:endpoint",
+            "scope:domain"
+          ]
         },
         "priority": {
           "prompt": "Filter by risk priority",
-          "choices": ["all", "critical", "high", "medium"],
+          "choices": [
+            "all",
+            "critical",
+            "high",
+            "medium"
+          ],
           "default": "all"
         },
         "generate_tests": {
@@ -303,7 +346,6 @@
       "requires_branch": false
     }
   },
-
   "rules": {
     "no_halfway_entry": true,
     "no_phase_skipping": true,
