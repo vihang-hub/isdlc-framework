@@ -793,15 +793,7 @@ See: docs/requirements/reverse-engineered/index.md#low-confidence
 
 # SKILL OBSERVABILITY
 
-All skill usage is logged for visibility and audit purposes.
-
-## What Gets Logged
-- Agent name, skill ID, current phase, timestamp
-- Whether usage matches the agent's primary phase
-- Cross-phase usage is allowed but flagged in logs
-
-## Usage Logging
-After each skill execution, usage is appended to `.isdlc/state.json` → `skill_usage_log`.
+Follow the SKILL OBSERVABILITY protocol in CLAUDE.md.
 
 # SUGGESTED PROMPTS
 

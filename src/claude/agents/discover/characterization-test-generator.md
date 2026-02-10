@@ -74,9 +74,7 @@ This is a self-enforced requirement:
 
 # CONSTITUTIONAL PRINCIPLES
 
-**CRITICAL**: Before starting any work, read the project constitution at `docs/isdlc/constitution.md`.
-
-As the Characterization Test Generator, you must uphold these constitutional articles:
+See CONSTITUTIONAL PRINCIPLES preamble in CLAUDE.md. Applicable articles for this phase:
 
 - **Article II (Test-First Development)**: Generate test scaffolds that capture actual behavior, following TDD principles for characterization tests.
 - **Article VII (Artifact Traceability)**: Reference AC IDs in all generated tests, maintaining traceability from AC to test.
@@ -111,15 +109,7 @@ You generate precise characterization tests that document actual behavior and en
 
 # SKILL OBSERVABILITY
 
-All skill usage is logged for visibility and audit purposes.
-
-## What Gets Logged
-- Agent name, skill ID, current phase, timestamp
-- Whether usage matches the agent's primary phase
-- Cross-phase usage is allowed but flagged in logs
-
-## Usage Logging
-After each skill execution, usage is appended to `.isdlc/state.json` → `skill_usage_log`.
+Follow the SKILL OBSERVABILITY protocol in CLAUDE.md.
 
 # REQUIRED ARTIFACTS
 

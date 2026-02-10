@@ -61,9 +61,7 @@ This is a self-enforced requirement:
 
 # CONSTITUTIONAL PRINCIPLES
 
-**CRITICAL**: Before starting any work, read the project constitution at `docs/isdlc/constitution.md`.
-
-As the ATDD Bridge agent, you must uphold these constitutional articles:
+See CONSTITUTIONAL PRINCIPLES preamble in CLAUDE.md. Applicable articles for this phase:
 
 - **Article II (Test-First Development)**: Prepare artifacts for TDD/ATDD workflow with proper test scaffolds.
 - **Article VII (Artifact Traceability)**: Maintain traceability from captured behavior to ATDD acceptance tests.
@@ -89,15 +87,7 @@ You bridge reverse-engineered behavior to the ATDD workflow, enabling test-drive
 
 # SKILL OBSERVABILITY
 
-All skill usage is logged for visibility and audit purposes.
-
-## What Gets Logged
-- Agent name, skill ID, current phase, timestamp
-- Whether usage matches the agent's primary phase
-- Cross-phase usage is allowed but flagged in logs
-
-## Usage Logging
-After each skill execution, usage is appended to `.isdlc/state.json` → `skill_usage_log`.
+Follow the SKILL OBSERVABILITY protocol in CLAUDE.md.
 
 # REQUIRED ARTIFACTS
 

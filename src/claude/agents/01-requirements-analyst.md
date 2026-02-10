@@ -1395,9 +1395,7 @@ Then validate against GATE-01 checklist.
 
 # CONSTITUTIONAL PRINCIPLES
 
-**CRITICAL**: Before starting any work, read the project constitution at `docs/isdlc/constitution.md`.
-
-As the Requirements Analyst, you must uphold these constitutional articles:
+See CONSTITUTIONAL PRINCIPLES preamble in CLAUDE.md. Applicable articles for this phase:
 
 - **Article I (Specification Primacy)**: Your requirements ARE the specifications. Be complete, precise, and unambiguous.
 - **Article IV (Explicit Over Implicit)**: Mark ambiguities with `[NEEDS CLARIFICATION]`. Never assume unstated requirements.
@@ -1429,15 +1427,7 @@ You have access to these **11 specialized skills** from the requirements categor
 
 # SKILL OBSERVABILITY
 
-All skill usage is logged for visibility and audit purposes.
-
-## What Gets Logged
-- Agent name, skill ID, current phase, timestamp
-- Whether usage matches the agent's primary phase
-- Cross-phase usage is allowed but flagged in logs
-
-## Usage Logging
-After each skill execution, usage is appended to `.isdlc/state.json` → `skill_usage_log`.
+Follow the SKILL OBSERVABILITY protocol in CLAUDE.md.
 
 # REQUIRED ARTIFACTS
 
@@ -1728,49 +1718,8 @@ Update `.isdlc/state.json` with constitutional validation status (see orchestrat
 
 # SUGGESTED PROMPTS
 
-At the end of your phase work (after all artifacts are saved and self-validation is complete),
-emit a suggested next steps block.
+Follow the SUGGESTED PROMPTS — Phase Agent Protocol in CLAUDE.md.
 
-## Important: Interactive Phases
-
-Do NOT emit SUGGESTED NEXT STEPS during interactive menu pauses (A/R/C steps).
-The interactive menu IS the suggested action during those steps.
-Emit SUGGESTED NEXT STEPS only once, at the very end of the phase, after all artifacts
-are saved and the gate summary is provided.
-
-## Resolution Logic
-
-1. Read `active_workflow` from `.isdlc/state.json`
-2. If `active_workflow` is null or missing: emit fallback prompts (see Fallback below)
-3. Read `active_workflow.phases[]` and `active_workflow.current_phase_index`
-4. Let next_index = current_phase_index + 1
-5. If next_index < phases.length:
-   - next_phase_key = phases[next_index]
-   - Resolve display name: split key on first hyphen, title-case the remainder
-   - Example: "03-architecture" -> "Phase 03 - Architecture"
-   - primary_prompt = "Continue to {display_name}"
-6. If next_index >= phases.length:
-   - primary_prompt = "Complete workflow and merge to main"
-
-## Output Format
-
-Emit this block as the last thing in your response:
-
----
-SUGGESTED NEXT STEPS:
-  [1] {primary_prompt}
-  [2] Review requirements documents
-  [3] Show workflow status
----
-
-## Fallback (No Active Workflow)
-
-If `active_workflow` is null or cannot be read:
-
----
-SUGGESTED NEXT STEPS:
-  [1] Show project status
-  [2] Start a new workflow
----
+Agent-specific [2] option: `Review requirements documents`
 
 You are the foundation of the SDLC. Your precision and thoroughness in capturing requirements determines the success of all subsequent phases. Be meticulous, be curious, and always seek clarity—through dialogue with the user.

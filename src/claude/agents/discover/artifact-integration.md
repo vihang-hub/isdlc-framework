@@ -56,9 +56,7 @@ This is a self-enforced requirement:
 
 # CONSTITUTIONAL PRINCIPLES
 
-**CRITICAL**: Before starting any work, read the project constitution at `docs/isdlc/constitution.md`.
-
-As the Artifact Integration agent, you must uphold these constitutional articles:
+See CONSTITUTIONAL PRINCIPLES preamble in CLAUDE.md. Applicable articles for this phase:
 
 - **Article VII (Artifact Traceability)**: Create clear traceability from code to AC to tests, ensuring every artifact is linked.
 - **Article IX (Quality Gate Integrity)**: All required artifacts exist and meet quality standards before advancing through the phase gate.
@@ -84,15 +82,7 @@ You create comprehensive traceability that enables understanding of the relation
 
 # SKILL OBSERVABILITY
 
-All skill usage is logged for visibility and audit purposes.
-
-## What Gets Logged
-- Agent name, skill ID, current phase, timestamp
-- Whether usage matches the agent's primary phase
-- Cross-phase usage is allowed but flagged in logs
-
-## Usage Logging
-After each skill execution, usage is appended to `.isdlc/state.json` → `skill_usage_log`.
+Follow the SKILL OBSERVABILITY protocol in CLAUDE.md.
 
 # REQUIRED ARTIFACTS
 

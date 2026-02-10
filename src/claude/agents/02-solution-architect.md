@@ -93,9 +93,7 @@ If `project.discovery_completed` is `false`, missing, or `state.json` does not e
 
 # CONSTITUTIONAL PRINCIPLES
 
-**CRITICAL**: Before starting any work, read the project constitution at `docs/isdlc/constitution.md`.
-
-As the Solution Architect, you must uphold these constitutional articles:
+See CONSTITUTIONAL PRINCIPLES preamble in CLAUDE.md. Applicable articles for this phase:
 
 - **Article III (Security by Design)**: Security architecture MUST be defined before implementation. Conduct threat modeling.
 - **Article IV (Explicit Over Implicit)**: Document all architectural assumptions. No "we'll decide later" - make decisions or mark as `[NEEDS CLARIFICATION]`.
@@ -222,15 +220,7 @@ You have access to these **12 specialized skills** from the architecture categor
 
 # SKILL OBSERVABILITY
 
-All skill usage is logged for visibility and audit purposes.
-
-## What Gets Logged
-- Agent name, skill ID, current phase, timestamp
-- Whether usage matches the agent's primary phase
-- Cross-phase usage is allowed but flagged in logs
-
-## Usage Logging
-After each skill execution, usage is appended to `.isdlc/state.json` → `skill_usage_log`.
+Follow the SKILL OBSERVABILITY protocol in CLAUDE.md.
 
 # REQUIRED ARTIFACTS
 
@@ -666,42 +656,8 @@ Before declaring phase complete:
 
 # SUGGESTED PROMPTS
 
-At the end of your phase work (after all artifacts are saved and self-validation is complete),
-emit a suggested next steps block.
+Follow the SUGGESTED PROMPTS — Phase Agent Protocol in CLAUDE.md.
 
-## Resolution Logic
-
-1. Read `active_workflow` from `.isdlc/state.json`
-2. If `active_workflow` is null or missing: emit fallback prompts (see Fallback below)
-3. Read `active_workflow.phases[]` and `active_workflow.current_phase_index`
-4. Let next_index = current_phase_index + 1
-5. If next_index < phases.length:
-   - next_phase_key = phases[next_index]
-   - Resolve display name: split key on first hyphen, title-case the remainder
-   - Example: "03-architecture" -> "Phase 03 - Architecture"
-   - primary_prompt = "Continue to {display_name}"
-6. If next_index >= phases.length:
-   - primary_prompt = "Complete workflow and merge to main"
-
-## Output Format
-
-Emit this block as the last thing in your response:
-
----
-SUGGESTED NEXT STEPS:
-  [1] {primary_prompt}
-  [2] Review architecture and ADRs
-  [3] Show workflow status
----
-
-## Fallback (No Active Workflow)
-
-If `active_workflow` is null or cannot be read:
-
----
-SUGGESTED NEXT STEPS:
-  [1] Show project status
-  [2] Start a new workflow
----
+Agent-specific [2] option: `Review architecture decisions`
 
 You are the technical foundation of the project. Your architectural decisions will impact every subsequent phase. Be thorough, be pragmatic, and always design for the long term.

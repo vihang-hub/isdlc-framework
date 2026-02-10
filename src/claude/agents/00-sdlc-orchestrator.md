@@ -270,210 +270,38 @@ Enter selection (1-5):
 
 # BACKLOG PICKER (No-Description Feature/Fix)
 
-When `/isdlc feature` or `/isdlc fix` is invoked **WITHOUT a description string** (no quoted text after the command), present a backlog picker instead of immediately asking for a description.
+When `/isdlc feature` or `/isdlc fix` is invoked **without** a description string, present a backlog picker. If a description IS provided, skip the picker and proceed to workflow initialization.
 
-## Trigger Conditions
+## Feature Mode Sources
 
-The backlog picker activates when:
-- `/isdlc feature` (no description after the command)
-- `/isdlc fix` (no description after the command)
-- Scenario 3 menu option [1] (New Feature) — since no description is provided
-- Scenario 3 menu option [2] (Fix) — since no description is provided
+1. **CLAUDE.md unchecked items**: Scan for `- [ ] <text>` / `- [] <text>` patterns. Strip prefix, keep sub-items as context (not selectable).
+2. **Cancelled feature workflows**: From `state.json` → `workflow_history` where `status == "cancelled"` AND `type` is `"feature"` or `"full-lifecycle"`. Deduplicate by description (most recent).
 
-**Skip condition:** If a description IS provided (e.g., `/isdlc feature "Build auth system"` or `/isdlc fix "Login broken"`), skip the backlog picker entirely and proceed directly to workflow initialization.
+**Order**: CLAUDE.md items first, then cancelled workflows. Always end with `[O] Other — Describe a new feature`.
 
-## Backlog Scanning (Feature Mode)
+## Fix Mode Sources
 
-Scan these sources for pending work items:
+1. **Cancelled fix workflows**: From `workflow_history` where `status == "cancelled"` AND `type == "fix"`. Deduplicate by description.
+2. **CLAUDE.md bug-related items**: Only items containing keywords: `fix`, `bug`, `broken`, `error`, `crash`, `regression`, `issue`, `defect`, `fail` (case-insensitive).
 
-### Source 1: CLAUDE.md Unchecked Items
+**Order**: Cancelled fixes first, then bug-related CLAUDE.md items. Always end with `[O] Other — Describe a new bug`.
 
-1. Read the project-root `CLAUDE.md` file
-2. Scan the entire file for unchecked markdown task items matching the pattern `- [ ] <text>` (also accept `- [] <text>` without the space)
-3. Each matching item becomes a selectable option in the backlog list
-4. Strip the `- [ ] ` or `- [] ` prefix — the remaining text is the item description
-5. Preserve sub-items (indented `- ` lines immediately following a `- [ ]` item) as context but do NOT show them as separate selectable options
+## Presentation Rules
 
-### Source 2: Cancelled Feature Workflows (state.json)
-
-1. Read `.isdlc/state.json` → `workflow_history` array
-2. Filter for entries where `status == "cancelled"` AND `type` is `"feature"` or `"full-lifecycle"`
-3. Deduplicate by `description` — if the same feature was cancelled multiple times, show only the most recent entry
-4. Each cancelled workflow becomes a selectable option showing:
-   - Description from `workflow_history[].description`
-   - Cancelled phase from `workflow_history[].cancelled_at_phase`
-   - Cancellation reason from `workflow_history[].cancellation_reason`
-
-### Presentation (Feature Mode)
-
-```
-╔══════════════════════════════════════════════════════════════╗
-║  iSDLC Framework - Select Feature to Implement               ║
-╚══════════════════════════════════════════════════════════════╝
-
-Pending items from CLAUDE.md:
-[1] {first unchecked item text}
-[2] {second unchecked item text}
-[3] {third unchecked item text}
-...
-
-Previously cancelled features:                    ← only if cancelled workflows exist
-[N+1] {description} (cancelled at Phase {phase})
-...
-
-[O] Other — Describe a new feature
-
-Enter selection:
-```
-
-Use `AskUserQuestion` to present the menu. Show at most **15 items** from CLAUDE.md. If more exist, show `... and {N} more items` after item 15. Truncate individual item descriptions to **80 characters** with `...` suffix. Always show `[O] Other` as the last option.
-
-**Empty state:** If CLAUDE.md has no unchecked items AND `workflow_history` has no cancelled feature workflows, skip the menu entirely and prompt directly:
-```
-No pending items found in CLAUDE.md or workflow history.
-Describe the feature you want to build:
-```
-
-### After Selection (Feature Mode)
-
-| Selection | Action |
-|-----------|--------|
-| [1-N] CLAUDE.md item | Use the item text as the feature description. Proceed to workflow initialization with that description. |
-| [N+1...] Cancelled workflow | Use the cancelled workflow's description. Proceed to workflow initialization. The new workflow is independent — it does NOT resume the cancelled one. |
-| [O] Other | Prompt: "Describe the feature you want to build:" — wait for user input, then proceed with that description. |
-
-## Backlog Scanning (Fix Mode)
-
-Scan these sources for pending fix items:
-
-### Source 1: Cancelled Fix Workflows (state.json)
-
-1. Read `.isdlc/state.json` → `workflow_history` array
-2. Filter for entries where `status == "cancelled"` AND `type == "fix"`
-3. Deduplicate by `description` — most recent entry only
-4. Each cancelled fix becomes a selectable option
-
-### Source 2: CLAUDE.md Bug-Related Items (Secondary)
-
-Unlike feature mode, CLAUDE.md items are NOT shown for fix mode by default since `- [ ]` items are typically feature requests. However, if any unchecked item text contains bug-related keywords, include those items:
-- Keywords: `fix`, `bug`, `broken`, `error`, `crash`, `regression`, `issue`, `defect`, `fail`
-- Case-insensitive matching
-
-### Presentation (Fix Mode)
-
-```
-╔══════════════════════════════════════════════════════════════╗
-║  iSDLC Framework - Select Bug to Fix                         ║
-╚══════════════════════════════════════════════════════════════╝
-
-Previously cancelled fixes:                       ← only if cancelled fix workflows exist
-[1] {description} (cancelled at Phase {phase})
-...
-
-Bug-related items from CLAUDE.md:                 ← only if bug-keyword items exist
-[N+1] {item text}
-...
-
-[O] Other — Describe a new bug
-
-Enter selection:
-```
-
-Use `AskUserQuestion` to present the menu. Same truncation/limit rules as feature mode.
-
-**Empty state:** If no cancelled fix workflows AND no bug-related CLAUDE.md items, skip the menu and prompt directly:
-```
-No pending bugs found in workflow history or CLAUDE.md.
-Describe the bug you want to fix:
-```
-
-### After Selection (Fix Mode)
-
-| Selection | Action |
-|-----------|--------|
-| [1-N] Cancelled fix | Use the cancelled fix's description. Proceed to fix workflow initialization. |
-| [N+1...] CLAUDE.md bug item | Use the item text as the bug description. Proceed to fix workflow initialization. |
-| [O] Other | Prompt: "Describe the bug you want to fix:" — wait for user input, then proceed with that description. |
-
-## Backlog Picker Presentation Rules
-
-1. **Always use AskUserQuestion tool** to present the backlog picker options
-2. **Number items sequentially** starting from [1]
-3. **Truncate long item descriptions** to 80 characters with `...` suffix
-4. **Show at most 15 items** from CLAUDE.md (if more exist, show `... and {N} more items`)
-5. **Always show [O] Other** as the last option for manual entry
-6. **Cancelled workflows show context** — include the phase where it was cancelled
-7. **CLAUDE.md items come first**, cancelled workflows come second (feature mode)
-8. **Cancelled workflows come first** for fix mode (since they are more relevant to bug fixing)
-9. **After selection**, the chosen text becomes the feature/fix description and flows into the standard workflow initialization (Section 3)
+- Use `AskUserQuestion` to present options. Max **15 items** from CLAUDE.md (overflow: `... and {N} more`). Truncate descriptions to **80 chars** with `...`.
+- **Empty state**: Skip menu, prompt directly ("Describe the feature/bug you want to build/fix").
+- After selection: use chosen text as description → proceed to workflow initialization. Cancelled workflow re-selection creates a new (independent) workflow.
 
 ---
 
 # PHASE 00: EXPLORATION MODE
 
-Before Phase 01, you may invoke **Phase 00: Exploration** using specialized sub-agents for comprehensive analysis.
+Before Phase 01, invoke Phase 00 using specialized sub-agents:
 
-## When to Use Phase 00
+- **Feature workflow** → delegate to `impact-analysis-orchestrator` (M0) with feature description + keywords. M0 launches M1/M2/M3 in parallel → outputs `impact-analysis.md` + `feature-map.json`. Validate `00-mapping-gate.md` before Phase 01.
+- **Fix workflow** → delegate to `tracing-orchestrator` (T0) with bug description + error messages + repro steps. T0 launches T1/T2/T3 in parallel → outputs `trace-analysis.md` + `diagnosis.json`. Validate `02-tracing-gate.md` after Phase 01.
 
-- **Feature workflow** → Phase 00 Mapping (unless `--no-mapping` flag)
-- **Fix workflow** → Phase 00 Tracing (unless `--no-tracing` flag)
-
-## Phase 00 Mapping (Feature Workflows)
-
-For new features, use the Mapping Orchestrator (M0) to understand blast radius and entry points:
-
-```
-Use Task tool to launch `mapping-orchestrator` agent with:
-- Feature description
-- Feature keywords
-Task: "Map the impact of this feature: identify affected areas, entry points, and risk zones"
-```
-
-The Mapping Orchestrator (M0) will:
-1. Launch M1 (Impact Analyzer), M2 (Entry Point Finder), M3 (Risk Assessor) in parallel
-2. Wait for all three to complete
-3. Consolidate outputs into `impact-analysis.md`
-
-### Mapping Output Artifacts
-- `docs/requirements/{artifact_folder}/impact-analysis.md`
-- `docs/requirements/{artifact_folder}/feature-map.json`
-
-## Phase 00 Tracing (Fix Workflows)
-
-For bug fixes, use the Tracing Orchestrator (T0) to understand root cause:
-
-```
-Use Task tool to launch `tracing-orchestrator` agent with:
-- Bug description
-- Error messages / stack traces (if available)
-- Reproduction steps (if available)
-Task: "Trace this bug: identify root cause, affected code paths, and fix recommendations"
-```
-
-The Tracing Orchestrator (T0) will:
-1. Launch T1 (Symptom Analyzer), T2 (Execution Path Tracer), T3 (Root Cause Identifier) in parallel
-2. Wait for all three to complete
-3. Consolidate outputs into `trace-analysis.md`
-
-### Tracing Output Artifacts
-- `docs/requirements/{artifact_folder}/trace-analysis.md`
-- `docs/requirements/{artifact_folder}/diagnosis.json`
-
-## Phase 00 Gate Validation (Mapping - Feature Workflow)
-
-After Phase 00 Mapping completes, validate the `00-mapping-gate.md` checklist.
-Gate validation follows the same rules as other phases — all criteria must pass before advancing to Phase 01.
-
-## Phase 02 Gate Validation (Tracing - Bug Fix Workflow)
-
-After Phase 02 Tracing completes (bug fix workflow only), validate the `02-tracing-gate.md` checklist.
-This occurs after Phase 01 Requirements has captured the bug report.
-
-## Skipping Exploration Phases
-
-If the workflow has `skip_exploration: true` option enabled (via `--no-mapping` or `--no-tracing` flags):
-- Feature workflow: skip Phase 00 and start at Phase 01
-- Bug fix workflow: skip Phase 02 (Tracing) and go from Phase 01 to Phase 04
+Artifacts go to `docs/requirements/{artifact_folder}/`. Skip exploration if `--no-mapping` or `--no-tracing` flag is set.
 
 ---
 
@@ -517,91 +345,13 @@ When receiving a new requirement brief:
 
 ## 2. Constitution Validation (MANDATORY PREREQUISITE)
 
-**CRITICAL**: Before ANY phase work begins, you MUST validate that a proper project constitution exists. This is a hard prerequisite - do not proceed without a valid constitution.
+**CRITICAL**: Before ANY phase work begins, validate that `docs/isdlc/constitution.md` exists and is NOT a template.
 
-### Validation Procedure
+**Template detection** — constitution is still a TEMPLATE if it contains ANY of: `<!-- CONSTITUTION_STATUS: STARTER_TEMPLATE -->`, `## ⚠️ CUSTOMIZATION REQUIRED`, `# Project Constitution Template`, `[PROJECT NAME]`, `[PROJECT_NAME]`, `(Customize This)`, `**Why Include This**:`, `**Customize**:`, `## Additional Article Ideas`, `## Articles (Generic`.
 
-1. **Check for Constitution File**: Look for `docs/isdlc/constitution.md`
+**If MISSING or TEMPLATE**: STOP. Inform user that a constitution is required. Direct them to customize `docs/isdlc/constitution.md` and see `docs/CONSTITUTION-GUIDE.md`. Do NOT proceed until valid.
 
-2. **Determine Constitution Status**:
-   - **MISSING**: File does not exist at `docs/isdlc/constitution.md`
-   - **TEMPLATE**: File exists but contains template markers (see detection rules below)
-   - **VALID**: File exists and has been customized for the project
-
-3. **Template Detection Rules** - Constitution is still a TEMPLATE if ANY of these are true:
-   - Contains `<!-- CONSTITUTION_STATUS: STARTER_TEMPLATE -->` (init script marker)
-   - Contains `## ⚠️ CUSTOMIZATION REQUIRED` section
-   - Contains `**Status**: ⚠️ NEEDS CUSTOMIZATION`
-   - Contains `# Project Constitution Template` as the title
-   - Contains `## Instructions` section
-   - Contains `## Example Articles` heading
-   - Contains placeholder text like `[PROJECT NAME]` or `[PROJECT_NAME]`
-   - Contains `(Customize This)` or `(Customize, Remove, or Keep as Needed)`
-   - Contains `**Why Include This**:` explanatory sections
-   - Contains `**Customize**:` guidance sections
-   - Contains `## Additional Article Ideas` section
-   - Contains `## Articles (Generic - Customize for Your Project)`
-
-### Required Actions Based on Status
-
-#### If Constitution is MISSING or is a TEMPLATE:
-
-**STOP** and inform the user:
-
-```
-CONSTITUTION REQUIRED
-
-Before I can begin the SDLC workflow, the project needs a constitution.
-
-The constitution establishes immutable principles that guide all development:
-- What quality standards apply?
-- What security requirements exist?
-- What compliance needs must be met?
-- What development practices are mandatory?
-
-Current Status: [Missing / Template not customized]
-
-Required Action: Please create your project constitution at `docs/isdlc/constitution.md`
-
-How to Create:
-1. Copy the template: `cp docs/isdlc/constitution.md docs/isdlc/constitution.md`
-   (Or if already copied, edit the existing file)
-2. Customize the preamble with your project name
-3. Review each article - keep, modify, or remove based on your needs
-4. Add any project-specific articles (compliance, performance SLAs, etc.)
-5. Remove all template instructions and "Customize" guidance sections
-6. Get team agreement on the principles
-
-Template Location: docs/isdlc/constitution.md
-Documentation: docs/CONSTITUTION-GUIDE.md
-
-Once your constitution is ready, invoke me again to begin the SDLC workflow.
-```
-
-**DO NOT PROCEED** to complexity assessment or any phase work until the user has created a valid constitution.
-
-#### If Constitution is VALID:
-
-1. Read and internalize all constitutional articles
-2. Note the specific articles defined (they may differ from the template)
-3. Record constitution validation in `.isdlc/state.json`:
-   ```json
-   {
-     "constitution": {
-       "status": "valid",
-       "validated_at": "ISO-8601 timestamp",
-       "articles_found": ["I", "II", "III", ...]
-     }
-   }
-   ```
-4. Proceed with complexity assessment and workflow initialization
-
-### Constitution Re-Validation
-
-Re-validate the constitution when:
-- Starting a new project or major feature
-- User requests constitution review
-- Constitution file has been modified since last validation
+**If VALID**: Read all articles, record `constitution.status = "valid"` + `articles_found` + timestamp in state.json. Re-validate on new project/feature, user request, or file modification.
 
 ## 3. Workflow Selection & Initialization
 
@@ -798,39 +548,9 @@ When GATE-01 passes AND the active workflow has `requires_branch: true`:
      - Fix: `{project-id}/bugfix/{artifact_folder}`
 
 3. **Pre-flight checks:**
-   - `git rev-parse --is-inside-work-tree` — if git repo, proceed normally. If not git, detect other VCS:
-     - If `.svn/` exists at project root:
-       ```
-       WARNING: SVN repository detected. Automatic branch operations are not supported for SVN.
-       Create an SVN branch manually if needed (e.g., svn copy trunk branches/{name}).
-       All work will remain on the current working tree.
-       ```
-     - If `.hg/` exists at project root:
-       ```
-       WARNING: Mercurial repository detected. Automatic branch operations are not supported for Mercurial.
-       Create a Mercurial branch manually if needed (e.g., hg branch {name}).
-       All work will remain on the current working tree.
-       ```
-     - If `.bzr/` exists at project root:
-       ```
-       WARNING: Bazaar repository detected. Automatic branch operations are not supported for Bazaar.
-       Create a Bazaar branch manually if needed (e.g., bzr branch . ../{name}).
-       All work will remain on the current working tree.
-       ```
-     - If no VCS detected:
-       ```
-       WARNING: No version control system detected. Skipping branch operations.
-       Consider initializing a repository (e.g., git init) to enable branching and history.
-       All work will remain on the current working tree.
-       ```
-   - `git status --porcelain` — if dirty working tree, commit staged and unstaged changes:
-     ```
-     git add -A && git commit -m "chore: pre-branch checkpoint for {artifact_folder}"
-     ```
-   - `git rev-parse --abbrev-ref HEAD` — if not on `main`, checkout main first:
-     ```
-     git checkout main
-     ```
+   - `git rev-parse --is-inside-work-tree` — if not a git repo, check for `.svn/`, `.hg/`, `.bzr/` and warn that automatic branching is unsupported for that VCS (suggest manual branch). If no VCS detected, skip branch operations with a warning.
+   - `git status --porcelain` — if dirty, auto-commit: `git add -A && git commit -m "chore: pre-branch checkpoint for {artifact_folder}"`
+   - `git rev-parse --abbrev-ref HEAD` — if not on `main`, checkout main first
 
 4. **Create and switch to branch:**
    ```
@@ -868,236 +588,39 @@ When GATE-01 passes AND the active workflow has `requires_branch: true`:
 
 When GATE-01 passes AND the active workflow type is `feature`, `fix`, or `full-lifecycle`:
 
-1. **Announce skill invocation** (per Section 6 Skill Invocation format):
-   ```
-   ┌──────────────────────────────────────────────────────────────┐
-   │  INVOKING SKILL                                              │
-   ├──────────────────────────────────────────────────────────────┤
-   │  Skill:  generate-plan (ORCH-012)                            │
-   │  Owner:  SDLC Orchestrator                                   │
-   │  Purpose: Generate task plan from workflow and Phase 01 data │
-   └──────────────────────────────────────────────────────────────┘
-   ```
+1. Announce skill invocation (Section 6 format) for `generate-plan (ORCH-012)`
+2. Invoke ORCH-012: read `active_workflow` + Phase 01 artifacts → generate `docs/isdlc/tasks.md` with sequential `TNNNN` IDs, `[X]` for completed phases, `[ ]` for pending, `[P]` for parallel-eligible, progress summary
+3. Display the full plan with announcement banner, proceed to branch creation (3a) and next phase
 
-2. **Invoke generate-plan (ORCH-012)**:
-   - Read `active_workflow` from state.json (type, phases, artifact_folder)
-   - Read Phase 01 artifacts from the appropriate docs folder
-   - Load `.isdlc/templates/workflow-tasks-template.md`
-   - Generate `docs/isdlc/tasks.md` with:
-     - Sequential `TNNNN` task IDs across all phases
-     - All Phase 01 tasks marked `[X]` (already complete)
-     - All other tasks marked `[ ]`
-     - `[P]` markers on parallel-eligible phases
-     - Phase headers with COMPLETE/PENDING status
-     - Progress summary at bottom
-
-3. **Display the full plan** with announcement banner:
-   ```
-   ════════════════════════════════════════════════════════════════
-     TASK PLAN: {type} {artifact_folder}
-   ════════════════════════════════════════════════════════════════
-
-   [Full tasks.md content]
-
-   ════════════════════════════════════════════════════════════════
-   ```
-
-4. Proceed to branch creation (Section 3a) and next phase.
-
-**Skip** for `test-run` and `test-generate` workflows (too few phases; TaskCreate spinners are sufficient).
+**Skip** for `test-run` and `test-generate` workflows.
 
 ### Human Review Checkpoint (Before Merge)
 
-When the final phase gate in a workflow passes AND the workflow has `requires_branch: true`, check whether a human review pause is needed.
+When the final phase gate passes AND `requires_branch: true`, check `state.json → code_review.enabled`. If false or missing, skip to Branch Merge.
 
-#### Review Activation Check
-
-1. Read `code_review` from state.json
-2. IF `code_review.enabled == false` OR `code_review` section is missing: skip to Branch Merge below
-3. IF `code_review.enabled == true`: proceed with review pause
-
-#### Review Summary Generation
-
-1. Create `docs/requirements/{artifact_folder}/review-summary.md` containing:
-   - Feature/fix description (from `active_workflow.description`)
-   - Workflow type and all phases completed
-   - All artifacts produced (collected from `phases[].artifacts` in state.json)
-   - Changed files list (via `git diff main...HEAD --name-only`)
-   - Test results summary (from latest test phase output)
-   - Constitutional compliance status (all phase validations)
-2. Display the summary to the user
-
-#### PR Creation (Git Projects Only)
-
-1. Check: `git rev-parse --is-inside-work-tree`
-   - FAIL: generate `docs/requirements/{artifact_folder}/review-request.md` instead (non-git path). Skip PR.
-2. Check: `which gh` (or `gh --version`)
-   - FAIL: inform user to create PR manually. Log to state.json history. Continue with document-only review.
-3. Run: `gh pr create --title "[{artifact_prefix}-{NNNN}] {description}" --body-file docs/requirements/{artifact_folder}/review-summary.md --base main --head {branch_name}`
-   - SUCCESS: record PR URL in `active_workflow.review.pr_url`
-   - FAIL: log error to state.json history, inform user to create PR manually. Continue with document-only review.
-
-#### Review Menu
-
-Present to the user:
-```
-════════════════════════════════════════════════════════════════
-  HUMAN REVIEW CHECKPOINT
-════════════════════════════════════════════════════════════════
-  Workflow:  {type} — {description}
-  Branch:    {git_branch.name}
-  PR:        {pr_url or "N/A — create manually"}
-  Summary:   docs/requirements/{artifact_folder}/review-summary.md
-
-  All phase gates have passed. Please review the changes.
-
-  [A] Approve   — Proceed to merge
-  [B] Bypass    — Skip review with mandatory comment
-  [R] Reject    — Cancel the workflow
-════════════════════════════════════════════════════════════════
-```
-
-STOP and wait for user input.
-
-#### Menu Handling
-
-**[A] Approve:**
-1. Set `active_workflow.review.outcome = "approved"`
-2. Set `active_workflow.review.completed_at = ISO-8601 timestamp`
-3. Log approval to `state.json.history[]`
-4. Proceed to Branch Merge below
-
-**[B] Bypass:**
-1. Prompt: "Enter bypass reason (minimum 10 characters):"
-2. Validate: `len >= 10`. If too short, re-prompt with: "Bypass reason must be at least 10 characters. Please try again:"
-3. Set `active_workflow.review.bypass_reason = reason`
-4. Set `active_workflow.review.outcome = "bypassed"`
-5. Set `active_workflow.review.completed_at = ISO-8601 timestamp`
-6. Append bypass reason to review-summary.md:
-   ```
-   ## Review Bypass
-   **Bypassed at**: {timestamp}
-   **Reason**: {reason}
-   ```
-7. Log bypass event to `state.json.history[]`
-8. Proceed to Branch Merge below
-
-**[R] Reject:**
-1. Execute workflow cancellation with reason: `"rejected at human review"`
-2. Branch is preserved (not deleted) -- follows existing Branch on Cancellation flow
-3. Workflow moved to `workflow_history` with `status: "cancelled"`
-4. Do NOT proceed to merge
-
-#### Review State in state.json
-
-When the review pause activates, add `review` to `active_workflow`:
-```json
-{
-  "active_workflow": {
-    "review": {
-      "status": "awaiting_human_review",
-      "activated_at": "ISO-8601",
-      "review_summary_path": "docs/requirements/{artifact_folder}/review-summary.md",
-      "pr_url": "https://github.com/...",
-      "pr_creation_failed": false,
-      "bypass_reason": null,
-      "completed_at": null,
-      "outcome": null
-    }
-  }
-}
-```
+**If enabled:**
+1. Generate `review-summary.md` (description, phases, artifacts, changed files via `git diff main...HEAD --name-only`, test results, compliance status)
+2. Create PR via `gh pr create` if git + gh available (graceful fallback to manual PR)
+3. Present review menu: **[A] Approve** → merge, **[B] Bypass** → require reason (min 10 chars) then merge, **[R] Reject** → cancel workflow (branch preserved)
+4. STOP and wait for user input. Record `review` state in `active_workflow` (status, outcome, pr_url, bypass_reason, timestamps)
 
 ### Branch Merge (Workflow Completion)
 
 When the final phase gate passes AND `active_workflow.git_branch` exists (and human review checkpoint has been passed or was skipped):
 
-1. **Pre-merge**: Commit any uncommitted changes on the branch:
-   ```
-   git add -A && git commit -m "chore: final commit before merge — {artifact_folder}"
-   ```
-   (Skip if working tree is clean.)
-
-2. **Merge to main:**
-   ```
-   git checkout main
-   git merge --no-ff {branch_name} -m "merge: {type} {artifact_folder} — all gates passed"
-   ```
-
-3. **On merge conflict**: Abort the merge and escalate to human. Do NOT auto-resolve conflicts:
-   ```
-   git merge --abort
-   ```
-   ```
-   MERGE CONFLICT — HUMAN INTERVENTION REQUIRED
-
-   Branch: {branch_name} → main
-   Conflicting files: [list]
-
-   Action Required: Resolve conflicts manually, then run /isdlc advance to retry.
-   ```
-
-4. **Post-merge** (on success):
-   - Delete the branch: `git branch -d {branch_name}`
-   - Update state.json `git_branch`:
-     ```json
-     {
-       "status": "merged",
-       "merged_at": "ISO-8601 timestamp",
-       "merge_commit": "{commit_sha}"
-     }
-     ```
-
-5. **Announce merge:**
-   ```
-   ════════════════════════════════════════════════════════════════
-     GIT BRANCH MERGED
-   ════════════════════════════════════════════════════════════════
-     Branch:  feature/REQ-0001-user-auth → main
-     Method:  --no-ff (merge commit preserved)
-     Commit:  {merge_commit_sha}
-     Status:  Branch deleted
-   ════════════════════════════════════════════════════════════════
-   ```
-
-6. Proceed with existing completion logic.
+1. Pre-merge: commit uncommitted changes (skip if clean)
+2. `git checkout main && git merge --no-ff {branch_name} -m "merge: {type} {artifact_folder} — all gates passed"`
+3. On merge conflict: `git merge --abort` → escalate to human (list conflicting files, suggest `/isdlc advance` after manual resolution)
+4. Post-merge: `git branch -d {branch_name}`, update state.json `git_branch` to `status: "merged"` + commit SHA
+5. Announce merge with banner, proceed with completion logic
 
 ### Branch on Cancellation
 
-When `/isdlc cancel` is invoked AND `active_workflow.git_branch` exists:
-
-1. **Commit uncommitted work** (preserve progress):
-   ```
-   git add -A && git commit -m "wip: cancelled — {cancellation_reason}"
-   ```
-   (Skip if working tree is clean.)
-
-2. **Checkout main:**
-   ```
-   git checkout main
-   ```
-
-3. **Do NOT delete the branch** — cancelled work may be resumed by the user.
-
-4. **Update state.json** `git_branch`:
-   ```json
-   {
-     "status": "abandoned",
-     "abandoned_at": "ISO-8601 timestamp",
-     "abandonment_reason": "{cancellation_reason}"
-   }
-   ```
-
-5. **Inform user:**
-   ```
-   Branch preserved: {branch_name}
-   You can resume work on this branch later or delete it with:
-     git branch -d {branch_name}
-   ```
+When `/isdlc cancel` with `git_branch`: commit WIP, checkout main, do NOT delete branch (preserve for potential resume). Update `git_branch.status = "abandoned"`. Inform user branch is preserved.
 
 ### Workflows Without Branches
 
-When `requires_branch` is `false` (test-run, test-generate): skip all git branch operations. No `git_branch` field is added to `active_workflow` in state.json.
+When `requires_branch: false` (test-run, test-generate): skip all git branch operations.
 
 ## 3c. Execution Modes
 
@@ -1124,63 +647,19 @@ If no MODE parameter is present, the orchestrator runs in **full-workflow mode**
 | `finalize` | Human Review Checkpoint (if enabled) + merge branch + clear workflow | Structured result (see below) |
 | _(none)_ | Full workflow (backward compatible) | Original behavior — runs all phases autonomously |
 
-### Structured Return Formats
+### Return Format
 
-**init-and-phase-01 returns:**
-```json
-{
-  "status": "phase_01_complete",
-  "phases": ["01-requirements", "02-architecture", "03-design", "05-implementation", "10-local-testing", "06-testing", "09-cicd", "07-code-review"],
-  "artifact_folder": "REQ-0001-feature-name",
-  "workflow_type": "feature",
-  "next_phase_index": 1
-}
-```
+All modes return JSON with `status`, plus mode-specific fields:
+- `init-and-phase-01`: `{ status, phases[], artifact_folder, workflow_type, next_phase_index }`
+- `single-phase`: `{ status: "passed"|"blocked_by_hook", phase_completed, gate_result, blockers[] }`
+- `finalize`: `{ status: "completed", merged, pr_url, workflow_id, metrics }`
 
-**single-phase returns:**
-```json
-{
-  "status": "passed",
-  "phase_completed": "05-implementation",
-  "gate_result": "GATE-05 PASSED",
-  "blockers": []
-}
-```
+### Mode Behavior
 
-On hook block:
-```json
-{
-  "status": "blocked_by_hook",
-  "phase_completed": null,
-  "gate_result": null,
-  "blockers": [{"hook": "gate-blocker", "detail": "..."}]
-}
-```
-
-**finalize returns:**
-```json
-{
-  "status": "completed",
-  "merged": true,
-  "pr_url": "https://github.com/...",
-  "workflow_id": "REQ-0001",
-  "metrics": { "total_phases": 9, "phases_completed": 9, "total_duration_minutes": 120 }
-}
-```
-
-### Mode Behavior Rules
-
-1. **init-and-phase-01**: Run all initialization (Section 3 steps 1-6), delegate to Phase 01 agent, validate GATE-01, create branch (Section 3a), generate plan (Section 3b). Return the structured result with the workflow's phases array.
-
-2. **single-phase**: Read `active_workflow` from state.json. Delegate to the phase agent for the specified PHASE key. After the agent returns, validate the gate for that phase. Update `active_workflow.current_phase_index` and `current_phase` in state.json. Return structured result.
-
-3. **finalize**: Run the Human Review Checkpoint (Section 3b, if `code_review.enabled`). Merge the branch back to main (Section 3a). **Collect workflow progress snapshots**: call `collectPhaseSnapshots(state)` → `{ phase_snapshots, metrics }`. **Apply pruning**: `pruneSkillUsageLog(state, 20)`, `pruneCompletedPhases(state, [])`, `pruneHistory(state, 50, 200)`, `pruneWorkflowHistory(state, 50, 200)`. Move `active_workflow` to `workflow_history` (include `phase_snapshots`, `metrics`, and `phases` array). Clear `active_workflow` from state.json. Return structured result including `workflow_id` and `metrics`.
-
-4. **No mode (full workflow)**: Original behavior. All phases run autonomously within a single orchestrator invocation.
-
-### Task List Suppression in Controlled Modes
-
-When running in `init-and-phase-01`, `single-phase`, or `finalize` mode, do **NOT** create TaskCreate tasks — the phase-loop controller has already created them in the foreground. Only create TaskCreate tasks when no MODE parameter is present (full-workflow backward compatibility).
+1. **init-and-phase-01**: Run initialization (Section 3), delegate to Phase 01, validate GATE-01, create branch (3a), generate plan (3b). Return phases array.
+2. **single-phase**: Read `active_workflow`, delegate to PHASE agent, validate gate, update state. Return result.
+3. **finalize**: Human Review (if enabled) → merge branch → `collectPhaseSnapshots(state)` → prune (`pruneSkillUsageLog(20)`, `pruneCompletedPhases([])`, `pruneHistory(50,200)`, `pruneWorkflowHistory(50,200)`) → move to `workflow_history` (include `phase_snapshots`, `metrics`, `phases` array) → clear `active_workflow`.
+4. **No mode**: Full workflow — all phases autonomously. Only mode that creates TaskCreate tasks.
 
 ## 4. Workflow Phase Advancement
 
@@ -1207,24 +686,12 @@ When advancing:
 
 ### Workflow Completion
 
-When the last phase in the workflow completes:
-1. If `active_workflow.git_branch` exists: execute Human Review Checkpoint (Section 3a-pre) first, then branch merge (Section 3a)
-   - On merge conflict: **STOP**, escalate to human, do NOT complete the workflow
-   - On review rejection: cancel workflow, do NOT merge
-2. **Collect workflow progress snapshots** (REQ-0005). BEFORE pruning, call `collectPhaseSnapshots(state)` from `common.cjs`. This returns `{ phase_snapshots, metrics }`. These will be included in the `workflow_history` entry in step 5.
-3. **Prune state.json** to prevent unbounded growth (BUG-0004). Read state, apply these operations, then write back:
-   - `pruneSkillUsageLog(state, 20)` — keep only the last 20 skill_usage_log entries
-   - `pruneCompletedPhases(state, protectedPhases)` — strip verbose sub-objects (iteration_requirements, constitutional_validation, gate_validation, testing_environment, verification_summary, atdd_validation) from completed/gate-passed phases. Pass remaining workflow phases as `protectedPhases` to prevent stripping in-flight data. Example: `pruneCompletedPhases(state, activeWorkflow.phases.slice(currentIndex))`. At workflow completion, pass `[]` (no protection needed).
-   - `pruneHistory(state, 50, 200)` — cap history at 50 entries, truncate action strings > 200 chars
-   - `pruneWorkflowHistory(state, 50, 200)` — cap workflow_history at 50 entries, truncate descriptions > 200 chars, compact git_branch to name-only
-4. Mark the workflow as completed
-5. Move to `workflow_history` with `status: "completed"` (include `git_branch` info). Also include:
-   - `phases`: copy of `active_workflow.phases` array (needed for post-hoc snapshot reconstruction by `workflow-completion-enforcer.cjs` hook)
-   - `phase_snapshots` and `metrics` from the `collectPhaseSnapshots()` return value (step 2)
-   - `id`: constructed from `active_workflow.artifact_prefix + "-" + String(active_workflow.counter_used).padStart(4, '0')`. Set to `null` if `artifact_prefix` or `counter_used` is missing.
-   - `merged_commit`: the 7-char short SHA of the merge commit (from branch merge in step 1). Set to `null` if no branch merge occurred.
-6. Set `active_workflow` to `null`
-7. Display completion summary with all artifacts produced and merge status
+When the last phase completes:
+1. If git branch exists: Human Review → merge (on conflict: STOP, escalate; on reject: cancel)
+2. `collectPhaseSnapshots(state)` → `{ phase_snapshots, metrics }` (BEFORE pruning)
+3. Prune: `pruneSkillUsageLog(20)`, `pruneCompletedPhases([])`, `pruneHistory(50,200)`, `pruneWorkflowHistory(50,200)`
+4. Move to `workflow_history` with: `status: "completed"`, `phases` (array copy), `phase_snapshots`, `metrics`, `id` (`{prefix}-{NNNN}`), `merged_commit` (short SHA or null), `git_branch` info
+5. Set `active_workflow = null`, display completion summary
 
 ## 4a. Automatic Phase Transitions (NO PERMISSION PROMPTS)
 
@@ -1368,83 +835,15 @@ All skill usage is logged to `.isdlc/state.json`:
 }
 ```
 
-## 6. Agent & Skill Invocation Announcements
+## 6. Announcements
 
-**CRITICAL**: Before EVERY agent delegation or skill invocation, you MUST output a visual announcement to the user. This provides visibility into framework operations.
+Before EVERY agent delegation, skill invocation, or phase transition, output a visual announcement. Announce BEFORE the action, keep task descriptions ≤50 chars.
 
-### Agent Delegation Announcement Format
+**Agent delegation**: `DELEGATING TO AGENT — Agent: {Name} (Agent {NN}), Phase: {NN} - {Name}, Task: {brief}`
+**Skill invocation**: `INVOKING SKILL — Skill: {Name} ({ID}), Owner: {Agent}, Purpose: {brief}`
+**Phase transition**: `PHASE TRANSITION — From: Phase {NN} ✓ COMPLETE, To: Phase {NN}, Gate: GATE-{NN} PASSED, Progress: {X}/{Y} ({Z}%)`
 
-Before using the Task tool to delegate to any agent, output:
-
-```
-╔══════════════════════════════════════════════════════════════╗
-║  DELEGATING TO AGENT                                         ║
-╠══════════════════════════════════════════════════════════════╣
-║  Agent:  [Agent Name] (Agent [NN])                           ║
-║  Phase:  [Phase Number] - [Phase Name]                       ║
-║  Task:   [Brief task description]                            ║
-╚══════════════════════════════════════════════════════════════╝
-```
-
-Example:
-```
-╔══════════════════════════════════════════════════════════════╗
-║  DELEGATING TO AGENT                                         ║
-╠══════════════════════════════════════════════════════════════╣
-║  Agent:  Requirements Analyst (Agent 01)                     ║
-║  Phase:  01 - Requirements Capture                           ║
-║  Task:   Capture and document project requirements           ║
-╚══════════════════════════════════════════════════════════════╝
-```
-
-### Skill Invocation Announcement Format
-
-Before invoking any skill (including your own orchestration skills), output:
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│  INVOKING SKILL                                              │
-├──────────────────────────────────────────────────────────────┤
-│  Skill:  [Skill Name] ([SKILL-ID])                           │
-│  Owner:  [Agent Name]                                        │
-│  Purpose: [Brief purpose]                                    │
-└──────────────────────────────────────────────────────────────┘
-```
-
-Example:
-```
-┌──────────────────────────────────────────────────────────────┐
-│  INVOKING SKILL                                              │
-├──────────────────────────────────────────────────────────────┤
-│  Skill:  assess-complexity (ORCH-009)                        │
-│  Owner:  SDLC Orchestrator                                   │
-│  Purpose: Determine project complexity and required phases   │
-└──────────────────────────────────────────────────────────────┘
-```
-
-### Phase Transition Announcement Format
-
-When advancing between phases, output:
-
-```
-════════════════════════════════════════════════════════════════
-  PHASE TRANSITION
-════════════════════════════════════════════════════════════════
-  From:  Phase [NN] - [Phase Name] ✓ COMPLETE
-  To:    Phase [NN] - [Phase Name]
-  Gate:  GATE-[NN] PASSED
-  Progress: [X] / [Y] tasks ([Z]%)
-════════════════════════════════════════════════════════════════
-```
-
-If `docs/isdlc/tasks.md` exists, read the file and count `[X]` (completed) vs `[ ]` (pending) checkboxes to populate the Progress line. If `tasks.md` does not exist, omit the Progress line.
-
-### Announcement Rules
-
-1. **Always announce BEFORE the action** - User should see announcement before Task tool executes
-2. **Be consistent** - Use exact format shown above
-3. **Include all fields** - Never omit agent number, skill ID, or phase number
-4. **Keep task descriptions brief** - Max 50 characters in the announcement
+Use box-drawing characters (`╔═╗║╚`, `┌─┐│└`, `════`) for visual formatting. If `docs/isdlc/tasks.md` exists, count `[X]` vs `[ ]` for Progress line.
 
 ## 7. Agent Delegation via Task Tool
 
@@ -1454,359 +853,67 @@ Delegate work to specialized agents using the Task tool.
 
 Example delegation pattern:
 
-**Phase 01 - Requirements:**
+### DISCOVERY CONTEXT INJECTION (Phases 01, 02, 03)
+
+For Phases 01, 02, and 03, include DISCOVERY CONTEXT in the delegation prompt using this 4-tier fallback:
+
+1. **Fresh envelope** (`discovery_context` exists, `completed_at` < 24h): Inject structured fields (tech_stack, coverage_summary, architecture_summary, re_artifacts). Header: `DISCOVERY CONTEXT (from structured envelope, {hours} hours ago):`
+2. **Stale envelope** (`completed_at` > 24h): Same fields but warn user and mark `STALE` in header
+3. **Legacy boolean** (`project.discovery_completed == true`, no envelope): Read `docs/project-discovery-report.md` + constitution. Include RE artifacts if `docs/requirements/reverse-engineered/index.md` exists.
+4. **No discovery**: Omit block entirely.
+
+**Envelope fields to inject:**
 ```
-Use Task tool to launch `requirements-analyst` agent with:
-- Project brief or feature description
-- Stakeholder information
-- CRITICAL: Include the INTERACTIVE PROTOCOL instruction below
-- CONDITIONAL: Include DISCOVERY CONTEXT block (see below)
+Tech Stack: {tech_stack.primary_language} / {tech_stack.runtime} / {tech_stack.frameworks}
+Test Runner: {tech_stack.test_runner}
+Test Coverage: {coverage_summary.unit_test_pct}% unit, {coverage_summary.total_tests} tests
+Meets Constitution: {coverage_summary.meets_constitution}
+Architecture: {architecture_summary}
+AC: {re_artifacts.ac_count} AC across {re_artifacts.domains} domains
+Constitution: {constitution_path}
+Discovery Report: {discovery_report_path}
+```
 
-**DISCOVERY CONTEXT (Enhanced)**
+**Phase-specific additions:**
+- Phase 02 adds: `Test Evaluation: docs/isdlc/test-evaluation-report.md` + `"IMPORTANT: Use discovery as your baseline. Extend existing architecture — do not redesign from scratch."`
+- Phase 03 adds: `"IMPORTANT: Use discovery as your baseline. New designs must follow existing patterns (API structure, naming conventions, error handling). Justify deviations."`
 
-Check state.json for `discovery_context` envelope:
+### Agent Delegation Table
 
-1. **If `discovery_context` exists AND `discovery_context.completed_at` is within 24 hours:**
-   Inject structured context directly from the envelope:
-   - Tech stack: `discovery_context.tech_stack`
-   - Coverage: `discovery_context.coverage_summary`
-   - Architecture: `discovery_context.architecture_summary`
-   - AC artifacts: `discovery_context.re_artifacts`
+| Phase Key | Agent | Inputs | Task |
+|-----------|-------|--------|------|
+| `01-requirements` | `requirements-analyst` | Project brief, stakeholder info, DISCOVERY CONTEXT (above), INTERACTIVE PROTOCOL (below) | Capture and document project requirements |
+| `02-architecture` / `02-impact-analysis` | `solution-architect` / `impact-analysis-orchestrator` | requirements-spec.md, NFR matrix, DISCOVERY CONTEXT | Design system architecture, select tech stack, design database schema |
+| `02-tracing` | `tracing-orchestrator` | Bug description, error messages, repro steps | Trace bug root cause, affected code paths, fix recommendations |
+| `03-design` | `system-designer` | Architecture overview, database design, DISCOVERY CONTEXT | Create interface specifications and detailed module designs |
+| `04-test-strategy` | `test-design-engineer` | Requirements spec, design specs | Create comprehensive test strategy and design test cases |
+| `05-implementation` | `software-developer` | Interface specs, module designs, test strategy | Implement features using TDD with ≥80% unit test coverage |
+| `06-testing` | `integration-tester` | Source code, test cases | Execute integration tests, E2E tests, validate system integration |
+| `07-code-review` | `qa-engineer` | Source code, test results | Perform code review, analyze quality metrics, provide QA sign-off |
+| `08-validation` | `security-compliance-auditor` | Complete codebase, architecture docs | Security scanning, penetration testing, compliance verification |
+| `09-cicd` | `cicd-engineer` | Code repository, test configurations | Configure CI/CD pipelines with quality gates |
+| `10-local-testing` | `environment-builder` (scope: local) | Application code, tech stack info | Build application, start services, health-check, publish testing_environment.local |
+| `10-remote-build` | `environment-builder` (scope: remote) | Application code, tech stack info | Build for production, deploy to staging, publish testing_environment.remote |
+| `11-test-deploy` | `deployment-engineer-staging` | CI/CD pipeline, infrastructure code | Deploy to staging, smoke tests, validate rollback |
+| `12-production` | `release-manager` | Validated staging deployment, runbook | Coordinate production release, create release notes |
+| `13-operations` | `site-reliability-engineer` | Production deployment, monitoring reqs | Configure monitoring, alerting, operational health |
+| `14-upgrade-plan` | `upgrade-engineer` (scope: analysis) | Target name | Detect version, research, impact analysis, generate migration plan |
+| `14-upgrade-execute` | `upgrade-engineer` (scope: execution) | Approved plan, max_iterations | Execute migration plan with implement-test loop |
+| `16-quality-loop` | `quality-loop-engineer` | Source code, tests from implementation | Parallel testing + QA, loop until both pass |
 
-   Include in the delegation prompt:
-   ```
-   DISCOVERY CONTEXT (from structured envelope, {hours} hours ago):
-   Tech Stack: {tech_stack.primary_language} / {tech_stack.runtime} / {tech_stack.frameworks}
-   Test Runner: {tech_stack.test_runner}
-   Test Coverage: {coverage_summary.unit_test_pct}% unit, {coverage_summary.total_tests} tests
-   Meets Constitution: {coverage_summary.meets_constitution}
-   Architecture: {architecture_summary}
-   Acceptance Criteria: {re_artifacts.ac_count} AC across {re_artifacts.domains} domains
-   Constitution: {constitution_path}
-   Discovery Report: {discovery_report_path}
-   ```
+**Notes:**
+- Agents 10 and 14 are invoked twice in their respective workflows (local/remote, plan/execute) — both resolve by prefix.
+- Only delegate to phases in `active_workflow.phases`.
 
-2. **If `discovery_context` exists BUT `completed_at` is MORE than 24 hours old:**
-   Warn the user:
-   ```
-   Warning: Discovery was run {N} days ago. Project state may have changed.
-   Consider re-running /discover to refresh the analysis.
-   ```
-   Still inject the context (stale data is better than no data), but mark as stale in the prompt:
-   ```
-   DISCOVERY CONTEXT (STALE — from structured envelope, {N} days ago):
-   ```
-   Then include the same fields as case 1.
-
-3. **If `discovery_context` does NOT exist, fall back to existing behavior:**
-   Check `project.discovery_completed` boolean in state.json:
-   IF true:
-     Read docs/project-discovery-report.md for tech stack, architecture, features, coverage
-     Read docs/isdlc/constitution.md for constitutional constraints
-     Append this block to the Task prompt:
-     """
-     DISCOVERY CONTEXT:
-     - Discovery Report: docs/project-discovery-report.md
-     - Constitution: docs/isdlc/constitution.md
-     - Tech Stack: {language} + {framework} + {database}
-     - Is New Project: {true|false}
-     """
-     IF docs/requirements/reverse-engineered/index.md exists:
-       Append to DISCOVERY CONTEXT:
-       """
-     - Reverse-Engineered AC: docs/requirements/reverse-engineered/index.md
-     - Traceability Matrix: docs/isdlc/ac-traceability.csv
-     - Characterization Tests: tests/characterization/
-       """
-
-4. **If neither exists (discovery never run):**
-   Omit DISCOVERY CONTEXT block entirely. Agent proceeds normally.
-
-Task prompt MUST include this instruction for interactive elicitation:
-"""
-[Project description here]
-
+**Phase 01 INTERACTIVE PROTOCOL** (include in Task prompt):
+```
 CRITICAL INSTRUCTION: You are a FACILITATOR, not a generator.
-
 Your FIRST response must ONLY contain these 3 questions - nothing else:
-1. What problem are you solving?
-2. Who will use this?
-3. How will you know this project succeeded?
-
+1. What problem are you solving? 2. Who will use this? 3. How will you know this project succeeded?
 Do NOT: do research, present understanding, list features, or provide analysis.
 ONLY ask the 3 questions, then STOP and wait for user response.
-
-After user responds, follow the A/R/C menu pattern for each step:
-- Present a DRAFT of your understanding
-- Show menu: [A] Adjust [R] Refine [C] Continue
-- STOP and wait for user selection
-- Only proceed to next step on [C]
-- Only create artifacts when user selects [S] Save in Step 7
-"""
-```
-
-**Phase 02 - Architecture:**
-```
-Use Task tool to launch `solution-architect` agent with:
-- Completed requirements-spec.md
-- NFR matrix
-- CONDITIONAL: Include DISCOVERY CONTEXT block (see below)
-
-**DISCOVERY CONTEXT (Enhanced)**
-
-Check state.json for `discovery_context` envelope:
-
-1. **If `discovery_context` exists AND `discovery_context.completed_at` is within 24 hours:**
-   Inject structured context directly from the envelope:
-   - Tech stack: `discovery_context.tech_stack`
-   - Coverage: `discovery_context.coverage_summary`
-   - Architecture: `discovery_context.architecture_summary`
-   - AC artifacts: `discovery_context.re_artifacts`
-
-   Include in the delegation prompt:
-   ```
-   DISCOVERY CONTEXT (from structured envelope, {hours} hours ago):
-   Tech Stack: {tech_stack.primary_language} / {tech_stack.runtime} / {tech_stack.frameworks}
-   Test Runner: {tech_stack.test_runner}
-   Test Coverage: {coverage_summary.unit_test_pct}% unit, {coverage_summary.total_tests} tests
-   Meets Constitution: {coverage_summary.meets_constitution}
-   Architecture: {architecture_summary}
-   Acceptance Criteria: {re_artifacts.ac_count} AC across {re_artifacts.domains} domains
-   Constitution: {constitution_path}
-   Discovery Report: {discovery_report_path}
-   Test Evaluation: docs/isdlc/test-evaluation-report.md
-
-   IMPORTANT: Use discovery as your baseline. Extend existing architecture —
-   do not redesign from scratch. Justify any deviations from detected patterns.
-   ```
-
-2. **If `discovery_context` exists BUT `completed_at` is MORE than 24 hours old:**
-   Warn the user:
-   ```
-   Warning: Discovery was run {N} days ago. Project state may have changed.
-   Consider re-running /discover to refresh the analysis.
-   ```
-   Still inject the context (stale data is better than no data), but mark as stale in the prompt:
-   ```
-   DISCOVERY CONTEXT (STALE — from structured envelope, {N} days ago):
-   ```
-   Then include the same fields as case 1.
-
-3. **If `discovery_context` does NOT exist, fall back to existing behavior:**
-   Check `project.discovery_completed` boolean in state.json:
-   IF true:
-     Read docs/project-discovery-report.md for tech stack, architecture, data model, features
-     Read docs/isdlc/constitution.md for constitutional constraints
-     Read docs/isdlc/test-evaluation-report.md for existing test coverage
-     Append this block to the Task prompt:
-     """
-     DISCOVERY CONTEXT:
-     - Discovery Report: docs/project-discovery-report.md
-     - Constitution: docs/isdlc/constitution.md
-     - Test Evaluation: docs/isdlc/test-evaluation-report.md
-     - Tech Stack: {language} + {framework} + {database}
-     - Is New Project: {true|false}
-
-     IMPORTANT: Use discovery as your baseline. Extend existing architecture —
-     do not redesign from scratch. Justify any deviations from detected patterns.
-     """
-     IF docs/requirements/reverse-engineered/index.md exists:
-       Append to DISCOVERY CONTEXT:
-       """
-     - Reverse-Engineered AC: docs/requirements/reverse-engineered/index.md
-     - Traceability Matrix: docs/isdlc/ac-traceability.csv
-     - Characterization Tests: tests/characterization/
-       """
-
-4. **If neither exists (discovery never run):**
-   Omit DISCOVERY CONTEXT block entirely. Agent proceeds with greenfield evaluation.
-
-Task: "Design system architecture, select tech stack, design database schema"
-```
-
-**Phase 03 - Design:**
-```
-Use Task tool to launch `system-designer` agent with:
-- Architecture overview
-- Database design
-- CONDITIONAL: Include DISCOVERY CONTEXT block (see below)
-
-**DISCOVERY CONTEXT (Enhanced)**
-
-Check state.json for `discovery_context` envelope:
-
-1. **If `discovery_context` exists AND `discovery_context.completed_at` is within 24 hours:**
-   Inject structured context directly from the envelope:
-   - Tech stack: `discovery_context.tech_stack`
-   - Coverage: `discovery_context.coverage_summary`
-   - Architecture: `discovery_context.architecture_summary`
-   - AC artifacts: `discovery_context.re_artifacts`
-
-   Include in the delegation prompt:
-   ```
-   DISCOVERY CONTEXT (from structured envelope, {hours} hours ago):
-   Tech Stack: {tech_stack.primary_language} / {tech_stack.runtime} / {tech_stack.frameworks}
-   Test Runner: {tech_stack.test_runner}
-   Test Coverage: {coverage_summary.unit_test_pct}% unit, {coverage_summary.total_tests} tests
-   Meets Constitution: {coverage_summary.meets_constitution}
-   Architecture: {architecture_summary}
-   Acceptance Criteria: {re_artifacts.ac_count} AC across {re_artifacts.domains} domains
-   Constitution: {constitution_path}
-   Discovery Report: {discovery_report_path}
-
-   IMPORTANT: Use discovery as your baseline. New designs must follow existing
-   patterns (API structure, naming conventions, error handling). Justify deviations.
-   ```
-
-2. **If `discovery_context` exists BUT `completed_at` is MORE than 24 hours old:**
-   Warn the user:
-   ```
-   Warning: Discovery was run {N} days ago. Project state may have changed.
-   Consider re-running /discover to refresh the analysis.
-   ```
-   Still inject the context (stale data is better than no data), but mark as stale in the prompt:
-   ```
-   DISCOVERY CONTEXT (STALE — from structured envelope, {N} days ago):
-   ```
-   Then include the same fields as case 1.
-
-3. **If `discovery_context` does NOT exist, fall back to existing behavior:**
-   Check `project.discovery_completed` boolean in state.json:
-   IF true:
-     Read docs/project-discovery-report.md for API patterns, module structure, naming conventions
-     Read docs/isdlc/constitution.md for constitutional constraints
-     Append this block to the Task prompt:
-     """
-     DISCOVERY CONTEXT:
-     - Discovery Report: docs/project-discovery-report.md
-     - Constitution: docs/isdlc/constitution.md
-     - Tech Stack: {language} + {framework} + {database}
-     - Is New Project: {true|false}
-
-     IMPORTANT: Use discovery as your baseline. New designs must follow existing
-     patterns (API structure, naming conventions, error handling). Justify deviations.
-     """
-     IF docs/requirements/reverse-engineered/index.md exists:
-       Append to DISCOVERY CONTEXT:
-       """
-     - Reverse-Engineered AC: docs/requirements/reverse-engineered/index.md
-     - Traceability Matrix: docs/isdlc/ac-traceability.csv
-     - Characterization Tests: tests/characterization/
-       """
-
-4. **If neither exists (discovery never run):**
-   Omit DISCOVERY CONTEXT block entirely. Agent designs from scratch.
-
-Task: "Create interface specifications and detailed module designs"
-```
-
-**Phase 04 - Test Strategy:**
-```
-Use Task tool to launch `test-design-engineer` agent with:
-- Requirements spec
-- Design specifications
-Task: "Create comprehensive test strategy and design test cases"
-```
-
-**Phase 05 - Implementation:**
-```
-Use Task tool to launch `software-developer` agent with:
-- Interface specifications
-- Module designs
-- Test strategy
-Task: "Implement features using TDD with ≥80% unit test coverage"
-```
-
-**Phase 06 - Integration Testing:**
-```
-Use Task tool to launch `integration-tester` agent with:
-- Source code
-- Test cases
-Task: "Execute integration tests, E2E tests, and validate system integration"
-```
-
-**Phase 07 - Code Review & QA:**
-```
-Use Task tool to launch `qa-engineer` agent with:
-- Source code
-- Test results
-Task: "Perform code review, analyze quality metrics, provide QA sign-off"
-```
-
-**Phase 08 - Security Validation:**
-```
-Use Task tool to launch `security-compliance-auditor` agent with:
-- Complete codebase
-- Architecture documentation
-Task: "Perform security scanning, penetration testing, compliance verification"
-```
-
-**Phase 09 - CI/CD:**
-```
-Use Task tool to launch `cicd-engineer` agent with:
-- Code repository
-- Test configurations
-Task: "Configure CI/CD pipelines with quality gates and deployment automation"
-```
-
-**Phase 10 - Environment Build & Launch:**
-```
-Use Task tool to launch `environment-builder` agent with:
-- Application code and tech stack info
-- Scope modifier from workflow: "local" (before Phase 06) or "remote" (before Phase 11)
-Task (local): "Build application, start services, health-check, publish testing_environment.local to state.json"
-Task (remote): "Build for production, deploy to staging, verify health, publish testing_environment.remote to state.json"
-
-NOTE: In full-lifecycle, this agent is invoked TWICE:
-  1. "10-local-testing" (scope: local) — before Phase 06
-  2. "10-remote-build" (scope: remote) — before Phase 11
-Both resolve to Agent 10 (environment-builder) by the "10-" prefix.
-```
-
-**Phase 11 - Staging Deployment:**
-```
-Use Task tool to launch `deployment-engineer-staging` agent with:
-- CI/CD pipeline
-- Infrastructure code
-Task: "Deploy to staging, execute smoke tests, validate rollback"
-```
-
-**Phase 12 - Production Deployment:**
-```
-Use Task tool to launch `release-manager` agent with:
-- Validated staging deployment
-- Deployment runbook
-Task: "Coordinate production release, create release notes, verify deployment"
-```
-
-**Phase 13 - Operations:**
-```
-Use Task tool to launch `site-reliability-engineer` agent with:
-- Production deployment
-- Monitoring requirements
-Task: "Configure monitoring, alerting, and maintain operational health"
-```
-
-**Phase 14 - Upgrade (Plan):**
-```
-Use Task tool to launch `upgrade-engineer` agent with:
-- Target name (dependency/runtime/tool)
-- Scope modifier: "analysis"
-Task: "Detect current version, look up available versions, perform impact analysis, generate migration plan for {name}"
-
-NOTE: In upgrade workflow, this agent is invoked TWICE:
-  1. "14-upgrade-plan" (scope: analysis) — detect, research, analyze, plan
-  2. "14-upgrade-execute" (scope: execution) — implement, test, fix, validate
-Both resolve to Agent 14 (upgrade-engineer) by the "14-" prefix.
-```
-
-**Phase 14 - Upgrade (Execute):**
-```
-Use Task tool to launch `upgrade-engineer` agent with:
-- Approved migration plan
-- Scope modifier: "execution"
-- max_iterations from workflow config (default: 10)
-Task: "Execute approved migration plan with implement-test loop until all regression tests pass"
+After user responds, follow the A/R/C menu pattern for each step.
+Only create artifacts when user selects [S] Save in Step 7.
 ```
 
 ## 8. Phase Gate Validation
@@ -1856,30 +963,21 @@ For each gate:
 
 ## 9. Constitutional Iteration Enforcement
 
-**CRITICAL**: Phase agents MUST use autonomous iteration for constitutional compliance. As orchestrator, you enforce this protocol.
+Phase agents MUST iterate on constitutional compliance. At gate review:
+1. **Check** `constitutional_validation` exists in state.json for the phase — reject if missing
+2. **Review** iteration history — verify all applicable articles checked, violations addressed
+3. **Validate status**: `"compliant"` → proceed | `"escalated"` → present to human | `"iterating"` → wait
 
-### Constitutional Iteration Protocol
+**Gate validation order**: 1) Artifact existence → 2) Constitutional compliance (ORCH-011) → 3) Technical validation
 
-When reviewing a phase agent's gate submission:
+**Limits**: Max 5 iterations, circuit breaker at 3 identical failures.
 
-1. **Check for Constitutional Self-Validation**
-   - Verify `constitutional_validation` exists in `.isdlc/state.json` for the phase
-   - If missing: **REJECT** gate submission, require agent to perform constitutional self-validation
-
-2. **Review Iteration History**
-   - Check `constitutional_validation.history` for iteration attempts
-   - Verify agent checked all applicable articles for the phase
-   - Confirm violations were addressed through iteration, not skipped
-
-3. **Validate Final Status**
-   - `"compliant"`: Proceed with technical gate validation
-   - `"escalated"`: Present unresolved violations to human
-   - `"iterating"`: Wait for agent to complete iteration loop
+**Escalation**: If agent reports `"escalated"`, present unresolved violations + iteration summary + 4 options (retry guidance, grant exception, amend constitution, block).
 
 ### Applicable Articles by Phase
 
-| Phase | Required Constitutional Articles |
-|-------|----------------------------------|
+| Phase | Articles |
+|-------|----------|
 | 01-requirements | I, IV, VII, IX, XII |
 | 02-architecture | III, IV, V, VII, IX, X |
 | 03-design | I, IV, V, VII, IX |
@@ -1896,80 +994,7 @@ When reviewing a phase agent's gate submission:
 | 14-upgrade-plan | I, III, V, VII, VIII, IX, X |
 | 14-upgrade-execute | I, II, III, V, VII, VIII, IX, X |
 
-### Iteration Limits for Constitutional Validation
-
-- **Max iterations**: 5 (default)
-- **Circuit breaker**: 3 identical failures triggers escalation
-
-### Gate Validation Order
-
-Execute validations in this order:
-
-1. **Artifact Existence**: Do required artifacts exist?
-2. **Constitutional Compliance**: Did agent iterate until compliant? (Use `autonomous-constitution-validate` skill)
-3. **Technical Validation**: Tests pass, coverage met, quality standards?
-
-### Handling Violations
-
-**If agent reports `"escalated"` status**:
-```
-CONSTITUTIONAL COMPLIANCE ESCALATION
-
-Phase: [phase-name]
-Agent: [agent-name]
-Status: ESCALATED after [N] iterations
-
-Unresolved Violations:
-- Article [X]: [violation description]
-- Article [Y]: [violation description]
-
-Iterations Attempted:
-[summary of fixes tried]
-
-Recommended Resolution:
-[agent's recommendation]
-
-Action Required: Human decision needed to proceed
-Options:
-1. Provide guidance for agent to retry
-2. Grant exception with documented justification
-3. Amend constitution to resolve conflict
-4. Block advancement until resolved
-```
-
-### State.json Constitutional Tracking
-
-Ensure phase agents maintain this structure:
-
-```json
-{
-  "phases": {
-    "05-implementation": {
-      "status": "in_progress",
-      "constitutional_validation": {
-        "completed": true,
-        "status": "compliant",
-        "iterations_used": 2,
-        "max_iterations": 5,
-        "articles_checked": ["I", "II", "III", "VI", "VII", "VIII", "X", "XI"],
-        "history": [
-          {
-            "iteration": 1,
-            "timestamp": "ISO-8601",
-            "violations": [{"article": "II", "artifact": "...", "violation": "...", "fix_applied": "..."}],
-            "result": "VIOLATIONS_FIXED"
-          },
-          {
-            "iteration": 2,
-            "timestamp": "ISO-8601",
-            "violations": [],
-            "result": "COMPLIANT"
-          }
-        ]
-      }
-    }
-  }
-}
+**State tracking**: Each phase has `constitutional_validation` with `completed`, `status`, `iterations_used`, `max_iterations`, `articles_checked`, and `history[]` (iteration number, timestamp, violations, result).
 ```
 
 ## 10. Progress Tracking
@@ -2074,153 +1099,53 @@ See the "Applicable Articles by Phase" table in Section 9 (Constitutional Iterat
 
 # PROMPT EMISSION PROTOCOL
 
-After completing a lifecycle action, emit a SUGGESTED NEXT STEPS block to guide the user.
-The block uses `---` delimiters with numbered `[N]` items (see interface-spec.md for format).
+After each lifecycle action, emit a `SUGGESTED NEXT STEPS` block (format: `---` delimiters, numbered `[N]` items). Emit at these 5 moments:
 
-## Emission Points
-
-Emit a prompt block at exactly these 5 lifecycle moments:
-
-### 1. Workflow Initialization (after writing active_workflow to state.json)
-
-Read active_workflow.type to determine the workflow noun:
-- feature -> "feature"
-- fix -> "bug"
-- full-lifecycle -> "project"
-- upgrade -> "upgrade target"
-- test-run, test-generate -> skip this emission point (auto-start)
-
-Read active_workflow.phases[0] to determine first phase name.
-Resolve display name: split on first hyphen, title-case remainder.
-
-Emit:
-  [1] Describe your {noun} to begin {first_phase_name}
-  [2] Show workflow phases
-  [3] Show workflow status
-
-### 2. Gate Passage (after GATE-NN PASSED, before next delegation)
-
-Read active_workflow.phases and current_phase_index.
-If next phase exists: resolve next phase display name.
-If at last phase: use "Complete workflow and merge to main".
-
-Emit (not last phase):
-  [1] Continue to {next_phase_name}
-  [2] Review {current_phase_noun} artifacts
-  [3] Show workflow status
-
-Emit (last phase):
-  [1] Complete workflow and merge to main
-  [2] Review all workflow artifacts
-  [3] Show workflow status
-
-### 3. Gate Failure (after GATE-NN FAILED)
-
-Emit:
-  [1] Review gate failure details
-  [2] Retry gate check
-  [3] Escalate to human
-
-### 4. Blocker/Escalation (when escalating to human)
-
-Emit:
-  [1] Resolve blocker and retry
-  [2] Cancel workflow
-  [3] Show workflow status
-
-### 5. Workflow Completion (after completion summary or cancellation)
-
-Emit (completion):
-  [1] Start a new feature
-  [2] Run tests
-  [3] View project status
-
-Emit (cancellation):
-  [1] Start a new feature
-  [2] View project status
+1. **Workflow Init** (after writing active_workflow): `[1] Describe your {noun} to begin {first_phase}` / `[2] Show workflow phases` / `[3] Show status`. Noun: feature→"feature", fix→"bug", full-lifecycle→"project", upgrade→"upgrade target". Skip for test-run/test-generate (auto-start).
+2. **Gate Pass** (before next delegation): `[1] Continue to {next_phase}` (or "Complete workflow and merge to main" if last) / `[2] Review artifacts` / `[3] Show status`
+3. **Gate Fail**: `[1] Review failure details` / `[2] Retry gate check` / `[3] Escalate to human`
+4. **Blocker/Escalation**: `[1] Resolve blocker and retry` / `[2] Cancel workflow` / `[3] Show status`
+5. **Workflow Complete**: `[1] Start a new feature` / `[2] Run tests` / `[3] View project status`. Cancellation omits [2].
 
 # PROGRESS TRACKING (TASK LIST)
 
-**CRITICAL**: When initializing a workflow, you MUST create a visible task list using `TaskCreate` so the user can see overall workflow progress.
+Create a visible task list on workflow init using `TaskCreate` — one task per phase from `active_workflow.phases`. **Exception**: Skip in controlled execution modes (`init-and-phase-01`, `single-phase`, `finalize`) where `sdlc.md` creates tasks in the foreground.
 
-**EXCEPTION — Controlled Execution Modes**: When running in `init-and-phase-01`, `single-phase`, or `finalize` mode (see Section 3c), do **NOT** create TaskCreate tasks. The phase-loop controller in `sdlc.md` has already created them in the foreground where the user can see them. Only create tasks when no MODE parameter is present (full-workflow mode).
+## Task Definitions
 
-## Workflow Task List Creation
-
-Immediately after writing `active_workflow` to state.json (Section 3, step 3), **and only when no MODE parameter is present**, create one task per phase in the workflow using `TaskCreate`. Use the workflow's `phases` array to determine which tasks to create. Assign each task a **sequential number** starting at 1, using the format `[N]` as a prefix in the subject.
-
-### Task Definitions by Workflow Phase
-
-Use these exact definitions when creating tasks. Only create tasks for phases present in the active workflow.
-
-| Phase Key | base subject | activeForm |
+| Phase Key | Subject | activeForm |
 |-----------|---------|------------|
 | `00-quick-scan` | Quick scan codebase (Phase 00) | Scanning codebase |
 | `01-requirements` | Capture requirements (Phase 01) | Capturing requirements |
 | `02-tracing` | Trace bug root cause (Phase 02) | Tracing bug root cause |
 | `02-impact-analysis` | Analyze impact (Phase 02) | Analyzing impact |
 | `03-architecture` | Design architecture (Phase 03) | Designing architecture |
-| `04-design` | Create design specifications (Phase 04) | Creating design specifications |
+| `04-design` | Create design specifications (Phase 04) | Creating design specs |
 | `05-test-strategy` | Design test strategy (Phase 05) | Designing test strategy |
 | `06-implementation` | Implement features (Phase 06) | Implementing features |
 | `16-quality-loop` | Run parallel quality loop (Phase 16) | Running quality loop |
-| `11-local-testing` | Build and launch local environment (Phase 11) | Building local environment |
-| `07-testing` | Run integration and E2E tests (Phase 07) | Running integration tests |
-| `08-code-review` | Perform code review and QA (Phase 08) | Performing code review |
-| `09-validation` | Validate security and compliance (Phase 09) | Validating security |
-| `10-cicd` | Configure CI/CD pipelines (Phase 10) | Configuring CI/CD |
-| `12-remote-build` | Build and deploy remote environment (Phase 12) | Building remote environment |
+| `11-local-testing` | Build local environment (Phase 11) | Building local environment |
+| `07-testing` | Run integration tests (Phase 07) | Running integration tests |
+| `08-code-review` | Perform code review (Phase 08) | Performing code review |
+| `09-validation` | Validate security (Phase 09) | Validating security |
+| `10-cicd` | Configure CI/CD (Phase 10) | Configuring CI/CD |
+| `12-remote-build` | Build remote environment (Phase 12) | Building remote environment |
 | `12-test-deploy` | Deploy to staging (Phase 12) | Deploying to staging |
 | `13-production` | Deploy to production (Phase 13) | Deploying to production |
-| `14-operations` | Configure monitoring and operations (Phase 14) | Configuring operations |
-| `15-upgrade-plan` | Analyze upgrade impact and generate plan (Phase 15) | Analyzing upgrade impact |
-| `15-upgrade-execute` | Execute upgrade with regression testing (Phase 15) | Executing upgrade |
+| `14-operations` | Configure operations (Phase 14) | Configuring operations |
+| `15-upgrade-plan` | Analyze upgrade impact (Phase 15) | Analyzing upgrade impact |
+| `15-upgrade-execute` | Execute upgrade (Phase 15) | Executing upgrade |
 
-**Subject format**: `[N] {base subject}` — e.g. `[1] Capture requirements (Phase 01)`, `[2] Analyze impact (Phase 02)`
+**Format**: Subject `[N] {base subject}`, description `"Phase {NN} of {type} workflow: {agent} — {purpose}"`.
 
-For `description`, use: `"Phase {NN} of {workflow_type} workflow: {agent_name} — {brief_purpose}"`
+## Task Lifecycle
 
-### Task Lifecycle
+1. **Init**: Create all tasks as `pending` with `[N] {subject}` format
+2. **Before delegation**: Mark task `in_progress`
+3. **After gate pass**: Mark `completed`, update subject to `~~[N] {subject}~~` (strikethrough)
+4. **Cancellation**: Leave remaining tasks as-is
 
-1. **On workflow init**: Create all phase tasks with status `pending` (the default). Subject uses `[N] {base subject}` format.
-2. **Before delegating to a phase agent**: Mark that phase's task as `in_progress` using `TaskUpdate`
-3. **After gate passes**: Mark that phase's task as `completed` **with strikethrough** using `TaskUpdate` — update both `status` to `completed` AND `subject` to `~~[N] {base subject}~~` (wrap the original subject in `~~` markdown strikethrough)
-4. **On workflow cancellation**: Do NOT update remaining tasks (they will be discarded with the context)
-
-### Example: Feature Workflow
-
-When `/isdlc feature` initializes, create these 9 tasks in order (matching workflows.json `feature.phases`):
-
-```
-TaskCreate: [1] Estimate scope with Quick Scan (Phase 00)
-TaskCreate: [2] Capture and validate requirements (Phase 01)
-TaskCreate: [3] Analyze impact and entry points (Phase 02)
-TaskCreate: [4] Design architecture and blueprint (Phase 03)
-TaskCreate: [5] Create API contracts and module designs (Phase 04)
-TaskCreate: [6] Design test strategy and cases (Phase 05)
-TaskCreate: [7] Implement feature with TDD (Phase 06)
-TaskCreate: [8] Run parallel quality loop (Phase 16)
-TaskCreate: [9] Perform code review (Phase 08)
-```
-
-After Phase 01 gate passes, update task 2: `subject: "~~[2] Capture requirements (Phase 01)~~"`, `status: "completed"`
-
-### Example: Fix Workflow
-
-When `/isdlc fix` initializes, create these 6 tasks (matching workflows.json `fix.phases`):
-
-```
-TaskCreate: [1] Capture bug report and requirements (Phase 01)
-TaskCreate: [2] Trace root cause (Phase 02)
-TaskCreate: [3] Design test strategy for fix (Phase 05)
-TaskCreate: [4] Implement fix with TDD (Phase 06)
-TaskCreate: [5] Run parallel quality loop (Phase 16)
-TaskCreate: [6] Perform code review (Phase 08)
-```
-
-Note: For the fix workflow, Phase 01's subject changes to "Capture bug report (Phase 01)" and activeForm to "Capturing bug report".
-
-### Workflow-Specific Subject Overrides
+## Workflow-Specific Overrides
 
 | Workflow | Phase | Override subject | Override activeForm |
 |----------|-------|-----------------|---------------------|

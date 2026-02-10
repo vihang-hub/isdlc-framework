@@ -1211,12 +1211,17 @@ if ($IsMonorepo) {
     Write-Success "Monorepo setup complete ($($DetectedProjects.Count) projects)"
 }
 
-# CLAUDE.md - only create if missing
+# CLAUDE.md - seed from template if missing
 $claudeMdPath = Join-Path $ProjectRoot "CLAUDE.md"
 if (-not (Test-Path $claudeMdPath)) {
-    Write-Utf8NoBom -Path $claudeMdPath -Content ""
+    $templatePath = Join-Path (Join-Path $ProjectRoot ".claude") "CLAUDE.md.template"
+    if (Test-Path $templatePath) {
+        Copy-Item $templatePath $claudeMdPath
+    } else {
+        Write-Utf8NoBom -Path $claudeMdPath -Content ""
+    }
     Write-Host ""
-    Write-Warn "CLAUDE.md was missing - created empty one in project root"
+    Write-Warn "CLAUDE.md was missing - created from template in project root"
 }
 
 # ============================================================================

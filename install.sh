@@ -959,12 +959,15 @@ EXTMANIFESTEOF
     echo -e "${GREEN}  ✓ Monorepo setup complete (${#DETECTED_PROJECTS[@]} projects)${NC}"
 fi
 
-# CLAUDE.md - only create if missing, don't inject framework-info read
-# Agents and commands are self-contained; no framework-info.md needed at runtime
+# CLAUDE.md - seed from template if missing
 if [ ! -f "CLAUDE.md" ]; then
-    touch "CLAUDE.md"
+    if [ -f ".claude/CLAUDE.md.template" ]; then
+        cp ".claude/CLAUDE.md.template" "CLAUDE.md"
+    else
+        touch "CLAUDE.md"
+    fi
     echo ""
-    echo -e "${YELLOW}  ⚠ CLAUDE.md was missing - created empty one in project root${NC}"
+    echo -e "${YELLOW}  ⚠ CLAUDE.md was missing - created from template in project root${NC}"
 fi
 
 # ============================================================================

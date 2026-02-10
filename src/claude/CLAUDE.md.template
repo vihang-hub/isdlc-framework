@@ -1,0 +1,50 @@
+# Project Instructions
+
+## Agent Framework Context
+
+Shared protocols referenced by all iSDLC agents. Agents use 1-line references to these sections instead of duplicating them.
+
+### SKILL OBSERVABILITY Protocol
+
+All skill usage is logged for visibility and audit purposes.
+
+- **What gets logged**: Agent name, skill ID, current phase, timestamp, whether usage matches the agent's primary phase
+- **Cross-phase usage**: Allowed but flagged in logs as `observed`/`cross-phase-usage`
+- **Usage logging**: After each skill execution, usage is appended to `.isdlc/state.json` → `skill_usage_log`
+
+### SUGGESTED PROMPTS — Phase Agent Protocol
+
+Phase agents emit a SUGGESTED NEXT STEPS block at the end of their phase work (after artifacts are saved and self-validation is complete).
+
+**Resolution Logic:**
+1. Read `active_workflow` from `.isdlc/state.json`
+2. If `active_workflow` is null or missing → emit fallback prompts (see below)
+3. Read `active_workflow.phases[]` and `active_workflow.current_phase_index`
+4. Let next_index = current_phase_index + 1
+5. If next_index < phases.length → resolve next phase display name (split key on first hyphen, title-case remainder, e.g. `"03-architecture"` → `"Phase 03 - Architecture"`), set primary_prompt = `"Continue to {display_name}"`
+6. If next_index >= phases.length → primary_prompt = `"Complete workflow and merge to main"`
+
+**Output Format:**
+```
+---
+SUGGESTED NEXT STEPS:
+  [1] {primary_prompt}
+  [2] {agent-specific review option}
+  [3] Show workflow status
+---
+```
+
+**Fallback (no active workflow):**
+```
+---
+SUGGESTED NEXT STEPS:
+  [1] Show project status
+  [2] Start a new workflow
+---
+```
+
+### CONSTITUTIONAL PRINCIPLES Preamble
+
+**CRITICAL**: Before starting any work, read the project constitution at `docs/isdlc/constitution.md`.
+
+Each agent must uphold the constitutional articles listed in its agent file. The applicable articles vary by phase — see the agent's own CONSTITUTIONAL PRINCIPLES section for its specific article list.
