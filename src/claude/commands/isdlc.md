@@ -789,17 +789,57 @@ Use `AskUserQuestion` with options:
 
 Clear `pending_escalations` after handling.
 
-**3d.** Launch the orchestrator for this single phase:
+**3d.** DIRECT PHASE DELEGATION — Bypass the orchestrator and delegate directly to the phase agent.
+
+Look up the agent for this phase from the PHASE→AGENT table:
+
+| Phase Key | Agent (`subagent_type`) |
+|-----------|------------------------|
+| `00-quick-scan` | `quick-scan-agent` |
+| `01-requirements` | `requirements-analyst` |
+| `02-impact-analysis` | `impact-analysis-orchestrator` |
+| `02-tracing` | `tracing-orchestrator` |
+| `03-architecture` | `solution-architect` |
+| `04-design` | `system-designer` |
+| `05-test-strategy` | `test-design-engineer` |
+| `06-implementation` | `software-developer` |
+| `07-testing` | `integration-tester` |
+| `08-code-review` | `qa-engineer` |
+| `09-validation` | `security-compliance-auditor` |
+| `10-cicd` | `cicd-engineer` |
+| `11-local-testing` | `environment-builder` |
+| `12-remote-build` | `environment-builder` |
+| `12-test-deploy` | `deployment-engineer-staging` |
+| `13-production` | `release-manager` |
+| `14-operations` | `site-reliability-engineer` |
+| `15-upgrade-plan` | `upgrade-engineer` |
+| `15-upgrade-execute` | `upgrade-engineer` |
+| `16-quality-loop` | `quality-loop-engineer` |
+
+Read `agent_modifiers` for this phase from `.isdlc/state.json` → `active_workflow.type`, then look up the workflow in `workflows.json` → `workflows[type].agent_modifiers[phase_key]`. If modifiers exist, include them as `WORKFLOW MODIFIERS: {json}` in the prompt.
+
+**Discovery context** (phases 02 and 03 only): If `phase_key` starts with `02-` or `03-`, read `.isdlc/state.json` → `discovery_context`. If it exists and `completed_at` is within 24 hours, include as a `DISCOVERY CONTEXT` block. If older than 24h, include with a `⚠️ STALE` warning. Otherwise omit.
 
 ```
-Use Task tool → sdlc-orchestrator with:
-  MODE: single-phase
-  PHASE: {phase_key}
-  (include MONOREPO CONTEXT if applicable)
+Use Task tool → {agent_name} with:
+  "Execute Phase {NN} - {Phase Name} for {workflow_type} workflow.
+   Artifact folder: {artifact_folder}
+   Phase key: {phase_key}
+   {WORKFLOW MODIFIERS: {json} — if applicable}
+   {DISCOVERY CONTEXT: ... — if phase 02 or 03}
+   Validate GATE-{NN} on completion."
 ```
 
-**3e.** On return, check the result status:
-- `"passed"` → Mark task as `completed` **with strikethrough**: update both `status` to `completed` AND `subject` to `~~[N] {base subject}~~` (wrap the original `[N] subject` in `~~`). Continue to next phase.
+**3e.** POST-PHASE STATE UPDATE — After the phase agent returns successfully:
+1. Read `.isdlc/state.json`
+2. Set `phases[phase_key].status` = `"completed"`
+3. Set `phases[phase_key].summary` = (extract from agent result, max 150 chars)
+4. Set `active_workflow.current_phase_index` += 1
+5. If more phases remain: set `active_workflow.current_phase` = `phases[new_index]`, set `phases[new_phase].status` = `"in_progress"`, set top-level `current_phase` = new phase key
+6. Write `.isdlc/state.json`
+
+**3f.** On return, check the result status:
+- `"passed"` or successful completion → Mark task as `completed` **with strikethrough**: update both `status` to `completed` AND `subject` to `~~[N] {base subject}~~` (wrap the original `[N] subject` in `~~`). Continue to next phase.
 - `"blocked_by_hook"` → Display blocker banner (same format as 3c), use `AskUserQuestion` for Retry/Skip/Cancel
 - Any other error → Display error, use `AskUserQuestion` for Retry/Skip/Cancel
 
@@ -826,12 +866,12 @@ The orchestrator runs the Human Review Checkpoint (if code_review.enabled), merg
 /isdlc (no args)    → Task → orchestrator → Interactive Menu → User Selection → Action
 /isdlc feature      → Task → orchestrator → Backlog Picker (feature) → Phase-Loop Controller
 /isdlc fix          → Task → orchestrator → Backlog Picker (fix) → Phase-Loop Controller
-/isdlc feature ...  → Phase-Loop Controller (init → tasks → loop → finalize)
-/isdlc fix ...      → Phase-Loop Controller (init → tasks → loop → finalize)
-/isdlc test run     → Phase-Loop Controller (init → tasks → loop → finalize)
-/isdlc test generate → Phase-Loop Controller (init → tasks → loop → finalize)
-/isdlc start ...    → Phase-Loop Controller (init → tasks → loop → finalize)
-/isdlc upgrade ...  → Phase-Loop Controller (init → tasks → loop → finalize)
+/isdlc feature ...  → Phase-Loop Controller (init → tasks → direct-agent-loop → finalize)
+/isdlc fix ...      → Phase-Loop Controller (init → tasks → direct-agent-loop → finalize)
+/isdlc test run     → Phase-Loop Controller (init → tasks → direct-agent-loop → finalize)
+/isdlc test generate → Phase-Loop Controller (init → tasks → direct-agent-loop → finalize)
+/isdlc start ...    → Phase-Loop Controller (init → tasks → direct-agent-loop → finalize)
+/isdlc upgrade ...  → Phase-Loop Controller (init → tasks → direct-agent-loop → finalize)
 /isdlc cancel       → Task → orchestrator → Cancel active workflow
 /isdlc status       → Task → orchestrator → Show status
 /isdlc <action>     → Task → orchestrator → Execute Action

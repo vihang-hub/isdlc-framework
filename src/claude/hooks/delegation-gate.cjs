@@ -102,6 +102,13 @@ async function main() {
             process.exit(0);
         }
 
+        // Phase-Loop Controller: if workflow progressed past phase 01, init delegation confirmed
+        if (state.active_workflow && state.active_workflow.current_phase_index > 0) {
+            debugLog(`Delegation gate: workflow at phase index ${state.active_workflow.current_phase_index} — init delegation confirmed`);
+            clearPendingDelegation();
+            process.exit(0);
+        }
+
         // Cross-reference: check if any phase is in_progress (evidence of active work)
         const currentPhase = state.current_phase || (state.active_workflow && state.active_workflow.current_phase);
         if (currentPhase && state.phases && state.phases[currentPhase]) {
@@ -119,8 +126,8 @@ async function main() {
 
         console.log(JSON.stringify({
             decision: 'block',
-            reason: `You loaded /${pending.skill} but did not delegate to the "${requiredAgent}" agent via the Task tool. ` +
-                `You MUST use the Task tool with subagent_type: "${requiredAgent}" to handle this command. ` +
+            reason: `You loaded /${pending.skill} but did not delegate to "${requiredAgent}" for initialization. ` +
+                `Follow the loaded command's Phase-Loop Controller: begin with Task → ${requiredAgent} (STEP 1). ` +
                 `Do not implement the request directly.`
         }));
 

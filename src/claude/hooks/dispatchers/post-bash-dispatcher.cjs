@@ -15,7 +15,10 @@
  *
  * Writes state once after all hooks.
  *
- * Version: 1.0.0
+ * Hooks with shouldActivate guards are skipped when their conditions
+ * aren't met (REQ-0010 T3-B).
+ *
+ * Version: 1.1.0
  */
 
 const {
@@ -33,14 +36,18 @@ const { check: testWatcherCheck } = require('../test-watcher.cjs');
 const { check: reviewReminderCheck } = require('../review-reminder.cjs');
 const { check: atddCompletenessValidatorCheck } = require('../atdd-completeness-validator.cjs');
 
+/** @param {object} ctx @returns {boolean} */
+const hasActiveWorkflow = (ctx) => !!ctx.state?.active_workflow;
+
 /**
- * Hook execution order.
- * @type {Array<{ name: string, check: function }>}
+ * Hook execution order with optional activation guards.
+ * If shouldActivate is defined and returns false, the hook is skipped.
+ * @type {Array<{ name: string, check: function, shouldActivate?: function }>}
  */
 const HOOKS = [
-    { name: 'test-watcher',                check: testWatcherCheck },
-    { name: 'review-reminder',             check: reviewReminderCheck },
-    { name: 'atdd-completeness-validator', check: atddCompletenessValidatorCheck }
+    { name: 'test-watcher',                check: testWatcherCheck,                shouldActivate: hasActiveWorkflow },
+    { name: 'review-reminder',             check: reviewReminderCheck,             shouldActivate: hasActiveWorkflow },
+    { name: 'atdd-completeness-validator', check: atddCompletenessValidatorCheck, shouldActivate: (ctx) => !!ctx.state?.active_workflow?.options?.atdd_mode }
 ];
 
 async function main() {
@@ -74,6 +81,9 @@ async function main() {
         const allStdout = [];
 
         for (const hook of HOOKS) {
+            if (hook.shouldActivate && !hook.shouldActivate(ctx)) {
+                continue; // skip inactive hook
+            }
             try {
                 const result = hook.check(ctx);
                 if (result.stateModified) stateModified = true;

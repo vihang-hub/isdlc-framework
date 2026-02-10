@@ -20,10 +20,10 @@
  * PostToolUse hooks receive tool_result in input.
  *
  * NOTE: No global early-exit-if-no-active-workflow guard because
- * log-skill-usage logs regardless. Each hook handles the null state
- * case internally.
+ * log-skill-usage logs regardless. Hooks with shouldActivate guards are
+ * skipped when their conditions aren't met (REQ-0010 T3-B).
  *
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 const {
@@ -44,17 +44,21 @@ const { check: discoverMenuGuardCheck } = require('../discover-menu-guard.cjs');
 const { check: phaseTransitionEnforcerCheck } = require('../phase-transition-enforcer.cjs');
 const { check: menuHaltEnforcerCheck } = require('../menu-halt-enforcer.cjs');
 
+/** @param {object} ctx @returns {boolean} */
+const hasActiveWorkflow = (ctx) => !!ctx.state?.active_workflow;
+
 /**
- * Hook execution order.
- * @type {Array<{ name: string, check: function }>}
+ * Hook execution order with optional activation guards.
+ * If shouldActivate is defined and returns false, the hook is skipped.
+ * @type {Array<{ name: string, check: function, shouldActivate?: function }>}
  */
 const HOOKS = [
     { name: 'log-skill-usage',           check: logSkillUsageCheck },
-    { name: 'menu-tracker',              check: menuTrackerCheck },
-    { name: 'walkthrough-tracker',       check: walkthroughTrackerCheck },
-    { name: 'discover-menu-guard',       check: discoverMenuGuardCheck },
-    { name: 'phase-transition-enforcer', check: phaseTransitionEnforcerCheck },
-    { name: 'menu-halt-enforcer',        check: menuHaltEnforcerCheck }
+    { name: 'menu-tracker',              check: menuTrackerCheck,              shouldActivate: hasActiveWorkflow },
+    { name: 'walkthrough-tracker',       check: walkthroughTrackerCheck,       shouldActivate: (ctx) => ctx.state?.active_workflow?.type === 'discover' },
+    { name: 'discover-menu-guard',       check: discoverMenuGuardCheck,        shouldActivate: (ctx) => ctx.state?.active_workflow?.type === 'discover' },
+    { name: 'phase-transition-enforcer', check: phaseTransitionEnforcerCheck,  shouldActivate: hasActiveWorkflow },
+    { name: 'menu-halt-enforcer',        check: menuHaltEnforcerCheck,         shouldActivate: hasActiveWorkflow }
 ];
 
 async function main() {
@@ -88,6 +92,9 @@ async function main() {
         const allStdout = [];
 
         for (const hook of HOOKS) {
+            if (hook.shouldActivate && !hook.shouldActivate(ctx)) {
+                continue; // skip inactive hook
+            }
             try {
                 const result = hook.check(ctx);
                 if (result.stateModified) stateModified = true;

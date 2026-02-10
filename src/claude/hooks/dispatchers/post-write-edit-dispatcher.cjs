@@ -23,7 +23,10 @@
  * Because hooks 1 and 2 read directly from disk and never modify state, and hook 3
  * manages its own I/O, the dispatcher does NOT call writeState() at all.
  *
- * Version: 1.0.0
+ * Hooks with activation guards are skipped when their conditions
+ * aren't met (REQ-0010 T3-B).
+ *
+ * Version: 1.1.0
  */
 
 const {
@@ -68,11 +71,12 @@ async function main() {
 
         // 5. Determine tool name for conditional hook execution
         const toolName = input.tool_name;
+        const hasActiveWorkflow = !!state?.active_workflow;
 
         // 6. Call hooks in order (all run, no short-circuit)
         const allStderr = [];
 
-        // Hook 1: state-write-validator (runs for both Write and Edit)
+        // Hook 1: state-write-validator (always runs for both Write and Edit)
         try {
             const result = stateWriteValidatorCheck(ctx);
             if (result.stderr) allStderr.push(result.stderr);
@@ -80,8 +84,8 @@ async function main() {
             debugLog('post-write-edit-dispatcher: state-write-validator threw:', e.message);
         }
 
-        // Hook 2: output-format-validator (Write only, skipped for Edit)
-        if (toolName === 'Write') {
+        // Hook 2: output-format-validator (Write only, skipped for Edit; requires active workflow)
+        if (toolName === 'Write' && hasActiveWorkflow) {
             try {
                 const result = outputFormatValidatorCheck(ctx);
                 if (result.stderr) allStderr.push(result.stderr);
@@ -90,14 +94,16 @@ async function main() {
             }
         }
 
-        // Hook 3: workflow-completion-enforcer (MUST be last; manages own I/O)
-        try {
-            const result = workflowCompletionEnforcerCheck(ctx);
-            // This hook outputs its own stderr via outputSelfHealNotification()
-            // and writes state directly. We do not touch its stateModified flag.
-            if (result.stderr) allStderr.push(result.stderr);
-        } catch (e) {
-            debugLog('post-write-edit-dispatcher: workflow-completion-enforcer threw:', e.message);
+        // Hook 3: workflow-completion-enforcer (only when workflow just completed: active_workflow is null)
+        if (!hasActiveWorkflow) {
+            try {
+                const result = workflowCompletionEnforcerCheck(ctx);
+                // This hook outputs its own stderr via outputSelfHealNotification()
+                // and writes state directly. We do not touch its stateModified flag.
+                if (result.stderr) allStderr.push(result.stderr);
+            } catch (e) {
+                debugLog('post-write-edit-dispatcher: workflow-completion-enforcer threw:', e.message);
+            }
         }
 
         // 7. Output accumulated stderr (no state write -- hooks manage their own)

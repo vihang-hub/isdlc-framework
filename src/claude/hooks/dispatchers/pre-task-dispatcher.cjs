@@ -20,10 +20,10 @@
  * Writes state once after all hooks or after the blocking hook.
  *
  * NOTE: No global early-exit-if-no-active-workflow guard because
- * skill-validator runs regardless. Each hook handles the null state case
- * internally.
+ * skill-validator runs regardless. Hooks with shouldActivate guards are
+ * skipped when their conditions aren't met (REQ-0010 T3-B).
  *
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 const {
@@ -47,19 +47,27 @@ const { check: gateBlockerCheck } = require('../gate-blocker.cjs');
 const { check: constitutionValidatorCheck } = require('../constitution-validator.cjs');
 const { check: testAdequacyBlockerCheck } = require('../test-adequacy-blocker.cjs');
 
+/** @param {object} ctx @returns {boolean} */
+const hasActiveWorkflow = (ctx) => !!ctx.state?.active_workflow;
+
 /**
- * Hook execution order.
- * @type {Array<{ name: string, check: function }>}
+ * Hook execution order with optional activation guards.
+ * If shouldActivate is defined and returns false, the hook is skipped.
+ * @type {Array<{ name: string, check: function, shouldActivate?: function }>}
  */
 const HOOKS = [
-    { name: 'iteration-corridor',    check: iterationCorridorCheck },
+    { name: 'iteration-corridor',    check: iterationCorridorCheck,    shouldActivate: hasActiveWorkflow },
     { name: 'skill-validator',       check: skillValidatorCheck },
-    { name: 'phase-loop-controller', check: phaseLoopControllerCheck },
-    { name: 'plan-surfacer',         check: planSurfacerCheck },
-    { name: 'phase-sequence-guard',  check: phaseSequenceGuardCheck },
-    { name: 'gate-blocker',          check: gateBlockerCheck },
-    { name: 'constitution-validator', check: constitutionValidatorCheck },
-    { name: 'test-adequacy-blocker', check: testAdequacyBlockerCheck }
+    { name: 'phase-loop-controller', check: phaseLoopControllerCheck, shouldActivate: hasActiveWorkflow },
+    { name: 'plan-surfacer',         check: planSurfacerCheck,         shouldActivate: hasActiveWorkflow },
+    { name: 'phase-sequence-guard',  check: phaseSequenceGuardCheck,  shouldActivate: hasActiveWorkflow },
+    { name: 'gate-blocker',          check: gateBlockerCheck,          shouldActivate: hasActiveWorkflow },
+    { name: 'constitution-validator', check: constitutionValidatorCheck, shouldActivate: hasActiveWorkflow },
+    { name: 'test-adequacy-blocker', check: testAdequacyBlockerCheck, shouldActivate: (ctx) => {
+        if (!ctx.state?.active_workflow) return false;
+        const phase = ctx.state.active_workflow.current_phase || '';
+        return phase.startsWith('15-upgrade');
+    }}
 ];
 
 async function main() {
@@ -92,6 +100,9 @@ async function main() {
         const allStderr = [];
 
         for (const hook of HOOKS) {
+            if (hook.shouldActivate && !hook.shouldActivate(ctx)) {
+                continue; // skip inactive hook
+            }
             try {
                 const result = hook.check(ctx);
                 if (result.stateModified) stateModified = true;

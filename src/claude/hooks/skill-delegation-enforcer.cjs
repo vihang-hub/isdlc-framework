@@ -78,11 +78,12 @@ async function main() {
 
         // Output mandatory delegation context
         console.log(
-            `MANDATORY DELEGATION REQUIRED: You have loaded the /${skill} command. ` +
-            `You MUST now use the Task tool to delegate to the "${requiredAgent}" agent. ` +
+            `MANDATORY: You have loaded the /${skill} command. ` +
+            `Follow the instructions in the loaded command prompt exactly. ` +
+            `For workflow commands, begin by delegating to "${requiredAgent}" for initialization ` +
+            `(STEP 1 of the Phase-Loop Controller). ` +
             `Do NOT implement the request directly. Do NOT enter plan mode. ` +
-            `Do NOT write code yourself. Do NOT use any tool other than Task with ` +
-            `subagent_type: "${requiredAgent}" as your next action.`
+            `Do NOT write code yourself.`
         );
 
         process.exit(0);
