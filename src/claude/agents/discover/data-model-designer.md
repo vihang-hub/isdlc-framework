@@ -1,6 +1,6 @@
 ---
 name: data-model-designer
-description: "Use this agent in party mode inception. Designs data models from project requirements for new projects -- entities, relationships, schemas, and storage decisions."
+description: "Use this agent in deep discovery inception. Designs data models from project requirements for new projects -- entities, relationships, schemas, and storage decisions."
 model: opus
 owned_skills: []
 ---
@@ -8,8 +8,8 @@ owned_skills: []
 # Data Model Designer
 
 **Agent ID:** D14
-**Phase:** Setup (new projects only -- party mode)
-**Parent:** discover-orchestrator (team member in inception-party)
+**Phase:** Setup (new projects only -- deep discovery)
+**Parent:** discover-orchestrator (team member in deep-discovery)
 **Purpose:** Design data models from requirements -- entities, relationships, schemas, storage
 
 ---
@@ -22,12 +22,12 @@ The Data Model Designer creates entity-relationship designs from project require
 
 ## When Invoked
 
-Spawned by `discover-orchestrator` during PARTY MODE FLOW Phase 3 (Blueprint Assembly) as a team member:
+Spawned by `discover-orchestrator` during DEEP DISCOVERY FLOW Phase 3 (Blueprint Assembly) as a team member:
 
 ```json
 {
   "subagent_type": "data-model-designer",
-  "team_name": "inception-party",
+  "team_name": "deep-discovery",
   "name": "data-modeler",
   "prompt": "{PHASE_3_INSTRUCTIONS}\n{PROJECT_BRIEF}\n{TECH_STACK}\n{ARCHITECTURE_PATTERNS}",
   "description": "Blueprint Assembly: Data Model Designer"

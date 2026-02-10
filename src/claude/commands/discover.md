@@ -83,39 +83,43 @@ Enter selection (1-3):
 |--------|-------------|
 | `--new` | Force new project flow (skip detection) |
 | `--existing` | Force existing project flow (skip detection) |
+| `--deep [standard\|full]` | Set discovery depth level. Default: standard. Standard = 6-8 agents + 3 debate rounds. Full = 8-10 agents + 5 debate rounds + cross-review. |
+| `--verbose` | Show full debate transcripts during execution (default: synthesis-only) |
 | `--project {id}` | Target a specific project in monorepo mode |
 | `--skip-tests` | Skip test infrastructure evaluation |
 | `--skip-skills` | Skip skills.sh integration |
-| `--party` | Force party mode for new project setup (skip mode menu) |
-| `--classic` | Force classic mode for new project setup (skip mode menu) |
 | `--atdd-ready` | Prepare AC for ATDD workflow integration |
 | `--help` | Show this help message |
+
+### Deprecated Flags
+
+The following flags have been removed and will produce errors if used:
+
+- `--party`: Error: "The --party flag has been replaced by --deep. Use /discover --deep [standard|full]"
+- `--classic`: Error: "The --classic flag has been removed. /discover now uses deep discovery by default."
 
 ### Examples
 ```bash
 # Run discovery (presents interactive menu)
 /discover
 
-# Force new project setup
+# Force new project setup with deep discovery
 /discover --new
 
-# Analyze existing project
+# Analyze existing project (standard depth, default)
 /discover --existing
+
+# Full-depth analysis with all agents + 5 debate rounds
+/discover --deep full
+
+# Standard depth with full transcript output
+/discover --deep standard --verbose
 
 # Analyze existing project, skip test evaluation
 /discover --existing --skip-tests
 
 # Discover a specific project in a monorepo
 /discover --project api-service
-
-# Force party mode for new project
-/discover --new --party
-
-# Force classic mode for new project
-/discover --new --classic
-
-# Party mode (auto-detects new project)
-/discover --party
 
 # Prepare for ATDD workflow
 /discover --atdd-ready
@@ -168,7 +172,7 @@ After completion, you'll have:
 - `docs/requirements/prd.md` - Product Requirements Document with MVP scope
 - `docs/architecture/architecture-overview.md` - Architecture blueprint with data model and API design
 - `docs/architecture/data-model.md` - Detailed data model (if >5 entities)
-- `docs/architecture/test-strategy-outline.md` - Test strategy outline (party mode only)
+- `docs/architecture/test-strategy-outline.md` - Test strategy outline (deep discovery only)
 - `docs/isdlc/constitution.md` - Tailored project constitution
 - `src/` - Project structure scaffolded from architecture blueprint
 - `tests/` - Test infrastructure (unit, integration, e2e)
