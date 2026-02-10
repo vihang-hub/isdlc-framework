@@ -1,0 +1,91 @@
+{
+  "version": "1.0.0",
+  "description": "Configuration for deep discovery debate rounds on existing projects",
+  "depth_levels": {
+    "standard": {
+      "agents": ["D1", "D2", "D5", "D6", "D16", "D17"],
+      "debate_rounds": 3
+    },
+    "full": {
+      "agents": ["D1", "D2", "D5", "D6", "D16", "D17", "D18", "D19"],
+      "debate_rounds": 5
+    }
+  },
+  "agents": {
+    "D16": {
+      "title": "Security Auditor",
+      "agent_type": "security-auditor",
+      "depth_level": "standard",
+      "output_artifact": "security-posture.md",
+      "scan_domains": ["dependency-vulnerabilities", "secret-exposure", "auth-patterns", "input-validation", "owasp-top-10"]
+    },
+    "D17": {
+      "title": "Technical Debt Auditor",
+      "agent_type": "technical-debt-auditor",
+      "depth_level": "standard",
+      "output_artifact": "technical-debt-report.md",
+      "scan_domains": ["code-duplication", "complexity-hotspots", "deprecated-apis", "error-handling", "dependency-staleness", "anti-patterns"]
+    },
+    "D18": {
+      "title": "Performance Analyst",
+      "agent_type": "performance-analyst",
+      "depth_level": "full",
+      "output_artifact": "performance-analysis.md",
+      "scan_domains": ["response-time-patterns", "memory-cpu-profiling", "caching-strategy", "query-patterns", "bundle-size"]
+    },
+    "D19": {
+      "title": "Ops Readiness Reviewer",
+      "agent_type": "ops-readiness-reviewer",
+      "depth_level": "full",
+      "output_artifact": "ops-readiness-report.md",
+      "scan_domains": ["logging-adequacy", "health-checks", "graceful-shutdown", "config-management", "monitoring-hooks"]
+    }
+  },
+  "debate_rounds": [
+    {
+      "round": 1,
+      "name": "Architecture + Security",
+      "focus": "Cross-validate architecture decisions against security posture and threat model",
+      "interaction": "cross-review",
+      "participants_standard": ["D1", "D16"],
+      "participants_full": ["D1", "D16", "D19"],
+      "timeout_minutes": 5
+    },
+    {
+      "round": 2,
+      "name": "Data + Testability + Architecture",
+      "focus": "Validate data model patterns are testable and architecturally sound",
+      "interaction": "cross-review",
+      "participants_standard": ["D5", "D2", "D1"],
+      "participants_full": ["D5", "D2", "D1"],
+      "timeout_minutes": 5
+    },
+    {
+      "round": 3,
+      "name": "Behavior + Security + Coverage",
+      "focus": "Cross-validate feature behaviors against security concerns and test coverage gaps",
+      "interaction": "cross-review",
+      "participants_standard": ["D6", "D16", "D2"],
+      "participants_full": ["D6", "D16", "D2"],
+      "timeout_minutes": 5
+    },
+    {
+      "round": 4,
+      "name": "Constitution Alignment",
+      "focus": "Map all findings to constitutional articles, identify compliance gaps and impacts",
+      "interaction": "constitution-mapping",
+      "participants_standard": null,
+      "participants_full": "all",
+      "timeout_minutes": 8
+    },
+    {
+      "round": 5,
+      "name": "Artifact Completeness + Cross-Review",
+      "focus": "Verify combined output covers all discovery dimensions, identify blind spots, cross-review assigned artifacts",
+      "interaction": "completeness-review",
+      "participants_standard": null,
+      "participants_full": "all",
+      "timeout_minutes": 8
+    }
+  ]
+}

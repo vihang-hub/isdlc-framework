@@ -241,7 +241,7 @@ At each phase gate, skill usage is reviewed:
 
 ## Skill Distribution
 
-### By Agent (229 skills across 36 agents)
+### By Agent (229 skills across 40 agents)
 
 | Group | Agent | Skills | Phase |
 |-------|-------|--------|-------|

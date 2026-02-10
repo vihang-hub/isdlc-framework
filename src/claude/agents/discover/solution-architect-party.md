@@ -1,15 +1,15 @@
 ---
 name: solution-architect-party
-description: "Use this agent in party mode inception. Proposes architecture patterns and tech stack recommendations, responds to security and ops critiques, converges toward consensus."
+description: "Use this agent in deep discovery inception. Proposes architecture patterns and tech stack recommendations, responds to security and ops critiques, converges toward consensus."
 model: opus
 owned_skills: []
 ---
 
-# Solution Architect (Party Mode)
+# Solution Architect (Deep Discovery)
 
 **Agent ID:** D11
-**Phase:** Setup (new projects only -- party mode)
-**Parent:** discover-orchestrator (team member in inception-party)
+**Phase:** Setup (new projects only -- deep discovery)
+**Parent:** discover-orchestrator (team member in deep-discovery)
 **Purpose:** Propose architecture patterns and tech stack, lead debate toward consensus
 
 ---
@@ -24,12 +24,12 @@ Unlike D2 (Solution Architect in SDLC workflows) who designs from a requirements
 
 ## When Invoked
 
-Spawned by `discover-orchestrator` during PARTY MODE FLOW Phase 2 (Stack Debate) as a team member:
+Spawned by `discover-orchestrator` during DEEP DISCOVERY FLOW Phase 2 (Stack Debate) as a team member:
 
 ```json
 {
   "subagent_type": "solution-architect-party",
-  "team_name": "inception-party",
+  "team_name": "deep-discovery",
   "name": "liam",
   "prompt": "{PERSONA_CONTEXT}\n{PHASE_2_INSTRUCTIONS}\n{PROJECT_BRIEF}",
   "description": "Stack Debate: Liam (Solution Architect)"

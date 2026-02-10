@@ -1,15 +1,15 @@
 # iSDLC Agents
 
-This document provides detailed information about all 36 agents in the iSDLC framework.
+This document provides detailed information about all 41 agents in the iSDLC framework.
 
 ## Overview
 
-The framework's 36 agents are organized into five groups:
+The framework's 41 agents are organized into five groups:
 
 | Group | Count | Purpose |
 |-------|-------|---------|
-| [SDLC Agents](#sdlc-agents) | 15 | Execute development phases (1 orchestrator + 14 phase agents) |
-| [Discover Agents](#discover-agents) | 12 | Analyze projects before development begins |
+| [SDLC Agents](#sdlc-agents) | 16 | Execute development phases (1 orchestrator + 15 phase agents) |
+| [Discover Agents](#discover-agents) | 16 | Analyze projects before development begins |
 | [Quick Scan Agent](#quick-scan-agent-phase-00) | 1 | Lightweight scope estimation before requirements |
 | [Impact Analysis Agents](#impact-analysis-agents-phase-02) | 4 | Full feature impact analysis after requirements |
 | [Tracing Agents](#tracing-agents-phase-02) | 4 | Trace bug root causes after requirements |
@@ -18,7 +18,7 @@ The framework's 36 agents are organized into five groups:
 
 ## SDLC Agents
 
-The 15 SDLC agents implement a 1-to-1 mapping between phases and agents. Each agent owns exactly one phase from requirements through operations and upgrades.
+The 16 SDLC agents implement a 1-to-1 mapping between phases and agents. Each agent owns exactly one phase from requirements through operations and upgrades.
 
 | Phase | Agent | Responsibility | Key Artifacts |
 |-------|-------|----------------|---------------|
@@ -37,6 +37,7 @@ The 15 SDLC agents implement a 1-to-1 mapping between phases and agents. Each ag
 | **13** | **Release Manager** | Production deployment, release coordination | release-notes.md, post-deployment-report.md |
 | **14** | **Site Reliability Engineer** | Operations, monitoring, incident response, SLAs | monitoring-config/, alert-rules.yaml, sla-tracking.md |
 | **15** | **Upgrade Engineer** | Dependency/tool upgrades with regression testing | upgrade-analysis.md, upgrade-summary.md |
+| **16** | **Quality Loop Engineer** | Parallel testing + automated QA (feature/fix workflows) | quality-report.md, coverage-report.md, security-scan.md |
 
 **1-to-1 Mapping**: Each phase has exactly ONE dedicated agent with clear entry/exit criteria. No overlapping responsibilities — conflicts only occur at phase boundaries and are handled by the Orchestrator.
 
@@ -104,11 +105,11 @@ For bug fixes, **after Phase 01 captures the bug report**, the Tracing Orchestra
 
 ## Discover Agents
 
-The `/discover` command uses 12 specialized sub-agents to analyze projects before SDLC workflows begin.
+The `/discover` command uses 16 specialized sub-agents to analyze projects before SDLC workflows begin. For existing projects, the `--deep` flag controls discovery depth: **standard** (6 core agents + 3 debate rounds) or **full** (8 agents + 5 debate rounds + cross-review).
 
-**For existing projects**: D1, D2, D5, and D6 run in parallel (Phase 1), then sequential phases extract behavior, generate characterization tests, and build traceability (Phases 1b–1d).
+**For existing projects**: D1, D2, D5, D6 run in parallel (Phase 1) with D16-D17 (standard depth) or D16-D19 (full depth) for deeper analysis. Sequential phases then extract behavior, generate characterization tests, and build traceability (Phases 1b-1d).
 
-**For new projects**: D7 guides vision elicitation and D8 designs the architecture blueprint.
+**For new projects**: D7 guides vision elicitation and D8 designs the architecture blueprint via deep discovery with debate rounds (D9-D15).
 
 | ID | Agent | Responsibility |
 |----|-------|----------------|
@@ -121,6 +122,10 @@ The `/discover` command uses 12 specialized sub-agents to analyze projects befor
 | **D6** | **Feature Mapper** | API endpoints, UI pages, CLI commands, business domains, **behavior extraction & AC generation** |
 | **D7** | **Product Analyst** | Vision elicitation, brainstorming, PRD generation (new projects) |
 | **D8** | **Architecture Designer** | Architecture blueprint from PRD and tech stack (new projects) |
+| **D16** | **Security Auditor** | Dependency vulnerabilities, secret detection, OWASP assessment (existing, standard+full) |
+| **D17** | **Technical Debt Auditor** | Code duplication, complexity, deprecated APIs, anti-patterns (existing, standard+full) |
+| **D18** | **Performance Analyst** | Response time patterns, caching, query optimization, bundle sizes (existing, full only) |
+| **D19** | **Ops Readiness Reviewer** | Logging, health checks, graceful shutdown, monitoring hooks (existing, full only) |
 | — | **Characterization Test Generator** | Generate tests that capture current behavior as executable specifications |
 | — | **Artifact Integration** | Link extracted AC to feature maps, generate traceability matrices |
 | — | **ATDD Bridge** | Prepare extracted AC for ATDD workflow integration with priority tagging |
@@ -129,7 +134,7 @@ The `/discover` command uses 12 specialized sub-agents to analyze projects befor
 
 **Output**: `docs/project-discovery-report.md`, `docs/isdlc/constitution.md`, `docs/requirements/reverse-engineered/`, `tests/characterization/`, `docs/isdlc/ac-traceability.csv`
 
-**Note**: D6 now includes behavior extraction (formerly the Behavior Analyzer agent). Use `--shallow` to skip behavior extraction and get only the feature catalog. Use `--atdd-ready` to enable ATDD Bridge integration.
+**Note**: D6 includes behavior extraction (formerly the Behavior Analyzer agent). Use `--atdd-ready` to enable ATDD Bridge integration. Use `--deep full` for maximum analysis depth (adds D18/D19 and extra debate rounds).
 
 ---
 
@@ -160,22 +165,22 @@ Phase 05: Test Strategy & Design
 Phase 06: Implementation
     | (Software Developer)
     v GATE-06: Code complete + unit tests pass
-Phase 07: Integration & Testing
-    | (Integration Tester)
-    v GATE-07: Integration tests pass
+Phase 16: Quality Loop (feature/fix workflows)
+    | (Quality Loop Engineer)
+    v GATE-16: All tests pass, lint clean, no vulnerabilities
 Phase 08: Code Review & QA
     | (QA Engineer)
     v GATE-08: QA sign-off
-Phase 09: Independent Validation
+Phase 09: Independent Validation (full-lifecycle only)
     | (Security & Compliance Auditor)
     v GATE-09: Security sign-off
-Phase 10: Version Control & CI/CD
+Phase 10: Version Control & CI/CD (full-lifecycle only)
     | (CI/CD Engineer)
     v GATE-10: Pipeline operational
-Phase 10: Local Development & Testing
+Phase 11: Local Development & Testing (full-lifecycle/test-run only)
     | (Environment Builder)
-    v GATE-10: Local environment validated
-Phase 11: Test Environment Deployment
+    v GATE-11: Local environment validated
+Phase 12: Test Environment Deployment
     | (Deployment Engineer - Staging)
     v GATE-11: Staging deployment verified
 Phase 13: Production Deployment
@@ -251,6 +256,10 @@ Agent definitions are located in `.claude/agents/`:
     ├── feature-mapper.md
     ├── product-analyst.md
     ├── architecture-designer.md
+    ├── security-auditor.md
+    ├── technical-debt-auditor.md
+    ├── performance-analyst.md
+    ├── ops-readiness-reviewer.md
     ├── characterization-test-generator.md
     ├── artifact-integration.md
     └── atdd-bridge.md

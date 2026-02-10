@@ -28,7 +28,7 @@ Present this welcome and menu. If context detection found a relevant signal, add
 
 ---
 
-**Welcome to iSDLC** — a framework of 36 AI agents that guide development from requirements through deployment. Quality gates enforce completion between phases, and deterministic hooks enforce rules at runtime.
+**Welcome to iSDLC** — a framework of 40 AI agents that guide development from requirements through deployment. Quality gates enforce completion between phases, and deterministic hooks enforce rules at runtime.
 
 **What would you like to learn about?**
 

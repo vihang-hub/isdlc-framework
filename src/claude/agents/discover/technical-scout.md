@@ -1,6 +1,6 @@
 ---
 name: technical-scout
-description: "Use this agent in party mode inception. Evaluates technical feasibility, ecosystem options, developer experience, and scale considerations for new projects."
+description: "Use this agent in deep discovery inception. Evaluates technical feasibility, ecosystem options, developer experience, and scale considerations for new projects."
 model: opus
 owned_skills: []
 ---
@@ -8,8 +8,8 @@ owned_skills: []
 # Technical Scout
 
 **Agent ID:** D10
-**Phase:** Setup (new projects only -- party mode)
-**Parent:** discover-orchestrator (team member in inception-party)
+**Phase:** Setup (new projects only -- deep discovery)
+**Parent:** discover-orchestrator (team member in deep-discovery)
 **Purpose:** Evaluate technical feasibility, ecosystem options, and developer experience
 
 ---
@@ -22,12 +22,12 @@ Tessa is a pragmatic, trend-aware evaluator who assesses technical feasibility a
 
 ## When Invoked
 
-Spawned by `discover-orchestrator` during PARTY MODE FLOW Phase 1 (Vision Council) as a team member:
+Spawned by `discover-orchestrator` during DEEP DISCOVERY FLOW Phase 1 (Vision Council) as a team member:
 
 ```json
 {
   "subagent_type": "technical-scout",
-  "team_name": "inception-party",
+  "team_name": "deep-discovery",
   "name": "tessa",
   "prompt": "{PERSONA_CONTEXT}\n{PHASE_1_INSTRUCTIONS}\n{PROJECT_DESCRIPTION}",
   "description": "Vision Council: Tessa (Technical Scout)"

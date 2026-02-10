@@ -40,13 +40,17 @@ The Discover Orchestrator coordinates the `/discover` command workflow. It deter
 | `feature-mapper` | D6 | Map endpoints, pages, jobs, domains + extract behavior AC + agent orchestration catalog | Existing projects |
 | `product-analyst` | D7 | Vision elicitation, brainstorming, PRD generation | New projects |
 | `architecture-designer` | D8 | Design architecture from PRD and tech stack | New projects |
-| `domain-researcher` | D9 | Industry context, regulations, compliance research | New (party mode) |
-| `technical-scout` | D10 | Technical feasibility, ecosystem, DX evaluation | New (party mode) |
-| `solution-architect-party` | D11 | Architecture + tech stack proposal with debate | New (party mode) |
-| `security-advisor` | D12 | Security posture critique of proposals | New (party mode) |
-| `devops-pragmatist` | D13 | Ops cost, deployment, CI/CD evaluation | New (party mode) |
-| `data-model-designer` | D14 | Entity design, schemas, storage for new projects | New (party mode) |
-| `test-strategist` | D15 | Test pyramid, coverage targets, tooling outline | New (party mode) |
+| `domain-researcher` | D9 | Industry context, regulations, compliance research | New (deep discovery) |
+| `technical-scout` | D10 | Technical feasibility, ecosystem, DX evaluation | New (deep discovery) |
+| `solution-architect-party` | D11 | Architecture + tech stack proposal with debate | New (deep discovery) |
+| `security-advisor` | D12 | Security posture critique of proposals | New (deep discovery) |
+| `devops-pragmatist` | D13 | Ops cost, deployment, CI/CD evaluation | New (deep discovery) |
+| `data-model-designer` | D14 | Entity design, schemas, storage for new projects | New (deep discovery) |
+| `test-strategist` | D15 | Test pyramid, coverage targets, tooling outline | New (deep discovery) |
+| `security-auditor` | D16 | Vulnerability scan, secret detection, OWASP assessment | Existing (standard+full depth) |
+| `technical-debt-auditor` | D17 | Duplication, complexity, deprecated APIs, anti-patterns | Existing (standard+full depth) |
+| `performance-analyst` | D18 | Response time, caching, query patterns, bundle sizes | Existing (full depth only) |
+| `ops-readiness-reviewer` | D19 | Logging, health checks, graceful shutdown, monitoring | Existing (full depth only) |
 | `characterization-test-generator` | — | Generate test.skip() scaffolds from extracted AC | Existing |
 | `artifact-integration` | — | Link AC to features, generate traceability matrix | Existing |
 | `atdd-bridge` | — | Create ATDD checklists, tag AC for workflow integration | Existing (--atdd-ready) |
@@ -307,45 +311,25 @@ Step 3: Branch IMMEDIATELY:
 
 For new projects, guide the user through a structured inception process that produces actionable artifacts -- a project brief, researched requirements, architecture blueprint, and constitution -- before any code is written.
 
-### Step 0: Mode Selection
+### Step 0: Depth Level Resolution
 
-Before proceeding with the new project setup, determine the execution mode.
+Determine the discovery depth level for the new project setup.
 
 **Resolution order:**
-1. If `--party` flag present -> set mode = "party"
-2. If `--classic` flag present -> set mode = "classic"
-3. If neither flag -> present Mode Selection Menu
+1. If `--deep full` flag present -> set depth = "full"
+2. If `--deep standard` flag present -> set depth = "standard"
+3. If `--deep` flag present without qualifier -> set depth = "standard" (default)
+4. If no `--deep` flag -> set depth = "standard" (default)
 
-**Mutual exclusion check:** If both `--party` and `--classic` are present, display error:
-```
-Error: --party and --classic are mutually exclusive. Use one or the other.
-```
-Then stop and wait for the user to re-invoke with a single flag.
-
-**Mode Selection Menu:**
-
-Use AskUserQuestion to present:
-
-```
-+==============================================================+
-|  INCEPTION MODE                                              |
-+==============================================================+
-
-How would you like to set up your new project?
-
-[1] Party Mode (Recommended)
-    Launch an Inception Party -- 3 specialist agents collaborate
-    in parallel at each stage for richer, multi-perspective output
-
-[2] Classic Mode
-    Sequential single-agent flow (8 phases, one at a time)
-
-Enter selection (1-2):
-```
+**Deprecated flag handling:**
+- If `--party` flag present -> display error:
+  `"Error: The --party flag has been replaced by --deep. Use /discover --deep [standard|full]"`
+- If `--classic` flag present -> display error:
+  `"Error: The --classic flag has been removed. /discover now uses deep discovery by default."`
 
 **After resolution:**
-- If mode == "classic": proceed to Step 1 (existing flow, unchanged)
-- If mode == "party": jump to PARTY MODE FLOW section below
+- Proceed to DEEP DISCOVERY FLOW below with the resolved depth level.
+- Depth level affects: number of agents in existing project Phase 1, number of debate rounds in new project flow, and cross-review enablement.
 
 ---
 
@@ -848,16 +832,16 @@ PHASE 8: Finalize                                    [Complete ✓]
 
 ---
 
-## PARTY MODE FLOW
+## DEEP DISCOVERY FLOW (NEW PROJECTS)
 
-For new projects using party mode, launch an Inception Party with multi-agent collaboration. This flow replaces Steps 1-10 with 5 parallel/sequential phases that produce the same output artifacts as classic mode.
+For new projects using deep discovery, launch a Deep Discovery Session with multi-agent collaboration. This flow replaces Steps 1-10 with 5 parallel/sequential phases that produce the same output artifacts as the sequential flow.
 
 **PREREQUISITES:**
-- Mode resolved to "party" from Step 0
+- Depth level resolved from Step 0
 - state.json accessible with project.is_new_project == true
 - No active SDLC workflow (active_workflow is null)
 
-### Party Phase 1: Vision Council
+### Deep Discovery Phase 1: Vision Council
 
 **Goal**: Gather multi-perspective understanding of the project from 3 specialists.
 **Interaction**: question-broadcast-debate
@@ -865,8 +849,8 @@ For new projects using party mode, launch an Inception Party with multi-agent co
 
 #### 1.1 Create Team and Progress Tasks
 
-1. Use TeamCreate with team_name: "inception-party"
-2. Use TaskCreate for each of the 5 party phases:
+1. Use TeamCreate with team_name: "deep-discovery"
+2. Use TaskCreate for each of the 5 deep discovery phases:
    - T1: "Vision Council -- gathering multi-perspective project vision" (activeForm: "Gathering project vision")
    - T2: "Stack Debate -- evaluating technology options" (activeForm: "Evaluating technology options")
    - T3: "Blueprint Assembly -- producing design artifacts" (activeForm: "Producing design artifacts")
@@ -892,7 +876,7 @@ PERSONA_CONTEXT:
   Phase: Vision Council
   Team Role: {persona.debate_focus}
 
-You are participating in an Inception Party with two other specialists.
+You are participating in an Deep Discovery Session with two other specialists.
 Communicate in a style consistent with your persona: {persona.communication_style}.
 Ask your questions from YOUR expertise angle. Do not duplicate their domains.
 When debating, stay in character but prioritize substance over performance.
@@ -900,7 +884,7 @@ When debating, stay in character but prioritize substance over performance.
 
 **Agent 1 (Nadia):** Use Task tool with:
 - subagent_type: "product-analyst"
-- team_name: "inception-party"
+- team_name: "deep-discovery"
 - name: "nadia"
 - prompt: PERSONA_CONTEXT block + phase 1 instructions:
   "You are participating in a Vision Council with Oscar (Domain Researcher)
@@ -912,7 +896,7 @@ When debating, stay in character but prioritize substance over performance.
 
 **Agent 2 (Oscar):** Use Task tool with:
 - subagent_type: "domain-researcher"
-- team_name: "inception-party"
+- team_name: "deep-discovery"
 - name: "oscar"
 - prompt: PERSONA_CONTEXT block + phase 1 instructions:
   "You are participating in a Vision Council with Nadia (Product Analyst)
@@ -923,7 +907,7 @@ When debating, stay in character but prioritize substance over performance.
 
 **Agent 3 (Tessa):** Use Task tool with:
 - subagent_type: "technical-scout"
-- team_name: "inception-party"
+- team_name: "deep-discovery"
 - name: "tessa"
 - prompt: PERSONA_CONTEXT block + phase 1 instructions:
   "You are participating in a Vision Council with Nadia (Product Analyst)
@@ -994,7 +978,7 @@ Merge into unified Project Brief (docs/project-brief.md):
 ```markdown
 # Project Brief
 
-**Generated by**: Inception Party (3-agent Vision Council)
+**Generated by**: Deep Discovery Session (3-agent Vision Council)
 **Date**: {timestamp}
 
 ## 1. Problem Statement
@@ -1031,7 +1015,7 @@ TaskUpdate: T1 -> completed
 
 ---
 
-### Party Phase 2: Stack & Architecture Debate
+### Deep Discovery Phase 2: Stack & Architecture Debate
 
 **Goal**: Evaluate tech stack options through structured debate with 3 specialists.
 **Interaction**: propose-critique-converge
@@ -1122,7 +1106,7 @@ TaskUpdate: T2 -> completed
 
 ---
 
-### Party Phase 3: Blueprint Assembly
+### Deep Discovery Phase 3: Blueprint Assembly
 
 **Goal**: Produce design artifacts with cross-review between 3 specialists.
 **Interaction**: produce-cross-review-finalize
@@ -1137,21 +1121,21 @@ Read Phase 3 persona details from party-personas.json for architect, data_modele
 Launch 3 agents IN PARALLEL as team members. Phase 3 agents do NOT receive PERSONA_CONTEXT -- they use their standard agent instructions plus project context.
 
 **Agent 1 (D8):** architecture-designer
-- team_name: "inception-party", name: "arch-designer"
+- team_name: "deep-discovery", name: "arch-designer"
 - Pass: Project Brief, approved tech_stack, architecture patterns from Phase 2
 - Instructions: "Design system architecture. Produce
   docs/architecture/architecture-overview.md. After production, share
   a summary via broadcast and review the data model designer's artifact."
 
 **Agent 2 (D14):** data-model-designer
-- team_name: "inception-party", name: "data-modeler"
+- team_name: "deep-discovery", name: "data-modeler"
 - Pass: Project Brief, approved tech_stack, architecture patterns
 - Instructions: "Design the data model. Produce
   docs/architecture/data-model.md. After production, share a summary
   via broadcast and review the test strategist's artifact."
 
 **Agent 3 (D15):** test-strategist
-- team_name: "inception-party", name: "test-strategist"
+- team_name: "deep-discovery", name: "test-strategist"
 - Pass: Project Brief, approved tech_stack, architecture patterns
 - Instructions: "Create test strategy outline. Produce
   docs/architecture/test-strategy-outline.md. After production, share
@@ -1183,9 +1167,9 @@ TaskUpdate: T3 -> completed
 
 ---
 
-### Party Phase 4: Constitution & Scaffold
+### Deep Discovery Phase 4: Constitution & Scaffold
 
-**Goal**: Generate constitution and install skills (same as classic mode).
+**Goal**: Generate constitution and install skills (same as sequential mode).
 **Interaction**: task-delegation (NOT team members -- uses standard Task tool)
 **AC**: AC-13
 
@@ -1196,13 +1180,13 @@ TaskUpdate: T4 -> in_progress
 Launch D3 (constitution-generator) via Task tool (NOT as team member):
 - Pass: Project Brief, tech_stack, architecture_overview, data_model,
   test_strategy, research findings from Phase 1 debate
-- Same invocation as classic mode Step 7
+- Same invocation as sequential mode Step 7
 - Interactive constitution review with user
 
 #### 4.2 Skills Installation
 
 Launch D4 (skills-researcher) via Task tool:
-- Same invocation as classic mode Step 8b
+- Same invocation as sequential mode Step 8b
 - Pass detected tech stack
 - Search skills.sh, install recommendations
 
@@ -1212,13 +1196,13 @@ Create directory structure from D8's architecture blueprint:
 - src/ scaffolding based on component structure
 - tests/ directories (unit, integration, e2e)
 
-Same logic as classic mode Step 8a.
+Same logic as sequential mode Step 8a.
 
 TaskUpdate: T4 -> completed
 
 ---
 
-### Party Phase 5: Walkthrough & Finalize
+### Deep Discovery Phase 5: Walkthrough & Finalize
 
 **Goal**: Present structured walkthrough and write discovery_context envelope.
 **Interaction**: orchestrator-inline
@@ -1238,7 +1222,7 @@ Execute walkthrough inline (same protocol as existing Step 7.5):
 
 #### 5.2 Write discovery_context Envelope (AC-16)
 
-Write discovery_context to state.json with the SAME schema as classic mode:
+Write discovery_context to state.json with the SAME schema as sequential mode:
 
 ```json
 {
@@ -1273,7 +1257,7 @@ Write discovery_context to state.json with the SAME schema as classic mode:
 
 #### 5.3 Update Project State
 
-Same as classic mode Step 9:
+Same as sequential mode Step 9:
 - project.is_new_project = false
 - project.discovery_completed = true
 - project.tech_stack = approved stack
@@ -1282,7 +1266,7 @@ Same as classic mode Step 9:
 #### 5.4 Team Cleanup (AC-20)
 
 Send shutdown_request to any remaining active team agents.
-Use TeamDelete to clean up the inception-party team.
+Use TeamDelete to clean up the deep-discovery team.
 
 TaskUpdate: T5 -> completed
 
@@ -1290,7 +1274,7 @@ TaskUpdate: T5 -> completed
 
 ```
 ════════════════════════════════════════════════════════════════
-  INCEPTION PARTY COMPLETE
+  DEEP DISCOVERY COMPLETE
 ════════════════════════════════════════════════════════════════
 
 Phase 1: Vision Council              [Complete]
@@ -1326,7 +1310,7 @@ Next Steps:
 
 ---
 
-### Party Mode Error Handling
+### Deep Discovery Error Handling
 
 #### Agent Failure Within a Phase
 
@@ -1344,13 +1328,13 @@ After spawning agents, monitor for failures:
      All agents in {phase_name} encountered errors.
 
      [1] Retry phase -- re-launch all agents
-     [2] Fall back to classic mode -- restart with sequential flow
+     [2] Fall back to sequential mode -- restart with sequential flow
      [3] Cancel -- abort discovery
 
      Enter selection (1-3):
      ```
    - [1]: Re-spawn all agents for that phase
-   - [2]: Send shutdown_request to any active agents, TeamDelete, then proceed to Step 1 (classic mode)
+   - [2]: Send shutdown_request to any active agents, TeamDelete, then proceed to Step 1 (sequential mode)
    - [3]: TeamDelete, clean up state, stop
 
 #### Team Cleanup on Error

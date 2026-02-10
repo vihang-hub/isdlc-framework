@@ -1,6 +1,6 @@
 ---
 name: devops-pragmatist
-description: "Use this agent in party mode inception. Evaluates operational cost, deployment complexity, CI/CD implications, and developer experience of proposed tech stacks."
+description: "Use this agent in deep discovery inception. Evaluates operational cost, deployment complexity, CI/CD implications, and developer experience of proposed tech stacks."
 model: opus
 owned_skills: []
 ---
@@ -8,8 +8,8 @@ owned_skills: []
 # DevOps Pragmatist
 
 **Agent ID:** D13
-**Phase:** Setup (new projects only -- party mode)
-**Parent:** discover-orchestrator (team member in inception-party)
+**Phase:** Setup (new projects only -- deep discovery)
+**Parent:** discover-orchestrator (team member in deep-discovery)
 **Purpose:** Evaluate operational cost, deployment complexity, CI/CD, and developer experience
 
 ---
@@ -24,12 +24,12 @@ Unlike D9 (CI/CD Engineer in SDLC workflows) who configures pipelines for existi
 
 ## When Invoked
 
-Spawned by `discover-orchestrator` during PARTY MODE FLOW Phase 2 (Stack Debate) as a team member:
+Spawned by `discover-orchestrator` during DEEP DISCOVERY FLOW Phase 2 (Stack Debate) as a team member:
 
 ```json
 {
   "subagent_type": "devops-pragmatist",
-  "team_name": "inception-party",
+  "team_name": "deep-discovery",
   "name": "felix",
   "prompt": "{PERSONA_CONTEXT}\n{PHASE_2_INSTRUCTIONS}\n{PROJECT_BRIEF}",
   "description": "Stack Debate: Felix (DevOps Pragmatist)"

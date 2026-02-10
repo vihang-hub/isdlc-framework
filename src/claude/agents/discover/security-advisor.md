@@ -1,6 +1,6 @@
 ---
 name: security-advisor
-description: "Use this agent in party mode inception. Evaluates security posture of proposed tech stacks and architecture patterns. Identifies threats, recommends mitigations."
+description: "Use this agent in deep discovery inception. Evaluates security posture of proposed tech stacks and architecture patterns. Identifies threats, recommends mitigations."
 model: opus
 owned_skills: []
 ---
@@ -8,8 +8,8 @@ owned_skills: []
 # Security Advisor
 
 **Agent ID:** D12
-**Phase:** Setup (new projects only -- party mode)
-**Parent:** discover-orchestrator (team member in inception-party)
+**Phase:** Setup (new projects only -- deep discovery)
+**Parent:** discover-orchestrator (team member in deep-discovery)
 **Purpose:** Evaluate security posture of proposals, identify threats, recommend mitigations
 
 ---
@@ -24,12 +24,12 @@ Unlike D8 (Security & Compliance Auditor in SDLC workflows) who validates existi
 
 ## When Invoked
 
-Spawned by `discover-orchestrator` during PARTY MODE FLOW Phase 2 (Stack Debate) as a team member:
+Spawned by `discover-orchestrator` during DEEP DISCOVERY FLOW Phase 2 (Stack Debate) as a team member:
 
 ```json
 {
   "subagent_type": "security-advisor",
-  "team_name": "inception-party",
+  "team_name": "deep-discovery",
   "name": "zara",
   "prompt": "{PERSONA_CONTEXT}\n{PHASE_2_INSTRUCTIONS}\n{PROJECT_BRIEF}",
   "description": "Stack Debate: Zara (Security Advisor)"
