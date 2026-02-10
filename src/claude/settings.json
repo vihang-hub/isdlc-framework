@@ -320,6 +320,11 @@
           },
           {
             "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/workflow-completion-enforcer.cjs",
+            "timeout": 5000
+          },
+          {
+            "type": "command",
             "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/output-format-validator.cjs",
             "timeout": 5000
           }
@@ -331,6 +336,11 @@
           {
             "type": "command",
             "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/state-write-validator.cjs",
+            "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/workflow-completion-enforcer.cjs",
             "timeout": 5000
           }
         ]

@@ -293,9 +293,10 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 1. Check for active workflow (if none, inform user)
 2. Prompt for cancellation reason (required)
 3. If git branch is active: commit uncommitted work, checkout main, preserve branch
-4. Move workflow to `workflow_history` with status `"cancelled"` and reason
-5. Clear `active_workflow` from state.json
-6. Display cancellation confirmation (include branch preservation note if applicable)
+4. Collect workflow progress snapshots: call `collectPhaseSnapshots(state)` to capture phase-by-phase execution data before it is lost
+5. Move workflow to `workflow_history` with status `"cancelled"`, reason, `phases` (copy of `active_workflow.phases`), `phase_snapshots`, and `metrics`
+6. Clear `active_workflow` from state.json
+7. Display cancellation confirmation (include branch preservation note if applicable)
 
 **status** - Show current project status
 ```
@@ -812,7 +813,7 @@ Use Task tool → sdlc-orchestrator with:
   (include MONOREPO CONTEXT if applicable)
 ```
 
-The orchestrator runs the Human Review Checkpoint (if code_review.enabled), merges the branch, and clears the workflow.
+The orchestrator runs the Human Review Checkpoint (if code_review.enabled), merges the branch, collects workflow progress snapshots (`collectPhaseSnapshots()`), applies state pruning, moves the workflow to `workflow_history` (with `phases`, `phase_snapshots`, and `metrics`), and clears `active_workflow`.
 
 **After the orchestrator returns from finalize**, clean up all workflow tasks:
 1. Use `TaskList` to get all tasks created during this workflow

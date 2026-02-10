@@ -763,6 +763,7 @@ When `/isdlc cancel` is invoked:
      "cancellation_reason": "User-provided reason",
      "status": "cancelled",
      "merged_commit": null,
+     "phases": ["01-requirements", "02-architecture", "03-design", "05-implementation"],
      "phase_snapshots": [],
      "metrics": {},
      "git_branch": {
@@ -772,7 +773,7 @@ When `/isdlc cancel` is invoked:
      }
    }
    ```
-   Include: `phase_snapshots` and `metrics` from step 4, `id` from `artifact_prefix + "-" + zeroPad(counter_used, 4)` (null if missing), `merged_commit: null`.
+   Include: `phases` (copy of `active_workflow.phases` array — needed for post-hoc snapshot reconstruction), `phase_snapshots` and `metrics` from step 4, `id` from `artifact_prefix + "-" + zeroPad(counter_used, 4)` (null if missing), `merged_commit: null`.
 7. Set `active_workflow` to `null`
 8. Confirm cancellation to user (include branch preservation note if applicable)
 
@@ -1161,7 +1162,9 @@ On hook block:
 {
   "status": "completed",
   "merged": true,
-  "pr_url": "https://github.com/..."
+  "pr_url": "https://github.com/...",
+  "workflow_id": "REQ-0001",
+  "metrics": { "total_phases": 9, "phases_completed": 9, "total_duration_minutes": 120 }
 }
 ```
 
@@ -1171,7 +1174,7 @@ On hook block:
 
 2. **single-phase**: Read `active_workflow` from state.json. Delegate to the phase agent for the specified PHASE key. After the agent returns, validate the gate for that phase. Update `active_workflow.current_phase_index` and `current_phase` in state.json. Return structured result.
 
-3. **finalize**: Run the Human Review Checkpoint (Section 3b, if `code_review.enabled`). Merge the branch back to main (Section 3a). Clear `active_workflow` from state.json. Return structured result.
+3. **finalize**: Run the Human Review Checkpoint (Section 3b, if `code_review.enabled`). Merge the branch back to main (Section 3a). **Collect workflow progress snapshots**: call `collectPhaseSnapshots(state)` → `{ phase_snapshots, metrics }`. **Apply pruning**: `pruneSkillUsageLog(state, 20)`, `pruneCompletedPhases(state, [])`, `pruneHistory(state, 50, 200)`, `pruneWorkflowHistory(state, 50, 200)`. Move `active_workflow` to `workflow_history` (include `phase_snapshots`, `metrics`, and `phases` array). Clear `active_workflow` from state.json. Return structured result including `workflow_id` and `metrics`.
 
 4. **No mode (full workflow)**: Original behavior. All phases run autonomously within a single orchestrator invocation.
 
@@ -1216,6 +1219,7 @@ When the last phase in the workflow completes:
    - `pruneWorkflowHistory(state, 50, 200)` — cap workflow_history at 50 entries, truncate descriptions > 200 chars, compact git_branch to name-only
 4. Mark the workflow as completed
 5. Move to `workflow_history` with `status: "completed"` (include `git_branch` info). Also include:
+   - `phases`: copy of `active_workflow.phases` array (needed for post-hoc snapshot reconstruction by `workflow-completion-enforcer.cjs` hook)
    - `phase_snapshots` and `metrics` from the `collectPhaseSnapshots()` return value (step 2)
    - `id`: constructed from `active_workflow.artifact_prefix + "-" + String(active_workflow.counter_used).padStart(4, '0')`. Set to `null` if `artifact_prefix` or `counter_used` is missing.
    - `merged_commit`: the 7-char short SHA of the merge commit (from branch merge in step 1). Set to `null` if no branch merge occurred.
