@@ -1,12 +1,12 @@
-# Detailed Skill Allocation to 36 Agents
+# Detailed Skill Allocation to 48 Agents
 
 ## Complete 1-to-1 Phase-Agent-Skills Mapping
 
-**Total Skills**: 229 | **Total Agents**: 36 | **Manifest Version**: 4.0.0
+**Total Skills**: 240 | **Total Agents**: 48 | **Manifest Version**: 5.0.0
 
 ---
 
-## Core SDLC Agents (15)
+## Core SDLC Agents (16)
 
 ### Agent 00: SDLC Orchestrator
 **Phase**: ALL (Cross-phase coordination)
@@ -289,6 +289,27 @@
 | UPG-004 | compatibility-testing |
 | UPG-005 | rollback-planning |
 | UPG-006 | upgrade-documentation |
+
+---
+
+### Agent 16: Quality Loop Engineer
+**Phase**: 16-quality-loop
+**Skill Category**: quality-loop/
+**Skills**: 11
+
+| ID | Skill |
+|----|-------|
+| QL-001 | parallel-track-orchestration |
+| QL-002 | local-test-execution |
+| QL-003 | mutation-testing |
+| QL-004 | coverage-analysis |
+| QL-005 | lint-check |
+| QL-006 | type-check |
+| QL-007 | build-verification |
+| QL-008 | security-scan-sast |
+| QL-009 | dependency-audit |
+| QL-010 | automated-code-review |
+| QL-011 | quality-report-generation |
 
 ---
 

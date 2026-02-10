@@ -224,7 +224,7 @@ Enter selection (1-5):
 3. Initialize `active_workflow` in state.json with type `"feature"` and phases `["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]`
 4. Delegate to Requirements Analyst (Phase 01) with `scope: "feature"`
 5. After GATE-01: creates `feature/REQ-NNNN-description` branch from main
-6. After GATE-07: merges branch to main, deletes branch
+6. After GATE-08: merges branch to main, deletes branch
 
 **No-description behavior:** When `/isdlc feature` is invoked without a description (no quoted text, no feature ID), the orchestrator presents a **backlog picker** instead of immediately asking for a description. The backlog picker scans:
 - `CLAUDE.md` for unchecked items (`- [ ] ...`) in the Next Session section
@@ -248,7 +248,7 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 7. If no `--link` provided, Agent 01 asks for the bug link during the bug report flow
 8. Phase 05 requires a failing test before the fix (TDD enforcement)
 9. After GATE-01: creates `bugfix/BUG-NNNN-external-id` branch from main
-10. After GATE-07: merges branch to main, deletes branch
+10. After GATE-08: merges branch to main, deletes branch
 
 **No-description behavior:** When `/isdlc fix` is invoked without a description, the orchestrator presents a **backlog picker** that scans:
 - `.isdlc/state.json` → `workflow_history` for cancelled fix workflows
@@ -620,12 +620,12 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 
 | Command | Workflow | Phases | Gate Mode | Branch |
 |---------|----------|--------|-----------|--------|
-| `/isdlc feature` | feature | 00 → 01 → 02(IA) → 03 → 04 → 05 → 06 → 11 → 07 → 10 → 08 | strict | `feature/REQ-NNNN-...` |
-| `/isdlc fix` | fix | 01 → 02(trace) → 05 → 06 → 11 → 07 → 10 → 08 | strict | `bugfix/BUG-NNNN-...` |
+| `/isdlc feature` | feature | 00 → 01 → 02(IA) → 03 → 04 → 05 → 06 → 16(QL) → 08 | strict | `feature/REQ-NNNN-...` |
+| `/isdlc fix` | fix | 01 → 02(trace) → 05 → 06 → 16(QL) → 08 | strict | `bugfix/BUG-NNNN-...` |
 | `/isdlc test run` | test-run | 11 → 07 | strict | none |
 | `/isdlc test generate` | test-generate | 05 → 06 → 11 → 07 → 08 | strict | none |
-| `/isdlc start` | full-lifecycle | 01 → 03 → 04 → 05 → 06 → 11 → 07 → 08 → 09 → 10 → 12 → 13 → 14 → 15 | strict | `feature/REQ-NNNN-...` |
-| `/isdlc upgrade` | upgrade | 16-plan → 16-execute → 08 | strict | `upgrade/{name}-v{ver}` |
+| `/isdlc start` | full-lifecycle | 01 → 03 → 04 → 05 → 06 → 11 → 07 → 08 → 09 → 10 → 12 → 12 → 13 → 14 | strict | `feature/REQ-NNNN-...` |
+| `/isdlc upgrade` | upgrade | 15-plan → 15-execute → 08 | strict | `upgrade/{name}-v{ver}` |
 | `/isdlc reverse-engineer` | *(alias → `/discover --existing`)* | — | — | — |
 
 **Enforcement rules:**

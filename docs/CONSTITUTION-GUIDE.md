@@ -12,7 +12,7 @@ A **Project Constitution** is a set of immutable principles that govern all deve
 
 ### Why Use a Constitution?
 
-✅ **Consistency**: Ensures all 37 agents apply the same principles
+✅ **Consistency**: Ensures all 48 agents apply the same principles
 ✅ **Quality**: Enforces standards automatically at quality gates
 ✅ **Alignment**: Keeps long-running projects on track architecturally
 ✅ **Clarity**: Makes expectations explicit and non-negotiable

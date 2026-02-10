@@ -119,17 +119,17 @@ The iSDLC framework is a JavaScript/Node.js CLI tool that installs an AI-powered
 | /discover | commands/discover.md | Project discovery and setup |
 | /provider | commands/provider.md | LLM provider management |
 
-#### Agent Inventory (36)
+#### Agent Inventory (48)
 
 | Category | Agents | Files |
 |----------|--------|-------|
-| SDLC Phases (00-14) | 15 | src/claude/agents/00-*.md through 14-*.md |
-| Discover | 12 | src/claude/agents/discover/*.md + discover-orchestrator.md |
+| SDLC Phases (00-16) | 16 | src/claude/agents/00-*.md through 16-*.md |
+| Discover | 23 | src/claude/agents/discover/*.md + discover-orchestrator.md |
 | Impact Analysis | 4 | src/claude/agents/impact-analysis/*.md |
 | Tracing | 4 | src/claude/agents/tracing/*.md |
 | Quick Scan | 1 | src/claude/agents/quick-scan/*.md |
 
-#### Skill Categories (16, 229 skills)
+#### Skill Categories (17, 240 skills)
 
 | Category | Skill Count |
 |----------|-------------|
@@ -142,6 +142,7 @@ The iSDLC framework is a JavaScript/Node.js CLI tool that installs an AI-powered
 | impact-analysis | 15 |
 | operations | ~10 |
 | orchestration | ~12 |
+| quality-loop | 11 |
 | quick-scan | 3 |
 | requirements | ~15 |
 | reverse-engineer | ~8 |

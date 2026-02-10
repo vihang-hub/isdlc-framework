@@ -9,10 +9,10 @@ This document describes the internal architecture of the iSDLC framework — how
 1. [Overview](#overview)
 2. [Installation Flow](#installation-flow)
 3. [The Orchestrator](#the-orchestrator)
-4. [Agents (36)](#agents-36)
-5. [Skills (233)](#skills-233)
-6. [Hooks (8)](#hooks-8)
-7. [Quality Gates (16)](#quality-gates-16)
+4. [Agents (48)](#agents-48)
+5. [Skills (240)](#skills-240)
+6. [Hooks (25)](#hooks-25)
+7. [Quality Gates (17)](#quality-gates-17)
 8. [State Management](#state-management)
 9. [Configuration](#configuration)
 10. [End-to-End Flow Example](#end-to-end-flow-example)
@@ -73,9 +73,9 @@ Step 2/6: Check for monorepo
     └── Confirm monorepo mode (prompt user)
 
 Step 3/6: Copy framework files
-    ├── .claude/agents/      (36 agent definitions)
-    ├── .claude/skills/      (233 skill definitions)
-    ├── .claude/hooks/       (8 hooks + lib/ + config/)
+    ├── .claude/agents/      (48 agent definitions)
+    ├── .claude/skills/      (240 skill definitions)
+    ├── .claude/hooks/       (25 hooks + lib/ + config/)
     ├── .claude/commands/    (slash commands: /isdlc, /discover, /provider)
     └── .claude/settings.json (hook registration, permissions)
 
@@ -107,15 +107,18 @@ your-project/
 │   │   ├── 00-sdlc-orchestrator.md
 │   │   ├── 01-requirements-analyst.md
 │   │   ├── ...
-│   │   ├── 15-upgrade-engineer.md
+│   │   ├── 14-upgrade-engineer.md
+│   │   ├── 16-quality-loop-engineer.md
 │   │   ├── discover-orchestrator.md
-│   │   ├── discover/           (12 discover agents)
+│   │   ├── discover/           (22 discover agents)
 │   │   ├── impact-analysis/    (4 agents)
+│   │   ├── quick-scan/         (1 agent)
 │   │   └── tracing/            (4 agents)
 │   ├── skills/
-│   │   ├── orchestrator/       (ORCH-001 to ORCH-012)
+│   │   ├── orchestration/      (ORCH-001 to ORCH-012)
 │   │   ├── requirements/       (REQ-001 to REQ-012)
-│   │   ├── ...                 (15 skill categories)
+│   │   ├── ...                 (17 skill categories)
+│   │   ├── quality-loop/       (QL-001 to QL-011)
 │   │   └── upgrade/            (UPG-001 to UPG-008)
 │   ├── hooks/
 │   │   ├── gate-blocker.cjs
@@ -190,12 +193,12 @@ The orchestrator loads workflow definitions from `.isdlc/config/workflows.json`:
 
 | Workflow | Command | Phase Sequence |
 |----------|---------|----------------|
-| **Feature** | `/isdlc feature` | 00 → 01 → 02(IA) → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 |
-| **Fix** | `/isdlc fix` | 01 → 02(T) → 05 → 06 → 07 → 08 → 09 → 10 |
-| **Test Run** | `/isdlc test run` | 10 → 06 |
-| **Test Generate** | `/isdlc test generate` | 04 → 05 → 06 → 07 → 10 |
-| **Full Lifecycle** | `/isdlc start` | 01 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11 → 12 → 13 |
-| **Upgrade** | `/isdlc upgrade` | 15(plan) → 15(execute) → 07 |
+| **Feature** | `/isdlc feature` | 00 → 01 → 02(IA) → 03 → 04 → 05 → 06 → 16(QL) → 08 |
+| **Fix** | `/isdlc fix` | 01 → 02(T) → 05 → 06 → 16(QL) → 08 |
+| **Test Run** | `/isdlc test run` | 11 → 07 |
+| **Test Generate** | `/isdlc test generate` | 05 → 06 → 11 → 07 → 08 |
+| **Full Lifecycle** | `/isdlc start` | 01 → 03 → 04 → 05 → 06 → 11 → 07 → 08 → 09 → 10 → 12 → 12 → 13 → 14 |
+| **Upgrade** | `/isdlc upgrade` | 15(plan) → 15(execute) → 08 |
 
 ### Phase Delegation
 
@@ -217,15 +220,15 @@ The orchestrator injects **DISCOVERY CONTEXT** into Phases 01-03 when discovery 
 
 ---
 
-## Agents (36)
+## Agents (48)
 
 ### Agent Groups
 
 | Group | Count | Location | Purpose |
 |-------|-------|----------|---------|
-| **SDLC** | 16 | `agents/00-*.md` to `agents/15-*.md` | Execute development phases |
-| **Discover** | 12 | `agents/discover-orchestrator.md`, `agents/discover/` | Analyze projects, generate constitution |
-| **Quick Scan** | 1 | `agents/quick-scan-agent.md` | Lightweight scope estimation |
+| **SDLC** | 16 | `agents/00-*.md` to `agents/16-*.md` | Execute development phases |
+| **Discover** | 23 | `agents/discover-orchestrator.md`, `agents/discover/` | Analyze projects, generate constitution, inception party |
+| **Quick Scan** | 1 | `agents/quick-scan/` | Lightweight scope estimation |
 | **Impact Analysis** | 4 | `agents/impact-analysis/` | Feature impact analysis |
 | **Tracing** | 4 | `agents/tracing/` | Bug root cause tracing |
 
@@ -250,6 +253,7 @@ Each phase has exactly one agent. No overlapping responsibilities.
 | 13 | `13-site-reliability-engineer.md` | Site Reliability Engineer |
 | 14 | `14-release-manager.md` | Release Manager |
 | 15 | `15-upgrade-engineer.md` | Upgrade Engineer |
+| 16 | `16-quality-loop-engineer.md` | Quality Loop Engineer |
 
 ### Agent Definition Format
 
@@ -276,7 +280,7 @@ owned_skills:
 
 ### Discover Agents (Deep Dive)
 
-The `/discover` command runs a 12-agent analysis pipeline:
+The `/discover` command runs a 23-agent analysis pipeline:
 
 | ID | Agent | What It Does |
 |----|-------|-------------|
@@ -285,19 +289,30 @@ The `/discover` command runs a 12-agent analysis pipeline:
 | D2 | Test Evaluator | Assesses test coverage, frameworks, gaps |
 | D3 | Constitution Generator | Creates tailored governance articles interactively |
 | D4 | Skills Researcher | Identifies tech-stack-specific skills |
-| D5 | Stack Analyzer | Detects languages, frameworks, build tools |
+| D5 | Data Model Analyzer | Database schemas, ORM models, migrations |
 | D6 | Feature Mapper | Maps features, behaviors, and acceptance criteria |
-| D7 | Dependency Mapper | Analyzes dependency graph and security |
-| D8 | Convention Detector | Identifies coding patterns and conventions |
-| R2 | Characterization Test Generator | Generates tests to capture existing behavior |
-| R3 | Artifact Integration | Maps discovery artifacts to SDLC phases |
-| R4 | ATDD Bridge | Converts extracted behaviors to ATDD format |
+| D7 | Product Analyst | Vision elicitation, brainstorming, PRD generation (new projects) |
+| D8 | Architecture Designer | Architecture blueprint from PRD and tech stack (new projects) |
+| D9 | Solution Architect Party | Architecture debate rounds (inception party) |
+| D10 | Security Advisor | Security posture evaluation (inception party) |
+| D11 | DevOps Pragmatist | Operational cost evaluation (inception party) |
+| D12 | Technical Scout | Technical feasibility evaluation (inception party) |
+| D13 | Domain Researcher | Industry context, regulations (inception party) |
+| D14 | Test Strategist | Test strategy outline (inception party) |
+| D15 | Data Model Designer | Entity design, storage decisions (inception party) |
+| D16 | Security Auditor | Dependency vulnerabilities, OWASP assessment |
+| D17 | Technical Debt Auditor | Code duplication, complexity, anti-patterns |
+| D18 | Performance Analyst | Response time patterns, caching, query optimization |
+| D19 | Ops Readiness Reviewer | Logging, health checks, monitoring hooks |
+| — | Characterization Test Generator | Generates tests to capture existing behavior |
+| — | Artifact Integration | Maps discovery artifacts to SDLC phases |
+| — | ATDD Bridge | Converts extracted behaviors to ATDD format |
 
-For existing projects with `--existing` flag, D6 (Feature Mapper) also performs behavior extraction (8 skills including code-behavior-extraction, precondition/postcondition inference, side-effect detection).
+For existing projects with `--existing` flag, D6 (Feature Mapper) also performs behavior extraction (8 skills including code-behavior-extraction, precondition/postcondition inference, side-effect detection). For new projects, D9-D15 form the "inception party" — multi-perspective debate rounds for architecture decisions.
 
 ---
 
-## Skills (233)
+## Skills (240)
 
 ### Architecture
 
@@ -305,7 +320,7 @@ Skills are **documented capabilities** — each skill has a `SKILL.md` file desc
 
 ```
 .claude/skills/
-├── orchestrator/          ORCH-001 to ORCH-012  (12 skills)
+├── orchestration/         ORCH-001 to ORCH-012  (12 skills)
 ├── discover/              DISC-001 to DISC-806  (48 skills)
 ├── requirements/          REQ-001 to REQ-012    (12 skills)
 ├── architecture/          ARCH-001 to ARCH-012  (12 skills)
@@ -320,6 +335,7 @@ Skills are **documented capabilities** — each skill has a `SKILL.md` file desc
 ├── tracing/               TRACE-*               (21 skills)
 ├── quick-scan/            QS-001 to QS-003      (3 skills)
 ├── impact-analysis/       IA-001 to IA-304      (15 skills)
+├── quality-loop/          QL-001 to QL-011      (11 skills)
 └── upgrade/               UPG-001 to UPG-008    (8 skills)
 ```
 
@@ -338,8 +354,8 @@ The skills manifest (`hooks/config/skills-manifest.json`) maps agents to their d
 
 ```json
 {
-  "version": "4.0.0",
-  "total_skills": 233,
+  "version": "5.0.0",
+  "total_skills": 240,
   "enforcement_mode": "observe",
   "ownership": {
     "software-developer": {
@@ -354,20 +370,23 @@ The skills manifest (`hooks/config/skills-manifest.json`) maps agents to their d
 
 ---
 
-## Hooks (8)
+## Hooks (25)
 
 ### Hook Architecture
 
-Hooks are Node.js scripts registered in `.claude/settings.json`. Claude Code invokes them as child processes at two points in the tool call lifecycle:
+Hooks are Node.js scripts registered in `.claude/settings.json`. Claude Code invokes them as child processes at three points in the lifecycle:
 
 - **PreToolUse** — fires before a tool call executes. Can block the call by outputting a JSON response.
 - **PostToolUse** — fires after a tool call completes. Used for logging and state updates.
+- **Stop** — fires when the agent stops. Used for final validation.
 
 ```
 User action ──► Claude Code ──► PreToolUse hooks ──► Tool executes ──► PostToolUse hooks
                                      │                                        │
                                  Can BLOCK                              Can LOG/UPDATE
                                  (output JSON)                          (update state.json)
+                                                                              │
+                                                                     Agent stops ──► Stop hooks
 ```
 
 **Fail-open design**: If any hook crashes, times out (10s default), or throws an error, it exits 0 with no output — allowing the tool call to proceed. This prevents framework bugs from blocking all user work.
@@ -512,7 +531,7 @@ Logs all Task tool invocations to state:
 
 ---
 
-## Quality Gates (16)
+## Quality Gates (17)
 
 ### Gate Validation Process
 
@@ -573,6 +592,7 @@ Each phase can enable or disable these requirement types in `iteration-requireme
 | 12-staging | — | — | Articles IX, X, XII | Yes |
 | 13-production | — | — | Articles IX, XII | Yes |
 | 14-operations | — | — | Articles VIII, IX, XII | Yes |
+| 16-quality-loop | — | 10 iter, 80% cov, CB=3 | Articles II, VII, IX, XI | Yes |
 
 *CB = circuit breaker threshold, cov = minimum coverage*
 
@@ -730,8 +750,8 @@ Maps agents to their documented skills and defines cross-agent delegation rules:
 
 ```json
 {
-  "version": "4.0.0",
-  "total_skills": 233,
+  "version": "5.0.0",
+  "total_skills": 240,
   "enforcement_mode": "observe",
   "ownership": {
     "agent-name": {
@@ -757,11 +777,11 @@ Defines the phase sequence for each workflow type:
 {
   "workflows": {
     "feature": {
-      "phases": ["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design", "05-test-strategy", "06-implementation", "07-testing", "08-code-review", "09-validation", "10-cicd"],
+      "phases": ["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"],
       "skip_exploration": false
     },
     "fix": {
-      "phases": ["01-requirements", "02-tracing", "05-test-strategy", "06-implementation", "07-testing", "08-code-review", "09-validation", "10-cicd"]
+      "phases": ["01-requirements", "02-tracing", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]
     }
   }
 }
@@ -915,16 +935,27 @@ Software Developer:
   Agent declares "phase complete"
     └── gate-blocker.cjs: all 4 checks pass ✓
 
-Gate 06: Pass → Advance to Phase 07
+Gate 06: Pass → Advance to Phase 16
 ```
 
-### Phases 07-10: Testing → Code Review → Validation → CI/CD
+### Phase 16: Quality Loop
 
 ```
-Integration Tester: runs integration + E2E tests (70% coverage threshold)
-QA Engineer: reviews code quality, generates metrics
-Security Auditor: scans for vulnerabilities, validates OWASP compliance
-CI/CD Engineer: configures pipeline, validates build
+Orchestrator delegates to quality-loop-engineer
+Quality Loop Engineer runs parallel tracks:
+  Track A (Testing): local test execution, coverage analysis, mutation testing
+  Track B (QA): lint check, type check, build verification, security scan, dependency audit
+  - Both tracks must pass before GATE-16
+  - If either fails: iterate (fix issues, re-run)
+  - Up to 10 iterations before escalation
+Gate 16: Pass → Advance to Phase 08
+```
+
+### Phase 08: Code Review & QA
+
+```
+QA Engineer: reviews code quality, generates metrics, human review pause
+Gate 08: Pass
 ```
 
 ### Workflow Complete
@@ -937,7 +968,7 @@ Orchestrator updates state.json:
 
 Output to user:
   "Feature 'Add user authentication' completed.
-   All 10 phases passed. 3 test iterations in implementation phase.
+   All 9 phases passed. 3 test iterations in implementation phase.
    Artifacts in docs/requirements/REQ-0001/"
 ```
 
@@ -946,7 +977,7 @@ Output to user:
 ## Further Reading
 
 - [AGENTS.md](AGENTS.md) — detailed agent responsibilities and artifacts
-- [DETAILED-SKILL-ALLOCATION.md](DETAILED-SKILL-ALLOCATION.md) — all 233 skills by category
+- [DETAILED-SKILL-ALLOCATION.md](DETAILED-SKILL-ALLOCATION.md) — all 240 skills by category
 - [CONSTITUTION-GUIDE.md](CONSTITUTION-GUIDE.md) — governance principles
 - [MONOREPO-GUIDE.md](MONOREPO-GUIDE.md) — multi-project setup
 - [AUTONOMOUS-ITERATION.md](AUTONOMOUS-ITERATION.md) — self-correcting behavior

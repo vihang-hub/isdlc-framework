@@ -1,15 +1,15 @@
 # iSDLC Agents
 
-This document provides detailed information about all 41 agents in the iSDLC framework.
+This document provides detailed information about all 48 agents in the iSDLC framework.
 
 ## Overview
 
-The framework's 41 agents are organized into five groups:
+The framework's 48 agents are organized into five groups:
 
 | Group | Count | Purpose |
 |-------|-------|---------|
 | [SDLC Agents](#sdlc-agents) | 16 | Execute development phases (1 orchestrator + 15 phase agents) |
-| [Discover Agents](#discover-agents) | 16 | Analyze projects before development begins |
+| [Discover Agents](#discover-agents) | 23 | Analyze projects before development begins (with inception party for new projects) |
 | [Quick Scan Agent](#quick-scan-agent-phase-00) | 1 | Lightweight scope estimation before requirements |
 | [Impact Analysis Agents](#impact-analysis-agents-phase-02) | 4 | Full feature impact analysis after requirements |
 | [Tracing Agents](#tracing-agents-phase-02) | 4 | Trace bug root causes after requirements |
@@ -105,11 +105,11 @@ For bug fixes, **after Phase 01 captures the bug report**, the Tracing Orchestra
 
 ## Discover Agents
 
-The `/discover` command uses 16 specialized sub-agents to analyze projects before SDLC workflows begin. For existing projects, the `--deep` flag controls discovery depth: **standard** (6 core agents + 3 debate rounds) or **full** (8 agents + 5 debate rounds + cross-review).
+The `/discover` command uses 23 specialized sub-agents to analyze projects before SDLC workflows begin. For existing projects, the `--deep` flag controls discovery depth: **standard** (6 core agents + 3 debate rounds) or **full** (8 agents + 5 debate rounds + cross-review).
 
 **For existing projects**: D1, D2, D5, D6 run in parallel (Phase 1) with D16-D17 (standard depth) or D16-D19 (full depth) for deeper analysis. Sequential phases then extract behavior, generate characterization tests, and build traceability (Phases 1b-1d).
 
-**For new projects**: D7 guides vision elicitation and D8 designs the architecture blueprint via deep discovery with debate rounds (D9-D15).
+**For new projects**: D7 guides vision elicitation and D8 designs the architecture blueprint via deep discovery with inception party debate rounds (D9-D15).
 
 | ID | Agent | Responsibility |
 |----|-------|----------------|
@@ -122,6 +122,13 @@ The `/discover` command uses 16 specialized sub-agents to analyze projects befor
 | **D6** | **Feature Mapper** | API endpoints, UI pages, CLI commands, business domains, **behavior extraction & AC generation** |
 | **D7** | **Product Analyst** | Vision elicitation, brainstorming, PRD generation (new projects) |
 | **D8** | **Architecture Designer** | Architecture blueprint from PRD and tech stack (new projects) |
+| **D9** | **Solution Architect Party** | Architecture debate rounds, pattern evaluation (inception party) |
+| **D10** | **Security Advisor** | Security posture evaluation, threat identification (inception party) |
+| **D11** | **DevOps Pragmatist** | Operational cost, deployment complexity evaluation (inception party) |
+| **D12** | **Technical Scout** | Technical feasibility, ecosystem evaluation (inception party) |
+| **D13** | **Domain Researcher** | Industry context, regulations, compliance research (inception party) |
+| **D14** | **Test Strategist** | Test strategy outline, coverage targets (inception party) |
+| **D15** | **Data Model Designer** | Entity design, relationships, storage decisions (inception party) |
 | **D16** | **Security Auditor** | Dependency vulnerabilities, secret detection, OWASP assessment (existing, standard+full) |
 | **D17** | **Technical Debt Auditor** | Code duplication, complexity, deprecated APIs, anti-patterns (existing, standard+full) |
 | **D18** | **Performance Analyst** | Response time patterns, caching, query optimization, bundle sizes (existing, full only) |
@@ -134,7 +141,7 @@ The `/discover` command uses 16 specialized sub-agents to analyze projects befor
 
 **Output**: `docs/project-discovery-report.md`, `docs/isdlc/constitution.md`, `docs/requirements/reverse-engineered/`, `tests/characterization/`, `docs/isdlc/ac-traceability.csv`
 
-**Note**: D6 includes behavior extraction (formerly the Behavior Analyzer agent). Use `--atdd-ready` to enable ATDD Bridge integration. Use `--deep full` for maximum analysis depth (adds D18/D19 and extra debate rounds).
+**Note**: D6 includes behavior extraction (formerly the Behavior Analyzer agent). Use `--atdd-ready` to enable ATDD Bridge integration. Use `--deep full` for maximum analysis depth (adds D18/D19 and extra debate rounds). Use `--new` for inception party mode (D9-D15 debate rounds).
 
 ---
 
@@ -208,7 +215,12 @@ Phase 05: Test Strategy & Design
 Phase 06: Implementation (TDD)
     | (Software Developer)
     v GATE-06: Fix implemented, tests pass
-... (remaining phases as needed)
+Phase 16: Quality Loop
+    | (Quality Loop Engineer)
+    v GATE-16: All tests pass, lint clean, no vulnerabilities
+Phase 08: Code Review & QA
+    | (QA Engineer)
+    v GATE-08: QA sign-off
 ```
 
 ---
@@ -234,6 +246,8 @@ Agent definitions are located in `.claude/agents/`:
 ├── 12-release-manager.md
 ├── 13-site-reliability-engineer.md
 ├── 14-upgrade-engineer.md
+├── 16-quality-loop-engineer.md
+├── discover-orchestrator.md
 ├── quick-scan/
 │   └── quick-scan-agent.md
 ├── impact-analysis/
@@ -247,20 +261,26 @@ Agent definitions are located in `.claude/agents/`:
 │   ├── execution-path-tracer.md
 │   └── root-cause-identifier.md
 └── discover/
-    ├── discover-orchestrator.md
     ├── architecture-analyzer.md
-    ├── test-evaluator.md
-    ├── constitution-generator.md
-    ├── skills-researcher.md
-    ├── data-model-analyzer.md
-    ├── feature-mapper.md
-    ├── product-analyst.md
     ├── architecture-designer.md
-    ├── security-auditor.md
-    ├── technical-debt-auditor.md
-    ├── performance-analyst.md
-    ├── ops-readiness-reviewer.md
-    ├── characterization-test-generator.md
     ├── artifact-integration.md
-    └── atdd-bridge.md
+    ├── atdd-bridge.md
+    ├── characterization-test-generator.md
+    ├── constitution-generator.md
+    ├── data-model-analyzer.md
+    ├── data-model-designer.md
+    ├── devops-pragmatist.md
+    ├── domain-researcher.md
+    ├── feature-mapper.md
+    ├── ops-readiness-reviewer.md
+    ├── performance-analyst.md
+    ├── product-analyst.md
+    ├── security-advisor.md
+    ├── security-auditor.md
+    ├── skills-researcher.md
+    ├── solution-architect-party.md
+    ├── technical-debt-auditor.md
+    ├── technical-scout.md
+    ├── test-evaluator.md
+    └── test-strategist.md
 ```

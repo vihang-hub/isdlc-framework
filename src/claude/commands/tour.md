@@ -28,7 +28,7 @@ Present this welcome and menu. If context detection found a relevant signal, add
 
 ---
 
-**Welcome to iSDLC** — a framework of 40 AI agents that guide development from requirements through deployment. Quality gates enforce completion between phases, and deterministic hooks enforce rules at runtime.
+**Welcome to iSDLC** — a framework of 48 AI agents, 240 skills, and 25 deterministic hooks that guide development from requirements through deployment. Quality gates enforce completion between phases, and hooks enforce rules at runtime.
 
 **What would you like to learn about?**
 
@@ -62,13 +62,18 @@ If you haven't run `/discover` on this project yet, that's your starting point. 
 
 **Run:** `/discover`
 
-What happens during discovery:
+What happens during discovery (23 specialized agents):
 1. **Architecture scan** — maps your project structure, dependencies, and patterns
 2. **Tech stack detection** — identifies languages, frameworks, build tools
 3. **Test evaluation** — measures existing coverage and identifies gaps
-4. **Feature mapping** — catalogs endpoints, pages, commands, background jobs
-5. **Constitution generation** — creates governance rules tailored to your stack (testing thresholds, security rules, coding standards)
-6. **Post-discovery walkthrough** — reviews the constitution with you, suggests next steps
+4. **Feature mapping** — catalogs endpoints, pages, commands, background jobs, **extracts behavior as acceptance criteria**
+5. **Data model analysis** — maps database schemas, ORM models, migrations
+6. **Security audit** — scans for dependency vulnerabilities and OWASP issues
+7. **Technical debt audit** — identifies code duplication, complexity, anti-patterns
+8. **Constitution generation** — creates governance rules tailored to your stack (testing thresholds, security rules, coding standards)
+9. **Post-discovery walkthrough** — reviews the constitution with you, configures iteration limits, suggests next steps
+
+Use `--deep full` for maximum analysis depth (adds performance analysis and ops readiness review with extra debate rounds).
 
 After discovery, the framework knows your project. You only need to re-run `/discover` if the architecture changes significantly (e.g., new major dependency, restructured modules).
 
@@ -76,38 +81,38 @@ After discovery, the framework knows your project. You only need to re-run `/dis
 
 **Run:** `/isdlc feature "description of the feature"`
 
-The orchestrator assesses complexity and selects which phases to run. For a typical feature:
+The feature workflow runs 9 phases:
 
-1. **Requirements** — the requirements analyst captures functional requirements, user stories, and acceptance criteria
-2. **Architecture** — the solution architect evaluates whether the feature needs architectural changes (extends existing patterns when discovery context exists)
-3. **Design** — the system designer creates detailed API contracts, data flows, and error handling
-4. **Test Strategy** — the test design engineer creates a test plan with cases mapped to each requirement
-5. **Implementation** — the software developer writes code using TDD (tests first, then implementation)
-6. **Local Testing** — the environment builder starts services and runs health checks
-7. **Integration Testing** — the integration tester runs the full test suite and measures coverage
-8. **Code Review** — the QA engineer reviews code quality and checks standards
-9. **Security** — the security auditor scans for vulnerabilities
-10. **CI/CD** — the CI/CD engineer configures pipeline automation
+1. **Quick Scan** (Phase 00) — lightweight scope estimation using haiku model
+2. **Requirements** (Phase 01) — the requirements analyst captures functional requirements, user stories, and acceptance criteria through interactive A/R/C menus
+3. **Impact Analysis** (Phase 02) — three parallel sub-agents analyze affected files, entry points, and risk
+4. **Architecture** (Phase 03) — the solution architect evaluates whether the feature needs architectural changes (extends existing patterns when discovery context exists)
+5. **Design** (Phase 04) — the system designer creates detailed API contracts, data flows, and error handling
+6. **Test Strategy** (Phase 05) — the test design engineer creates a test plan with cases mapped to each requirement
+7. **Implementation** (Phase 06) — the software developer writes code using TDD (tests first, then implementation)
+8. **Quality Loop** (Phase 16) — parallel testing + automated QA:
+   - **Track A**: build verification, test execution, mutation testing, coverage analysis
+   - **Track B**: lint check, type check, SAST security scan, dependency audit, automated code review
+   - Both tracks must pass. If either fails, fixes are delegated back to the developer and both tracks re-run
+9. **Code Review** (Phase 08) — the QA engineer reviews code quality with a human review pause
 
 Each phase has a quality gate that must pass before the next begins. If a gate fails, the agent iterates (with circuit breakers to prevent infinite loops).
-
-Not all phases run for every feature — the orchestrator skips phases when complexity is low.
 
 #### 1c. Bug Fix
 
 **Run:** `/isdlc fix "description of the bug"`
 
-Bug fixes use a TDD approach with tracing agents:
+Bug fixes use a TDD approach with tracing agents (6 phases):
 
-1. **Bug Report** — the requirements analyst captures the bug report (expected behavior, actual behavior, reproduction steps)
-2. **Tracing** — three specialized agents work in parallel:
+1. **Bug Report** (Phase 01) — the requirements analyst captures the bug report (expected behavior, actual behavior, reproduction steps) with a sufficiency check
+2. **Tracing** (Phase 02) — three specialized agents work in parallel:
    - Symptom analyzer — analyzes error messages and log patterns
    - Execution path tracer — follows code execution from entry point to where the bug manifests
    - Root cause identifier — synthesizes findings and ranks hypotheses
-3. **Test Strategy** — the test design engineer creates test cases that reproduce the bug
-4. **Implementation** — the software developer writes a failing test first, then fixes the code until the test passes
-5. **Testing** — the integration tester verifies the fix doesn't break anything else
-6. **Code Review** — the QA engineer reviews the fix
+3. **Test Strategy** (Phase 05) — the test design engineer creates test cases that reproduce the bug
+4. **Implementation** (Phase 06) — the software developer writes a failing test first, then fixes the code until the test passes
+5. **Quality Loop** (Phase 16) — parallel testing + automated QA verifies the fix doesn't break anything else (same parallel Track A/B as features)
+6. **Code Review** (Phase 08) — the QA engineer reviews the fix with a human review pause
 
 ---
 
@@ -119,14 +124,16 @@ For a brand-new project, discovery works differently — it helps you plan rathe
 
 **Run:** `/discover`
 
-What happens for a new project:
-1. **Vision elicitation** — the product analyst asks about your project goals, target users, and constraints
-2. **Research** — analyzes similar projects, frameworks, and patterns relevant to your vision
-3. **Tech stack recommendation** — suggests technologies based on your requirements
-4. **PRD generation** — creates a Product Requirements Document
-5. **Architecture blueprint** — designs the initial system architecture
-6. **Constitution generation** — creates governance rules for the new project
-7. **Scaffolding** — sets up project structure, configuration, and initial files
+What happens for a new project (inception party mode):
+1. **Vision elicitation** — the product analyst asks about your project goals, target users, and constraints through interactive prompts
+2. **Deep discovery with debate rounds** — 7 specialist agents (solution architect, security advisor, devops pragmatist, technical scout, domain researcher, test strategist, data model designer) debate and converge on:
+   - **Tech stack recommendation** — evaluated from multiple perspectives (security, cost, DX, scalability)
+   - **Architecture blueprint** — designed through structured propose-critique-converge rounds
+   - **Data model** — entity design and storage decisions
+   - **Test strategy** — coverage targets and tooling selection
+3. **PRD generation** — creates a Product Requirements Document from the converged vision
+4. **Constitution generation** — creates governance rules for the new project
+5. **Post-discovery walkthrough** — reviews the constitution, configures iteration limits, suggests next steps
 
 #### 2b. Feature Development and Bug Fixes
 
@@ -152,19 +159,14 @@ The upgrade workflow uses an implement-test loop — it makes changes, runs test
 
 Example: `/isdlc upgrade "Node.js 22"` or `/isdlc upgrade "React 19"`
 
-What happens:
-1. **Detection** — identifies the current version and looks up the target version
-2. **Impact analysis** — reviews changelogs, identifies breaking changes, maps affected files
-3. **Migration plan** — generates a step-by-step plan ranked by risk, presented for your approval
-4. **Implement-test loop** — for each migration step:
+What happens (3 phases):
+1. **Upgrade Plan** (Phase 15-plan) — identifies the current version, looks up the target version, reviews changelogs, identifies breaking changes, maps affected files, and generates a step-by-step migration plan ranked by risk. **You approve the plan before any code changes begin.**
+2. **Upgrade Execute** (Phase 15-execute) — for each migration step:
    - Makes the code change
    - Runs the test suite
-   - If tests fail, analyzes failures and iterates
+   - If tests fail, analyzes failures and iterates (up to 10 iterations)
    - Moves to next step when tests pass
-5. **Code review** — QA engineer reviews all changes
-6. **Merge** — when all tests pass and review is complete
-
-You approve the migration plan before any code changes begin.
+3. **Code Review** (Phase 08) — QA engineer reviews all changes with a human review pause
 
 ---
 

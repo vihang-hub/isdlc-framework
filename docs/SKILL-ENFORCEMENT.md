@@ -8,7 +8,7 @@
 
 ## Overview
 
-Skill Observability provides visibility into agent delegation patterns. Each of the 229 skills has a **primary agent**, and all usage is logged for audit and visibility. Cross-phase delegations are allowed but flagged in logs.
+Skill Observability provides visibility into agent delegation patterns. Each of the 240 skills has a **primary agent**, and all usage is logged for audit and visibility. Cross-phase delegations are allowed but flagged in logs.
 
 **Key change in v3.0**: Skill IDs are now **event identifiers** for logging/visibility, not access-control tokens. The PreToolUse hook never blocks — it only observes.
 
@@ -241,7 +241,7 @@ At each phase gate, skill usage is reviewed:
 
 ## Skill Distribution
 
-### By Agent (229 skills across 40 agents)
+### By Agent (240 skills across 48 agents)
 
 | Group | Agent | Skills | Phase |
 |-------|-------|--------|-------|
@@ -260,6 +260,7 @@ At each phase gate, skill usage is reviewed:
 | Core | 12 - Release Manager | 5 | 13-production |
 | Core | 13 - Site Reliability Engineer | 14 | 14-operations |
 | Core | 14 - Upgrade Engineer | 6 | 15-upgrade |
+| Core | 16 - Quality Loop Engineer | 11 | 16-quality-loop |
 | Discovery | D0 - Discover Orchestrator | 4 | setup |
 | Discovery | D1 - Architecture Analyzer | 6 | setup |
 | Discovery | D2 - Test Evaluator | 6 | setup |
@@ -286,7 +287,7 @@ At each phase gate, skill usage is reviewed:
 
 ## Files
 
-### Hook Files (8 hooks, Node.js)
+### Hook Files (25 hooks, Node.js)
 
 | File | Trigger | Purpose |
 |------|---------|---------|
