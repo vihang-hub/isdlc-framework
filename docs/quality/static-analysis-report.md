@@ -1,82 +1,45 @@
-# Static Analysis Report: REQ-0002-powershell-windows-scripts
+# Static Analysis Report: REQ-0008-update-node-version
 
-**Date**: 2026-02-08
-**Phase**: 08 - Code Review & QA
+**Date**: 2026-02-10
+**Phase**: 08-code-review
 
 ---
 
-## Analysis Performed
+## JSON Validation
 
-Since these are PowerShell scripts (not Node.js code), static analysis was performed via custom Python-based checkers targeting PowerShell-specific patterns.
+| File | Status |
+|------|--------|
+| package.json | VALID (JSON.parse succeeds) |
+| package-lock.json | VALID (JSON.parse succeeds) |
 
-## Checks Performed
+## YAML Validation
 
-### 1. PS 5.1 Compatibility (ADR-007)
+| File | Status | Lines |
+|------|--------|-------|
+| .github/workflows/ci.yml | VALID (readable, has name: and jobs: keys) | 272 |
+| .github/workflows/publish.yml | VALID (readable, has name: and jobs: keys) | 112 |
 
-Scanned all 3 scripts for PowerShell 7-only syntax:
+## Stale Reference Scan
 
-| Pattern | Description | Found |
-|---------|-------------|-------|
-| `? :` | Ternary operator | 0 |
-| `??` | Null-coalescing operator | 0 |
-| `-AsHashtable` | ConvertFrom-Json -AsHashtable | 0 |
-| `Join-String` | PS 6.2+ cmdlet | 0 |
-| `ForEach-Object -Parallel` | PS 7 parallel | 0 |
-| `-EscapeHandling` | PS 7.3+ parameter | 0 |
+Node 18 references in version-context fields across all 9 target files: **0 found**
 
-**Result**: PASS - All scripts are PS 5.1 compatible.
+Verified by 9 completeness tests (TC-039 through TC-047), all PASS.
 
-### 2. Error Handling (ADR-005)
+## Security Scan
 
-| Check | install.ps1 | uninstall.ps1 | update.ps1 |
-|-------|-------------|---------------|------------|
-| Set-StrictMode -Version 2.0 | YES | YES | YES |
-| $ErrorActionPreference = 'Stop' | YES | YES | YES |
-| try/catch blocks | 4 | 1 | 1 |
-| -ErrorAction SilentlyContinue on non-critical ops | YES | YES | YES |
-| exit codes (0/1) | 4 | 6 | 7 |
+```
+npm audit: found 0 vulnerabilities
+```
 
-**Result**: PASS
+No new dependencies. No secrets detected. CI actions unchanged (checkout@v4, setup-node@v4).
 
-### 3. File Write Safety (ADR-004)
+## Test Suite Results
 
-Scanned for raw file write operations (Set-Content, Out-File, Add-Content) that bypass Write-Utf8NoBom:
+| Suite | Pass | Fail | Duration |
+|-------|------|------|----------|
+| New verification (node-version-update.test.js) | 44 | 0 | 41ms |
+| ESM (lib/*.test.js) | 489 | 1 (TC-E09 pre-existing) | ~7.6s |
+| CJS (hooks/tests/*.test.cjs) | 696 | 0 | ~2.0s |
+| **Total** | **1229** | **1** | -- |
 
-| File | Set-Content | Out-File | Add-Content |
-|------|-------------|----------|-------------|
-| install.ps1 | 0 | 0 | 0 |
-| uninstall.ps1 | 0 | 0 | 0 |
-| update.ps1 | 0 | 0 | 0 |
-
-All file writes go through Write-Utf8NoBom or Write-JsonFile (which calls Write-Utf8NoBom).
-
-**Result**: PASS
-
-### 4. Path Normalization (ADR-003)
-
-All paths written to JSON files pass through ConvertTo-ForwardSlashPath (via Get-RelativePath). CI assertion confirms no backslashes in manifest paths.
-
-**Result**: PASS
-
-### 5. Security Analysis
-
-| Check | Result |
-|-------|--------|
-| Invoke-Expression / iex | NOT FOUND |
-| Start-Process with user input | NOT FOUND |
-| Network calls (Invoke-WebRequest etc.) | NOT FOUND |
-| Elevation/admin requirement | NOT FOUND |
-| Secrets/credentials in source | NOT FOUND |
-| Environment variable injection | NOT FOUND |
-
-**Result**: PASS
-
-### 6. Parameter Handling
-
-All scripts use [CmdletBinding()] and [switch] parameters. No positional parameters that could be accidentally triggered.
-
-**Result**: PASS
-
-## Overall Static Analysis Result
-
-**PASS** - No errors, no warnings. All ADR compliance checks satisfied.
+Note: The 1 failure is TC-E09 ("README.md contains updated agent count"), a pre-existing issue documented across multiple prior workflows. It is unrelated to this change.

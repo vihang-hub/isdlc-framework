@@ -29,7 +29,7 @@ The iSDLC framework is a JavaScript/Node.js CLI tool that installs an AI-powered
 | Component | Technology | Version | Notes |
 |-----------|------------|---------|-------|
 | Language | JavaScript (ES2022+) | ESM + CJS dual-module | `"type": "module"` in package.json |
-| Runtime | Node.js | >= 18.0.0 | Tested on 18, 20, 22 in CI |
+| Runtime | Node.js | >= 20.0.0 | Tested on 20, 22, 24 in CI |
 | Package Manager | npm | lockfile v3 | 4 runtime dependencies |
 | Test Runner | node:test | Built-in | No external test framework |
 | Dep: chalk | Terminal colors | ^5.3.0 | ESM-only |

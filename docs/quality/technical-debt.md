@@ -1,43 +1,31 @@
-# Technical Debt: REQ-0002-powershell-windows-scripts
+# Technical Debt Inventory: REQ-0008-update-node-version
 
-**Date**: 2026-02-08
-**Phase**: 08 - Code Review & QA
-
----
-
-## Identified Technical Debt Items
-
-### TD-001: Helper Function Duplication (ACCEPTED)
-
-**Severity**: Low
-**Category**: Code duplication
-**Description**: 11 helper functions (~175 lines) are duplicated across all 3 PowerShell scripts.
-**ADR Reference**: ADR-001 (Inline Helper Functions)
-**Rationale**: Accepted trade-off per architecture decision. Single-file execution eliminates module loading errors and path resolution issues. Duplication cost is low (stable, small functions).
-**Future Action**: If helpers grow beyond ~200 lines or change frequently, reconsider extracting to a shared module. Currently not worth the complexity.
-
-### TD-002: String-Based Version Comparison (LOW PRIORITY)
-
-**Severity**: Low
-**Category**: Logic limitation
-**Description**: update.ps1 uses string equality for version comparison instead of semantic versioning. This matches bash behavior and works for the current version scheme.
-**Future Action**: Implement semantic version comparison when the project starts using pre-release tags or version ranges that string comparison cannot handle correctly.
-
-### TD-003: .isdlc/constitution.md Display Check (COSMETIC)
-
-**Severity**: Very Low
-**Category**: Dead code
-**Description**: uninstall.ps1 (line 495) and uninstall.sh (line 449) both check for `.isdlc/constitution.md` which never exists. The constitution lives at `docs/isdlc/constitution.md`. This is a display-only check with no functional impact.
-**Future Action**: Clean up in next maintenance pass.
+**Date**: 2026-02-10
+**Phase**: 08-code-review
 
 ---
 
-## Technical Debt Summary
+## New Technical Debt Introduced
 
-| ID | Severity | Status | Estimated Effort |
-|----|----------|--------|-----------------|
-| TD-001 | Low | Accepted (ADR-001) | N/A |
-| TD-002 | Low | Deferred | 1 hour |
-| TD-003 | Very Low | Deferred | 5 minutes |
+**None.** This change introduces zero new technical debt. It is a pure configuration update with no runtime code changes.
 
-**Total new technical debt**: Minimal. All items are either accepted architecture decisions or very low priority cosmetic issues.
+## Pre-Existing Technical Debt (Noted)
+
+### TD-001: Pre-existing TC-E09 test failure (LOW)
+
+- **Location**: `lib/deep-discovery-consistency.test.js:115`
+- **Description**: Test expects README.md to reference "40 agents" but the actual agent count has changed. This test has been failing across multiple workflows.
+- **Impact**: LOW -- single cosmetic test failure, does not affect framework functionality
+- **Recommendation**: Update README agent count or test expectation in a future fix workflow
+
+### TD-002: Node 20 EOL approaching (INFORMATIONAL)
+
+- **Description**: Node 20 reaches end-of-life on April 30, 2026 (~2.5 months away). When it does, another version bump workflow will be needed to set minimum to Node 22.
+- **Impact**: LOW -- proactive awareness, not a current issue
+- **Recommendation**: Schedule REQ for Node 22 minimum in March 2026
+
+### TD-003: No YAML parser in test suite (INFORMATIONAL)
+
+- **Description**: YAML workflow validation uses string matching and regex rather than a proper YAML parser. This is by design (no external test dependencies) but means structural YAML errors beyond readability are not caught by the test suite.
+- **Impact**: VERY LOW -- GitHub Actions would catch YAML parse errors on push
+- **Recommendation**: Acceptable trade-off per Article V (Simplicity First)
