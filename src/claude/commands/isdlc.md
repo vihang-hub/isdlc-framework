@@ -152,11 +152,10 @@ What would you like to do?
 [2] Fix               — Fix a bug or defect
 [3] Run Tests         — Execute existing automation tests
 [4] Generate Tests    — Create new tests for existing code
-[5] Full Lifecycle    — Run complete SDLC (all 13 phases)
-[6] View Status       — Check current project status
-[7] Upgrade           — Upgrade a dependency, runtime, or tool
+[5] View Status       — Check current project status
+[6] Upgrade           — Upgrade a dependency, runtime, or tool
 
-Enter selection (1-7):
+Enter selection (1-6):
 ```
 
 ---
@@ -200,9 +199,8 @@ Enter selection (1-5):
 | 3 (Ready, no workflow) | [2] | Execute `/isdlc fix` (no description — presents backlog picker) |
 | 3 (Ready, no workflow) | [3] | Execute `/isdlc test run` |
 | 3 (Ready, no workflow) | [4] | Execute `/isdlc test generate` |
-| 3 (Ready, no workflow) | [5] | Execute `/isdlc start` (full lifecycle) |
-| 3 (Ready, no workflow) | [6] | Execute `/isdlc status` |
-| 3 (Ready, no workflow) | [7] | Ask what to upgrade, then execute `/isdlc upgrade "<name>"` |
+| 3 (Ready, no workflow) | [5] | Execute `/isdlc status` |
+| 3 (Ready, no workflow) | [6] | Ask what to upgrade, then execute `/isdlc upgrade "<name>"` |
 | 4 (Workflow active) | [1] | Resume current workflow at active phase |
 | 4 (Workflow active) | [2] | Execute `/isdlc gate-check` |
 | 4 (Workflow active) | [3] | Execute `/isdlc status` |
@@ -275,16 +273,6 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 4. Phase 05: Write the test code
 5. Phase 06: Run new tests to verify they work
 6. Phase 07: Review test quality
-
-**start** - Run complete SDLC lifecycle (all 13 phases)
-```
-/isdlc start "Project or feature description"
-```
-1. Validate constitution exists and is not a template
-2. Check no active workflow
-3. Assess project complexity
-4. Initialize `active_workflow` with type `"full-lifecycle"` and all 13 phases
-5. Delegate to Requirements Analyst (Phase 01)
 
 **cancel** - Cancel the active workflow
 ```
@@ -625,7 +613,6 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 | `/isdlc fix` | fix | 01 → 02(trace) → 05 → 06 → 16(QL) → 08 | strict | `bugfix/BUG-NNNN-...` |
 | `/isdlc test run` | test-run | 11 → 07 | strict | none |
 | `/isdlc test generate` | test-generate | 05 → 06 → 11 → 07 → 08 | strict | none |
-| `/isdlc start` | full-lifecycle | 01 → 03 → 04 → 05 → 06 → 11 → 07 → 08 → 09 → 10 → 12 → 12 → 13 → 14 | strict | `feature/REQ-NNNN-...` |
 | `/isdlc upgrade` | upgrade | 15-plan → 15-execute → 08 | strict | `upgrade/{name}-v{ver}` |
 | `/isdlc reverse-engineer` | *(alias → `/discover --existing`)* | — | — | — |
 
@@ -644,7 +631,6 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 /isdlc fix "Login endpoint returns 500 on empty password" --link https://mycompany.atlassian.net/browse/AUTH-456
 /isdlc test run
 /isdlc test generate
-/isdlc start "New e-commerce platform"
 /isdlc status
 /isdlc status --project web-frontend
 /isdlc gate-check
@@ -746,12 +732,6 @@ Look up the base subject and activeForm from this table:
 | `11-local-testing` | Build and launch local environment (Phase 11) | Building local environment |
 | `07-testing` | Run integration and E2E tests (Phase 07) | Running integration tests |
 | `08-code-review` | Perform code review and QA (Phase 08) | Performing code review |
-| `09-validation` | Validate security and compliance (Phase 09) | Validating security |
-| `10-cicd` | Configure CI/CD pipelines (Phase 10) | Configuring CI/CD |
-| `12-remote-build` | Build and deploy remote environment (Phase 12) | Building remote environment |
-| `12-test-deploy` | Deploy to staging (Phase 12) | Deploying to staging |
-| `13-production` | Deploy to production (Phase 13) | Deploying to production |
-| `14-operations` | Configure monitoring and operations (Phase 14) | Configuring operations |
 | `15-upgrade-plan` | Analyze upgrade impact and generate plan (Phase 15) | Analyzing upgrade impact |
 | `15-upgrade-execute` | Execute upgrade with regression testing (Phase 15) | Executing upgrade |
 
@@ -870,7 +850,6 @@ The orchestrator runs the Human Review Checkpoint (if code_review.enabled), merg
 /isdlc fix ...      → Phase-Loop Controller (init → tasks → direct-agent-loop → finalize)
 /isdlc test run     → Phase-Loop Controller (init → tasks → direct-agent-loop → finalize)
 /isdlc test generate → Phase-Loop Controller (init → tasks → direct-agent-loop → finalize)
-/isdlc start ...    → Phase-Loop Controller (init → tasks → direct-agent-loop → finalize)
 /isdlc upgrade ...  → Phase-Loop Controller (init → tasks → direct-agent-loop → finalize)
 /isdlc cancel       → Task → orchestrator → Cancel active workflow
 /isdlc status       → Task → orchestrator → Show status

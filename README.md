@@ -39,7 +39,6 @@ The iSDLC (integrated Software Development Lifecycle) framework is a **structure
 | `/isdlc test generate` | Generate test suite (5 phases) |
 | `/isdlc test run` | Execute tests (2 phases) |
 | `/isdlc upgrade "name"` | Dependency upgrade (3 phases) |
-| `/isdlc start` | Full lifecycle (14 phases) |
 
 <details>
 <summary><strong>Agent breakdown (48 total)</strong></summary>

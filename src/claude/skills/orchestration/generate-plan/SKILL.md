@@ -6,7 +6,7 @@ owner: sdlc-orchestrator
 collaborators: []
 project: sdlc-framework
 version: 1.0.0
-when_to_use: After GATE-01 passes, before branch creation, for feature/fix/full-lifecycle workflows
+when_to_use: After GATE-01 passes, before branch creation, for feature/fix workflows
 dependencies: [ORCH-001]
 ---
 
@@ -18,7 +18,7 @@ Generate a persistent task plan file (`docs/isdlc/tasks.md`) that shows the user
 
 ## When to Use
 
-- After GATE-01 passes for `feature`, `fix`, or `full-lifecycle` workflows
+- After GATE-01 passes for `feature` or `fix` workflows
 - Before branch creation (Section 3a of the orchestrator)
 - **Skip** for `test-run` and `test-generate` workflows (too few phases; TaskCreate spinners are sufficient)
 
@@ -37,7 +37,7 @@ Generate a persistent task plan file (`docs/isdlc/tasks.md`) that shows the user
 1. Read active_workflow from .isdlc/state.json
 2. Extract: type, artifact_folder, phases array
 3. Read Phase 01 artifacts to understand scope:
-   - feature/full-lifecycle: docs/requirements/REQ-NNNN-*/requirements-spec.md
+   - feature: docs/requirements/REQ-NNNN-*/requirements-spec.md
    - fix: docs/requirements/BUG-NNNN-*/bug-report.md
 ```
 
@@ -45,7 +45,7 @@ Generate a persistent task plan file (`docs/isdlc/tasks.md`) that shows the user
 
 ```
 1. Read .isdlc/templates/workflow-tasks-template.md
-2. Locate the section matching active_workflow.type (## feature, ## fix, or ## full-lifecycle)
+2. Locate the section matching active_workflow.type (## feature or ## fix)
 3. Extract task descriptions for each phase listed in the workflow
 ```
 
@@ -70,7 +70,6 @@ Apply `[P]` markers based on workflow type:
 |----------|-----------------|-----------|
 | feature | 06-testing, 09-cicd | Both can start after Phase 10 completes |
 | fix | 06-testing, 09-cicd | Both can start after Phase 10 completes |
-| full-lifecycle | 07-code-review, 08-validation | Both can start after Phase 06 completes |
 
 Markers are **informational only** — the orchestrator still executes sequentially. They signal future parallelization opportunities.
 

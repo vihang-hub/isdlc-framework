@@ -1,5 +1,19 @@
 # Project Instructions
 
+## Workflow-First Development
+
+**CRITICAL**: When the user asks you to implement a feature, fix a bug, refactor code, or do any development work, you MUST:
+
+1. **Offer the appropriate iSDLC command first** — suggest `/isdlc feature`, `/isdlc fix`, `/discover`, or `/isdlc` (interactive menu) based on the task
+2. **Wait for the user's choice** before proceeding
+3. **Run the chosen workflow through the framework** — never bypass it with direct edits
+
+If the user has already invoked an iSDLC command (e.g. `/isdlc fix`), execute it immediately — do not re-ask.
+
+Do NOT implement changes directly without going through an iSDLC workflow. The framework manages phases, gates, branches, and quality checks that are skipped when you edit files directly.
+
+---
+
 ## Agent Framework Context
 
 Shared protocols referenced by all iSDLC agents. Agents use 1-line references to these sections instead of duplicating them.
