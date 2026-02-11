@@ -19,12 +19,12 @@
 
 ## What is iSDLC?
 
-The iSDLC (integrated Software Development Lifecycle) framework provides **48 specialized AI agents** that guide software development from requirements through production:
+The iSDLC (integrated Software Development Lifecycle) framework provides **48 specialized AI agents** organized around 4 orchestrators that guide software development from requirements through production:
 
-- **16 SDLC agents** — 1 orchestrator + 15 phase agents (requirements → operations → upgrades + quality loop)
-- **23 Discover agents** — 1 orchestrator + 22 sub-agents that analyze existing projects (with behavior extraction & AC generation) or elicit vision for new ones (with inception party debate rounds)
-- **5 Exploration agents** — 1 quick scan (Phase 00) + 4 impact analysis (Phase 02 for features)
-- **4 Tracing agents** — trace bug root causes (Phase 02 for bugs)
+- **16 SDLC agents** — 1 orchestrator (`/isdlc`) + 15 phase agents (requirements → operations → upgrades + quality loop)
+- **23 Discover agents** — 1 orchestrator (`/discover`) + 22 sub-agents that analyze existing projects (with behavior extraction & AC generation) or elicit vision for new ones (with inception party debate rounds)
+- **5 Exploration agents** — 1 quick scan (Phase 00) + 1 orchestrator + 3 impact analysis sub-agents (Phase 02 for features)
+- **4 Tracing agents** — 1 orchestrator + 3 sub-agents that trace bug root causes (Phase 02 for bugs)
 
 The framework installs **into your existing project**, providing structured multi-agent workflows, quality gates between every phase, and 26 deterministic hooks that enforce iteration requirements at runtime.
 
@@ -248,13 +248,14 @@ AI coding assistants are powerful but have well-known failure modes. The iSDLC f
 **The problem**: Multi-agent systems are fragile — agents talk past each other, duplicate work, make contradictory decisions, and lack clear handoff protocols. Orchestrating 48 agents without chaos is a coordination problem, not just a prompting problem.
 
 **How iSDLC solves it**:
+- **4 orchestrators** provide entry points and coordination — `/isdlc` (SDLC orchestrator), `/discover` (discover orchestrator), impact-analysis orchestrator, and tracing orchestrator
 - `workflows.json` defines fixed, non-skippable phase sequences for each workflow type — agents execute in a defined order, not in parallel free-for-all
 - `delegation-gate.cjs` validates that the correct agent is delegated for each phase — the orchestrator cannot accidentally assign the wrong agent
-- Phase 02 (Impact Analysis) and Phase 02 (Tracing) each orchestrate 3 parallel sub-agents with structured consolidation — parallelism is controlled, not ad-hoc
-- `skill-delegation-enforcer.cjs` ensures skill invocations match the expected agent-phase pairing
+- `skill-delegation-enforcer.cjs` ensures `/isdlc` and `/discover` skill invocations are followed by delegation to the correct orchestrator agent
+- Phase 02 orchestrators (Impact Analysis, Tracing) each coordinate 3 parallel sub-agents with structured consolidation — parallelism is controlled, not ad-hoc
 - `no_halfway_entry` and `no_phase_skipping` rules in `workflows.json` prevent agents from entering workflows mid-stream
 
-> *Mechanism*: `workflows.json` (fixed sequences), `delegation-gate.cjs`, `skill-delegation-enforcer.cjs`, parallel sub-agent orchestration (impact-analysis, tracing)
+> *Mechanism*: 4 orchestrators, `workflows.json` (fixed sequences), `delegation-gate.cjs`, `skill-delegation-enforcer.cjs`, parallel sub-agent orchestration
 
 ---
 
