@@ -5,23 +5,31 @@
 
 ## Open
 
+**Framework Features:**
 - [ ] T4: Test execution parallelism
   - T4-A: Parallel test creation — test design agent assesses workload, spawns parallel sub-agents for large codebases
   - T4-B: Parallel local test execution — detect framework, apply parallel flags (Jest --workers, pytest -n auto, etc.)
-- [ ] Split large files: installer.js (~845 lines) and common.cjs (~1460 lines) — refactor when natural seams emerge
-- [ ] Add /sdlc refactor command and workflow — pre-requisite: 100% automated E2E testing
-- [x] Update Node version (REQ-0008) — Node 18→20 minimum, CI matrix [20,22,24], constitution v1.2.0
+- [ ] Improve search capabilities to help Claude be more effective
 - [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
+- [ ] Add /isdlc refactor command and workflow — pre-requisite: 100% automated E2E testing
 - [ ] Separate commands to manage deployments and operations
-- [ ] npx and npm publishing
-- [ ] Design systems using variant.ai
+
+**Product/Vision:**
 - [ ] Board-driven autonomous development (read from board, develop without intervention when users are away)
-- [ ] Marketing integration for SMBs
+- [ ] Design systems using variant.ai
 - [ ] Feedback collector, analyser, and roadmap creator
-- [ ] User auth and profile management
 - [ ] Analytics manager (integrated with feedback collector/roadmap)
+- [ ] User auth and profile management
+- [ ] Marketing integration for SMBs
 
 ## Completed
+
+### 2026-02-11
+- [x] Split large files: installer.js (~845 lines) and common.cjs (~1460 lines)
+- [x] npx and npm publishing
+- [x] Update Node version (REQ-0008) — Node 18→20 minimum, CI matrix [20,22,24], constitution v1.2.0
+- [x] Add BMAD party mode for requirements
+- [x] Fix: `/isdlc start` should only be offered for new projects, not existing projects
 
 ### 2026-02-10
 - [x] Performance optimization (REQ-0010) — see docs/PERFORMANCE-PLAN.md
