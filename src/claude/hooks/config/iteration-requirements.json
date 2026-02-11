@@ -1,5 +1,5 @@
 {
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Deterministic iteration requirements per phase - enforced by hooks",
   "phase_requirements": {
     "00-quick-scan": {
@@ -40,6 +40,12 @@
       },
       "agent_delegation_validation": {
         "enabled": true
+      },
+      "artifact_validation": {
+        "enabled": true,
+        "paths": [
+          "docs/requirements/{artifact_folder}/requirements-spec.md"
+        ]
       }
     },
     "02-impact-analysis": {
@@ -85,6 +91,7 @@
       }
     },
     "03-architecture": {
+      "timeout_minutes": 45,
       "interactive_elicitation": {
         "enabled": false
       },
@@ -105,6 +112,12 @@
       },
       "agent_delegation_validation": {
         "enabled": true
+      },
+      "artifact_validation": {
+        "enabled": true,
+        "paths": [
+          "docs/architecture/{artifact_folder}/architecture-overview.md"
+        ]
       }
     },
     "04-design": {
@@ -127,6 +140,13 @@
       },
       "agent_delegation_validation": {
         "enabled": true
+      },
+      "artifact_validation": {
+        "enabled": true,
+        "paths": [
+          "docs/design/{artifact_folder}/interface-spec.yaml",
+          "docs/design/{artifact_folder}/interface-spec.md"
+        ]
       }
     },
     "05-test-strategy": {
@@ -144,6 +164,12 @@
           "VII",
           "IX",
           "XI"
+        ]
+      },
+      "artifact_validation": {
+        "enabled": true,
+        "paths": [
+          "docs/testing/{artifact_folder}/test-strategy.md"
         ]
       },
       "atdd_validation": {
@@ -165,6 +191,7 @@
       }
     },
     "06-implementation": {
+      "timeout_minutes": 90,
       "interactive_elicitation": {
         "enabled": false
       },
@@ -233,6 +260,7 @@
       }
     },
     "07-testing": {
+      "timeout_minutes": 60,
       "interactive_elicitation": {
         "enabled": false
       },
@@ -318,6 +346,12 @@
       },
       "agent_delegation_validation": {
         "enabled": true
+      },
+      "artifact_validation": {
+        "enabled": true,
+        "paths": [
+          "docs/reviews/{artifact_folder}/review-summary.md"
+        ]
       }
     },
     "09-validation": {
@@ -666,6 +700,7 @@
     "block_on_incomplete_constitutional": true,
     "block_on_incomplete_elicitation": true,
     "block_on_missing_agent_delegation": true,
+    "block_on_missing_artifacts": true,
     "allow_escalation_override": true
   },
   "escalation_rules": {

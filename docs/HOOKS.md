@@ -1,6 +1,6 @@
 # Hook Reference
 
-> Complete reference for all 26 runtime enforcement hooks in the iSDLC framework.
+> Complete reference for all 27 runtime enforcement hooks in the iSDLC framework.
 
 The hook system runs **outside the LLM** as separate Node.js processes, intercepting tool calls via Claude Code's `PreToolUse`, `PostToolUse`, and `Stop` events. This means enforcement is deterministic — it cannot be forgotten, reinterpreted, or prompt-injected away.
 

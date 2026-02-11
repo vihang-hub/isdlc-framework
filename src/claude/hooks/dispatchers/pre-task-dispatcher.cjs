@@ -23,7 +23,7 @@
  * skill-validator runs regardless. Hooks with shouldActivate guards are
  * skipped when their conditions aren't met (REQ-0010 T3-B).
  *
- * Version: 1.1.0
+ * Version: 1.2.0
  */
 
 const {
@@ -34,7 +34,9 @@ const {
     loadIterationRequirements,
     loadWorkflowDefinitions,
     outputBlockResponse,
-    debugLog
+    debugLog,
+    checkPhaseTimeout,
+    logHookEvent
 } = require('../lib/common.cjs');
 
 // Import hook check functions
@@ -94,6 +96,23 @@ async function main() {
 
         // 4. Build ctx
         const ctx = { input, state, manifest, requirements, workflows };
+
+        // 4b. Phase timeout advisory check (fail-open, non-blocking)
+        if (state?.active_workflow && requirements) {
+            try {
+                const timeout = checkPhaseTimeout(state, requirements);
+                if (timeout.exceeded) {
+                    console.error(`TIMEOUT WARNING: Phase '${timeout.phase}' has been active for ${timeout.elapsed} minutes (limit: ${timeout.limit}). Consider escalating to human review.`);
+                    logHookEvent('pre-task-dispatcher', 'timeout_warning', {
+                        phase: timeout.phase,
+                        reason: `Phase active for ${timeout.elapsed}min, limit ${timeout.limit}min`
+                    });
+                }
+            } catch (e) {
+                // Fail-open: timeout check errors should never block
+                debugLog('pre-task-dispatcher: timeout check error:', e.message);
+            }
+        }
 
         // 5. Call hooks in order, short-circuit on first block
         let stateModified = false;

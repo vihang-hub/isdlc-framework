@@ -1958,6 +1958,69 @@ function loadWorkflowDefinitions() {
     return null;
 }
 
+/**
+ * Check if the current phase has exceeded its timeout.
+ * Reads started_at from phase state and timeout_minutes from requirements.
+ * @param {object} state - Parsed state.json
+ * @param {object} requirements - Parsed iteration-requirements.json
+ * @returns {{ exceeded: boolean, elapsed?: number, limit?: number, phase?: string }}
+ */
+function checkPhaseTimeout(state, requirements) {
+    if (!state || !requirements) {
+        return { exceeded: false };
+    }
+
+    const activeWorkflow = state.active_workflow;
+    const currentPhase = activeWorkflow?.current_phase || state.current_phase;
+    if (!currentPhase) {
+        return { exceeded: false };
+    }
+
+    const phaseReq = requirements.phase_requirements?.[currentPhase];
+    if (!phaseReq) {
+        return { exceeded: false };
+    }
+
+    // Look for timeout_minutes in various config locations
+    const timeoutMinutes = phaseReq.interactive_elicitation?.timeout_minutes
+        || phaseReq.timeout_minutes
+        || null;
+
+    if (!timeoutMinutes) {
+        return { exceeded: false };
+    }
+
+    // Find phase start time from state
+    const phaseState = state.phases?.[currentPhase];
+    const startedAt = phaseState?.started_at
+        || phaseState?.iteration_requirements?.test_iteration?.started_at
+        || phaseState?.iteration_requirements?.interactive_elicitation?.started_at
+        || null;
+
+    if (!startedAt) {
+        return { exceeded: false };
+    }
+
+    const startTime = new Date(startedAt).getTime();
+    if (isNaN(startTime)) {
+        return { exceeded: false };
+    }
+
+    const elapsedMs = Date.now() - startTime;
+    const elapsedMinutes = Math.round(elapsedMs / 60000);
+
+    if (elapsedMinutes > timeoutMinutes) {
+        return {
+            exceeded: true,
+            elapsed: elapsedMinutes,
+            limit: timeoutMinutes,
+            phase: currentPhase
+        };
+    }
+
+    return { exceeded: false };
+}
+
 module.exports = {
     getProjectRoot,
     // Protected state fields & patterns (REQ-HARDENING)
@@ -2038,5 +2101,7 @@ module.exports = {
     addPendingEscalation,
     addSkillLogEntry,
     loadIterationRequirements,
-    loadWorkflowDefinitions
+    loadWorkflowDefinitions,
+    // Phase timeout detection
+    checkPhaseTimeout
 };

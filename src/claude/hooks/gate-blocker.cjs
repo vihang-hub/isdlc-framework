@@ -8,7 +8,7 @@
  * - Task tool calls to orchestrator with "advance", "gate-check", "gate" in prompt
  * - Skill tool calls with /isdlc advance
  *
- * Version: 3.1.0
+ * Version: 3.2.0
  */
 
 const {
@@ -420,6 +420,85 @@ function checkAgentDelegationRequirement(phaseState, phaseRequirements, state, c
 }
 
 /**
+ * Resolve template placeholders in artifact paths.
+ * Substitutes {artifact_folder} from state.active_workflow.artifact_folder.
+ * @param {string[]} paths - Paths with template placeholders
+ * @param {object} state - state.json content
+ * @returns {string[]} Resolved paths (templates without values are filtered out)
+ */
+function resolveArtifactPaths(paths, state) {
+    const artifactFolder = state?.active_workflow?.artifact_folder;
+    const resolved = [];
+
+    for (const p of paths) {
+        if (p.includes('{artifact_folder}')) {
+            if (artifactFolder) {
+                resolved.push(p.replace(/\{artifact_folder\}/g, artifactFolder));
+            }
+            // If no artifact_folder, skip this path (fail-open)
+        } else {
+            resolved.push(p);
+        }
+    }
+
+    return resolved;
+}
+
+/**
+ * Check if required artifacts are present for the current phase.
+ * For phases with artifact_validation config, checks that files exist on disk.
+ * Fail-open: missing config or unresolvable paths pass the check.
+ */
+function checkArtifactPresenceRequirement(phaseState, phaseRequirements, state, currentPhase) {
+    const artifactReq = phaseRequirements.artifact_validation;
+    if (!artifactReq || !artifactReq.enabled) {
+        return { satisfied: true, reason: 'not_required' };
+    }
+
+    const paths = artifactReq.paths;
+    if (!paths || paths.length === 0) {
+        return { satisfied: true, reason: 'no_paths_configured' };
+    }
+
+    const resolvedPaths = resolveArtifactPaths(paths, state);
+    if (resolvedPaths.length === 0) {
+        // All paths had unresolvable templates — fail-open
+        return { satisfied: true, reason: 'paths_unresolvable' };
+    }
+
+    const { getProjectRoot } = require('./lib/common.cjs');
+    const projectRoot = getProjectRoot();
+    const missingArtifacts = [];
+
+    // For paths with alternatives (e.g., interface-spec.yaml OR interface-spec.md),
+    // group by directory and check if ANY variant exists
+    const pathsByDir = {};
+    for (const p of resolvedPaths) {
+        const dir = path.dirname(p);
+        if (!pathsByDir[dir]) pathsByDir[dir] = [];
+        pathsByDir[dir].push(p);
+    }
+
+    for (const [dir, dirPaths] of Object.entries(pathsByDir)) {
+        const anyExists = dirPaths.some(p => fs.existsSync(path.join(projectRoot, p)));
+        if (!anyExists) {
+            missingArtifacts.push(dirPaths[0]); // Report first variant as missing
+        }
+    }
+
+    if (missingArtifacts.length > 0) {
+        return {
+            satisfied: false,
+            reason: `Required artifact(s) missing for phase '${currentPhase}': ${missingArtifacts.join(', ')}`,
+            action_required: 'CREATE_ARTIFACTS',
+            missing_artifacts: missingArtifacts
+        };
+    }
+
+    return { satisfied: true, reason: 'all_present' };
+}
+
+/**
  * Dispatcher-compatible check function.
  * @param {object} ctx - { input, state, manifest, requirements, workflows }
  * @returns {{ decision: 'allow'|'block', stopReason?: string, stderr?: string, stdout?: string, stateModified?: boolean }}
@@ -579,6 +658,15 @@ function check(ctx) {
             checks.push({
                 requirement: 'agent_delegation',
                 ...delegationCheck
+            });
+        }
+
+        // 5. Artifact presence check
+        const artifactCheck = checkArtifactPresenceRequirement(phaseState, phaseReq, state, currentPhase);
+        if (!artifactCheck.satisfied) {
+            checks.push({
+                requirement: 'artifact_presence',
+                ...artifactCheck
             });
         }
 

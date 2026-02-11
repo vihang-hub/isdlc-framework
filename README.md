@@ -4,13 +4,13 @@
 
 <h3><em>Structured AI-powered software development, from requirements to production.</em></h3>
 
-<p><strong>A comprehensive SDLC framework for Claude Code with 48 agents, 240 skills, quality gates at every phase boundary, and 26 deterministic enforcement hooks.</strong></p>
+<p><strong>A comprehensive SDLC framework for Claude Code with 48 agents, 240 skills, quality gates at every phase boundary, and 27 deterministic enforcement hooks.</strong></p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Agents](https://img.shields.io/badge/Agents-48-purple.svg)](docs/AGENTS.md)
 [![Skills](https://img.shields.io/badge/Skills-240-green.svg)](docs/DETAILED-SKILL-ALLOCATION.md)
 [![Gates](https://img.shields.io/badge/Quality%20Gates-21-orange.svg)](docs/ARCHITECTURE.md#quality-gates)
-[![Hooks](https://img.shields.io/badge/Hooks-26-red.svg)](docs/HOOKS.md)
+[![Hooks](https://img.shields.io/badge/Hooks-27-red.svg)](docs/HOOKS.md)
 
 </div>
 
@@ -22,7 +22,7 @@ The iSDLC (integrated Software Development Lifecycle) framework is a **structure
 
 ### What it enforces
 
-- **Quality gates the AI can't skip** — 26 hooks run as separate Node.js processes outside the LLM conversation, enforcing iteration limits, test coverage thresholds, and phase sequencing deterministically
+- **Quality gates the AI can't skip** — 27 hooks run as separate Node.js processes outside the LLM conversation, enforcing iteration limits, test coverage thresholds, and phase sequencing deterministically
 - **Structured workflows, not free-form chat** — each workflow type has a fixed phase sequence; agents execute in order with clear handoffs and typed artifacts
 - **Session persistence** — workflow state, phase progress, and iteration counters survive session boundaries; resume where you left off, not from scratch
 - **Scope containment** — fix workflows are scoped to 6 phases, feature workflows to 9; the agent cannot invent extra steps or refactor unrelated code
@@ -93,7 +93,7 @@ Non-interactive (CI/CD):
 .\isdlc-framework\install.ps1 -Force
 ```
 
-The installer copies 48 agents, 240 skills, 26 hooks, and settings into your project, sets up the `.isdlc/` state directory, and generates docs structure. See [Installation Flow](docs/ARCHITECTURE.md#installation-flow) for details.
+The installer copies 48 agents, 240 skills, 27 hooks, and settings into your project, sets up the `.isdlc/` state directory, and generates docs structure. See [Installation Flow](docs/ARCHITECTURE.md#installation-flow) for details.
 
 ### Step 2: Start Using the Framework
 
@@ -109,20 +109,20 @@ The `/discover` command analyzes your project's architecture, test coverage, and
 
 ## How iSDLC Solves AI Development Challenges
 
-AI coding assistants are powerful but have well-known failure modes. The iSDLC framework addresses eleven specific challenges through structural enforcement — 26 hooks, quality gates at every phase boundary, 48 agents, and configuration files that constrain AI behavior deterministically rather than relying on prompt instructions alone.
+AI coding assistants are powerful but have well-known failure modes. The iSDLC framework addresses eleven specific challenges through structural enforcement — 27 hooks, quality gates at every phase boundary, 48 agents, and configuration files that constrain AI behavior deterministically rather than relying on prompt instructions alone.
 
 ### 1. Enforcement Outside the LLM
 
 **The problem**: Prompt-based constraints can be ignored, reinterpreted, or forgotten as context grows. AI behavior is inherently non-deterministic — the same prompt produces different results. No amount of instruction-tuning guarantees the AI will follow rules once the conversation is long enough.
 
 **How iSDLC solves it**:
-- All 26 hooks run as **separate Node.js processes** — they intercept tool calls via Claude Code's `PreToolUse` and `PostToolUse` events and are not part of the LLM conversation
+- All 27 hooks run as **separate Node.js processes** — they intercept tool calls via Claude Code's `PreToolUse` and `PostToolUse` events and are not part of the LLM conversation
 - `iteration-corridor.cjs` enforces TEST and CONST corridors — when tests are failing, the agent can only fix code and re-run tests (no delegation, no gate advancement)
 - `gate-blocker.cjs` performs 4 checks before allowing phase advancement: iteration requirements, workflow validation, phase sequencing, and agent delegation verification
 - State-driven enforcement means behavior depends on `.isdlc/state.json` and config files, not on conversation history
 - **Fail-open safety**: if a hook crashes or times out, it allows the operation to proceed rather than blocking all work
 
-> *Mechanism*: 26 hooks as Node.js processes, `iteration-corridor.cjs` (TEST/CONST corridors), `gate-blocker.cjs` (4 checks), `.claude/settings.json` registration, fail-open design
+> *Mechanism*: 27 hooks as Node.js processes, `iteration-corridor.cjs` (TEST/CONST corridors), `gate-blocker.cjs` (5 checks), `.claude/settings.json` registration, fail-open design
 
 ### 2. Quality That Can't Be Skipped
 
@@ -144,7 +144,7 @@ AI coding assistants are powerful but have well-known failure modes. The iSDLC f
 
 **How iSDLC solves it**:
 - `.isdlc/state.json` persists workflow state, phase progress, iteration counters, and active agent across sessions
-- `workflow-completion-enforcer.cjs` detects when `active_workflow` is cleared and ensures the workflow completes cleanly
+- `workflow-completion-enforcer.cjs` performs post-completion self-healing — adding phase snapshots and metrics to workflow history when a workflow ends
 - Starting a new Claude Code session with an in-progress workflow resumes at the exact phase where you left off — no repeated work
 - Each phase produces typed artifacts (requirements spec, architecture doc, test strategy) that survive session boundaries and become inputs to the next phase
 
@@ -217,9 +217,9 @@ AI coding assistants are powerful but have well-known failure modes. The iSDLC f
 
 **How iSDLC solves it**:
 - Phase 01 (Requirements Analyst) uses interactive A/R/C elicitation — presenting menus where the user can **A**djust, **R**efine, or **C**ontinue
-- `menu-tracker.cjs` tracks elicitation progress and requires a minimum of 3 menu interactions before allowing phase advancement
+- `menu-tracker.cjs` tracks elicitation progress (menu interactions and selections) while `gate-blocker.cjs` enforces the minimum of 3 interactions before allowing phase advancement
 - Bug reports include a **sufficiency check** — the requirements analyst validates expected behavior, actual behavior, and reproduction steps
-- `plan-surfacer.cjs` blocks delegation to implementation phases when the task plan hasn't been reviewed
+- `plan-surfacer.cjs` blocks delegation to implementation phases when the task plan hasn't been generated
 - For existing projects, `/discover` captures implicit knowledge (dependencies, conventions, test patterns) so agents don't have to guess
 
 > *Mechanism*: `menu-tracker.cjs` (min 3 interactions), `plan-surfacer.cjs`, bug sufficiency check in `01-requirements-analyst.md`, A/R/C menus
@@ -271,7 +271,7 @@ AI coding assistants are powerful but have well-known failure modes. The iSDLC f
 ## Project Status
 
 **Completed** (9 enhancements):
-- 48 agents, 240 skills, 21 enforced phases, 26 hooks
+- 48 agents, 240 skills, 21 enforced phases, 27 hooks
 - Project Constitution, Adaptive Workflow, Autonomous Iteration
 - Skill Observability, Deterministic Hooks, Monorepo Support
 - Task Planning, Phase 00 Exploration Mode, Multi-Provider LLM Support
@@ -302,6 +302,6 @@ MIT License
 
 <div align="center">
 
-**iSDLC Framework** v0.1.0-alpha — 48 agents, 240 skills, 21 enforced phases, 26 hooks
+**iSDLC Framework** v0.1.0-alpha — 48 agents, 240 skills, 21 enforced phases, 27 hooks
 
 </div>

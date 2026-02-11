@@ -10,7 +10,7 @@
  * 3. Checks for circuit breaker (identical failures)
  * 4. Outputs iteration guidance to the agent
  *
- * Version: 1.1.0
+ * Version: 1.2.0
  */
 
 const {
@@ -90,6 +90,43 @@ const FAILURE_PATTERNS = [
     /error Command failed/i,
     /exited with code [1-9]/i
 ];
+
+/**
+ * Coverage patterns - regex to extract coverage percentage from common test runners
+ */
+const COVERAGE_PATTERNS = [
+    // Jest/Vitest: "Statements   : 85.71%"
+    { name: 'jest-statements', pattern: /Statements\s*:\s*(\d+\.?\d*)%/ },
+    // Jest/Vitest: "Lines        : 90.00%"
+    { name: 'jest-lines', pattern: /Lines\s*:\s*(\d+\.?\d*)%/ },
+    // pytest-cov: "TOTAL    100    15    85%"
+    { name: 'pytest-cov', pattern: /TOTAL\s+\d+\s+\d+\s+(\d+)%/ },
+    // Go: "coverage: 82.5% of statements"
+    { name: 'go-coverage', pattern: /coverage:\s*(\d+\.?\d*)%/ },
+    // Generic: "85.5% coverage" or "85.5% covered"
+    { name: 'generic', pattern: /(\d+\.?\d*)%\s*(?:coverage|covered)/ }
+];
+
+/**
+ * Parse coverage percentage from test output.
+ * Returns first match from COVERAGE_PATTERNS.
+ * @param {string} output - Test command output
+ * @returns {{ found: boolean, percentage: number|null }}
+ */
+function parseCoverage(output) {
+    if (!output || typeof output !== 'string') {
+        return { found: false, percentage: null };
+    }
+
+    for (const { pattern } of COVERAGE_PATTERNS) {
+        const match = output.match(pattern);
+        if (match) {
+            return { found: true, percentage: parseFloat(match[1]) };
+        }
+    }
+
+    return { found: false, percentage: null };
+}
 
 /**
  * Success patterns in test output
@@ -474,47 +511,97 @@ function check(ctx) {
         let outputMessage = '';
 
         if (testResult.passed) {
-            // SUCCESS
-            iterState.completed = true;
-            iterState.status = 'success';
-            iterState.completed_at = getTimestamp();
+            // SUCCESS — but check coverage before marking complete
             iterState.identical_failure_count = 0;
 
-            debugLog('Tests PASSED - iteration complete');
+            debugLog('Tests PASSED - checking coverage');
 
-            // Check for ATDD mode and skipped tests
-            const atddMode = isATDDMode(state);
-            const skippedInfo = detectSkippedTests(result);
+            // Coverage enforcement (fail-open: only activates when coverage data is present)
+            const coverageThreshold = phaseReq.test_iteration?.success_criteria?.min_coverage_percent;
+            const coverage = parseCoverage(result);
+            iterState.coverage = {
+                found: coverage.found,
+                percentage: coverage.percentage,
+                threshold: coverageThreshold || null,
+                met: !coverage.found || !coverageThreshold || coverage.percentage >= coverageThreshold
+            };
 
-            let atddWarning = '';
-            if (atddMode && skippedInfo.count > 0) {
-                // In ATDD mode, skipped tests are NOT allowed at gate
-                atddWarning = `\n\n⚠️ ATDD MODE WARNING: ${skippedInfo.count} skipped test(s) detected!\n` +
-                    `In ATDD mode, ALL acceptance tests must be implemented (no test.skip() allowed).\n` +
-                    `Skipped tests:\n${skippedInfo.details.slice(0, 5).map(t => `  - ${t}`).join('\n')}\n` +
-                    (skippedInfo.details.length > 5 ? `  ... and ${skippedInfo.details.length - 5} more\n` : '') +
-                    `\nYou must unskip and implement these tests before advancing the gate.`;
+            let coverageWarning = '';
+            if (coverage.found && coverageThreshold && coverage.percentage < coverageThreshold) {
+                // Coverage below threshold — don't mark completed, keep iterating
+                debugLog(`Coverage ${coverage.percentage}% below threshold ${coverageThreshold}%`);
 
-                // Update state with ATDD skip info
-                if (!state.phases[currentPhase].atdd_validation) {
-                    state.phases[currentPhase].atdd_validation = {};
+                const remaining = iterState.max_iterations - iterState.current_iteration;
+                if (remaining <= 0) {
+                    // Max iterations exhausted with coverage below threshold — escalate
+                    iterState.completed = true;
+                    iterState.status = 'escalated';
+                    iterState.escalation_reason = 'coverage_below_threshold';
+                    iterState.escalation_details = `Coverage ${coverage.percentage}% below ${coverageThreshold}% after ${iterState.max_iterations} iterations`;
+
+                    outputMessage = `\n\n🚨 COVERAGE BELOW THRESHOLD (${coverage.percentage}% < ${coverageThreshold}%)\n` +
+                        `Max iterations (${iterState.max_iterations}) exhausted.\n\n` +
+                        `ACTION REQUIRED: Escalate to human review.\n` +
+                        `Add tests to improve coverage above ${coverageThreshold}%.`;
+                } else {
+                    coverageWarning = `\n\n⚠️ COVERAGE WARNING: ${coverage.percentage}% is below the required ${coverageThreshold}%.\n` +
+                        `Remaining iterations: ${remaining}\n` +
+                        `Add more tests to reach ${coverageThreshold}% coverage, then re-run tests.`;
+
+                    outputMessage = `\n\n⚠️ TESTS PASSED but COVERAGE INSUFFICIENT (iteration ${iterState.current_iteration}/${iterState.max_iterations})\n` +
+                        `Coverage: ${coverage.percentage}% (required: ${coverageThreshold}%)` +
+                        coverageWarning;
                 }
-                state.phases[currentPhase].atdd_validation.orphan_skips_detected = skippedInfo.count;
-                state.phases[currentPhase].atdd_validation.orphan_skip_details = skippedInfo.details;
+            } else {
+                // Coverage met or not applicable — mark complete
+                iterState.completed = true;
+                iterState.status = 'success';
+                iterState.completed_at = getTimestamp();
+
+                debugLog('Tests PASSED - iteration complete');
+
+                let coverageNote = '';
+                if (coverage.found) {
+                    coverageNote = `\nCoverage: ${coverage.percentage}%` + (coverageThreshold ? ` (threshold: ${coverageThreshold}%)` : '');
+                } else if (coverageThreshold) {
+                    coverageNote = `\nNote: No coverage data detected in output. Run tests with coverage flag (e.g., --coverage) to enable coverage enforcement.`;
+                }
+
+                // Check for ATDD mode and skipped tests
+                const atddMode = isATDDMode(state);
+                const skippedInfo = detectSkippedTests(result);
+
+                let atddWarning = '';
+                if (atddMode && skippedInfo.count > 0) {
+                    // In ATDD mode, skipped tests are NOT allowed at gate
+                    atddWarning = `\n\n⚠️ ATDD MODE WARNING: ${skippedInfo.count} skipped test(s) detected!\n` +
+                        `In ATDD mode, ALL acceptance tests must be implemented (no test.skip() allowed).\n` +
+                        `Skipped tests:\n${skippedInfo.details.slice(0, 5).map(t => `  - ${t}`).join('\n')}\n` +
+                        (skippedInfo.details.length > 5 ? `  ... and ${skippedInfo.details.length - 5} more\n` : '') +
+                        `\nYou must unskip and implement these tests before advancing the gate.`;
+
+                    // Update state with ATDD skip info
+                    if (!state.phases[currentPhase].atdd_validation) {
+                        state.phases[currentPhase].atdd_validation = {};
+                    }
+                    state.phases[currentPhase].atdd_validation.orphan_skips_detected = skippedInfo.count;
+                    state.phases[currentPhase].atdd_validation.orphan_skip_details = skippedInfo.details;
+                }
+
+                // Build constitutional article list from phase requirements
+                const constArticles = phaseReq.constitutional_validation?.articles;
+                const constArticleNote = constArticles
+                    ? `Read docs/isdlc/constitution.md and validate artifacts against these articles: ${constArticles.join(', ')}\n` +
+                      `Update state.json → phases.${currentPhase}.constitutional_validation when complete.`
+                    : `Check iteration-requirements.json for applicable constitutional articles.`;
+
+                outputMessage = `\n\n✅ TESTS PASSED (iteration ${iterState.current_iteration})\n` +
+                    `Test iteration requirement: SATISFIED` +
+                    coverageNote +
+                    atddWarning +
+                    `\n\nNEXT STEP: Constitutional validation required.\n` +
+                    constArticleNote;
             }
-
-            // Build constitutional article list from phase requirements
-            const constArticles = phaseReq.constitutional_validation?.articles;
-            const constArticleNote = constArticles
-                ? `Read docs/isdlc/constitution.md and validate artifacts against these articles: ${constArticles.join(', ')}\n` +
-                  `Update state.json → phases.${currentPhase}.constitutional_validation when complete.`
-                : `Check iteration-requirements.json for applicable constitutional articles.`;
-
-            outputMessage = `\n\n✅ TESTS PASSED (iteration ${iterState.current_iteration})\n` +
-                `Test iteration requirement: SATISFIED\n` +
-                atddWarning +
-                `\n\nNEXT STEP: Constitutional validation required.\n` +
-                constArticleNote;
 
         } else {
             // FAILURE
@@ -587,8 +674,8 @@ function check(ctx) {
     }
 }
 
-// Export check for dispatcher use (+ fuzzy helpers for direct testing)
-module.exports = { check, normalizeErrorForComparison, isIdenticalFailure };
+// Export check for dispatcher use (+ helpers for direct testing)
+module.exports = { check, normalizeErrorForComparison, isIdenticalFailure, parseCoverage };
 
 // Standalone execution
 if (require.main === module) {
