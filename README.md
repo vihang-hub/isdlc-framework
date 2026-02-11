@@ -6,12 +6,11 @@
 
 <p><strong>A comprehensive SDLC framework for Claude Code with 48 agents, 240 skills, quality gates at every phase boundary, and 26 deterministic enforcement hooks.</strong></p>
 
-[![npm version](https://img.shields.io/npm/v/isdlc.svg)](https://www.npmjs.com/package/isdlc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Agents](https://img.shields.io/badge/Agents-48-purple.svg)](docs/AGENTS.md)
 [![Skills](https://img.shields.io/badge/Skills-240-green.svg)](docs/DETAILED-SKILL-ALLOCATION.md)
 [![Gates](https://img.shields.io/badge/Quality%20Gates-21-orange.svg)](docs/ARCHITECTURE.md#quality-gates)
-[![Hooks](https://img.shields.io/badge/Hooks-26-red.svg)](docs/ARCHITECTURE.md#hooks-26)
+[![Hooks](https://img.shields.io/badge/Hooks-26-red.svg)](docs/HOOKS.md)
 
 </div>
 
@@ -19,16 +18,38 @@
 
 ## What is iSDLC?
 
-The iSDLC (integrated Software Development Lifecycle) framework provides **48 specialized AI agents** organized around 4 orchestrators that guide software development from requirements through production:
+The iSDLC (integrated Software Development Lifecycle) framework is a **structured, multi-agent SDLC** that installs into your existing project and guides AI-powered development from requirements through production. It exists because LLM-based coding assistants are powerful but unreliable without external constraints — they skip tests, drift from requirements, lose context across sessions, and declare work "done" prematurely.
+
+### What it enforces
+
+- **Quality gates the AI can't skip** — 26 hooks run as separate Node.js processes outside the LLM conversation, enforcing iteration limits, test coverage thresholds, and phase sequencing deterministically
+- **Structured workflows, not free-form chat** — each workflow type has a fixed phase sequence; agents execute in order with clear handoffs and typed artifacts
+- **Session persistence** — workflow state, phase progress, and iteration counters survive session boundaries; resume where you left off, not from scratch
+- **Scope containment** — fix workflows are scoped to 6 phases, feature workflows to 9; the agent cannot invent extra steps or refactor unrelated code
+- **Codebase knowledge** — `/discover` runs 22 agents that map your architecture, test coverage, and conventions before any work begins
+- **Self-correction with limits** — circuit breakers stop infinite retry loops; iteration limits force human escalation instead of token-burning loops
+
+### Available workflows
+
+| Command | Description |
+|---------|-------------|
+| `/discover` | Analyze existing project or set up a new one |
+| `/isdlc feature "desc"` | End-to-end feature development (9 phases) |
+| `/isdlc fix "desc"` | TDD bug fix (6 phases) |
+| `/isdlc test generate` | Generate test suite (5 phases) |
+| `/isdlc test run` | Execute tests (2 phases) |
+| `/isdlc upgrade "name"` | Dependency upgrade (3 phases) |
+| `/isdlc start` | Full lifecycle (14 phases) |
+
+<details>
+<summary><strong>Agent breakdown (48 total)</strong></summary>
 
 - **16 SDLC agents** — 1 orchestrator (`/isdlc`) + 15 phase agents (requirements → operations → upgrades + quality loop)
 - **23 Discover agents** — 1 orchestrator (`/discover`) + 22 sub-agents that analyze existing projects (with behavior extraction & AC generation) or elicit vision for new ones (with inception party debate rounds)
 - **5 Exploration agents** — 1 quick scan (Phase 00) + 1 orchestrator + 3 impact analysis sub-agents (Phase 02 for features)
 - **4 Tracing agents** — 1 orchestrator + 3 sub-agents that trace bug root causes (Phase 02 for bugs)
 
-The framework installs **into your existing project**, providing structured multi-agent workflows, quality gates between every phase, and 26 deterministic hooks that enforce iteration requirements at runtime.
-
-**Key principles**: Clear ownership (one agent per phase), deterministic hook enforcement, quality gates at every boundary, artifact traceability, and adaptive workflows.
+</details>
 
 **Licensing**: This framework is **free and open source** (MIT License). You provide your own LLM access via a Claude Code subscription.
 
@@ -44,33 +65,17 @@ The framework installs **into your existing project**, providing structured mult
 |-------------|---------|-------|
 | **Node.js** | 20+ | Required for hooks and CLI |
 | **Claude Code** | Latest | [Install guide](https://docs.anthropic.com/en/docs/claude-code/overview) |
-| **LLM Provider** | Any | Free options available (see Step 2) |
 
 ### Step 1: Install the Framework
 
-Choose one of three installation methods:
-
-**Option 1: npx (recommended — no global install needed)**
-```bash
-cd /path/to/your-project
-npx isdlc init
-```
-
-**Option 2: Global install (for frequent use)**
-```bash
-npm install -g isdlc
-cd /path/to/your-project
-isdlc init
-```
-
-**Option 3: Git clone (for development or customization)**
+**macOS / Linux:**
 ```bash
 cd /path/to/your-project
 git clone <repo-url> isdlc-framework
 ./isdlc-framework/install.sh
 ```
 
-**Option 3b: Git clone on Windows (PowerShell)**
+**Windows (PowerShell):**
 ```powershell
 cd C:\path\to\your-project
 git clone <repo-url> isdlc-framework
@@ -88,7 +93,7 @@ Non-interactive (CI/CD):
 .\isdlc-framework\install.ps1 -Force
 ```
 
-The installer runs a 6-step process: detect project type → check for monorepo → confirm installation → copy framework files (48 agents, 240 skills, 26 hooks, settings) → set up `.isdlc/` state directory → generate docs structure. See [Installation Flow](docs/ARCHITECTURE.md#installation-flow) for details.
+The installer copies 48 agents, 240 skills, 26 hooks, and settings into your project, sets up the `.isdlc/` state directory, and generates docs structure. See [Installation Flow](docs/ARCHITECTURE.md#installation-flow) for details.
 
 ### Step 2: Start Using the Framework
 
@@ -98,19 +103,7 @@ claude                                    # Start Claude Code
 /isdlc feature "Add user authentication"   # Develop a feature end-to-end
 ```
 
-The `/discover` command analyzes your project's architecture, test coverage, and patterns, then generates a tailored constitution (governance rules). For new projects, it elicits your vision through interactive prompts.
-
-Once discovery is complete, `/isdlc` presents a context-aware menu based on your project state:
-
-| Use Case | Command |
-|----------|---------|
-| **Analyze existing project** | `/discover` |
-| **Develop new feature** | `/isdlc feature "description"` |
-| **Fix a bug (TDD)** | `/isdlc fix "description"` |
-| **Generate test suite** | `/isdlc test generate` |
-| **Upgrade dependency** | `/isdlc upgrade "Node.js 22"` |
-| **Full lifecycle** | `/isdlc start` |
-<!-- | **Configure LLM provider** | `/provider` | -->
+The `/discover` command analyzes your project's architecture, test coverage, and patterns, then generates a tailored constitution (governance rules). For new projects, it elicits your vision through interactive prompts. Once discovery is complete, use any `/isdlc` workflow to begin development.
 
 ---
 
@@ -264,6 +257,7 @@ AI coding assistants are powerful but have well-known failure modes. The iSDLC f
 | Document | Description |
 |----------|-------------|
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture, hooks, agents, state management, end-to-end flow |
+| [HOOKS.md](docs/HOOKS.md) | All 26 hooks — what they block, warn, and track |
 | [AGENTS.md](docs/AGENTS.md) | All 48 agents with responsibilities and artifacts |
 | [DETAILED-SKILL-ALLOCATION.md](docs/DETAILED-SKILL-ALLOCATION.md) | 240 skills organized by category |
 | [CONSTITUTION-GUIDE.md](docs/CONSTITUTION-GUIDE.md) | Project governance principles |
@@ -276,12 +270,11 @@ AI coding assistants are powerful but have well-known failure modes. The iSDLC f
 
 ## Project Status
 
-**Completed** (10 enhancements):
+**Completed** (9 enhancements):
 - 48 agents, 240 skills, 21 enforced phases, 26 hooks
 - Project Constitution, Adaptive Workflow, Autonomous Iteration
 - Skill Observability, Deterministic Hooks, Monorepo Support
 - Task Planning, Phase 00 Exploration Mode, Multi-Provider LLM Support
-- **Cross-platform npm package** with auto-update notifications
 
 **In Progress**: Integration testing, real project validation
 
@@ -309,6 +302,6 @@ MIT License
 
 <div align="center">
 
-**iSDLC Framework** v0.1.0-alpha — 48 agents, 240 skills, 21 enforced phases, 26 hooks, cross-platform npm package
+**iSDLC Framework** v0.1.0-alpha — 48 agents, 240 skills, 21 enforced phases, 26 hooks
 
 </div>
