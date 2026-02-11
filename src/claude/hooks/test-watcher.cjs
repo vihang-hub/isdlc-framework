@@ -233,6 +233,33 @@ function loadIterationRequirements() {
 }
 
 /**
+ * Normalize an error string for comparison by stripping volatile parts.
+ * This enables the circuit breaker to catch semantically identical errors
+ * that differ only in line numbers, timestamps, or memory addresses.
+ * @param {string} error - The error string to normalize
+ * @returns {string} Normalized error string
+ */
+function normalizeErrorForComparison(error) {
+    if (!error || typeof error !== 'string') return '';
+    return error
+        // 1. Strip ISO 8601 timestamps (most specific — contains T delimiter + colons)
+        .replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?/g, 'TIMESTAMP')
+        // 2. Strip common date formats (e.g., 2026-02-11 10:30:00)
+        .replace(/\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}/g, 'TIMESTAMP')
+        // 3. Strip stack trace file paths with parentheses (e.g., at Object.<anonymous> (/path/to/file.js:42:13))
+        .replace(/at\s+.*?\(.*?\)/g, 'at STACK')
+        // 4. Strip stack trace file paths without parentheses (e.g., at /path/to/file.js:42:13)
+        .replace(/at\s+\/.*?:\d+:\d+/g, 'at STACK')
+        // 5. Strip line:column references — general fallback, must run LAST among colon patterns
+        .replace(/:\d+:\d+/g, ':X:X')
+        // 6. Strip memory addresses (e.g., 0x7fff5fbff8c0)
+        .replace(/0x[0-9a-fA-F]+/g, '0xADDR')
+        // 7. Collapse whitespace + trim
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+/**
  * Check for identical failure (circuit breaker)
  */
 function isIdenticalFailure(currentError, history) {
@@ -243,8 +270,9 @@ function isIdenticalFailure(currentError, history) {
 
     if (recentErrors.length < 2) return false;
 
-    // Check if all recent errors match current
-    return recentErrors.every(e => e === currentError);
+    // Check if all recent errors match current (using normalized comparison)
+    const normalizedCurrent = normalizeErrorForComparison(currentError);
+    return recentErrors.every(e => normalizeErrorForComparison(e) === normalizedCurrent);
 }
 
 /**
@@ -559,8 +587,8 @@ function check(ctx) {
     }
 }
 
-// Export check for dispatcher use
-module.exports = { check };
+// Export check for dispatcher use (+ fuzzy helpers for direct testing)
+module.exports = { check, normalizeErrorForComparison, isIdenticalFailure };
 
 // Standalone execution
 if (require.main === module) {

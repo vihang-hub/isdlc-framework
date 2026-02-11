@@ -59,6 +59,18 @@ function findDelegation(usageLog, requiredAgent, invokedAt) {
 
 async function main() {
     try {
+        // Helper to clear delegation marker and reset error counter
+        function clearMarkerAndResetErrors() {
+            clearPendingDelegation();
+            try {
+                const s = readState();
+                if (s && s._delegation_gate_error_count) {
+                    s._delegation_gate_error_count = 0;
+                    writeState(s);
+                }
+            } catch (e) { /* ignore */ }
+        }
+
         const inputStr = await readStdin();
 
         if (!inputStr || !inputStr.trim()) {
@@ -84,8 +96,16 @@ async function main() {
         // Read state to check skill_usage_log
         const state = readState();
         if (!state) {
-            // No state — fail open, clear marker
-            clearPendingDelegation();
+            // State is missing/corrupt but we have a pending delegation — block instead of clearing
+            logHookEvent('delegation-gate', 'block', {
+                reason: 'State unavailable but pending delegation exists — blocking to preserve marker'
+            });
+            console.log(JSON.stringify({
+                decision: 'block',
+                reason: `Delegation gate cannot verify delegation: state.json is unavailable. ` +
+                    `A pending delegation to "${pending.required_agent}" exists. ` +
+                    `Please ensure state.json is valid and retry.`
+            }));
             process.exit(0);
         }
 
@@ -98,14 +118,14 @@ async function main() {
 
         if (delegated) {
             debugLog(`Delegation gate: delegation to ${requiredAgent} confirmed, clearing marker`);
-            clearPendingDelegation();
+            clearMarkerAndResetErrors();
             process.exit(0);
         }
 
         // Phase-Loop Controller: if workflow progressed past phase 01, init delegation confirmed
         if (state.active_workflow && state.active_workflow.current_phase_index > 0) {
             debugLog(`Delegation gate: workflow at phase index ${state.active_workflow.current_phase_index} — init delegation confirmed`);
-            clearPendingDelegation();
+            clearMarkerAndResetErrors();
             process.exit(0);
         }
 
@@ -116,7 +136,7 @@ async function main() {
             if (phaseData.status === 'in_progress') {
                 outputSelfHealNotification('delegation-gate',
                     `Phase '${currentPhase}' is in_progress — accepting as delegation evidence.`);
-                clearPendingDelegation();
+                clearMarkerAndResetErrors();
                 process.exit(0);
             }
         }
@@ -135,8 +155,46 @@ async function main() {
 
     } catch (error) {
         debugLog('Error in delegation-gate:', error.message);
-        // Fail open — clear marker to prevent infinite blocking
-        try { clearPendingDelegation(); } catch (e) { /* ignore */ }
+
+        // Safety valve: track consecutive error-blocks to prevent infinite loops
+        let errorCount = 0;
+        try {
+            const state = readState();
+            if (state) {
+                errorCount = (state._delegation_gate_error_count || 0) + 1;
+                state._delegation_gate_error_count = errorCount;
+                writeState(state);
+            }
+        } catch (e) { /* ignore state update failures */ }
+
+        if (errorCount >= 5) {
+            // Safety valve: after 5 consecutive errors, clear marker to prevent infinite loops
+            debugLog('delegation-gate: safety valve triggered after 5 consecutive errors, clearing marker');
+            try { clearPendingDelegation(); } catch (e) { /* ignore */ }
+            try {
+                const state = readState();
+                if (state) {
+                    state._delegation_gate_error_count = 0;
+                    writeState(state);
+                }
+            } catch (e) { /* ignore */ }
+            logHookEvent('delegation-gate', 'warn', {
+                reason: 'Safety valve: cleared marker after 5 consecutive errors'
+            });
+            process.exit(0);
+        }
+
+        // Block on error instead of fail-open — preserve the marker
+        logHookEvent('delegation-gate', 'error', {
+            reason: `Error during delegation check: ${error.message}`
+        });
+        console.log(JSON.stringify({
+            decision: 'block',
+            reason: `Delegation gate encountered an error during verification. ` +
+                `The pending delegation marker has been preserved. ` +
+                `Error: ${error.message}. ` +
+                `Please retry the delegation to the required orchestrator agent.`
+        }));
         process.exit(0);
     }
 }

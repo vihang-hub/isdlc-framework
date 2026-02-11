@@ -11,6 +11,41 @@
 const fs = require('fs');
 const path = require('path');
 
+// =========================================================================
+// Protected State Fields & Patterns (REQ-HARDENING)
+// =========================================================================
+
+/**
+ * Regex to match state.json paths (single-project and monorepo, cross-platform).
+ * Consolidated from state-write-validator and explore-readonly-enforcer.
+ */
+const STATE_JSON_PATTERN = /\.isdlc[/\\](?:projects[/\\][^/\\]+[/\\])?state\.json$/;
+
+/**
+ * State fields that must NEVER be modified by agents directly.
+ * These are governance-critical fields whose values are set by hooks only.
+ * @type {ReadonlyArray<string>}
+ */
+const PROTECTED_STATE_FIELDS = Object.freeze([
+    'iteration_enforcement.enabled',
+    'iteration_enforcement',
+    'chat_explore_active',
+    'iteration_config.testing_max',
+    'iteration_config.circuit_breaker_threshold',
+    'gate_validation.status'
+]);
+
+/**
+ * Check if a state.json file physically exists on disk (regardless of parse-ability).
+ * Differentiates "missing file" (legitimate no-state) from "corrupt file" (exists but unparseable).
+ * @param {string} [projectId] - Optional project ID for monorepo mode
+ * @returns {boolean} True if the file exists on disk
+ */
+function stateFileExistsOnDisk(projectId) {
+    const stateFile = resolveStatePath(projectId);
+    return fs.existsSync(stateFile);
+}
+
 /**
  * Get project root directory (where .isdlc/ folder exists)
  * @returns {string} Project root path
@@ -1925,6 +1960,10 @@ function loadWorkflowDefinitions() {
 
 module.exports = {
     getProjectRoot,
+    // Protected state fields & patterns (REQ-HARDENING)
+    STATE_JSON_PATTERN,
+    PROTECTED_STATE_FIELDS,
+    stateFileExistsOnDisk,
     // Monorepo support
     isMonorepoMode,
     readMonorepoConfig,

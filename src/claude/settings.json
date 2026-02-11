@@ -175,6 +175,11 @@
             "type": "command",
             "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/branch-guard.cjs",
             "timeout": 10000
+          },
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/state-file-guard.cjs",
+            "timeout": 10000
           }
         ]
       },
@@ -190,6 +195,16 @@
       },
       {
         "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/explore-readonly-enforcer.cjs",
+            "timeout": 10000
+          }
+        ]
+      },
+      {
+        "matcher": "NotebookEdit",
         "hooks": [
           {
             "type": "command",

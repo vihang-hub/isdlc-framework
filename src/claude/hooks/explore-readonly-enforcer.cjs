@@ -64,7 +64,7 @@ async function main() {
         }
 
         // Only check Write and Edit tools
-        if (input.tool_name !== 'Write' && input.tool_name !== 'Edit') {
+        if (input.tool_name !== 'Write' && input.tool_name !== 'Edit' && input.tool_name !== 'NotebookEdit') {
             process.exit(0);
         }
 
@@ -83,7 +83,7 @@ async function main() {
         debugLog('Chat/Explore mode is active, checking file path');
 
         // Get the target file path
-        const filePath = (input.tool_input && input.tool_input.file_path) || '';
+        const filePath = (input.tool_input && (input.tool_input.file_path || input.tool_input.notebook_path)) || '';
         if (!filePath) {
             debugLog('No file path in tool input, allowing (fail-open)');
             process.exit(0);
