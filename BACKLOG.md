@@ -10,7 +10,7 @@
   - T4-B: Parallel local test execution — detect framework, apply parallel flags (Jest --workers, pytest -n auto, etc.)
 - [ ] Split large files: installer.js (~845 lines) and common.cjs (~1460 lines) — refactor when natural seams emerge
 - [ ] Add /sdlc refactor command and workflow — pre-requisite: 100% automated E2E testing
-- [ ] Update Node version
+- [x] Update Node version (REQ-0008) — Node 18→20 minimum, CI matrix [20,22,24], constitution v1.2.0
 - [ ] Fix: full lifecycle execution (/sdlc start) should only be offered for new projects, not existing projects
 - [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
 - [ ] Separate commands to manage deployments and operations

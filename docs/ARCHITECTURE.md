@@ -370,7 +370,9 @@ The skills manifest (`hooks/config/skills-manifest.json`) maps agents to their d
 
 ---
 
-## Hooks (25)
+## Hooks (26)
+
+> For a complete reference table of all 26 hooks — what they block, warn, and track — see [HOOKS.md](HOOKS.md).
 
 ### Hook Architecture
 
