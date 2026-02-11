@@ -175,7 +175,7 @@ These 10 articles are mandatory for all projects. They represent industry best p
 **Validation**:
 - Orchestrator validates all gate criteria before advancement
 - `gate-validation.json` MUST show PASS status
-- Gate enforcement applies to all workflows: feature, fix, test-run, test-generate, full-lifecycle
+- Gate enforcement applies to all workflows: feature, fix, test-run, test-generate, upgrade
 
 ---
 

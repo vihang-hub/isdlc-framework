@@ -825,7 +825,6 @@ PHASE 8: Finalize                                    [Complete ✓]
     2. Review constitution: cat docs/isdlc/constitution.md
     3. Start a workflow:
        /isdlc feature  — Build your first feature
-       /isdlc start    — Run full SDLC lifecycle
 
 ════════════════════════════════════════════════════════════════
 ```
@@ -1303,7 +1302,6 @@ Created:
 
 Next Steps:
   /isdlc feature  -- Build your first feature
-  /isdlc start    -- Run full SDLC lifecycle
 
 ════════════════════════════════════════════════════════════════
 ```
@@ -2240,18 +2238,15 @@ What would you like to do next?
 [4] I'm done for now
 ```
 
-**IMPORTANT: Do NOT offer "/isdlc start" (Full lifecycle) for existing projects.** It is only appropriate after `/discover --new`.
-
 **For NEW projects:**
 
 ```
 What would you like to do next?
-[1] Start full lifecycle (Recommended)  -> /isdlc start
-[2] Start a new feature                 -> /isdlc feature
-[3] I'm done for now
+[1] Start a new feature (Recommended)   -> /isdlc feature
+[2] I'm done for now
 ```
 
-Record the user's selection in `.isdlc/state.json` under `discovery_context.user_next_action`. Use the command string (e.g., `/isdlc test generate`, `/isdlc feature`, `/isdlc fix`, `/isdlc start`, or `none`).
+Record the user's selection in `.isdlc/state.json` under `discovery_context.user_next_action`. Use the command string (e.g., `/isdlc test generate`, `/isdlc feature`, `/isdlc fix`, or `none`).
 
 **Update progress:**
 ```

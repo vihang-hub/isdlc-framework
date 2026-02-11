@@ -218,20 +218,18 @@ What would you like to do?
 [2] Fix               — Fix a bug or defect
 [3] Run Tests         — Execute existing automation tests
 [4] Generate Tests    — Create new tests for existing code
-[5] Full Lifecycle    — Run complete SDLC (all 13 phases)
-[6] View Status       — Check current project status
-[7] Upgrade           — Upgrade a dependency, runtime, or tool
+[5] View Status       — Check current project status
+[6] Upgrade           — Upgrade a dependency, runtime, or tool
 
-Enter selection (1-7):
+Enter selection (1-6):
 ```
 
 - Option [1] → Execute the **BACKLOG PICKER** in feature mode (see BACKLOG PICKER section below)
 - Option [2] → Execute the **BACKLOG PICKER** in fix mode (see BACKLOG PICKER section below)
 - Option [3] → Execute `/isdlc test run` (presents test type selection)
 - Option [4] → Execute `/isdlc test generate` (presents test type selection)
-- Option [5] → Ask user to describe the project, then execute `/isdlc start "<description>"`
-- Option [6] → Execute `/isdlc status`
-- Option [7] → Ask user what to upgrade, then execute `/isdlc upgrade "<name>"`
+- Option [5] → Execute `/isdlc status`
+- Option [6] → Ask user what to upgrade, then execute `/isdlc upgrade "<name>"`
 
 ### SCENARIO 4: Constitution IS configured + Workflow IN PROGRESS
 
@@ -275,7 +273,7 @@ When `/isdlc feature` or `/isdlc fix` is invoked **without** a description strin
 ## Feature Mode Sources
 
 1. **CLAUDE.md unchecked items**: Scan for `- [ ] <text>` / `- [] <text>` patterns. Strip prefix, keep sub-items as context (not selectable).
-2. **Cancelled feature workflows**: From `state.json` → `workflow_history` where `status == "cancelled"` AND `type` is `"feature"` or `"full-lifecycle"`. Deduplicate by description (most recent).
+2. **Cancelled feature workflows**: From `state.json` → `workflow_history` where `status == "cancelled"` AND `type == "feature"`. Deduplicate by description (most recent).
 
 **Order**: CLAUDE.md items first, then cancelled workflows. Always end with `[O] Other — Describe a new feature`.
 
@@ -336,7 +334,7 @@ When receiving a new requirement brief:
 - **Read the project constitution** from `docs/isdlc/constitution.md` (if it exists)
 - If no constitution exists, or is still a template, recommend creating one from the template in `docs/isdlc/constitution.md`
 - Ensure all agents will operate under constitutional principles (once defined)
-- **Select workflow type** based on user's intent (feature, fix, test, or full lifecycle)
+- **Select workflow type** based on user's intent (feature, fix, test, or upgrade)
 - **Load workflow definition** from `.isdlc/config/workflows.json` for the selected type
 - Initialize workflow state in `.isdlc/state.json` with `active_workflow`
 - Set up project directory structure
@@ -365,7 +363,6 @@ When the user selects a workflow (via `/isdlc feature`, `/isdlc fix`, etc.), ini
 | `/isdlc fix` | fix | 01 → 05 → 10 → 06 → 09 → 07 | Bug fix with TDD |
 | `/isdlc test run` | test-run | 10 → 06 | Execute existing tests |
 | `/isdlc test generate` | test-generate | 04 → 05 → 10 → 06 → 07 | Create new tests |
-| `/isdlc start` | full-lifecycle | 01 → ... → 05 → 10 → 06 → ... → 10(remote) → 11 → ... → 13 | Complete SDLC |
 | `/isdlc upgrade` | upgrade | 14-plan → 14-execute → 07 | Dependency/tool upgrade |
 
 ### Initialization Process
@@ -536,15 +533,15 @@ Workflows with `requires_branch: true` in `.isdlc/config/workflows.json` automat
 When GATE-01 passes AND the active workflow has `requires_branch: true`:
 
 1. **Read branch context from state.json:**
-   - `active_workflow.type` → determines prefix: feature/full-lifecycle → `feature/`, fix → `bugfix/`
+   - `active_workflow.type` → determines prefix: feature → `feature/`, fix → `bugfix/`
    - `active_workflow.artifact_folder` → identifier (e.g., `REQ-0001-user-auth` or `BUG-0001-JIRA-1234`)
 
 2. **Construct branch name:**
    - **Single-project mode:**
-     - Feature / full-lifecycle: `feature/{artifact_folder}` (lowercase, hyphens)
+     - Feature: `feature/{artifact_folder}` (lowercase, hyphens)
      - Fix: `bugfix/{artifact_folder}`
    - **Monorepo mode** (prefix with project-id):
-     - Feature / full-lifecycle: `{project-id}/feature/{artifact_folder}`
+     - Feature: `{project-id}/feature/{artifact_folder}`
      - Fix: `{project-id}/bugfix/{artifact_folder}`
 
 3. **Pre-flight checks:**
@@ -586,7 +583,7 @@ When GATE-01 passes AND the active workflow has `requires_branch: true`:
 
 ## 3b. Plan Generation (Post-GATE-01)
 
-When GATE-01 passes AND the active workflow type is `feature`, `fix`, or `full-lifecycle`:
+When GATE-01 passes AND the active workflow type is `feature` or `fix`:
 
 1. Announce skill invocation (Section 6 format) for `generate-plan (ORCH-012)`
 2. Invoke ORCH-012: read `active_workflow` + Phase 01 artifacts → generate `docs/isdlc/tasks.md` with sequential `TNNNN` IDs, `[X]` for completed phases, `[ ]` for pending, `[P]` for parallel-eligible, progress summary
@@ -1070,7 +1067,6 @@ You have access to these **12 orchestration skills**:
 - **/isdlc fix "<description>"**: Start a bug fix workflow
 - **/isdlc test run**: Execute existing automation tests
 - **/isdlc test generate**: Create new tests for existing code
-- **/isdlc start "<description>"**: Start full lifecycle workflow
 - **/isdlc status**: Provide current project status across all phases
 - **/isdlc gate-check**: Validate current phase gate requirements
 - **/isdlc advance**: Move to next phase (only if gate validation passes)
@@ -1101,7 +1097,7 @@ See the "Applicable Articles by Phase" table in Section 9 (Constitutional Iterat
 
 After each lifecycle action, emit a `SUGGESTED NEXT STEPS` block (format: `---` delimiters, numbered `[N]` items). Emit at these 5 moments:
 
-1. **Workflow Init** (after writing active_workflow): `[1] Describe your {noun} to begin {first_phase}` / `[2] Show workflow phases` / `[3] Show status`. Noun: feature→"feature", fix→"bug", full-lifecycle→"project", upgrade→"upgrade target". Skip for test-run/test-generate (auto-start).
+1. **Workflow Init** (after writing active_workflow): `[1] Describe your {noun} to begin {first_phase}` / `[2] Show workflow phases` / `[3] Show status`. Noun: feature→"feature", fix→"bug", upgrade→"upgrade target". Skip for test-run/test-generate (auto-start).
 2. **Gate Pass** (before next delegation): `[1] Continue to {next_phase}` (or "Complete workflow and merge to main" if last) / `[2] Review artifacts` / `[3] Show status`
 3. **Gate Fail**: `[1] Review failure details` / `[2] Retry gate check` / `[3] Escalate to human`
 4. **Blocker/Escalation**: `[1] Resolve blocker and retry` / `[2] Cancel workflow` / `[3] Show status`

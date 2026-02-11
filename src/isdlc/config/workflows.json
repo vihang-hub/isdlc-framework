@@ -195,37 +195,6 @@
       },
       "requires_branch": false
     },
-    "full-lifecycle": {
-      "label": "Full Lifecycle",
-      "command": "/isdlc start",
-      "description": "Complete SDLC for new projects or major work",
-      "phases": [
-        "01-requirements",
-        "03-architecture",
-        "04-design",
-        "05-test-strategy",
-        "06-implementation",
-        "11-local-testing",
-        "07-testing",
-        "08-code-review",
-        "09-validation",
-        "10-cicd",
-        "12-remote-build",
-        "12-test-deploy",
-        "13-production",
-        "14-operations"
-      ],
-      "gate_mode": "strict",
-      "agent_modifiers": {
-        "11-local-testing": {
-          "scope": "local"
-        },
-        "12-remote-build": {
-          "scope": "remote"
-        }
-      },
-      "requires_branch": true
-    },
     "upgrade": {
       "label": "Dependency/Tool Upgrade",
       "command": "/isdlc upgrade <name>",

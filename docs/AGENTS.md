@@ -178,13 +178,13 @@ Phase 16: Quality Loop (feature/fix workflows)
 Phase 08: Code Review & QA
     | (QA Engineer)
     v GATE-08: QA sign-off
-Phase 09: Independent Validation (full-lifecycle only)
+Phase 09: Independent Validation
     | (Security & Compliance Auditor)
     v GATE-09: Security sign-off
-Phase 10: Version Control & CI/CD (full-lifecycle only)
+Phase 10: Version Control & CI/CD
     | (CI/CD Engineer)
     v GATE-10: Pipeline operational
-Phase 11: Local Development & Testing (full-lifecycle/test-run only)
+Phase 11: Local Development & Testing (test-run only)
     | (Environment Builder)
     v GATE-11: Local environment validated
 Phase 12: Test Environment Deployment

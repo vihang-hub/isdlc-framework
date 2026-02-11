@@ -277,7 +277,7 @@ The requirements workflow adapts based on the `scope` modifier from the active w
 
 | Scope | Workflow | Folder Prefix | Counter Key | Flow |
 |-------|----------|---------------|-------------|------|
-| `feature` | feature, full-lifecycle | `REQ` | `counters.next_req_id` | Full 7-step discovery (Steps 1-7) |
+| `feature` | feature | `REQ` | `counters.next_req_id` | Full 7-step discovery (Steps 1-7) |
 | `bug-report` | fix | `BUG` | `counters.next_bug_id` | Streamlined 4-step flow with sufficiency check |
 
 **Counter & Folder Naming:**

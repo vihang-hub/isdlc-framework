@@ -184,7 +184,7 @@ When `/isdlc` is invoked without arguments, the orchestrator detects project sta
 | **0** | Monorepo, no active project | Project selection list |
 | **1** | No constitution, new project | Recommend `/discover` |
 | **2** | No constitution, existing project | Recommend `/discover` |
-| **3** | Constitution valid, no active workflow | Feature / Fix / Test / Upgrade / Full Lifecycle |
+| **3** | Constitution valid, no active workflow | Feature / Fix / Test / Upgrade |
 | **4** | Constitution valid, workflow in progress | Continue / Gate Check / Status / Escalate / Cancel |
 
 ### Workflow Types
@@ -197,7 +197,6 @@ The orchestrator loads workflow definitions from `.isdlc/config/workflows.json`:
 | **Fix** | `/isdlc fix` | 01 → 02(T) → 05 → 06 → 16(QL) → 08 |
 | **Test Run** | `/isdlc test run` | 11 → 07 |
 | **Test Generate** | `/isdlc test generate` | 05 → 06 → 11 → 07 → 08 |
-| **Full Lifecycle** | `/isdlc start` | 01 → 03 → 04 → 05 → 06 → 11 → 07 → 08 → 09 → 10 → 12 → 12 → 13 → 14 |
 | **Upgrade** | `/isdlc upgrade` | 15(plan) → 15(execute) → 08 |
 
 ### Phase Delegation

@@ -1245,7 +1245,7 @@ if [ "$CLAUDE_CODE_FOUND" = false ]; then
     echo "     • Analyze your project (or describe it if new)"
     echo "     • Research best practices for your stack"
     echo "     • Create a tailored constitution interactively"
-    echo -e "  4. Run ${GREEN}/isdlc start${NC} to begin your workflow"
+    echo -e "  4. Run ${GREEN}/isdlc feature${NC} to begin your workflow"
     echo -e "  5. Run ${GREEN}/tour${NC} anytime to revisit the framework introduction"
 else
     echo -e "  1. Run ${GREEN}claude${NC} to start Claude Code"
@@ -1253,7 +1253,7 @@ else
     echo "     • Analyze your project (or describe it if new)"
     echo "     • Research best practices for your stack"
     echo "     • Create a tailored constitution interactively"
-    echo -e "  3. Run ${GREEN}/isdlc start${NC} to begin your workflow"
+    echo -e "  3. Run ${GREEN}/isdlc feature${NC} to begin your workflow"
     echo -e "  4. Run ${GREEN}/tour${NC} anytime to revisit the framework introduction"
 fi
 echo ""

@@ -1497,7 +1497,7 @@ if (-not $ClaudeCodeFound) {
     Write-Host "     * Research best practices for your stack"
     Write-Host "     * Create a tailored constitution interactively"
     Write-Host "  4. Run " -NoNewline
-    Write-Host "/isdlc start" -ForegroundColor Green -NoNewline
+    Write-Host "/isdlc feature" -ForegroundColor Green -NoNewline
     Write-Host " to begin your workflow"
     Write-Host "  5. Run " -NoNewline
     Write-Host "/tour" -ForegroundColor Green -NoNewline
@@ -1514,7 +1514,7 @@ else {
     Write-Host "     * Research best practices for your stack"
     Write-Host "     * Create a tailored constitution interactively"
     Write-Host "  3. Run " -NoNewline
-    Write-Host "/isdlc start" -ForegroundColor Green -NoNewline
+    Write-Host "/isdlc feature" -ForegroundColor Green -NoNewline
     Write-Host " to begin your workflow"
     Write-Host "  4. Run " -NoNewline
     Write-Host "/tour" -ForegroundColor Green -NoNewline
