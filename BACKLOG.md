@@ -13,6 +13,30 @@
 - [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
 - [ ] Add /isdlc refactor command and workflow — pre-requisite: 100% automated E2E testing
 - [ ] Separate commands to manage deployments and operations
+- [ ] Adaptive workflow sizing — framework auto-sizes features after Impact Analysis (Phase 02)
+  - **Problem**: The framework runs the same heavyweight process for all features regardless of size. Architecture + Design produce 16+ artifacts (~1-2 hours) even for trivial changes. Conversely, massive features get crammed into a single implementation phase with no decomposition.
+  - **Sizing decision point**: After Impact Analysis (Phase 02) completes — this is where the framework has real data (affected files, entry points, risk assessment, blast radius) to make an informed recommendation. Quick Scan (Phase 00) is too rough.
+  - **Three workflow intensities**:
+    - **`-light`** (small scope, ~1-5 files, low risk): Skip Phase 03 (Architecture) and Phase 04 (Design) — jump from Impact Analysis straight to Test Strategy. User can force with `/isdlc feature -light`.
+    - **standard** (medium scope, ~6-20 files): Current full workflow, no changes.
+    - **epic** (large scope, 20+ files or high risk): Decompose into sub-features, each getting its own mini-cycle (requirements → design → implement → test), with integration testing across all sub-features at the end.
+  - **UX**: After Impact Analysis, present sizing recommendation with rationale:
+    > "Impact Analysis complete: 3 files affected, low risk. Recommend lightweight workflow — skip architecture and design. [Accept] [Full workflow]"
+    > "Impact Analysis complete: 47 files affected, high risk across 4 modules. Recommend epic decomposition into sub-features. [Accept] [Standard workflow]"
+  - **Sizing inputs from Impact Analysis**: file count, module count, risk score, coupling assessment, test coverage gaps
+  - **No new flags beyond `-light`** — epic decomposition is always framework-recommended, never user-forced (too risky to skip decomposition)
+- [ ] Epic decomposition for large features (depends on adaptive workflow sizing above)
+  - **Trigger**: Impact Analysis estimates `large` scope (20+ files) or `high` risk
+  - **Process**: After sizing decision, Requirements Analyst re-enters to break the feature into sub-features with clear boundaries
+  - **Execution model**: Each sub-feature gets an independent mini-cycle with its own gates:
+    ```
+    Sub-feature A → design → implement → test → gate
+    Sub-feature B → design → implement → test → gate
+    Sub-feature C → design → implement → test → gate
+    Integration testing across A + B + C → final gate
+    ```
+  - **Benefits**: Catch problems early per sub-feature, reduce context window pressure, intermediate quality gates, partial progress is usable
+  - **State tracking**: `state.json` tracks parent feature + sub-features with individual phase progress
 
 **Product/Vision:**
 - [ ] Board-driven autonomous development (read from board, develop without intervention when users are away)
