@@ -818,6 +818,64 @@ Use Task tool → {agent_name} with:
 5. If more phases remain: set `active_workflow.current_phase` = `phases[new_index]`, set `phases[new_phase].status` = `"in_progress"`, set top-level `current_phase` = new phase key
 6. Write `.isdlc/state.json`
 
+**3e-refine.** TASK REFINEMENT (conditional) — After the post-phase state update, check if task refinement should run:
+
+**Trigger check**:
+1. Read the phase key that was just completed from the state update in 3e
+2. If `phase_key === '04-design'`:
+   a. Check if `active_workflow.phases` includes `'06-implementation'`
+   b. Check if `active_workflow.refinement_completed` is NOT `true`
+   c. If BOTH true: execute refinement (below)
+   d. If either false: skip to 3f
+
+**Refinement execution**:
+1. Read `active_workflow.artifact_folder` from state.json
+2. Set `artifact_path` = `docs/requirements/{artifact_folder}`
+3. Read design artifacts:
+   - `{artifact_path}/module-design-*.md` (all module design files)
+   - `{artifact_path}/interface-spec.yaml` or `{artifact_path}/interface-spec.md` (if exists)
+   - `{artifact_path}/component-spec.md` (if exists)
+4. Read `{artifact_path}/requirements-spec.md` for REQ/AC cross-reference
+5. Read `docs/isdlc/tasks.md` (current plan)
+6. Execute the refinement algorithm:
+   a. Parse tasks.md: extract Phase 06 section tasks (preserve Phase 01-05, 07+ verbatim)
+   b. Read design artifacts: build a map of { module -> files -> functions/exports }
+   c. Read requirements-spec.md: build a map of { REQ-NNN -> [AC-NNx, ...] }
+   d. For each Phase 06 high-level task:
+      - Identify which design modules it maps to
+      - Identify which files need CREATE or MODIFY
+      - Identify which REQ/AC the files fulfill
+      - Generate one task per logical unit of work (one file or tightly coupled file group)
+      - Assign new TNNNN IDs (continuing from last ID in tasks.md)
+      - Add `| traces:` annotations linking to REQ/AC
+      - Add `files:` sub-lines with file paths and CREATE/MODIFY
+   e. Compute dependencies:
+      - If file B imports from file A, the task for B is `blocked_by` the task for A
+      - If module X depends on module Y, tasks for X are `blocked_by` tasks for Y
+      - Add `blocked_by:` and `blocks:` sub-lines
+   f. Validate acyclicity: trace all dependency chains, confirm no task depends on itself transitively
+   g. Compute critical path: find longest dependency chain
+   h. Generate Dependency Graph section with critical path
+   i. Re-compute Traceability Matrix with refined tasks
+7. Write updated `docs/isdlc/tasks.md`
+8. Write `{artifact_path}/task-refinement-log.md`
+9. Set `active_workflow.refinement_completed = true` in state.json
+10. Display refinement summary to user:
+
+```
++----------------------------------------------------------+
+|  TASK REFINEMENT COMPLETE                                 |
+|                                                           |
+|  Phase 06 tasks refined: {N} high-level -> {M} file-level|
+|  Dependencies added: {D} edges                           |
+|  Critical path length: {L} tasks                         |
+|  Traceability: {T}% AC coverage                          |
+|  Details: {artifact_path}/task-refinement-log.md          |
++----------------------------------------------------------+
+```
+
+**Fallback**: If no design artifacts are found, skip refinement silently. Phase 06 tasks remain high-level. The software-developer agent will self-decompose work as it does today.
+
 **3f.** On return, check the result status:
 - `"passed"` or successful completion → Mark task as `completed` **with strikethrough**: update both `status` to `completed` AND `subject` to `~~[N] {base subject}~~` (wrap the original `[N] subject` in `~~`). Continue to next phase.
 - `"blocked_by_hook"` → Display blocker banner (same format as 3c), use `AskUserQuestion` for Retry/Skip/Cancel

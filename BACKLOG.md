@@ -5,6 +5,35 @@
 
 ## Open
 
+### Spec-Kit Learnings (from framework comparison 2026-02-11)
+
+- [x] Enhanced plan-to-tasks pipeline (REQ-0009 — DONE)
+  - [x] File-level task granularity — after design phase, decompose tasks.md into specific files/functions to create/modify (not just "write failing tests")
+  - [x] User-story traceability in tasks — tag every task back to a requirement (REQ-001, AC-003), not just group by phase
+  - [x] Explicit dependency graph — mark which tasks block which others, not just [P] for parallel
+  - [x] Dedicated task refinement step — between design and implementation, a pass that converts high-level design into file-level implementation tasks (enhance ORCH-012)
+  - [x] Mechanical execution mode — option for implementation agent to follow tasks literally rather than self-decomposing
+- [ ] Spike/explore workflow — parallel implementation branches from a single spec for tech stack comparison or architecture exploration (Spec-Kit's "Creative Exploration")
+- [ ] `/isdlc validate` command — on-demand artifact quality check (constitutional + completeness) without running a full workflow (Spec-Kit's `/speckit.checklist` + `/speckit.analyze`)
+- [ ] Progressive disclosure / lite mode — expose only constitution → requirements → implement → quality loop for simple projects, full lifecycle opt-in
+- [ ] Research agents for greenfield — dedicated pre-architecture research step (library compatibility, benchmarks, security implications, org standards) before planning begins
+
+### Bugs Found During REQ-0009 Workflow (2026-02-11)
+
+- [ ] BUG: Redundant state tracking causes stale fields and hook blocks
+  - `state.json` has 3 places tracking phase status: `active_workflow.phase_status`, top-level `current_phase`/`active_agent`, top-level `phases{}`
+  - Phase-loop controller (isdlc.md STEP 3e) only updates `active_workflow.*` — top-level fields go stale
+  - Hooks (phase-sequence-guard, delegation-gate) read top-level fields → false blocks
+  - Fix: consolidate to `active_workflow.*` as single source of truth; update hooks to read from there; eliminate redundant top-level fields
+- [ ] BUG: Phase-loop controller delegates before marking state as in_progress
+  - isdlc.md STEP 3d fires Task tool before STEP 3a sets `phases[key].status = "in_progress"` in top-level `phases{}`
+  - Hook correctly blocks ("phase task has not been marked as in_progress") but agent may have already completed
+  - Fix: set `phases[key].status = "in_progress"` and top-level `current_phase`/`active_agent` BEFORE Task delegation in STEP 3d
+- [ ] BUG: Test watcher circuit breaker trips on unparseable output (false positives)
+  - test-watcher records "FAILED" with 0 failures and "Unable to determine test result" when it can't parse output (e.g. `npm run test:char`, `npm run test:e2e` which don't exist)
+  - Circuit breaker trips after 3 "identical" non-failures
+  - Fix: classify unparseable output as `"inconclusive"` (not "FAILED"), don't increment `identical_failure_count` for inconclusive results
+
 **Framework Features:**
 - [ ] T4: Test execution parallelism
   - T4-A: Parallel test creation — test design agent assesses workload, spawns parallel sub-agents for large codebases
@@ -49,6 +78,7 @@
 ## Completed
 
 ### 2026-02-11
+- [x] Enhanced plan-to-tasks pipeline (REQ-0009) — file-level granularity, traceability, dependency graph, refinement step, mechanical mode
 - [x] Split large files: installer.js (~845 lines) and common.cjs (~1460 lines)
 - [x] npx and npm publishing
 - [x] Update Node version (REQ-0008) — Node 18→20 minimum, CI matrix [20,22,24], constitution v1.2.0

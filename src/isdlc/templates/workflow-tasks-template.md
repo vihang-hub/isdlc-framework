@@ -37,7 +37,10 @@ Template task descriptions organized by workflow type and phase. The `generate-p
 - Create validation rules
 - Validate design artifacts against GATE-03
 
-### 05-implementation
+### 06-implementation
+<!-- Tasks below are high-level placeholders. The refinement step (3e-refine) will
+     expand them with file-level annotations, traceability, and dependency sub-lines
+     once the design phase completes. -->
 - Check existing test infrastructure
 - Write failing unit tests (TDD Red)
 - Implement code to pass tests (TDD Green)
@@ -86,7 +89,10 @@ Template task descriptions organized by workflow type and phase. The `generate-p
 - Draft bug report for review
 - Save bug report artifacts
 
-### 05-implementation
+### 06-implementation
+<!-- Tasks below are high-level placeholders. The refinement step (3e-refine) will
+     expand them with file-level annotations, traceability, and dependency sub-lines
+     once the design phase completes. -->
 - Check existing test infrastructure
 - Write failing test that reproduces the bug (TDD Red)
 - Implement fix to pass tests (TDD Green)
