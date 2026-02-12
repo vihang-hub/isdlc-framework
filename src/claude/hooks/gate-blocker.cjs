@@ -21,6 +21,7 @@ const {
     outputSelfHealNotification,
     logHookEvent,
     addPendingEscalation,
+    detectPhaseDelegation,
     loadIterationRequirements: loadIterationRequirementsFromCommon,
     loadWorkflowDefinitions: loadWorkflowDefinitionsFromCommon
 } = require('./lib/common.cjs');
@@ -113,6 +114,8 @@ const SETUP_COMMAND_KEYWORDS = [
 
 /**
  * Detect if this is a gate advancement attempt
+ * BUG-0008: Added detectPhaseDelegation() guard to prevent false positives
+ * on delegation prompts containing gate-related keywords like "GATE-NN".
  */
 function isGateAdvancementAttempt(input) {
     const toolName = input.tool_name;
@@ -120,6 +123,15 @@ function isGateAdvancementAttempt(input) {
 
     // Check Task tool calls
     if (toolName === 'Task') {
+        // BUG-0008: Phase-loop controller delegations are NOT gate advancement attempts
+        try {
+            const delegation = detectPhaseDelegation(input);
+            if (delegation.isDelegation) {
+                debugLog(`Delegation detected (agent: ${delegation.agentName}, phase: ${delegation.targetPhase}), skipping gate check`);
+                return false;
+            }
+        } catch (e) { /* fail-open: fall through to existing logic */ }
+
         const subagentType = (toolInput.subagent_type || '').toLowerCase();
         const prompt = (toolInput.prompt || '').toLowerCase();
         const description = (toolInput.description || '').toLowerCase();

@@ -24,6 +24,7 @@ const {
     outputSelfHealNotification,
     logHookEvent,
     addPendingEscalation,
+    detectPhaseDelegation,
     loadIterationRequirements: loadIterationRequirementsFromCommon
 } = require('./lib/common.cjs');
 
@@ -174,8 +175,19 @@ function determineCorridorState(state, currentPhase, phaseReq) {
 
 /**
  * Check if a Task tool call contains advance/delegate keywords
+ * BUG-0008: Added detectPhaseDelegation() guard to prevent false positives
+ * on delegation prompts (e.g., "Validate GATE-06" matches /gate/i).
  */
-function taskHasAdvanceKeywords(toolInput) {
+function taskHasAdvanceKeywords(toolInput, fullInput) {
+    // BUG-0008: Phase-loop controller delegations are NOT advance attempts
+    try {
+        const delegation = detectPhaseDelegation(fullInput || { tool_name: 'Task', tool_input: toolInput });
+        if (delegation.isDelegation) {
+            debugLog(`Delegation detected (agent: ${delegation.agentName}), skipping advance keyword check`);
+            return false;
+        }
+    } catch (e) { /* fail-open: fall through to existing logic */ }
+
     const prompt = (toolInput.prompt || '');
     const description = (toolInput.description || '');
     const combined = prompt + ' ' + description;
@@ -297,7 +309,7 @@ function check(ctx) {
         // Apply corridor rules
         if (corridorState.corridor === 'TEST_CORRIDOR') {
             // TEST_CORRIDOR: Block Task delegation and Skill advancement
-            if (toolName === 'Task' && taskHasAdvanceKeywords(toolInput)) {
+            if (toolName === 'Task' && taskHasAdvanceKeywords(toolInput, input)) {
                 const d = corridorState.details;
                 const stopReason = `ITERATION CORRIDOR: Tests are failing (iteration ${d.current_iteration}/${d.max_iterations}). ` +
                     `Fix the code and re-run tests before doing anything else.\n\n` +
@@ -334,7 +346,7 @@ function check(ctx) {
 
         if (corridorState.corridor === 'CONST_CORRIDOR') {
             // CONST_CORRIDOR: Block Task delegation and Skill advancement
-            if (toolName === 'Task' && taskHasAdvanceKeywords(toolInput)) {
+            if (toolName === 'Task' && taskHasAdvanceKeywords(toolInput, input)) {
                 const d = corridorState.details;
                 const articleList = d.articles.join(', ');
                 const stopReason = `ITERATION CORRIDOR: Constitutional validation in progress for Articles [${articleList}]. ` +
