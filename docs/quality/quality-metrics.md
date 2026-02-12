@@ -1,4 +1,4 @@
-# Quality Metrics: BUG-0005-state-tracking-stale
+# Quality Metrics: BUG-0006-phase-loop-state-ordering
 
 **Date**: 2026-02-12
 **Phase**: 08-code-review
@@ -9,48 +9,42 @@
 
 | Metric | Value |
 |--------|-------|
-| CJS Hook Tests (npm run test:hooks) | 865 pass, 0 fail |
+| CJS Hook Tests (npm run test:hooks) | 883 pass, 0 fail |
 | ESM Lib Tests (npm test) | 489 pass, 1 fail (pre-existing TC-E09) |
-| Total tests (npm run test:all) | 1354 pass, 1 fail (pre-existing) |
-| New BUG-0005 tests | 25 (across 6 test files) |
+| Total tests (npm run test:all) | 1372 pass, 1 fail (pre-existing) |
+| New BUG-0006 tests | 18 (in 1 test file) |
 | Test count baseline (Article II) | 555 |
-| Current total test count | ~1355 (2.44x baseline) |
+| Current total test count | 1373 (2.47x baseline) |
 | Regressions introduced | 0 |
 
 ## Code Change Metrics
 
 | Metric | Value |
 |--------|-------|
-| Hook files modified | 6 |
-| Command files modified (prompt text) | 1 (isdlc.md) |
-| New files created | 0 |
-| Production code lines changed | ~12 (6 hooks x 1-2 lines each) |
-| Prompt text lines added | ~40 (STEP 3e steps 5-8 + PHASE_AGENT_MAP) |
-| Test code lines added | ~450 (25 tests across 6 files) |
-| Test-to-code ratio (new) | ~37:1 (tests:production lines) |
+| Prompt files modified | 1 (isdlc.md -- source; runtime is hardlinked) |
+| Hook files modified | 0 |
+| New files created | 1 (isdlc-step3-ordering.test.cjs) |
+| Prompt text lines changed | +15 / -7 (net +8) |
+| Test code lines added | 385 |
+| Test-to-prompt ratio (new) | 385:8 (~48:1 test:prompt) |
 
 ## Complexity Metrics
 
 | File | Change | Cyclomatic Impact |
 |------|--------|------------------|
-| constitution-validator.cjs | 1 line | Zero -- replaced one expression with another |
-| delegation-gate.cjs | 1 line | Zero -- reordered existing `\|\|` operands |
-| log-skill-usage.cjs | 1 line | Zero -- prepended expression to existing chain |
-| skill-validator.cjs | 1 line | Zero -- prepended expression to existing chain |
-| gate-blocker.cjs | 1 line | Zero -- replaced expression in else branch |
-| provider-utils.cjs | 1 line | Zero -- prepended expression to existing chain |
+| isdlc.md (STEP 3c-prime) | +12 lines | N/A -- Markdown prompt, no branching logic added |
+| isdlc.md (STEP 3e step 6) | -5/+2 lines | N/A -- Reduced complexity (removed 5 write instructions, replaced with 1 no-op) |
 
 ## Quality Indicators
 
 | Indicator | Status |
 |-----------|--------|
-| Syntax check (node -c) | PASS (all 6 files) |
-| Module system compliance (Article XIII) | PASS |
-| Fail-open compliance (Article X) | PASS |
-| No ESM imports in hooks | PASS |
+| Syntax check (node -c) on test file | PASS |
+| Module system compliance (Article XIII) | PASS -- CJS test uses require() |
+| No ESM imports in hook test | PASS |
 | No security vulnerabilities | PASS |
-| Backward compatibility | PASS |
+| Backward compatibility | PASS -- BUG-0005 fields preserved |
 | npm audit | PASS (0 vulnerabilities) |
-| Pattern consistency | PASS (all hooks use same read-priority pattern) |
 | Scope containment | PASS (no scope creep) |
-| Constitutional compliance | PASS (Articles V, VI, VII, VIII, IX, X, XIII, XIV) |
+| Constitutional compliance | PASS (Articles V, VI, VII, VIII, IX) |
+| Traceability complete | PASS (17/17 ACs covered by 18 tests) |

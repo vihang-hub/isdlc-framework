@@ -1,7 +1,7 @@
-# Code Review Report: BUG-0005-state-tracking-stale
+# Code Review Report: BUG-0006-phase-loop-state-ordering
 
 **Date**: 2026-02-12
 **Status**: APPROVED
-**Details**: See docs/requirements/BUG-0005-state-tracking-stale/code-review-report.md
+**Details**: See docs/requirements/BUG-0006-phase-loop-state-ordering/code-review-report.md
 
-Summary: 6 hook read-priority fixes and STEP 3e prompt updates reviewed across 7 modified files. 25 new tests (all passing) across 6 test files. No critical, high, or medium issues. 2 low observations (stylistic inconsistency in delegation-gate, defensive no-op in gate-blocker else branch). Full backward compatibility verified. All 865 CJS and 489 ESM tests pass. Full constitutional compliance (Articles V, VI, VII, VIII, IX, X, XIII, XIV).
+Summary: Phase-loop state ordering fix reviewed across 2 modified files (isdlc.md source + runtime hardlink) and 1 new test file (385 lines, 18 tests). STEP 3c-prime correctly positioned between 3c and 3d, sets all 6 required state fields, writes state.json before delegation. STEP 3e step 6 redundant next-phase activation properly removed; index increment preserved. No critical, high, or medium issues. 1 LOW pre-existing observation (PHASE_AGENT_MAP vs PHASE->AGENT table agent name discrepancy -- does not affect runtime). 17/17 ACs implemented and tested. Zero regressions across 1373 total tests (883 CJS + 490 ESM; 1 pre-existing ESM failure TC-E09). Full constitutional compliance (Articles V, VI, VII, VIII, IX).
