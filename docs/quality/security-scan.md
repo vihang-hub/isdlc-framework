@@ -1,4 +1,4 @@
-# Security Scan: REQ-0010-blast-radius-coverage
+# Security Scan: REQ-0011-adaptive-workflow-sizing
 
 **Phase**: 16-quality-loop
 **Date**: 2026-02-12
@@ -30,38 +30,47 @@ All new and modified files were manually reviewed for security concerns.
 
 ### Files Reviewed
 
-1. `src/claude/hooks/blast-radius-validator.cjs` (NEW - 15,717 bytes)
-2. `src/claude/hooks/tests/test-blast-radius-validator.test.cjs` (NEW - 43,121 bytes)
-3. `src/claude/hooks/dispatchers/pre-task-dispatcher.cjs` (MODIFIED)
-4. `src/claude/hooks/constitution-validator.cjs` (MODIFIED - BUG-0008)
-5. `src/claude/hooks/iteration-corridor.cjs` (MODIFIED - BUG-0008)
-6. `src/claude/hooks/gate-blocker.cjs` (MODIFIED - BUG-0008)
+1. `src/claude/hooks/lib/common.cjs` (MODIFIED - 3 sizing functions + 3 helpers, ~230 lines)
+2. `src/claude/hooks/tests/test-sizing.test.cjs` (NEW - 72 test cases, ~939 lines)
+3. `src/claude/commands/isdlc.md` (MODIFIED - STEP 3e-sizing block)
+4. `src/isdlc/config/workflows.json` (MODIFIED - sizing config block)
+5. `src/claude/agents/impact-analysis-orchestrator.md` (MODIFIED - JSON metadata spec)
+6. `src/claude/hooks/workflow-completion-enforcer.cjs` (MODIFIED - variable-length guard)
 
 ### Security Checks
 
 | Check | Result | Details |
 |-------|--------|---------|
 | No eval/Function constructor usage | PASS | No dynamic code execution in any file |
-| child_process usage review | PASS | `execSync` in blast-radius-validator.cjs for `git diff` only; timeout-bounded; no user input in command |
-| No file system writes in hook logic | PASS | State writes only in standalone mode via writeState |
-| No network requests | PASS | All hooks are local-only |
+| No child_process usage in new code | PASS | Sizing functions are pure computation; no shell commands |
+| No file system writes in sizing logic | PASS | Functions mutate in-memory objects only; state write handled by caller (writeState) |
+| No network requests | PASS | All sizing functions are local-only |
 | No hardcoded secrets/credentials | PASS | No sensitive data in any file |
-| No path traversal vulnerabilities | PASS | All paths resolved via getProjectRoot() |
-| Input validation on check() | PASS | Handles null/undefined/missing fields gracefully |
-| Fail-open design (Article X) | PASS | All error paths fail-open with try/catch |
-| No regex denial-of-service (ReDoS) | PASS | All regex patterns are simple (no nested quantifiers) |
-| No prototype pollution | PASS | No Object.assign on user input; JSON.parse only on controlled state files |
-| Command injection prevention | PASS | `git diff` command is hardcoded, not parameterized with user input |
+| No path traversal vulnerabilities | PASS | No file path construction in sizing functions |
+| Input validation on all entry points | PASS | Handles null, undefined, non-string, negative numbers, invalid enums |
+| Fail-open design (Article X) | PASS | Null metrics default to standard; invariant failures roll back to standard |
+| No regex denial-of-service (ReDoS) | PASS | JSON block regex (`/```json\s*\n([\s\S]*?)\n```/g`) uses lazy quantifier; fallback patterns are linear |
+| No prototype pollution | PASS | JSON.parse results validated through _validateAndNormalizeSizingMetrics; no Object.assign on user input |
+| Rollback safety | PASS | applySizingDecision snapshots state before mutation; restores all fields on invariant failure |
+| State integrity after mutation | PASS | 4 invariant checks (INV-01 through INV-04) validate post-mutation state |
 
-### blast-radius-validator.cjs Specific Review
+### Sizing Function Security Details
 
-The new hook uses `child_process.execSync` to run `git diff --name-only main...HEAD`. This is a security-relevant operation, reviewed in detail:
+#### parseSizingFromImpactAnalysis
+- **Input**: String content from impact-analysis.md (agent-generated, not user-supplied)
+- **Risk**: Low -- JSON.parse wrapped in try/catch; regex patterns are simple
+- **Verdict**: SAFE
 
-- **Command is hardcoded**: The git command string is a literal, not interpolated with user input
-- **Timeout is set**: `execSync` is called with a timeout parameter
-- **Error handling**: try/catch wraps the call; failures result in fail-open (empty file list)
-- **No shell expansion**: No template literals or string concatenation with external data
-- **Verdict**: SAFE -- legitimate use of child_process for VCS integration
+#### computeSizingRecommendation
+- **Input**: Metrics object and thresholds from workflows.json
+- **Risk**: None -- Pure function, no I/O, no side effects
+- **Verdict**: SAFE
+
+#### applySizingDecision
+- **Input**: State object, intensity string, sizing data
+- **Risk**: Low -- Modifies in-memory state; rollback on invariant failure
+- **Mitigation**: State snapshot + rollback; 4 invariant post-conditions; invalid intensity defaults to standard
+- **Verdict**: SAFE
 
 ### Findings
 
@@ -69,11 +78,11 @@ The new hook uses `child_process.execSync` to run `git diff --name-only main...H
 **High**: 0
 **Medium**: 0
 **Low**: 0
-**Informational**: 1 (child_process usage is legitimate but noted for audit trail)
+**Informational**: 0
 
 ## Summary
 
-No security vulnerabilities were identified in the REQ-0010 or BUG-0008 changes. The blast-radius-validator's use of `child_process.execSync` is restricted to a hardcoded `git diff` command with timeout bounds and fail-open error handling. The detectPhaseDelegation guards in the BUG-0008 fixes follow the existing fail-open pattern (Article X: Fail-Safe Defaults). Dependency audit is clean with 0 known vulnerabilities.
+No security vulnerabilities were identified in the REQ-0011 changes. The adaptive workflow sizing implementation consists of pure computation functions with no I/O, no shell commands, no network requests, and no file system access. Input validation and invariant checking provide defense-in-depth against malformed data. The rollback mechanism ensures state integrity even when post-mutation invariants fail. Dependency audit is clean with 0 known vulnerabilities.
 
 ---
 
