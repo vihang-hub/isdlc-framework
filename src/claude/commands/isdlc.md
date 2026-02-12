@@ -769,6 +769,18 @@ Use `AskUserQuestion` with options:
 
 Clear `pending_escalations` after handling.
 
+**3c-prime.** PRE-DELEGATION STATE UPDATE — Write phase activation to `state.json` BEFORE delegating to the phase agent. This ensures hooks see the correct state when the agent starts executing.
+
+Using the `state.json` already read in step 3b, update the following fields:
+
+1. Set `phases[phase_key].status` = `"in_progress"`
+2. Set `phases[phase_key].started` = current ISO-8601 timestamp (only if not already set — preserve existing start time on retries)
+3. Set `active_workflow.current_phase` = `phase_key`
+4. Set `active_workflow.phase_status[phase_key]` = `"in_progress"`
+5. Set top-level `current_phase` = `phase_key`
+6. Set top-level `active_agent` = agent name (resolved from PHASE_AGENT_MAP below)
+7. Write `.isdlc/state.json`
+
 **3d.** DIRECT PHASE DELEGATION — Bypass the orchestrator and delegate directly to the phase agent.
 
 Look up the agent for this phase from the PHASE→AGENT table:
@@ -816,12 +828,8 @@ Use Task tool → {agent_name} with:
 3. Set `phases[phase_key].summary` = (extract from agent result, max 150 chars)
 4. Set `active_workflow.current_phase_index` += 1
 5. Set `active_workflow.phase_status[phase_key]` = `"completed"` (BUG-0005: sync phase_status map)
-6. If more phases remain:
-   - Set `active_workflow.current_phase` = `phases[new_index]`
-   - Set `active_workflow.phase_status[new_phase]` = `"in_progress"` (BUG-0005: sync phase_status map)
-   - Set `phases[new_phase].status` = `"in_progress"`
-   - Set top-level `current_phase` = new phase key
-   - Set top-level `active_agent` = agent name for new phase (use PHASE_AGENT_MAP below)
+6. If more phases remain: (BUG-0006: next-phase activation moved to STEP 3c-prime at start of next iteration)
+   - No action needed here — the next iteration's STEP 3c-prime handles phase activation
 7. Write `.isdlc/state.json`
 8. Update `docs/isdlc/tasks.md` (if it exists):
    - Find the completed phase section header (e.g., `## Phase NN: ... -- PENDING` or `-- IN PROGRESS`)
@@ -831,7 +839,7 @@ Use Task tool → {agent_name} with:
    - Write the updated `docs/isdlc/tasks.md`
    - If `docs/isdlc/tasks.md` does not exist, skip this step silently
 
-**PHASE_AGENT_MAP** (for step 6 `active_agent` resolution):
+**PHASE_AGENT_MAP** (for STEP 3c-prime `active_agent` resolution):
 ```
 01-requirements → requirements-analyst
 02-tracing → trace-analyst
