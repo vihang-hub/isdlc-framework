@@ -91,8 +91,8 @@ function check(ctx) {
         const failBehavior = enforcement.fail_behavior || 'allow';
         debugLog('Enforcement mode:', enforcementMode);
 
-        // Get current phase
-        const currentPhase = state.current_phase || '01-requirements';
+        // Get current phase — BUG-0005 (AC-03d): prefer active_workflow.current_phase
+        const currentPhase = state.active_workflow?.current_phase || state.current_phase || '01-requirements';
         debugLog('Current phase:', currentPhase);
 
         // Load manifest

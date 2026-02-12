@@ -815,8 +815,40 @@ Use Task tool → {agent_name} with:
 2. Set `phases[phase_key].status` = `"completed"`
 3. Set `phases[phase_key].summary` = (extract from agent result, max 150 chars)
 4. Set `active_workflow.current_phase_index` += 1
-5. If more phases remain: set `active_workflow.current_phase` = `phases[new_index]`, set `phases[new_phase].status` = `"in_progress"`, set top-level `current_phase` = new phase key
-6. Write `.isdlc/state.json`
+5. Set `active_workflow.phase_status[phase_key]` = `"completed"` (BUG-0005: sync phase_status map)
+6. If more phases remain:
+   - Set `active_workflow.current_phase` = `phases[new_index]`
+   - Set `active_workflow.phase_status[new_phase]` = `"in_progress"` (BUG-0005: sync phase_status map)
+   - Set `phases[new_phase].status` = `"in_progress"`
+   - Set top-level `current_phase` = new phase key
+   - Set top-level `active_agent` = agent name for new phase (use PHASE_AGENT_MAP below)
+7. Write `.isdlc/state.json`
+8. Update `docs/isdlc/tasks.md` (if it exists):
+   - Find the completed phase section header (e.g., `## Phase NN: ... -- PENDING` or `-- IN PROGRESS`)
+   - Change section header status to `-- COMPLETE`
+   - Change all `- [ ] TNNNN ...` to `- [X] TNNNN ...` within that section (preserve pipe annotations like `| traces: AC-03a`)
+   - Recalculate the Progress Summary table: update completed task counts per phase, total count, and percentage
+   - Write the updated `docs/isdlc/tasks.md`
+   - If `docs/isdlc/tasks.md` does not exist, skip this step silently
+
+**PHASE_AGENT_MAP** (for step 6 `active_agent` resolution):
+```
+01-requirements → requirements-analyst
+02-tracing → trace-analyst
+02-impact-analysis → impact-analyst
+03-architecture → solution-architect
+04-design → software-designer
+05-test-strategy → test-design-engineer
+06-implementation → software-developer
+07-testing → quality-assurance-engineer
+08-code-review → code-reviewer
+09-security → security-engineer
+10-local-testing → quality-assurance-engineer
+16-quality-loop → quality-assurance-engineer
+11-deployment → release-engineer
+12-test-deploy → release-engineer
+13-production → release-engineer
+```
 
 **3e-refine.** TASK REFINEMENT (conditional) — After the post-phase state update, check if task refinement should run:
 

@@ -242,7 +242,8 @@ function check(ctx) {
             return { decision: 'allow' };
         }
 
-        let currentPhase = state.current_phase;
+        // BUG-0005 (AC-03a): Prefer active_workflow.current_phase over top-level
+        let currentPhase = state.active_workflow?.current_phase || state.current_phase;
         if (!currentPhase) {
             return { decision: 'allow' };
         }
