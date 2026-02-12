@@ -1,32 +1,42 @@
-# Technical Debt Inventory: REQ-0009-enhanced-plan-to-tasks
+# Technical Debt Inventory: BUG-0005-state-tracking-stale
 
 **Date**: 2026-02-12
 **Phase**: 08-code-review
 
 ---
 
-## New Technical Debt Introduced
+## Technical Debt Resolved by BUG-0005
 
-### TD-REQ0009-001: Kahn's Algorithm Duplication in Test File (LOW)
+### TD-RESOLVED-001: Hook Read-Priority Inversion (was HIGH)
 
-- **Location**: `src/claude/hooks/tests/tasks-format-validation.test.cjs` (lines 580-634)
-- **Description**: The `detectCycleInContent()` helper duplicates the Kahn's algorithm from `plan-surfacer.cjs`'s `detectCyclesInDependencyGraph()`. The duplication exists because `plan-surfacer.cjs` only exports `{ check }` and the internal functions are not exposed.
-- **Impact**: LOW -- If the algorithm is updated in the hook, the test helper must also be updated
-- **Recommendation**: Acceptable per test isolation pattern. If the algorithm changes, update both locations. An alternative would be to export the function for testing, but this would expand the public API unnecessarily (violates Article V).
+- **Location**: 6 hook files
+- **Description**: Hooks read `state.current_phase` (top-level) which could be stale, causing false blocks and incorrect behavior when `active_workflow.current_phase` had advanced beyond the top-level value.
+- **Resolution**: All 6 hooks now prefer `active_workflow.current_phase` with fallback to top-level.
+- **Impact**: Eliminates false blocks during workflow execution.
 
-### TD-REQ0009-002: check() Function Length (LOW)
+### TD-RESOLVED-002: STEP 3e Missing State Sync (was HIGH)
 
-- **Location**: `src/claude/hooks/plan-surfacer.cjs` (check function, ~85 lines of logic)
-- **Description**: The check() function handles multiple responsibilities: input validation, phase checking, plan existence checking, and format validation dispatch. While each concern is clearly separated with comments and early returns, the function exceeds the 50-line guideline.
-- **Impact**: LOW -- The function is well-structured with clear guard clauses and is within the performance budget
-- **Recommendation**: No immediate action. Consider refactoring into smaller helper functions if additional validation checks are added in the future.
+- **Location**: `src/claude/commands/isdlc.md`
+- **Description**: STEP 3e did not update `active_workflow.phase_status`, did not update `active_agent`, and did not mark tasks.md completed.
+- **Resolution**: Steps 5-8 added to STEP 3e for complete state synchronization.
+- **Impact**: All 3 redundant state tracking locations now stay in sync during phase transitions.
 
-### TD-REQ0009-003: Format Validation Only at Phase 06 (INFORMATIONAL)
+---
 
-- **Location**: `src/claude/hooks/plan-surfacer.cjs` (line 268: `if (currentPhase === '06-implementation')`)
-- **Description**: Format validation only runs during the `06-implementation` phase. This is by design (to avoid unnecessary overhead and because file-level annotations are only relevant for implementation), but it means format issues in tasks.md are not detected during later phases (testing, code review, etc.).
-- **Impact**: VERY LOW -- Later phases do not depend on file-level annotations
-- **Recommendation**: Acceptable trade-off. If future phases need format validation, the condition can be expanded.
+## New Technical Debt Introduced by BUG-0005
+
+### TD-BUG0005-001: Redundant State Tracking Locations Not Eliminated (INFORMATIONAL)
+
+- **Description**: `state.json` still has 3 redundant locations for phase information: `active_workflow.current_phase`, `active_workflow.phase_status`, and top-level `current_phase`/`phases{}`. BUG-0005 makes them consistent but does not eliminate the redundancy.
+- **Impact**: INFORMATIONAL -- the redundancy is maintained for backward compatibility (AC-05a through AC-05c) and standalone hook execution.
+- **Recommendation**: Consider a future state schema simplification initiative (explicitly out of scope per requirements-spec.md section 5).
+
+### TD-BUG0005-002: gate-blocker.cjs Else Branch Defensive No-Op (VERY LOW)
+
+- **Location**: `src/claude/hooks/gate-blocker.cjs` line 578-579
+- **Description**: The `else` branch fix `state.active_workflow?.current_phase || state.current_phase` is a no-op because `state.active_workflow` is always falsy when the else branch executes. Added for pattern consistency.
+- **Impact**: VERY LOW -- no runtime cost, improves code consistency.
+- **Recommendation**: No action needed. If the if/else structure is refactored in the future, this can be cleaned up.
 
 ---
 
@@ -48,19 +58,18 @@
 ### TD-004: Template Phase Key Mismatch (LOW)
 
 - **Location**: `src/isdlc/templates/workflow-tasks-template.md`
-- **Description**: Template uses `### 02-architecture` but the feature workflow in `workflows.json` has `02-impact-analysis` and `03-architecture` as separate phases. The template section `02-architecture` maps to the combined architecture tasks but the key does not match either workflow phase key.
-- **Impact**: LOW -- The generate-plan skill uses task descriptions (not phase keys) from the template, so the mismatch does not cause functional issues
-- **Recommendation**: Update template phase keys to match workflows.json in a future cleanup pass
-- **Note**: Pre-existing, NOT introduced by REQ-0009
+- **Description**: Template uses `### 02-architecture` but the feature workflow has `02-impact-analysis` and `03-architecture` as separate phases.
+- **Impact**: LOW -- template keys used for task descriptions, not phase key matching
 
 ---
 
 ## Debt Summary
 
-| Category | New (REQ-0009) | Pre-Existing | Total |
-|----------|---------------|--------------|-------|
-| LOW | 2 | 3 | 5 |
-| INFORMATIONAL | 1 | 0 | 1 |
-| **Total** | **3** | **3** | **6** |
+| Category | Resolved (BUG-0005) | New (BUG-0005) | Pre-Existing | Active Total |
+|----------|---------------------|----------------|--------------|-------------|
+| HIGH | 2 resolved | 0 | 0 | 0 |
+| LOW | 0 | 0 | 2 | 2 |
+| INFORMATIONAL | 0 | 2 | 1 | 3 |
+| **Total** | **2 resolved** | **2** | **3** | **5** |
 
-No HIGH or CRITICAL technical debt.
+Net debt change: -2 HIGH resolved, +2 INFORMATIONAL added. Overall debt posture improved.

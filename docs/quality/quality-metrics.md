@@ -1,4 +1,4 @@
-# Quality Metrics: REQ-0009-enhanced-plan-to-tasks
+# Quality Metrics: BUG-0005-state-tracking-stale
 
 **Date**: 2026-02-12
 **Phase**: 08-code-review
@@ -9,45 +9,48 @@
 
 | Metric | Value |
 |--------|-------|
-| Total tests (npm run test:all) | 489 pass, 1 fail (pre-existing TC-E09) |
-| New tests (plan-surfacer.test.cjs) | 17 pass (10 existing + 7 new), 0 fail |
-| New tests (tasks-format-validation.test.cjs) | 46 pass, 0 fail |
-| Total new tests this feature | 63 |
+| CJS Hook Tests (npm run test:hooks) | 865 pass, 0 fail |
+| ESM Lib Tests (npm test) | 489 pass, 1 fail (pre-existing TC-E09) |
+| Total tests (npm run test:all) | 1354 pass, 1 fail (pre-existing) |
+| New BUG-0005 tests | 25 (across 6 test files) |
 | Test count baseline (Article II) | 555 |
-| Current total test count | ~1370+ (estimated, 2.47x baseline) |
+| Current total test count | ~1355 (2.44x baseline) |
 | Regressions introduced | 0 |
 
 ## Code Change Metrics
 
 | Metric | Value |
 |--------|-------|
-| Primary files modified | 8 |
-| Protocol files modified (agent updates) | 14 |
-| New files created | 1 (tasks-format-validation.test.cjs) |
-| Production code lines added | ~200 (plan-surfacer.cjs: validateTasksFormat + detectCyclesInDependencyGraph) |
-| Test code lines added | ~550 (7 tests in plan-surfacer.test.cjs + 46 tests in tasks-format-validation.test.cjs) |
-| Documentation lines added | ~300 (SKILL.md v2.0 + isdlc.md refinement step + mechanical mode) |
-| Agent protocol lines added | ~180 (14 agents x ~13 lines each) |
+| Hook files modified | 6 |
+| Command files modified (prompt text) | 1 (isdlc.md) |
+| New files created | 0 |
+| Production code lines changed | ~12 (6 hooks x 1-2 lines each) |
+| Prompt text lines added | ~40 (STEP 3e steps 5-8 + PHASE_AGENT_MAP) |
+| Test code lines added | ~450 (25 tests across 6 files) |
+| Test-to-code ratio (new) | ~37:1 (tests:production lines) |
 
 ## Complexity Metrics
 
-| File | Functions | Max Function Length | Cyclomatic Complexity |
-|------|-----------|--------------------|-----------------------|
-| plan-surfacer.cjs | 3 (validateTasksFormat, detectCyclesInDependencyGraph, check) | check: ~85 lines | Low-Medium |
-| plan-surfacer.test.cjs | 6 helpers | createV2TasksPlan: ~60 lines | Low |
-| tasks-format-validation.test.cjs | 9 helpers | detectCycleInContent: ~55 lines | Low |
+| File | Change | Cyclomatic Impact |
+|------|--------|------------------|
+| constitution-validator.cjs | 1 line | Zero -- replaced one expression with another |
+| delegation-gate.cjs | 1 line | Zero -- reordered existing `\|\|` operands |
+| log-skill-usage.cjs | 1 line | Zero -- prepended expression to existing chain |
+| skill-validator.cjs | 1 line | Zero -- prepended expression to existing chain |
+| gate-blocker.cjs | 1 line | Zero -- replaced expression in else branch |
+| provider-utils.cjs | 1 line | Zero -- prepended expression to existing chain |
 
 ## Quality Indicators
 
 | Indicator | Status |
 |-----------|--------|
-| Syntax check (node -c) | PASS (all 3 .cjs files) |
-| Module system compliance (Article XIII) | PASS (CommonJS require/module.exports, .cjs extension) |
-| Fail-open compliance (Article X) | PASS (5 try-catch blocks, all fail-open) |
+| Syntax check (node -c) | PASS (all 6 files) |
+| Module system compliance (Article XIII) | PASS |
+| Fail-open compliance (Article X) | PASS |
 | No ESM imports in hooks | PASS |
-| No security vulnerabilities | PASS (no eval/exec/spawn usage) |
-| EBNF grammar consistency | PASS (SKILL.md matches database-design.md) |
-| Backward compatibility | PASS (v1.0 files skip all validation) |
-| Annotation preservation consistency | PASS (all 5 rules in all 14 agent files) |
-| Scope containment | PASS (no scope creep detected) |
-| Constitutional compliance | PASS (Articles V, VI, VII, VIII, IX, XIII) |
+| No security vulnerabilities | PASS |
+| Backward compatibility | PASS |
+| npm audit | PASS (0 vulnerabilities) |
+| Pattern consistency | PASS (all hooks use same read-priority pattern) |
+| Scope containment | PASS (no scope creep) |
+| Constitutional compliance | PASS (Articles V, VI, VII, VIII, IX, X, XIII, XIV) |
