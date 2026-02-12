@@ -16,7 +16,8 @@
 - [ ] Spike/explore workflow — parallel implementation branches from a single spec for tech stack comparison or architecture exploration (Spec-Kit's "Creative Exploration")
 - [ ] `/isdlc validate` command — on-demand artifact quality check (constitutional + completeness) without running a full workflow (Spec-Kit's `/speckit.checklist` + `/speckit.analyze`)
 - [ ] Progressive disclosure / lite mode — expose only constitution → requirements → implement → quality loop for simple projects, full lifecycle opt-in
-- [ ] Research agents for greenfield — dedicated pre-architecture research step (library compatibility, benchmarks, security implications, org standards) before planning begins
+- [x] Research agents for greenfield — dedicated pre-architecture research step (library compatibility, benchmarks, security implications, org standards) before planning begins
+  - Already implemented via deep discovery Inception Party (BMAD-inspired): domain-researcher, technical-scout, solution-architect-party, security-advisor, devops-pragmatist + parallel research agents
 
 ### Bugs Found During REQ-0009 Workflow (2026-02-11)
 
@@ -31,7 +32,8 @@
   - detectPhaseDelegation() guard added to constitution-validator, gate-blocker, iteration-corridor
 - [x] BUG: Subagents overwrite state.json with stale/fabricated data (BUG-0009 — FIXED)
   - Optimistic locking via state_version counter in writeState() + V7 block rule in state-write-validator
-- [ ] BUG: Orchestrator finalize creates tasks but doesn't mark them completed
+- [x] BUG: Orchestrator finalize creates tasks but doesn't mark them completed (BUG-0010 — FIXED)
+  - Rewrote STEP 4 cleanup: CRITICAL mandatory loop marks ALL non-completed tasks
 
 **Framework Features:**
 - [ ] T4: Test execution parallelism
@@ -76,6 +78,25 @@
   - **Benefits**: Catch problems early per sub-feature, reduce context window pressure, intermediate quality gates, partial progress is usable
   - **State tracking**: `state.json` tracks parent feature + sub-features with individual phase progress
 
+- [ ] Multi-agent debate mode for phase execution — replace single-agent phases with agent teams that collaborate via propose-critique-refine cycles
+  - **Concept**: Instead of one agent producing a phase artifact solo, a team of 3 agents works together:
+    1. **Creator** — produces the initial artifact (architecture, design, test strategy, etc.)
+    2. **Critic** — reviews and critiques the artifact, identifies weaknesses, missing edge cases, over-engineering, and gaps
+    3. **Refiner** — synthesizes the critique, improves the solution, identifies additional edge cases, proposes alternatives
+    4. **Consensus round** — all three discuss and converge on the best approach before finalizing
+  - **Applies to all applicable phases**: Architecture (03), Design (04), Test Strategy (05), Implementation (06), Code Review (08) — each phase gets a tailored team composition
+  - **Phase-specific team roles**:
+    - Phase 03 (Architecture): Architect → Security/Scalability Critic → Systems Refiner
+    - Phase 04 (Design): Designer → API/UX Critic → Integration Refiner
+    - Phase 05 (Test Strategy): Test Designer → Coverage Critic → Edge Case Refiner
+    - Phase 06 (Implementation): Developer → Code Reviewer → Robustness Refiner
+    - Phase 08 (Code Review): Quality Analyst → Security Critic → Maintainability Refiner
+  - **Debate protocol**: Each round produces a structured artifact with sections: Proposal, Critiques, Improvements, Unresolved Concerns, Final Consensus
+  - **Configurable rounds**: Default 2 rounds (propose-critique-refine → consensus), max 4 for complex phases
+  - **Opt-in via flag**: `/isdlc feature "desc" --debate` or per-phase in constitution (e.g., `debate_phases: [03, 04, 05]`)
+  - **Precedent**: Deep discovery Inception Party already uses this pattern for `/discover --new` — this extends it to all workflow phases
+  - **Benefits**: Higher quality artifacts, catch blind spots early, reduce iteration loops in later phases, built-in adversarial testing of designs
+
 **Product/Vision:**
 - [ ] Board-driven autonomous development (read from board, develop without intervention when users are away)
 - [ ] Design systems using variant.ai
@@ -92,6 +113,7 @@
 ## Completed
 
 ### 2026-02-12
+- [x] BUG-0010: Orchestrator finalize stale tasks — rewrote STEP 4 cleanup as CRITICAL mandatory loop
 - [x] BUG-0009: Subagent state.json drift — optimistic locking via state_version counter, writeState() auto-increment, V7 block rule
 - [x] Blast radius coverage validation (REQ-0010) — new blast-radius-validator.cjs hook, pre-task-dispatcher slot 9, 66 tests, 982 CJS pass
 - [x] BUG-0008: Constitution validator false positive on delegation prompts — detectPhaseDelegation() guard in 3 hooks

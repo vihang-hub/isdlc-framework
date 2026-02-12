@@ -1,4 +1,4 @@
-# Lint Report: REQ-0010-blast-radius-coverage
+# Lint Report: REQ-0011-adaptive-workflow-sizing
 
 **Phase**: 16-quality-loop
 **Date**: 2026-02-12
@@ -17,30 +17,36 @@ In lieu of an automated linter, the following manual checks were performed on al
 
 | File | Type | Change |
 |------|------|--------|
-| `src/claude/hooks/blast-radius-validator.cjs` | New | REQ-0010 feature hook |
-| `src/claude/hooks/tests/test-blast-radius-validator.test.cjs` | New | REQ-0010 test file |
-| `src/claude/hooks/dispatchers/pre-task-dispatcher.cjs` | Modified | Added blast-radius integration |
-| `src/claude/hooks/constitution-validator.cjs` | Modified | BUG-0008 delegation guard |
-| `src/claude/hooks/gate-blocker.cjs` | Modified | BUG-0008 delegation guard |
-| `src/claude/hooks/iteration-corridor.cjs` | Modified | BUG-0008 delegation guard |
+| `src/claude/hooks/lib/common.cjs` | Modified | 3 sizing functions + 3 private helpers (~230 lines) |
+| `src/claude/hooks/tests/test-sizing.test.cjs` | New | 72 test cases (~939 lines) |
+| `src/claude/commands/isdlc.md` | Modified | STEP 3e-sizing block (~87 lines) |
+| `src/isdlc/config/workflows.json` | Modified | Sizing config block (~15 lines) |
+| `src/claude/agents/impact-analysis-orchestrator.md` | Modified | JSON metadata spec (~10 lines) |
+| `src/claude/hooks/workflow-completion-enforcer.cjs` | Modified | Variable-length guard (~8 lines) |
 
 ### Syntax Validation
 
-All files pass `node -c` (CJS) syntax validation by virtue of loading and executing in the test suite without errors (982 tests pass).
+| File | Method | Result |
+|------|--------|--------|
+| `src/claude/hooks/lib/common.cjs` | `node --check` | PASS |
+| `src/claude/hooks/workflow-completion-enforcer.cjs` | `node --check` | PASS |
+| `src/claude/hooks/tests/test-sizing.test.cjs` | Test execution (72/72 pass) | PASS |
+| `src/isdlc/config/workflows.json` | `JSON.parse()` via Node.js require | PASS |
 
 ### Code Style Checks
 
 | Check | Result | Files Affected |
 |-------|--------|----------------|
-| No stray console.log in business logic | PASS | All files -- console.log only in standalone paths |
-| Consistent indentation (spaces) | PASS | All files |
+| No stray console.log in business logic | PASS | All files -- stderr only for warnings |
+| Consistent indentation (4 spaces) | PASS | All files |
 | Consistent semicolons | PASS | All files use semicolons |
-| Proper JSDoc comments | PASS | All new/modified functions annotated |
+| Proper JSDoc comments | PASS | All new/modified functions annotated with @param and @returns |
 | No unused imports | PASS | All require() calls used |
 | No dead code | PASS | No unreachable code paths |
-| Module system compliance (CJS) | PASS | All files use require()/module.exports |
-| Error handling patterns | PASS | try/catch fail-open on all new code paths |
-| 'use strict' directive | PASS | Present in all hook files |
+| Module system compliance (CJS) | PASS | All .cjs files use require()/module.exports |
+| Error handling patterns | PASS | try/catch for JSON.parse; stderr for warnings |
+| 'use strict' directive | PASS | Present in test-sizing.test.cjs |
+| Private function naming (_prefix) | PASS | _safeNonNegInt, _validateAndNormalizeSizingMetrics, _checkSizingInvariants |
 
 ### Findings
 
