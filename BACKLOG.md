@@ -24,7 +24,9 @@
   - `state.json` has 3 places tracking phase status: `active_workflow.phase_status`, top-level `current_phase`/`active_agent`, top-level `phases{}`
   - Phase-loop controller (isdlc.md STEP 3e) only updates `active_workflow.*` — top-level fields go stale
   - Hooks (phase-sequence-guard, delegation-gate) read top-level fields → false blocks
+  - `tasks.md` never updated after plan generation — phases complete but tasks stay unchecked, giving false "PENDING" status
   - Fix: consolidate to `active_workflow.*` as single source of truth; update hooks to read from there; eliminate redundant top-level fields
+  - Fix: phase-loop controller STEP 3e should also mark completed tasks as `[X]` in `tasks.md` and update the Progress Summary table
 - [ ] BUG: Phase-loop controller delegates before marking state as in_progress
   - isdlc.md STEP 3d fires Task tool before STEP 3a sets `phases[key].status = "in_progress"` in top-level `phases{}`
   - Hook correctly blocks ("phase task has not been marked as in_progress") but agent may have already completed
@@ -42,6 +44,11 @@
 - [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
 - [ ] Add /isdlc refactor command and workflow — pre-requisite: 100% automated E2E testing
 - [ ] Separate commands to manage deployments and operations
+- [ ] State.json pruning at workflow completion — actively prune stale/transient fields from state.json at the end of every feature or fix workflow
+  - After finalize phase, remove accumulated runtime data: iteration logs, hook activity traces, intermediate phase artifacts, resolved escalations
+  - Keep only durable state: workflow history summary, project-level config, skill usage stats
+  - Prevents state.json from growing unbounded across workflows and avoids stale data bleeding into subsequent runs
+  - Audit and restructure state.json schema for human readability — ensure the structure is well-organized, logically grouped, and understandable when inspected manually (not just machine-consumed)
 - [ ] Adaptive workflow sizing — framework auto-sizes features after Impact Analysis (Phase 02)
   - **Problem**: The framework runs the same heavyweight process for all features regardless of size. Architecture + Design produce 16+ artifacts (~1-2 hours) even for trivial changes. Conversely, massive features get crammed into a single implementation phase with no decomposition.
   - **Sizing decision point**: After Impact Analysis (Phase 02) completes — this is where the framework has real data (affected files, entry points, risk assessment, blast radius) to make an informed recommendation. Quick Scan (Phase 00) is too rough.
