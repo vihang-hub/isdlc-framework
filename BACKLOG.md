@@ -20,13 +20,9 @@
 
 ### Bugs Found During REQ-0009 Workflow (2026-02-11)
 
-- [ ] BUG: Redundant state tracking causes stale fields and hook blocks
-  - `state.json` has 3 places tracking phase status: `active_workflow.phase_status`, top-level `current_phase`/`active_agent`, top-level `phases{}`
-  - Phase-loop controller (isdlc.md STEP 3e) only updates `active_workflow.*` — top-level fields go stale
-  - Hooks (phase-sequence-guard, delegation-gate) read top-level fields → false blocks
-  - `tasks.md` never updated after plan generation — phases complete but tasks stay unchecked, giving false "PENDING" status
-  - Fix: consolidate to `active_workflow.*` as single source of truth; update hooks to read from there; eliminate redundant top-level fields
-  - Fix: phase-loop controller STEP 3e should also mark completed tasks as `[X]` in `tasks.md` and update the Progress Summary table
+- [x] BUG: Redundant state tracking causes stale fields and hook blocks (BUG-0005 — FIXED)
+  - 6 hooks fixed to read `active_workflow.current_phase` first with fallback
+  - STEP 3e updated to sync `phase_status`, `active_agent`, and mark tasks.md checkboxes on phase completion
 - [ ] BUG: Phase-loop controller delegates before marking state as in_progress
   - isdlc.md STEP 3d fires Task tool before STEP 3a sets `phases[key].status = "in_progress"` in top-level `phases{}`
   - Hook correctly blocks ("phase task has not been marked as in_progress") but agent may have already completed
