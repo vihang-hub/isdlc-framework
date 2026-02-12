@@ -23,10 +23,9 @@
 - [x] BUG: Redundant state tracking causes stale fields and hook blocks (BUG-0005 — FIXED)
   - 6 hooks fixed to read `active_workflow.current_phase` first with fallback
   - STEP 3e updated to sync `phase_status`, `active_agent`, and mark tasks.md checkboxes on phase completion
-- [ ] BUG: Phase-loop controller delegates before marking state as in_progress
-  - isdlc.md STEP 3d fires Task tool before STEP 3a sets `phases[key].status = "in_progress"` in top-level `phases{}`
-  - Hook correctly blocks ("phase task has not been marked as in_progress") but agent may have already completed
-  - Fix: set `phases[key].status = "in_progress"` and top-level `current_phase`/`active_agent` BEFORE Task delegation in STEP 3d
+- [x] BUG: Phase-loop controller delegates before marking state as in_progress (BUG-0006 — FIXED)
+  - Added STEP 3c-prime: pre-delegation state write before STEP 3d
+  - Removed redundant next-phase activation from STEP 3e step 6
 - [ ] BUG: Test watcher circuit breaker trips on unparseable output (false positives)
   - test-watcher records "FAILED" with 0 failures and "Unable to determine test result" when it can't parse output (e.g. `npm run test:char`, `npm run test:e2e` which don't exist)
   - Circuit breaker trips after 3 "identical" non-failures
