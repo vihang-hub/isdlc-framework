@@ -933,10 +933,17 @@ Use Task tool → sdlc-orchestrator with:
 
 The orchestrator runs the Human Review Checkpoint (if code_review.enabled), merges the branch, collects workflow progress snapshots (`collectPhaseSnapshots()`), applies state pruning, moves the workflow to `workflow_history` (with `phases`, `phase_snapshots`, and `metrics`), and clears `active_workflow`.
 
-**After the orchestrator returns from finalize**, clean up all workflow tasks:
-1. Use `TaskList` to get all tasks created during this workflow
-2. For any task still showing as `pending` or `in_progress`, mark it as `completed` with strikethrough subject
-3. This ensures the task list accurately reflects the completed workflow and no stale tasks remain visible
+**CRITICAL — MANDATORY CLEANUP (must execute even if finalize output is long):**
+
+After the orchestrator returns from finalize, execute this cleanup loop immediately:
+
+1. Call `TaskList` to retrieve ALL tasks in the session
+2. For EACH task returned by TaskList:
+   a. If task `status` is `pending` or `in_progress`:
+      - Call `TaskUpdate` with `status: "completed"`
+      - If the task `subject` does NOT already start with `~~`, update `subject` to `~~{current_subject}~~`
+3. This loop processes ALL tasks (workflow phase tasks AND sub-agent tasks) — do not attempt to filter or identify which tasks "belong" to the workflow. After finalize, every remaining non-completed task is stale by definition.
+4. Do NOT exit the Phase-Loop Controller until this cleanup loop has completed.
 
 #### Flow Summary
 
