@@ -575,7 +575,8 @@ function check(ctx) {
                 }
             }
         } else {
-            currentPhase = state.current_phase;
+            // BUG-0005 (AC-03e): prefer active_workflow.current_phase even in fallback branch
+            currentPhase = state.active_workflow?.current_phase || state.current_phase;
         }
 
         if (!currentPhase) {

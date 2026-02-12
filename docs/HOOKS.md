@@ -4,7 +4,7 @@
 
 The hook system runs **outside the LLM** as separate Node.js processes, intercepting tool calls via Claude Code's `PreToolUse`, `PostToolUse`, and `Stop` events. This means enforcement is deterministic — it cannot be forgotten, reinterpreted, or prompt-injected away.
 
-**Architecture**: 5 dispatchers consolidate 21 hooks for performance; 4 standalone hooks handle cross-cutting concerns. PreToolUse dispatchers short-circuit on first block; PostToolUse dispatchers run all hooks.
+**Architecture**: 5 dispatchers consolidate 21 hooks for performance; 5 standalone hooks handle cross-cutting concerns. PreToolUse dispatchers short-circuit on first block; PostToolUse dispatchers run all hooks.
 
 For hook architecture details, registration, and deep dives, see [ARCHITECTURE.md](ARCHITECTURE.md#hooks-26).
 
@@ -26,8 +26,9 @@ These hooks run on **PreToolUse** (or Stop) and **prevent tool execution** when 
 | 8 | `test-adequacy-blocker` | PreToolUse [Task] | **Upgrades without safety net** — blocks delegation to upgrade phases (14+) when test coverage is inadequate (<50% unit coverage or 0 total tests). Requires a regression baseline before upgrades. |
 | 9 | `branch-guard` | PreToolUse [Bash] | **Commits to main** — blocks `git commit` on main/master when the active workflow has a feature branch. Keeps feature work isolated on its own branch. |
 | 10 | `explore-readonly-enforcer` | PreToolUse [Write, Edit] | **Writes during exploration** — blocks file writes/edits when Chat/Explore mode is active. Only temp files and `state.json` are exempt. Enforces read-only exploration. |
-| 11 | `skill-delegation-enforcer` | PostToolUse [Skill] | **Running without orchestrator** — when `/isdlc` or `/discover` skill is loaded, injects mandatory context requiring delegation to the correct orchestrator and writes a `pending_delegation` marker to state. |
-| 12 | `delegation-gate` | Stop | **Missing orchestrator delegation** — hard safety net that blocks the response if `/isdlc` or `/discover` was invoked but the required orchestrator delegation never happened. Last line of defense. |
+| 11 | `state-file-guard` | PreToolUse [Bash] | **Direct state.json writes** — blocks Bash commands that attempt to write directly to `state.json` (via redirects, `tee`, `sed -i`, etc.), bypassing the hook enforcement system. Read-only commands like `cat state.json` are allowed. Regex-only, no I/O (<50ms). |
+| 12 | `skill-delegation-enforcer` | PostToolUse [Skill] | **Running without orchestrator** — when `/isdlc` or `/discover` skill is loaded, injects mandatory context requiring delegation to the correct orchestrator and writes a `pending_delegation` marker to state. |
+| 13 | `delegation-gate` | Stop | **Missing orchestrator delegation** — hard safety net that blocks the response if `/isdlc` or `/discover` was invoked but the required orchestrator delegation never happened. Last line of defense. |
 
 ---
 
@@ -75,7 +76,7 @@ The 21 dispatched hooks are grouped into 5 dispatchers for performance (single p
 | `post-bash-dispatcher` | PostToolUse [Bash] | review-reminder, atdd-completeness-validator, test-watcher | Run **all** hooks |
 | `post-write-edit-dispatcher` | PostToolUse [Write, Edit] | state-write-validator, output-format-validator, workflow-completion-enforcer | Run **all** hooks (skips output-format-validator for Edit events) |
 
-The 4 standalone hooks (`branch-guard`, `explore-readonly-enforcer`, `skill-delegation-enforcer`, `delegation-gate`) run as their own processes because they match different tool events or require independent lifecycle management.
+The 5 standalone hooks (`branch-guard`, `state-file-guard`, `explore-readonly-enforcer`, `skill-delegation-enforcer`, `delegation-gate`) run as their own processes because they match different tool events or require independent lifecycle management.
 
 ---
 
@@ -101,9 +102,9 @@ The 4 standalone hooks (`branch-guard`, `explore-readonly-enforcer`, `skill-dele
 
 | Category | Count | Purpose |
 |----------|-------|---------|
-| Hard Blockers | 12 | Prevent invalid state transitions, enforce phase ordering, protect branches |
+| Hard Blockers | 13 | Prevent invalid state transitions, enforce phase ordering, protect branches |
 | Observers & Warners | 11 | Log delegations, track menus, validate artifacts, emit warnings |
 | State Managers | 3 | Track test iterations, clean up workflow completion, route providers |
-| **Total** | **26** | |
+| **Total** | **27** | |
 
 **Design principle**: All hooks are **fail-open** — if a hook crashes, times out (10s default), or throws an error, it allows the operation to proceed. Framework bugs never block user work.

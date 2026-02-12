@@ -49,6 +49,12 @@
   - Keep only durable state: workflow history summary, project-level config, skill usage stats
   - Prevents state.json from growing unbounded across workflows and avoids stale data bleeding into subsequent runs
   - Audit and restructure state.json schema for human readability — ensure the structure is well-organized, logically grouped, and understandable when inspected manually (not just machine-consumed)
+- [ ] Blast radius coverage validation — enforce that implementation actually covers the affected files identified during Impact Analysis (Phase 02)
+  - **Problem**: Impact analysis produces a detailed `impact-analysis.md` with affected files, risk scores, and entry points, but it's purely informational. No downstream agent, gate, or hook validates that implementation touched those files. A developer can implement a subset of affected files and pass all gates if test coverage thresholds are met.
+  - **Validation mechanism**: Pre-gate hook or gate check at GATE-05 (implementation) that cross-references affected files from `impact-analysis.md` against `git diff` of the implementation branch
+  - **Artifact**: Generate a `blast-radius-coverage.md` checklist — each affected file marked as covered/skipped with justification for skips
+  - **Agent update**: Implementation agent (Phase 06) should read `impact-analysis.md` and confirm all affected files are addressed in its implementation plan
+  - **Gate update**: Add to GATE-05: "All files from blast radius addressed or explicitly deferred with rationale"
 - [ ] Adaptive workflow sizing — framework auto-sizes features after Impact Analysis (Phase 02)
   - **Problem**: The framework runs the same heavyweight process for all features regardless of size. Architecture + Design produce 16+ artifacts (~1-2 hours) even for trivial changes. Conversely, massive features get crammed into a single implementation phase with no decomposition.
   - **Sizing decision point**: After Impact Analysis (Phase 02) completes — this is where the framework has real data (affected files, entry points, risk assessment, blast radius) to make an informed recommendation. Quick Scan (Phase 00) is too rough.
@@ -81,6 +87,11 @@
 - [ ] Analytics manager (integrated with feedback collector/roadmap)
 - [ ] User auth and profile management
 - [ ] Marketing integration for SMBs
+- [ ] Backlog management integration — connect iSDLC workflows to external project management tools (Jira, Linear, GitHub Issues, Azure DevOps, etc.)
+  - Sync workflow status, phase progress, and gate results to board tickets automatically
+  - Create/update tickets from iSDLC artifacts (requirements → epics/stories, bugs → issues)
+  - Read from board to pick up next work item (feeds into board-driven autonomous development)
+  - Pluggable adapter pattern — Jira first (Atlassian MCP already available), others via provider interface
 
 ## Completed
 
