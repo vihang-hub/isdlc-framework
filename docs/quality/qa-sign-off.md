@@ -1,8 +1,8 @@
-# QA Sign-Off: BUG-0006-phase-loop-state-ordering
+# QA Sign-Off: BUG-0008-constitution-validator-false-positive
 
 **Phase**: 08-code-review
 **Date**: 2026-02-12
-**Reviewer**: QA Engineer (Agent 08)
+**Reviewer**: QA Engineer (Phase 08)
 **Decision**: APPROVED
 
 ---
@@ -11,39 +11,65 @@
 
 | Criterion | Status | Evidence |
 |-----------|--------|----------|
-| Code review completed for all changes | PASS | 2 files reviewed (1 prompt file + 1 test file); detailed report in BUG-0006 folder |
-| No critical code review issues open | PASS | 0 critical, 0 high, 0 medium issues |
-| Static analysis passing | PASS | `node -c` syntax check PASS on test file; no ESM imports in CJS |
-| Test suite passing | PASS | 883 CJS pass, 489 ESM pass; 1 pre-existing fail (TC-E09, unrelated) |
-| New tests well-structured | PASS | 18 tests in 4 describe blocks; cover all 17 ACs + existence check |
-| Coding standards followed | PASS | CommonJS module system (Article XIII), proper `node:test` framework usage |
-| Performance acceptable | PASS | 1 extra state.json write per phase iteration; negligible overhead |
-| Security review complete | PASS | No eval/exec/spawn; no secrets; npm audit clean; Markdown prompt changes only |
-| No scope creep | PASS | Changes limited to isdlc.md (3c-prime + 3e cleanup) + 1 test file |
-| Traceability complete | PASS | All 4 FRs and 17 ACs traced to code changes and tests |
-| Documentation updated | PASS | BUG-0006 comments in isdlc.md; implementation-notes.md current |
-| Backward compatibility | PASS | BUG-0005 state sync preserved; STEP 3e steps 1-5, 7-8 unchanged |
-| Pattern consistency | PASS | State lifecycle (activate -> delegate -> complete) is clean and well-separated |
-| Constitutional compliance | PASS | Articles V, VI, VII, VIII, IX all satisfied (see below) |
-| Technical debt net improved | PASS | 1 HIGH + 1 MEDIUM resolved; 0 new debt; 1 LOW pre-existing documented |
+| Code review completed for all changes | PASS | 3 production files + 3 test files reviewed; see code-review-report.md |
+| No critical code review issues open | PASS | 0 critical, 0 high, 0 medium, 0 low findings |
+| Static analysis passing (no errors) | PASS | node -c syntax, module system, security scan -- all clean |
+| All tests pass | PASS | 916 CJS pass (0 fail), 489 ESM pass (1 pre-existing TC-E09) |
+| Code coverage meets thresholds | PASS | 17/17 ACs covered by tests; 69 regression tests pass; 100% AC coverage |
+| Coding standards followed | PASS | CommonJS, 'use strict', JSDoc annotations, consistent patterns |
+| Performance acceptable | PASS | Guard adds <5ms overhead (in-memory function call + boolean check) |
+| Security review complete | PASS | No injection vectors, no secrets, no dynamic code execution, npm audit clean |
+| QA sign-off obtained | PASS | This document |
+| Runtime copies in sync | PASS | All 4 runtime files verified identical to source |
+| Traceability complete | PASS | Full traceability: 17 ACs -> 17 new tests + 69 regression tests -> 3 code locations |
+| No scope creep | PASS | Exactly 3 production files, 0 new files, no unrelated changes |
+| Fail-open behavior verified | PASS | All 3 guards wrapped in try/catch; errors fall through to existing logic |
+| Constraint compliance verified | PASS | common.cjs, pre-task-dispatcher, phase-loop-controller, phase-sequence-guard all unmodified |
 
-## Constitutional Compliance
+## Constitutional Compliance (Phase 08 Applicable Articles)
 
 | Article | Status | Evidence |
 |---------|--------|----------|
-| V (Simplicity First) | PASS | Minimal change: +15/-7 lines in prompt; no new abstractions; no over-engineering |
-| VI (Code Review Required) | PASS | Full code review completed before gate passage; detailed report produced |
-| VII (Artifact Traceability) | PASS | All code traces to requirements (17/17 ACs); no orphan code or requirements |
-| VIII (Documentation Currency) | PASS | BUG-0006 comments in isdlc.md; PHASE_AGENT_MAP label updated; implementation notes current |
-| IX (Quality Gate Integrity) | PASS | All required artifacts exist and meet quality standards; GATE-08 validated |
+| V (Simplicity First) | PASS | Minimal 5-7 line guard per hook. No over-engineering. Reuses existing `detectPhaseDelegation()`. YAGNI respected. |
+| VI (Code Review Required) | PASS | Full code review completed by Phase 08 agent. All code reviewed before gate passage. |
+| VII (Artifact Traceability) | PASS | Requirements -> Test Cases -> Code traced in traceability-matrix.csv. No orphan code or requirements. |
+| VIII (Documentation Currency) | PASS | JSDoc annotations updated on all 3 modified functions. implementation-notes.md created. Bug report, requirements, trace analysis, test cases, and quality docs all current. |
+| IX (Quality Gate Integrity) | PASS | Gate criteria validated. All required artifacts exist. No gate bypasses. |
+
+## Test Results Summary
+
+| Suite | Total | Pass | Fail | Pre-existing Failures |
+|-------|-------|------|------|-----------------------|
+| CJS Hook Tests | 916 | 916 | 0 | 0 |
+| ESM Lib Tests | 490 | 489 | 1 | 1 (TC-E09) |
+| **Combined** | **1406** | **1405** | **1** | **1** |
+
+## Artifact Inventory
+
+| Artifact | Location | Status |
+|----------|----------|--------|
+| Bug Report | docs/requirements/BUG-0008-.../bug-report.md | Present |
+| Requirements Spec | docs/requirements/BUG-0008-.../requirements-spec.md | Present |
+| Trace Analysis | docs/requirements/BUG-0008-.../trace-analysis.md | Present |
+| Test Strategy | docs/requirements/BUG-0008-.../test-strategy.md | Present |
+| Test Cases | docs/requirements/BUG-0008-.../test-cases.md | Present |
+| Traceability Matrix | docs/requirements/BUG-0008-.../traceability-matrix.csv | Present |
+| Implementation Notes | docs/requirements/BUG-0008-.../implementation-notes.md | Present |
+| Code Review Report | docs/quality/code-review-report.md | Present |
+| Quality Metrics | docs/quality/quality-metrics.md | Present |
+| Static Analysis Report | docs/quality/static-analysis-report.md | Present |
+| Technical Debt | docs/quality/technical-debt.md | Present |
+| QA Sign-Off | docs/quality/qa-sign-off.md | Present (this document) |
 
 ## Gate Decision
 
 **GATE-08: PASS**
 
-This bug fix is approved for progression. The implementation delivers a correct pre-delegation state write (STEP 3c-prime) and clean removal of redundant next-phase activation (STEP 3e step 6), with 18 new tests (all passing), zero regressions across 1372 passing tests, full backward compatibility with BUG-0005, and complete constitutional compliance. One LOW pre-existing observation (PHASE_AGENT_MAP discrepancy) is documented for separate remediation and does not block this fix.
+All code review and QA criteria are satisfied. The BUG-0008 fix adds a `detectPhaseDelegation()` guard to 3 hooks (constitution-validator, iteration-corridor, gate-blocker) to prevent false-positive blocking of phase delegation prompts. 17 new TDD tests validate all acceptance criteria. Zero regressions across 916 CJS and 489 ESM tests. Code is minimal, fail-open, well-documented, and fully traceable. Constitutional compliance verified for Articles V, VI, VII, VIII, and IX.
+
+The fix is approved for workflow completion and merge to main.
 
 ---
 
-**Signed**: QA Engineer (Agent 08)
+**Signed**: QA Engineer (Phase 08)
 **Date**: 2026-02-12
