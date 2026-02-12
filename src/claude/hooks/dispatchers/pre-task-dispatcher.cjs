@@ -3,7 +3,7 @@
 /**
  * iSDLC Pre-Task Dispatcher - PreToolUse[Task] Hook
  * ===================================================
- * Consolidates 8 PreToolUse[Task] hooks into 1 process for performance.
+ * Consolidates 9 PreToolUse[Task] hooks into 1 process for performance.
  * REQ-0010 Tier 1: Hook Dispatcher Consolidation
  *
  * Execution order (preserves current enforcement priority):
@@ -15,6 +15,7 @@
  *   6. gate-blocker          - gate requirements + self-healing
  *   7. constitution-validator - constitutional compliance check
  *   8. test-adequacy-blocker - test coverage sufficiency (upgrade phases)
+ *   9. blast-radius-validator - impact analysis coverage (feature Phase 06)
  *
  * Short-circuits on first { decision: 'block' }.
  * Writes state once after all hooks or after the blocking hook.
@@ -23,7 +24,7 @@
  * skill-validator runs regardless. Hooks with shouldActivate guards are
  * skipped when their conditions aren't met (REQ-0010 T3-B).
  *
- * Version: 1.2.0
+ * Version: 1.3.0
  */
 
 const {
@@ -48,6 +49,7 @@ const { check: phaseSequenceGuardCheck } = require('../phase-sequence-guard.cjs'
 const { check: gateBlockerCheck } = require('../gate-blocker.cjs');
 const { check: constitutionValidatorCheck } = require('../constitution-validator.cjs');
 const { check: testAdequacyBlockerCheck } = require('../test-adequacy-blocker.cjs');
+const { check: blastRadiusValidatorCheck } = require('../blast-radius-validator.cjs');
 
 /** @param {object} ctx @returns {boolean} */
 const hasActiveWorkflow = (ctx) => !!ctx.state?.active_workflow;
@@ -69,6 +71,14 @@ const HOOKS = [
         if (!ctx.state?.active_workflow) return false;
         const phase = ctx.state.active_workflow.current_phase || '';
         return phase.startsWith('15-upgrade');
+    }},
+    { name: 'blast-radius-validator', check: blastRadiusValidatorCheck, shouldActivate: (ctx) => {
+        // CON-005: Feature workflows only
+        if (!ctx.state?.active_workflow) return false;
+        if (ctx.state.active_workflow.type !== 'feature') return false;
+        // AC-001-06: Phase 06 implementation only
+        const phase = ctx.state.active_workflow.current_phase || '';
+        return phase === '06-implementation';
     }}
 ];
 
