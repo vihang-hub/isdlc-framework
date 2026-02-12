@@ -331,6 +331,10 @@ Based on the impact analysis:
 
 ## Impact Analysis Metadata
 
+The following JSON block is required for automated sizing analysis (REQ-0011).
+All fields are required. The `parseSizingFromImpactAnalysis()` function reads
+the LAST JSON block in the file to extract sizing metrics.
+
 ```json
 {
   "analysis_completed_at": "{timestamp}",
@@ -338,9 +342,16 @@ Based on the impact analysis:
   "requirements_document": "docs/requirements/{artifact-folder}/requirements.md",
   "quick_scan_used": "docs/requirements/{artifact-folder}/quick-scan.md",
   "scope_change_from_original": "{none|expanded|reduced|refined}",
-  "requirements_keywords": {requirements_context.domain_keywords}
+  "requirements_keywords": {requirements_context.domain_keywords},
+  "files_directly_affected": {integer from M1 affected files count},
+  "modules_affected": {integer from M1 affected modules count},
+  "risk_level": "{low|medium|high from M3}",
+  "blast_radius": "{low|medium|high from M1}",
+  "coverage_gaps": {integer - count of affected files with no test coverage, from M3}
 }
 ```
+
+**`coverage_gaps` derivation**: Count the number of files in M1's "Files Affected" list that appear in M3's "No Coverage" or "0%" column of the Test Coverage table. If no Test Coverage table exists, default to 0.
 ```
 
 ## Step 5: Update State

@@ -136,6 +136,9 @@ function check(ctx) {
 
         // Reconstruct temporary active_workflow for collectPhaseSnapshots()
         // Priority: entry.phases > Object.keys(state.phases) > empty
+        // Note (REQ-0011): After adaptive sizing, entry.phases may be shorter
+        // than the original workflow definition. This is correct -- we iterate
+        // whatever phases the workflow actually used, not the full definition.
         let phasesArray = [];
         if (Array.isArray(lastEntry.phases) && lastEntry.phases.length > 0) {
             phasesArray = lastEntry.phases;
@@ -143,11 +146,16 @@ function check(ctx) {
             phasesArray = Object.keys(state.phases);
         }
 
+        // REQ-0011: Preserve sizing record in workflow_history entry if present
+        const sizingRecord = lastEntry.sizing || null;
+
         // Temporarily set active_workflow so collectPhaseSnapshots can read it
+        // REQ-0011: Include sizing if present (variable-length phase support)
         state.active_workflow = {
             phases: phasesArray,
             started_at: lastEntry.started_at || null,
-            completed_at: lastEntry.completed_at || lastEntry.cancelled_at || null
+            completed_at: lastEntry.completed_at || lastEntry.cancelled_at || null,
+            sizing: sizingRecord
         };
 
         // Collect snapshots

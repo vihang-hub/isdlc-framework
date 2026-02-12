@@ -215,11 +215,15 @@ Enter selection (1-5):
 ```
 /isdlc feature "Feature description"
 /isdlc feature "Feature description" --project api-service
+/isdlc feature -light "Feature description"
+/isdlc feature -light "Feature description" --project api-service
 /isdlc feature                        (no description — presents backlog picker)
 ```
 1. Validate constitution exists and is not a template
 2. Check no active workflow (block if one exists, suggest `/isdlc cancel` first)
-3. Initialize `active_workflow` in state.json with type `"feature"` and phases `["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]`
+3. Parse flags from command arguments:
+   - If args contain "-light": set flags.light = true, remove "-light" from description
+4. Initialize `active_workflow` in state.json with type `"feature"`, phases `["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]`, and flags: `{ light: flags.light || false }`
 4. Delegate to Requirements Analyst (Phase 01) with `scope: "feature"`
 5. After GATE-01: creates `feature/REQ-NNNN-description` branch from main
 6. After GATE-08: merges branch to main, deletes branch
@@ -857,6 +861,87 @@ Use Task tool → {agent_name} with:
 12-test-deploy → release-engineer
 13-production → release-engineer
 ```
+
+**3e-sizing.** SIZING DECISION POINT (conditional) -- After the post-phase
+state update, check if adaptive workflow sizing should run.
+
+**Trigger check**:
+1. Read the phase key that was just completed from the state update in 3e
+2. If `phase_key === '02-impact-analysis'` AND `active_workflow.type === 'feature'`:
+   a. Read `active_workflow.sizing` from state.json
+   b. If `sizing` is already set (not undefined/null): skip to 3e-refine (prevent double-sizing)
+   c. If `sizing` is not set: execute sizing flow (below)
+3. Otherwise (not Phase 02, or not feature workflow): skip to 3e-refine
+
+**Sizing flow**:
+
+**S1.** Read configuration:
+   - Read `active_workflow.flags.light` from state.json
+   - Read `workflows.json` -> `workflows.feature.sizing`
+   - If `sizing.enabled` is falsy or `sizing` block is missing: skip sizing entirely (default to standard, no UX prompt). Write sizing record: `{ intensity: 'standard', effective_intensity: 'standard', recommended_by: 'framework', overridden: false, decided_at: <now>, forced_by_flag: false, epic_deferred: false }`. Write state.json, then skip to 3e-refine.
+
+**S2.** IF `-light` flag is set (`active_workflow.flags.light === true`):
+   a. Call `applySizingDecision(state, 'light', { forced_by_flag: true, config: sizingConfig })`
+      where `sizingConfig` = `{ light_skip_phases: workflows.feature.sizing.light_skip_phases }`
+   b. Write state.json
+   c. Display forced-light banner:
+      ```
+      +----------------------------------------------------------+
+      |  WORKFLOW SIZING: Light (forced via -light flag)          |
+      |                                                           |
+      |  Skipping phases:                                         |
+      |    - Phase 03: Architecture                               |
+      |    - Phase 04: Design                                     |
+      |                                                           |
+      |  Workflow: 00 -> 01 -> 02 -> 05 -> 06 -> 16 -> 08       |
+      +----------------------------------------------------------+
+      ```
+   d. Update task list: find tasks for skipped phases, mark as completed with subject `~~[N] {subject} (Skipped -- light workflow)~~`
+   e. Skip to 3e-refine
+
+**S3.** ELSE (standard sizing flow):
+   a. Read impact-analysis.md:
+      - Path: `docs/requirements/{artifact_folder}/impact-analysis.md`
+      - If file not found: default to standard, log warning, write sizing record, skip to 3e-refine
+   b. Call `parseSizingFromImpactAnalysis(content)`
+      - If returns null: default to standard with rationale "Unable to parse impact analysis", write sizing record, skip to 3e-refine
+   c. Read thresholds: `workflows.json` -> `workflows.feature.sizing.thresholds`
+      - If missing: use defaults `{ light_max_files: 5, epic_min_files: 20 }`
+   d. Call `computeSizingRecommendation(metrics, thresholds)`
+   e. Display sizing recommendation banner:
+      ```
+      +----------------------------------------------------------+
+      |  WORKFLOW SIZING RECOMMENDATION                           |
+      |                                                           |
+      |  Recommended: {INTENSITY}                                 |
+      |  Rationale: {rationale text}                              |
+      |                                                           |
+      |  Impact Analysis Summary:                                 |
+      |    Files affected:  {N}                                   |
+      |    Modules:         {N}                                   |
+      |    Risk level:      {level}                               |
+      |    Coupling:        {level}                               |
+      |    Coverage gaps:   {N}                                   |
+      +----------------------------------------------------------+
+      ```
+   f. Present user menu using `AskUserQuestion`:
+      - `[A] Accept recommendation`
+      - `[O] Override (choose different intensity)`
+      - `[S] Show full impact analysis`
+   g. Handle user choice:
+      - **[A] Accept**:
+        - If intensity is 'epic': inform user that epic is deferred, proceeding with standard
+        - Call `applySizingDecision(state, recommendation.intensity, { metrics, config: sizingConfig })`
+      - **[O] Override**:
+        - Present intensity picker: `[1] Light  [2] Standard  [3] Epic`
+        - Call `applySizingDecision(state, chosen, { metrics, overridden: true, overridden_to: chosen, recommended_intensity: recommendation.intensity, config: sizingConfig })`
+      - **[S] Show analysis**:
+        - Display full impact-analysis.md content
+        - Return to menu (repeat step f)
+   h. Write state.json
+   i. If effective_intensity is 'light': update task list (mark skipped phase tasks as completed)
+   j. Display applied sizing confirmation banner
+   k. Proceed to 3e-refine
 
 **3e-refine.** TASK REFINEMENT (conditional) — After the post-phase state update, check if task refinement should run:
 
