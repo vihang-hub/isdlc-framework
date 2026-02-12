@@ -203,8 +203,9 @@ function parseTestResult(output, exitCode) {
         };
     }
 
-    // Default to failure if uncertain
-    return { passed: false, error: 'Unable to determine test result' };
+    // BUG-0007: Return inconclusive when no patterns matched and no exit code available.
+    // Previously this defaulted to { passed: false }, causing false circuit breaker trips.
+    return { passed: null, inconclusive: true, error: 'Unable to determine test result' };
 }
 
 /**
@@ -491,26 +492,57 @@ function check(ctx) {
             };
         }
 
+        // BUG-0007: Determine result classification (PASSED / FAILED / INCONCLUSIVE)
+        const resultClassification = testResult.inconclusive ? 'INCONCLUSIVE'
+            : testResult.passed ? 'PASSED' : 'FAILED';
+
         // Create history entry
         const historyEntry = {
             iteration: iterState.current_iteration + 1,
             timestamp: getTimestamp(),
             command: command,
-            result: testResult.passed ? 'PASSED' : 'FAILED',
+            result: resultClassification,
             failures: testResult.failures || 0,
             error: testResult.error || null
         };
 
         // Update iteration state
         iterState.current_iteration += 1;
-        iterState.last_test_result = testResult.passed ? 'passed' : 'failed';
+        iterState.last_test_result = resultClassification.toLowerCase();
         iterState.last_test_command = command;
         iterState.last_test_at = getTimestamp();
         iterState.history.push(historyEntry);
 
         let outputMessage = '';
 
-        if (testResult.passed) {
+        if (testResult.inconclusive) {
+            // BUG-0007: INCONCLUSIVE — do NOT increment failure counts or trigger circuit breaker.
+            // The test output could not be parsed. This is a warning, not an error.
+            debugLog('Test result INCONCLUSIVE - skipping circuit breaker');
+
+            if (iterState.current_iteration >= iterState.max_iterations) {
+                // Max iterations exceeded even with inconclusive results
+                iterState.completed = true;
+                iterState.status = 'escalated';
+                iterState.escalation_reason = 'max_iterations';
+                iterState.escalation_details = `Exceeded ${iterState.max_iterations} iterations without success`;
+
+                outputMessage = `\n\n\u26a0\ufe0f MAX ITERATIONS EXCEEDED (${iterState.max_iterations})\n` +
+                    `Last result was INCONCLUSIVE (test output could not be parsed).\n` +
+                    `Reason: ${testResult.error}\n\n` +
+                    `ACTION REQUIRED: Verify the test command is correct and produces parseable output.`;
+            } else {
+                const remaining = iterState.max_iterations - iterState.current_iteration;
+
+                outputMessage = `\n\n\u26a0\ufe0f TEST RESULT INCONCLUSIVE (iteration ${iterState.current_iteration}/${iterState.max_iterations})\n` +
+                    `The test output could not be parsed as pass or fail.\n` +
+                    `Reason: ${testResult.error}\n` +
+                    `Remaining iterations: ${remaining}\n\n` +
+                    `Please verify the test command produces recognizable output.\n` +
+                    `This result does NOT count as a failure and will NOT trigger the circuit breaker.`;
+            }
+
+        } else if (testResult.passed) {
             // SUCCESS — but check coverage before marking complete
             iterState.identical_failure_count = 0;
 
@@ -675,7 +707,8 @@ function check(ctx) {
 }
 
 // Export check for dispatcher use (+ helpers for direct testing)
-module.exports = { check, normalizeErrorForComparison, isIdenticalFailure, parseCoverage };
+// BUG-0007: Added parseTestResult to exports for direct unit testing
+module.exports = { check, normalizeErrorForComparison, isIdenticalFailure, parseCoverage, parseTestResult };
 
 // Standalone execution
 if (require.main === module) {
