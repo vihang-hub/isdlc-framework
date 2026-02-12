@@ -637,7 +637,13 @@ function readState(projectId) {
 }
 
 /**
- * Write state.json
+ * Write state.json with automatic state_version increment (BUG-0009).
+ *
+ * Before writing, reads the current state_version from the existing file on disk.
+ * Sets state_version = current_version + 1 on a COPY of the state object
+ * (does NOT mutate the caller's object).
+ * If no existing file or no state_version on disk, initializes to 1.
+ *
  * @param {object} state - State object to write
  * @param {string} [projectId] - Optional project ID for monorepo mode
  * @returns {boolean} Success
@@ -652,7 +658,26 @@ function writeState(state, projectId) {
     }
 
     try {
-        fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
+        // BUG-0009: Read current version from disk and auto-increment
+        let currentVersion = 0;
+        try {
+            if (fs.existsSync(stateFile)) {
+                const diskContent = fs.readFileSync(stateFile, 'utf8');
+                const diskState = JSON.parse(diskContent);
+                if (typeof diskState.state_version === 'number' && diskState.state_version > 0) {
+                    currentVersion = diskState.state_version;
+                }
+            }
+        } catch (e) {
+            // Fail-open: if we can't read the disk file, start from 0
+            currentVersion = 0;
+        }
+
+        // Create a shallow copy to avoid mutating the caller's object
+        const stateCopy = Object.assign({}, state);
+        stateCopy.state_version = currentVersion + 1;
+
+        fs.writeFileSync(stateFile, JSON.stringify(stateCopy, null, 2));
         return true;
     } catch (e) {
         return false;
