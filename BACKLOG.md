@@ -26,10 +26,12 @@
 - [x] BUG: Phase-loop controller delegates before marking state as in_progress (BUG-0006 — FIXED)
   - Added STEP 3c-prime: pre-delegation state write before STEP 3d
   - Removed redundant next-phase activation from STEP 3e step 6
-- [ ] BUG: Test watcher circuit breaker trips on unparseable output (false positives)
-  - test-watcher records "FAILED" with 0 failures and "Unable to determine test result" when it can't parse output (e.g. `npm run test:char`, `npm run test:e2e` which don't exist)
-  - Circuit breaker trips after 3 "identical" non-failures
-  - Fix: classify unparseable output as `"inconclusive"` (not "FAILED"), don't increment `identical_failure_count` for inconclusive results
+- [x] BUG: Test watcher circuit breaker trips on unparseable output (BUG-0007 — FIXED)
+- [x] BUG: Constitution validator false positive on delegation prompts (BUG-0008 — FIXED)
+  - detectPhaseDelegation() guard added to constitution-validator, gate-blocker, iteration-corridor
+- [x] BUG: Subagents overwrite state.json with stale/fabricated data (BUG-0009 — FIXED)
+  - Optimistic locking via state_version counter in writeState() + V7 block rule in state-write-validator
+- [ ] BUG: Orchestrator finalize creates tasks but doesn't mark them completed
 
 **Framework Features:**
 - [ ] T4: Test execution parallelism
@@ -44,11 +46,10 @@
   - Keep only durable state: workflow history summary, project-level config, skill usage stats
   - Prevents state.json from growing unbounded across workflows and avoids stale data bleeding into subsequent runs
   - Audit and restructure state.json schema for human readability — ensure the structure is well-organized, logically grouped, and understandable when inspected manually (not just machine-consumed)
-- [ ] Blast radius coverage validation — enforce that implementation actually covers the affected files identified during Impact Analysis (Phase 02)
-  - **Problem**: Impact analysis produces a detailed `impact-analysis.md` with affected files, risk scores, and entry points, but it's purely informational. No downstream agent, gate, or hook validates that implementation touched those files. A developer can implement a subset of affected files and pass all gates if test coverage thresholds are met.
-  - **Validation mechanism**: Pre-gate hook or gate check at GATE-05 (implementation) that cross-references affected files from `impact-analysis.md` against `git diff` of the implementation branch
-  - **Artifact**: Generate a `blast-radius-coverage.md` checklist — each affected file marked as covered/skipped with justification for skips
-  - **Agent update**: Implementation agent (Phase 06) should read `impact-analysis.md` and confirm all affected files are addressed in its implementation plan
+- [x] Blast radius coverage validation (REQ-0010 — DONE)
+  - blast-radius-validator.cjs hook in pre-task-dispatcher slot 9, feature-only, Phase 06 activation
+  - Parses impact-analysis.md, cross-references git diff, generates blast-radius-coverage.md
+  - 66 new tests, 982 CJS tests pass, fail-open on all error paths
   - **Gate update**: Add to GATE-05: "All files from blast radius addressed or explicitly deferred with rationale"
 - [ ] Adaptive workflow sizing — framework auto-sizes features after Impact Analysis (Phase 02)
   - **Problem**: The framework runs the same heavyweight process for all features regardless of size. Architecture + Design produce 16+ artifacts (~1-2 hours) even for trivial changes. Conversely, massive features get crammed into a single implementation phase with no decomposition.
@@ -89,6 +90,12 @@
   - Pluggable adapter pattern — Jira first (Atlassian MCP already available), others via provider interface
 
 ## Completed
+
+### 2026-02-12
+- [x] BUG-0009: Subagent state.json drift — optimistic locking via state_version counter, writeState() auto-increment, V7 block rule
+- [x] Blast radius coverage validation (REQ-0010) — new blast-radius-validator.cjs hook, pre-task-dispatcher slot 9, 66 tests, 982 CJS pass
+- [x] BUG-0008: Constitution validator false positive on delegation prompts — detectPhaseDelegation() guard in 3 hooks
+- [x] BUG-0007: Test watcher circuit breaker false positives — inconclusive classification, skip circuit breaker
 
 ### 2026-02-11
 - [x] Enhanced plan-to-tasks pipeline (REQ-0009) — file-level granularity, traceability, dependency graph, refinement step, mechanical mode
