@@ -9,7 +9,9 @@
  * Fail-open: any error results in silent exit (exit 0, no output)
  *
  * Traces to: FR-01, AC-01, AC-01a, AC-01b, AC-01c
- * Version: 1.1.0
+ * BUG-0013: Same-phase bypass added — sub-agent Task calls within the
+ *           active phase are no longer falsely blocked.
+ * Version: 1.2.0
  */
 
 const {
@@ -60,6 +62,21 @@ function check(ctx) {
         const currentPhase = state.active_workflow.current_phase;
         if (!currentPhase) {
             debugLog('No current phase, allowing');
+            return { decision: 'allow' };
+        }
+
+        // BUG-0013: Same-phase bypass — sub-agent Task calls within the active
+        // phase are legitimate and must not be blocked regardless of phase status.
+        // detectPhaseDelegation resolves sub-agents (e.g. symptom-analyzer,
+        // execution-path-tracer) to their parent phase; when that matches
+        // currentPhase the call is intra-phase, not a cross-phase delegation.
+        if (delegation.targetPhase === currentPhase) {
+            debugLog('Same-phase delegation detected (targetPhase === currentPhase), allowing');
+            logHookEvent('phase-loop-controller', 'same-phase-bypass', {
+                phase: currentPhase,
+                agent: delegation.agentName || 'unknown',
+                reason: 'targetPhase matches currentPhase — intra-phase sub-agent call'
+            });
             return { decision: 'allow' };
         }
 
