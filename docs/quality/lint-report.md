@@ -1,4 +1,4 @@
-# Lint Report: BUG-0012-premature-git-commit
+# Lint Report: REQ-0012-invisible-framework
 
 **Phase**: 16-quality-loop
 **Date**: 2026-02-13
@@ -17,38 +17,45 @@ In lieu of an automated linter, the following manual checks were performed on al
 
 | File | Type | Change |
 |------|------|--------|
-| `src/claude/hooks/branch-guard.cjs` | Modified | Phase-aware commit blocking logic (~50 lines added) |
-| `src/claude/hooks/tests/branch-guard.test.cjs` | Modified | 17 new test cases T15-T31 (~330 lines added) |
-| `src/claude/agents/05-software-developer.md` | Modified | No-commit CRITICAL instruction (~6 lines added) |
-| `src/claude/agents/16-quality-loop-engineer.md` | Modified | No-commit CRITICAL instruction (~4 lines added) |
+| `CLAUDE.md` | Markdown | Workflow-First Development section rewritten (~50 lines) |
+| `src/claude/CLAUDE.md.template` | Markdown | Template consistency update (~50 lines) |
+| `lib/invisible-framework.test.js` | JavaScript | New test file (49 tests, 299 lines) |
 
 ### Syntax Validation
 
 | File | Method | Result |
 |------|--------|--------|
-| `src/claude/hooks/branch-guard.cjs` | `node -e "require(...)"` | PASS |
-| `src/claude/hooks/tests/branch-guard.test.cjs` | Test execution (31/31 pass) | PASS |
+| `lib/invisible-framework.test.js` | Test execution (49/49 pass) | PASS |
+| `CLAUDE.md` | Markdown structure verification | PASS |
+| `src/claude/CLAUDE.md.template` | Markdown structure verification | PASS |
 
 ### Code Style Checks
 
 | Check | Result | Files Affected |
 |-------|--------|----------------|
-| No stray console.log in business logic | PASS | branch-guard.cjs uses debugLog (stderr) only |
-| Consistent indentation (4 spaces) | PASS | All files |
-| Consistent semicolons | PASS | All .cjs files use semicolons |
-| Proper JSDoc comments | PASS | isGitCommit() and getCurrentBranch() annotated with @param and @returns |
-| No unused imports | PASS | All require() calls used |
-| No dead code | PASS | No unreachable code paths |
-| Module system compliance (CJS) | PASS | All .cjs files use require()/module.exports |
-| Error handling patterns | PASS | try/catch at top level with fail-open exit |
-| No process.exit(1) | PASS | All exits use process.exit(0) for fail-open compliance |
+| Trailing whitespace | PASS | 0 instances across all 3 files |
+| TODO/FIXME/HACK markers | PASS | 0 instances across all 3 files |
+| Console output in tests | PASS | No console.log/warn/error in test file |
+| Consistent indentation (2 spaces) | PASS | Test file follows ESM convention |
+| Import ordering | PASS | node:test, node:assert, node:fs, node:path in logical order |
+| Module system compliance (ESM) | PASS | Test file uses import syntax |
+| String quoting consistency | PASS | Single quotes throughout test file |
 | No var declarations | PASS | Uses const exclusively |
-| String quoting consistency | PASS | Single quotes for strings, template literals for interpolation |
+
+### Long Line Analysis
+
+| File | Lines > 200 chars | Verdict |
+|------|-------------------|---------|
+| CLAUDE.md | 7 lines | Acceptable (prose documentation) |
+| CLAUDE.md.template | 7 lines | Acceptable (prose documentation) |
+| invisible-framework.test.js | 0 lines | Clean |
+
+Long lines in markdown files contain prose instructions for Claude Code's intent detection and consent protocol. Breaking these lines would reduce readability.
 
 ### Findings
 
 **Errors**: 0
-**Warnings**: 0
+**Warnings**: 14 (all long lines in markdown, non-blocking)
 **Info**: 0
 
 ## Recommendation

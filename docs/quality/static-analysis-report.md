@@ -1,8 +1,8 @@
-# Static Analysis Report: BUG-0013-phase-loop-controller-false-blocks
+# Static Analysis Report: REQ-0012-invisible-framework
 
 **Date**: 2026-02-13
 **Phase**: 08-code-review
-**Workflow**: Fix (BUG-0013)
+**Workflow**: Feature (REQ-0012)
 
 ---
 
@@ -10,63 +10,61 @@
 
 | File | Tool | Result |
 |------|------|--------|
-| `src/claude/hooks/phase-loop-controller.cjs` | `node -c` | SYNTAX OK |
-| `src/claude/hooks/tests/phase-loop-controller.test.cjs` | `node -c` | SYNTAX OK |
+| `lib/invisible-framework.test.js` | `node --check` | SYNTAX OK |
+| `CLAUDE.md` | Markdown lint | No issues |
+| `src/claude/CLAUDE.md.template` | Markdown lint | No issues |
 
-## Module System Compliance (Article XIII)
+## Markdown Quality
+
+| Check | File | Result | Notes |
+|-------|------|--------|-------|
+| Trailing whitespace | CLAUDE.md | PASS | No trailing whitespace in Workflow-First section |
+| Trailing whitespace | Template | PASS | No trailing whitespace in Workflow-First section |
+| Table formatting | CLAUDE.md | PASS | All tables have balanced pipe characters |
+| Table formatting | Template | PASS | All tables have balanced pipe characters |
+| Heading hierarchy | CLAUDE.md | PASS | ## -> ### progressive nesting |
+| Heading hierarchy | Template | PASS | ## -> ### progressive nesting |
+
+## Test File Static Analysis
 
 | Check | Result | Notes |
 |-------|--------|-------|
-| No ESM imports in hook file | PASS | Only `require()` used in phase-loop-controller.cjs |
-| `.cjs` extension used | PASS | Explicit CJS extension for both production and test files |
-| module.exports used correctly | PASS | `module.exports = { check }` on line 120 |
+| No `console.log` | PASS | Uses test assertions only |
+| No `console.error` | PASS | Clean output |
+| No TODO/FIXME/HACK markers | PASS | No incomplete work items |
+| Module imports valid | PASS | `node:test`, `node:assert/strict`, `node:fs`, `node:path`, `node:url` |
+| ESM syntax used | PASS | `import` statements, consistent with lib/ convention |
+| describe() blocks | 14 | Well-organized test groups |
+| it() test cases | 49 (52 callbacks, 49 unique tests) | Comprehensive coverage |
+| Lines > 120 chars | 9 | Assertion messages -- acceptable in tests |
 
 ## Security Static Analysis
 
 | Check | Result | Notes |
 |-------|--------|-------|
-| No `eval()` usage | PASS | No eval or new Function found |
-| No `child_process.exec` with user input | PASS | No child_process calls in production code |
-| No secrets in source code | PASS | No API keys, tokens, passwords, or credentials detected |
-| No `console.log` in production hook | PASS | Uses `debugLog()` from common.cjs (controlled by SKILL_VALIDATOR_DEBUG) |
-| No dynamic require() | PASS | All require() calls use static string paths |
-| No prototype pollution vectors | PASS | No Object.assign from external input, no dynamic property assignment |
+| No `eval()` usage | PASS | No eval or new Function found in test file |
+| No secrets in source code | PASS | No API keys, tokens, passwords, or credentials |
+| No external network calls | PASS | Tests read local files only |
+| No `child_process` usage | PASS | No process spawning in tests |
+| No `fs.writeFileSync` | PASS | Tests are read-only -- no file modifications |
 
-## Error Handling Analysis
-
-| Check | Result | Notes |
-|-------|--------|-------|
-| Outer try-catch wraps check() | PASS | Lines 29-116. Returns { decision: 'allow' } on any error. |
-| logHookEvent has internal try-catch | PASS | Cannot propagate exceptions to caller. |
-| No throw statements in new code | PASS | All error paths return allow decision. |
-| Standalone mode try-catch | PASS | Lines 126-156 wrap stdin processing with process.exit(0). |
-
-## Complexity Analysis
-
-| Metric | Value | Rating |
-|--------|-------|--------|
-| Cyclomatic complexity (check) | 17 | Acceptable (< 20) |
-| Max nesting depth | 2 | Good (< 5) |
-| Lines of code (production) | 159 | Small |
-| Number of exported functions | 1 | Simple |
-| Number of catch blocks | 3 | Appropriate |
-
-## Code Style Analysis
+## Template Consistency Analysis (NFR-04)
 
 | Check | Result | Notes |
 |-------|--------|-------|
-| Consistent indentation | PASS | 4-space indentation throughout |
-| Consistent quoting | PASS | Single quotes for strings |
-| JSDoc on exported function | PASS | check() has @param and @returns JSDoc |
-| File header with traceability | PASS | Version 1.2.0, BUG-0013 traces documented |
-| Meaningful variable names | PASS | currentPhase, delegation.targetPhase are self-documenting |
+| Workflow-First section identical | PASS | Byte-for-byte match between CLAUDE.md and template |
+| Agent Framework Context identical | PASS | Template content is exact prefix of CLAUDE.md |
+| SKILL OBSERVABILITY Protocol intact | PASS | Content unchanged from prior version |
+| SUGGESTED PROMPTS Protocol intact | PASS | Content unchanged from prior version |
+| CONSTITUTIONAL PRINCIPLES Preamble intact | PASS | Content unchanged from prior version |
 
 ## Dependency Analysis
 
 | Check | Result | Notes |
 |-------|--------|-------|
-| External dependencies | 0 | Only internal (common.cjs) |
-| New dependencies added | 0 | No new require() statements |
+| New external dependencies | 0 | No new packages required |
+| Runtime dependencies added | 0 | No runtime code changes |
+| Test dependencies | 0 | Uses Node.js built-in modules only |
 | Vulnerability scan | N/A | No external dependencies to scan |
 
 ## Summary
@@ -74,11 +72,10 @@
 | Category | Errors | Warnings | Info |
 |----------|--------|----------|------|
 | Syntax | 0 | 0 | 0 |
+| Markdown quality | 0 | 0 | 0 |
 | Security | 0 | 0 | 0 |
-| Module system | 0 | 0 | 0 |
-| Error handling | 0 | 0 | 0 |
-| Complexity | 0 | 0 | 1 (CC=17, approaching threshold) |
-| Code style | 0 | 0 | 0 |
+| Template consistency | 0 | 0 | 0 |
+| Test file quality | 0 | 0 | 1 (9 lines > 120 chars) |
 | Dependencies | 0 | 0 | 0 |
 | **Total** | **0** | **0** | **1** |
 

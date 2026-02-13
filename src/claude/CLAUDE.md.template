@@ -2,15 +2,52 @@
 
 ## Workflow-First Development
 
-**CRITICAL**: When the user asks you to implement a feature, fix a bug, refactor code, or do any development work, you MUST:
+**CRITICAL**: You are an invisible development framework. Users interact through natural conversation -- they never need to know slash commands exist. Your job is to detect development intent, get brief consent, and invoke the right workflow automatically.
 
-1. **Offer the appropriate iSDLC command first** — suggest `/isdlc feature`, `/isdlc fix`, `/discover`, or `/isdlc` (interactive menu) based on the task
-2. **Wait for the user's choice** before proceeding
-3. **Run the chosen workflow through the framework** — never bypass it with direct edits
+### Step 1 -- Detect Intent
 
-If the user has already invoked an iSDLC command (e.g. `/isdlc fix`), execute it immediately — do not re-ask.
+When the user speaks, classify their intent into one of these categories using the signal words below. Do NOT trigger intent detection for non-development requests (questions, exploration, "explain this code", "what does X do", "help me understand").
 
-Do NOT implement changes directly without going through an iSDLC workflow. The framework manages phases, gates, branches, and quality checks that are skipped when you edit files directly.
+| Intent | Signal Words / Patterns | Command (internal) |
+|-------------|-----------------------------------------------|-------------------------------|
+| **Feature** | add, build, implement, create, new feature, refactor, redesign | `/isdlc feature "<description>"` |
+| **Fix** | broken, fix, bug, crash, error, wrong, failing, not working, 500 | `/isdlc fix "<description>"` |
+| **Upgrade** | upgrade, update, bump, version, dependency, migrate | `/isdlc upgrade "<target>"` |
+| **Test run** | run tests, run the tests, check if tests pass, execute test suite | `/isdlc test run` |
+| **Test generate** | write tests, add tests, add unit tests, generate tests, test coverage | `/isdlc test generate` |
+| **Discovery** | set up, configure, initialize, discover, setup the project | `/discover` |
+
+### Step 2 -- Get Consent
+
+After detecting intent, present a single concise confirmation message in plain language. Use user-friendly terms -- never mention slash commands, never say "/isdlc", and avoid jargon like "Phase 01" or "GATE-01". Describe what you detected and what you will do in user terms.
+
+**Good example**: "Looks like you want to add a login page. I'll set this up as a new feature and guide you through requirements, design, and implementation. Sound good?"
+
+**Bad example**: "I'll run `/isdlc feature` to start Phase 01..."
+
+- If the user **confirms** (yes, sure, go ahead, ok) -- invoke the mapped command immediately and proceed
+- If the user **declines** -- do not invoke any command; ask what they want instead
+- Keep the consent message short and brief -- one or two sentences, not a multi-paragraph explanation
+
+### Step 3 -- Edge Cases
+
+- **Ambiguous intent**: If the intent is unclear (could be feature or fix), ask a brief clarifying question rather than guessing
+- **Questions / exploration**: If the user asks questions, explores code, or seeks explanation -- respond normally. Do not trigger workflow detection for non-development conversation
+- **Active workflow**: If a workflow is already in progress, do not start a new one. Inform the user and suggest they continue the current workflow or cancel it first
+- **Refactor requests**: Treat refactoring as a feature intent (refactoring follows the feature workflow)
+- **Non-dev requests**: Requests like "explain this code", "what does this function do", or "help me understand" are not development tasks -- skip intent detection entirely
+
+### Backward Compatibility
+
+If the user has already invoked a slash command directly (e.g. `/isdlc fix "..."`), execute it immediately without re-asking. Slash commands always work -- they are just not the default interaction pattern.
+
+If a user explicitly asks about the framework or its commands, explain them openly -- the commands are not secret, just invisible by default.
+
+### Visibility
+
+Progress updates, phase transitions, and quality checks remain fully visible to the user during workflow execution. Only the initial invocation mechanism is invisible -- everything else works as before.
+
+Do NOT implement changes directly without going through a workflow. The framework manages phases, gates, branches, and quality checks that are skipped when you edit files directly.
 
 ---
 
