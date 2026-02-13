@@ -1,23 +1,25 @@
-# Code Review Report: BUG-0011-subagent-phase-state-overwrite
+# Code Review Report: BUG-0012-premature-git-commit
 
 **Date**: 2026-02-13
 **Phase**: 08-code-review
 **Reviewer**: QA Engineer (Phase 08)
 **Status**: APPROVED
-**Workflow**: Fix (BUG-0011)
+**Workflow**: Fix (BUG-0012)
 
 ---
 
 ## Scope of Review
 
-1 modified production file, 1 modified test file (36 new tests appended). Total diff: +158 production lines (state-write-validator.cjs), +1163 test lines (state-write-validator.test.cjs). No agent files, dispatchers, common.cjs, or settings.json modified.
+3 modified production files, 1 modified test file (17 new tests appended). Total diff: +45 production lines (branch-guard.cjs), +6 lines (05-software-developer.md), +4 lines (16-quality-loop-engineer.md), +331 test lines (branch-guard.test.cjs). No dispatchers, common.cjs, settings.json, or other hooks modified.
 
 ### Files Reviewed
 
 | File | Type | Lines Changed | Verdict |
 |------|------|---------------|---------|
-| `src/claude/hooks/state-write-validator.cjs` | Production | +158 (V8 checkPhaseFieldProtection + PHASE_STATUS_ORDINAL + check() wiring) | PASS |
-| `src/claude/hooks/tests/state-write-validator.test.cjs` | Test | +1163 (36 new tests T32-T67) | PASS |
+| `src/claude/hooks/branch-guard.cjs` | Production | +45 (phase-aware commit blocking after existing main/master protection) | PASS |
+| `src/claude/agents/05-software-developer.md` | Agent Config | +6 (no-commit instruction section) | PASS |
+| `src/claude/agents/16-quality-loop-engineer.md` | Agent Config | +4 (no-commit instruction section) | PASS |
+| `src/claude/hooks/tests/branch-guard.test.cjs` | Test | +331 (17 new tests T15-T31, helper functions, describe block) | PASS |
 
 ---
 
@@ -27,123 +29,106 @@
 
 | Check | Result | Notes |
 |-------|--------|-------|
-| checkPhaseFieldProtection() compares incoming phase_index < disk correctly | PASS | `incomingIndex < diskIndex` guard at line 273. T32 (index 2<3), T37 (index 4<7), T58 (index 0<1), T62 (index 3<7) all correctly blocked. |
-| checkPhaseFieldProtection() allows incoming phase_index >= disk | PASS | T33 (5==5 allowed), T34 (3>2 allowed). |
-| Phase status ordinal comparison is correct | PASS | `PHASE_STATUS_ORDINAL` maps pending=0, in_progress=1, completed=2. Regression means incoming ordinal < disk ordinal. T39 (completed->pending), T40 (completed->in_progress), T41 (in_progress->pending) all correctly blocked. |
-| Phase status forward progress is allowed | PASS | T42 (pending->in_progress), T43 (in_progress->completed) both allowed. |
-| New phase_status entries are allowed | PASS | T44 confirms new phases not on disk are allowed. `diskStatus === undefined` check at line 297. |
-| Mixed valid+regression writes are blocked | PASS | T45 confirms that one valid change + one regression = BLOCK. The loop exits on first regression found. |
-| V8 skips Edit events | PASS | Guard at line 209: `if (toolName !== 'Write') return null`. T53 confirms Edit events pass through. |
-| V8 runs after V7 but before V1-V3 | PASS | In check(), V7 called first (line 357), V8 called second (line 363), V1-V3 run after (line 370+). T55, T56, T57 verify the execution order. |
-| V7 short-circuits before V8 | PASS | T55: stale version (3<10) blocks at V7; V8 never runs. Block message says "Version mismatch" confirming V7 origin. |
-| V8 short-circuits before V1-V3 | PASS | T56: V8 blocks (phase index 0<5); V1-V3 warning for suspicious constitutional_validation does NOT appear in stderr. |
-| Monorepo paths work | PASS | T63 uses `.isdlc/projects/my-api/state.json` path. V8 blocks correctly through STATE_JSON_PATTERN regex. |
+| Phase-aware blocking only on workflow branch | PASS | Line 140: `currentBranch !== workflowBranchName` check ensures non-workflow branches (hotfix/, etc.) are never blocked. T20 verifies. |
+| Fail-open on missing current_phase | PASS | Line 150: `!currentPhase` guard returns early. T21 verifies. |
+| Fail-open on missing/empty phases array | PASS | Line 150: `!Array.isArray(phases) || phases.length === 0` guard returns early. T22 verifies. |
+| Last-phase detection for commit-allowed | PASS | Line 159-160: `phases[phases.length - 1]` correctly identifies the final phase. T18 (standard workflow), T25 (non-standard workflow) verify. |
+| Intermediate phases are blocked | PASS | T15 (06-implementation), T16 (16-quality-loop), T17 (05-test-strategy) all correctly blocked. |
+| Main/master protection preserved | PASS | Line 115: existing check unchanged. T26 regression test verifies. T1, T2 original tests still pass. |
+| Block message construction is correct | PASS | Lines 169-182: includes phase name, stash suggestion, orchestrator note. T24 verifies all three. |
+| Ordering: main/master check before phase check | PASS | Main/master check at line 115 runs before phase-aware check at line 136. Correct priority ordering. |
 
 ### Error Handling
 
 | Check | Result | Notes |
 |-------|--------|-------|
-| checkPhaseFieldProtection() fail-open on incoming parse error | PASS | T46: non-JSON content returns null (allow). Inner try/catch at line 219. |
-| checkPhaseFieldProtection() fail-open on disk file missing | PASS | T47: no disk file returns null (allow). `fs.existsSync()` check at line 234. |
-| checkPhaseFieldProtection() fail-open on missing active_workflow in incoming | PASS | T35, T48: incoming without active_workflow returns null. |
-| checkPhaseFieldProtection() fail-open on missing active_workflow in disk | PASS | T36, T49: disk without active_workflow returns null. |
-| checkPhaseFieldProtection() fail-open on missing phase_status | PASS | T50, T51: missing phase_status on either side skips the status check. |
-| checkPhaseFieldProtection() fail-open on unknown status values | PASS | T59: unknown statuses have undefined ordinal, `continue` skips comparison. |
-| checkPhaseFieldProtection() fail-open on type errors | PASS | T52: active_workflow as string (not object) fails the `typeof incomingAW !== 'object'` guard. |
-| checkPhaseFieldProtection() fail-open on missing current_phase_index | PASS | T60, T61: missing index on either side skips comparison (NFR-02 backward compat). |
-| Outermost catch returns null (allow) | PASS | Catch at line 318 returns null with debugLog. |
-| No new throw sites introduced | PASS | All error paths return null. |
-| Consistent with Article X (Fail-Safe Defaults) | PASS | Every error path allows the operation to proceed. 7 dedicated fail-open tests (T46-T52). |
+| Outermost try-catch at line 185 | PASS | Catches any unhandled exception, calls process.exit(0) (fail-open). |
+| JSON.parse failure on stdin | PASS | Inner try-catch at line 68-72. T13 verifies. |
+| readStdin() returns empty/null | PASS | Lines 63-65 guard against empty input. T12 verifies. |
+| readState() returns null | PASS | Line 89-92 guard. T11 verifies. |
+| getCurrentBranch() returns null | PASS | Lines 107-110 guard (git rev-parse failure). T10 verifies. |
+| Missing git_branch in state | PASS | Lines 99-103 guard. T7 verifies. |
+| Missing git_branch.name | PASS | Line 139: defaults to empty string via `|| ''`. If workflow branch name is empty, `currentBranch !== ''` will always be true for real branches, so it fails open by exiting at line 142. |
+| All error paths exit 0 | PASS | All 13 process.exit() calls use exit(0). Confirmed by static analysis. |
 
 ### Security Considerations
 
 | Check | Result | Notes |
 |-------|--------|-------|
-| No user-controlled data in error messages | PASS | stopReason includes only phase index numbers, phase names, and status strings from a known ordinal map. |
+| No user-controlled data in code execution | PASS | No eval, no new Function, no child_process.exec with user input. Only execSync('git rev-parse') with hardcoded command. |
 | No secrets or credentials | PASS | No secrets in any modified file. |
-| No dynamic code execution | PASS | No eval, new Function, or child_process usage. |
-| No prototype pollution risk | PASS | Object.entries() iteration on phase_status is safe -- iterates own enumerable properties only. |
-| No injection vectors | PASS | Phase index compared as numbers only. Status values compared against PHASE_STATUS_ORDINAL keys. |
-| Path traversal risk | PASS | filePath validated against STATE_JSON_PATTERN regex before any fs operations. |
-| JSON.parse safety | PASS | Parse errors caught and handled (fail-open). |
-| No ReDoS risk | PASS | No new regex patterns introduced. Existing STATE_JSON_PATTERN is simple and non-backtracking. |
+| No injection vectors | PASS | Branch names and phase names come from state.json (internal) and git (local). Used only in string comparisons and log output. |
+| No prototype pollution | PASS | No dynamic property access or Object.assign from external input. |
+| Template literal injection risk | LOW | Phase names and branch names are interpolated into the block message. These come from state.json (trusted internal data), not user input. No code execution risk. |
+| execSync command injection | PASS | The git command on line 49 is a hardcoded string literal with no interpolation. |
 
 ### Performance Implications
 
 | Check | Result | Notes |
 |-------|--------|-------|
-| V8 adds one readFileSync + one JSON.parse | PASS | Same disk read pattern as V7. Small JSON file (<10KB typical). Well within 100ms budget. |
-| V8 JSON parsing duplicates V7 parsing | NOTE | Both V7 and V8 independently parse incoming content and read disk state. See OBS-01 below. |
-| No async operations introduced | PASS | All new code is synchronous, matching existing patterns. |
-| PHASE_STATUS_ORDINAL lookup is O(1) | PASS | Object property lookup on a 3-entry constant. |
-| Phase status loop is O(n) where n = phase count | PASS | Typical workflow has 6-9 phases. Negligible. |
-| T66 performance test passes | PASS | Average execution time within 200ms budget (includes Node process startup). |
-| T67 overhead test passes | PASS | V8 overhead < 50ms compared to no-active_workflow baseline. |
+| Single state.json read (readState) | PASS | One readState() call at line 88. Same as before the change. |
+| Single git subprocess (rev-parse) | PASS | One execSync at line 49 with 3-second timeout. Same as before. |
+| No new I/O operations introduced | PASS | The phase-aware logic only reads from the already-loaded state object (in-memory). |
+| No async operations added | PASS | All new logic is synchronous branching on the existing state object. |
+| String comparisons only | PASS | `currentPhase === lastPhase`, `currentBranch !== workflowBranchName` are O(1) string comparisons. |
+| Total hook execution | PASS | Test T15 through T26 all complete within 100ms individually (including process startup). Well within 200ms budget. |
 
 ### Test Coverage
 
 | Check | Result | Notes |
 |-------|--------|-------|
-| All 23 ACs mapped to tests | PASS | See Acceptance Criteria Traceability section below. Full matrix in traceability-matrix.csv. |
-| Positive tests (block on regression) | PASS | T32, T37, T38, T39, T40, T41, T45, T54, T56, T58, T62, T63 |
-| Negative tests (allow on valid/missing) | PASS | T33, T34, T35, T36, T42, T43, T44, T46, T47, T48, T49, T50, T51, T52, T53, T57, T59, T60, T61 |
-| Boundary tests | PASS | T58 (index 1->0), T62 (multiple simultaneous regressions) |
-| Backward compatibility / missing field tests | PASS | T60, T61 (missing index), T50, T51 (missing phase_status) |
-| Monorepo test | PASS | T63 confirms V8 works with `.isdlc/projects/{id}/state.json` paths |
-| Regression suite (V1-V7 unaffected) | PASS | T64 (V7 still blocks), T65 (V1 warnings still fire) |
-| Performance tests | PASS | T66 (<200ms budget), T67 (<50ms overhead) |
-| Pre-existing regression suite passes | PASS | T1-T31 all pass unchanged |
+| All 20 ACs mapped to tests | PASS | See Acceptance Criteria Traceability section below. Full matrix matches traceability-matrix.csv. |
+| Statement coverage | PASS | 98.42% (c8 report). Only uncovered: outer catch block lines 186-188 (error-recovery path). |
+| Branch coverage | PASS | 88.37% branch coverage. Uncovered branches are the deeply nested error paths within the outer catch. |
+| Function coverage | PASS | 100% function coverage. All 3 functions (isGitCommit, getCurrentBranch, main) exercised. |
+| Positive tests (block commits) | PASS | T15, T16, T17 (intermediate phases), T24 (message quality), T26 (main regression) |
+| Negative tests (allow commits) | PASS | T18, T19, T20, T21, T22, T23, T25 (final phase, no workflow, non-workflow branch, fail-open, git add) |
+| Regression tests | PASS | T26 verifies main/master blocking still works with phase-aware logic present. T1-T14 all pass unchanged. |
+| Agent content tests | PASS | T27-T31 validate agent markdown content (no-commit instruction presence, prominence, rationale). |
 
 ### Code Documentation
 
 | Check | Result | Notes |
 |-------|--------|-------|
-| JSDoc on checkPhaseFieldProtection() | PASS | Comprehensive JSDoc with param types, return type, behavior description, and FR traceability. |
-| JSDoc on PHASE_STATUS_ORDINAL | PASS | Describes ordinal map purpose and fail-open behavior for unknown values. |
-| Inline AC traceability comments | PASS | Each guard references specific ACs (e.g., `// AC-01c, AC-03c`, `// AC-02f`, `// AC-03e, T59`). |
-| Version bump in file header | PASS | `Version: 1.2.0` (upgraded from 1.1.0). |
-| V8 traceability in file header | PASS | `V8 traces to: BUG-0011 FR-01 thru FR-05`. |
-| check() JSDoc updated | PASS | Added `For V8 (BUG-0011)` line to check() documentation. |
-| Test file traceability header | PASS | `Traces to: FR-01 thru FR-05, AC-01a thru AC-05c, NFR-01, NFR-02` |
+| File header updated | PASS | Header updated to describe phase-aware blocking behavior, BUG-0012 traceability, version 2.0.0. |
+| Inline comments | PASS | Each new code section has clear inline comments explaining the logic and rationale. |
+| BUG-0012 traceability in header | PASS | `Traces to:` line includes BUG-0012 FR-01 through FR-05, AC-07 through AC-20. |
+| Agent instruction clarity | PASS | Both agents use `# CRITICAL` / `## CRITICAL` heading with bold text. Explains why (quality-loop, code-review not yet run) and who handles commits (orchestrator). |
+| Test traceability comments | PASS | Each test case has `// Traces to: AC-XX` comments matching the traceability matrix. |
 
 ### Naming Clarity
 
 | Check | Result | Notes |
 |-------|--------|-------|
-| `checkPhaseFieldProtection()` function name | PASS | Clearly describes the phase field protection check. Follows the `checkVersionLock()` naming convention. |
-| `PHASE_STATUS_ORDINAL` constant name | PASS | Clearly describes ordinal values for phase statuses. |
-| `incomingAW` / `diskAW` variable names | PASS | Short but unambiguous abbreviations for active_workflow from incoming/disk. |
-| `incomingPS` / `diskPS` variable names | PASS | Consistent abbreviation pattern for phase_status. |
-| `incomingOrd` / `diskOrd` variable names | PASS | Clear ordinal value comparisons. |
-| `v8Result` variable in check() | PASS | Follows the `v7Result` naming convention. |
+| `workflowBranchName` | PASS | Clear variable name distinguishing it from `currentBranch`. |
+| `currentPhase` / `lastPhase` | PASS | Intuitive names for the phase comparison logic. |
+| `isGitCommit()` | PASS | Existing function, unchanged. Clear boolean predicate name. |
+| `getCurrentBranch()` | PASS | Existing function, unchanged. Clear action-returning name. |
 
 ### DRY Principle
 
 | Check | Result | Notes |
 |-------|--------|-------|
-| V8 follows V7 structural pattern | PASS | Both functions: parse incoming, read disk, compare, block/allow. Consistent hook convention. |
-| No duplication of V8 logic | PASS | `checkPhaseFieldProtection()` is the single location for phase field protection. |
-| V7 and V8 both independently parse incoming content | NOTE | See OBS-01 below. Both functions parse `toolInput.content` independently. This is the same pattern used within V7 for incoming vs disk parsing. |
-| STATE_JSON_PATTERN regex | NOTE | Pre-existing duplication (common.cjs and state-write-validator.cjs). Not introduced or worsened by BUG-0011. |
-| Test helper `makeWriteStdinWithContent()` reused | PASS | V8 tests reuse the same helper from the V7 test section. No duplication. |
+| No duplicated logic | PASS | Phase-aware blocking is a single code path after the main/master check. No duplication. |
+| Agent instructions share common wording | NOTE | Both agents use similar phrasing ("Do NOT run git add, git commit, or git push"). This is intentional duplication for agent prompt clarity -- each agent must be self-contained. Not a violation. |
+| State reading reuses existing readState() | PASS | Uses the same `readState()` call and `state.active_workflow` access as the main/master check. |
 
 ### Single Responsibility Principle
 
 | Check | Result | Notes |
 |-------|--------|-------|
-| checkPhaseFieldProtection() has single purpose | PASS | Compares phase orchestration fields, returns block/null. No side effects beyond logging. |
-| PHASE_STATUS_ORDINAL is a pure data constant | PASS | No logic, no side effects. Single-purpose ordinal lookup. |
-| check() orchestrates V7 + V8 + V1-V3 | PASS | Clear sequential orchestration: V7 first, V8 second, V1-V3 third. Each is a separate function. |
+| branch-guard.cjs guards git commit | PASS | All new logic is within the hook's existing responsibility: guarding when git commits should be blocked. Phase-aware blocking is a natural extension of branch-level blocking. |
+| Agent files instruct agent behavior | PASS | The no-commit instructions belong in the agent definitions. They complement the hook enforcement with prompt-level guidance. |
 
 ### Code Smells
 
 | Check | Result | Notes |
 |-------|--------|-------|
-| checkPhaseFieldProtection() length (108 lines) | ACCEPTABLE | Function includes comprehensive JSDoc (17 lines), comments, and fail-open guards. Net logic is ~60 lines. Linear early-return pattern is readable. |
-| Cyclomatic complexity (CC ~15 estimated) | ACCEPTABLE | Driven by fail-open pattern (3 catch paths + null/undefined guards + type checks). Each branch is an early return. Same pattern as checkVersionLock(). See OBS-02. |
-| Duplicate JSON parsing between V7 and V8 | LOW | See OBS-01 below. |
-| Dead code | PASS | No dead code introduced. |
-| Unused imports | PASS | Only `debugLog`, `logHookEvent`, and `fs` imported; all used. |
+| main() function length | ACCEPTABLE | 128 lines including comments and whitespace. Linear flow with early returns. No deeply nested logic. |
+| Cyclomatic complexity | ACCEPTABLE | Estimated CC=13. Driven by fail-open guard chain (6 if-blocks + 3 catch paths + conditionals). Each branch is an early return or process.exit. Linear and readable. |
+| process.exit() pattern | NOTE | The hook uses process.exit(0) for all paths (both block and allow). This is the established convention for iSDLC hooks -- stdout JSON indicates block, empty stdout indicates allow, exit code is always 0. |
+| Dead code | PASS | No dead code. The old "Not on main/master, allowing" comment and process.exit(0) were replaced by the phase-aware logic. |
+| Unused imports | PASS | All imports from common.cjs are used: readStdin, readState, outputBlockResponse, debugLog, logHookEvent. |
 
 ---
 
@@ -153,22 +138,15 @@
 ### High Issues: 0
 ### Medium Issues: 0
 
-### Low Issues: 1
-
-**LOW-01**: Stale header comment (pre-existing, not introduced by BUG-0011)
-
-- **Location**: `src/claude/hooks/state-write-validator.cjs`, line 8
-- **Description**: The file header says "OBSERVATIONAL ONLY: outputs warnings to stderr, never blocks." This was accurate before BUG-0009 (V7) added blocking behavior. V7 and V8 both block writes. The comment is stale and misleading.
-- **Impact**: LOW -- documentation-only issue. No functional impact. Anyone reading the header would get incorrect expectations about the hook's behavior.
-- **Recommendation**: Update the header comment to reflect current blocking behavior. This should be addressed in a future fix workflow since it predates BUG-0011.
+### Low Issues: 0
 
 ### Observations (No Action Required)
 
-**OBS-01**: V7 and V8 both independently parse the incoming content (`JSON.parse(toolInput.content)`) and read the disk state (`fs.readFileSync` + `JSON.parse`). This means two JSON parses of the same content occur when both V7 and V8 run. This follows the established pattern where each validation function is self-contained with its own fail-open error handling. Merging them would increase coupling and break the single-responsibility pattern. The overhead is negligible (two parses of a <10KB JSON file, ~0.1ms each).
+**OBS-01**: The `phases.length === 0` check on line 150 is defensive. In practice, `active_workflow.phases` always has at least one entry because the orchestrator requires at least one phase to create a workflow. However, the check is correct defensive programming and costs nothing. No action needed.
 
-**OBS-02**: `checkPhaseFieldProtection()` has an estimated cyclomatic complexity of ~15 (6 early-return guards + 3 catch blocks + 2 loop conditionals + type checks). This is above the typical threshold of 10 but follows the same pattern as `checkVersionLock()` (CC=13). Both functions are linear (all branches are early returns), readable, and thoroughly tested. The CC is inflated by the defensive fail-open convention used throughout the hook codebase.
+**OBS-02**: The test file (branch-guard.test.cjs) at 597 lines is 3x the size of the production file (191 lines). This is expected for a well-tested hook -- the test-to-code ratio of 3:1 reflects thorough coverage. The test helpers (`setupTestEnv`, `writeState`, `setupGitRepo`, `runHook`, `makeStdin`, `makeWorkflowState`) are well-structured and reusable.
 
-**OBS-03**: The `current_phase` string field is not directly protected by V8, despite being mentioned in the bug report summary. The implementation correctly relies on `current_phase_index` protection because `current_phase` always correlates with `current_phase_index` -- if the index regresses, the phase name regression is also prevented. The FR-01 specification explicitly scopes to `current_phase_index` only, making this an intentional and valid simplification.
+**OBS-03**: Test T3 ("allows git commit on feature branch") from the original test suite now passes by a different code path than before BUG-0012. Pre-BUG-0012, it passed via the "Not on main/master, allowing" catch-all. Post-BUG-0012, it passes because the state has no `current_phase` or `phases` array, triggering the fail-open at line 150. This is correct behavior -- both code paths result in allowing the commit. The test assertion is stable either way.
 
 ---
 
@@ -176,9 +154,11 @@
 
 | Source File | Runtime Copy | Status |
 |-------------|-------------|--------|
-| `src/claude/hooks/state-write-validator.cjs` | `.claude/hooks/state-write-validator.cjs` | IDENTICAL |
+| `src/claude/hooks/branch-guard.cjs` | `.claude/hooks/branch-guard.cjs` | IDENTICAL |
+| `src/claude/agents/05-software-developer.md` | `.claude/agents/05-software-developer.md` | IDENTICAL |
+| `src/claude/agents/16-quality-loop-engineer.md` | `.claude/agents/16-quality-loop-engineer.md` | IDENTICAL |
 
-Verified via `diff` -- source and runtime copies are byte-identical.
+Verified via `diff` -- all source and runtime copies are byte-identical.
 
 ---
 
@@ -186,75 +166,71 @@ Verified via `diff` -- source and runtime copies are byte-identical.
 
 | Constraint | Verification | Result |
 |------------|-------------|--------|
-| Existing tests pass without modification | T1-T31 all pass with 0 changes to test code | PASS |
-| V1-V3 observational rules unaffected | T65 confirms V1 warnings still fire | PASS |
-| V7 blocking unaffected | T64 confirms V7 version blocking still works | PASS |
-| No common.cjs modifications | `git diff --stat` shows 0 changes to common.cjs | PASS |
-| No dispatchers modified | `git diff --stat` shows 0 dispatcher changes | PASS |
-| No settings.json modified | `git diff --stat` shows 0 settings changes | PASS |
-| No agent files modified | `git diff --stat` shows 0 agent file changes | PASS |
-| Scope limited to 1 production file + 1 test file | Only state-write-validator.cjs and its test modified | PASS |
-| Module system compliance (CJS, Article XIII) | require() / module.exports only; no ESM imports | PASS |
+| Existing tests pass without modification | T1-T14 all pass with 0 changes to original test code | PASS |
+| Main/master protection preserved | T26 regression test, T1 and T2 original tests | PASS |
+| No common.cjs modifications | git diff shows 0 changes to common.cjs | PASS |
+| No dispatchers modified | git diff shows 0 dispatcher changes | PASS |
+| No settings.json modified | git diff shows 0 settings changes | PASS |
+| No other hooks modified | git diff shows only branch-guard.cjs changed in hooks/ | PASS |
+| Module system compliance (CJS) | require() / module.exports only; no ESM imports | PASS |
+| Scope limited to declared files | Only 3 production files + 1 test file modified, as specified in requirements | PASS |
 
 ---
 
 ## Acceptance Criteria Traceability
 
-### FR-01: Block Phase Index Regression
+### FR-01: Software Developer Agent No-Commit Instruction
 
 | AC | Description | Test(s) | Status |
 |----|-------------|---------|--------|
-| AC-01a | Write with current_phase_index < disk is BLOCKED | T32, T58, T62, T63 | COVERED |
-| AC-01b | Write with current_phase_index >= disk is ALLOWED | T33, T34 | COVERED |
-| AC-01c | Write with no active_workflow is ALLOWED | T35, T48 | COVERED |
-| AC-01d | Write where disk has no active_workflow is ALLOWED | T36, T49 | COVERED |
-| AC-01e | Block message includes incoming vs disk values | T37 | COVERED |
-| AC-01f | Rule is logged to hook-activity.log | T38 | COVERED |
+| AC-01 | Agent contains "Do NOT" instruction about git commit | T27 | COVERED |
+| AC-02 | Instruction in prominent position (within first 80 lines) | T27 | COVERED |
+| AC-03 | Explains WHY (quality-loop and code-review not yet run) | T28 | COVERED |
+| AC-04 | Specifies orchestrator manages git operations | T29 | COVERED |
 
-### FR-02: Block phase_status Regression
+### FR-02: Quality Loop Agent No-Commit Instruction
 
 | AC | Description | Test(s) | Status |
 |----|-------------|---------|--------|
-| AC-02a | completed -> pending is BLOCKED | T39 | COVERED |
-| AC-02b | completed -> in_progress is BLOCKED | T40 | COVERED |
-| AC-02c | in_progress -> pending is BLOCKED | T41 | COVERED |
-| AC-02d | pending -> in_progress is ALLOWED | T42 | COVERED |
-| AC-02e | in_progress -> completed is ALLOWED | T43 | COVERED |
-| AC-02f | Adding NEW entries is ALLOWED | T44 | COVERED |
-| AC-02g | One valid + one regression = BLOCK | T45, T62 | COVERED |
+| AC-05 | Agent contains "Do NOT" instruction about git commit | T30 | COVERED |
+| AC-06 | Explains code review (Phase 08) has not yet run | T31 | COVERED |
 
-### FR-03: Fail-Open on Errors
+### FR-03: Phase-Aware Commit Blocking
 
 | AC | Description | Test(s) | Status |
 |----|-------------|---------|--------|
-| AC-03a | Cannot parse incoming JSON -> ALLOW | T46 | COVERED |
-| AC-03b | Cannot read disk state -> ALLOW | T47 | COVERED |
-| AC-03c | No active_workflow in either -> ALLOW | T48, T49 | COVERED |
-| AC-03d | No phase_status in either -> ALLOW | T50, T51 | COVERED |
-| AC-03e | Any exception -> ALLOW | T52, T59 | COVERED |
+| AC-07 | Hook reads current_phase from state.json | T15, T16, T17 | COVERED |
+| AC-08 | Hook reads phases array to determine commit-allowed phase | T18, T25 | COVERED |
+| AC-09 | Commits blocked on workflow branches during non-final phases | T15, T16, T17 | COVERED |
+| AC-10 | Commits allowed during final phase | T18, T25 | COVERED |
+| AC-11 | Commits allowed when no active workflow | T19 | COVERED |
+| AC-12 | Commits allowed on non-workflow branches | T20 | COVERED |
+| AC-13 | Helpful error message with phase name | T24 | COVERED |
+| AC-14 | Fail-open on errors | T21, T22 | COVERED |
 
-### FR-04: Write Events Only
-
-| AC | Description | Test(s) | Status |
-|----|-------------|---------|--------|
-| AC-04a | V8 skipped for Edit events | T53 | COVERED |
-| AC-04b | V8 runs for Write events | T54 | COVERED |
-
-### FR-05: Execution Order
+### FR-04: Allowed Commit Phases Configuration
 
 | AC | Description | Test(s) | Status |
 |----|-------------|---------|--------|
-| AC-05a | V8 runs after V7 but before V1-V3 | T55, T56, T57 | COVERED |
-| AC-05b | V7 blocks -> V8 does not run | T55 | COVERED |
-| AC-05c | V8 blocks -> V1-V3 do not run | T56 | COVERED |
+| AC-15 | Last phase in phases array = commit-allowed | T18, T25 | COVERED |
+| AC-16 | Commits allowed during last phase | T18, T25 | COVERED |
+| AC-17 | Orchestrator git ops unaffected (main blocked separately) | T26 | COVERED |
+| AC-18 | git add without commit allowed during all phases | T23 | COVERED |
 
-**Total: 23/23 ACs covered (100%)**
+### FR-05: Git Stash as Alternative
+
+| AC | Description | Test(s) | Status |
+|----|-------------|---------|--------|
+| AC-19 | Block message suggests git stash | T24 | COVERED |
+| AC-20 | Block message explains orchestrator handles commits | T24 | COVERED |
+
+**Total: 20/20 ACs covered (100%)**
 
 ---
 
 ## Verdict
 
-**APPROVED**. The BUG-0011 V8 phase field protection rule is correctly implemented, minimal in scope (1 production file), fail-open on all error paths (7 dedicated tests), backward-compatible with legacy state files missing orchestration fields (4 tests), and fully tested with 36 new tests covering 100% of the 23 acceptance criteria. All 67 state-write-validator tests pass. All 1112 CJS hook tests pass with 0 regressions. The implementation follows the established V7 structural pattern exactly, maintaining consistency and predictability. Runtime copy is in sync. No dispatchers, agent files, common.cjs, or settings.json were modified. One low-severity finding (stale header comment, pre-existing from BUG-0009) noted for future cleanup.
+**APPROVED**. The BUG-0012 phase-aware commit blocking is correctly implemented, minimal in scope (3 production files, 1 test file), fail-open on all error paths, backward-compatible with existing main/master protection (T26 regression test), and fully tested with 17 new tests covering 100% of the 20 acceptance criteria. All 31 branch-guard tests pass. All 1129 CJS hook tests pass with 0 regressions. 489/490 ESM tests pass (1 pre-existing TC-E09 failure, unrelated). 98.42% statement coverage, 100% function coverage on branch-guard.cjs. All 3 runtime copies in sync with source. No critical, high, or medium findings. 0 low findings. 3 informational observations noted.
 
 ---
 

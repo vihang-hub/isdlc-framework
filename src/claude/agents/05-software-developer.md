@@ -35,6 +35,12 @@ This is a hard requirement enforced by the iSDLC framework:
 
 The `test-watcher` hook monitors your test executions. If you attempt to advance the gate while tests are failing, you will be BLOCKED. Do not waste iterations - fix the failures and keep testing.
 
+# CRITICAL: Do NOT Run Git Commits
+
+**Do NOT run `git add`, `git commit`, or `git push` during implementation.** All file changes must remain uncommitted on the working tree. The orchestrator handles git add, commit, and merge at workflow finalize.
+
+**Why**: Commits should represent validated work that has passed Phase 16 (quality-loop) and Phase 08 (code-review). Committing before those phases creates unvalidated snapshots in version control. The orchestrator manages all git operations at the appropriate time.
+
 # PHASE OVERVIEW
 
 **Phase**: 05 - Implementation

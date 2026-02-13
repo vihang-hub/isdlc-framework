@@ -1,75 +1,88 @@
-# Quality Metrics: BUG-0011-subagent-phase-state-overwrite
+# Quality Metrics: BUG-0012-premature-git-commit
 
 **Date**: 2026-02-13
 **Phase**: 08-code-review
+**Workflow**: Fix (BUG-0012)
 
 ---
 
-## Test Metrics
+## Test Results
 
-| Metric | Value |
-|--------|-------|
-| CJS Hook Tests (npm run test:hooks) | 1112 pass, 0 fail |
-| ESM Lib Tests (npm test) | 489 pass, 1 fail (pre-existing TC-E09) |
-| Total tests (npm run test:all) | 1601 pass, 1 fail (pre-existing) |
-| New BUG-0011 tests | 36 (T32-T67 in state-write-validator.test.cjs) |
-| State-write-validator file total | 67 (31 existing + 36 new) |
-| Test count baseline (Article II) | 555 |
-| Current total test count | 1602 (2.89x baseline) |
-| Regressions introduced | 0 |
-| Pre-existing regression suite (T1-T31) | All pass unchanged |
+| Test Suite | Total | Pass | Fail | Skip | Duration |
+|------------|-------|------|------|------|----------|
+| branch-guard.test.cjs | 31 | 31 | 0 | 0 | 2.1s |
+| CJS hooks (full suite) | 1129 | 1129 | 0 | 0 | 3.4s |
+| ESM lib (full suite) | 490 | 489 | 1* | 0 | ~45s |
 
-## Code Change Metrics
+*1 pre-existing failure: TC-E09 (README agent count). Unrelated to BUG-0012.
 
-| Metric | Value |
-|--------|-------|
-| Production files modified | 1 (state-write-validator.cjs) |
-| Test files modified | 1 (state-write-validator.test.cjs) |
-| Test files created | 0 |
-| Production lines added (net) | +158 (1 constant + 1 function + check() wiring + JSDoc + header update) |
-| Test lines added | +1163 (36 tests in V8 describe block) |
-| Test-to-code ratio (new) | ~1163:158 (~7.4:1 test:code) |
-| Files NOT modified (verified by constraint) | common.cjs, dispatchers, settings.json, agent files, commands |
+## Code Coverage (branch-guard.cjs)
+
+| Metric | Value | Threshold | Status |
+|--------|-------|-----------|--------|
+| Statement coverage | 98.42% | >= 80% | PASS |
+| Branch coverage | 88.37% | >= 80% | PASS |
+| Function coverage | 100% | >= 80% | PASS |
+| Line coverage | 98.42% | >= 80% | PASS |
+
+**Uncovered lines**: 186-188 (outer catch block -- error-recovery-only path).
+
+## Code Size Metrics
+
+| File | Before | After | Delta | Type |
+|------|--------|-------|-------|------|
+| branch-guard.cjs | 138 lines | 191 lines | +53 | Production |
+| 05-software-developer.md | ~500 lines | ~506 lines | +6 | Agent Config |
+| 16-quality-loop-engineer.md | ~100 lines | ~104 lines | +4 | Agent Config |
+| branch-guard.test.cjs | 265 lines | 597 lines | +332 | Test |
 
 ## Complexity Metrics
 
-| File | Function | Lines | Cyclomatic Complexity | Assessment |
-|------|----------|-------|----------------------|------------|
-| state-write-validator.cjs | checkPhaseFieldProtection() | 108 (60 net logic) | ~15 | ACCEPTABLE -- linear early-return fail-open pattern, same convention as checkVersionLock() |
-| state-write-validator.cjs | PHASE_STATUS_ORDINAL | 5 | 0 | PASS -- pure data constant |
-| state-write-validator.cjs | check() (delta) | +6 lines | +1 (v8Result check) | PASS -- minimal addition |
+| Metric | Value | Threshold | Status |
+|--------|-------|-----------|--------|
+| Cyclomatic complexity (main function) | 13 | < 20 | PASS |
+| Total functions in branch-guard.cjs | 3 | - | INFO |
+| Max nesting depth | 2 | < 5 | PASS |
+| Test-to-code ratio (new code) | 6.3:1 (332 test / 53 prod) | > 1:1 | PASS |
+| Total test-to-code ratio | 3.1:1 (597 test / 191 prod) | > 1:1 | PASS |
+
+## Regression Metrics
+
+| Check | Result |
+|-------|--------|
+| CJS tests: 1129/1129 pass | No regressions |
+| ESM tests: 489/490 pass | No regressions (1 pre-existing) |
+| Original branch-guard tests (T1-T14) | All pass unchanged |
+| Main/master blocking preserved | T26 regression test passes |
 
 ## Acceptance Criteria Coverage
 
-| Requirement | ACs | Tests | Coverage |
-|-------------|-----|-------|----------|
-| FR-01 (Phase Index Regression) | 6 | 10 (T32-T38, T58, T62, T63) | 100% |
-| FR-02 (Phase Status Regression) | 7 | 9 (T39-T45, T62) | 100% |
-| FR-03 (Fail-Open) | 5 | 8 (T46-T52, T59) | 100% |
-| FR-04 (Write Events Only) | 2 | 2 (T53-T54) | 100% |
-| FR-05 (Execution Order) | 3 | 3 (T55-T57) | 100% |
-| NFR-01 (Performance) | -- | 2 (T66-T67) | 100% |
-| NFR-02 (Backward Compat) | -- | 2 (T60-T61) | 100% |
-| Regression (V1-V7) | -- | 2 (T64-T65) | 100% |
-| **Total** | **23 ACs** | **36 tests** | **100%** |
+| Metric | Value |
+|--------|-------|
+| Total ACs | 20 |
+| ACs with test coverage | 20 |
+| AC coverage | 100% |
+| Total test cases | 17 (new) + 14 (existing) = 31 |
 
-## Quality Indicators
+## Non-Functional Requirement Metrics
 
-| Indicator | Status |
+| NFR | Metric | Value | Threshold | Status |
+|-----|--------|-------|-----------|--------|
+| NFR-01 Performance | Test execution (per test) | < 100ms | < 200ms | PASS |
+| NFR-02 Fail-open | Fail-open test count | 4 (T19, T21, T22, T10) | > 0 | PASS |
+| NFR-03 Backward compat | Regression tests | T26 + T1-T14 | > 0 | PASS |
+
+## Quality Gate Status
+
+| Gate Item | Status |
 |-----------|--------|
-| Syntax check (node -c) on production file | PASS |
-| Syntax check (node -c) on test file | PASS |
-| Module system compliance (CJS, Article XIII) | PASS |
-| No stray console.log in production code | PASS |
-| Fail-open on all error paths (Article X) | PASS (7 dedicated tests) |
-| No agent files modified | PASS |
-| No dispatcher files modified | PASS |
-| No common.cjs modified | PASS |
-| Runtime sync (.claude/ = src/) | PASS (1 file verified identical via diff) |
-| Constitutional compliance | PASS (Articles V, VI, VII, VIII, IX, X, XIV) |
-| Traceability complete | PASS (23/23 ACs traced to tests and code) |
-| Code review findings | 0 critical, 0 high, 0 medium, 1 low (pre-existing stale comment) |
-| Backward compatibility | PASS (T1-T31 unchanged, T60-T61 + T50-T51 missing-field tests) |
-| Performance budget (NFR-01) | PASS (T66 <200ms total, T67 <50ms V8 overhead) |
-| npm audit | 0 vulnerabilities |
-| No new dependencies | PASS (only existing imports: fs, debugLog, logHookEvent) |
+| All tests passing | PASS (31/31) |
+| Coverage >= 80% | PASS (98.42%) |
+| No critical findings | PASS (0 findings) |
+| No regressions | PASS (1129/1129 CJS, 489/490 ESM) |
+| AC traceability 100% | PASS (20/20) |
+| Runtime sync verified | PASS (3/3 files) |
+
+---
+
+**Status**: All quality metrics within acceptable thresholds.
