@@ -18,14 +18,14 @@
 
 ## What is iSDLC?
 
-The iSDLC (intelligent Software Development Lifecycle) framework installs into your existing project and guides AI-powered development from requirements through production. It exists because LLM-based coding assistants are powerful but unreliable without external constraints — they skip tests, drift from requirements, lose context across sessions, and declare work "done" prematurely. iSDLC adds the structure they lack.
+The iSDLC (intelligent Software Development Lifecycle) framework works with both existing codebases and greenfield projects, guiding AI-powered development from requirements through production. It exists because LLM-based coding assistants are powerful but unreliable without external constraints — they skip tests, drift from requirements, lose context across sessions, and declare work "done" prematurely. iSDLC adds the structure they lack.
 
 ### Self-adapting
 
 - **Adaptive workflow sizing** — automatically scales workflows to light, standard, or epic based on impact analysis, so small fixes don't carry the overhead of large features
 - **Self-correction with limits** — agents iterate autonomously to fix failing tests; circuit breakers stop infinite loops and escalate to a human instead of burning tokens
 - **Tech-stack-aware skills** — during discovery, the framework detects your technologies and activates relevant skills automatically — React projects get component and state management skills, Django projects get migration and ORM skills, and so on
-- **Codebase knowledge** — `/discover` runs 22 agents that map your architecture, test coverage, dependencies, and conventions before any work begins
+- **Codebase knowledge** — for existing projects, `/discover` runs 22 agents that map your architecture, test coverage, dependencies, and conventions — extracting behavior as acceptance criteria and generating characterization tests so the AI understands what's already there before changing anything
 
 ### Constitution-governed
 
@@ -37,7 +37,7 @@ The iSDLC (intelligent Software Development Lifecycle) framework installs into y
 
 - **Structured workflows, not free-form chat** — each workflow type has a fixed phase sequence; agents execute in order with clear handoffs and typed artifacts
 - **Session persistence** — workflow state, phase progress, and iteration counters survive session boundaries; resume where you left off, not from scratch
-- **Artifact traceability** — every phase produces typed artifacts that become inputs to the next; requirements trace to tests trace to code
+- **Artifact traceability** — every feature and bug fix is the anchor; each produces a chain of artifacts — requirements, architecture decisions, test cases, and code changes — so you can trace exactly what changed and why, even across sessions
 
 ### Deterministically enforced
 
@@ -114,12 +114,11 @@ The installer copies 48 agents, 240 skills, 27 hooks, and settings into your pro
 ### Step 2: Start Using the Framework
 
 ```bash
-claude                                    # Start Claude Code
-/discover                                 # Analyze project (or describe if new)
-/isdlc feature "Add user authentication"   # Develop a feature end-to-end
+claude
 ```
 
-The `/discover` command analyzes your project's architecture, test coverage, and patterns, then generates a tailored constitution (governance rules). For new projects, it elicits your vision through interactive prompts. Once discovery is complete, use any `/isdlc` workflow to begin development.
+- **`/discover`** — for existing projects, maps your architecture, tests, dependencies, and conventions; for new projects, elicits your vision through interactive prompts and multi-agent debate. Both produce a tailored project constitution.
+- **`/isdlc`** — for existing projects, presents feature, fix, test, and upgrade workflows scoped to your codebase; for new projects, guides you through end-to-end development starting from requirements.
 
 ---
 
