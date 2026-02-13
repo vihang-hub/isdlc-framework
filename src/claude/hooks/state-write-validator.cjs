@@ -12,7 +12,8 @@
  * Fail-open: any error results in silent exit (exit 0, no output)
  *
  * Traces to: FR-05, AC-05, AC-05a, AC-05b, AC-05c, AC-05d, AC-05e
- * Version: 1.1.0
+ * V8 traces to: BUG-0011 FR-01 thru FR-05 (phase orchestration field protection)
+ * Version: 1.2.0
  */
 
 const {
@@ -173,9 +174,159 @@ function checkVersionLock(filePath, toolInput, toolName) {
 }
 
 /**
+ * Phase status ordinal map for regression detection.
+ * Higher ordinal = more advanced status.
+ * Unknown statuses return -1 (fail-open: cannot compare).
+ */
+const PHASE_STATUS_ORDINAL = {
+    'pending': 0,
+    'in_progress': 1,
+    'completed': 2
+};
+
+/**
+ * Rule V8: Phase Orchestration Field Protection (BUG-0011).
+ *
+ * For Write events: compares incoming active_workflow orchestration fields
+ * against disk values. Blocks if:
+ *   - current_phase_index in incoming < disk (phase index regression)
+ *   - Any phase_status entry regresses (e.g., completed -> pending)
+ *
+ * For Edit events: skipped (Edit has no incoming content to compare).
+ * Backward-compatible: allows if fields are missing in either incoming or disk.
+ * Fail-open: allows on any error.
+ *
+ * Traces to: FR-01, FR-02, FR-03, FR-04, FR-05
+ *
+ * @param {string} filePath - Path to the state.json file
+ * @param {object} toolInput - The tool_input from the hook event
+ * @param {string} toolName - 'Write' or 'Edit'
+ * @returns {{ decision: string, stopReason?: string } | null}
+ *   Returns a block result if V8 detects regression, or null to continue.
+ */
+function checkPhaseFieldProtection(filePath, toolInput, toolName) {
+    // V8 only applies to Write events (AC-04a, AC-04b)
+    if (toolName !== 'Write') {
+        return null;
+    }
+
+    try {
+        // Parse incoming content
+        const incomingContent = toolInput.content;
+        if (!incomingContent || typeof incomingContent !== 'string') {
+            return null; // No content to check -- allow
+        }
+
+        let incomingState;
+        try {
+            incomingState = JSON.parse(incomingContent);
+        } catch (e) {
+            // AC-03a: Fail-open on parse error
+            return null;
+        }
+
+        // AC-01c, AC-03c: If incoming has no active_workflow, nothing to check
+        const incomingAW = incomingState && incomingState.active_workflow;
+        if (!incomingAW || typeof incomingAW !== 'object') {
+            return null;
+        }
+
+        // Read current disk state
+        let diskState;
+        try {
+            if (!fs.existsSync(filePath)) {
+                return null; // AC-03b: Fail-open when disk file missing
+            }
+            const diskContent = fs.readFileSync(filePath, 'utf8');
+            diskState = JSON.parse(diskContent);
+        } catch (e) {
+            // AC-03b: Fail-open on disk read error
+            return null;
+        }
+
+        // AC-01d, AC-03c: If disk has no active_workflow, allow (workflow init)
+        const diskAW = diskState && diskState.active_workflow;
+        if (!diskAW || typeof diskAW !== 'object') {
+            return null;
+        }
+
+        // --- Check 1: current_phase_index regression (FR-01) ---
+        const incomingIndex = incomingAW.current_phase_index;
+        const diskIndex = diskAW.current_phase_index;
+
+        // NFR-02: Backward compat -- skip if either is missing/undefined
+        if (
+            incomingIndex !== undefined && incomingIndex !== null &&
+            diskIndex !== undefined && diskIndex !== null
+        ) {
+            if (typeof incomingIndex === 'number' && typeof diskIndex === 'number') {
+                if (incomingIndex < diskIndex) {
+                    // AC-01a, AC-01e: Block with debug info
+                    const reason = `Phase index regression: incoming current_phase_index (${incomingIndex}) < disk (${diskIndex}). Subagents must not regress phase orchestration fields. Re-read state.json.`;
+                    console.error(`[state-write-validator] V8 BLOCK: ${reason}`);
+                    logHookEvent('state-write-validator', 'block', {
+                        reason: `V8: phase_index ${incomingIndex} < disk ${diskIndex}`
+                    });
+                    return {
+                        decision: 'block',
+                        stopReason: reason
+                    };
+                }
+            }
+        }
+
+        // --- Check 2: phase_status regression (FR-02) ---
+        const incomingPS = incomingAW.phase_status;
+        const diskPS = diskAW.phase_status;
+
+        // AC-03d: Skip if either has no phase_status
+        if (incomingPS && typeof incomingPS === 'object' &&
+            diskPS && typeof diskPS === 'object') {
+
+            for (const [phase, incomingStatus] of Object.entries(incomingPS)) {
+                const diskStatus = diskPS[phase];
+                // AC-02f: New entries not on disk are allowed
+                if (diskStatus === undefined || diskStatus === null) {
+                    continue;
+                }
+
+                const incomingOrd = PHASE_STATUS_ORDINAL[incomingStatus];
+                const diskOrd = PHASE_STATUS_ORDINAL[diskStatus];
+
+                // AC-03e, T59: Unknown statuses fail-open (ordinal is undefined)
+                if (incomingOrd === undefined || diskOrd === undefined) {
+                    continue;
+                }
+
+                // AC-02a, AC-02b, AC-02c: Block if regression
+                if (incomingOrd < diskOrd) {
+                    const reason = `Phase status regression: phase '${phase}' changed from '${diskStatus}' to '${incomingStatus}'. Subagents must not regress phase_status. Re-read state.json.`;
+                    console.error(`[state-write-validator] V8 BLOCK: ${reason}`);
+                    logHookEvent('state-write-validator', 'block', {
+                        reason: `V8: phase_status '${phase}' ${diskStatus} -> ${incomingStatus}`
+                    });
+                    return {
+                        decision: 'block',
+                        stopReason: reason
+                    };
+                }
+            }
+        }
+
+        // V8 passes -- no regression detected
+        return null;
+    } catch (e) {
+        // AC-03e: Fail-open on any error
+        debugLog('V8 phase field protection error:', e.message);
+        return null;
+    }
+}
+
+/**
  * Dispatcher-compatible check function.
  * NOTE: For V1-V3, reads the just-written state.json file from disk.
  * For V7 (BUG-0009), compares incoming content version against disk version.
+ * For V8 (BUG-0011), compares incoming phase orchestration fields against disk.
  * @param {object} ctx - { input, state, manifest, requirements, workflows }
  * @returns {{ decision: 'allow'|'block', stopReason?: string, stderr?: string }}
  */
@@ -205,6 +356,12 @@ function check(ctx) {
         const v7Result = checkVersionLock(filePath, toolInput, input.tool_name);
         if (v7Result && v7Result.decision === 'block') {
             return v7Result;
+        }
+
+        // Rule V8: Phase field protection (BUG-0011) — runs after V7, before V1-V3
+        const v8Result = checkPhaseFieldProtection(filePath, toolInput, input.tool_name);
+        if (v8Result && v8Result.decision === 'block') {
+            return v8Result;
         }
 
         // Read the file from disk (it was just written)
