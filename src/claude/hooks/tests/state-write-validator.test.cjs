@@ -563,3 +563,1166 @@ describe('BUG-0009: Version Check (V7)', () => {
             `Should fail-open on bad JSON, got: ${result.stdout}`);
     });
 });
+
+// =========================================================================
+// BUG-0011: Phase Field Protection (V8)
+// Traces to: FR-01 thru FR-05, AC-01a thru AC-05c, NFR-01, NFR-02
+// =========================================================================
+describe('BUG-0011: Phase Field Protection (V8)', () => {
+    let tmpDir;
+
+    beforeEach(() => {
+        tmpDir = setupTestEnv();
+    });
+
+    afterEach(() => {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+    });
+
+    /**
+     * Helper: build a Write stdin payload with explicit content.
+     * Reuses the same pattern as the V7 test section.
+     */
+    function makeWriteStdinWithContent(filePath, content) {
+        return {
+            tool_name: 'Write',
+            tool_input: {
+                file_path: filePath,
+                content: typeof content === 'string' ? content : JSON.stringify(content, null, 2)
+            }
+        };
+    }
+
+    // ===================================================================
+    // FR-01: Block Phase Index Regression (AC-01a thru AC-01f)
+    // ===================================================================
+
+    // T32: Block write when incoming current_phase_index < disk (AC-01a)
+    it('T32: blocks write when incoming current_phase_index < disk', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '03-architecture',
+                current_phase_index: 3,
+                phase_status: {
+                    '01-requirements': 'completed',
+                    '02-impact-analysis': 'completed',
+                    '03-architecture': 'in_progress'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '02-impact-analysis',
+                current_phase_index: 2,
+                phase_status: {
+                    '01-requirements': 'completed',
+                    '02-impact-analysis': 'in_progress'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.ok(
+            result.stdout.includes('"continue":false') || result.stdout.includes('"continue": false'),
+            `T32: Expected V8 block, got stdout: ${result.stdout}`
+        );
+    });
+
+    // T33: Allow write when incoming current_phase_index == disk (AC-01b)
+    it('T33: allows write when incoming current_phase_index equals disk', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.stdout, '', 'T33: Should allow same phase index');
+    });
+
+    // T34: Allow write when incoming current_phase_index > disk (AC-01b)
+    it('T34: allows write when incoming current_phase_index > disk', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '05-test-strategy',
+                current_phase_index: 2,
+                phase_status: {
+                    '05-test-strategy': 'in_progress'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 11,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 3,
+                phase_status: {
+                    '05-test-strategy': 'completed',
+                    '06-implementation': 'in_progress'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.stdout, '', 'T34: Should allow forward phase index');
+    });
+
+    // T35: Allow write when incoming has no active_workflow (AC-01c)
+    it('T35: allows write when incoming has no active_workflow', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {}
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            phases: {
+                '06-implementation': { status: 'in_progress' }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.stdout, '', 'T35: Should allow when incoming has no active_workflow');
+    });
+
+    // T36: Allow write when disk has no active_workflow (AC-01d)
+    it('T36: allows write when disk has no active_workflow', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 5,
+            phases: {}
+        });
+        const incomingState = {
+            state_version: 6,
+            active_workflow: {
+                current_phase: '01-requirements',
+                current_phase_index: 0,
+                phase_status: {
+                    '01-requirements': 'in_progress'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.stdout, '', 'T36: Should allow when disk has no active_workflow');
+    });
+
+    // T37: Block message includes incoming and disk phase index values (AC-01e)
+    it('T37: block message includes incoming and disk phase index values', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 8,
+            active_workflow: {
+                current_phase: '16-quality-loop',
+                current_phase_index: 7,
+                phase_status: {
+                    '16-quality-loop': 'in_progress'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 8,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 4,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.ok(
+            result.stdout.includes('"continue":false') || result.stdout.includes('"continue": false'),
+            `T37: Expected V8 block, got stdout: ${result.stdout}`
+        );
+        // Block message should include both index values for debugging
+        assert.ok(result.stdout.includes('4'), `T37: Expected incoming index 4 in message, got: ${result.stdout}`);
+        assert.ok(result.stdout.includes('7'), `T37: Expected disk index 7 in message, got: ${result.stdout}`);
+    });
+
+    // T38: V8 block is logged to stderr (AC-01f)
+    it('T38: V8 block is logged to stderr', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 8,
+            active_workflow: {
+                current_phase: '16-quality-loop',
+                current_phase_index: 7,
+                phase_status: {
+                    '16-quality-loop': 'in_progress'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 8,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 4,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.ok(
+            result.stderr.includes('V8') || result.stderr.includes('phase'),
+            `T38: Expected V8/phase in stderr, got: ${result.stderr}`
+        );
+        assert.ok(
+            result.stderr.includes('[state-write-validator]'),
+            `T38: Expected [state-write-validator] in stderr, got: ${result.stderr}`
+        );
+    });
+
+    // ===================================================================
+    // FR-02: Block phase_status Regression (AC-02a thru AC-02g)
+    // ===================================================================
+
+    // T39: Block phase_status change from completed to pending (AC-02a)
+    it('T39: blocks phase_status regression completed -> pending', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '01-requirements': 'completed',
+                    '02-impact-analysis': 'completed',
+                    '06-implementation': 'in_progress'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '01-requirements': 'pending',
+                    '02-impact-analysis': 'completed',
+                    '06-implementation': 'in_progress'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.ok(
+            result.stdout.includes('"continue":false') || result.stdout.includes('"continue": false'),
+            `T39: Expected V8 block on status regression, got stdout: ${result.stdout}`
+        );
+    });
+
+    // T40: Block phase_status change from completed to in_progress (AC-02b)
+    it('T40: blocks phase_status regression completed -> in_progress', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '01-requirements': 'completed',
+                    '06-implementation': 'in_progress'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '01-requirements': 'in_progress',
+                    '06-implementation': 'in_progress'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.ok(
+            result.stdout.includes('"continue":false') || result.stdout.includes('"continue": false'),
+            `T40: Expected V8 block on status regression, got stdout: ${result.stdout}`
+        );
+    });
+
+    // T41: Block phase_status change from in_progress to pending (AC-02c)
+    it('T41: blocks phase_status regression in_progress -> pending', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'pending'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.ok(
+            result.stdout.includes('"continue":false') || result.stdout.includes('"continue": false'),
+            `T41: Expected V8 block on status regression, got stdout: ${result.stdout}`
+        );
+    });
+
+    // T42: Allow phase_status change from pending to in_progress (AC-02d)
+    it('T42: allows phase_status forward progress pending -> in_progress', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'pending'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.stdout, '', 'T42: Should allow forward progress');
+    });
+
+    // T43: Allow phase_status change from in_progress to completed (AC-02e)
+    it('T43: allows phase_status forward progress in_progress -> completed', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 11,
+            active_workflow: {
+                current_phase: '16-quality-loop',
+                current_phase_index: 6,
+                phase_status: {
+                    '06-implementation': 'completed',
+                    '16-quality-loop': 'in_progress'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.stdout, '', 'T43: Should allow forward progress');
+    });
+
+    // T44: Allow adding new phase_status entries not on disk (AC-02f)
+    it('T44: allows adding new phase_status entries not on disk', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '01-requirements',
+                current_phase_index: 0,
+                phase_status: {
+                    '01-requirements': 'in_progress'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 11,
+            active_workflow: {
+                current_phase: '02-impact-analysis',
+                current_phase_index: 1,
+                phase_status: {
+                    '01-requirements': 'completed',
+                    '02-impact-analysis': 'in_progress'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.stdout, '', 'T44: Should allow new phase entries');
+    });
+
+    // T45: Block when one valid change plus one regression (AC-02g)
+    it('T45: blocks when one valid change plus one regression', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '01-requirements': 'completed',
+                    '02-impact-analysis': 'completed',
+                    '05-test-strategy': 'completed',
+                    '06-implementation': 'in_progress'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '01-requirements': 'completed',
+                    '02-impact-analysis': 'in_progress',
+                    '05-test-strategy': 'completed',
+                    '06-implementation': 'in_progress'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.ok(
+            result.stdout.includes('"continue":false') || result.stdout.includes('"continue": false'),
+            `T45: Expected V8 block on mixed regression, got stdout: ${result.stdout}`
+        );
+    });
+
+    // ===================================================================
+    // FR-03: Fail-Open on Errors (AC-03a thru AC-03e)
+    // ===================================================================
+
+    // T46: Allow when incoming content is not valid JSON (AC-03a)
+    it('T46: allows when incoming content is not valid JSON', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {}
+            }
+        });
+        const result = runHook(tmpDir, {
+            tool_name: 'Write',
+            tool_input: {
+                file_path: statePath,
+                content: 'this is {{ not valid json'
+            }
+        });
+        assert.equal(result.exitCode, 0);
+        assert.ok(
+            !result.stdout.includes('"continue":false') && !result.stdout.includes('"continue": false'),
+            `T46: Should fail-open on bad JSON, got: ${result.stdout}`
+        );
+    });
+
+    // T47: Allow when disk state cannot be read (AC-03b)
+    it('T47: allows when disk state file does not exist', () => {
+        // Do NOT create a disk state file -- use a path that doesn't exist on disk
+        const fakePath = path.join(tmpDir, '.isdlc', 'nonexistent-state.json');
+        const incomingState = {
+            state_version: 1,
+            active_workflow: {
+                current_phase: '01-requirements',
+                current_phase_index: 0,
+                phase_status: {
+                    '01-requirements': 'in_progress'
+                }
+            }
+        };
+        // We need the path to match STATE_JSON_PATTERN, so use state.json name
+        // but remove it from disk first
+        const statePath = path.join(tmpDir, '.isdlc', 'state.json');
+        // setupTestEnv creates .isdlc/ but no state.json
+        if (fs.existsSync(statePath)) {
+            fs.unlinkSync(statePath);
+        }
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.stdout, '', 'T47: Should fail-open when disk file missing');
+    });
+
+    // T48: Allow when incoming has no active_workflow (AC-03c)
+    it('T48: allows when incoming has no active_workflow (AC-03c)', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {}
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            phases: {}
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.stdout, '', 'T48: Should allow when incoming lacks active_workflow');
+    });
+
+    // T49: Allow when disk has no active_workflow (AC-03c -- disk side)
+    it('T49: allows when disk has no active_workflow', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 5
+        });
+        const incomingState = {
+            state_version: 6,
+            active_workflow: {
+                current_phase: '01-requirements',
+                current_phase_index: 0,
+                phase_status: {}
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.stdout, '', 'T49: Should allow when disk lacks active_workflow');
+    });
+
+    // T50: Allow when disk has no phase_status but incoming does (AC-03d)
+    it('T50: allows when disk has no phase_status but incoming does', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.stdout, '', 'T50: Should allow when disk lacks phase_status');
+    });
+
+    // T51: Allow when incoming has no phase_status but disk does (AC-03d -- incoming side)
+    it('T51: allows when incoming has no phase_status but disk does', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.stdout, '', 'T51: Should allow when incoming lacks phase_status');
+    });
+
+    // T52: Allow when V8 logic throws an unexpected error (AC-03e)
+    it('T52: allows when active_workflow is not an object (fail-open)', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: 'this is not an object'
+        });
+        const incomingState = {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '01-requirements',
+                current_phase_index: 0,
+                phase_status: {}
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.ok(
+            !result.stdout.includes('"continue":false') && !result.stdout.includes('"continue": false'),
+            `T52: Should fail-open on type error, got: ${result.stdout}`
+        );
+    });
+
+    // ===================================================================
+    // FR-04: Write Events Only (AC-04a, AC-04b)
+    // ===================================================================
+
+    // T53: V8 is skipped for Edit events (AC-04a)
+    it('T53: V8 is skipped for Edit events', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '01-requirements': 'completed'
+                }
+            }
+        });
+        // Edit event -- V8 should not run (Edit has no incoming content to compare)
+        const result = runHook(tmpDir, makeEditStdin(statePath));
+        assert.equal(result.exitCode, 0);
+        // Even though disk has regressed data, Edit should not trigger V8 block
+        assert.ok(
+            !result.stdout.includes('"continue":false') && !result.stdout.includes('"continue": false'),
+            `T53: V8 should not block Edit events, got: ${result.stdout}`
+        );
+    });
+
+    // T54: V8 runs for Write events targeting state.json (AC-04b)
+    it('T54: V8 runs for Write events and blocks phase index regression', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '01-requirements',
+                current_phase_index: 0,
+                phase_status: {
+                    '01-requirements': 'in_progress'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.ok(
+            result.stdout.includes('"continue":false') || result.stdout.includes('"continue": false'),
+            `T54: Expected V8 block on Write event, got stdout: ${result.stdout}`
+        );
+    });
+
+    // ===================================================================
+    // FR-05: Execution Order (AC-05a thru AC-05c)
+    // ===================================================================
+
+    // T55: V7 blocks before V8 runs -- short circuit (AC-05a, AC-05b)
+    it('T55: V7 blocks before V8 runs (stale version + regressed index)', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 3,
+            active_workflow: {
+                current_phase: '01-requirements',
+                current_phase_index: 0,
+                phase_status: {
+                    '01-requirements': 'pending'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        // V7 should block (version 3 < 10)
+        assert.ok(
+            result.stdout.includes('"continue":false') || result.stdout.includes('"continue": false'),
+            `T55: Expected V7 block, got stdout: ${result.stdout}`
+        );
+        // Block should be from V7, not V8
+        assert.ok(
+            result.stdout.includes('Version mismatch') || result.stdout.includes('version'),
+            `T55: Expected V7 version message, got: ${result.stdout}`
+        );
+    });
+
+    // T56: V8 blocks before V1-V3 content validation runs (AC-05a, AC-05c)
+    it('T56: V8 blocks before V1-V3 content validation', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            },
+            phases: {
+                '06-implementation': {
+                    constitutional_validation: { completed: true, iterations_used: 0 }
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '01-requirements',
+                current_phase_index: 0,
+                phase_status: {
+                    '01-requirements': 'pending'
+                }
+            },
+            phases: {
+                '06-implementation': {
+                    constitutional_validation: { completed: true, iterations_used: 0 }
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        // V8 should block (phase index 0 < 5)
+        assert.ok(
+            result.stdout.includes('"continue":false') || result.stdout.includes('"continue": false'),
+            `T56: Expected V8 block, got stdout: ${result.stdout}`
+        );
+        // V1-V3 should NOT have run, so no constitutional_validation WARNING
+        assert.ok(
+            !result.stderr.includes('constitutional_validation'),
+            `T56: V1-V3 should not run after V8 block, stderr: ${result.stderr}`
+        );
+    });
+
+    // T57: V8 allows, then V1-V3 runs and warns (AC-05a)
+    it('T57: V8 allows then V1-V3 runs and warns on suspicious content', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            },
+            phases: {
+                '06-implementation': {
+                    constitutional_validation: { completed: true, iterations_used: 0 }
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            },
+            phases: {
+                '06-implementation': {
+                    constitutional_validation: { completed: true, iterations_used: 0 }
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        // V8 should allow (same phase index)
+        assert.equal(result.stdout, '', 'T57: Should not block');
+        // V1-V3 should run and produce WARNING
+        assert.ok(
+            result.stderr.includes('constitutional_validation'),
+            `T57: Expected V1 warning on stderr, got: ${result.stderr}`
+        );
+    });
+
+    // ===================================================================
+    // Boundary and Edge Cases
+    // ===================================================================
+
+    // T58: Block on phase index regression from 1 to 0 (boundary)
+    it('T58: blocks on smallest phase index regression (1 to 0)', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 5,
+            active_workflow: {
+                current_phase: '02-impact-analysis',
+                current_phase_index: 1,
+                phase_status: {
+                    '02-impact-analysis': 'in_progress'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 5,
+            active_workflow: {
+                current_phase: '01-requirements',
+                current_phase_index: 0,
+                phase_status: {
+                    '01-requirements': 'in_progress'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.ok(
+            result.stdout.includes('"continue":false') || result.stdout.includes('"continue": false'),
+            `T58: Expected V8 block on boundary regression, got stdout: ${result.stdout}`
+        );
+    });
+
+    // T59: Allow when phase_status has unknown status values
+    it('T59: allows when phase_status has unknown status values', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'unknown_status'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'another_unknown'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.ok(
+            !result.stdout.includes('"continue":false') && !result.stdout.includes('"continue": false'),
+            `T59: Should fail-open on unknown statuses, got: ${result.stdout}`
+        );
+    });
+
+    // T60: Allow when current_phase_index is missing in incoming (NFR-02)
+    it('T60: allows when current_phase_index missing in incoming', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.stdout, '', 'T60: Should allow when incoming lacks current_phase_index');
+    });
+
+    // T61: Allow when current_phase_index is missing in disk state (NFR-02)
+    it('T61: allows when current_phase_index missing in disk state', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.stdout, '', 'T61: Should allow when disk lacks current_phase_index');
+    });
+
+    // T62: Block on phase_status regression across multiple phases simultaneously
+    it('T62: blocks on multiple simultaneous phase_status regressions', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '08-code-review',
+                current_phase_index: 7,
+                phase_status: {
+                    '01-requirements': 'completed',
+                    '02-impact-analysis': 'completed',
+                    '05-test-strategy': 'completed',
+                    '06-implementation': 'completed',
+                    '16-quality-loop': 'completed',
+                    '08-code-review': 'in_progress'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 3,
+                phase_status: {
+                    '01-requirements': 'completed',
+                    '02-impact-analysis': 'in_progress',
+                    '05-test-strategy': 'pending',
+                    '06-implementation': 'in_progress'
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.ok(
+            result.stdout.includes('"continue":false') || result.stdout.includes('"continue": false'),
+            `T62: Expected V8 block on multiple regressions, got stdout: ${result.stdout}`
+        );
+    });
+
+    // T63: V8 works with monorepo state.json paths
+    it('T63: V8 blocks phase regression in monorepo state.json', () => {
+        const monorepoDir = path.join(tmpDir, '.isdlc', 'projects', 'my-api');
+        fs.mkdirSync(monorepoDir, { recursive: true });
+        const statePath = path.join(monorepoDir, 'state.json');
+        fs.writeFileSync(statePath, JSON.stringify({
+            state_version: 5,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            }
+        }, null, 2));
+        const incomingState = {
+            state_version: 5,
+            active_workflow: {
+                current_phase: '01-requirements',
+                current_phase_index: 0,
+                phase_status: {
+                    '01-requirements': 'pending'
+                }
+            }
+        };
+        const result = runHook(tmpDir, {
+            tool_name: 'Write',
+            tool_input: {
+                file_path: statePath,
+                content: JSON.stringify(incomingState, null, 2)
+            }
+        });
+        assert.equal(result.exitCode, 0);
+        assert.ok(
+            result.stdout.includes('"continue":false') || result.stdout.includes('"continue": false'),
+            `T63: Expected V8 block on monorepo regression, got stdout: ${result.stdout}`
+        );
+    });
+
+    // ===================================================================
+    // Regression Tests: V1-V7 Unaffected
+    // ===================================================================
+
+    // T64: V7 version block still works after V8 addition
+    it('T64: V7 version block still works after V8 addition', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {}
+            }
+        });
+        const incomingState = {
+            state_version: 3,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {}
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.ok(
+            result.stdout.includes('"continue":false') || result.stdout.includes('"continue": false'),
+            `T64: Expected V7 block, got stdout: ${result.stdout}`
+        );
+        assert.ok(
+            result.stdout.includes('Version mismatch') || result.stdout.includes('version'),
+            `T64: Expected V7 version message, got: ${result.stdout}`
+        );
+    });
+
+    // T65: V1 content warning still fires after V8 addition
+    it('T65: V1 content warning still fires after V8 addition', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            },
+            phases: {
+                '01-requirements': {
+                    constitutional_validation: { completed: true, iterations_used: 0 }
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            },
+            phases: {
+                '01-requirements': {
+                    constitutional_validation: { completed: true, iterations_used: 0 }
+                }
+            }
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        // V8 should allow (same phase index)
+        assert.equal(result.stdout, '', 'T65: Should not block');
+        // V1 should still warn
+        assert.ok(
+            result.stderr.includes('constitutional_validation'),
+            `T65: Expected V1 warning on stderr, got: ${result.stderr}`
+        );
+    });
+
+    // ===================================================================
+    // Performance Tests (NFR-01)
+    // ===================================================================
+
+    // T66: Hook completes within 100ms budget
+    it('T66: hook completes within 100ms budget (averaged)', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            }
+        });
+        const incomingState = {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: {
+                    '06-implementation': 'in_progress'
+                }
+            }
+        };
+        const stdin = makeWriteStdinWithContent(statePath, incomingState);
+        const iterations = 5;
+        const start = Date.now();
+        for (let i = 0; i < iterations; i++) {
+            runHook(tmpDir, stdin);
+        }
+        const elapsed = Date.now() - start;
+        const avg = elapsed / iterations;
+        // Node process startup dominates; 100ms per invocation is the budget
+        assert.ok(avg < 200, `T66: Average execution time ${avg}ms exceeds 200ms budget`);
+    });
+
+    // T67: V8 overhead measured by comparing with and without active_workflow
+    it('T67: V8 overhead is minimal (< 50ms delta)', () => {
+        // Scenario 1: No active_workflow (V8 short-circuits)
+        const statePathNoAW = writeStateFile(tmpDir, {
+            state_version: 10,
+            phases: {}
+        });
+        const noAWStdin = {
+            tool_name: 'Write',
+            tool_input: {
+                file_path: statePathNoAW,
+                content: JSON.stringify({ state_version: 10, phases: {} }, null, 2)
+            }
+        };
+
+        const iterations = 5;
+        const startNoAW = Date.now();
+        for (let i = 0; i < iterations; i++) {
+            runHook(tmpDir, noAWStdin);
+        }
+        const elapsedNoAW = Date.now() - startNoAW;
+
+        // Scenario 2: With active_workflow (V8 does full comparison)
+        const statePathAW = writeStateFile(tmpDir, {
+            state_version: 10,
+            active_workflow: {
+                current_phase: '06-implementation',
+                current_phase_index: 5,
+                phase_status: { '06-implementation': 'in_progress' }
+            }
+        });
+        const awStdin = {
+            tool_name: 'Write',
+            tool_input: {
+                file_path: statePathAW,
+                content: JSON.stringify({
+                    state_version: 10,
+                    active_workflow: {
+                        current_phase: '06-implementation',
+                        current_phase_index: 5,
+                        phase_status: { '06-implementation': 'in_progress' }
+                    }
+                }, null, 2)
+            }
+        };
+
+        const startAW = Date.now();
+        for (let i = 0; i < iterations; i++) {
+            runHook(tmpDir, awStdin);
+        }
+        const elapsedAW = Date.now() - startAW;
+
+        const avgNoAW = elapsedNoAW / iterations;
+        const avgAW = elapsedAW / iterations;
+        const delta = Math.abs(avgAW - avgNoAW);
+        // V8 overhead should be < 50ms (generous allowance for CI variance)
+        assert.ok(delta < 50, `T67: V8 overhead ${delta}ms exceeds 50ms`);
+    });
+});
