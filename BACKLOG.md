@@ -88,6 +88,66 @@ Findings from 4-agent parallel analysis of workflow speed bottlenecks. T1-T3 alr
   - **Complexity**: Medium-large (2-3 sessions through full iSDLC workflow)
   - **Prerequisite**: BUG-0013 (phase-loop-controller same-phase bypass) should be done first to reduce false blocks during parallel work
 
+### Implementation-Review Fusion (Architecture)
+
+- [ ] Multi-agent collaborative implementation — replace sequential Phase 06 → Phase 16 → Phase 08 with a tight write-review-fix loop using a 3-agent team
+  - **Problem**: Code is written in Phase 06, then waits for Phase 16 (quality loop) and Phase 08 (code review) to find issues. By then context is cold, fixes require re-reading, and the sequential overhead adds 15-30 minutes per workflow. The quality loop and code review agents also don't check if skills used match the project's tech stack.
+  - **Design**: A 3-agent team runs concurrently within a single "implementation" super-phase:
+    - **Writer** (software-developer) — writes code following tasks.md, TDD, produces files
+    - **Reviewer** (code-reviewer) — reviews each file/function as it's written, flags issues immediately, checks constitutional compliance, validates skill usage matches tech stack from constitution
+    - **Updater** (code-updater) — takes reviewer feedback, applies fixes, re-runs tests, confirms resolution
+  - **Loop protocol**:
+    ```
+    Writer produces file A → Reviewer reviews A → issues found?
+      YES → Updater fixes A → Reviewer re-reviews → loop until clean
+      NO  → Writer moves to file B → Reviewer reviews B → ...
+    All files done → Final quality sweep (security scan, full test suite, coverage)
+    ```
+  - **Skill validation**: Reviewer agent checks that Writer used appropriate skills for the tech stack (e.g., if constitution says TypeScript, reviewer flags plain JS patterns; if React, reviewer flags jQuery-style DOM manipulation). Skills-manifest.json cross-referenced against `constitution.tech_stack`.
+  - **Benefits**:
+    - Issues caught immediately while context is hot (not 2 phases later)
+    - No cold-start re-reading for reviewers
+    - Fewer iteration loops — fix happens in the same breath as detection
+    - Quality is continuous, not a gate at the end
+    - Phase 16 (quality loop) reduced to final sweep only (full test suite + security scan)
+    - Phase 08 (code review) becomes human-review-only (automated review already done in-loop)
+  - **Phase restructuring**:
+    - Current: `06-implementation → 16-quality-loop → 08-code-review`
+    - Proposed: `06-implementation-loop (writer+reviewer+updater) → 16-final-sweep (tests+security) → 08-human-review`
+  - **Implementation options**:
+    - Option A: Single Task call that spawns 3 sub-agents with shared context (simplest, but sub-agents can't easily pass artifacts)
+    - Option B: Phase-Loop Controller manages the write-review-fix loop explicitly (more control, more complex isdlc.md changes)
+    - Option C: New `collaborative-implementation-engineer` agent that orchestrates the 3 roles internally (cleanest encapsulation)
+  - **Quality loop optimisation**: The remaining Phase 16 becomes a thin final sweep — just `npm run test:all` + `npm audit` + coverage check. No redundant code review since that happened in-loop. Target: <2 minutes.
+  - **In-loop reviewer checks** (per file, immediate — while context is hot):
+    - Logic correctness: algorithm verified, edge cases handled, boundary conditions
+    - Error handling: all conditions caught, meaningful messages, no swallowed exceptions
+    - Security: injection prevention (SQL/XSS/command), no eval/exec, no hardcoded secrets, input validation at boundaries, output sanitization
+    - Code quality: naming clarity, DRY, single responsibility, complexity <20 lines per function, no code smells (feature envy, data clumps, dead code)
+    - Test quality: edge cases covered, test actually tests the right thing, mocks appropriate
+    - Skill/tech-stack alignment: patterns match constitution's tech stack (e.g., flag jQuery in React project, flag CommonJS in ESM project, flag wrong test framework)
+    - Constitutional compliance: spec primacy (Article I), TDD followed (Article II), simplicity (Article V), traceability (Article VII)
+    - Comment quality: explains "why" not "what", complex logic documented
+  - **Final sweep checks** (batch, after all files complete — stays in Phase 16):
+    - Full test suite execution (all tests pass, no regressions)
+    - Coverage analysis (≥80% unit, ≥70% integration, 100% critical paths)
+    - Mutation testing (≥80% mutation score, Article XI)
+    - npm audit / dependency vulnerability scan
+    - SAST security scan (automated tooling)
+    - Build verification (clean build, no warnings-as-errors)
+    - Lint and type check (project-level)
+    - Traceability matrix validation (requirements → design → code → tests)
+    - Technical debt assessment
+  - **Stays in Phase 08** (human review only):
+    - Architecture decision review
+    - Business logic correctness (domain knowledge)
+    - Overall design coherence
+    - Non-obvious security implications
+    - Merge approval
+  - **Complexity**: Large (new agent architecture, loop protocol, skill validation logic)
+  - **Precedent**: Deep discovery Inception Party already uses multi-agent debate. This extends the pattern from research to implementation.
+  - **Relates to**: Multi-agent debate mode (already in backlog) — this is the implementation-specific version of that broader idea
+
 **Framework Features:**
 - [ ] Improve search capabilities to help Claude be more effective
 - [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation

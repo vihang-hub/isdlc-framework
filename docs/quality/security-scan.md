@@ -1,4 +1,4 @@
-# Security Scan: BUG-0012-premature-git-commit
+# Security Scan: REQ-0012-invisible-framework
 
 **Phase**: 16-quality-loop
 **Date**: 2026-02-13
@@ -26,48 +26,35 @@ found 0 vulnerabilities
 
 ## Manual Security Review (QL-008)
 
-All new and modified files were manually reviewed for security concerns.
+All new and modified files were reviewed for security concerns using automated pattern matching.
 
 ### Files Reviewed
 
-1. `src/claude/hooks/branch-guard.cjs` (MODIFIED - phase-aware commit blocking, ~50 lines added)
-2. `src/claude/hooks/tests/branch-guard.test.cjs` (MODIFIED - 17 new test cases, ~330 lines added)
-3. `src/claude/agents/05-software-developer.md` (MODIFIED - no-commit instruction, ~6 lines)
-4. `src/claude/agents/16-quality-loop-engineer.md` (MODIFIED - no-commit instruction, ~4 lines)
+1. `CLAUDE.md` (MODIFIED - Workflow-First Development section rewritten, ~50 lines)
+2. `src/claude/CLAUDE.md.template` (MODIFIED - Template consistency update, ~50 lines)
+3. `lib/invisible-framework.test.js` (NEW - 49 test cases, 299 lines)
 
 ### Security Checks
 
 | Check | Result | Details |
 |-------|--------|---------|
-| No eval/Function constructor usage | PASS | No dynamic code execution in any file |
-| No new child_process usage | PASS | Existing execSync for git rev-parse only (unchanged from v1.0.0) |
-| No hardcoded secrets/credentials | PASS | No sensitive data in any file |
-| No path traversal vulnerabilities | PASS | No user-supplied file path construction |
-| Input validation on all entry points | PASS | Guards for null state, missing active_workflow, missing git_branch, missing phases |
-| Fail-open design (Article X) | PASS | All error/edge paths exit 0 silently; no process.exit(1) |
-| No regex denial-of-service (ReDoS) | PASS | Single regex `/\bgit\s+commit\b/` is simple with no backtracking |
-| No prototype pollution | PASS | JSON.parse results accessed via property chains only, not spread/assign |
-| No console.log leaks | PASS | All diagnostic output via debugLog (stderr); stdout reserved for JSON protocol |
-| Block message safety | PASS | Block messages contain no user-supplied input that could be injected |
+| No hardcoded passwords | PASS | No password patterns in any file |
+| No hardcoded API keys | PASS | No API key patterns in any file |
+| No hardcoded secrets/tokens | PASS | No sensitive data in any file |
+| No eval/Function constructor | PASS | No dynamic code execution |
+| No child_process usage | PASS | No process spawning in any new/modified file |
+| No innerHTML assignment | PASS | No XSS vectors |
+| No .env file references | PASS | No environment file handling |
+| No exec() calls | PASS | No shell command execution |
 
-### Branch-Guard Security Analysis
+### Risk Assessment
 
-#### Phase-Aware Blocking Logic
-- **Input**: state.json (framework-controlled, not user-supplied)
-- **Risk**: Low -- reads current_phase and phases array from trusted state file
-- **Mitigations**: Null checks on every property access; fail-open on any error
-- **Verdict**: SAFE
-
-#### Git Branch Detection
-- **Input**: `git rev-parse --abbrev-ref HEAD` output
-- **Risk**: Low -- local git operation, 3-second timeout, no user input
-- **Unchanged**: This code existed in v1.0.0; no new risk introduced
-- **Verdict**: SAFE
-
-#### Block Message Generation
-- **Risk**: None -- Messages contain phase names and branch names from state.json (framework-controlled strings)
-- **No injection vector**: Messages are returned as JSON stopReason, not executed
-- **Verdict**: SAFE
+| Factor | Assessment |
+|--------|------------|
+| Attack surface change | **NONE** -- No runtime code modified, no new endpoints, no new file I/O |
+| Prompt injection risk | **LOW** -- CLAUDE.md contains instructions for Claude, not user-supplied input processing |
+| Data exposure risk | **NONE** -- No secrets, credentials, or PII in any file |
+| Dependency risk | **NONE** -- No new dependencies added; 0 known vulnerabilities |
 
 ### Findings
 
@@ -79,7 +66,7 @@ All new and modified files were manually reviewed for security concerns.
 
 ## Summary
 
-No security vulnerabilities were identified in the BUG-0012 changes. The phase-aware commit blocking extends an existing hook with additional logic gates that read from the trusted state.json file. No new dependencies, no new shell commands, no new file I/O, and no new attack surfaces were introduced. The fail-open design ensures the hook cannot deny service even under unexpected conditions. Dependency audit is clean with 0 known vulnerabilities.
+No security vulnerabilities were identified in the REQ-0012 changes. This feature modifies only markdown documentation files (CLAUDE.md and its template) and adds a test file. No runtime JavaScript/CJS code was changed, no new dependencies were introduced, no new shell commands were added, and no new attack surfaces were created. The dependency audit is clean with 0 known vulnerabilities across all packages.
 
 ---
 

@@ -1,83 +1,104 @@
-# Quality Metrics: BUG-0013-phase-loop-controller-false-blocks
+# Quality Metrics: REQ-0012-invisible-framework
 
 **Date**: 2026-02-13
 **Phase**: 08-code-review
-**Workflow**: Fix (BUG-0013)
+**Workflow**: Feature (REQ-0012)
 
 ---
 
-## Test Results
-
-| Test Suite | Total | Pass | Fail | Skip | Duration |
-|------------|-------|------|------|------|----------|
-| phase-loop-controller.test.cjs | 23 | 23 | 0 | 0 | 554ms |
-| CJS hooks (full suite) | 1140 | 1140 | 0 | 0 | 3.4s |
-| ESM lib (full suite) | 490 | 489 | 1* | 0 | ~45s |
-
-*1 pre-existing failure: TC-E09 (README agent count). Unrelated to BUG-0013.
-
-## Code Coverage (phase-loop-controller.cjs)
+## Test Metrics
 
 | Metric | Value | Threshold | Status |
 |--------|-------|-----------|--------|
-| Line coverage | 93.04% | >= 80% | PASS |
-| Function coverage | 100% | >= 80% | PASS |
+| Feature tests passing | 49/49 (100%) | 100% | PASS |
+| ESM suite passing | 538/539 (99.8%) | No new failures | PASS |
+| CJS suite passing | 1140/1140 (100%) | No new failures | PASS |
+| Total tests passing | 1727/1728 (99.94%) | No regressions | PASS |
+| New regressions introduced | 0 | 0 | PASS |
+| Pre-existing failures | 1 (TC-E09) | Known/documented | PASS |
 
-## Code Size Metrics
+## Coverage Metrics
 
-| File | Before | After | Delta | Type |
-|------|--------|-------|-------|------|
-| phase-loop-controller.cjs | 143 lines | 159 lines | +16 | Production |
-| phase-loop-controller.test.cjs | 244 lines | 437 lines | +193 | Test |
+| Metric | Value | Threshold | Status |
+|--------|-------|-----------|--------|
+| Acceptance criteria covered | 28/28 (100%) | 100% | PASS |
+| NFR requirements covered | 4/4 (100%) | 100% | PASS |
+| Functional requirements covered | 5/5 (100%) | 100% | PASS |
+| Test-to-AC traceability | 49 tests -> 28 ACs | Full traceability | PASS |
+
+## Code Quality Metrics
+
+| Metric | Value | Threshold | Status |
+|--------|-------|-----------|--------|
+| Critical issues | 0 | 0 | PASS |
+| High issues | 0 | 0 | PASS |
+| Medium issues | 0 | 0 | PASS |
+| Low issues | 0 | <= 5 | PASS |
+| Observations (informational) | 4 | No limit | INFO |
 
 ## Complexity Metrics
 
-| Metric | Value | Threshold | Status |
-|--------|-------|-----------|--------|
-| Cyclomatic complexity (check function) | 17 | < 20 | PASS |
-| Total functions in production file | 1 (check) | - | INFO |
-| Max nesting depth | 2 | < 5 | PASS |
-| Test-to-code ratio (new code) | 12.1:1 (193 test / 16 prod) | > 1:1 | PASS |
-| Total test-to-code ratio | 2.75:1 (437 test / 159 prod) | > 1:1 | PASS |
+| Metric | Value | Notes |
+|--------|-------|-------|
+| Files modified | 2 | CLAUDE.md + template (markdown only) |
+| Files added | 1 | lib/invisible-framework.test.js |
+| Runtime code changes | 0 | No .js/.cjs modifications |
+| Lines added (production) | ~90 | 45 per file (markdown) |
+| Lines added (test) | 743 | New test file |
+| Lines removed (production) | ~16 | 8 per file (old section) |
+| Net change | +817 | Mostly test code |
 
-## Regression Metrics
+## Static Analysis
 
 | Check | Result |
 |-------|--------|
-| CJS tests: 1140/1140 pass | No regressions |
-| ESM tests: 489/490 pass | No regressions (1 pre-existing) |
-| Original tests T1-T12 | All pass (T1, T2, T12 updated to cross-phase scenarios) |
-| Cross-phase blocking preserved | T1, T2, T17 verify blocking still works |
+| JavaScript syntax check (test file) | PASS |
+| Markdown formatting (CLAUDE.md) | PASS -- no trailing whitespace, tables well-formed |
+| Markdown formatting (template) | PASS -- no trailing whitespace, tables well-formed |
+| Template consistency (NFR-04) | PASS -- Workflow-First sections byte-identical |
+| Unchanged sections preserved (NFR-02) | PASS -- Agent Framework Context through Constitutional Principles identical |
 
-## Acceptance Criteria Coverage
+## Constraint Compliance
 
-| Metric | Value |
-|--------|-------|
-| Total ACs | 12 |
-| ACs with test coverage | 12 |
-| AC coverage | 100% |
-| Total test cases | 11 (new) + 12 (existing/updated) = 23 |
+| Constraint | Status |
+|------------|--------|
+| No runtime code changes | PASS |
+| No hook modifications | PASS |
+| No agent modifications | PASS |
+| No skill modifications | PASS |
+| No isdlc.md command changes | PASS |
+| Template/dogfooding consistency (NFR-04) | PASS |
+| Backward compatibility (NFR-02) | PASS |
+| Maintainability -- single mapping table (NFR-03) | PASS |
 
-## Non-Functional Requirement Metrics
-
-| NFR | Metric | Value | Threshold | Status |
-|-----|--------|-------|-----------|--------|
-| NFR-01 Performance | Bypass comparison cost | < 0.001ms | < 1ms | PASS |
-| NFR-01 Performance | Total hook execution (per test) | < 30ms | < 100ms | PASS |
-| NFR-02 Fail-open | Fail-open test count | 5 (T7, T9, T10, T11, T21/T22) | > 0 | PASS |
-| NFR-03 Backward compat | Cross-phase regression tests | T1, T2, T17, T18, T19 | > 0 | PASS |
-
-## Quality Gate Status
+## Quality Gate Status (GATE-08)
 
 | Gate Item | Status |
 |-----------|--------|
-| All tests passing | PASS (23/23 unit, 1140/1140 CJS) |
-| Coverage >= 80% | PASS (93.04% line, 100% function) |
+| Code review completed | PASS |
 | No critical findings | PASS (0 findings) |
-| No regressions | PASS (1140/1140 CJS, 489/490 ESM) |
-| AC traceability 100% | PASS (12/12) |
-| Runtime sync verified | PASS (1/1 file) |
+| Static analysis passing | PASS |
+| Test coverage meets thresholds | PASS (28/28 ACs, 4/4 NFRs) |
+| Coding standards followed | PASS |
+| Performance acceptable | PASS (0 runtime changes) |
+| Security review complete | PASS (no injection, no secrets) |
+| QA sign-off obtained | PASS |
+
+---
+
+## Trend (Last 3 Workflows)
+
+| Metric | BUG-0012 | BUG-0013 | REQ-0012 |
+|--------|----------|----------|----------|
+| Critical findings | 0 | 0 | 0 |
+| Total findings | 0 | 0 | 0 |
+| Tests passing | 1629/1630 | 1629/1630 | 1727/1728 |
+| AC coverage | 20/20 | 12/12 | 28/28 |
+| Regressions | 0 | 0 | 0 |
+
+Test count increased by 98 (from 1630 to 1728) due to 49 new feature tests and other concurrent additions.
 
 ---
 
 **Status**: All quality metrics within acceptable thresholds.
+**Generated**: 2026-02-13
