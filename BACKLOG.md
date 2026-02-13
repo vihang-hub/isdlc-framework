@@ -294,6 +294,7 @@ Findings from 4-agent parallel analysis of workflow speed bottlenecks. T1-T3 alr
 ## Completed
 
 ### 2026-02-13
+- [x] BUG-0014: Early branch creation — moved branch creation from post-GATE-01 to workflow initialization time. All phases now execute on the feature/bugfix branch, keeping main untouched. 3 doc files (14 locations), 22 new tests, 0 regressions
 - [x] REQ-0012: Invisible framework — CLAUDE.md rewrite for auto-intent-detection, consent protocol, edge case handling. Users never need to know slash commands exist. 49 tests, 28/28 ACs, 4/4 NFRs, light workflow (93 min)
 - [x] BUG-0013: Phase-loop-controller false blocks — same-phase bypass in phase-loop-controller.cjs v1.2.0, 11 new tests, 23/23 passing, 93% coverage
 - [x] BUG-0012: Premature git commits — phase-aware commit blocking in branch-guard.cjs v2.0.0, no-commit instructions in agents, 17 new tests
