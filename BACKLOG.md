@@ -106,6 +106,7 @@ Findings from 4-agent parallel analysis of workflow speed bottlenecks. T1-T3 alr
   - **Benefits**: Catch problems early per sub-feature, reduce context window pressure, intermediate quality gates, partial progress is usable
   - **State tracking**: `state.json` tracks parent feature + sub-features with individual phase progress
 
+- [ ] SonarQube integration
 - [ ] Multi-agent debate mode for phase execution — replace single-agent phases with agent teams that collaborate via propose-critique-refine cycles
   - **Concept**: Instead of one agent producing a phase artifact solo, a team of 3 agents works together:
     1. **Creator** — produces the initial artifact (architecture, design, test strategy, etc.)
