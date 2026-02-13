@@ -1,14 +1,14 @@
-# Technical Debt Assessment: BUG-0012-premature-git-commit
+# Technical Debt Assessment: BUG-0013-phase-loop-controller-false-blocks
 
 **Date**: 2026-02-13
 **Phase**: 08-code-review
-**Workflow**: Fix (BUG-0012)
+**Workflow**: Fix (BUG-0013)
 
 ---
 
-## Technical Debt Introduced by BUG-0012
+## Technical Debt Introduced by BUG-0013
 
-**None identified.** The BUG-0012 changes are clean, well-tested, and follow established patterns. No new complexity, no new coupling, no new duplication introduced.
+**None identified.** The BUG-0013 changes are clean, minimal (11 lines of production code), well-tested, and follow established patterns. No temporary workarounds, TODO comments, or deferred cleanup.
 
 ---
 
@@ -16,38 +16,37 @@
 
 ### TD-001: TC-E09 README Agent Count (Pre-existing, LOW)
 
-- **Source**: ESM test `deep-discovery-consistency.test.js` line 117
+- **Source**: ESM test `deep-discovery-consistency.test.js`
 - **Description**: Test expects README.md to reference "40 agents" but the actual count has changed. 1 ESM test fails (489/490).
 - **Impact**: LOW -- test-only issue, no production impact
-- **Introduced by**: Not BUG-0012. Pre-existing since prior agent additions.
-- **Recommendation**: Update README or test to reflect current agent count in a future fix workflow.
+- **Introduced by**: Prior agent additions, not BUG-0013.
+- **Recommendation**: Update README or test to reflect current agent count.
 
-### TD-NEW-001: Stale Header Comment in state-write-validator.cjs (Pre-existing from BUG-0011 review, LOW)
+### TD-002: Stale Header Comment in state-write-validator.cjs (Pre-existing, LOW)
 
 - **Source**: `src/claude/hooks/state-write-validator.cjs`, line 8
-- **Description**: The file header says "OBSERVATIONAL ONLY" but V7/V8 now block writes. Stale comment.
+- **Description**: File header says "OBSERVATIONAL ONLY" but V7/V8 now block writes.
 - **Impact**: LOW -- documentation-only issue.
-- **Introduced by**: BUG-0009/BUG-0011, not BUG-0012.
+- **Introduced by**: BUG-0009/BUG-0011.
+
+### TD-003: check() Cyclomatic Complexity Approaching Threshold (Pre-existing, LOW)
+
+- **Source**: `src/claude/hooks/phase-loop-controller.cjs`, check() function
+- **Description**: CC=17 (threshold <20). High due to the guard chain pattern (7 if-blocks + catch blocks). BUG-0013 added 1 if-block (CC was 16 before).
+- **Impact**: LOW -- function is still linear (early returns), readable, and well-tested.
+- **Recommendation**: Consider extracting guard chain into named helper functions in a future refactor (e.g., `validateInput()`, `validateWorkflowState()`, `checkSamePhase()`, `checkPhaseStatus()`).
 
 ---
 
-## Technical Debt Not Worsened by BUG-0012
+## Technical Debt Not Worsened by BUG-0013
 
 | Item | Status | Notes |
 |------|--------|-------|
-| STATE_JSON_PATTERN regex duplication | Pre-existing | Not affected by BUG-0012 |
-| state-write-validator.cjs stale header | Pre-existing | Not affected by BUG-0012 |
-| V7+V8 duplicate JSON parsing | Pre-existing | Not affected by BUG-0012 |
-| SETUP_COMMAND_KEYWORDS quadruplicated | Pre-existing | Not affected by BUG-0012 |
-| Triplicated delegation guard pattern | Pre-existing | Not affected by BUG-0012 |
-| Template phase key mismatch | Pre-existing | Not affected by BUG-0012 |
-
----
-
-## Informational: T3 Test Code Path Shift
-
-- **Source**: branch-guard.test.cjs T3 ("allows git commit on feature branch")
-- **Description**: Before BUG-0012, T3 passed via the "Not on main/master" catch-all. After BUG-0012, T3 passes via the fail-open path at line 150 (missing current_phase/phases). The test still passes correctly -- both paths allow the commit. If T3's state is enriched with current_phase/phases in a future update, the test should be re-evaluated. No action needed now.
+| STATE_JSON_PATTERN regex duplication | Pre-existing | Not affected by BUG-0013 |
+| state-write-validator.cjs stale header | Pre-existing | Not affected by BUG-0013 |
+| SETUP_COMMAND_KEYWORDS quadruplicated | Pre-existing | Not affected by BUG-0013 |
+| Triplicated delegation guard pattern | Pre-existing | Not affected by BUG-0013 |
+| Template phase key mismatch | Pre-existing | Not affected by BUG-0013 |
 
 ---
 
@@ -55,10 +54,10 @@
 
 | Category | New Debt | Pre-existing Debt | Worsened |
 |----------|----------|-------------------|----------|
-| Production code | 0 | 2 (stale header, regex dup) | No |
+| Production code | 0 | 3 (stale header, regex dup, CC approaching threshold) | No |
 | Tests | 0 | 1 (TC-E09 count) | No |
 | Documentation | 0 | 0 | No |
 | Architecture | 0 | 0 | No |
-| **Total** | **0** | **3** | **No** |
+| **Total** | **0** | **4** | **No** |
 
-**Verdict**: BUG-0012 introduces no new technical debt.
+**Verdict**: BUG-0013 introduces no new technical debt.

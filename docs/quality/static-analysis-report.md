@@ -1,8 +1,8 @@
-# Static Analysis Report: BUG-0012-premature-git-commit
+# Static Analysis Report: BUG-0013-phase-loop-controller-false-blocks
 
 **Date**: 2026-02-13
 **Phase**: 08-code-review
-**Workflow**: Fix (BUG-0012)
+**Workflow**: Fix (BUG-0013)
 
 ---
 
@@ -10,22 +10,23 @@
 
 | File | Tool | Result |
 |------|------|--------|
-| `src/claude/hooks/branch-guard.cjs` | `node -c` | SYNTAX OK |
+| `src/claude/hooks/phase-loop-controller.cjs` | `node -c` | SYNTAX OK |
+| `src/claude/hooks/tests/phase-loop-controller.test.cjs` | `node -c` | SYNTAX OK |
 
 ## Module System Compliance (Article XIII)
 
 | Check | Result | Notes |
 |-------|--------|-------|
-| No ESM imports in hook file | PASS | Only `require()` used in branch-guard.cjs |
-| No CommonJS require in agent markdown | N/A | Agent files are markdown, not executable |
-| `.cjs` extension used | PASS | branch-guard.cjs uses explicit CJS extension |
+| No ESM imports in hook file | PASS | Only `require()` used in phase-loop-controller.cjs |
+| `.cjs` extension used | PASS | Explicit CJS extension for both production and test files |
+| module.exports used correctly | PASS | `module.exports = { check }` on line 120 |
 
 ## Security Static Analysis
 
 | Check | Result | Notes |
 |-------|--------|-------|
 | No `eval()` usage | PASS | No eval or new Function found |
-| No `child_process.exec` with user input | PASS | Only `execSync('git rev-parse --abbrev-ref HEAD')` with hardcoded command |
+| No `child_process.exec` with user input | PASS | No child_process calls in production code |
 | No secrets in source code | PASS | No API keys, tokens, passwords, or credentials detected |
 | No `console.log` in production hook | PASS | Uses `debugLog()` from common.cjs (controlled by SKILL_VALIDATOR_DEBUG) |
 | No dynamic require() | PASS | All require() calls use static string paths |
@@ -35,19 +36,19 @@
 
 | Check | Result | Notes |
 |-------|--------|-------|
-| All process.exit() calls use exit(0) | PASS | 13 exit calls, all exit(0). Fail-open compliant. |
-| try-catch coverage | PASS | 3 catch blocks: stdin JSON parse, git subprocess, outermost. |
-| No unhandled promise rejections | PASS | main() is async with try-catch wrapper. readStdin() is awaited. |
-| No throw statements in new code | PASS | All error paths exit gracefully. |
+| Outer try-catch wraps check() | PASS | Lines 29-116. Returns { decision: 'allow' } on any error. |
+| logHookEvent has internal try-catch | PASS | Cannot propagate exceptions to caller. |
+| No throw statements in new code | PASS | All error paths return allow decision. |
+| Standalone mode try-catch | PASS | Lines 126-156 wrap stdin processing with process.exit(0). |
 
 ## Complexity Analysis
 
 | Metric | Value | Rating |
 |--------|-------|--------|
-| Cyclomatic complexity (main) | 13 | Acceptable (< 20) |
+| Cyclomatic complexity (check) | 17 | Acceptable (< 20) |
 | Max nesting depth | 2 | Good (< 5) |
-| Lines of code (production) | 191 | Small |
-| Number of functions | 3 | Simple |
+| Lines of code (production) | 159 | Small |
+| Number of exported functions | 1 | Simple |
 | Number of catch blocks | 3 | Appropriate |
 
 ## Code Style Analysis
@@ -56,15 +57,15 @@
 |-------|--------|-------|
 | Consistent indentation | PASS | 4-space indentation throughout |
 | Consistent quoting | PASS | Single quotes for strings |
-| JSDoc on public functions | PASS | isGitCommit(), getCurrentBranch() have JSDoc |
-| File header with traceability | PASS | Version 2.0.0, BUG-0012 traces documented |
-| Meaningful variable names | PASS | workflowBranchName, currentPhase, lastPhase are self-documenting |
+| JSDoc on exported function | PASS | check() has @param and @returns JSDoc |
+| File header with traceability | PASS | Version 1.2.0, BUG-0013 traces documented |
+| Meaningful variable names | PASS | currentPhase, delegation.targetPhase are self-documenting |
 
 ## Dependency Analysis
 
 | Check | Result | Notes |
 |-------|--------|-------|
-| External dependencies | 0 | Only Node.js built-ins (child_process) and internal (common.cjs) |
+| External dependencies | 0 | Only internal (common.cjs) |
 | New dependencies added | 0 | No new require() statements |
 | Vulnerability scan | N/A | No external dependencies to scan |
 
@@ -76,7 +77,7 @@
 | Security | 0 | 0 | 0 |
 | Module system | 0 | 0 | 0 |
 | Error handling | 0 | 0 | 0 |
-| Complexity | 0 | 0 | 1 (CC=13, acceptable) |
+| Complexity | 0 | 0 | 1 (CC=17, approaching threshold) |
 | Code style | 0 | 0 | 0 |
 | Dependencies | 0 | 0 | 0 |
 | **Total** | **0** | **0** | **1** |
