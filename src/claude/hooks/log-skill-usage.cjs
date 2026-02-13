@@ -83,8 +83,8 @@ function check(ctx) {
         // Get enforcement mode
         const enforcementMode = enforcement.mode || 'strict';
 
-        // Get current phase
-        const currentPhase = state.current_phase || '01-requirements';
+        // Get current phase — BUG-0005 (AC-03c): prefer active_workflow.current_phase
+        const currentPhase = state.active_workflow?.current_phase || state.current_phase || '01-requirements';
 
         // Load manifest to determine authorization (prefer ctx.manifest)
         const manifest = ctx.manifest || loadManifest();

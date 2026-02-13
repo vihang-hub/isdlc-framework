@@ -1,8 +1,8 @@
-# QA Sign-Off: REQ-0008-update-node-version
+# QA Sign-Off: REQ-0011-adaptive-workflow-sizing
 
-**Phase**: 08-code-review
-**Date**: 2026-02-10
-**Reviewer**: QA Engineer (Agent 07)
+**Phase**: 16-quality-loop
+**Date**: 2026-02-12
+**Reviewer**: Quality Loop Engineer (Phase 16)
 **Decision**: APPROVED
 
 ---
@@ -11,27 +11,78 @@
 
 | Criterion | Status | Evidence |
 |-----------|--------|----------|
-| Code review completed | PASS | 16/16 edits verified against design specification |
-| No critical code review issues | PASS | 0 critical, 0 major, 0 minor issues |
-| Static analysis passing | PASS | JSON valid, YAML valid, npm audit clean |
-| Test suite passing | PASS | 1185 pass, 1 pre-existing fail (TC-E09) |
-| New tests well-structured | PASS | 44 tests with TC IDs, AC refs, priority markers |
-| No scope creep | PASS | Changes limited to 9 files per design spec |
-| Traceability complete | PASS | REQ -> design -> test -> code fully traced |
-| Documentation updated | PASS | README, constitution, discovery report, state.json |
-| Security review complete | PASS | npm audit 0 vulnerabilities, no new deps |
-| Constitutional compliance | PASS | Articles V, VI, VII, VIII, IX all satisfied |
-| Artifact completeness | PASS | 16 artifacts present across all phases |
-| Performance acceptable | PASS | No runtime changes, CI matrix still 9 jobs |
-| Technical debt documented | PASS | 0 new debt, 3 pre-existing items noted |
+| Build verification completed | PASS | `node --check` clean on common.cjs and workflow-completion-enforcer.cjs |
+| All tests pass | PASS | CJS: 1076/1076, ESM: 489/490 (1 pre-existing TC-E09) |
+| New feature tests pass | PASS | 72/72 sizing tests (TC-SZ-001 through TC-SZ-074) |
+| No regressions | PASS | 1004 pre-existing CJS tests unchanged and passing |
+| Code coverage meets thresholds | N/A | Coverage tool not configured; 72 tests cover all 22 error codes |
+| Linter passes | N/A | No linter configured; manual static analysis clean |
+| Type checker passes | N/A | Pure JavaScript project |
+| No critical/high SAST vulnerabilities | PASS | Manual security review clean; pure computation functions |
+| No critical/high dependency vulnerabilities | PASS | `npm audit` reports 0 vulnerabilities |
+| Automated code review has no blockers | PASS | All pattern checks pass |
+| Configuration validated | PASS | workflows.json valid JSON with sizing config |
+
+## Test Results Summary
+
+| Suite | Total | Pass | Fail | Pre-existing Failures |
+|-------|-------|------|------|-----------------------|
+| CJS Hook Tests | 1076 | 1076 | 0 | 0 |
+| ESM Lib Tests | 490 | 489 | 1 | 1 (TC-E09) |
+| **Combined** | **1566** | **1565** | **1** | **1** |
+
+### New Tests (REQ-0011)
+
+| Function | Tests | Pass | Fail |
+|----------|-------|------|------|
+| parseSizingFromImpactAnalysis | 19 | 19 | 0 |
+| computeSizingRecommendation | 16 | 16 | 0 |
+| applySizingDecision | 26 | 26 | 0 |
+| Integration (end-to-end) | 8 | 8 | 0 |
+| Error paths | 3 | 3 | 0 |
+| **Total** | **72** | **72** | **0** |
+
+## Files in Scope
+
+| File | Change | Verified |
+|------|--------|----------|
+| `src/claude/hooks/lib/common.cjs` | 3 sizing functions + 3 helpers | YES |
+| `src/claude/hooks/tests/test-sizing.test.cjs` | 72 test cases | YES |
+| `src/claude/commands/isdlc.md` | STEP 3e-sizing block | YES |
+| `src/isdlc/config/workflows.json` | Sizing config | YES |
+| `src/claude/agents/impact-analysis-orchestrator.md` | JSON metadata spec | YES |
+| `src/claude/hooks/workflow-completion-enforcer.cjs` | Variable-length guard | YES |
+
+## Constitutional Compliance
+
+| Article | Status | Evidence |
+|---------|--------|----------|
+| II (Test-Driven Development) | PASS | 72 new tests; boundary testing; error path coverage |
+| III (Architectural Integrity) | PASS | Pure functions; no I/O in computation; existing mutation pattern |
+| V (Security by Design) | PASS | Input validation; invariant checks; rollback; npm audit clean |
+| VI (Code Quality) | PASS | JSDoc; underscore-prefixed privates; deterministic algorithms |
+| VII (Documentation) | PASS | Quality reports generated |
+| IX (Traceability) | PASS | Tests map to SZ-xxx error codes |
+| XI (Integration Testing Integrity) | PASS | 8 integration tests; 1076 total CJS pass |
+
+## Quality Loop Metrics
+
+| Metric | Value |
+|--------|-------|
+| Iterations required | 1 |
+| Track A failures | 0 |
+| Track B failures | 0 |
+| Fixes delegated to developer | 0 |
+| Circuit breaker triggered | No |
 
 ## Gate Decision
 
-**GATE-08: PASS**
+**GATE-16: PASS**
 
-This feature is approved for the next phase. The implementation is a clean, minimal, configuration-only change that faithfully executes the design specification with comprehensive test coverage.
+The REQ-0011 adaptive workflow sizing implementation passes all GATE-16 criteria. The 3 new sizing functions in common.cjs are well-tested (72 tests, 22 error codes covered), security-reviewed (pure computation, no I/O), and properly integrated with workflows.json, isdlc.md, and workflow-completion-enforcer.cjs. Zero regressions across 1004 pre-existing CJS tests. Both parallel tracks (testing + automated QA) passed on the first iteration. The implementation is approved for progression to code review (Phase 08).
 
 ---
 
-**Signed**: QA Engineer (Agent 07)
-**Date**: 2026-02-10
+**Signed**: Quality Loop Engineer (Phase 16)
+**Date**: 2026-02-12
+**Iteration count**: 1

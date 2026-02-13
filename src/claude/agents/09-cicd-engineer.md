@@ -189,6 +189,15 @@ If `docs/isdlc/tasks.md` exists:
 2. Update phase status header to `COMPLETE`
 3. Update Progress section at bottom of tasks.md
 
+## Annotation Preservation (v2.0)
+When updating tasks.md (toggling checkboxes, updating status headers, refining tasks):
+1. MUST NOT remove or modify pipe-delimited annotations (`| traces: ...`) on task lines
+2. MUST NOT remove or modify indented sub-lines (lines starting with 2+ spaces below a task):
+   - `blocked_by:`, `blocks:`, `files:`, `reason:` sub-lines
+3. MUST NOT remove or modify the Dependency Graph, Traceability Matrix, or Progress Summary sections
+4. When refining template tasks with specifics, preserve existing annotations and extend them
+5. When adding new tasks at section end, add `| traces:` annotations if the requirement mapping is clear
+
 ## If tasks.md Does Not Exist
 Skip this protocol entirely. TaskCreate spinners are sufficient.
 

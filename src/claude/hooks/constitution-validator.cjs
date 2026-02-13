@@ -19,6 +19,7 @@ const {
     outputSelfHealNotification,
     logHookEvent,
     addPendingEscalation,
+    detectPhaseDelegation,
     loadIterationRequirements: loadIterationRequirementsFromCommon
 } = require('./lib/common.cjs');
 
@@ -84,12 +85,23 @@ const SETUP_COMMAND_KEYWORDS = [
 
 /**
  * Detect if this is a phase completion attempt
+ * BUG-0008: Added detectPhaseDelegation() guard to prevent false positives
+ * on delegation prompts from the phase-loop controller.
  */
 function isPhaseCompletionAttempt(input) {
     const toolName = input.tool_name;
     const toolInput = input.tool_input || {};
 
     if (toolName === 'Task') {
+        // BUG-0008: Phase-loop controller delegations are NOT completion attempts
+        try {
+            const delegation = detectPhaseDelegation(input);
+            if (delegation.isDelegation) {
+                debugLog(`Delegation detected (agent: ${delegation.agentName}, phase: ${delegation.targetPhase}), skipping completion check`);
+                return false;
+            }
+        } catch (e) { /* fail-open: fall through to existing logic */ }
+
         const prompt = (toolInput.prompt || '');
         const description = (toolInput.description || '');
         const combined = (prompt + ' ' + description).toLowerCase();
@@ -242,7 +254,8 @@ function check(ctx) {
             return { decision: 'allow' };
         }
 
-        let currentPhase = state.current_phase;
+        // BUG-0005 (AC-03a): Prefer active_workflow.current_phase over top-level
+        let currentPhase = state.active_workflow?.current_phase || state.current_phase;
         if (!currentPhase) {
             return { decision: 'allow' };
         }

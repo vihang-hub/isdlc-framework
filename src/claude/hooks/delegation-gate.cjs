@@ -130,7 +130,8 @@ async function main() {
         }
 
         // Cross-reference: check if any phase is in_progress (evidence of active work)
-        const currentPhase = state.current_phase || (state.active_workflow && state.active_workflow.current_phase);
+        // BUG-0005 (AC-03b): Prefer active_workflow.current_phase over top-level (fix inverted priority)
+        const currentPhase = (state.active_workflow && state.active_workflow.current_phase) || state.current_phase;
         if (currentPhase && state.phases && state.phases[currentPhase]) {
             const phaseData = state.phases[currentPhase];
             if (phaseData.status === 'in_progress') {

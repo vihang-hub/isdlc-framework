@@ -88,11 +88,96 @@ function validatePhase(phaseName, phaseData, filePath) {
 }
 
 /**
+ * Rule V7: Optimistic locking version check (BUG-0009).
+ *
+ * For Write events: compares the incoming state_version (from tool_input.content)
+ * against the current disk state_version. Blocks if incoming < disk.
+ * For Edit events: skipped (Edit modifies in-place, version is managed by writeState).
+ *
+ * Backward-compatible: allows if either version is missing/null.
+ * Fail-open: allows on any read/parse error.
+ *
+ * @param {string} filePath - Path to the state.json file
+ * @param {object} toolInput - The tool_input from the hook event
+ * @param {string} toolName - 'Write' or 'Edit'
+ * @returns {{ decision: string, stopReason?: string, stderr?: string } | null}
+ *   Returns a block/allow result if V7 applies, or null to continue to other rules.
+ */
+function checkVersionLock(filePath, toolInput, toolName) {
+    // V7 only applies to Write events (Edit reads from disk post-write)
+    if (toolName !== 'Write') {
+        return null;
+    }
+
+    try {
+        // Parse incoming content to get incoming state_version
+        const incomingContent = toolInput.content;
+        if (!incomingContent || typeof incomingContent !== 'string') {
+            return null; // No content to check — allow
+        }
+
+        let incomingState;
+        try {
+            incomingState = JSON.parse(incomingContent);
+        } catch (e) {
+            // Fail-open: incoming content is not valid JSON
+            return null;
+        }
+
+        const incomingVersion = incomingState.state_version;
+
+        // Backward compat: if incoming has no state_version, allow
+        if (incomingVersion === undefined || incomingVersion === null) {
+            return null;
+        }
+
+        // Read current disk state_version
+        let diskVersion;
+        try {
+            if (!fs.existsSync(filePath)) {
+                return null; // No disk file — allow (first write)
+            }
+            const diskContent = fs.readFileSync(filePath, 'utf8');
+            const diskState = JSON.parse(diskContent);
+            diskVersion = diskState.state_version;
+        } catch (e) {
+            // Fail-open: error reading disk file
+            return null;
+        }
+
+        // Migration case: disk has no state_version
+        if (diskVersion === undefined || diskVersion === null) {
+            return null;
+        }
+
+        // Version check: incoming must be >= disk
+        if (incomingVersion < diskVersion) {
+            const reason = `Version mismatch: expected state_version >= ${diskVersion}, got ${incomingVersion}. Re-read .isdlc/state.json before writing.`;
+            console.error(`[state-write-validator] V7 BLOCK: ${reason}`);
+            logHookEvent('state-write-validator', 'block', {
+                reason: `V7: state_version ${incomingVersion} < disk ${diskVersion}`
+            });
+            return {
+                decision: 'block',
+                stopReason: reason
+            };
+        }
+
+        // Version OK
+        return null;
+    } catch (e) {
+        // Fail-open: any error in V7 allows the write
+        debugLog('V7 version check error:', e.message);
+        return null;
+    }
+}
+
+/**
  * Dispatcher-compatible check function.
- * NOTE: Reads the just-written state.json file from disk via fs.readFileSync.
- * NEVER produces stdout output.
+ * NOTE: For V1-V3, reads the just-written state.json file from disk.
+ * For V7 (BUG-0009), compares incoming content version against disk version.
  * @param {object} ctx - { input, state, manifest, requirements, workflows }
- * @returns {{ decision: 'allow', stderr?: string }}
+ * @returns {{ decision: 'allow'|'block', stopReason?: string, stderr?: string }}
  */
 function check(ctx) {
     try {
@@ -115,6 +200,12 @@ function check(ctx) {
         }
 
         debugLog('State.json write detected:', filePath);
+
+        // Rule V7: Version check (BUG-0009) — runs BEFORE content validation
+        const v7Result = checkVersionLock(filePath, toolInput, input.tool_name);
+        if (v7Result && v7Result.decision === 'block') {
+            return v7Result;
+        }
 
         // Read the file from disk (it was just written)
         let stateData;
@@ -150,7 +241,7 @@ function check(ctx) {
             return { decision: 'allow', stderr: allWarnings.join('\n') };
         }
 
-        // NEVER produce stdout output
+        // NEVER produce stdout output for non-block cases
         return { decision: 'allow' };
 
     } catch (error) {

@@ -591,6 +591,89 @@ Update `.isdlc/state.json` with `constitutional_validation` block (see orchestra
 
 Escalate to orchestrator if max iterations exceeded, constitutional conflict detected, or same violation persists 3+ times.
 
+# MECHANICAL EXECUTION MODE
+
+## Overview
+
+Mechanical execution mode is an opt-in mode where you follow tasks.md task-by-task instead of self-decomposing work. This mode is activated by the `--mechanical` flag or `mechanical_mode: true` in workflow modifiers.
+
+## Mode Detection
+
+At the start of Phase 06:
+
+1. Read `state.json -> active_workflow.mechanical_mode`
+2. If `true`: read tasks.md and check for file-level tasks in Phase 06
+3. If file-level tasks exist: enter mechanical mode
+4. If no file-level tasks: emit fallback warning, use standard mode
+5. If `mechanical_mode` is false or missing: use standard mode (default)
+
+## Execution Protocol
+
+When in mechanical mode:
+
+### Step 1: Parse Phase 06 Tasks
+Read `docs/isdlc/tasks.md`, extract all Phase 06 tasks with their annotations:
+- `| traces:` -- which requirements this task fulfills
+- `blocked_by:` -- prerequisite tasks
+- `blocks:` -- downstream dependent tasks
+- `files:` -- target file paths with CREATE/MODIFY action
+
+### Step 2: Build Execution Order
+Compute topological sort of tasks based on blocked_by/blocks dependencies.
+Tasks with no dependencies execute first. Among equal-priority tasks, execute
+in TNNNN order (lowest ID first).
+
+### Step 3: Execute Each Task
+For each task in dependency order:
+
+1. **Check dependencies**: All `blocked_by` tasks must be `[X]`. If any are
+   `[BLOCKED]` or `[ ]`, mark this task `[BLOCKED]` with reason.
+
+2. **Read task context**: Parse the description, traces, and file annotations.
+
+3. **Implement**: For each file in `files:`:
+   - `CREATE`: Create the file, implement the specified functionality
+   - `MODIFY`: Read the existing file, apply the described changes
+   - Follow the `traces:` annotations to understand which acceptance criteria
+     to fulfill
+
+4. **Test (TDD)**: Write or update tests for the implemented functionality.
+   Run tests. Fix failures. Repeat until passing.
+
+5. **Mark completion**: Update tasks.md:
+   - Success: Change `- [ ]` to `- [X]`
+   - Failure after retries: Change `- [ ]` to `- [BLOCKED]` and add
+     `reason:` sub-line explaining why
+
+### Step 4: Report Results
+After all tasks are attempted, report:
+- Number completed, blocked, and remaining
+- Any deviations flagged
+- Updated Progress Summary in tasks.md
+
+## Deviation Rules
+
+In mechanical mode:
+- **DO NOT** add tasks without flagging as `[DEVIATION]` with reason
+- **DO NOT** remove tasks -- mark unnecessary ones as `[BLOCKED] reason: Task unnecessary`
+- **DO NOT** reorder tasks beyond dependency order
+- **DO** adjust implementation details (variable names, internal structure)
+- **DO** write additional tests beyond what is specified
+
+## Fallback
+
+If tasks.md Phase 06 section lacks file-level annotations (`files:` sub-lines),
+emit a warning and fall back to standard execution mode (self-decomposition).
+
+## Integration with ATDD Mode
+
+| ATDD Mode | Mechanical Mode | Behavior |
+|-----------|----------------|----------|
+| false | false | **Standard** (existing): Agent self-decomposes work, TDD cycle |
+| true | false | **ATDD**: Agent follows ATDD test-first unskipping order |
+| false | true | **Mechanical**: Agent follows tasks.md task-by-task per this design |
+| true | true | **ATDD + Mechanical**: ATDD controls test ordering; Mechanical controls file targeting |
+
 # PROGRESS TRACKING (TASK LIST)
 
 When this agent starts, create a task list for your key workflow steps using `TaskCreate`. Mark each task `in_progress` when you begin it and `completed` when done.
@@ -624,7 +707,7 @@ If `docs/isdlc/tasks.md` exists:
 1. Read tasks.md, locate your phase section (`## Phase NN:`)
 2. Update phase status header from `PENDING` to `IN PROGRESS`
 3. Refine template tasks with specifics from input artifacts
-   (e.g., "Write failing unit tests" → "Write failing tests for UserService and AuthController")
+   (e.g., "Write failing unit tests" -> "Write failing tests for UserService and AuthController")
 4. Preserve TNNNN IDs when refining. Append new tasks at section end if needed.
 
 ## During Execution
@@ -636,8 +719,28 @@ If `docs/isdlc/tasks.md` exists:
 2. Update phase status header to `COMPLETE`
 3. Update Progress section at bottom of tasks.md
 
+## Annotation Preservation (v2.0)
+When updating tasks.md (toggling checkboxes, updating status headers, refining tasks):
+1. MUST NOT remove or modify pipe-delimited annotations (`| traces: ...`) on task lines
+2. MUST NOT remove or modify indented sub-lines (lines starting with 2+ spaces below a task):
+   - `blocked_by:`, `blocks:`, `files:`, `reason:` sub-lines
+3. MUST NOT remove or modify the Dependency Graph, Traceability Matrix, or Progress Summary sections
+4. When refining template tasks with specifics, preserve existing annotations and extend them
+5. When adding new tasks at section end, add `| traces:` annotations if the requirement mapping is clear
+
 ## If tasks.md Does Not Exist
 Skip this protocol entirely. TaskCreate spinners are sufficient.
+
+## Mechanical Execution Mode (Agent 05 only)
+If `active_workflow.mechanical_mode: true` AND Phase 06 tasks have `files:` sub-lines:
+1. Read all Phase 06 tasks and parse their file annotations
+2. Build dependency graph from blocked_by/blocks sub-lines
+3. Execute tasks in topological (dependency) order
+4. For each task: implement the specified files, run tests, mark [X] or [BLOCKED]
+5. Do NOT add, remove, or reorder tasks without flagging as [DEVIATION]
+6. If tasks lack file-level detail, fall back to standard mode with a warning
+
+See the MECHANICAL EXECUTION MODE section (above) for the full execution algorithm.
 
 # SELF-VALIDATION
 

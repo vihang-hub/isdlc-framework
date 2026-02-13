@@ -215,11 +215,15 @@ Enter selection (1-5):
 ```
 /isdlc feature "Feature description"
 /isdlc feature "Feature description" --project api-service
+/isdlc feature -light "Feature description"
+/isdlc feature -light "Feature description" --project api-service
 /isdlc feature                        (no description — presents backlog picker)
 ```
 1. Validate constitution exists and is not a template
 2. Check no active workflow (block if one exists, suggest `/isdlc cancel` first)
-3. Initialize `active_workflow` in state.json with type `"feature"` and phases `["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]`
+3. Parse flags from command arguments:
+   - If args contain "-light": set flags.light = true, remove "-light" from description
+4. Initialize `active_workflow` in state.json with type `"feature"`, phases `["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]`, and flags: `{ light: flags.light || false }`
 4. Delegate to Requirements Analyst (Phase 01) with `scope: "feature"`
 5. After GATE-01: creates `feature/REQ-NNNN-description` branch from main
 6. After GATE-08: merges branch to main, deletes branch
@@ -769,6 +773,18 @@ Use `AskUserQuestion` with options:
 
 Clear `pending_escalations` after handling.
 
+**3c-prime.** PRE-DELEGATION STATE UPDATE — Write phase activation to `state.json` BEFORE delegating to the phase agent. This ensures hooks see the correct state when the agent starts executing.
+
+Using the `state.json` already read in step 3b, update the following fields:
+
+1. Set `phases[phase_key].status` = `"in_progress"`
+2. Set `phases[phase_key].started` = current ISO-8601 timestamp (only if not already set — preserve existing start time on retries)
+3. Set `active_workflow.current_phase` = `phase_key`
+4. Set `active_workflow.phase_status[phase_key]` = `"in_progress"`
+5. Set top-level `current_phase` = `phase_key`
+6. Set top-level `active_agent` = agent name (resolved from PHASE_AGENT_MAP below)
+7. Write `.isdlc/state.json`
+
 **3d.** DIRECT PHASE DELEGATION — Bypass the orchestrator and delegate directly to the phase agent.
 
 Look up the agent for this phase from the PHASE→AGENT table:
@@ -815,8 +831,175 @@ Use Task tool → {agent_name} with:
 2. Set `phases[phase_key].status` = `"completed"`
 3. Set `phases[phase_key].summary` = (extract from agent result, max 150 chars)
 4. Set `active_workflow.current_phase_index` += 1
-5. If more phases remain: set `active_workflow.current_phase` = `phases[new_index]`, set `phases[new_phase].status` = `"in_progress"`, set top-level `current_phase` = new phase key
-6. Write `.isdlc/state.json`
+5. Set `active_workflow.phase_status[phase_key]` = `"completed"` (BUG-0005: sync phase_status map)
+6. If more phases remain: (BUG-0006: next-phase activation moved to STEP 3c-prime at start of next iteration)
+   - No action needed here — the next iteration's STEP 3c-prime handles phase activation
+7. Write `.isdlc/state.json`
+8. Update `docs/isdlc/tasks.md` (if it exists):
+   - Find the completed phase section header (e.g., `## Phase NN: ... -- PENDING` or `-- IN PROGRESS`)
+   - Change section header status to `-- COMPLETE`
+   - Change all `- [ ] TNNNN ...` to `- [X] TNNNN ...` within that section (preserve pipe annotations like `| traces: AC-03a`)
+   - Recalculate the Progress Summary table: update completed task counts per phase, total count, and percentage
+   - Write the updated `docs/isdlc/tasks.md`
+   - If `docs/isdlc/tasks.md` does not exist, skip this step silently
+
+**PHASE_AGENT_MAP** (for STEP 3c-prime `active_agent` resolution):
+```
+01-requirements → requirements-analyst
+02-tracing → trace-analyst
+02-impact-analysis → impact-analyst
+03-architecture → solution-architect
+04-design → software-designer
+05-test-strategy → test-design-engineer
+06-implementation → software-developer
+07-testing → quality-assurance-engineer
+08-code-review → code-reviewer
+09-security → security-engineer
+10-local-testing → quality-assurance-engineer
+16-quality-loop → quality-assurance-engineer
+11-deployment → release-engineer
+12-test-deploy → release-engineer
+13-production → release-engineer
+```
+
+**3e-sizing.** SIZING DECISION POINT (conditional) -- After the post-phase
+state update, check if adaptive workflow sizing should run.
+
+**Trigger check**:
+1. Read the phase key that was just completed from the state update in 3e
+2. If `phase_key === '02-impact-analysis'` AND `active_workflow.type === 'feature'`:
+   a. Read `active_workflow.sizing` from state.json
+   b. If `sizing` is already set (not undefined/null): skip to 3e-refine (prevent double-sizing)
+   c. If `sizing` is not set: execute sizing flow (below)
+3. Otherwise (not Phase 02, or not feature workflow): skip to 3e-refine
+
+**Sizing flow**:
+
+**S1.** Read configuration:
+   - Read `active_workflow.flags.light` from state.json
+   - Read `workflows.json` -> `workflows.feature.sizing`
+   - If `sizing.enabled` is falsy or `sizing` block is missing: skip sizing entirely (default to standard, no UX prompt). Write sizing record: `{ intensity: 'standard', effective_intensity: 'standard', recommended_by: 'framework', overridden: false, decided_at: <now>, forced_by_flag: false, epic_deferred: false }`. Write state.json, then skip to 3e-refine.
+
+**S2.** IF `-light` flag is set (`active_workflow.flags.light === true`):
+   a. Call `applySizingDecision(state, 'light', { forced_by_flag: true, config: sizingConfig })`
+      where `sizingConfig` = `{ light_skip_phases: workflows.feature.sizing.light_skip_phases }`
+   b. Write state.json
+   c. Display forced-light banner:
+      ```
+      +----------------------------------------------------------+
+      |  WORKFLOW SIZING: Light (forced via -light flag)          |
+      |                                                           |
+      |  Skipping phases:                                         |
+      |    - Phase 03: Architecture                               |
+      |    - Phase 04: Design                                     |
+      |                                                           |
+      |  Workflow: 00 -> 01 -> 02 -> 05 -> 06 -> 16 -> 08       |
+      +----------------------------------------------------------+
+      ```
+   d. Update task list: find tasks for skipped phases, mark as completed with subject `~~[N] {subject} (Skipped -- light workflow)~~`
+   e. Skip to 3e-refine
+
+**S3.** ELSE (standard sizing flow):
+   a. Read impact-analysis.md:
+      - Path: `docs/requirements/{artifact_folder}/impact-analysis.md`
+      - If file not found: default to standard, log warning, write sizing record, skip to 3e-refine
+   b. Call `parseSizingFromImpactAnalysis(content)`
+      - If returns null: default to standard with rationale "Unable to parse impact analysis", write sizing record, skip to 3e-refine
+   c. Read thresholds: `workflows.json` -> `workflows.feature.sizing.thresholds`
+      - If missing: use defaults `{ light_max_files: 5, epic_min_files: 20 }`
+   d. Call `computeSizingRecommendation(metrics, thresholds)`
+   e. Display sizing recommendation banner:
+      ```
+      +----------------------------------------------------------+
+      |  WORKFLOW SIZING RECOMMENDATION                           |
+      |                                                           |
+      |  Recommended: {INTENSITY}                                 |
+      |  Rationale: {rationale text}                              |
+      |                                                           |
+      |  Impact Analysis Summary:                                 |
+      |    Files affected:  {N}                                   |
+      |    Modules:         {N}                                   |
+      |    Risk level:      {level}                               |
+      |    Coupling:        {level}                               |
+      |    Coverage gaps:   {N}                                   |
+      +----------------------------------------------------------+
+      ```
+   f. Present user menu using `AskUserQuestion`:
+      - `[A] Accept recommendation`
+      - `[O] Override (choose different intensity)`
+      - `[S] Show full impact analysis`
+   g. Handle user choice:
+      - **[A] Accept**:
+        - If intensity is 'epic': inform user that epic is deferred, proceeding with standard
+        - Call `applySizingDecision(state, recommendation.intensity, { metrics, config: sizingConfig })`
+      - **[O] Override**:
+        - Present intensity picker: `[1] Light  [2] Standard  [3] Epic`
+        - Call `applySizingDecision(state, chosen, { metrics, overridden: true, overridden_to: chosen, recommended_intensity: recommendation.intensity, config: sizingConfig })`
+      - **[S] Show analysis**:
+        - Display full impact-analysis.md content
+        - Return to menu (repeat step f)
+   h. Write state.json
+   i. If effective_intensity is 'light': update task list (mark skipped phase tasks as completed)
+   j. Display applied sizing confirmation banner
+   k. Proceed to 3e-refine
+
+**3e-refine.** TASK REFINEMENT (conditional) — After the post-phase state update, check if task refinement should run:
+
+**Trigger check**:
+1. Read the phase key that was just completed from the state update in 3e
+2. If `phase_key === '04-design'`:
+   a. Check if `active_workflow.phases` includes `'06-implementation'`
+   b. Check if `active_workflow.refinement_completed` is NOT `true`
+   c. If BOTH true: execute refinement (below)
+   d. If either false: skip to 3f
+
+**Refinement execution**:
+1. Read `active_workflow.artifact_folder` from state.json
+2. Set `artifact_path` = `docs/requirements/{artifact_folder}`
+3. Read design artifacts:
+   - `{artifact_path}/module-design-*.md` (all module design files)
+   - `{artifact_path}/interface-spec.yaml` or `{artifact_path}/interface-spec.md` (if exists)
+   - `{artifact_path}/component-spec.md` (if exists)
+4. Read `{artifact_path}/requirements-spec.md` for REQ/AC cross-reference
+5. Read `docs/isdlc/tasks.md` (current plan)
+6. Execute the refinement algorithm:
+   a. Parse tasks.md: extract Phase 06 section tasks (preserve Phase 01-05, 07+ verbatim)
+   b. Read design artifacts: build a map of { module -> files -> functions/exports }
+   c. Read requirements-spec.md: build a map of { REQ-NNN -> [AC-NNx, ...] }
+   d. For each Phase 06 high-level task:
+      - Identify which design modules it maps to
+      - Identify which files need CREATE or MODIFY
+      - Identify which REQ/AC the files fulfill
+      - Generate one task per logical unit of work (one file or tightly coupled file group)
+      - Assign new TNNNN IDs (continuing from last ID in tasks.md)
+      - Add `| traces:` annotations linking to REQ/AC
+      - Add `files:` sub-lines with file paths and CREATE/MODIFY
+   e. Compute dependencies:
+      - If file B imports from file A, the task for B is `blocked_by` the task for A
+      - If module X depends on module Y, tasks for X are `blocked_by` tasks for Y
+      - Add `blocked_by:` and `blocks:` sub-lines
+   f. Validate acyclicity: trace all dependency chains, confirm no task depends on itself transitively
+   g. Compute critical path: find longest dependency chain
+   h. Generate Dependency Graph section with critical path
+   i. Re-compute Traceability Matrix with refined tasks
+7. Write updated `docs/isdlc/tasks.md`
+8. Write `{artifact_path}/task-refinement-log.md`
+9. Set `active_workflow.refinement_completed = true` in state.json
+10. Display refinement summary to user:
+
+```
++----------------------------------------------------------+
+|  TASK REFINEMENT COMPLETE                                 |
+|                                                           |
+|  Phase 06 tasks refined: {N} high-level -> {M} file-level|
+|  Dependencies added: {D} edges                           |
+|  Critical path length: {L} tasks                         |
+|  Traceability: {T}% AC coverage                          |
+|  Details: {artifact_path}/task-refinement-log.md          |
++----------------------------------------------------------+
+```
+
+**Fallback**: If no design artifacts are found, skip refinement silently. Phase 06 tasks remain high-level. The software-developer agent will self-decompose work as it does today.
 
 **3f.** On return, check the result status:
 - `"passed"` or successful completion → Mark task as `completed` **with strikethrough**: update both `status` to `completed` AND `subject` to `~~[N] {base subject}~~` (wrap the original `[N] subject` in `~~`). Continue to next phase.
@@ -835,10 +1018,17 @@ Use Task tool → sdlc-orchestrator with:
 
 The orchestrator runs the Human Review Checkpoint (if code_review.enabled), merges the branch, collects workflow progress snapshots (`collectPhaseSnapshots()`), applies state pruning, moves the workflow to `workflow_history` (with `phases`, `phase_snapshots`, and `metrics`), and clears `active_workflow`.
 
-**After the orchestrator returns from finalize**, clean up all workflow tasks:
-1. Use `TaskList` to get all tasks created during this workflow
-2. For any task still showing as `pending` or `in_progress`, mark it as `completed` with strikethrough subject
-3. This ensures the task list accurately reflects the completed workflow and no stale tasks remain visible
+**CRITICAL — MANDATORY CLEANUP (must execute even if finalize output is long):**
+
+After the orchestrator returns from finalize, execute this cleanup loop immediately:
+
+1. Call `TaskList` to retrieve ALL tasks in the session
+2. For EACH task returned by TaskList:
+   a. If task `status` is `pending` or `in_progress`:
+      - Call `TaskUpdate` with `status: "completed"`
+      - If the task `subject` does NOT already start with `~~`, update `subject` to `~~{current_subject}~~`
+3. This loop processes ALL tasks (workflow phase tasks AND sub-agent tasks) — do not attempt to filter or identify which tasks "belong" to the workflow. After finalize, every remaining non-completed task is stale by definition.
+4. Do NOT exit the Phase-Loop Controller until this cleanup loop has completed.
 
 #### Flow Summary
 

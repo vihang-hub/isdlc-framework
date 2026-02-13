@@ -320,7 +320,8 @@ function resolveModelId(config, providerName, modelAlias) {
  */
 function selectProvider(config, state, context) {
     const { subagent_type } = context;
-    const currentPhase = state?.current_phase || 'unknown';
+    // BUG-0005 (AC-03f): prefer active_workflow.current_phase over top-level
+    const currentPhase = state?.active_workflow?.current_phase || state?.current_phase || 'unknown';
     const activeMode = config.active_mode || 'hybrid';
 
     // 1. Check CLI override (environment variables)

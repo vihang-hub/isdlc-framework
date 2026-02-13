@@ -28,6 +28,22 @@
           "description": "Skip Phase 00 Quick Scan for simple features",
           "default": false,
           "flag": "--no-scan"
+        },
+        "light": {
+          "description": "Force lightweight workflow (skip architecture and design phases)",
+          "default": false,
+          "flag": "-light"
+        }
+      },
+      "sizing": {
+        "enabled": true,
+        "thresholds": {
+          "light_max_files": 5,
+          "epic_min_files": 20
+        },
+        "light_skip_phases": ["03-architecture", "04-design"],
+        "risk_override": {
+          "high_risk_forces_standard_minimum": true
         }
       },
       "agent_modifiers": {
@@ -317,7 +333,8 @@
   },
   "rules": {
     "no_halfway_entry": true,
-    "no_phase_skipping": true,
+    "no_agent_phase_skipping": true,
+    "_comment_phase_skipping": "Agents cannot skip phases at runtime. Framework-level sizing modifications to the phase array (REQ-0011) are permitted before phases are encountered.",
     "single_active_workflow_per_project": true,
     "require_cancellation_reason": true
   }

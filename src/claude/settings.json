@@ -32,9 +32,7 @@
     "ask": [
       "Bash(rm *)",
       "Bash(mv *)",
-      "Bash(cp *)",
       "Bash(git push *)",
-      "Bash(git merge *)",
       "Bash(git rebase *)",
       "Bash(docker *)",
       "Bash(docker-compose *)",
@@ -106,6 +104,8 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(git checkout *)",
+      "Bash(git merge *)",
+      "Bash(cp *)",
       "Bash(git switch *)",
       "Bash(git stash *)",
       "Bash(git fetch *)",
