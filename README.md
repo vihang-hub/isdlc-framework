@@ -4,7 +4,7 @@
 
 <h3><em>Structured AI-powered software development, from requirements to production.</em></h3>
 
-<p><strong>A comprehensive SDLC framework for Claude Code with 48 agents, 240 skills, quality gates at every phase boundary, and 27 deterministic enforcement hooks.</strong></p>
+<p><strong>An intelligent framework for Claude Code — self-adapting, constitution-governed, document-driven, and deterministically enforced from requirements to production.</strong></p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Agents](https://img.shields.io/badge/Agents-48-purple.svg)](docs/AGENTS.md)
@@ -18,16 +18,33 @@
 
 ## What is iSDLC?
 
-The iSDLC (intelligent Software Development Lifecycle) framework is a **structured, multi-agent SDLC** that installs into your existing project and guides AI-powered development from requirements through production. It exists because LLM-based coding assistants are powerful but unreliable without external constraints — they skip tests, drift from requirements, lose context across sessions, and declare work "done" prematurely.
+The iSDLC (intelligent Software Development Lifecycle) framework installs into your existing project and guides AI-powered development from requirements through production. It exists because LLM-based coding assistants are powerful but unreliable without external constraints — they skip tests, drift from requirements, lose context across sessions, and declare work "done" prematurely. iSDLC adds the structure they lack.
 
-### What it enforces
+### Self-adapting
 
-- **Quality gates the AI can't skip** — 27 hooks run as separate Node.js processes outside the LLM conversation, enforcing iteration limits, test coverage thresholds, and phase sequencing deterministically
+- **Adaptive workflow sizing** — automatically scales workflows to light, standard, or epic based on impact analysis, so small fixes don't carry the overhead of large features
+- **Self-correction with limits** — agents iterate autonomously to fix failing tests; circuit breakers stop infinite loops and escalate to a human instead of burning tokens
+- **Tech-stack-aware skills** — during discovery, the framework detects your technologies and activates relevant skills automatically — React projects get component and state management skills, Django projects get migration and ORM skills, and so on
+- **Codebase knowledge** — `/discover` runs 22 agents that map your architecture, test coverage, dependencies, and conventions before any work begins
+
+### Constitution-governed
+
+- **Per-project constitution** — `/discover` generates governance rules tailored to your codebase — coding standards, dependency constraints, architectural boundaries — that bind all downstream agents
+- **Constitutional validation** — hooks intercept phase completions and block advancement until artifacts comply with constitutional articles
+- **Specification primacy** — code serves specifications, not the other way around; requirements trace through architecture, design, tests, and implementation
+
+### Document-driven
+
 - **Structured workflows, not free-form chat** — each workflow type has a fixed phase sequence; agents execute in order with clear handoffs and typed artifacts
 - **Session persistence** — workflow state, phase progress, and iteration counters survive session boundaries; resume where you left off, not from scratch
+- **Artifact traceability** — every phase produces typed artifacts that become inputs to the next; requirements trace to tests trace to code
+
+### Deterministically enforced
+
+- **Quality gates the AI can't skip** — 27 hooks run as separate Node.js processes outside the LLM conversation, enforcing iteration limits, test coverage thresholds, and phase sequencing
+- **Test-first development** — TDD enforcement with 80% coverage minimums; the agent cannot advance past implementation without passing tests
 - **Scope containment** — fix workflows are scoped to 6 phases, feature workflows to 9; the agent cannot invent extra steps or refactor unrelated code
-- **Codebase knowledge** — `/discover` runs 22 agents that map your architecture, test coverage, and conventions before any work begins
-- **Self-correction with limits** — circuit breakers stop infinite retry loops; iteration limits force human escalation instead of token-burning loops
+- **Human escalation** — when circuit breakers trip, iteration limits are exceeded, or gate checks fail repeatedly, the framework pauses and escalates to a human
 
 ### Available workflows
 
