@@ -35,10 +35,38 @@
 - [x] BUG: Orchestrator finalize creates tasks but doesn't mark them completed (BUG-0010 — FIXED)
   - Rewrote STEP 4 cleanup: CRITICAL mandatory loop marks ALL non-completed tasks
 
+### Bugs Found During REQ-0011 Workflow (2026-02-13)
+
+- [ ] BUG: Git add/commit runs before quality-loop and code-review (BUG-0011)
+  - Claude Code proactively runs `git add` and `git commit` during Phase 06 (implementation), before Phase 16 (quality-loop) and Phase 08 (code-review) have validated the code
+  - No agent instructs this — it's Claude Code's default behavior, and no agent or hook prevents it
+  - Commits should represent validated work; committing untested/unreviewed code pollutes git history
+  - **Fix**: Add explicit "Do NOT run git add or git commit" instruction to software-developer agent (Phase 06), and optionally add a hook that blocks `git commit` on feature branches during phases 06, 16, and allows it only at finalize
+  - **Scope**: `src/claude/agents/05-software-developer.md`, potentially a new hook or extension to branch-guard
+
+### Performance Investigation (2026-02-13)
+
+Findings from 4-agent parallel analysis of workflow speed bottlenecks. T1-T3 already completed (4-6x cumulative speedup). Remaining opportunities:
+
+- [ ] T4-B: Parallel test execution — detect framework, apply parallel flags (Jest --workers, pytest -n auto, Vitest --threads, Go -parallel N)
+  - **Impact**: 3-5x speedup for test phases (Phase 07, 11, 16)
+  - **Complexity**: Low (prompt changes in environment-builder, integration-tester, quality-loop-engineer agents)
+  - **Fallback**: If parallel run fails, retry sequential with flakiness warning
+- [ ] T4-A: Parallel test creation — test design agent spawns parallel sub-agents for large codebases
+- [ ] T5: Quality Loop true parallelism — Track A (testing) and Track B (QA) currently run sequentially despite being designed as parallel
+  - **Impact**: 2x speedup for Phase 16 (1.5-2 min savings)
+  - **Complexity**: Medium (spawn Track A + Track B as separate sub-agents, wait for both)
+- [ ] T6: Hook I/O optimization — reduce disk reads in dispatchers
+  - T6-A: Config caching — cache skills-manifest.json (50-200KB), iteration-requirements.json, workflows.json with mtime invalidation (saves 30-50ms per invocation)
+  - T6-B: writeState() double-read elimination — BUG-0009 optimistic locking reads disk to get version before writing, adds 10-20ms per write; trust in-memory version instead
+  - T6-C: getProjectRoot() caching — compute once per dispatcher, not per sub-hook (saves 5-10ms per hook)
+  - T6-D: Post-write/edit triple I/O consolidation — dispatcher + validators + workflow-completion-enforcer do 4-5 sequential state reads
+- [ ] T7: Agent prompt boilerplate extraction — ROOT RESOLUTION, MONOREPO, ITERATION protocols duplicated across 17 agents (~3,600 lines)
+  - Move remaining shared sections to CLAUDE.md (T2 follow-up)
+  - **Impact**: 2-3% speedup per agent delegation
+  - **Complexity**: Low (mechanical extraction)
+
 **Framework Features:**
-- [ ] T4: Test execution parallelism
-  - T4-A: Parallel test creation — test design agent assesses workload, spawns parallel sub-agents for large codebases
-  - T4-B: Parallel local test execution — detect framework, apply parallel flags (Jest --workers, pytest -n auto, etc.)
 - [ ] Improve search capabilities to help Claude be more effective
 - [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
 - [ ] Add /isdlc refactor command and workflow — pre-requisite: 100% automated E2E testing
