@@ -148,6 +148,67 @@ Findings from 4-agent parallel analysis of workflow speed bottlenecks. T1-T3 alr
   - **Precedent**: Deep discovery Inception Party already uses multi-agent debate. This extends the pattern from research to implementation.
   - **Relates to**: Multi-agent debate mode (already in backlog) — this is the implementation-specific version of that broader idea
 
+### Multi-Agent Teams for Requirements, Architecture, Design (Architecture)
+
+- [ ] Creator/Critic/Refiner teams for Phases 01, 03, and 04 — extend the Implementation-Review Fusion pattern to all creative phases
+  - **Pattern**: Each phase runs a 3-agent loop: Creator produces artifact → Critic reviews and challenges → Refiner synthesizes improvements. Max 3 rounds, convergence when Critic has zero blocking findings.
+  - **Phase 01 — Requirements Team**:
+    - **Creator** (requirements-analyst): Produces requirements-spec.md, user-stories.json, NFR matrix, traceability matrix. Captures FRs, ACs, user stories, constraints, and dependencies.
+    - **Critic** catches:
+      - Vague/untestable acceptance criteria (no Given/When/Then, no measurable threshold)
+      - Orphan requirements (FR with no AC, AC with no user story)
+      - Unmeasured NFRs (e.g., "fast" without p95 latency target)
+      - Scope creep signals (requirement not traceable to user's original description)
+      - Missing compliance/regulatory requirements (GDPR, PCI-DSS, HIPAA depending on domain)
+      - Contradictory requirements (FR-01 says X, FR-03 implies not-X)
+      - Missing error/edge case scenarios (happy path only)
+      - Unstated assumptions that should be explicit constraints
+    - **Refiner** produces:
+      - Testable Given/When/Then for every AC
+      - Quantified NFRs (p95 < 200ms, 99.9% uptime, etc.)
+      - Complete traceability (every FR → AC → user story → test case)
+      - Risk mitigation for each identified gap
+      - Explicit assumption register
+  - **Phase 03 — Architecture Team**:
+    - **Creator** (solution-architect): Produces architecture-overview.md, tech-stack-decision.md, database-design.md, security-architecture.md, ADRs. Evaluates tech stack, designs infrastructure, plans data layer.
+    - **Critic** catches:
+      - NFR misalignment (architecture can't meet stated performance/scalability NFRs)
+      - Incomplete STRIDE threat model (missing categories, unmitigated threats)
+      - Database design flaws (missing indexes, N+1 query patterns, no migration strategy)
+      - Weak tech stack justification (no alternatives evaluated, no trade-off analysis)
+      - Single points of failure (no redundancy, no failover, no circuit breakers)
+      - Cost implications not addressed (cloud resource estimates, scaling costs)
+      - Missing observability design (no logging strategy, no metrics, no tracing)
+      - Coupling that contradicts stated modularity goals
+    - **Refiner** produces:
+      - Complete ADRs with alternatives, trade-offs, and consequences
+      - Security hardening (STRIDE fully addressed, auth/authz patterns explicit)
+      - Multi-AZ / high-availability adjustments where NFRs require
+      - Cost optimization recommendations
+      - Observability architecture (structured logging, metrics endpoints, distributed tracing)
+  - **Phase 04 — Design Team**:
+    - **Creator** (system-designer): Produces interface-spec.yaml/openapi.yaml, module-designs/, wireframes/, error-taxonomy.md, validation-rules.json. Designs APIs, components, data flows, error handling.
+    - **Critic** catches:
+      - Incomplete API specifications (missing error responses, no pagination, no versioning)
+      - Inconsistent patterns across modules (different naming conventions, different error formats)
+      - Module overlap / unclear boundaries (two modules owning same responsibility)
+      - Validation gaps (input validated at API but not at service layer, or vice versa)
+      - Missing idempotency for state-changing operations
+      - Wireframe accessibility issues (no keyboard nav, missing ARIA, contrast problems)
+      - Error taxonomy holes (category exists but no specific error codes defined)
+      - Data flow bottlenecks (synchronous calls that should be async, missing caching)
+    - **Refiner** produces:
+      - API contracts conforming to OpenAPI 3.x standards with complete error responses
+      - Unified error taxonomy with codes, HTTP status mapping, and user-facing messages
+      - Component variants for all states (loading, error, empty, populated)
+      - Validation rules at every boundary (API input, service layer, DB constraints)
+      - Idempotency keys for all mutating endpoints
+  - **Loop protocol**: Creator → Critic → Refiner, max 3 rounds. Exit when Critic produces zero blocking findings (warnings allowed). Each round produces a versioned artifact diff so progress is visible.
+  - **Configurable**: Off for `-light` workflows (single agent, current behavior). On for `standard` and `epic`. Override with `--no-debate` flag to force single-agent mode.
+  - **Complexity**: Large (3 new agent roles per phase, loop protocol, convergence logic)
+  - **Prerequisite**: Implementation-Review Fusion (above) — prove the pattern works for Phase 06 first, then extend
+  - **Relates to**: Multi-agent debate mode (general backlog item) — this and Implementation-Review Fusion together cover all creative phases
+
 **Framework Features:**
 - [ ] Improve search capabilities to help Claude be more effective
 - [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
@@ -221,9 +282,19 @@ Findings from 4-agent parallel analysis of workflow speed bottlenecks. T1-T3 alr
   - Read from board to pick up next work item (feeds into board-driven autonomous development)
   - Pluggable adapter pattern — Jira first (Atlassian MCP already available), others via provider interface
 
+**Workflow Quality:**
+- [ ] Requirements debate before workflow start — for new features and bugs, engage in a structured discussion/debate about the requirement or issue before initiating the iSDLC workflow. Clarify scope, challenge assumptions, explore alternatives, and converge on a shared understanding. Only after the debate concludes should the workflow (feature/fix) be kicked off with a well-refined description.
+
+**Investigation:**
+- [ ] Phase handshake audit — investigate whether the handshake between phases is working correctly (state transitions, artifact passing, gate validation, pre-delegation state writes, post-phase updates). Verify no data loss or stale state between phase boundaries.
+
+**Developer Experience:**
+- [ ] Install script landing page and demo GIF — update the install script landing/README with a polished visual experience including an animated GIF demonstrating the framework in action (invisible framework flow, workflow progression, quality gates)
+
 ## Completed
 
 ### 2026-02-13
+- [x] REQ-0012: Invisible framework — CLAUDE.md rewrite for auto-intent-detection, consent protocol, edge case handling. Users never need to know slash commands exist. 49 tests, 28/28 ACs, 4/4 NFRs, light workflow (93 min)
 - [x] BUG-0013: Phase-loop-controller false blocks — same-phase bypass in phase-loop-controller.cjs v1.2.0, 11 new tests, 23/23 passing, 93% coverage
 - [x] BUG-0012: Premature git commits — phase-aware commit blocking in branch-guard.cjs v2.0.0, no-commit instructions in agents, 17 new tests
 - [x] REQ-0011: Adaptive workflow sizing — 3 intensities (light/standard/epic), `-light` flag, sizing functions in common.cjs, STEP 3e-sizing in isdlc.md
