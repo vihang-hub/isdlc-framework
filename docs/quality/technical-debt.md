@@ -1,43 +1,36 @@
-# Technical Debt Inventory: BUG-0009-state-json-optimistic-locking
+# Technical Debt Inventory: BUG-0011-subagent-phase-state-overwrite
 
-**Date**: 2026-02-12
+**Date**: 2026-02-13
 **Phase**: 08-code-review
 
 ---
 
-## Technical Debt Resolved by BUG-0009
+## Technical Debt Resolved by BUG-0011
 
-### TD-RESOLVED-006: State.json Stale Write Vulnerability (was CRITICAL)
+### TD-RESOLVED-007: Phase Orchestration Field Regression Vulnerability (was HIGH)
 
-- **Location**: `src/claude/hooks/lib/common.cjs` writeState(), `src/claude/hooks/state-write-validator.cjs`
-- **Description**: The writeState() function performed blind overwrites with no version tracking. Subagents could overwrite orchestrator state changes with stale snapshots, causing workflow reversions, branch-guard blocks, and manual intervention requirements.
-- **Resolution**: Added `state_version` auto-increment to writeState() and V7 version check to state-write-validator hook. Stale writes are now detected and blocked before they reach disk.
-- **Impact**: All 18 writeState() call sites across hooks and dispatchers are now protected by optimistic locking without any call-site changes.
+- **Location**: `src/claude/hooks/state-write-validator.cjs`
+- **Description**: Subagents could overwrite `active_workflow.current_phase_index` and `phase_status` fields in state.json with stale values, regressing phase orchestration state. This caused `phase-sequence-guard` to block subsequent phase delegations with false "OUT-OF-ORDER PHASE DELEGATION" errors.
+- **Resolution**: Added V8 rule `checkPhaseFieldProtection()` that compares incoming orchestration fields against disk state and blocks regressions. Complements V7 (BUG-0009) which handles version staleness but not semantic field regression.
+- **Impact**: The Phase-Loop Controller's orchestration fields are now protected against overwrite by subagents that read state before the controller advances it.
 
 ---
 
-## New Technical Debt Introduced by BUG-0009
+## New Technical Debt Introduced by BUG-0011
 
-### TD-BUG0009-001: Shallow Copy in writeState() (VERY LOW)
+### TD-BUG0011-001: checkPhaseFieldProtection() Cyclomatic Complexity (LOW)
 
-- **Location**: `src/claude/hooks/lib/common.cjs:677`
-- **Description**: `Object.assign({}, state)` creates a shallow copy. Nested objects (phases, active_workflow) share references with the caller's object. Currently safe because only the root-level `state_version` is modified on the copy before serialization.
-- **Impact**: VERY LOW -- if future changes to writeState() need to modify nested fields on the copy, a deep clone (e.g., `JSON.parse(JSON.stringify(state))`) would be required. Current usage is safe.
-- **Recommendation**: No action needed. Document in code if writeState() behavior expands.
+- **Location**: `src/claude/hooks/state-write-validator.cjs`, checkPhaseFieldProtection()
+- **Description**: The function has an estimated cyclomatic complexity of ~15 (above the typical threshold of 10). This is driven by the defensive fail-open pattern: 6 early-return guards, 3 catch blocks, 1 loop with 2 continue statements, and multiple type checks.
+- **Impact**: LOW -- the function is linear (all branches are early returns or continues), readable, and thoroughly tested with 36 dedicated tests. The CC number is inflated by the fail-open defensive pattern which is a standard convention in the hook codebase (checkVersionLock has CC=13 with the same pattern).
+- **Recommendation**: No refactoring needed. If the function grows further (e.g., additional orchestration field checks), consider splitting into `checkPhaseIndexRegression()` and `checkPhaseStatusRegression()` helpers.
 
-### TD-BUG0009-002: checkVersionLock() Cyclomatic Complexity (LOW)
+### TD-BUG0011-002: Duplicate JSON Parsing in V7 and V8 (VERY LOW)
 
-- **Location**: `src/claude/hooks/state-write-validator.cjs:106`
-- **Description**: The function has a cyclomatic complexity of 13 (above the typical threshold of 10). This is driven by 3 catch blocks and 3 || operators for backward-compatibility null/undefined checks.
-- **Impact**: LOW -- the function is linear (all branches are early returns), readable, and well-tested with 16 dedicated tests. The CC number is inflated by the fail-open defensive pattern which is a standard convention in the hook codebase.
-- **Recommendation**: No refactoring needed. If the function grows further, consider splitting into `parseIncomingVersion()` and `readDiskVersion()` helpers.
-
-### TD-BUG0009-003: STATE_JSON_PATTERN Duplicated (LOW, pre-existing, unchanged)
-
-- **Location**: `src/claude/hooks/lib/common.cjs:22`, `src/claude/hooks/state-write-validator.cjs:28`
-- **Description**: The STATE_JSON_PATTERN regex is defined in both common.cjs and state-write-validator.cjs. This duplication existed before BUG-0009 and was not changed. Each hook keeps a local copy for standalone execution mode.
-- **Impact**: LOW -- patterns are identical. If the pattern changes, 2 files need updating.
-- **Recommendation**: Consider consolidating to common.cjs in a future refactoring pass.
+- **Location**: `src/claude/hooks/state-write-validator.cjs`, checkVersionLock() and checkPhaseFieldProtection()
+- **Description**: Both V7 and V8 independently parse `toolInput.content` (JSON.parse) and read the disk state (`fs.readFileSync` + `JSON.parse`). When both rules run on the same Write event, the incoming content is parsed twice and the disk file is read twice.
+- **Impact**: VERY LOW -- the overhead is ~0.2ms total for two parses of a <10KB JSON file. Node caches the file in the OS page cache after the first read.
+- **Recommendation**: No action needed. Merging the parsing would increase coupling between V7 and V8, break the self-contained fail-open pattern, and make the code harder to reason about. The performance impact is negligible compared to the Node process startup time (~20ms).
 
 ---
 
@@ -86,16 +79,38 @@
 - **Location**: `constitution-validator.cjs`, `iteration-corridor.cjs`, `gate-blocker.cjs`, `common.cjs`
 - **Description**: The `SETUP_COMMAND_KEYWORDS` array is defined in 4 places.
 
+### TD-BUG0009-001: Shallow Copy in writeState() (VERY LOW)
+
+- **Location**: `src/claude/hooks/lib/common.cjs:677`
+- **Description**: `Object.assign({}, state)` creates a shallow copy. Nested objects share references.
+
+### TD-BUG0009-002: checkVersionLock() Cyclomatic Complexity (LOW)
+
+- **Location**: `src/claude/hooks/state-write-validator.cjs:106`
+- **Description**: CC of 13, above typical threshold of 10. Driven by fail-open pattern.
+
+### TD-BUG0009-003: STATE_JSON_PATTERN Duplicated (LOW, pre-existing)
+
+- **Location**: `src/claude/hooks/lib/common.cjs:22`, `src/claude/hooks/state-write-validator.cjs:28`
+- **Description**: The STATE_JSON_PATTERN regex is defined in both files.
+
+### TD-NEW-001: Stale Header Comment in state-write-validator.cjs (LOW)
+
+- **Location**: `src/claude/hooks/state-write-validator.cjs`, line 8
+- **Description**: The file header says "OBSERVATIONAL ONLY: outputs warnings to stderr, never blocks." This was accurate before BUG-0009 (V7) added blocking behavior. V7 and V8 both block writes. The comment is stale and misleading.
+- **Impact**: LOW -- documentation-only issue. No functional impact.
+- **Recommendation**: Update the header comment to reflect current blocking behavior in a future fix workflow.
+
 ---
 
 ## Debt Summary
 
-| Category | Resolved (BUG-0009) | New (BUG-0009) | Pre-Existing | Active Total |
+| Category | Resolved (BUG-0011) | New (BUG-0011) | Pre-Existing | Active Total |
 |----------|---------------------|----------------|--------------|-------------|
-| CRITICAL | 1 resolved | 0 | 0 | 0 |
-| LOW | 0 | 2 (CC, STATE_JSON_PATTERN) | 7 | 9 |
-| VERY LOW | 0 | 1 (shallow copy) | 1 | 2 |
+| HIGH | 1 resolved | 0 | 0 | 0 |
+| LOW | 0 | 1 (CC) | 8 | 9 |
+| VERY LOW | 0 | 1 (duplicate parsing) | 2 | 3 |
 | INFORMATIONAL | 0 | 0 | 2 | 2 |
-| **Total** | **1 resolved** | **3** | **10** | **13** |
+| **Total** | **1 resolved** | **2** | **12** | **14** |
 
-Net debt change: -1 CRITICAL resolved, +3 LOW/VERY LOW added. Overall debt posture significantly improved (eliminated a critical production vulnerability at the cost of 3 trivial code quality observations).
+Net debt change: -1 HIGH resolved, +2 LOW/VERY LOW added. Overall debt posture improved (eliminated a high-severity production vulnerability at the cost of 2 trivial code quality observations).

@@ -37,7 +37,7 @@
 
 ### Bugs Found During REQ-0011 Workflow (2026-02-13)
 
-- [ ] BUG: Git add/commit runs before quality-loop and code-review (BUG-0011)
+- [ ] BUG: Git add/commit runs before quality-loop and code-review (BUG-0012)
   - Claude Code proactively runs `git add` and `git commit` during Phase 06 (implementation), before Phase 16 (quality-loop) and Phase 08 (code-review) have validated the code
   - No agent instructs this — it's Claude Code's default behavior, and no agent or hook prevents it
   - Commits should represent validated work; committing untested/unreviewed code pollutes git history
