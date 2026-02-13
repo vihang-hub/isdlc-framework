@@ -18,7 +18,7 @@
 
 ## What is iSDLC?
 
-The iSDLC (integrated Software Development Lifecycle) framework is a **structured, multi-agent SDLC** that installs into your existing project and guides AI-powered development from requirements through production. It exists because LLM-based coding assistants are powerful but unreliable without external constraints — they skip tests, drift from requirements, lose context across sessions, and declare work "done" prematurely.
+The iSDLC (intelligent Software Development Lifecycle) framework is a **structured, multi-agent SDLC** that installs into your existing project and guides AI-powered development from requirements through production. It exists because LLM-based coding assistants are powerful but unreliable without external constraints — they skip tests, drift from requirements, lose context across sessions, and declare work "done" prematurely.
 
 ### What it enforces
 
