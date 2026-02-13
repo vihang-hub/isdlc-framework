@@ -41,14 +41,8 @@
   - Phase-aware commit blocking in branch-guard.cjs v2.0.0, no-commit instructions in software-developer and quality-loop-engineer agents
   - 17 new tests (T15-T31), 31/31 passing, 98.42% coverage
 
-- [ ] BUG: phase-loop-controller false blocks on sub-agent Task calls (BUG-0013)
-  - `phase-loop-controller.cjs` fires on ALL `Task` tool calls when a workflow is active, including sub-agent spawns within a phase (e.g., `tracing-orchestrator` → `symptom-analyzer`)
-  - `detectPhaseDelegation()` resolves `symptom-analyzer` to phase `02-tracing` (from manifest), treats it as a phase delegation, checks `state.phases[02-tracing].status`
-  - If the parent agent overwrote state (pre-BUG-0011) or if there's a timing issue, the hook sees `pending` instead of `in_progress` and blocks
-  - **Root cause**: Hook doesn't distinguish top-level phase delegation (Phase-Loop Controller → phase agent) from intra-phase sub-agent calls (phase agent → its own sub-agents)
-  - **Fix**: Add same-phase bypass — if `delegation.targetPhase === active_workflow.current_phase`, allow (it's a sub-agent within the active phase, not a cross-phase violation)
-  - **Scope**: `src/claude/hooks/phase-loop-controller.cjs` (~3 lines), tests
-  - **Quality**: No compromise — cross-phase violations still blocked, only same-phase sub-agents are allowed through
+- [x] BUG: phase-loop-controller false blocks on sub-agent Task calls (BUG-0013 — FIXED)
+  - Same-phase bypass in phase-loop-controller.cjs v1.2.0, 11 new tests (T13-T23), 23/23 passing, 93% coverage
 
 ### Performance Investigation (2026-02-13)
 
@@ -170,6 +164,7 @@ Findings from 4-agent parallel analysis of workflow speed bottlenecks. T1-T3 alr
 ## Completed
 
 ### 2026-02-13
+- [x] BUG-0013: Phase-loop-controller false blocks — same-phase bypass in phase-loop-controller.cjs v1.2.0, 11 new tests, 23/23 passing, 93% coverage
 - [x] BUG-0012: Premature git commits — phase-aware commit blocking in branch-guard.cjs v2.0.0, no-commit instructions in agents, 17 new tests
 - [x] REQ-0011: Adaptive workflow sizing — 3 intensities (light/standard/epic), `-light` flag, sizing functions in common.cjs, STEP 3e-sizing in isdlc.md
 - [x] BUG-0011: Subagent phase state overwrite — V8 checkPhaseFieldProtection() in state-write-validator.cjs, blocks phase index/status regression
