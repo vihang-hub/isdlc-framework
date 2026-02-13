@@ -22,16 +22,16 @@ The iSDLC (intelligent Software Development Lifecycle) framework works with both
 
 ### Self-adapting
 
+- **Codebase knowledge** — for existing projects, `/discover` runs 22 agents that map your architecture, test coverage, dependencies, and conventions — extracting behavior as acceptance criteria and generating characterization tests so the AI understands what's already there before changing anything
+- **Tech-stack-aware skills** — during discovery, the framework detects your technologies and activates relevant skills automatically — React projects get component and state management skills, Django projects get migration and ORM skills, and so on
 - **Adaptive workflow sizing** — automatically scales workflows to light, standard, or epic based on impact analysis, so small fixes don't carry the overhead of large features
 - **Self-correction with limits** — agents iterate autonomously to fix failing tests; circuit breakers stop infinite loops and escalate to a human instead of burning tokens
-- **Tech-stack-aware skills** — during discovery, the framework detects your technologies and activates relevant skills automatically — React projects get component and state management skills, Django projects get migration and ORM skills, and so on
-- **Codebase knowledge** — for existing projects, `/discover` runs 22 agents that map your architecture, test coverage, dependencies, and conventions — extracting behavior as acceptance criteria and generating characterization tests so the AI understands what's already there before changing anything
 
 ### Constitution-governed
 
+- **Specification primacy** — code serves specifications, not the other way around; requirements trace through architecture, design, tests, and implementation
 - **Per-project constitution** — `/discover` generates governance rules tailored to your codebase — coding standards, dependency constraints, architectural boundaries — that bind all downstream agents
 - **Constitutional validation** — hooks intercept phase completions and block advancement until artifacts comply with constitutional articles
-- **Specification primacy** — code serves specifications, not the other way around; requirements trace through architecture, design, tests, and implementation
 
 ### Document-driven
 
@@ -51,11 +51,11 @@ The iSDLC (intelligent Software Development Lifecycle) framework works with both
 | Command | Description |
 |---------|-------------|
 | `/discover` | Analyze existing project or set up a new one |
-| `/isdlc feature "desc"` | End-to-end feature development (9 phases) |
-| `/isdlc fix "desc"` | TDD bug fix (6 phases) |
-| `/isdlc test generate` | Generate test suite (5 phases) |
-| `/isdlc test run` | Execute tests (2 phases) |
-| `/isdlc upgrade "name"` | Dependency upgrade (3 phases) |
+| `/isdlc feature "desc or Jira/Confluence link"` | Describe the feature in plain text or paste a Jira ticket or Confluence page link (requires Atlassian MCP). End-to-end development through 9 phases from requirements to code review. |
+| `/isdlc fix "desc or Jira/Confluence link"` | Describe the bug or paste a Jira ticket link (requires Atlassian MCP). TDD bug fix through 6 phases — root cause tracing, test-first fix, and quality validation. |
+| `/isdlc test generate` | Generate a test suite for your existing codebase. Recommended after `/discover` on existing projects to establish a safety net before making changes — analyzes coverage gaps and produces tests for untested code paths. |
+| `/isdlc test run` | Execute your project's test suite, track results, and report coverage. Use this to validate the current state of the codebase or verify changes after a feature or fix workflow. |
+| `/isdlc upgrade "name"` | Upgrade a dependency, runtime, or framework (e.g., `"React 19"`, `"Node 22"`, `"Prisma 6"`). Performs impact analysis, identifies breaking changes, and applies the upgrade with test validation. |
 
 <details>
 <summary><strong>Agent breakdown (48 total)</strong></summary>
