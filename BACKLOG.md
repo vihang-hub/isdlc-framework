@@ -38,6 +38,9 @@
   - **Benefits**: Catch problems early per sub-feature, reduce context window pressure, intermediate quality gates, partial progress is usable
   - **State tracking**: `state.json` tracks parent feature + sub-features with individual phase progress
 
+
+- [ ] SonarQube integration
+
 **Product/Vision:**
 - [ ] Board-driven autonomous development (read from board, develop without intervention when users are away)
 - [ ] Design systems using variant.ai
