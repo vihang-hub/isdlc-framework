@@ -37,12 +37,18 @@
 
 ### Bugs Found During REQ-0011 Workflow (2026-02-13)
 
-- [ ] BUG: Git add/commit runs before quality-loop and code-review (BUG-0011)
-  - Claude Code proactively runs `git add` and `git commit` during Phase 06 (implementation), before Phase 16 (quality-loop) and Phase 08 (code-review) have validated the code
-  - No agent instructs this — it's Claude Code's default behavior, and no agent or hook prevents it
-  - Commits should represent validated work; committing untested/unreviewed code pollutes git history
-  - **Fix**: Add explicit "Do NOT run git add or git commit" instruction to software-developer agent (Phase 06), and optionally add a hook that blocks `git commit` on feature branches during phases 06, 16, and allows it only at finalize
-  - **Scope**: `src/claude/agents/05-software-developer.md`, potentially a new hook or extension to branch-guard
+- [x] BUG: Git add/commit runs before quality-loop and code-review (BUG-0012 — FIXED)
+  - Phase-aware commit blocking in branch-guard.cjs v2.0.0, no-commit instructions in software-developer and quality-loop-engineer agents
+  - 17 new tests (T15-T31), 31/31 passing, 98.42% coverage
+
+- [ ] BUG: phase-loop-controller false blocks on sub-agent Task calls (BUG-0013)
+  - `phase-loop-controller.cjs` fires on ALL `Task` tool calls when a workflow is active, including sub-agent spawns within a phase (e.g., `tracing-orchestrator` → `symptom-analyzer`)
+  - `detectPhaseDelegation()` resolves `symptom-analyzer` to phase `02-tracing` (from manifest), treats it as a phase delegation, checks `state.phases[02-tracing].status`
+  - If the parent agent overwrote state (pre-BUG-0011) or if there's a timing issue, the hook sees `pending` instead of `in_progress` and blocks
+  - **Root cause**: Hook doesn't distinguish top-level phase delegation (Phase-Loop Controller → phase agent) from intra-phase sub-agent calls (phase agent → its own sub-agents)
+  - **Fix**: Add same-phase bypass — if `delegation.targetPhase === active_workflow.current_phase`, allow (it's a sub-agent within the active phase, not a cross-phase violation)
+  - **Scope**: `src/claude/hooks/phase-loop-controller.cjs` (~3 lines), tests
+  - **Quality**: No compromise — cross-phase violations still blocked, only same-phase sub-agents are allowed through
 
 ### Performance Investigation (2026-02-13)
 
@@ -65,6 +71,28 @@ Findings from 4-agent parallel analysis of workflow speed bottlenecks. T1-T3 alr
   - Move remaining shared sections to CLAUDE.md (T2 follow-up)
   - **Impact**: 2-3% speedup per agent delegation
   - **Complexity**: Low (mechanical extraction)
+
+### Parallel Workflows (Architecture)
+
+- [ ] Parallel workflow support — per-workflow state isolation enabling concurrent feature/fix sessions
+  - **Problem**: `single_active_workflow_per_project` rule blocks parallel work. A developer can't work on BUG-0013 while BUG-0012 is in progress. The constraint exists because `state.json` has a single `active_workflow` field and all hooks assume one active context.
+  - **Design**: Split state into per-workflow files with a shared index:
+    ```
+    .isdlc/
+      workflows.index.json          ← lightweight: [{ id, type, branch, status, started }]
+      workflows/
+        BUG-0012/state.json         ← full workflow state (phases, current_phase, escalations, skill_usage_log)
+        BUG-0013/state.json         ← full workflow state
+      config/                       ← shared (unchanged)
+      state.json                    ← project-level only (counters, project info, workflow_history, constitution)
+    ```
+  - **Hook resolution**: Dispatchers resolve `git branch → workflow ID → workflow state` once per invocation via `git branch --show-current` (~5ms), pass resolved state to all hooks. Branch name already maps 1:1 to workflow.
+  - **Session binding**: At session start, `/isdlc` (no args) presents a picker if multiple workflows are active. Once selected, CLAUDE.md instruction scopes all operations to that workflow. After selection, hooks only read that workflow's state file.
+  - **Git parallelism**: Requires `git worktree` for true parallel sessions (two checkouts in different directories) or separate clones. Without worktrees, workflows are still sequential but with better state isolation and no cancellation needed to switch.
+  - **Migration scope**: ~20 files reference `readState()` — all dispatchers, standalone hooks, and common.cjs utilities need to resolve workflow-scoped state instead of global state.
+  - **Performance impact**: +10-20ms per hook invocation (index read + branch resolution). Mitigated by caching within dispatcher runs.
+  - **Complexity**: Medium-large (2-3 sessions through full iSDLC workflow)
+  - **Prerequisite**: BUG-0013 (phase-loop-controller same-phase bypass) should be done first to reduce false blocks during parallel work
 
 **Framework Features:**
 - [ ] Improve search capabilities to help Claude be more effective
@@ -140,6 +168,11 @@ Findings from 4-agent parallel analysis of workflow speed bottlenecks. T1-T3 alr
   - Pluggable adapter pattern — Jira first (Atlassian MCP already available), others via provider interface
 
 ## Completed
+
+### 2026-02-13
+- [x] BUG-0012: Premature git commits — phase-aware commit blocking in branch-guard.cjs v2.0.0, no-commit instructions in agents, 17 new tests
+- [x] REQ-0011: Adaptive workflow sizing — 3 intensities (light/standard/epic), `-light` flag, sizing functions in common.cjs, STEP 3e-sizing in isdlc.md
+- [x] BUG-0011: Subagent phase state overwrite — V8 checkPhaseFieldProtection() in state-write-validator.cjs, blocks phase index/status regression
 
 ### 2026-02-12
 - [x] BUG-0010: Orchestrator finalize stale tasks — rewrote STEP 4 cleanup as CRITICAL mandatory loop

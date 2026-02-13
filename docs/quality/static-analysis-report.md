@@ -1,97 +1,84 @@
-# Static Analysis Report: BUG-0009-state-json-optimistic-locking
+# Static Analysis Report: BUG-0012-premature-git-commit
 
-**Date**: 2026-02-12
+**Date**: 2026-02-13
 **Phase**: 08-code-review
+**Workflow**: Fix (BUG-0012)
 
 ---
 
 ## Syntax Validation
 
-| File | Status | Method |
-|------|--------|--------|
-| src/claude/hooks/lib/common.cjs | PASS | `node -c` syntax check |
-| src/claude/hooks/state-write-validator.cjs | PASS | `node -c` syntax check |
-| src/claude/hooks/tests/state-write-validator.test.cjs | PASS | `node -c` syntax check |
-| src/claude/hooks/tests/common.test.cjs | PASS | `node -c` syntax check |
+| File | Tool | Result |
+|------|------|--------|
+| `src/claude/hooks/branch-guard.cjs` | `node -c` | SYNTAX OK |
 
-## Module System Compliance
+## Module System Compliance (Article XIII)
 
-| File | Extension | Module System | require() | module.exports | ESM imports |
-|------|-----------|---------------|-----------|----------------|-------------|
-| common.cjs | .cjs | CommonJS | YES | full exports block | none (correct) |
-| state-write-validator.cjs | .cjs | CommonJS | YES | `{ check }` | none (correct) |
+| Check | Result | Notes |
+|-------|--------|-------|
+| No ESM imports in hook file | PASS | Only `require()` used in branch-guard.cjs |
+| No CommonJS require in agent markdown | N/A | Agent files are markdown, not executable |
+| `.cjs` extension used | PASS | branch-guard.cjs uses explicit CJS extension |
 
-All files comply with Article XIII (Module System Consistency) -- hooks use CommonJS, no ESM imports.
+## Security Static Analysis
 
-## Security Scan
+| Check | Result | Notes |
+|-------|--------|-------|
+| No `eval()` usage | PASS | No eval or new Function found |
+| No `child_process.exec` with user input | PASS | Only `execSync('git rev-parse --abbrev-ref HEAD')` with hardcoded command |
+| No secrets in source code | PASS | No API keys, tokens, passwords, or credentials detected |
+| No `console.log` in production hook | PASS | Uses `debugLog()` from common.cjs (controlled by SKILL_VALIDATOR_DEBUG) |
+| No dynamic require() | PASS | All require() calls use static string paths |
+| No prototype pollution vectors | PASS | No Object.assign from external input, no dynamic property assignment |
 
-| Check | Result |
-|-------|--------|
-| `eval()` usage | 0 found |
-| `new Function()` usage | 0 found |
-| `child_process.exec/spawn` | 0 found in modified files |
-| User-controlled regex patterns | 0 found |
-| Dynamic code execution | 0 found |
-| Secrets/credentials in code | 0 found |
-| Path traversal | 0 found -- STATE_JSON_PATTERN regex validates paths before fs operations |
-| ReDoS (regex denial of service) | 0 risk -- STATE_JSON_PATTERN is simple, non-backtracking |
-| Prototype pollution | 0 risk -- Object.assign({}, state) creates a new empty target, no merge from user-controlled source |
-| Injection vectors | 0 found -- version numbers are integer-compared only, error messages use template literals with integer values |
-| JSON.parse on untrusted input | SAFE -- all JSON.parse calls wrapped in try/catch with fail-open behavior |
+## Error Handling Analysis
 
-## Dependency Audit
-
-- `npm audit`: 0 vulnerabilities found
-- No new dependencies introduced by BUG-0009
-- No new require() statements beyond `debugLog` and `logHookEvent` from existing common.cjs
-
-## Runtime Copy Sync
-
-| Source | Runtime | Result |
-|--------|---------|--------|
-| `src/claude/hooks/lib/common.cjs` | `.claude/hooks/lib/common.cjs` | IDENTICAL |
-| `src/claude/hooks/state-write-validator.cjs` | `.claude/hooks/state-write-validator.cjs` | IDENTICAL |
-
-Verified via `diff` -- both files are byte-identical between source and runtime copies.
-
-## Code Pattern Analysis
-
-| Pattern | Status | Details |
-|---------|--------|---------|
-| Fail-open error handling | PASS | All try/catch blocks return null (allow) or false (no-op). No exceptions escape. |
-| Version comparison using < operator | PASS | Integer comparison is correct for monotonically increasing version counter. |
-| Shallow copy via Object.assign | PASS | Only root-level `state_version` modified on copy. Safe for current usage. |
-| Inner try/catch in writeState() | PASS | Isolates disk-read errors from write errors. Standard pattern. |
-| BUG-0009 comment annotations | PASS | JSDoc and inline comments reference BUG-0009 for traceability. |
-| console.error for stderr output | PASS | V7 block message logged via console.error (stderr), not console.log (stdout). |
-| logHookEvent for observability | PASS | V7 block events logged to hook-activity.log. |
+| Check | Result | Notes |
+|-------|--------|-------|
+| All process.exit() calls use exit(0) | PASS | 13 exit calls, all exit(0). Fail-open compliant. |
+| try-catch coverage | PASS | 3 catch blocks: stdin JSON parse, git subprocess, outermost. |
+| No unhandled promise rejections | PASS | main() is async with try-catch wrapper. readStdin() is awaited. |
+| No throw statements in new code | PASS | All error paths exit gracefully. |
 
 ## Complexity Analysis
 
-| Function | Lines | Cyclomatic Complexity | Decision Points | Assessment |
-|----------|-------|----------------------|-----------------|------------|
-| writeState() | 35 | ~8 (estimated) | 4 if + 1 try/catch + 1 nested try/catch | ACCEPTABLE |
-| checkVersionLock() | 68 | 13 | 6 if + 3 catch + 3 || | ACCEPTABLE (fail-open pattern) |
-| check() (delta) | +6 lines | +1 | 1 if (v7Result.decision === 'block') | PASS |
+| Metric | Value | Rating |
+|--------|-------|--------|
+| Cyclomatic complexity (main) | 13 | Acceptable (< 20) |
+| Max nesting depth | 2 | Good (< 5) |
+| Lines of code (production) | 191 | Small |
+| Number of functions | 3 | Simple |
+| Number of catch blocks | 3 | Appropriate |
 
-Note: CC of 13 for checkVersionLock() is above the typical 10 threshold but is driven entirely by fail-open defensive checks. Each decision point is an early return. The function has no loops, no recursion, and reads top-to-bottom linearly.
+## Code Style Analysis
 
-## Test File Analysis
+| Check | Result | Notes |
+|-------|--------|-------|
+| Consistent indentation | PASS | 4-space indentation throughout |
+| Consistent quoting | PASS | Single quotes for strings |
+| JSDoc on public functions | PASS | isGitCommit(), getCurrentBranch() have JSDoc |
+| File header with traceability | PASS | Version 2.0.0, BUG-0012 traces documented |
+| Meaningful variable names | PASS | workflowBranchName, currentPhase, lastPhase are self-documenting |
 
-| Test File | New Tests | Existing Tests | Total | Status |
-|-----------|-----------|----------------|-------|--------|
-| state-write-validator.test.cjs | 16 (T16-T31) | 15 (T1-T15) | 31 | ALL PASS |
-| common.test.cjs (NEW) | 6 (C1-C6) | 0 | 6 | ALL PASS |
+## Dependency Analysis
 
-## Modified File Summary (git diff --stat)
+| Check | Result | Notes |
+|-------|--------|-------|
+| External dependencies | 0 | Only Node.js built-ins (child_process) and internal (common.cjs) |
+| New dependencies added | 0 | No new require() statements |
+| Vulnerability scan | N/A | No external dependencies to scan |
 
-```
-src/claude/hooks/lib/common.cjs                    |  29 +-
-src/claude/hooks/state-write-validator.cjs          |  99 ++++++-
-src/claude/hooks/tests/state-write-validator.test.cjs | 304 +++++++++++++++++++++
-3 files changed (tracked), +432 insertions, -15 deletions
-```
+## Summary
 
-Plus 1 new untracked (gitignored) file: `src/claude/hooks/tests/common.test.cjs` (+143 lines).
+| Category | Errors | Warnings | Info |
+|----------|--------|----------|------|
+| Syntax | 0 | 0 | 0 |
+| Security | 0 | 0 | 0 |
+| Module system | 0 | 0 | 0 |
+| Error handling | 0 | 0 | 0 |
+| Complexity | 0 | 0 | 1 (CC=13, acceptable) |
+| Code style | 0 | 0 | 0 |
+| Dependencies | 0 | 0 | 0 |
+| **Total** | **0** | **0** | **1** |
 
-Exactly 2 production files modified. No unrelated changes. No scope creep.
+**Verdict**: Static analysis PASSED with 0 errors, 0 warnings, 1 informational note.
