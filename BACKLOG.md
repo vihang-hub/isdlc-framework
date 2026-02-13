@@ -48,11 +48,11 @@
 
 Findings from 4-agent parallel analysis of workflow speed bottlenecks. T1-T3 already completed (4-6x cumulative speedup). Remaining opportunities:
 
-- [ ] T4-B: Parallel test execution — detect framework, apply parallel flags (Jest --workers, pytest -n auto, Vitest --threads, Go -parallel N)
+- [x] T4-B: Parallel test execution — detect framework, apply parallel flags (Jest --workers, pytest -n auto, Vitest --threads, Go -parallel N)
   - **Impact**: 3-5x speedup for test phases (Phase 07, 11, 16)
   - **Complexity**: Low (prompt changes in environment-builder, integration-tester, quality-loop-engineer agents)
   - **Fallback**: If parallel run fails, retry sequential with flakiness warning
-- [ ] T4-A: Parallel test creation — test design agent spawns parallel sub-agents for large codebases
+- [x] T4-A: Parallel test creation — test design agent spawns parallel sub-agents for large codebases
 - [ ] T5: Quality Loop true parallelism — Track A (testing) and Track B (QA) currently run sequentially despite being designed as parallel
   - **Impact**: 2x speedup for Phase 16 (1.5-2 min savings)
   - **Complexity**: Medium (spawn Track A + Track B as separate sub-agents, wait for both)

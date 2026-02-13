@@ -144,6 +144,62 @@ cat package.json | jq '.scripts | to_entries | map(select(.key | startswith("tes
 # Step 3: Use discovered commands in your iteration loop
 ```
 
+## Parallel Test Execution
+
+When running integration, E2E, or contract test suites with 50+ test files, use parallel execution to reduce execution time.
+
+### Framework Detection Table
+
+Detect the project's test framework and select the correct parallel flag.
+
+| Framework | Detection Method | Parallel Flag | Failure Re-run Flag |
+|-----------|-----------------|---------------|---------------------|
+| Jest | `jest.config.*` or `package.json` jest field | `--maxWorkers=<N>` | `--onlyFailures` |
+| Vitest | `vitest.config.*` or `vite.config.*` with test | `--pool=threads` | (filter by name) |
+| pytest | `pytest.ini`, `pyproject.toml [tool.pytest]`, `conftest.py` | `-n auto` (requires `pytest-xdist`) | `--lf` (last failed) |
+| Go test | `go.mod` | `-parallel <N>` with `-count=1` | (re-run specific test functions) |
+| node:test | `package.json` scripts using `node --test` | `--test-concurrency=<N>` | (re-run specific test files) |
+| Cargo test | `Cargo.toml` | `--test-threads=<N>` | (re-run specific test names) |
+| JUnit/Maven | `pom.xml` or `build.gradle` | `-T <N>C` (Maven) or `maxParallelForks` (Gradle) | `--tests <pattern>` |
+
+If the framework is not recognized, fall back to sequential execution with an informational message.
+
+### CPU Core Detection
+
+Determine CPU core count: `nproc` (Linux) or `sysctl -n hw.ncpu` (macOS). Default parallelism: `max(1, cores - 1)`. For frameworks with `auto` mode (pytest `-n auto`, Jest `--maxWorkers=auto`), prefer `auto`.
+
+### Sequential Fallback on Parallel Failure
+
+If parallel test execution produces failures:
+
+1. Extract failing test names from the parallel run output
+2. Re-run only the failing tests sequentially (do NOT retry the entire suite)
+3. If tests pass sequentially but fail in parallel, log a flakiness warning
+4. Report genuinely failing tests (fail both parallel and sequential)
+
+### ATDD Mode Exclusion
+
+When `active_workflow.atdd_mode = true`, do NOT use parallel test execution. ATDD mode requires sequential P0->P1->P2->P3 priority ordering. Disable parallel execution during ATDD validation runs.
+
+### Parallel Execution State Tracking
+
+After test execution, update `phases[phase].test_results` in state.json:
+
+```json
+{
+  "test_results": {
+    "parallel_execution": {
+      "enabled": true,
+      "framework": "jest",
+      "flag": "--maxWorkers=auto",
+      "workers": 7,
+      "fallback_triggered": false,
+      "flaky_tests": []
+    }
+  }
+}
+```
+
 ## Article XI Compliance with Existing Infrastructure
 
 When `testing_infrastructure` is configured, it should already be Article XI compliant:

@@ -100,6 +100,30 @@ Builds for production and deploys to a staging/remote environment.
    }
    ```
 
+# PARALLEL TEST EXECUTION FOR BUILD VERIFICATION
+
+When running test suites during build verification (step 6 health-check or post-build validation), use parallel execution to speed up large test suites.
+
+## Framework Detection Table
+
+Detect the project's test framework and select the correct parallel flag.
+
+| Framework | Detection Method | Parallel Flag |
+|-----------|-----------------|---------------|
+| Jest | `jest.config.*` or `package.json` jest field | `--maxWorkers=<N>` |
+| Vitest | `vitest.config.*` or `vite.config.*` with test | `--pool=threads` |
+| pytest | `pytest.ini`, `pyproject.toml [tool.pytest]`, `conftest.py` | `-n auto` (requires `pytest-xdist`) |
+| Go test | `go.mod` | `-parallel <N>` with `-count=1` |
+| node:test | `package.json` scripts using `node --test` | `--test-concurrency=<N>` |
+| Cargo test | `Cargo.toml` | `--test-threads=<N>` |
+| JUnit/Maven | `pom.xml` or `build.gradle` | `-T <N>C` (Maven) or `maxParallelForks` (Gradle) |
+
+If the framework is not recognized, fall back to sequential execution.
+
+## CPU Core Detection
+
+Determine CPU core count: `nproc` (Linux) or `sysctl -n hw.ncpu` (macOS). Default parallelism: `max(1, cores - 1)`. For frameworks with `auto` mode (pytest `-n auto`, Jest `--maxWorkers=auto`), prefer `auto`.
+
 # CONSTITUTIONAL PRINCIPLES
 
 See CONSTITUTIONAL PRINCIPLES preamble in CLAUDE.md. Applicable articles for this phase:

@@ -74,6 +74,62 @@ Launch as a Task agent:
 5. **Automated code review** — Check code quality patterns (QL-010)
 6. **SonarQube** — If configured in `state.json` `qa_tools.sonarqube`
 
+### Parallel Test Execution in Track A
+
+When running tests in Track A, use parallel execution to speed up test suites with 50+ test files.
+
+#### Framework Detection Table
+
+Detect the project's test framework and select the correct parallel flag.
+
+| Framework | Detection Method | Parallel Flag |
+|-----------|-----------------|---------------|
+| Jest | `jest.config.*` or `package.json` jest field | `--maxWorkers=<N>` |
+| Vitest | `vitest.config.*` or `vite.config.*` with test | `--pool=threads` |
+| pytest | `pytest.ini`, `pyproject.toml [tool.pytest]`, `conftest.py` | `-n auto` (requires `pytest-xdist`) |
+| Go test | `go.mod` | `-parallel <N>` with `-count=1` |
+| node:test | `package.json` scripts using `node --test` | `--test-concurrency=<N>` |
+| Cargo test | `Cargo.toml` | `--test-threads=<N>` |
+| JUnit/Maven | `pom.xml` or `build.gradle` | `-T <N>C` (Maven) or `maxParallelForks` (Gradle) |
+
+If the framework is not recognized, fall back to sequential execution.
+
+#### CPU Core Detection
+
+Determine CPU core count: `nproc` (Linux) or `sysctl -n hw.ncpu` (macOS). Default parallelism: `max(1, cores - 1)`. For frameworks with `auto` mode (pytest `-n auto`, Jest `--maxWorkers=auto`), prefer `auto`.
+
+#### Sequential Fallback on Parallel Failure
+
+If parallel test execution produces failures, re-run only the failing tests sequentially (do NOT retry the entire suite). If tests pass sequentially but fail in parallel, log a flakiness warning. Report genuinely failing tests.
+
+#### Parallel Execution State Tracking
+
+After test execution, update `phases[phase].test_results` in state.json:
+
+```json
+{
+  "test_results": {
+    "parallel_execution": {
+      "enabled": true,
+      "framework": "jest",
+      "flag": "--maxWorkers=auto",
+      "workers": 7,
+      "fallback_triggered": false,
+      "flaky_tests": []
+    }
+  }
+}
+```
+
+#### Parallel Execution in Quality Report
+
+The `quality-report.md` must include a "Parallel Execution" section summarizing:
+- Whether parallel mode was used and which framework/flag
+- Number of workers used
+- Whether fallback to sequential was triggered
+- Any flaky tests detected
+- Estimated speedup (if measurable)
+
 ### Consolidation
 
 After both tracks complete:

@@ -471,6 +471,50 @@ When ATDD mode is active, verify before passing GATE-04:
 - [ ] Test fixtures created for valid/invalid/boundary cases
 - [ ] Traceability matrix includes AC → test mapping with priorities
 
+# PARALLEL TEST CREATION (T4-A)
+
+When generating tests for large codebases with 10+ modules or domains, use parallel sub-agent creation to speed up test design.
+
+## Threshold
+
+If the codebase has 10 or more modules/domains to generate tests for, activate parallel sub-agent creation. This threshold is documented here in the agent prompt, not hardcoded in any hook.
+
+## Parallel Sub-Agent Workflow
+
+1. **Identify modules**: List all modules/domains that need test generation
+2. **Spawn parallel sub-agents**: Use the Task tool to create one sub-agent per module
+   - Each sub-agent generates tests for one module/domain independently
+   - Sub-agents work independently and do not share state during generation
+3. **Consolidate results**: After all sub-agents complete, the parent agent:
+   - Collects all generated test files
+   - Resolves any cross-module test conflicts (e.g., duplicate fixture names, shared helper collisions)
+   - Ensures consistent naming conventions across all generated tests
+   - Validates traceability coverage across all modules
+
+## Example Sub-Agent Delegation
+
+```
+Task: "Generate test cases for the Authentication module"
+  - Read requirements for auth module
+  - Design test cases (unit, integration, E2E)
+  - Write test scaffolds
+  - Create module-specific fixtures
+
+Task: "Generate test cases for the Payment module"
+  - Read requirements for payment module
+  - Design test cases independently
+  - Write test scaffolds
+  - Create module-specific fixtures
+```
+
+## Conflict Resolution
+
+Common cross-module conflicts to resolve during consolidation:
+- **Duplicate fixture names**: Rename to module-prefixed names (e.g., `authUser` vs `paymentUser`)
+- **Shared helper collisions**: Extract into `tests/helpers/shared.ts`
+- **Inconsistent assertion styles**: Normalize to project convention
+- **Port conflicts in integration tests**: Assign unique ports per module
+
 # AUTONOMOUS CONSTITUTIONAL ITERATION
 
 **CRITICAL**: Before declaring phase complete, you MUST iterate on constitutional compliance until all applicable articles are satisfied.

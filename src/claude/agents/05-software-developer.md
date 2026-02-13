@@ -109,6 +109,100 @@ pytest tests/unit/          # If Python with pytest
 go test ./...               # If Go project
 ```
 
+## Parallel Test Execution
+
+When running tests during TDD iteration loops, use parallel execution to speed up test suites with 50+ test files.
+
+### Framework Detection Table
+
+Before running tests, detect the project's test framework and select the correct parallel flag.
+
+| Framework | Detection Method | Parallel Flag | Failure Re-run Flag |
+|-----------|-----------------|---------------|---------------------|
+| Jest | `jest.config.*` or `package.json` jest field | `--maxWorkers=<N>` | `--onlyFailures` |
+| Vitest | `vitest.config.*` or `vite.config.*` with test | `--pool=threads` | `--reporter=verbose` (filter by name) |
+| pytest | `pytest.ini`, `pyproject.toml [tool.pytest]`, `conftest.py` | `-n auto` (requires `pytest-xdist`) | `--lf` (last failed) |
+| Go test | `go.mod` | `-parallel <N>` with `-count=1` | (re-run specific test functions) |
+| node:test | `package.json` scripts using `node --test` | `--test-concurrency=<N>` | (re-run specific test files) |
+| Cargo test | `Cargo.toml` | `--test-threads=<N>` | (re-run specific test names) |
+| JUnit/Maven | `pom.xml` or `build.gradle` | `-T <N>C` (Maven) or `maxParallelForks` (Gradle) | `--tests <pattern>` |
+
+If the framework is not recognized, fall back to sequential execution with an informational message: "Framework not recognized for parallel execution, running sequentially."
+
+### CPU Core Detection
+
+Determine CPU core count to set parallelism level:
+
+```bash
+# Linux
+N=$(nproc)
+
+# macOS
+N=$(sysctl -n hw.ncpu)
+
+# Cross-platform Node.js
+N=$(node -e "console.log(require('os').cpus().length)")
+```
+
+Default parallelism: `max(1, cores - 1)` to leave one core for the system.
+
+For frameworks with `auto` mode (pytest `-n auto`, Jest `--maxWorkers=auto`), prefer `auto` over manual core count as the framework optimizes internally.
+
+For `node:test`, use `--test-concurrency=<N>` where N is the computed value (requires Node 22+).
+
+### Sequential Fallback on Parallel Failure
+
+If parallel test execution produces failures:
+
+1. **Extract failing test names** from the parallel run output
+2. **Re-run only the failing tests** sequentially -- do NOT re-run the entire suite
+3. Use the framework-specific failure re-run flag (e.g., Jest `--onlyFailures`, pytest `--lf`)
+4. **If tests pass sequentially but failed in parallel**: log a flakiness warning
+   - "WARNING: Flaky test detected -- passes sequentially but fails in parallel: {test_name}"
+5. **If tests fail both in parallel and sequentially**: report as genuine failures
+
+Only the failing tests are retried, not the full suite.
+
+### ATDD Mode Exclusion
+
+When `active_workflow.atdd_mode = true`, do NOT use parallel test execution. ATDD mode requires strict P0->P1->P2->P3 sequential ordering to ensure priority-based test processing. Run all tests sequentially during ATDD iterations.
+
+### Parallel Execution State Tracking
+
+After running tests, update `phases[phase].test_results` in state.json with the `parallel_execution` field:
+
+```json
+{
+  "test_results": {
+    "parallel_execution": {
+      "enabled": true,
+      "framework": "jest",
+      "flag": "--maxWorkers=auto",
+      "workers": 7,
+      "fallback_triggered": false,
+      "flaky_tests": []
+    }
+  }
+}
+```
+
+If fallback occurred, set `fallback_triggered: true` and list flaky tests:
+
+```json
+{
+  "test_results": {
+    "parallel_execution": {
+      "enabled": true,
+      "framework": "jest",
+      "flag": "--maxWorkers=auto",
+      "workers": 7,
+      "fallback_triggered": true,
+      "flaky_tests": ["auth.test.js::should handle concurrent sessions"]
+    }
+  }
+}
+```
+
 ## Writing Tests That Fit Existing Patterns
 
 ```typescript
