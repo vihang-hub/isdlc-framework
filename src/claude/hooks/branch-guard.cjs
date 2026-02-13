@@ -3,13 +3,21 @@
  * iSDLC Branch Guard - PreToolUse[Bash] Hook
  * ============================================
  * Blocks git commits to main/master when an active workflow has a
- * feature branch. Ensures commits go to the correct branch.
+ * feature branch. Also blocks commits on the workflow's feature/bugfix
+ * branch during intermediate phases (before the final phase completes).
+ * Ensures commits represent validated, reviewed work.
+ *
+ * Phase-aware blocking (BUG-0012):
+ *   - Commits on the workflow branch are BLOCKED during all phases except the last
+ *   - Commits on the workflow branch are ALLOWED during the final phase (e.g., finalize)
+ *   - Commits on non-workflow branches are always ALLOWED (fail-open)
+ *   - Missing current_phase or phases array triggers fail-open
  *
  * Performance budget: < 200ms (includes git subprocess)
  * Fail-open: any error results in silent exit (exit 0, no output)
  *
- * Traces to: FR-04, AC-04, AC-04a, AC-04b, AC-04c, AC-04d, AC-04e
- * Version: 1.0.0
+ * Traces to: FR-04, AC-04, AC-04a-e, BUG-0012 FR-01 through FR-05, AC-07 through AC-20
+ * Version: 2.0.0
  */
 
 const {
@@ -125,8 +133,53 @@ async function main() {
             process.exit(0);
         }
 
-        // On feature branch or other branch, allow
-        debugLog('Not on main/master, allowing');
+        // Phase-aware commit blocking on feature/bugfix branches (BUG-0012)
+        // Only apply phase blocking if the current branch matches the workflow branch.
+        // If on a different branch (e.g., hotfix/urgent), allow unconditionally.
+        const workflowBranchName = gitBranch.name || '';
+        if (currentBranch !== workflowBranchName) {
+            debugLog('Current branch does not match workflow branch, allowing');
+            process.exit(0);
+        }
+
+        // On the workflow branch: check if the current phase allows commits.
+        // Fail-open if current_phase or phases array is missing.
+        const currentPhase = state.active_workflow.current_phase;
+        const phases = state.active_workflow.phases;
+
+        if (!currentPhase || !Array.isArray(phases) || phases.length === 0) {
+            debugLog('Missing current_phase or phases array, allowing (fail-open)');
+            process.exit(0);
+        }
+
+        // Commits are ALLOWED only during the final phase of the workflow.
+        // The final phase is typically 08-code-review or finalize -- the last
+        // element in the phases array. All earlier phases are blocked because
+        // the code has not yet passed quality-loop and code-review validation.
+        const lastPhase = phases[phases.length - 1];
+        if (currentPhase === lastPhase) {
+            debugLog(`Current phase '${currentPhase}' is the final phase, allowing commit`);
+            process.exit(0);
+        }
+
+        // Block: we are on the workflow branch during an intermediate phase.
+        logHookEvent('branch-guard', 'block', {
+            reason: `Commit blocked during phase '${currentPhase}' on branch '${currentBranch}'`
+        });
+        outputBlockResponse(
+            `COMMIT BLOCKED (Phase: ${currentPhase}): Commits are not allowed ` +
+            `on the workflow branch during intermediate phases.\n\n` +
+            `The current phase '${currentPhase}' has not yet passed quality-loop ` +
+            `and code-review validation. Committing now would create unvalidated ` +
+            `snapshots in version control.\n\n` +
+            `What to do instead:\n` +
+            `- Leave changes on the working tree (they will be committed by the orchestrator at workflow finalize)\n` +
+            `- If you need to save work temporarily, use: git stash\n` +
+            `- The orchestrator handles git add, commit, and merge at the appropriate time\n\n` +
+            `Current phase:  ${currentPhase}\n` +
+            `Current branch: ${currentBranch}\n` +
+            `Final phase:    ${lastPhase}`
+        );
         process.exit(0);
 
     } catch (error) {

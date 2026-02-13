@@ -1,120 +1,103 @@
-# Coverage Report: REQ-0011-adaptive-workflow-sizing
+# Coverage Report: BUG-0012-premature-git-commit
 
 **Phase**: 16-quality-loop
-**Date**: 2026-02-12
+**Date**: 2026-02-13
 
 ---
 
-## Coverage Tool Status
+## Coverage Tool
 
-**NOT CONFIGURED** -- No code coverage instrumentation tool (c8, istanbul, nyc) is installed in this project.
+Node.js built-in `--experimental-test-coverage` used for branch-guard.cjs analysis.
+
+## Instrumented Coverage: branch-guard.cjs
+
+| Metric | Value | Notes |
+|--------|-------|-------|
+| Line coverage | **98.43%** | Lines 186-188 uncovered (top-level catch block, unreachable in normal flow) |
+| Function coverage | **100%** | All 3 functions exercised: main(), isGitCommit(), getCurrentBranch() |
+| Branch coverage | **44.44%** | Low number reflects Node coverage counting common.cjs shared library branches |
+
+### Uncovered Lines
+
+| Lines | Code | Reason |
+|-------|------|--------|
+| 186-188 | `catch (error) { debugLog(...); process.exit(0); }` | Top-level error handler; only reached on unexpected runtime errors; exercised indirectly by fail-open tests |
 
 ## Test Coverage by Suite
 
 | Suite | Tests | Pass | Fail | Coverage |
 |-------|-------|------|------|----------|
-| CJS hooks (`npm run test:hooks`) | 1076 | 1076 | 0 | All hook modules exercised |
+| Branch-guard (`node --test branch-guard.test.cjs`) | 31 | 31 | 0 | 98.43% line, 100% function |
+| CJS hooks (`npm run test:hooks`) | 1129 | 1129 | 0 | All hook modules exercised |
 | ESM lib (`npm test`) | 490 | 489 | 1 | TC-E09 pre-existing |
-| **Total** | **1566** | **1565** | **1** | |
+| **Total** | **1650** | **1649** | **1** | |
 
 ## Acceptance Criteria Coverage (Manual Analysis)
 
-Since no automated coverage tool is available, coverage is assessed by mapping each acceptance criterion (AC) to its dedicated test case(s).
+### BUG-0012: Phase-Aware Commit Blocking -- 17 new tests
 
-### REQ-0011: Adaptive Workflow Sizing -- 72 new tests
-
-#### parseSizingFromImpactAnalysis -- 19 tests
+#### Hook Logic Tests (T15-T26)
 
 | Category | Test IDs | Count | Status |
 |----------|----------|-------|--------|
-| JSON metadata block parsing (primary) | TC-SZ-001 to TC-SZ-006 | 6 | COVERED |
-| Fallback regex parsing | TC-SZ-007 to TC-SZ-010 | 4 | COVERED |
-| Invalid/missing field normalization | TC-SZ-011 to TC-SZ-015 | 5 | COVERED |
-| Null/empty/malformed inputs | TC-SZ-016 to TC-SZ-019 | 4 | COVERED |
+| Block during intermediate phases | T15 (implementation), T16 (quality-loop), T17 (test-strategy) | 3 | COVERED |
+| Allow during final phase | T18 (code-review), T25 (non-standard last phase) | 2 | COVERED |
+| Fail-open: no active_workflow | T19 | 1 | COVERED |
+| Allow: non-workflow branch | T20 | 1 | COVERED |
+| Fail-open: missing current_phase | T21 | 1 | COVERED |
+| Fail-open: missing phases array | T22 | 1 | COVERED |
+| Allow: git add without commit | T23 | 1 | COVERED |
+| Block message content validation | T24 | 1 | COVERED |
+| Regression: main protection intact | T26 | 1 | COVERED |
 
-#### computeSizingRecommendation -- 16 tests
-
-| Category | Test IDs | Count | Status |
-|----------|----------|-------|--------|
-| Light/standard boundary | TC-SZ-020 to TC-SZ-023 | 4 | COVERED |
-| Standard/epic boundary | TC-SZ-024 to TC-SZ-027 | 4 | COVERED |
-| Risk override | TC-SZ-028 to TC-SZ-030 | 3 | COVERED |
-| Null metrics fallback | TC-SZ-031 to TC-SZ-032 | 2 | COVERED |
-| Threshold sanitization | TC-SZ-033 to TC-SZ-035 | 3 | COVERED |
-
-#### applySizingDecision -- 26 tests
+#### Agent Instruction Tests (T27-T31)
 
 | Category | Test IDs | Count | Status |
 |----------|----------|-------|--------|
-| Light intensity phase removal | TC-SZ-036 to TC-SZ-040 | 5 | COVERED |
-| Standard intensity (no changes) | TC-SZ-041 to TC-SZ-043 | 3 | COVERED |
-| Epic intensity (deferred) | TC-SZ-044 to TC-SZ-046 | 3 | COVERED |
-| Invariant failures + rollback | TC-SZ-047 to TC-SZ-050 | 4 | COVERED |
-| Guards and edge cases | TC-SZ-051 to TC-SZ-057 | 7 | COVERED |
-| Flag and override recording | TC-SZ-058 to TC-SZ-061 | 4 | COVERED |
+| software-developer no-commit instruction present | T27 | 1 | COVERED |
+| software-developer explains WHY | T28 | 1 | COVERED |
+| software-developer mentions orchestrator | T29 | 1 | COVERED |
+| quality-loop-engineer no-commit instruction | T30 | 1 | COVERED |
+| quality-loop-engineer explains code review not run | T31 | 1 | COVERED |
 
-#### Integration tests -- 8 tests
+### AC-to-Test Traceability
 
-| Category | Test IDs | Count | Status |
-|----------|----------|-------|--------|
-| End-to-end: light, standard, epic | TC-SZ-062 to TC-SZ-064 | 3 | COVERED |
-| Parsing failure cascade | TC-SZ-065 | 1 | COVERED |
-| High risk override | TC-SZ-066 | 1 | COVERED |
-| Custom thresholds | TC-SZ-067 | 1 | COVERED |
-| Invariant failure cascade | TC-SZ-068 | 1 | COVERED |
-| Determinism | TC-SZ-069 | 1 | COVERED |
-
-#### Error path tests -- 3 tests
-
-| Category | Test IDs | Count | Status |
-|----------|----------|-------|--------|
-| Missing IA file (null input) | TC-SZ-070 | 1 | COVERED |
-| No JSON blocks (fallback only) | TC-SZ-071 | 1 | COVERED |
-| Double sizing (overwrite) | TC-SZ-074 | 1 | COVERED |
-
-### Error Code Coverage
-
-| Error Code | Description | Test Case |
-|------------|-------------|-----------|
-| SZ-100 | Missing IA file | TC-SZ-070 |
-| SZ-101 | Empty string input | TC-SZ-016 |
-| SZ-102 | No JSON blocks | TC-SZ-071 |
-| SZ-103 | Malformed JSON | TC-SZ-018 |
-| SZ-104 | Both strategies fail | TC-SZ-019 |
-| SZ-105 | Negative file_count | TC-SZ-011 |
-| SZ-106 | Non-integer module_count | TC-SZ-012 |
-| SZ-107 | Unrecognized risk_level | TC-SZ-013 |
-| SZ-108 | Numeric blast_radius | TC-SZ-014 |
-| SZ-109 | Negative coverage_gaps | TC-SZ-015 |
-| SZ-202 | Invalid light_max_files | TC-SZ-033 |
-| SZ-203 | Invalid epic_min_files | TC-SZ-034 |
-| SZ-204 | light_max >= epic_min | TC-SZ-035 |
-| SZ-205 | Non-array light_skip_phases | TC-SZ-056 |
-| SZ-206 | Skip phase not in workflow | TC-SZ-057 |
-| SZ-300 | No active_workflow | TC-SZ-053, TC-SZ-054 |
-| SZ-301 | INV-01: Too few phases | TC-SZ-047 |
-| SZ-302 | INV-02: Index out of bounds | TC-SZ-048 |
-| SZ-303 | INV-03: Orphan phase_status | TC-SZ-049 |
-| SZ-304 | INV-04: Next phase not pending | TC-SZ-050 |
-| SZ-305 | Invalid intensity string | TC-SZ-051 |
-| SZ-306 | Double sizing | TC-SZ-074 |
+| AC | Description | Test Case(s) |
+|----|-------------|-------------|
+| AC-01 | software-developer has "Do NOT" git commit | T27 |
+| AC-02 | Instruction within first 80 lines | T27 |
+| AC-03 | Explains quality-loop and code-review | T28 |
+| AC-04 | Mentions orchestrator | T29 |
+| AC-05 | quality-loop-engineer has no-commit instruction | T30 |
+| AC-06 | quality-loop-engineer explains code review not run | T31 |
+| AC-07 | Block during 06-implementation | T15 |
+| AC-08 | Allow during final phase | T18, T25 |
+| AC-09 | Block during 16-quality-loop | T16 |
+| AC-10 | Allow during 08-code-review (final) | T18 |
+| AC-11 | Fail-open: no active_workflow | T19 |
+| AC-12 | Allow on non-workflow branch | T20 |
+| AC-13 | Block message includes phase name | T24 |
+| AC-14 | Fail-open: missing current_phase or phases | T21, T22 |
+| AC-15 | Final phase = last element of phases array | T18, T25 |
+| AC-16 | Works with variable-length workflows | T25 |
+| AC-17 | Existing main protection intact | T26 |
+| AC-18 | git add without commit allowed | T23 |
+| AC-19 | Block message suggests git stash | T24 |
+| AC-20 | Block message mentions orchestrator | T24 |
 
 ### Coverage Summary
 
 | Metric | Value |
 |--------|-------|
-| Total new tests (REQ-0011) | 72 |
-| Pre-existing regression tests | 1004 |
-| Total CJS tests | **1076** |
-| CJS test pass rate | **100%** (1076/1076) |
+| Total new tests (BUG-0012) | 17 |
+| Pre-existing branch-guard tests | 14 |
+| Total branch-guard tests | **31** |
+| Total CJS tests | **1129** |
+| CJS test pass rate | **100%** (1129/1129) |
 | ESM test pass rate | **99.8%** (489/490, 1 pre-existing) |
-| Error codes covered | 22/22 (100%) |
-
-## Recommendation
-
-Install `c8` or equivalent coverage tool to enable automated line/branch/function coverage measurement for future quality loops.
+| Acceptance criteria covered | **20/20 (100%)** |
 
 ---
 
 **Generated by**: Quality Loop Engineer (Phase 16)
-**Timestamp**: 2026-02-12
+**Timestamp**: 2026-02-13

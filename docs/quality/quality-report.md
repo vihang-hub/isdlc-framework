@@ -1,46 +1,53 @@
-# Quality Report: REQ-0011-adaptive-workflow-sizing
+# Quality Report: BUG-0012-premature-git-commit
 
 **Phase**: 16-quality-loop
-**Date**: 2026-02-12
+**Date**: 2026-02-13
 **Quality Loop Iteration**: 1 (both tracks passed first run)
-**Branch**: feature/REQ-0009-enhanced-plan-to-tasks
+**Branch**: bugfix/BUG-0012-premature-git-commit
 
 ---
 
 ## Summary
 
-Phase 16 Quality Loop executed for REQ-0011 (Adaptive Workflow Sizing). Both Track A (Testing) and Track B (Automated QA) passed on the first iteration with zero failures requiring remediation. CJS test count increased from 1004 to 1076 (+72 new sizing tests). All 3 new sizing functions, the STEP 3e-sizing orchestration block, the workflows.json config, and the workflow-completion-enforcer variable-length guard are validated.
+Phase 16 Quality Loop executed for BUG-0012 (Premature Git Commit). Both Track A (Testing) and Track B (Automated QA) passed on the first iteration with zero failures requiring remediation. The fix adds phase-aware commit blocking to `branch-guard.cjs` (v2.0.0) and explicit no-commit instructions to the software-developer and quality-loop-engineer agent files. 17 new tests (T15-T31) validate all aspects of the fix. The CJS test count increased from 1112 to 1129 (+17 new phase-aware blocking tests). No regressions detected.
 
 ## Track A: Testing Results
 
 | Check | Result | Details |
 |-------|--------|---------|
-| Build verification (QL-007) | PASS | `node --check common.cjs` and `node --check workflow-completion-enforcer.cjs` clean; all test suites load without errors |
-| CJS hook tests - `npm run test:hooks` (QL-002) | PASS | **1076 pass, 0 fail** (72 new sizing tests) |
-| ESM tests - `npm test` (QL-002) | PASS | 489 pass, 1 fail (TC-E09 pre-existing, unrelated) |
+| Build verification (QL-007) | PASS | `node -e "require('./src/claude/hooks/branch-guard.cjs')"` loads cleanly; all test suites load without errors |
+| Branch-guard unit tests (QL-002) | PASS | **31/31 pass** (14 existing + 17 new BUG-0012 tests) |
+| CJS hook tests - `npm run test:hooks` (QL-002) | PASS | **1129 pass, 0 fail** (+17 from BUG-0011 baseline of 1112) |
+| ESM tests - `npm test` (QL-002) | PASS | **489/490 pass** (TC-E09 pre-existing, unrelated to BUG-0012) |
+| Characterization tests (QL-002) | N/A | No characterization tests configured |
+| E2E tests (QL-002) | N/A | No E2E tests configured |
 | Mutation testing (QL-003) | NOT CONFIGURED | No mutation testing framework available |
-| Coverage analysis (QL-004) | NOT CONFIGURED | No coverage tool configured; manual AC-to-test mapping provided |
+| Coverage analysis (QL-004) | PASS | branch-guard.cjs: 98.43% line, 100% function, 44.44% branch (see coverage-report.md) |
 
 ### Test Breakdown by Feature Scope
 
-#### REQ-0011: Adaptive Workflow Sizing -- 72 New Tests
+#### BUG-0012: Phase-Aware Commit Blocking -- 17 New Tests (T15-T31)
 
 | Test Group | Test IDs | Count | Status |
 |------------|----------|-------|--------|
-| parseSizingFromImpactAnalysis (unit) | TC-SZ-001 to TC-SZ-019 | 19 | ALL PASS |
-| computeSizingRecommendation (unit) | TC-SZ-020 to TC-SZ-035 | 16 | ALL PASS |
-| applySizingDecision (unit) | TC-SZ-036 to TC-SZ-061 | 26 | ALL PASS |
-| Integration: End-to-End Sizing | TC-SZ-062 to TC-SZ-069 | 8 | ALL PASS |
-| Error Path Tests (SZ-xxx) | TC-SZ-070, TC-SZ-071, TC-SZ-074 | 3 | ALL PASS |
-| **Total** | **TC-SZ-001 to TC-SZ-074** | **72** | **ALL PASS** |
+| Phase blocking (feature/bugfix branches) | T15-T17 | 3 | ALL PASS |
+| Final phase allowance | T18, T25 | 2 | ALL PASS |
+| Fail-open scenarios | T19, T21, T22 | 3 | ALL PASS |
+| Non-workflow branch allowance | T20 | 1 | ALL PASS |
+| Non-commit git operations | T23 | 1 | ALL PASS |
+| Block message content | T24 | 1 | ALL PASS |
+| Regression (main protection) | T26 | 1 | ALL PASS |
+| Agent no-commit instructions | T27-T31 | 5 | ALL PASS |
+| **Total** | **T15-T31** | **17** | **ALL PASS** |
 
 ### Test Totals
 
 | Suite | Pass | Fail | Notes |
 |-------|------|------|-------|
-| CJS hooks (`npm run test:hooks`) | 1076 | 0 | Full pass (72 new + 1004 existing) |
+| Branch-guard tests | 31 | 0 | 14 existing + 17 new |
+| CJS hooks (`npm run test:hooks`) | 1129 | 0 | Full pass (+17 new) |
 | ESM lib (`npm test`) | 489 | 1 | TC-E09 pre-existing (README agent count mismatch) |
-| **Combined** | **1565** | **1** | Pre-existing only |
+| **Combined** | **1618** | **1** | Pre-existing only |
 
 ## Track B: Automated QA Results
 
@@ -52,75 +59,65 @@ Phase 16 Quality Loop executed for REQ-0011 (Adaptive Workflow Sizing). Both Tra
 | Dependency audit (QL-009) | PASS | `npm audit` reports 0 vulnerabilities |
 | Automated code review (QL-010) | PASS | See details below |
 | SonarQube | NOT CONFIGURED | Not configured in state.json |
+| src/claude <-> .claude sync | PASS | branch-guard.cjs identical in both directories |
 
 ### SAST Security Review (QL-008)
 
 | Check | Result | Details |
 |-------|--------|---------|
 | No eval/Function constructor usage | PASS | No dynamic code execution |
-| No child_process usage in new code | PASS | Sizing functions are pure computation; no shell commands |
-| No file system writes in sizing logic | PASS | Functions mutate in-memory objects only; state persistence handled by caller |
-| No network requests | PASS | All sizing functions are local-only |
+| No new child_process usage | PASS | Existing execSync for git rev-parse only (unchanged) |
 | No hardcoded secrets/credentials | PASS | No sensitive data |
-| Input validation | PASS | Guards for null, undefined, non-string, negative numbers, invalid enums |
-| Fail-open design (Article X) | PASS | Null metrics default to standard; invariant failures roll back to standard |
-| No regex denial-of-service (ReDoS) | PASS | JSON block regex and fallback patterns are simple |
-| No prototype pollution | PASS | No Object.assign on user input; JSON.parse results validated through _validateAndNormalizeSizingMetrics |
-| Rollback safety | PASS | applySizingDecision snapshots state before mutation, restores on invariant failure |
+| Input validation | PASS | Guards for null/undefined states, missing phases, missing current_phase |
+| Fail-open design (Article X) | PASS | All error paths exit 0 silently; no process.exit(1) |
+| No console.log leaks | PASS | All diagnostic output uses debugLog (stderr) |
+| No prototype pollution | PASS | JSON.parse results validated before use |
+| No regex denial-of-service | PASS | Single simple regex `/\bgit\s+commit\b/` (no backtracking) |
 
 ### Automated Code Review Details (QL-010)
 
 | Pattern Check | Result | Evidence |
 |---------------|--------|----------|
-| Function purity | PASS | parseSizingFromImpactAnalysis and computeSizingRecommendation are pure (no I/O, no side effects) |
-| JSDoc annotations | PASS | All 3 public functions + 3 private helpers have complete JSDoc with @param and @returns |
-| Private helper scoping | PASS | _safeNonNegInt, _validateAndNormalizeSizingMetrics, _checkSizingInvariants prefixed with underscore |
-| Module export correctness | PASS | All 3 functions exported in common.cjs module.exports block |
-| Guard clause coverage | PASS | Input validation on all public entry points (null/undefined/non-string/invalid-enum) |
-| Consistent error handling | PASS | stderr output for warnings (invalid intensity, invariant failures); no process.exit() |
-| State mutation pattern | PASS | applySizingDecision follows same in-place mutation pattern as resetPhasesForWorkflow() |
-| Invariant post-condition checks | PASS | 4 invariant checks (INV-01 through INV-04) with rollback on failure |
-| Threshold sanitization | PASS | Invalid/negative thresholds reset to defaults; light_max >= epic_min triggers reset |
-| Config extensibility | PASS | workflows.json sizing block supports custom thresholds and skip_phases |
-| workflow-completion-enforcer guard | PASS | Preserves sizing record in workflow_history via lastEntry.sizing |
-
-### Configuration Validation
-
-| Config File | Validation | Result |
-|-------------|-----------|--------|
-| `src/isdlc/config/workflows.json` | Valid JSON, sizing block present with thresholds and light_skip_phases | PASS |
-| `src/isdlc/config/workflows.json` | Rules comment updated for framework-level phase modification (REQ-0011) | PASS |
+| Fail-open compliance | PASS | No process.exit(1) in branch-guard.cjs; all error paths exit 0 |
+| JSDoc annotations | PASS | isGitCommit() and getCurrentBranch() have complete JSDoc |
+| Version header | PASS | Version: 2.0.0 with BUG-0012 trace references |
+| Traceability | PASS | FR-01 through FR-05, AC-07 through AC-20 referenced in header |
+| Guard clause coverage | PASS | Null checks for state, active_workflow, git_branch, currentBranch, currentPhase, phases |
+| Consistent error handling | PASS | try/catch at top level with fail-open exit |
+| Agent instruction clarity | PASS | Both agent files have prominent "CRITICAL: Do NOT Run Git Commits" section |
+| Agent instruction completeness | PASS | Both agents explain WHY (quality-loop, code-review), mention orchestrator |
+| Hook log events | PASS | logHookEvent called on both main-block and phase-block paths |
+| Code readability | PASS | Clear comments, logical flow, descriptive variable names |
+| Block message UX | PASS | Phase name, stash suggestion, orchestrator note all included |
 
 ## Files Changed (Scope Verification)
 
-| File | Change Type | Lines Added | Purpose |
-|------|------------|-------------|---------|
-| `src/claude/hooks/lib/common.cjs` | Modified | ~230 | 3 sizing functions + 3 private helpers |
-| `src/claude/hooks/tests/test-sizing.test.cjs` | New | ~939 | 72 test cases for sizing functions |
-| `src/claude/commands/isdlc.md` | Modified | ~87 | STEP 3e-sizing orchestration block |
-| `src/isdlc/config/workflows.json` | Modified | ~15 | Sizing config block + rules comment |
-| `src/claude/agents/impact-analysis-orchestrator.md` | Modified | ~10 | JSON metadata spec for IA output |
-| `src/claude/hooks/workflow-completion-enforcer.cjs` | Modified | ~8 | Variable-length guard + sizing record preservation |
+| File | Change Type | Lines Changed | Purpose |
+|------|------------|---------------|---------|
+| `src/claude/hooks/branch-guard.cjs` | Modified | ~50 added | Phase-aware commit blocking logic (v2.0.0) |
+| `src/claude/agents/05-software-developer.md` | Modified | ~6 added | No-commit CRITICAL instruction |
+| `src/claude/agents/16-quality-loop-engineer.md` | Modified | ~4 added | No-commit CRITICAL instruction |
+| `src/claude/hooks/tests/branch-guard.test.cjs` | Modified | ~330 added | 17 new test cases (T15-T31) |
 
 ## Constitutional Compliance
 
 | Article | Status | Evidence |
 |---------|--------|----------|
-| II (Test-Driven Development) | PASS | 72 new tests covering all 3 functions, boundary conditions, error paths, and integration |
-| III (Architectural Integrity) | PASS | Pure-function design; no I/O in computation layer; state mutation follows existing pattern |
-| V (Security by Design) | PASS | Input validation, invariant checking, rollback safety; npm audit clean |
-| VI (Code Quality) | PASS | JSDoc, consistent patterns, proper helper scoping, deterministic algorithms |
-| VII (Documentation) | PASS | JSDoc on all functions; quality docs generated; ADR references in comments |
-| IX (Traceability) | PASS | 72 tests trace to SZ-xxx error codes and acceptance criteria; config references REQ-0011 |
-| XI (Integration Testing Integrity) | PASS | 8 end-to-end integration tests; 1076 total CJS pass; no regressions |
+| II (Test-Driven Development) | PASS | 17 new tests covering all 20 ACs; TDD red-green cycle followed |
+| III (Architectural Integrity) | PASS | Extends existing branch-guard hook pattern; no new modules or dependencies |
+| V (Security by Design) | PASS | Fail-open design; no new attack surface; npm audit clean |
+| VI (Code Quality) | PASS | JSDoc, consistent patterns, no console.log leaks, clear error messages |
+| VII (Documentation) | PASS | Version header, trace references, quality reports generated |
+| IX (Traceability) | PASS | All test cases trace to specific ACs; BUG-0012 references throughout |
+| XI (Integration Testing Integrity) | PASS | 1129 CJS pass, 489 ESM pass; zero regressions from BUG-0012 changes |
 
 ## GATE-16 Checklist
 
 | Criterion | Status | Notes |
 |-----------|--------|-------|
-| Clean build succeeds | PASS | `node --check` clean on all modified .cjs files; all test suites load without errors |
-| All tests pass | PASS | 1076/1076 CJS, 489/490 ESM (1 pre-existing unrelated TC-E09) |
-| Code coverage meets threshold | N/A | Coverage tool not configured; 72 new tests cover all ACs by manual mapping |
+| Clean build succeeds | PASS | branch-guard.cjs loads cleanly; no syntax errors |
+| All tests pass | PASS | 1129/1129 CJS, 489/490 ESM (1 pre-existing unrelated TC-E09) |
+| Code coverage meets threshold | PASS | branch-guard.cjs: 98.43% line, 100% function |
 | Linter passes with zero errors | N/A | No linter configured |
 | Type checker passes | N/A | Pure JavaScript project |
 | No critical/high SAST vulnerabilities | PASS | Manual security review clean; no dangerous patterns |
@@ -133,5 +130,5 @@ Phase 16 Quality Loop executed for REQ-0011 (Adaptive Workflow Sizing). Both Tra
 ---
 
 **Generated by**: Quality Loop Engineer (Phase 16)
-**Timestamp**: 2026-02-12
+**Timestamp**: 2026-02-13
 **Iteration count**: 1 (both tracks passed first run)

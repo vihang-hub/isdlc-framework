@@ -1,90 +1,84 @@
-# Static Analysis Report: BUG-0011-subagent-phase-state-overwrite
+# Static Analysis Report: BUG-0012-premature-git-commit
 
 **Date**: 2026-02-13
 **Phase**: 08-code-review
+**Workflow**: Fix (BUG-0012)
 
 ---
 
 ## Syntax Validation
 
-| File | Status | Method |
-|------|--------|--------|
-| src/claude/hooks/state-write-validator.cjs | PASS | `node -c` syntax check |
-| src/claude/hooks/tests/state-write-validator.test.cjs | PASS | `node -c` syntax check |
+| File | Tool | Result |
+|------|------|--------|
+| `src/claude/hooks/branch-guard.cjs` | `node -c` | SYNTAX OK |
 
-## Module System Compliance
+## Module System Compliance (Article XIII)
 
-| File | Extension | Module System | require() | module.exports | ESM imports |
-|------|-----------|---------------|-----------|----------------|-------------|
-| state-write-validator.cjs | .cjs | CommonJS | YES | `{ check }` | none (correct) |
+| Check | Result | Notes |
+|-------|--------|-------|
+| No ESM imports in hook file | PASS | Only `require()` used in branch-guard.cjs |
+| No CommonJS require in agent markdown | N/A | Agent files are markdown, not executable |
+| `.cjs` extension used | PASS | branch-guard.cjs uses explicit CJS extension |
 
-All files comply with Article XIII (Module System Consistency) -- hooks use CommonJS, no ESM imports.
+## Security Static Analysis
 
-## Security Scan
+| Check | Result | Notes |
+|-------|--------|-------|
+| No `eval()` usage | PASS | No eval or new Function found |
+| No `child_process.exec` with user input | PASS | Only `execSync('git rev-parse --abbrev-ref HEAD')` with hardcoded command |
+| No secrets in source code | PASS | No API keys, tokens, passwords, or credentials detected |
+| No `console.log` in production hook | PASS | Uses `debugLog()` from common.cjs (controlled by SKILL_VALIDATOR_DEBUG) |
+| No dynamic require() | PASS | All require() calls use static string paths |
+| No prototype pollution vectors | PASS | No Object.assign from external input, no dynamic property assignment |
 
-| Check | Result |
-|-------|--------|
-| `eval()` usage | 0 found |
-| `new Function()` usage | 0 found |
-| `child_process.exec/spawn` | 0 found in modified files |
-| User-controlled regex patterns | 0 found |
-| Dynamic code execution | 0 found |
-| Secrets/credentials in code | 0 found |
-| Path traversal | 0 found -- STATE_JSON_PATTERN regex validates paths before fs operations |
-| ReDoS (regex denial of service) | 0 risk -- no new regex patterns introduced |
-| Prototype pollution | 0 risk -- Object.entries() iterates own enumerable properties; PHASE_STATUS_ORDINAL is a frozen-shape constant |
-| Injection vectors | 0 found -- phase index compared as numbers only, status values compared against known ordinal keys |
-| JSON.parse on untrusted input | SAFE -- all JSON.parse calls wrapped in try/catch with fail-open behavior |
+## Error Handling Analysis
 
-## Dependency Audit
-
-- `npm audit`: 0 vulnerabilities found
-- No new dependencies introduced by BUG-0011
-- No new require() statements beyond existing `debugLog`, `logHookEvent` from common.cjs, and `fs` (Node built-in)
-
-## Runtime Copy Sync
-
-| Source | Runtime | Result |
-|--------|---------|--------|
-| `src/claude/hooks/state-write-validator.cjs` | `.claude/hooks/state-write-validator.cjs` | IDENTICAL |
-
-Verified via `diff` -- source and runtime copies are byte-identical.
-
-## Code Pattern Analysis
-
-| Pattern | Status | Details |
-|---------|--------|---------|
-| Fail-open error handling | PASS | All try/catch blocks return null (allow). No exceptions escape. 7 dedicated fail-open tests. |
-| Phase index comparison using < operator | PASS | Integer comparison is correct for monotonically increasing phase index. |
-| Status ordinal comparison | PASS | PHASE_STATUS_ORDINAL maps to 0/1/2. Regression means incoming < disk. Unknown values skip comparison (fail-open). |
-| Self-contained validation functions | PASS | checkPhaseFieldProtection() is self-contained like checkVersionLock(). Each function does its own parsing and disk reading. |
-| BUG-0011 comment annotations | PASS | JSDoc, inline AC references, and header traceability all reference BUG-0011. |
-| console.error for stderr output | PASS | V8 block message logged via console.error (stderr), not console.log (stdout). |
-| logHookEvent for observability | PASS | V8 block events logged to hook-activity.log via logHookEvent(). |
-| Guard clause pattern (Write-only) | PASS | `if (toolName !== 'Write') return null` matches V7 pattern exactly. |
+| Check | Result | Notes |
+|-------|--------|-------|
+| All process.exit() calls use exit(0) | PASS | 13 exit calls, all exit(0). Fail-open compliant. |
+| try-catch coverage | PASS | 3 catch blocks: stdin JSON parse, git subprocess, outermost. |
+| No unhandled promise rejections | PASS | main() is async with try-catch wrapper. readStdin() is awaited. |
+| No throw statements in new code | PASS | All error paths exit gracefully. |
 
 ## Complexity Analysis
 
-| Function | Lines | Cyclomatic Complexity | Decision Points | Assessment |
-|----------|-------|----------------------|-----------------|------------|
-| checkPhaseFieldProtection() | 108 | ~15 | 6 if/guard + 3 catch + 1 for-of + 2 continue + type checks | ACCEPTABLE (fail-open pattern) |
-| PHASE_STATUS_ORDINAL | 5 | 0 | 0 | PASS (pure data) |
-| check() (delta) | +6 lines | +1 | 1 if (v8Result.decision === 'block') | PASS |
+| Metric | Value | Rating |
+|--------|-------|--------|
+| Cyclomatic complexity (main) | 13 | Acceptable (< 20) |
+| Max nesting depth | 2 | Good (< 5) |
+| Lines of code (production) | 191 | Small |
+| Number of functions | 3 | Simple |
+| Number of catch blocks | 3 | Appropriate |
 
-Note: CC of ~15 for checkPhaseFieldProtection() is above the typical 10 threshold but is driven entirely by fail-open defensive checks and backward-compatibility guards. Each decision point is an early return. The function has one loop (iterating phase_status entries, typically 6-9 entries). It reads top-to-bottom linearly. This follows the same convention as checkVersionLock() (CC=13).
+## Code Style Analysis
 
-## Test File Analysis
+| Check | Result | Notes |
+|-------|--------|-------|
+| Consistent indentation | PASS | 4-space indentation throughout |
+| Consistent quoting | PASS | Single quotes for strings |
+| JSDoc on public functions | PASS | isGitCommit(), getCurrentBranch() have JSDoc |
+| File header with traceability | PASS | Version 2.0.0, BUG-0012 traces documented |
+| Meaningful variable names | PASS | workflowBranchName, currentPhase, lastPhase are self-documenting |
 
-| Test File | New Tests | Existing Tests | Total | Status |
-|-----------|-----------|----------------|-------|--------|
-| state-write-validator.test.cjs | 36 (T32-T67) | 31 (T1-T31) | 67 | ALL PASS |
+## Dependency Analysis
 
-## Modified File Summary (git diff --stat)
+| Check | Result | Notes |
+|-------|--------|-------|
+| External dependencies | 0 | Only Node.js built-ins (child_process) and internal (common.cjs) |
+| New dependencies added | 0 | No new require() statements |
+| Vulnerability scan | N/A | No external dependencies to scan |
 
-```
-src/claude/hooks/state-write-validator.cjs              |  159 ++-
-src/claude/hooks/tests/state-write-validator.test.cjs    | 1163 ++++++++++++++++++++
-2 files changed, 1321 insertions(+), 1 deletion(-)
-```
+## Summary
 
-Exactly 1 production file modified. No unrelated changes. No scope creep.
+| Category | Errors | Warnings | Info |
+|----------|--------|----------|------|
+| Syntax | 0 | 0 | 0 |
+| Security | 0 | 0 | 0 |
+| Module system | 0 | 0 | 0 |
+| Error handling | 0 | 0 | 0 |
+| Complexity | 0 | 0 | 1 (CC=13, acceptable) |
+| Code style | 0 | 0 | 0 |
+| Dependencies | 0 | 0 | 0 |
+| **Total** | **0** | **0** | **1** |
+
+**Verdict**: Static analysis PASSED with 0 errors, 0 warnings, 1 informational note.

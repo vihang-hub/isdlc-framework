@@ -1,7 +1,7 @@
-# Security Scan: REQ-0011-adaptive-workflow-sizing
+# Security Scan: BUG-0012-premature-git-commit
 
 **Phase**: 16-quality-loop
-**Date**: 2026-02-12
+**Date**: 2026-02-13
 
 ---
 
@@ -30,46 +30,43 @@ All new and modified files were manually reviewed for security concerns.
 
 ### Files Reviewed
 
-1. `src/claude/hooks/lib/common.cjs` (MODIFIED - 3 sizing functions + 3 helpers, ~230 lines)
-2. `src/claude/hooks/tests/test-sizing.test.cjs` (NEW - 72 test cases, ~939 lines)
-3. `src/claude/commands/isdlc.md` (MODIFIED - STEP 3e-sizing block)
-4. `src/isdlc/config/workflows.json` (MODIFIED - sizing config block)
-5. `src/claude/agents/impact-analysis-orchestrator.md` (MODIFIED - JSON metadata spec)
-6. `src/claude/hooks/workflow-completion-enforcer.cjs` (MODIFIED - variable-length guard)
+1. `src/claude/hooks/branch-guard.cjs` (MODIFIED - phase-aware commit blocking, ~50 lines added)
+2. `src/claude/hooks/tests/branch-guard.test.cjs` (MODIFIED - 17 new test cases, ~330 lines added)
+3. `src/claude/agents/05-software-developer.md` (MODIFIED - no-commit instruction, ~6 lines)
+4. `src/claude/agents/16-quality-loop-engineer.md` (MODIFIED - no-commit instruction, ~4 lines)
 
 ### Security Checks
 
 | Check | Result | Details |
 |-------|--------|---------|
 | No eval/Function constructor usage | PASS | No dynamic code execution in any file |
-| No child_process usage in new code | PASS | Sizing functions are pure computation; no shell commands |
-| No file system writes in sizing logic | PASS | Functions mutate in-memory objects only; state write handled by caller (writeState) |
-| No network requests | PASS | All sizing functions are local-only |
+| No new child_process usage | PASS | Existing execSync for git rev-parse only (unchanged from v1.0.0) |
 | No hardcoded secrets/credentials | PASS | No sensitive data in any file |
-| No path traversal vulnerabilities | PASS | No file path construction in sizing functions |
-| Input validation on all entry points | PASS | Handles null, undefined, non-string, negative numbers, invalid enums |
-| Fail-open design (Article X) | PASS | Null metrics default to standard; invariant failures roll back to standard |
-| No regex denial-of-service (ReDoS) | PASS | JSON block regex (`/```json\s*\n([\s\S]*?)\n```/g`) uses lazy quantifier; fallback patterns are linear |
-| No prototype pollution | PASS | JSON.parse results validated through _validateAndNormalizeSizingMetrics; no Object.assign on user input |
-| Rollback safety | PASS | applySizingDecision snapshots state before mutation; restores all fields on invariant failure |
-| State integrity after mutation | PASS | 4 invariant checks (INV-01 through INV-04) validate post-mutation state |
+| No path traversal vulnerabilities | PASS | No user-supplied file path construction |
+| Input validation on all entry points | PASS | Guards for null state, missing active_workflow, missing git_branch, missing phases |
+| Fail-open design (Article X) | PASS | All error/edge paths exit 0 silently; no process.exit(1) |
+| No regex denial-of-service (ReDoS) | PASS | Single regex `/\bgit\s+commit\b/` is simple with no backtracking |
+| No prototype pollution | PASS | JSON.parse results accessed via property chains only, not spread/assign |
+| No console.log leaks | PASS | All diagnostic output via debugLog (stderr); stdout reserved for JSON protocol |
+| Block message safety | PASS | Block messages contain no user-supplied input that could be injected |
 
-### Sizing Function Security Details
+### Branch-Guard Security Analysis
 
-#### parseSizingFromImpactAnalysis
-- **Input**: String content from impact-analysis.md (agent-generated, not user-supplied)
-- **Risk**: Low -- JSON.parse wrapped in try/catch; regex patterns are simple
+#### Phase-Aware Blocking Logic
+- **Input**: state.json (framework-controlled, not user-supplied)
+- **Risk**: Low -- reads current_phase and phases array from trusted state file
+- **Mitigations**: Null checks on every property access; fail-open on any error
 - **Verdict**: SAFE
 
-#### computeSizingRecommendation
-- **Input**: Metrics object and thresholds from workflows.json
-- **Risk**: None -- Pure function, no I/O, no side effects
+#### Git Branch Detection
+- **Input**: `git rev-parse --abbrev-ref HEAD` output
+- **Risk**: Low -- local git operation, 3-second timeout, no user input
+- **Unchanged**: This code existed in v1.0.0; no new risk introduced
 - **Verdict**: SAFE
 
-#### applySizingDecision
-- **Input**: State object, intensity string, sizing data
-- **Risk**: Low -- Modifies in-memory state; rollback on invariant failure
-- **Mitigation**: State snapshot + rollback; 4 invariant post-conditions; invalid intensity defaults to standard
+#### Block Message Generation
+- **Risk**: None -- Messages contain phase names and branch names from state.json (framework-controlled strings)
+- **No injection vector**: Messages are returned as JSON stopReason, not executed
 - **Verdict**: SAFE
 
 ### Findings
@@ -82,9 +79,9 @@ All new and modified files were manually reviewed for security concerns.
 
 ## Summary
 
-No security vulnerabilities were identified in the REQ-0011 changes. The adaptive workflow sizing implementation consists of pure computation functions with no I/O, no shell commands, no network requests, and no file system access. Input validation and invariant checking provide defense-in-depth against malformed data. The rollback mechanism ensures state integrity even when post-mutation invariants fail. Dependency audit is clean with 0 known vulnerabilities.
+No security vulnerabilities were identified in the BUG-0012 changes. The phase-aware commit blocking extends an existing hook with additional logic gates that read from the trusted state.json file. No new dependencies, no new shell commands, no new file I/O, and no new attack surfaces were introduced. The fail-open design ensures the hook cannot deny service even under unexpected conditions. Dependency audit is clean with 0 known vulnerabilities.
 
 ---
 
 **Generated by**: Quality Loop Engineer (Phase 16)
-**Timestamp**: 2026-02-12
+**Timestamp**: 2026-02-13
