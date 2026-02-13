@@ -6,7 +6,7 @@ owner: sdlc-orchestrator
 collaborators: []
 project: sdlc-framework
 version: 2.0.0
-when_to_use: After GATE-01 passes, before branch creation, for feature/fix workflows
+when_to_use: After GATE-01 passes, after branch already created during init, for feature/fix workflows
 dependencies: [ORCH-001]
 traces: FR-01, FR-02, FR-03, FR-06, ADR-0001, ADR-0004, NFR-02, NFR-04
 ---
@@ -20,7 +20,7 @@ Generate a persistent task plan file (`docs/isdlc/tasks.md`) using the v2.0 form
 ## When to Use
 
 - After GATE-01 passes for `feature` or `fix` workflows
-- Before branch creation (Section 3a of the orchestrator)
+- Branch already created during workflow initialization (Section 3a of the orchestrator)
 - **Skip** for `test-run` and `test-generate` workflows (too few phases; TaskCreate spinners are sufficient)
 
 ## Prerequisites

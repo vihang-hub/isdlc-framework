@@ -225,7 +225,7 @@ Enter selection (1-5):
    - If args contain "-light": set flags.light = true, remove "-light" from description
 4. Initialize `active_workflow` in state.json with type `"feature"`, phases `["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]`, and flags: `{ light: flags.light || false }`
 4. Delegate to Requirements Analyst (Phase 01) with `scope: "feature"`
-5. After GATE-01: creates `feature/REQ-NNNN-description` branch from main
+5. During initialization: creates `feature/REQ-NNNN-description` branch from main (before Phase 01)
 6. After GATE-08: merges branch to main, deletes branch
 
 **No-description behavior:** When `/isdlc feature` is invoked without a description (no quoted text, no feature ID), the orchestrator presents a **backlog picker** instead of immediately asking for a description. The backlog picker scans:
@@ -249,7 +249,7 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 6. Agent 01 extracts external ID from URL and creates `BUG-NNNN-{external-id}/` folder
 7. If no `--link` provided, Agent 01 asks for the bug link during the bug report flow
 8. Phase 05 requires a failing test before the fix (TDD enforcement)
-9. After GATE-01: creates `bugfix/BUG-NNNN-external-id` branch from main
+9. During initialization: creates `bugfix/BUG-NNNN-external-id` branch from main (before Phase 01)
 10. After GATE-08: merges branch to main, deletes branch
 
 **No-description behavior:** When `/isdlc fix` is invoked without a description, the orchestrator presents a **backlog picker** that scans:
@@ -701,7 +701,7 @@ Use Task tool → sdlc-orchestrator with:
   (include MONOREPO CONTEXT if applicable)
 ```
 
-The orchestrator initializes the workflow, runs Phase 01 (requirements/bug-report), validates GATE-01, creates the branch, generates the plan, and returns a structured result:
+The orchestrator initializes the workflow, creates the branch, runs Phase 01 (requirements/bug-report), validates GATE-01, generates the plan, and returns a structured result:
 ```json
 {
   "status": "phase_01_complete",

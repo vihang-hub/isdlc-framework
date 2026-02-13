@@ -416,7 +416,7 @@ When the user selects a workflow (via `/isdlc feature`, `/isdlc fix`, etc.), ini
 6. **Delegate to the first phase agent** with any `agent_modifiers` from the workflow definition.
 
 7. **Check `requires_branch`** from the workflow definition:
-   - If `true`: Branch will be created after GATE-01 passes (see Section 3a)
+   - If `true`: Create branch immediately during initialization (see Section 3a) — before Phase 01 delegation
    - If `false`: No branch operations for this workflow
 
 ### Workflow-Specific Behavior
@@ -434,7 +434,7 @@ When the user selects a workflow (via `/isdlc feature`, `/isdlc fix`, etc.), ini
   }
   ```
 - Increment `counters.next_req_id` in state.json
-- After GATE-01: create branch `feature/{artifact_folder}` from main (see Section 3a)
+- During initialization: create branch `feature/{artifact_folder}` from main (see Section 3a) — before Phase 01
 
 **fix workflow:**
 - Phase 01: `scope: "bug-report"` — capture reproduction steps, expected vs actual
@@ -452,7 +452,7 @@ When the user selects a workflow (via `/isdlc feature`, `/isdlc fix`, etc.), ini
   }
   ```
 - Increment `counters.next_bug_id` in state.json
-- After GATE-01: create branch `bugfix/{artifact_folder}` from main (see Section 3a)
+- During initialization: create branch `bugfix/{artifact_folder}` from main (see Section 3a) — before Phase 01
 - Phase 05: `require_failing_test_first: true` — must write failing test before fix
 
 **test-run workflow:**
@@ -528,9 +528,9 @@ When `/isdlc cancel` is invoked:
 
 Workflows with `requires_branch: true` in `.isdlc/config/workflows.json` automatically manage a git branch for the duration of the workflow. The orchestrator owns all branch operations — phase agents work on the branch without awareness of branch management.
 
-### Branch Creation (Post-GATE-01)
+### Branch Creation (At Initialization)
 
-When GATE-01 passes AND the active workflow has `requires_branch: true`:
+When initializing a workflow that has `requires_branch: true` (immediately after writing `active_workflow` to state.json, before delegating to Phase 01):
 
 1. **Read branch context from state.json:**
    - `active_workflow.type` → determines prefix: feature → `feature/`, fix → `bugfix/`
@@ -579,7 +579,7 @@ When GATE-01 passes AND the active workflow has `requires_branch: true`:
    ════════════════════════════════════════════════════════════════
    ```
 
-7. Proceed to plan generation (Section 3b) and then next phase delegation.
+7. Proceed to Phase 01 delegation. Plan generation (Section 3b) happens after GATE-01 passes.
 
 ## 3b. Plan Generation (Post-GATE-01)
 
@@ -587,7 +587,7 @@ When GATE-01 passes AND the active workflow type is `feature` or `fix`:
 
 1. Announce skill invocation (Section 6 format) for `generate-plan (ORCH-012)`
 2. Invoke ORCH-012: read `active_workflow` + Phase 01 artifacts → generate `docs/isdlc/tasks.md` with sequential `TNNNN` IDs, `[X]` for completed phases, `[ ]` for pending, `[P]` for parallel-eligible, progress summary
-3. Display the full plan with announcement banner, proceed to branch creation (3a) and next phase
+3. Display the full plan with announcement banner, proceed to next phase delegation (branch already created during init)
 
 **Skip** for `test-run` and `test-generate` workflows.
 
@@ -639,7 +639,7 @@ If no MODE parameter is present, the orchestrator runs in **full-workflow mode**
 
 | Mode | Scope | Returns |
 |------|-------|---------|
-| `init-and-phase-01` | Initialize workflow + run Phase 01 + validate GATE-01 + create branch | Structured result (see below) |
+| `init-and-phase-01` | Initialize workflow + create branch + run Phase 01 + validate GATE-01 + generate plan | Structured result (see below) |
 | `single-phase` | Run one phase (specified by PHASE param) + validate its gate + update state.json | Structured result (see below) |
 | `finalize` | Human Review Checkpoint (if enabled) + merge branch + clear workflow | Structured result (see below) |
 | _(none)_ | Full workflow (backward compatible) | Original behavior — runs all phases autonomously |
@@ -653,7 +653,7 @@ All modes return JSON with `status`, plus mode-specific fields:
 
 ### Mode Behavior
 
-1. **init-and-phase-01**: Run initialization (Section 3), delegate to Phase 01, validate GATE-01, create branch (3a), generate plan (3b). Return phases array.
+1. **init-and-phase-01**: Run initialization (Section 3), create branch (3a), delegate to Phase 01, validate GATE-01, generate plan (3b). Return phases array.
 2. **single-phase**: Read `active_workflow`, delegate to PHASE agent, validate gate, update state. Return result.
 3. **finalize**: Human Review (if enabled) → merge branch → `collectPhaseSnapshots(state)` → prune (`pruneSkillUsageLog(20)`, `pruneCompletedPhases([])`, `pruneHistory(50,200)`, `pruneWorkflowHistory(50,200)`) → move to `workflow_history` (include `phase_snapshots`, `metrics`, `phases` array) → clear `active_workflow`.
 4. **No mode**: Full workflow — all phases autonomously. Only mode that creates TaskCreate tasks.
