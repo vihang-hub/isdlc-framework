@@ -239,6 +239,8 @@ Enter selection (1-5):
 /isdlc feature -light "Feature description" --project api-service
 /isdlc feature "Feature description" --supervised
 /isdlc feature -light "Feature description" --supervised
+/isdlc feature "Feature description" --debate
+/isdlc feature "Feature description" --no-debate
 /isdlc feature                        (no description — presents backlog picker)
 ```
 1. Validate constitution exists and is not a template
@@ -246,11 +248,42 @@ Enter selection (1-5):
 3. Parse flags from command arguments:
    - If args contain "-light": set flags.light = true, remove "-light" from description
    - If args contain "--supervised": set flags.supervised = true, remove "--supervised" from description
+   - If args contain "--debate": set flags.debate = true, remove "--debate" from description
+   - If args contain "--no-debate": set flags.no_debate = true, remove "--no-debate" from description
 4. Initialize `active_workflow` in state.json with type `"feature"`, phases `["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]`, and flags: `{ light: flags.light || false }`
    - If flags.supervised: pass `--supervised` flag to orchestrator init (sets supervised_mode.enabled=true in state)
+   - If flags.debate or flags.no_debate: pass to orchestrator for debate mode resolution
 4. Delegate to Requirements Analyst (Phase 01) with `scope: "feature"`
 5. During initialization: creates `feature/REQ-NNNN-description` branch from main (before Phase 01)
 6. After GATE-08: merges branch to main, deletes branch
+
+### Debate Mode Flags
+
+| Flag | Effect | Default |
+|------|--------|---------|
+| `--debate` | Force debate mode ON (multi-agent requirements team) | Implied for standard/epic sizing |
+| `--no-debate` | Force debate mode OFF (single-agent requirements) | Implied for -light |
+
+**Flag precedence** (highest to lowest):
+1. `--no-debate` -- always wins (conservative override)
+2. `--debate` -- explicit enable
+3. `-light` -- implies `--no-debate`
+4. Sizing-based default: standard/epic = debate ON, fallback = debate ON
+
+**Conflict resolution:** If both `--debate` and `--no-debate` are present,
+`--no-debate` wins (Article X: Fail-Safe Defaults).
+
+**Passed to orchestrator:** The resolved debate flags are included in the
+orchestrator delegation context as:
+```
+FLAGS:
+  debate: true|false
+  no_debate: true|false
+  light: true|false
+```
+
+The orchestrator reads `FLAGS.debate` and `FLAGS.no_debate` to resolve `debate_mode`
+and writes the result to `active_workflow.debate_mode` in state.json.
 
 **No-description behavior:** When `/isdlc feature` is invoked without a description (no quoted text, no feature ID), the orchestrator presents a **backlog picker** instead of immediately asking for a description. The backlog picker scans:
 - `BACKLOG.md` `## Open` section for unchecked items (`- N.N [ ] ...`), with `[Jira: TICKET-ID]` suffix for Jira-backed items

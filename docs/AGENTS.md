@@ -1,14 +1,14 @@
 # iSDLC Agents
 
-This document provides detailed information about all 48 agents in the iSDLC framework.
+This document provides detailed information about all 50 agents in the iSDLC framework.
 
 ## Overview
 
-The framework's 48 agents are organized into five groups:
+The framework's 50 agents are organized into five groups:
 
 | Group | Count | Purpose |
 |-------|-------|---------|
-| [SDLC Agents](#sdlc-agents) | 16 | Execute development phases (1 orchestrator + 15 phase agents) |
+| [SDLC Agents](#sdlc-agents) | 18 | Execute development phases (1 orchestrator + 15 phase agents + 2 debate agents) |
 | [Discover Agents](#discover-agents) | 23 | Analyze projects before development begins (with inception party for new projects) |
 | [Quick Scan Agent](#quick-scan-agent-phase-00) | 1 | Lightweight scope estimation before requirements |
 | [Impact Analysis Agents](#impact-analysis-agents-phase-02) | 4 | Full feature impact analysis after requirements |
@@ -18,12 +18,14 @@ The framework's 48 agents are organized into five groups:
 
 ## SDLC Agents
 
-The 16 SDLC agents implement a 1-to-1 mapping between phases and agents. Each agent owns exactly one phase from requirements through operations and upgrades.
+The 18 SDLC agents implement a 1-to-1 mapping between phases and agents (plus 2 debate-mode agents for Phase 01). Each agent owns exactly one phase from requirements through operations and upgrades.
 
 | Phase | Agent | Responsibility | Key Artifacts |
 |-------|-------|----------------|---------------|
 | **00** | **SDLC Orchestrator** | Workflow coordination, phase gates, conflict resolution | workflow-state.json, gate-validation.json |
 | **01** | **Requirements Analyst** | Requirements capture, user stories, NFRs | requirements-spec.md, user-stories.json, nfr-matrix.md |
+| **01** | **Requirements Critic** (`01-requirements-critic`, debate mode) | Reviews requirements artifacts, produces BLOCKING/WARNING critique | round-N-critique.md |
+| **01** | **Requirements Refiner** (`01-requirements-refiner`, debate mode) | Addresses critique findings, enforces Given/When/Then and quantified NFRs | Updated requirements artifacts, change log |
 | **03** | **Solution Architect** | System architecture, tech stack, database design | architecture-overview.md, tech-stack-decision.md, ADRs |
 | **04** | **System Designer** | API contracts, module design, UI/UX wireframes | openapi.yaml, module-designs/, wireframes/ |
 | **05** | **Test Design Engineer** | Test strategy, test cases, traceability | test-strategy.md, test-cases/, traceability-matrix.csv |
