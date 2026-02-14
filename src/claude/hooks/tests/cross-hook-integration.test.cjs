@@ -212,6 +212,9 @@ describe('Cross-hook: branch-guard + review-reminder on Bash git commands', () =
     afterEach(() => { fs.rmSync(tmpDir, { recursive: true, force: true }); });
 
     it('branch-guard blocks PreToolUse, review-reminder processes PostToolUse independently', () => {
+        // BUG-0015: Create the feature branch so branch existence check passes
+        execSync('git checkout -b feature/test-branch', { cwd: tmpDir, stdio: 'pipe' });
+        execSync('git checkout main', { cwd: tmpDir, stdio: 'pipe' });
         const state = makeActiveWorkflowState('06-implementation');
         state.code_review = { enabled: false, team_size: 3 };
         writeState(tmpDir, state);

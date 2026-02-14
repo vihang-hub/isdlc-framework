@@ -14,7 +14,12 @@
  * Performance budget: < 50ms (regex only, no I/O)
  * Fail-open: empty/missing input → allow
  *
- * Version: 1.0.0
+ * Inline script body inspection (BUG-0016):
+ *   - For node -e, python -c, ruby -e, perl -e: extract script body
+ *   - Only treat as write if script body contains write operations
+ *   - Read-only inline scripts are allowed through
+ *
+ * Version: 1.1.0
  */
 
 const {
@@ -33,22 +38,76 @@ const STATE_JSON_CMD_PATTERN = /\.isdlc[/\\](?:projects[/\\][^/\\\s"']+[/\\])?st
 /**
  * Patterns that indicate a write operation in a bash command.
  * These are checked against the full command string.
+ * Note: inline script patterns (node -e, python -c, etc.) are NOT here --
+ * they are handled separately by isInlineScriptWrite() which inspects the
+ * script body for actual write operations. (BUG-0016)
  * @type {RegExp[]}
  */
 const WRITE_PATTERNS = [
     />\s*/,           // redirect: > or >>
     /\btee\b/,        // tee command
-    /\bwriteFileSync\b/,   // Node.js fs.writeFileSync
-    /\bwriteFile\b/,       // Node.js fs.writeFile
-    /\bnode\s+-e\b/,       // node -e (inline script)
-    /\bnode\s+--eval\b/,   // node --eval
-    /\bpython3?\s+-c\b/,   // python -c (inline script)
-    /\bruby\s+-e\b/,       // ruby -e
-    /\bperl\s+-e\b/,       // perl -e
+    /\bwriteFileSync\b/,   // Node.js fs.writeFileSync (bare, outside node -e)
+    /\bwriteFile\b/,       // Node.js fs.writeFile (bare, outside node -e)
     /\bsed\s+-i\b/,        // sed in-place
     /\bsed\s+--in-place\b/,
     /\bawk\s+-i\b/,        // awk in-place
 ];
+
+/**
+ * Patterns for inline script commands and their flag.
+ * Each entry: [regex matching the interpreter+flag, flag to split on]
+ * @type {Array<[RegExp, RegExp]>}
+ */
+const INLINE_SCRIPT_PATTERNS = [
+    [/\bnode\s+-e\b/, /\bnode\s+-e\s+/],
+    [/\bnode\s+--eval\b/, /\bnode\s+--eval\s+/],
+    [/\bpython3?\s+-c\b/, /\bpython3?\s+-c\s+/],
+    [/\bruby\s+-e\b/, /\bruby\s+-e\s+/],
+    [/\bperl\s+-e\b/, /\bperl\s+-e\s+/],
+];
+
+/**
+ * Patterns that indicate actual write operations inside an inline script body.
+ * @type {RegExp[]}
+ */
+const INLINE_WRITE_INDICATORS = [
+    /writeFileSync/,
+    /writeFile/,
+    /fs\.write\b/,
+    /\.write\s*\(/,        // generic .write() call
+    /open\s*\([^)]*['"][wa]['"]/,  // Python/Ruby open(..., 'w') or 'a'
+];
+
+/**
+ * Check if an inline script command (node -e, python -c, etc.) contains
+ * write operations in its script body.
+ * Returns true if the command is an inline script with write operations.
+ * Returns false if:
+ *   - The command is not an inline script
+ *   - The command is an inline script but the body is read-only
+ * @param {string} command - The full bash command string
+ * @returns {boolean}
+ */
+function isInlineScriptWrite(command) {
+    for (const [detectPattern, splitPattern] of INLINE_SCRIPT_PATTERNS) {
+        if (detectPattern.test(command)) {
+            // Extract the script body (everything after the flag)
+            const parts = command.split(splitPattern);
+            const scriptBody = parts.length > 1 ? parts.slice(1).join(' ') : '';
+
+            // Check if the script body contains any write indicators
+            for (const writePattern of INLINE_WRITE_INDICATORS) {
+                if (writePattern.test(scriptBody)) {
+                    return true;
+                }
+            }
+            // Inline script found but no write operations -- read-only
+            return false;
+        }
+    }
+    // Not an inline script command
+    return false;
+}
 
 /**
  * Patterns for commands that move/copy files TO state.json.
@@ -88,6 +147,9 @@ function isWriteCommand(command) {
     for (const pattern of MOVE_COPY_PATTERNS) {
         if (pattern.test(command)) return true;
     }
+
+    // BUG-0016: Check inline script commands with body inspection
+    if (isInlineScriptWrite(command)) return true;
 
     return false;
 }
@@ -145,7 +207,7 @@ function check(ctx) {
     }
 }
 
-module.exports = { check, commandTargetsStateJson, isWriteCommand };
+module.exports = { check, commandTargetsStateJson, isWriteCommand, isInlineScriptWrite };
 
 // Standalone execution
 if (require.main === module) {

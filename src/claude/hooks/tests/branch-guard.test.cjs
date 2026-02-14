@@ -88,6 +88,9 @@ describe('branch-guard hook', () => {
     // T1: Blocks git commit on main when workflow has active feature branch
     it('blocks git commit on main with active workflow branch', () => {
         setupGitRepo(tmpDir, 'main');
+        // BUG-0015: Must create the branch in git so existence check passes
+        execSync('git checkout -b feature/test-branch', { cwd: tmpDir, stdio: 'pipe' });
+        execSync('git checkout main', { cwd: tmpDir, stdio: 'pipe' });
         writeState(tmpDir, {
             active_workflow: {
                 type: 'feature',
@@ -105,6 +108,9 @@ describe('branch-guard hook', () => {
     // T2: Blocks git commit on master
     it('blocks git commit on master with active workflow branch', () => {
         setupGitRepo(tmpDir, 'main');
+        // BUG-0015: Create the branch first so existence check passes
+        execSync('git checkout -b feature/test', { cwd: tmpDir, stdio: 'pipe' });
+        execSync('git checkout main', { cwd: tmpDir, stdio: 'pipe' });
         // Rename main to master
         execSync('git branch -m main master', { cwd: tmpDir, stdio: 'pipe' });
         writeState(tmpDir, {
@@ -201,6 +207,9 @@ describe('branch-guard hook', () => {
     // T9: Detects git commit in chained commands
     it('detects git commit in chained commands', () => {
         setupGitRepo(tmpDir, 'main');
+        // BUG-0015: Create the branch so existence check passes
+        execSync('git checkout -b feature/test', { cwd: tmpDir, stdio: 'pipe' });
+        execSync('git checkout main', { cwd: tmpDir, stdio: 'pipe' });
         writeState(tmpDir, {
             active_workflow: {
                 type: 'feature',
@@ -251,6 +260,9 @@ describe('branch-guard hook', () => {
     // T14: Block message includes expected branch name
     it('block message includes expected branch name', () => {
         setupGitRepo(tmpDir, 'main');
+        // BUG-0015: Create the branch so existence check passes
+        execSync('git checkout -b feature/REQ-0004', { cwd: tmpDir, stdio: 'pipe' });
+        execSync('git checkout main', { cwd: tmpDir, stdio: 'pipe' });
         writeState(tmpDir, {
             active_workflow: {
                 type: 'feature',
@@ -501,6 +513,9 @@ describe('branch-guard phase-aware commit blocking (BUG-0012)', () => {
     // Traces to: NFR-03
     it('T26: regression - still blocks commits to main when phase-aware logic is present', () => {
         setupGitRepo(tmpDir, 'main');
+        // BUG-0015: Create the branch so existence check passes
+        execSync('git checkout -b feature/REQ-test', { cwd: tmpDir, stdio: 'pipe' });
+        execSync('git checkout main', { cwd: tmpDir, stdio: 'pipe' });
         writeState(tmpDir, makeWorkflowState(
             '06-implementation',
             STANDARD_PHASES,
@@ -593,5 +608,94 @@ describe('branch-guard agent no-commit instructions (BUG-0012)', () => {
             /08-code-review/i.test(content),
             'Quality-loop agent must explain that code review (Phase 08) has not yet run'
         );
+    });
+});
+
+// =========================================================================
+// BUG-0015: Branch Existence Verification Tests (T32-T35)
+// =========================================================================
+// Traces to: BUG-0015 requirements-spec.md (FR-01, FR-02, AC-01 through AC-04)
+// =========================================================================
+
+describe('branch-guard branch existence check (BUG-0015)', () => {
+    let tmpDir;
+
+    beforeEach(() => {
+        tmpDir = setupTestEnv();
+    });
+
+    afterEach(() => {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+    });
+
+    // T32: Allow commit to main when workflow branch was already deleted
+    // Traces to: AC-01 (BUG-0015)
+    it('T32: allows commit to main when workflow branch no longer exists in git', () => {
+        setupGitRepo(tmpDir, 'main');
+        // State says branch is active, but it does not exist in git
+        writeState(tmpDir, {
+            active_workflow: {
+                type: 'feature',
+                git_branch: { name: 'feature/REQ-0099-deleted', status: 'active' }
+            }
+        });
+        const result = runHook(tmpDir, makeStdin('git commit -m "post-merge commit"'));
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.stdout, '', 'Should allow commit when workflow branch does not exist in git');
+    });
+
+    // T33: Still block commit to main when workflow branch exists in git
+    // Traces to: AC-02 (BUG-0015)
+    it('T33: still blocks commit to main when workflow branch exists in git', () => {
+        setupGitRepo(tmpDir, 'main');
+        // Create the feature branch so it exists in git
+        execSync('git checkout -b feature/REQ-0099-exists', { cwd: tmpDir, stdio: 'pipe' });
+        execSync('git checkout main', { cwd: tmpDir, stdio: 'pipe' });
+        writeState(tmpDir, {
+            active_workflow: {
+                type: 'feature',
+                git_branch: { name: 'feature/REQ-0099-exists', status: 'active' }
+            }
+        });
+        const result = runHook(tmpDir, makeStdin('git commit -m "should be blocked"'));
+        assert.equal(result.exitCode, 0);
+        assert.ok(result.stdout.length > 0, 'Should produce block output when branch exists');
+        const parsed = JSON.parse(result.stdout);
+        assert.equal(parsed.continue, false);
+        assert.ok(parsed.stopReason.includes('COMMIT TO MAIN BLOCKED'));
+    });
+
+    // T34: Fail-open when git rev-parse --verify fails (not a git repo)
+    // Traces to: AC-03 (BUG-0015)
+    it('T34: fail-open when branch verification fails in non-git directory', () => {
+        // No git repo initialized -- git rev-parse --verify will fail
+        writeState(tmpDir, {
+            active_workflow: {
+                type: 'feature',
+                git_branch: { name: 'feature/REQ-test', status: 'active' }
+            }
+        });
+        const result = runHook(tmpDir, makeStdin('git commit -m "msg"'));
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.stdout, '', 'Should fail-open when git verification fails');
+    });
+
+    // T35: Allow commit on feature branch when branch exists (phase-aware still applies)
+    // Regression test: branch existence check should not interfere with
+    // non-main branch logic.
+    // Traces to: AC-02 (BUG-0015), regression
+    it('T35: branch existence check does not interfere with feature branch commits', () => {
+        setupGitRepo(tmpDir, 'feature/REQ-test');
+        writeState(tmpDir, {
+            active_workflow: {
+                type: 'feature',
+                git_branch: { name: 'feature/REQ-test', status: 'active' },
+                current_phase: '08-code-review',
+                phases: ['01-requirements', '06-implementation', '08-code-review']
+            }
+        });
+        const result = runHook(tmpDir, makeStdin('git commit -m "review commit"'));
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.stdout, '', 'Should allow commit on feature branch during final phase');
     });
 });
