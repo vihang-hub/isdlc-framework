@@ -210,6 +210,13 @@ Findings from 4-agent parallel analysis of workflow speed bottlenecks. T1-T3 alr
   - **Relates to**: Multi-agent debate mode (general backlog item) — this and Implementation-Review Fusion together cover all creative phases
 
 **Framework Features:**
+- [ ] TOON format integration — adopt Token-Oriented Object Notation for agent prompts and state data to reduce token usage
+  - TOON (Token-Oriented Object Notation) reduces token consumption by 30-60% vs JSON while maintaining or improving LLM accuracy
+  - Sweet spot: uniform arrays (tabular data like skill manifests, phase tables, workflow history) — field names declared once as header, rows follow
+  - Less effective for deeply nested/non-uniform structures (keep JSON for those)
+  - SDKs available: TypeScript, Python, Go, Rust, .NET ([github.com/toon-format/toon](https://github.com/toon-format/toon))
+  - **Candidate areas**: skills-manifest.json, state.json arrays, agent prompt data injection, hook config loading
+  - **Not a full JSON replacement** — complement for token-heavy tabular data only
 - [ ] Improve search capabilities to help Claude be more effective
 - [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
 - [ ] Add /isdlc refactor command and workflow — pre-requisite: 100% automated E2E testing
