@@ -94,16 +94,23 @@
 
 ### 5. Framework Features
 
-- 5.1 [ ] Improve search capabilities to help Claude be more effective
-- 5.2 [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
-- 5.3 [ ] Add /isdlc refactor command and workflow — pre-requisite: 100% automated E2E testing
-- 5.4 [ ] Separate commands to manage deployments and operations
-- 5.5 [ ] State.json pruning at workflow completion — actively prune stale/transient fields from state.json at the end of every feature or fix workflow
+- 5.1 [ ] TOON format integration — adopt Token-Oriented Object Notation for agent prompts and state data to reduce token usage
+  - TOON (Token-Oriented Object Notation) reduces token consumption by 30-60% vs JSON while maintaining or improving LLM accuracy
+  - Sweet spot: uniform arrays (tabular data like skill manifests, phase tables, workflow history) — field names declared once as header, rows follow
+  - Less effective for deeply nested/non-uniform structures (keep JSON for those)
+  - SDKs available: TypeScript, Python, Go, Rust, .NET ([github.com/toon-format/toon](https://github.com/toon-format/toon))
+  - **Candidate areas**: skills-manifest.json, state.json arrays, agent prompt data injection, hook config loading
+  - **Not a full JSON replacement** — complement for token-heavy tabular data only
+- 5.2 [ ] Improve search capabilities to help Claude be more effective
+- 5.3 [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
+- 5.4 [ ] Add /isdlc refactor command and workflow — pre-requisite: 100% automated E2E testing
+- 5.5 [ ] Separate commands to manage deployments and operations
+- 5.6 [ ] State.json pruning at workflow completion — actively prune stale/transient fields from state.json at the end of every feature or fix workflow
   - After finalize phase, remove accumulated runtime data: iteration logs, hook activity traces, intermediate phase artifacts, resolved escalations
   - Keep only durable state: workflow history summary, project-level config, skill usage stats
   - Prevents state.json from growing unbounded across workflows and avoids stale data bleeding into subsequent runs
   - Audit and restructure state.json schema for human readability — ensure the structure is well-organized, logically grouped, and understandable when inspected manually (not just machine-consumed)
-- 5.6 [ ] Epic decomposition for large features (depends on adaptive workflow sizing / REQ-0011)
+- 5.7 [ ] Epic decomposition for large features (depends on adaptive workflow sizing / REQ-0011)
   - **Trigger**: Impact Analysis estimates `large` scope (20+ files) or `high` risk
   - **Process**: After sizing decision, Requirements Analyst re-enters to break the feature into sub-features with clear boundaries
   - **Execution model**: Each sub-feature gets an independent mini-cycle with its own gates:
@@ -115,7 +122,7 @@
     ```
   - **Benefits**: Catch problems early per sub-feature, reduce context window pressure, intermediate quality gates, partial progress is usable
   - **State tracking**: `state.json` tracks parent feature + sub-features with individual phase progress
-- 5.7 [ ] SonarQube integration
+- 5.8 [ ] SonarQube integration
 
 ### 6. Product/Vision
 
