@@ -2386,6 +2386,353 @@ function applySizingDecision(state, intensity, sizingData = {}) {
     return state;
 }
 
+// =========================================================================
+// Supervised Mode Utilities (REQ-0013: Supervised Mode)
+// =========================================================================
+
+/**
+ * Map a phase key to a human-readable display name.
+ * @param {string} phaseKey - e.g., '03-architecture'
+ * @returns {string} Display name, e.g., 'Architecture'
+ * @private
+ */
+function _resolvePhaseDisplayName(phaseKey) {
+    const PHASE_NAMES = {
+        '00-quick-scan': 'Quick Scan',
+        '01-requirements': 'Requirements',
+        '02-impact-analysis': 'Impact Analysis',
+        '02-tracing': 'Root Cause Tracing',
+        '03-architecture': 'Architecture',
+        '04-design': 'Design & Specifications',
+        '05-test-strategy': 'Test Strategy',
+        '06-implementation': 'Implementation',
+        '07-testing': 'Testing',
+        '08-code-review': 'Code Review & QA',
+        '09-validation': 'Security & Compliance',
+        '10-cicd': 'CI/CD Pipeline',
+        '11-local-testing': 'Local Testing',
+        '12-test-deploy': 'Staging Deployment',
+        '13-production': 'Production Deployment',
+        '14-operations': 'Operations & Monitoring',
+        '15-upgrade-plan': 'Upgrade Planning',
+        '15-upgrade-execute': 'Upgrade Execution',
+        '16-quality-loop': 'Quality Loop'
+    };
+
+    if (PHASE_NAMES[phaseKey]) {
+        return PHASE_NAMES[phaseKey];
+    }
+
+    // Fallback: derive from phase key (remove number prefix, title case)
+    const parts = phaseKey.split('-').slice(1);
+    return parts.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || phaseKey;
+}
+
+/**
+ * Extract key decision bullet points from a phase summary string.
+ * Splits on commas and semicolons. Returns up to 5 entries.
+ * @param {string} summaryText - Phase summary text
+ * @returns {string[]} Array of decision strings (max 5)
+ * @private
+ */
+function _extractDecisions(summaryText) {
+    if (!summaryText || typeof summaryText !== 'string') {
+        return [];
+    }
+
+    // Split on comma or semicolon boundaries
+    const parts = summaryText.split(/[,;]/).map(s => s.trim()).filter(s => s.length > 0);
+    return parts.slice(0, 5);
+}
+
+/**
+ * Get git diff --name-status output for the current working tree.
+ * Returns null if git is unavailable or fails (ASM-013-03).
+ * @param {string} projectRoot - Absolute path to project root
+ * @returns {string|null} Diff output or null
+ * @private
+ */
+function _getGitDiffNameStatus(projectRoot) {
+    try {
+        const { execSync } = require('child_process');
+        const output = execSync('git diff --name-status HEAD', {
+            cwd: projectRoot,
+            encoding: 'utf8',
+            timeout: 5000,      // 5s timeout for safety
+            stdio: ['pipe', 'pipe', 'pipe']
+        });
+        return output;
+    } catch (e) {
+        // Git unavailable or command failed -- degrade gracefully
+        return null;
+    }
+}
+
+/**
+ * Read and normalize supervised_mode configuration from state.json.
+ *
+ * Follows the readCodeReviewConfig() fail-open pattern:
+ * - Missing supervised_mode block: returns { enabled: false }
+ * - Invalid or corrupt block: returns { enabled: false }
+ * - Invalid field values: replaced with safe defaults
+ *
+ * Traces to: FR-01 (AC-01a, AC-01b, AC-01c, AC-01f), NFR-013-02
+ *
+ * @param {object} state - Parsed state.json content (already loaded by caller)
+ * @returns {{ enabled: boolean, review_phases: 'all'|string[], parallel_summary: boolean, auto_advance_timeout: number|null }}
+ */
+function readSupervisedModeConfig(state) {
+    const defaults = { enabled: false, review_phases: 'all', parallel_summary: true, auto_advance_timeout: null };
+
+    // Guard: no state or no supervised_mode block
+    if (!state || typeof state !== 'object') {
+        return defaults;
+    }
+
+    const sm = state.supervised_mode;
+
+    // Guard: supervised_mode missing or not an object
+    if (!sm || typeof sm !== 'object' || Array.isArray(sm)) {
+        return defaults;
+    }
+
+    // Normalize enabled (must be boolean true to enable)
+    const enabled = sm.enabled === true;
+
+    // Normalize review_phases
+    let review_phases = 'all';
+    if (sm.review_phases === 'all') {
+        review_phases = 'all';
+    } else if (Array.isArray(sm.review_phases)) {
+        // Filter to valid phase number strings (2-digit prefixes like "01", "03", "06")
+        review_phases = sm.review_phases.filter(
+            p => typeof p === 'string' && /^\d{2}$/.test(p)
+        );
+        // If all entries were invalid, fall back to 'all'
+        if (review_phases.length === 0) {
+            review_phases = 'all';
+        }
+    }
+    // Any other type: default to 'all'
+
+    // Normalize parallel_summary (default true)
+    const parallel_summary = typeof sm.parallel_summary === 'boolean'
+        ? sm.parallel_summary
+        : true;
+
+    // auto_advance_timeout: reserved, not implemented (always null)
+    const auto_advance_timeout = null;
+
+    return { enabled, review_phases, parallel_summary, auto_advance_timeout };
+}
+
+/**
+ * Determine if a review gate should fire for the given phase.
+ *
+ * Traces to: FR-01 (AC-01d, AC-01e, AC-01f), FR-03 (AC-03e, AC-03f)
+ *
+ * @param {{ enabled: boolean, review_phases: 'all'|string[] }} config - Normalized config from readSupervisedModeConfig()
+ * @param {string} phaseKey - Phase key (e.g., '03-architecture', '04-design')
+ * @returns {boolean} True if review gate should fire
+ */
+function shouldReviewPhase(config, phaseKey) {
+    // Guard: config not valid or not enabled
+    if (!config || config.enabled !== true) {
+        return false;
+    }
+
+    // Guard: invalid phase key
+    if (!phaseKey || typeof phaseKey !== 'string') {
+        return false;
+    }
+
+    // review_phases = 'all' means every phase triggers review
+    if (config.review_phases === 'all') {
+        return true;
+    }
+
+    // review_phases is an array of 2-digit phase prefixes
+    if (Array.isArray(config.review_phases)) {
+        // Extract the 2-digit prefix from phaseKey (e.g., '03' from '03-architecture')
+        const phaseNumber = phaseKey.split('-')[0];
+        return config.review_phases.includes(phaseNumber);
+    }
+
+    // Unexpected review_phases type: fail-open (no review)
+    return false;
+}
+
+/**
+ * Generate a phase summary markdown file after phase completion.
+ *
+ * Output: .isdlc/reviews/phase-{NN}-summary.md
+ * Overwrites any existing summary for the same phase (redo support).
+ *
+ * Traces to: FR-02 (AC-02a through AC-02e), NFR-013-03, NFR-013-06
+ *
+ * @param {object} state - Parsed state.json content
+ * @param {string} phaseKey - Phase key (e.g., '03-architecture')
+ * @param {string} projectRoot - Absolute path to project root
+ * @param {{ minimal?: boolean }} [options={}] - Options
+ *   - minimal: If true, generate minimal summary (no diffs, no decisions)
+ * @returns {string|null} Absolute path to generated summary file, or null on failure
+ */
+function generatePhaseSummary(state, phaseKey, projectRoot, options = {}) {
+    try {
+        // --- Extract phase metadata from state ---
+        const phaseData = state?.phases?.[phaseKey] || {};
+        const phaseNumber = phaseKey.split('-')[0];               // '03'
+        const phaseName = _resolvePhaseDisplayName(phaseKey);     // 'Architecture'
+
+        // Duration calculation
+        const started = phaseData.started || null;
+        const completed = phaseData.completed || null;
+        let durationStr = 'N/A';
+        if (started && completed) {
+            const ms = new Date(completed) - new Date(started);
+            if (!isNaN(ms) && ms >= 0) {
+                const minutes = Math.round(ms / 60000);
+                durationStr = `${minutes}m`;
+            }
+        }
+
+        // Artifact list from phase state
+        const artifacts = Array.isArray(phaseData.artifacts)
+            ? phaseData.artifacts
+            : [];
+
+        // Summary text from phase state
+        const summaryText = phaseData.summary || 'No summary available';
+
+        // --- Build markdown ---
+        let md = '';
+        md += `# Phase ${phaseNumber} Summary: ${phaseName}\n\n`;
+        md += `**Status**: Completed\n`;
+        md += `**Duration**: ${durationStr}`;
+        if (started && completed && durationStr !== 'N/A') {
+            md += ` (${started} to ${completed})`;
+        }
+        md += `\n`;
+        md += `**Artifacts**: ${artifacts.length} files\n\n`;
+
+        // Key decisions (full summary only)
+        if (!options.minimal) {
+            md += `## Key Decisions\n`;
+            const decisions = _extractDecisions(summaryText);
+            if (decisions.length === 0) {
+                md += `- ${summaryText}\n`;
+            } else {
+                for (const d of decisions) {
+                    md += `- ${d}\n`;
+                }
+            }
+            md += `\n`;
+        }
+
+        // Artifacts table
+        md += `## Artifacts Created/Modified\n`;
+        if (artifacts.length === 0) {
+            md += `No file changes recorded in phase state.\n`;
+        } else {
+            md += `| File | Status |\n`;
+            md += `|------|--------|\n`;
+            for (const a of artifacts) {
+                md += `| ${a} | Created/Modified |\n`;
+            }
+        }
+        md += `\n`;
+
+        // Git diff section (full summary only)
+        if (!options.minimal) {
+            md += `## File Changes (git diff)\n`;
+            const diffOutput = _getGitDiffNameStatus(projectRoot);
+            if (diffOutput !== null) {
+                if (diffOutput.trim() === '') {
+                    md += `No uncommitted file changes detected.\n`;
+                } else {
+                    md += '```\n' + diffOutput + '\n```\n';
+                }
+            } else {
+                md += `Git diff unavailable.\n`;
+            }
+            md += `\n`;
+        }
+
+        // Links section
+        if (artifacts.length > 0) {
+            md += `## Links\n`;
+            for (const a of artifacts) {
+                md += `- [${a}](${a})\n`;
+            }
+            md += `\n`;
+        }
+
+        // --- Write to file ---
+        const reviewsDir = path.join(projectRoot, '.isdlc', 'reviews');
+        fs.mkdirSync(reviewsDir, { recursive: true });     // AC-02c
+
+        const summaryPath = path.join(reviewsDir, `phase-${phaseNumber}-summary.md`);
+        fs.writeFileSync(summaryPath, md, 'utf8');          // AC-02d: overwrites
+
+        return summaryPath;
+
+    } catch (e) {
+        // Fail-safe: never throw, log to stderr and return null
+        try {
+            process.stderr.write(`[supervised-mode] Summary generation failed: ${e.message}\n`);
+        } catch (_) { /* swallow */ }
+        return null;
+    }
+}
+
+/**
+ * Record a review gate action in the workflow's review history.
+ *
+ * Appends to active_workflow.review_history[] (initializes if missing).
+ * Does NOT write state to disk -- caller must call writeState() after.
+ *
+ * Traces to: FR-08 (AC-08a, AC-08b)
+ *
+ * @param {object} state - Parsed state.json content (mutated in place)
+ * @param {string} phaseKey - Phase key (e.g., '03-architecture')
+ * @param {'continue'|'review'|'redo'} action - The user's choice
+ * @param {object} [details={}] - Additional fields to include in the entry
+ *   - For 'continue': { timestamp }
+ *   - For 'review': { paused_at, resumed_at }
+ *   - For 'redo': { redo_count, guidance, timestamp }
+ * @returns {boolean} True if recorded successfully, false if state is invalid
+ */
+function recordReviewAction(state, phaseKey, action, details = {}) {
+    // Guard: state and active_workflow must exist
+    if (!state || !state.active_workflow) {
+        return false;
+    }
+
+    const aw = state.active_workflow;
+
+    // Initialize review_history if missing or not an array
+    if (!Array.isArray(aw.review_history)) {
+        aw.review_history = [];
+    }
+
+    // Build entry (spread details to avoid mutating the original)
+    const entry = {
+        phase: phaseKey,
+        action: action,
+        timestamp: details.timestamp || getTimestamp(),
+        ...details
+    };
+
+    // Ensure timestamp is present (not duplicated if already in details)
+    if (!entry.timestamp) {
+        entry.timestamp = getTimestamp();
+    }
+
+    aw.review_history.push(entry);
+
+    return true;
+}
+
 module.exports = {
     getProjectRoot,
     // Protected state fields & patterns (REQ-HARDENING)
@@ -2472,5 +2819,10 @@ module.exports = {
     // Sizing utilities (REQ-0011)
     parseSizingFromImpactAnalysis,
     computeSizingRecommendation,
-    applySizingDecision
+    applySizingDecision,
+    // Supervised mode (REQ-0013)
+    readSupervisedModeConfig,
+    shouldReviewPhase,
+    generatePhaseSummary,
+    recordReviewAction
 };

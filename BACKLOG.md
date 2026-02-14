@@ -102,7 +102,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
 | **Supervised** | Reviewer — inspect, edit, and course-correct between phases | Pause at configurable review gates | Existing projects, domain-heavy features, learning the codebase |
 | **Collaborative** | Reviewer + contributor — produce artifacts alongside the AI | Pause at review gates + suggest parallel human tasks + consume contributed artifacts | Complex features, developer has domain expertise, "boring AI" problem |
 
-- 5.1 [ ] Supervised mode — configurable per-phase review gates with parallel change summaries, giving users control to review, edit, and course-correct between phases
+- 5.1 [x] Supervised mode — configurable per-phase review gates with parallel change summaries, giving users control to review, edit, and course-correct between phases (REQ-0013 — DONE)
   - **Problem**: The framework is either fully autonomous (phases flow without pause) or broken (escalation on failure). There's no structured way for users to review phase output before the next phase consumes it. By the time the end-of-workflow Human Review Checkpoint fires, it's too late to fix Phase 03 architecture that Phase 06 already built on. Critical for existing project discovery where the user knows the codebase better than the agent.
   - **Design**: A lightweight gate enhancement (not a new phase) with three components:
     1. **Parallel summary generation**: During phase execution, a background sub-agent generates `.isdlc/reviews/phase-NN-summary.md` — file diffs, artifact list, key decisions made, links to all changed/created files
@@ -310,6 +310,9 @@ Three modes controlling the developer's role during a workflow, activated via fe
 - 10.1 [ ] Install script landing page and demo GIF — update the install script landing/README with a polished visual experience including an animated GIF demonstrating the framework in action (invisible framework flow, workflow progression, quality gates)
 
 ## Completed
+
+### 2026-02-14
+- [x] REQ-0013: Supervised mode — per-phase review gates with Continue/Review/Redo menu, parallel change summaries, redo circuit breaker (max 3), session recovery. 4 new common.cjs helpers, STEP 3e-review in phase-loop controller, --supervised flag, 88 new tests (80 supervised + 8 gate-blocker), 1228/1228 CJS passing, 8 FRs, 6 NFRs, 35 ACs
 
 ### 2026-02-13
 - [x] BUG-0014: Early branch creation — moved branch creation from post-GATE-01 to workflow initialization time. All phases now execute on the feature/bugfix branch, keeping main untouched. 3 doc files (14 locations), 22 new tests, 0 regressions
