@@ -50,25 +50,25 @@
 
 ### 4. Multi-Agent Teams for Creative Phases (Architecture)
 
-- 4.1 [x] Replace single-agent phases with Creator/Critic/Refiner teams that collaborate via propose-critique-refine cycles (REQ-0014 Phase 01 -- DONE)
+- 4.1 [~] Replace single-agent phases with Creator/Critic/Refiner teams that collaborate via propose-critique-refine cycles (1 of 4 phases done)
   - **Shared pattern**: Each phase runs a 3-agent loop: Creator produces artifact → Critic reviews and challenges → Refiner synthesizes improvements. Max 3 rounds, convergence when Critic has zero blocking findings (warnings allowed). Each round produces a versioned artifact diff so progress is visible.
   - **Configurable**: Off for `-light` workflows (single agent, current behavior). On for `standard` and `epic`. Override with `--no-debate` flag to force single-agent mode. Opt-in via `/isdlc feature "desc" --debate` or per-phase in constitution (e.g., `debate_phases: [01, 03, 04, 06]`).
   - **Precedent**: Deep discovery Inception Party already uses this pattern for `/discover --new` — this extends it to all workflow phases.
-  - **Sequencing**: Phase 06 first (prove the pattern with implementation), then extend to 01/03/04.
+  - **Sequencing**: Phase 01 done first (REQ-0014), then extend to 03/04/06.
   - **Complexity**: Large (new agent roles, loop protocol, convergence logic, phase restructuring)
-  - **Phase 01 — Requirements Team** (Creator/Critic/Refiner):
+  - **Phase 01 — Requirements Team** [x] (REQ-0014 — DONE: 2 new agents, 90 tests, --debate/--no-debate flags, conversational Creator, debate loop orchestration)
     - **Creator** (requirements-analyst): Produces requirements-spec.md, user-stories.json, NFR matrix, traceability matrix.
     - **Critic** catches: vague/untestable ACs, orphan requirements, unmeasured NFRs, scope creep, missing compliance requirements, contradictions, missing edge cases, unstated assumptions
     - **Refiner** produces: testable Given/When/Then for every AC, quantified NFRs, complete traceability, risk mitigation, explicit assumption register
-  - **Phase 03 — Architecture Team** (Creator/Critic/Refiner):
+  - **Phase 03 — Architecture Team** [ ] (Creator/Critic/Refiner):
     - **Creator** (solution-architect): Produces architecture-overview.md, tech-stack-decision.md, database-design.md, security-architecture.md, ADRs.
     - **Critic** catches: NFR misalignment, incomplete STRIDE threat model, database design flaws, weak tech stack justification, single points of failure, unaddressed cost implications, missing observability, coupling contradictions
     - **Refiner** produces: complete ADRs with trade-offs, security hardening, HA adjustments, cost optimization, observability architecture
-  - **Phase 04 — Design Team** (Creator/Critic/Refiner):
+  - **Phase 04 — Design Team** [ ] (Creator/Critic/Refiner):
     - **Creator** (system-designer): Produces interface-spec.yaml/openapi.yaml, module-designs/, wireframes/, error-taxonomy.md, validation-rules.json.
     - **Critic** catches: incomplete API specs, inconsistent patterns across modules, module overlap, validation gaps, missing idempotency, accessibility issues, error taxonomy holes, data flow bottlenecks
     - **Refiner** produces: OpenAPI 3.x contracts with complete error responses, unified error taxonomy, component variants for all states, validation rules at every boundary, idempotency keys
-  - **Phase 06 — Implementation Team** (Writer/Reviewer/Updater — specialized per-file loop):
+  - **Phase 06 — Implementation Team** [ ] (Writer/Reviewer/Updater — specialized per-file loop):
     - **Problem**: Code is written in Phase 06, then waits for Phase 16 (quality loop) and Phase 08 (code review) to find issues. By then context is cold, fixes require re-reading, and the sequential overhead adds 15-30 minutes per workflow.
     - **Writer** (software-developer) — writes code following tasks.md, TDD, produces files
     - **Reviewer** (code-reviewer) — reviews each file as it's written, flags issues immediately, checks constitutional compliance, validates skill/tech-stack alignment
