@@ -195,13 +195,26 @@
 
 - 8.1 [ ] Requirements debate before workflow start — for new features and bugs, engage in a structured discussion/debate about the requirement or issue before initiating the iSDLC workflow. Clarify scope, challenge assumptions, explore alternatives, and converge on a shared understanding. Only after the debate concludes should the workflow (feature/fix) be kicked off with a well-refined description.
 
-### 9. Investigation
+### 9. Bugs
 
-- 9.1 [ ] Phase handshake audit — investigate whether the handshake between phases is working correctly (state transitions, artifact passing, gate validation, pre-delegation state writes, post-phase updates). Verify no data loss or stale state between phase boundaries.
+- 9.1 [ ] BUG-0015: branch-guard false positive after merge — blocks commits to main when feature branch was already merged/deleted but state.json not yet finalized
+  - **Trigger**: Commit to main in the window between `git merge`/branch deletion and orchestrator finalize (state.json still has `active_workflow.git_branch.status: 'active'`)
+  - **Root cause**: Hook trusts state.json's `git_branch.status` without verifying the branch actually exists in git
+  - **Fix**: Add `git rev-parse --verify <branch>` check — if branch no longer exists, allow commit (fail-open)
+  - **Missing test**: Post-merge scenario where branch is deleted but state not finalized
+- 9.2 [ ] BUG-0016: state-file-guard false positive on read-only Bash commands — blocks `node -e` scripts that only read state.json
+  - **Trigger**: `node -e "...readFileSync('.isdlc/state.json')..."` blocked as a "write" because hook matches on `/\bnode\s+-e\b/` pattern
+  - **Root cause**: Syntactic pattern matching on command signature (`node -e`) instead of semantic analysis — assumes all inline scripts are writes
+  - **Fix**: For `node -e` commands, inspect script body for actual write operations (`writeFileSync`, `writeFile`, `appendFile`); if none found, treat as read-only
+  - **Missing test**: `node -e` with `readFileSync` only (no write operations)
 
-### 10. Developer Experience
+### 10. Investigation
 
-- 10.1 [ ] Install script landing page and demo GIF — update the install script landing/README with a polished visual experience including an animated GIF demonstrating the framework in action (invisible framework flow, workflow progression, quality gates)
+- 10.1 [ ] Phase handshake audit — investigate whether the handshake between phases is working correctly (state transitions, artifact passing, gate validation, pre-delegation state writes, post-phase updates). Verify no data loss or stale state between phase boundaries.
+
+### 11. Developer Experience
+
+- 11.1 [ ] Install script landing page and demo GIF — update the install script landing/README with a polished visual experience including an animated GIF demonstrating the framework in action (invisible framework flow, workflow progression, quality gates)
 
 ## Completed
 
