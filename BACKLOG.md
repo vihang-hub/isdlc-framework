@@ -309,13 +309,11 @@ Three modes controlling the developer's role during a workflow, activated via fe
 - 9.2 [x] BUG-0016: state-file-guard false positive on read-only Bash commands — **FIXED** (2026-02-14)
   - Added `isInlineScriptWrite()` — inspects script body for actual write operations instead of blanket-blocking `node -e`
   - 8 integration tests + 12 unit tests added
-- 9.3 [ ] BUG-0017: Orchestrator exceeds `init-and-phase-01` scope — runs all phases instead of returning after Phase 01
-  - **Observed**: During BUG-0015/0016 fix workflow, the orchestrator ran all 6 phases (01→02→05→06→16→08) internally in a single `init-and-phase-01` call instead of returning control after Phase 01
-  - **Impact**: Phase-loop controller (isdlc.md STEP 2-3) was completely bypassed — no per-phase task visibility, no hook enforcement between phases, no escalation handling, no supervised review gates, fabricated round-number timestamps in phase_snapshots
-  - **Root cause**: The `00-sdlc-orchestrator.md` agent prompt for `init-and-phase-01` mode does not have a hard stop after Phase 01 + GATE-01. The agent autonomously continues through remaining phases because it has the full phase list and no explicit "STOP HERE AND RETURN" boundary
-  - **Fix options**: (A) Add explicit stop instruction in orchestrator agent: "After GATE-01 passes, STOP. Return structured result. Do NOT proceed to Phase 02." (B) Add a hook that detects orchestrator writing phase_status for phases beyond 01 and blocks it (C) Both — belt and suspenders
-  - **Governance violation**: Breaks the separation between orchestrator (init/finalize) and phase-loop controller (phase execution). Also defeats supervised mode, sizing decisions, and task refinement which all live in the phase-loop controller
-  - **Complexity**: Low (agent prompt fix) to Medium (if adding hook enforcement)
+- 9.3 [x] BUG-0017: Orchestrator exceeds `init-and-phase-01` scope — **FIXED** (2026-02-14)
+  - Added CRITICAL-level MODE ENFORCEMENT block at top of orchestrator prompt (before CORE MISSION)
+  - Added mode-aware guard in Section 4a (before automatic transitions)
+  - Added step 7.5 in Section 4 advancement algorithm (before delegate to next phase)
+  - 20 structural prompt validation tests, regression fix in early-branch-creation.test.js
 
 ### 10. Investigation
 
