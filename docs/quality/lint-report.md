@@ -1,8 +1,8 @@
-# Lint Report: REQ-0014-backlog-scaffolding
+# Lint Report: REQ-0016-multi-agent-design-team
 
 **Phase**: 16-quality-loop
-**Date**: 2026-02-14
-**Branch**: feature/REQ-0014-backlog-scaffolding
+**Date**: 2026-02-15
+**Branch**: feature/REQ-0016-multi-agent-design-team
 
 ## Linter Configuration
 
@@ -14,19 +14,41 @@ No ESLint, Prettier, or other linter is installed in this project.
 
 Since no automated linter is available, a manual review was performed on changed files.
 
-### lib/installer.js (20 lines added)
+### src/claude/agents/03-design-critic.md (NEW -- 189 lines)
+
+| Check | Result |
+|-------|--------|
+| YAML frontmatter valid | PASS |
+| Markdown heading hierarchy (H1 > H2 > H3) | PASS |
+| Table formatting consistent | PASS |
+| Code block fencing (triple backtick) | PASS |
+| No trailing whitespace | PASS |
+| Consistent list marker style (dash) | PASS |
+| Article reference format consistent with siblings | PASS |
+
+### src/claude/agents/03-design-refiner.md (NEW -- 131 lines)
+
+| Check | Result |
+|-------|--------|
+| YAML frontmatter valid | PASS |
+| Markdown heading hierarchy (H1 > H2 > H3) | PASS |
+| Table formatting consistent | PASS |
+| Code block fencing (triple backtick) | PASS |
+| No trailing whitespace | PASS |
+| Consistent list marker style (dash) | PASS |
+| Numbered rules consistent with sibling agents | PASS |
+
+### src/claude/hooks/tests/design-debate-*.test.cjs (5 test files)
 
 | Check | Result |
 |-------|--------|
 | Consistent indentation (2 spaces) | PASS |
 | Consistent quote style (single quotes) | PASS |
-| Trailing semicolons | PASS (consistent with codebase) |
-| Template literal usage | PASS (appropriate for multi-line content) |
-| Function naming convention (camelCase) | PASS (`generateBacklogMd`) |
-| Comment style (// for inline, JSDoc for functions) | PASS |
-| No console.log (uses logger instead) | PASS |
-| No trailing whitespace | PASS |
-| File ends with newline | PASS |
+| Trailing semicolons | PASS |
+| Test naming convention (TC-MN-NN) | PASS |
+| `node:test` and `node:assert` imports | PASS |
+| `node:fs` for file reading | PASS |
+| `node:path` for path construction | PASS |
 
 ## Summary
 
