@@ -261,8 +261,8 @@ Enter selection (1-5):
 
 | Flag | Effect | Default |
 |------|--------|---------|
-| `--debate` | Force debate mode ON (multi-agent requirements team) | Implied for standard/epic sizing |
-| `--no-debate` | Force debate mode OFF (single-agent requirements) | Implied for -light |
+| `--debate` | Force debate mode ON (multi-agent debate team: requirements + architecture) | Implied for standard/epic sizing |
+| `--no-debate` | Force debate mode OFF (single-agent mode for all phases) | Implied for -light |
 
 **Flag precedence** (highest to lowest):
 1. `--no-debate` -- always wins (conservative override)
@@ -272,6 +272,10 @@ Enter selection (1-5):
 
 **Conflict resolution:** If both `--debate` and `--no-debate` are present,
 `--no-debate` wins (Article X: Fail-Safe Defaults).
+
+**Debate-enabled phases:** The debate loop currently supports Phase 01 (Requirements)
+and Phase 03 (Architecture). Other phases use single-agent delegation regardless of
+debate flags. See the orchestrator's DEBATE_ROUTING table for the authoritative list.
 
 **Passed to orchestrator:** The resolved debate flags are included in the
 orchestrator delegation context as:
