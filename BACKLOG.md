@@ -48,126 +48,49 @@
   - **Complexity**: Medium-large (2-3 sessions through full iSDLC workflow)
   - **Prerequisite**: BUG-0013 (phase-loop-controller same-phase bypass) should be done first to reduce false blocks during parallel work
 
-### Implementation-Review Fusion (Architecture)
+### Multi-Agent Teams for Creative Phases (Architecture)
 
-- [ ] Multi-agent collaborative implementation — replace sequential Phase 06 → Phase 16 → Phase 08 with a tight write-review-fix loop using a 3-agent team
-  - **Problem**: Code is written in Phase 06, then waits for Phase 16 (quality loop) and Phase 08 (code review) to find issues. By then context is cold, fixes require re-reading, and the sequential overhead adds 15-30 minutes per workflow. The quality loop and code review agents also don't check if skills used match the project's tech stack.
-  - **Design**: A 3-agent team runs concurrently within a single "implementation" super-phase:
+- [ ] Replace single-agent phases with Creator/Critic/Refiner teams that collaborate via propose-critique-refine cycles
+  - **Shared pattern**: Each phase runs a 3-agent loop: Creator produces artifact → Critic reviews and challenges → Refiner synthesizes improvements. Max 3 rounds, convergence when Critic has zero blocking findings (warnings allowed). Each round produces a versioned artifact diff so progress is visible.
+  - **Configurable**: Off for `-light` workflows (single agent, current behavior). On for `standard` and `epic`. Override with `--no-debate` flag to force single-agent mode. Opt-in via `/isdlc feature "desc" --debate` or per-phase in constitution (e.g., `debate_phases: [01, 03, 04, 06]`).
+  - **Precedent**: Deep discovery Inception Party already uses this pattern for `/discover --new` — this extends it to all workflow phases.
+  - **Sequencing**: Phase 06 first (prove the pattern with implementation), then extend to 01/03/04.
+  - **Complexity**: Large (new agent roles, loop protocol, convergence logic, phase restructuring)
+  - **Phase 01 — Requirements Team** (Creator/Critic/Refiner):
+    - **Creator** (requirements-analyst): Produces requirements-spec.md, user-stories.json, NFR matrix, traceability matrix.
+    - **Critic** catches: vague/untestable ACs, orphan requirements, unmeasured NFRs, scope creep, missing compliance requirements, contradictions, missing edge cases, unstated assumptions
+    - **Refiner** produces: testable Given/When/Then for every AC, quantified NFRs, complete traceability, risk mitigation, explicit assumption register
+  - **Phase 03 — Architecture Team** (Creator/Critic/Refiner):
+    - **Creator** (solution-architect): Produces architecture-overview.md, tech-stack-decision.md, database-design.md, security-architecture.md, ADRs.
+    - **Critic** catches: NFR misalignment, incomplete STRIDE threat model, database design flaws, weak tech stack justification, single points of failure, unaddressed cost implications, missing observability, coupling contradictions
+    - **Refiner** produces: complete ADRs with trade-offs, security hardening, HA adjustments, cost optimization, observability architecture
+  - **Phase 04 — Design Team** (Creator/Critic/Refiner):
+    - **Creator** (system-designer): Produces interface-spec.yaml/openapi.yaml, module-designs/, wireframes/, error-taxonomy.md, validation-rules.json.
+    - **Critic** catches: incomplete API specs, inconsistent patterns across modules, module overlap, validation gaps, missing idempotency, accessibility issues, error taxonomy holes, data flow bottlenecks
+    - **Refiner** produces: OpenAPI 3.x contracts with complete error responses, unified error taxonomy, component variants for all states, validation rules at every boundary, idempotency keys
+  - **Phase 06 — Implementation Team** (Writer/Reviewer/Updater — specialized per-file loop):
+    - **Problem**: Code is written in Phase 06, then waits for Phase 16 (quality loop) and Phase 08 (code review) to find issues. By then context is cold, fixes require re-reading, and the sequential overhead adds 15-30 minutes per workflow.
     - **Writer** (software-developer) — writes code following tasks.md, TDD, produces files
-    - **Reviewer** (code-reviewer) — reviews each file/function as it's written, flags issues immediately, checks constitutional compliance, validates skill usage matches tech stack from constitution
+    - **Reviewer** (code-reviewer) — reviews each file as it's written, flags issues immediately, checks constitutional compliance, validates skill/tech-stack alignment
     - **Updater** (code-updater) — takes reviewer feedback, applies fixes, re-runs tests, confirms resolution
-  - **Loop protocol**:
-    ```
-    Writer produces file A → Reviewer reviews A → issues found?
-      YES → Updater fixes A → Reviewer re-reviews → loop until clean
-      NO  → Writer moves to file B → Reviewer reviews B → ...
-    All files done → Final quality sweep (security scan, full test suite, coverage)
-    ```
-  - **Skill validation**: Reviewer agent checks that Writer used appropriate skills for the tech stack (e.g., if constitution says TypeScript, reviewer flags plain JS patterns; if React, reviewer flags jQuery-style DOM manipulation). Skills-manifest.json cross-referenced against `constitution.tech_stack`.
-  - **Benefits**:
-    - Issues caught immediately while context is hot (not 2 phases later)
-    - No cold-start re-reading for reviewers
-    - Fewer iteration loops — fix happens in the same breath as detection
-    - Quality is continuous, not a gate at the end
-    - Phase 16 (quality loop) reduced to final sweep only (full test suite + security scan)
-    - Phase 08 (code review) becomes human-review-only (automated review already done in-loop)
-  - **Phase restructuring**:
-    - Current: `06-implementation → 16-quality-loop → 08-code-review`
-    - Proposed: `06-implementation-loop (writer+reviewer+updater) → 16-final-sweep (tests+security) → 08-human-review`
-  - **Implementation options**:
-    - Option A: Single Task call that spawns 3 sub-agents with shared context (simplest, but sub-agents can't easily pass artifacts)
-    - Option B: Phase-Loop Controller manages the write-review-fix loop explicitly (more control, more complex isdlc.md changes)
-    - Option C: New `collaborative-implementation-engineer` agent that orchestrates the 3 roles internally (cleanest encapsulation)
-  - **Quality loop optimisation**: The remaining Phase 16 becomes a thin final sweep — just `npm run test:all` + `npm audit` + coverage check. No redundant code review since that happened in-loop. Target: <2 minutes.
-  - **In-loop reviewer checks** (per file, immediate — while context is hot):
-    - Logic correctness: algorithm verified, edge cases handled, boundary conditions
-    - Error handling: all conditions caught, meaningful messages, no swallowed exceptions
-    - Security: injection prevention (SQL/XSS/command), no eval/exec, no hardcoded secrets, input validation at boundaries, output sanitization
-    - Code quality: naming clarity, DRY, single responsibility, complexity <20 lines per function, no code smells (feature envy, data clumps, dead code)
-    - Test quality: edge cases covered, test actually tests the right thing, mocks appropriate
-    - Skill/tech-stack alignment: patterns match constitution's tech stack (e.g., flag jQuery in React project, flag CommonJS in ESM project, flag wrong test framework)
-    - Constitutional compliance: spec primacy (Article I), TDD followed (Article II), simplicity (Article V), traceability (Article VII)
-    - Comment quality: explains "why" not "what", complex logic documented
-  - **Final sweep checks** (batch, after all files complete — stays in Phase 16):
-    - Full test suite execution (all tests pass, no regressions)
-    - Coverage analysis (≥80% unit, ≥70% integration, 100% critical paths)
-    - Mutation testing (≥80% mutation score, Article XI)
-    - npm audit / dependency vulnerability scan
-    - SAST security scan (automated tooling)
-    - Build verification (clean build, no warnings-as-errors)
-    - Lint and type check (project-level)
-    - Traceability matrix validation (requirements → design → code → tests)
-    - Technical debt assessment
-  - **Stays in Phase 08** (human review only):
-    - Architecture decision review
-    - Business logic correctness (domain knowledge)
-    - Overall design coherence
-    - Non-obvious security implications
-    - Merge approval
-  - **Complexity**: Large (new agent architecture, loop protocol, skill validation logic)
-  - **Precedent**: Deep discovery Inception Party already uses multi-agent debate. This extends the pattern from research to implementation.
-  - **Relates to**: Multi-agent debate mode (already in backlog) — this is the implementation-specific version of that broader idea
-
-### Multi-Agent Teams for Requirements, Architecture, Design (Architecture)
-
-- [ ] Creator/Critic/Refiner teams for Phases 01, 03, and 04 — extend the Implementation-Review Fusion pattern to all creative phases
-  - **Pattern**: Each phase runs a 3-agent loop: Creator produces artifact → Critic reviews and challenges → Refiner synthesizes improvements. Max 3 rounds, convergence when Critic has zero blocking findings.
-  - **Phase 01 — Requirements Team**:
-    - **Creator** (requirements-analyst): Produces requirements-spec.md, user-stories.json, NFR matrix, traceability matrix. Captures FRs, ACs, user stories, constraints, and dependencies.
-    - **Critic** catches:
-      - Vague/untestable acceptance criteria (no Given/When/Then, no measurable threshold)
-      - Orphan requirements (FR with no AC, AC with no user story)
-      - Unmeasured NFRs (e.g., "fast" without p95 latency target)
-      - Scope creep signals (requirement not traceable to user's original description)
-      - Missing compliance/regulatory requirements (GDPR, PCI-DSS, HIPAA depending on domain)
-      - Contradictory requirements (FR-01 says X, FR-03 implies not-X)
-      - Missing error/edge case scenarios (happy path only)
-      - Unstated assumptions that should be explicit constraints
-    - **Refiner** produces:
-      - Testable Given/When/Then for every AC
-      - Quantified NFRs (p95 < 200ms, 99.9% uptime, etc.)
-      - Complete traceability (every FR → AC → user story → test case)
-      - Risk mitigation for each identified gap
-      - Explicit assumption register
-  - **Phase 03 — Architecture Team**:
-    - **Creator** (solution-architect): Produces architecture-overview.md, tech-stack-decision.md, database-design.md, security-architecture.md, ADRs. Evaluates tech stack, designs infrastructure, plans data layer.
-    - **Critic** catches:
-      - NFR misalignment (architecture can't meet stated performance/scalability NFRs)
-      - Incomplete STRIDE threat model (missing categories, unmitigated threats)
-      - Database design flaws (missing indexes, N+1 query patterns, no migration strategy)
-      - Weak tech stack justification (no alternatives evaluated, no trade-off analysis)
-      - Single points of failure (no redundancy, no failover, no circuit breakers)
-      - Cost implications not addressed (cloud resource estimates, scaling costs)
-      - Missing observability design (no logging strategy, no metrics, no tracing)
-      - Coupling that contradicts stated modularity goals
-    - **Refiner** produces:
-      - Complete ADRs with alternatives, trade-offs, and consequences
-      - Security hardening (STRIDE fully addressed, auth/authz patterns explicit)
-      - Multi-AZ / high-availability adjustments where NFRs require
-      - Cost optimization recommendations
-      - Observability architecture (structured logging, metrics endpoints, distributed tracing)
-  - **Phase 04 — Design Team**:
-    - **Creator** (system-designer): Produces interface-spec.yaml/openapi.yaml, module-designs/, wireframes/, error-taxonomy.md, validation-rules.json. Designs APIs, components, data flows, error handling.
-    - **Critic** catches:
-      - Incomplete API specifications (missing error responses, no pagination, no versioning)
-      - Inconsistent patterns across modules (different naming conventions, different error formats)
-      - Module overlap / unclear boundaries (two modules owning same responsibility)
-      - Validation gaps (input validated at API but not at service layer, or vice versa)
-      - Missing idempotency for state-changing operations
-      - Wireframe accessibility issues (no keyboard nav, missing ARIA, contrast problems)
-      - Error taxonomy holes (category exists but no specific error codes defined)
-      - Data flow bottlenecks (synchronous calls that should be async, missing caching)
-    - **Refiner** produces:
-      - API contracts conforming to OpenAPI 3.x standards with complete error responses
-      - Unified error taxonomy with codes, HTTP status mapping, and user-facing messages
-      - Component variants for all states (loading, error, empty, populated)
-      - Validation rules at every boundary (API input, service layer, DB constraints)
-      - Idempotency keys for all mutating endpoints
-  - **Loop protocol**: Creator → Critic → Refiner, max 3 rounds. Exit when Critic produces zero blocking findings (warnings allowed). Each round produces a versioned artifact diff so progress is visible.
-  - **Configurable**: Off for `-light` workflows (single agent, current behavior). On for `standard` and `epic`. Override with `--no-debate` flag to force single-agent mode.
-  - **Complexity**: Large (3 new agent roles per phase, loop protocol, convergence logic)
-  - **Prerequisite**: Implementation-Review Fusion (above) — prove the pattern works for Phase 06 first, then extend
-  - **Relates to**: Multi-agent debate mode (general backlog item) — this and Implementation-Review Fusion together cover all creative phases
+    - **Per-file loop** (unlike other phases which loop per-artifact):
+      ```
+      Writer produces file A → Reviewer reviews A → issues found?
+        YES → Updater fixes A → Reviewer re-reviews → loop until clean
+        NO  → Writer moves to file B → Reviewer reviews B → ...
+      All files done → Final quality sweep (security scan, full test suite, coverage)
+      ```
+    - **In-loop reviewer checks** (per file, immediate — while context is hot):
+      - Logic correctness, error handling, security (injection prevention, no hardcoded secrets)
+      - Code quality (naming, DRY, single responsibility, complexity), test quality
+      - Skill/tech-stack alignment (flag wrong patterns for project's stack)
+      - Constitutional compliance (spec primacy, TDD, simplicity, traceability)
+    - **Phase restructuring**:
+      - Current: `06-implementation → 16-quality-loop → 08-code-review`
+      - Proposed: `06-implementation-loop (writer+reviewer+updater) → 16-final-sweep → 08-human-review`
+    - **Final sweep** (Phase 16, batch): full test suite, coverage (≥80% unit, ≥70% integration), mutation testing (≥80%), npm audit, SAST scan, build verification, lint/type check, traceability matrix, technical debt assessment
+    - **Phase 08 becomes human-review only**: architecture decisions, business logic, design coherence, non-obvious security, merge approval
+    - **Implementation options**: (A) Single Task with 3 sub-agents, (B) Phase-Loop Controller manages loop explicitly, (C) New `collaborative-implementation-engineer` agent encapsulates all 3 roles
 
 **Framework Features:**
 - [ ] Improve search capabilities to help Claude be more effective
@@ -193,24 +116,6 @@
   - **State tracking**: `state.json` tracks parent feature + sub-features with individual phase progress
 
 - [ ] SonarQube integration
-- [ ] Multi-agent debate mode for phase execution — replace single-agent phases with agent teams that collaborate via propose-critique-refine cycles
-  - **Concept**: Instead of one agent producing a phase artifact solo, a team of 3 agents works together:
-    1. **Creator** — produces the initial artifact (architecture, design, test strategy, etc.)
-    2. **Critic** — reviews and critiques the artifact, identifies weaknesses, missing edge cases, over-engineering, and gaps
-    3. **Refiner** — synthesizes the critique, improves the solution, identifies additional edge cases, proposes alternatives
-    4. **Consensus round** — all three discuss and converge on the best approach before finalizing
-  - **Applies to all applicable phases**: Architecture (03), Design (04), Test Strategy (05), Implementation (06), Code Review (08) — each phase gets a tailored team composition
-  - **Phase-specific team roles**:
-    - Phase 03 (Architecture): Architect → Security/Scalability Critic → Systems Refiner
-    - Phase 04 (Design): Designer → API/UX Critic → Integration Refiner
-    - Phase 05 (Test Strategy): Test Designer → Coverage Critic → Edge Case Refiner
-    - Phase 06 (Implementation): Developer → Code Reviewer → Robustness Refiner
-    - Phase 08 (Code Review): Quality Analyst → Security Critic → Maintainability Refiner
-  - **Debate protocol**: Each round produces a structured artifact with sections: Proposal, Critiques, Improvements, Unresolved Concerns, Final Consensus
-  - **Configurable rounds**: Default 2 rounds (propose-critique-refine → consensus), max 4 for complex phases
-  - **Opt-in via flag**: `/isdlc feature "desc" --debate` or per-phase in constitution (e.g., `debate_phases: [03, 04, 05]`)
-  - **Precedent**: Deep discovery Inception Party already uses this pattern for `/discover --new` — this extends it to all workflow phases
-  - **Benefits**: Higher quality artifacts, catch blind spots early, reduce iteration loops in later phases, built-in adversarial testing of designs
 
 **Product/Vision:**
 - [ ] Board-driven autonomous development (read from board, develop without intervention when users are away)
