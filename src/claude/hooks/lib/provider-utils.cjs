@@ -248,6 +248,72 @@ function hasProvidersConfig() {
 }
 
 // ============================================================================
+// AUTO-DETECTION
+// ============================================================================
+
+/**
+ * Auto-detect the active LLM provider using a tiered strategy.
+ * Called by selectProvider() when providers.yaml exists and no
+ * explicit provider override is active.
+ *
+ * Detection priority (first match wins):
+ *   1. Environment variable check (synchronous, zero I/O)
+ *   2. Config file check (synchronous, already loaded)
+ *   3. Health probe (async, up to 2000ms timeout)
+ *   4. Fallback to 'anthropic'
+ *
+ * Traces: REQ-006, NFR-001, NFR-002, NFR-003, ADR-0001, ADR-0004
+ *
+ * @param {object} config - Loaded providers config (from loadProvidersConfig())
+ * @returns {Promise<{provider: string, healthy: boolean, source: string, reason?: string}>}
+ */
+async function autoDetectProvider(config) {
+    try {
+        // Tier 1: Environment variable check (synchronous, zero I/O)
+        const baseUrl = process.env.ANTHROPIC_BASE_URL;
+        if (baseUrl && baseUrl.toLowerCase().includes('localhost:11434')) {
+            return { provider: 'ollama', healthy: true, source: 'env_var' };
+        }
+
+        if (process.env.ANTHROPIC_API_KEY && !baseUrl) {
+            return { provider: 'anthropic', healthy: true, source: 'env_var' };
+        }
+
+        // Tier 2: Config file check (synchronous -- config already loaded)
+        const configProvider = config?.defaults?.provider;
+
+        if (configProvider && configProvider !== 'anthropic') {
+            // Tier 3: Health probe for non-Anthropic providers
+            if (configProvider === 'ollama') {
+                try {
+                    const health = await checkProviderHealth(config, 'ollama');
+                    return {
+                        provider: 'ollama',
+                        healthy: health.healthy,
+                        source: 'config_file',
+                        ...(health.healthy ? {} : { reason: health.reason || 'Health check failed' })
+                    };
+                } catch (healthErr) {
+                    // Health probe failed -- fail-open to anthropic (Article X)
+                    return { provider: 'anthropic', healthy: true, source: 'default_fallback' };
+                }
+            }
+            return { provider: configProvider, healthy: true, source: 'config_file' };
+        }
+
+        if (configProvider === 'anthropic') {
+            return { provider: 'anthropic', healthy: true, source: 'config_file' };
+        }
+
+        // Tier 4: Fallback to Anthropic (Article X -- fail-safe default)
+        return { provider: 'anthropic', healthy: true, source: 'default_fallback' };
+    } catch (err) {
+        // Catch-all: any exception returns Anthropic default (fail-open, ADR-0004)
+        return { provider: 'anthropic', healthy: true, source: 'default_fallback' };
+    }
+}
+
+// ============================================================================
 // PROVIDER SELECTION
 // ============================================================================
 
@@ -871,6 +937,9 @@ module.exports = {
     isLocalProvider,
     getDefaultModel,
     resolveModelId,
+
+    // Auto-detection
+    autoDetectProvider,
 
     // Health checking
     checkProviderHealth,
