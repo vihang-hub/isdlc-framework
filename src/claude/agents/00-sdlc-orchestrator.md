@@ -1015,9 +1015,27 @@ After user responds, follow the A/R/C menu pattern for each step.
 Only create artifacts when user selects [S] Save in Step 7.
 ```
 
-## 7.5 DEBATE LOOP ORCHESTRATION (Phase 01 Only)
+## 7.5 DEBATE LOOP ORCHESTRATION (Multi-Phase)
 
-When the feature workflow reaches Phase 01, resolve debate mode before delegation.
+When the feature workflow reaches a debate-enabled phase (any phase listed in DEBATE_ROUTING),
+resolve debate mode before delegation.
+
+### Phase Agent Routing Table
+
+The debate loop uses a routing table to determine which agents to delegate to
+based on the current phase. Phases not in this table do not support debate mode
+and fall through to single-agent delegation.
+
+DEBATE_ROUTING:
+
+| Phase Key | Creator Agent | Critic Agent | Refiner Agent | Phase Artifacts | Critical Artifact |
+|-----------|--------------|-------------|--------------|----------------|------------------|
+| 01-requirements | 01-requirements-analyst.md | 01-requirements-critic.md | 01-requirements-refiner.md | requirements-spec.md, user-stories.json, nfr-matrix.md, traceability-matrix.csv | requirements-spec.md |
+| 03-architecture | 02-solution-architect.md | 02-architecture-critic.md | 02-architecture-refiner.md | architecture-overview.md, tech-stack-decision.md, database-design.md, security-architecture.md | architecture-overview.md |
+
+Lookup logic:
+- IF current_phase IN DEBATE_ROUTING: use routing entry for phase-specific agents
+- ELSE: delegate to phase's standard agent (no DEBATE_CONTEXT, no debate)
 
 ### Step 1: Resolve Debate Mode
 
@@ -1038,8 +1056,16 @@ Write to state.json:
 
 ### Step 2: Conditional Delegation
 
+Look up the current phase in DEBATE_ROUTING:
+
+routing = DEBATE_ROUTING[current_phase]
+
+IF current_phase NOT IN DEBATE_ROUTING:
+  - Delegate to phase's primary agent as today (NO DEBATE_CONTEXT)
+  - STOP (phase does not support debate)
+
 IF debate_mode == false:
-  - Delegate to 01-requirements-analyst.md as today (NO DEBATE_CONTEXT)
+  - Delegate to routing.creator (NO DEBATE_CONTEXT)
   - STOP (single-agent path, unchanged)
 
 IF debate_mode == true:
@@ -1047,6 +1073,7 @@ IF debate_mode == true:
     ```json
     {
       "debate_state": {
+        "phase": "{current_phase}",
         "round": 0,
         "max_rounds": 3,
         "converged": false,
@@ -1062,7 +1089,7 @@ IF debate_mode == true:
 debate_state.round = 1
 Update state.json with round number.
 
-Delegate to 01-requirements-analyst.md with Task prompt:
+Delegate to routing.creator with Task prompt:
 ```
 DEBATE_CONTEXT:
   mode: creator
@@ -1071,12 +1098,15 @@ DEBATE_CONTEXT:
 {Feature description from user}
 {Discovery context if available}
 
-Produce: requirements-spec.md, user-stories.json, nfr-matrix.md,
-         traceability-matrix.csv
+Produce: {routing.artifacts (comma-separated list)}
 ```
 
 After Creator completes:
-- Verify all 4 artifacts exist in artifact folder
+- Verify routing.critical_artifact exists in artifact folder
+- IF routing.critical_artifact NOT found:
+    Log error: "Critical artifact {routing.critical_artifact} not produced by Creator"
+    Fall back to single-agent mode (no debate)
+    STOP
 - Proceed to Step 4
 
 ### Step 4: Critic-Refiner Loop
@@ -1085,19 +1115,22 @@ WHILE debate_state.round <= debate_state.max_rounds
       AND NOT debate_state.converged:
 
   #### 4a: Critic Review
-  Delegate to 01-requirements-critic.md with Task prompt:
+  Delegate to routing.critic with Task prompt:
   ```
   DEBATE_CONTEXT:
     round: {debate_state.round}
 
-  Review the following Phase 01 artifacts:
-  {list paths to all 4 artifacts}
+  Review the following {current_phase} artifacts:
+  {list paths to all routing.artifacts}
   {feature description for scope reference}
   ```
 
   After Critic completes:
   - Read round-{N}-critique.md from artifact folder
   - Parse BLOCKING findings count from the "## Summary" section
+  - IF BLOCKING count cannot be parsed (malformed critique):
+      Treat as 0 BLOCKING (fail-open per Article X)
+      Log warning: "Critic critique malformed, treating as converged"
   - Record in debate_state:
     ```
     rounds_history.push({
@@ -1124,13 +1157,13 @@ WHILE debate_state.round <= debate_state.max_rounds
 
   #### 4c: Refiner Improvement
   rounds_history[last].action = "refine"
-  Delegate to 01-requirements-refiner.md with Task prompt:
+  Delegate to routing.refiner with Task prompt:
   ```
   DEBATE_CONTEXT:
     round: {debate_state.round}
 
   Improve the following artifacts based on the Critic's findings:
-  {list paths to all 4 artifacts}
+  {list paths to all routing.artifacts}
   {path to round-{N}-critique.md}
   {feature description for context}
   ```
@@ -1149,10 +1182,11 @@ Write debate-summary.md to artifact folder with:
 - Round count, convergence status
 - Per-round history (findings, actions)
 - Key changes summary
+- Phase-specific metrics (see agent-produced critique summaries)
 
 #### Handle Unconverged Case
 IF debate_state.converged == false:
-  - Append to requirements-spec.md:
+  - Append to routing.critical_artifact:
     "[WARNING: Debate did not converge after {max_rounds} rounds.
      {remaining_blocking} BLOCKING finding(s) remain.
      See debate-summary.md for details.]"
@@ -1163,15 +1197,17 @@ IF debate_state.converged == false:
 | Edge Case | Handling |
 |-----------|---------|
 | Convergence on Round 1 (Critic finds 0 BLOCKING) | Refiner is NOT invoked. debate-summary.md notes "Converged on first review." |
-| Creator fails to produce all 4 artifacts | Log error, attempt debate with available artifacts. If requirements-spec.md missing, abort debate and fall back to single-agent mode. |
+| Creator fails to produce critical artifact (routing.critical_artifact) | Abort debate, fall back to single-agent mode. Log error. |
+| Creator produces partial artifacts (some missing, but critical artifact exists) | Attempt debate with available artifacts. Critic reviews what exists. |
 | Critic produces malformed critique (cannot parse BLOCKING count) | Treat as 0 BLOCKING (fail-open per Article X). Log warning. |
 | Refiner does not address all BLOCKING findings | Next Critic round will re-flag them. Eventually hits max-rounds limit. |
-| Both --debate and --no-debate flags | --no-debate wins (conservative, per ADR-0003). |
+| Both --debate and --no-debate flags | --no-debate wins (conservative, per Article X). |
+| Phase not in DEBATE_ROUTING | Delegate to phase's standard agent. No debate. |
 
 #### Update State
 - Update active_workflow.debate_state with final status
 - Log completion in state.json history
-- Proceed to Phase 01 gate validation
+- Proceed to phase gate validation
 
 ## 8. Phase Gate Validation
 

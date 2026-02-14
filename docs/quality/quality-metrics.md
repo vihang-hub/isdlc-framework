@@ -1,61 +1,71 @@
-# Quality Metrics: REQ-0014-backlog-scaffolding
+# Quality Metrics: REQ-0015-multi-agent-architecture-team
 
 **Date**: 2026-02-14
 **Phase**: 08-code-review
-**Workflow**: Feature (REQ-0014)
+**Workflow**: Feature (REQ-0015)
 
 ---
 
 ## 1. Test Results
 
-| Suite | Pass | Fail | Total | Notes |
-|-------|------|------|-------|-------|
-| ESM (lib/*.test.js) | 598 | 1 | 599 | 1 pre-existing TC-E09 |
-| CJS (hooks/tests/*.test.cjs) | 1280 | 0 | 1280 | Clean |
-| **Total** | **1878** | **1** | **1879** | 0 regressions |
+| Suite | Total | Pass | Fail | Skip |
+|-------|-------|------|------|------|
+| New architecture debate tests | 87 | 87 | 0 | 0 |
+| Existing debate regression tests | 90 | 90 | 0 | 0 |
+| Full CJS test suite | 674 | 631 | 43 | 0 |
 
-### New Tests Added
+**New regressions**: 0
+**Pre-existing failures**: 43 (unchanged from baseline)
 
-| File | New Tests | All Pass |
-|------|-----------|----------|
-| lib/installer.test.js | 15 | Yes (56/56 total) |
-| lib/uninstaller.test.js | 3 | Yes (22/22 total) |
-| **Total** | **18** | **18/18** |
+## 2. Requirements Coverage
 
-## 2. Code Metrics
+| Metric | Value | Target | Status |
+|--------|-------|--------|--------|
+| FRs implemented | 7/7 | 100% | PASS |
+| ACs covered by tests | 30/30 | 100% | PASS |
+| NFRs validated | 4/4 | 100% | PASS |
+| Orphan code | 0 | 0 | PASS |
+| Unimplemented requirements | 0 | 0 | PASS |
 
-| Metric | Value | Threshold | Status |
-|--------|-------|-----------|--------|
-| New production code | 20 lines | N/A | Minimal |
-| New test code | ~160 lines | N/A | 8:1 test-to-code ratio |
-| Cyclomatic complexity (BACKLOG block) | 2 | <10 | PASS |
-| Function length (generateBacklogMd) | 11 lines | <30 | PASS |
-| Total functions in installer.js | 9 | N/A | No change |
-| Total lines in installer.js | 1065 | N/A | +20 from baseline |
+## 3. Code Quality
 
-## 3. Coverage
+| Metric | Value | Target | Status |
+|--------|-------|--------|--------|
+| Critical findings | 0 | 0 | PASS |
+| Major findings | 0 | 0 | PASS |
+| Minor findings | 0 | 0 | PASS |
+| Informational findings | 2 | -- | Noted |
+| Agent file size (max) | 7,158B | < 15,360B | PASS |
+| Syntax errors | 0 | 0 | PASS |
+| npm audit vulnerabilities | 0 | 0 | PASS |
 
-| Requirement Type | Covered | Total | Percentage |
-|-----------------|---------|-------|------------|
-| Functional Requirements (FRs) | 4 | 4 | 100% |
-| Non-Functional Requirements (NFRs) | 2 | 2 | 100% |
-| Acceptance Criteria (ACs) | 12 | 12 | 100% |
-| Test Cases Specified | 18 | 18 | 100% |
-| Test Cases Implemented | 18 | 18 | 100% |
+## 4. Pattern Consistency (NFR-002)
 
-## 4. Security
+| Structural Element | Phase 01 Analog | Phase 03 Agent | Match |
+|-------------------|----------------|----------------|-------|
+| Frontmatter format | name, description, model, owned_skills | Identical structure | Yes |
+| IDENTITY section | Present | Present | Yes |
+| INPUT section | Present | Present | Yes |
+| Process section | CRITIQUE PROCESS / REFINEMENT PROCESS | Same naming | Yes |
+| OUTPUT FORMAT | BLOCKING/WARNING structure | Same structure | Yes |
+| RULES section | 8 rules (critic), 6 rules (refiner) | 8 rules each | Yes |
+| Debate-only constraint | "ONLY invoked by orchestrator" | Same language | Yes |
+
+## 5. Backward Compatibility (NFR-003)
+
+| Check | Result |
+|-------|--------|
+| Phase 01 routing preserved in orchestrator | PASS (3 entries intact) |
+| Solution architect name unchanged | PASS (still `solution-architect`) |
+| No-debate fallback preserves current behavior | PASS (documented and tested) |
+| Existing debate regression tests | 90/90 PASS |
+| Full CJS suite regressions | 0 new |
+
+## 6. Security Metrics
 
 | Check | Result |
 |-------|--------|
 | No secrets in code | PASS |
-| No user input in template | PASS |
-| Path traversal protection | PASS (uses path.join) |
-| Dependency scan (npm audit) | 0 vulnerabilities |
-
-## 5. Regression Check
-
-| Baseline | Current | Delta |
-|----------|---------|-------|
-| 1860 tests | 1878 tests | +18 (all new) |
-| 1 pre-existing failure (TC-E09) | 1 pre-existing failure (TC-E09) | No change |
-| 0 vulnerabilities | 0 vulnerabilities | No change |
+| No executable code in agent files | PASS |
+| STRIDE coverage enforced by critic | PASS (AC-02, 6 categories) |
+| npm audit clean | PASS (0 vulnerabilities) |
