@@ -249,7 +249,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
 - 7.4 [ ] Analytics manager (integrated with feedback collector/roadmap)
 - 7.5 [ ] User auth and profile management
 - 7.6 [ ] Marketing integration for SMBs
-- 7.7 [ ] Backlog management integration — curated local BACKLOG.md backed by Jira, with Confluence as input source
+- 7.7 [x] Backlog management integration — curated local BACKLOG.md backed by Jira, with Confluence as input source (REQ-0008 -- DONE)
   - **Problem**: Jira has hundreds of unsorted, unprioritised tickets. Nobody wants to trawl through that from the CLI. But Jira is the canonical source for ticket data in existing teams. BACKLOG.md provides a clean, curated, readable experience — but without Jira sync it's a disconnected island.
   - **Design**: BACKLOG.md is the developer's curated working set. Jira is the canonical source for ticket content. Sync is lightweight — content flows in from Jira, status flows back.
   - **UX** (invisible framework — all via natural language, no explicit commands):
@@ -326,6 +326,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
 ## Completed
 
 ### 2026-02-14
+- [x] REQ-0008: Backlog management integration — prompt-driven MCP delegation for Jira + Confluence backed BACKLOG.md. 5 modules (CLAUDE.md template, orchestrator extensions, requirements analyst Confluence context, command spec, hook verification). ~195 lines across 4 production files, 72 new tests, zero regressions, 2 implementation iterations. 9 FRs, 5 NFRs, 22 ACs
 - [x] REQ-0013: Supervised mode — per-phase review gates with Continue/Review/Redo menu, parallel change summaries, redo circuit breaker (max 3), session recovery. 4 new common.cjs helpers, STEP 3e-review in phase-loop controller, --supervised flag, 88 new tests (80 supervised + 8 gate-blocker), 1228/1228 CJS passing, 8 FRs, 6 NFRs, 35 ACs
 
 ### 2026-02-13
