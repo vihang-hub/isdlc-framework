@@ -50,7 +50,7 @@
 
 ### 4. Multi-Agent Teams for Creative Phases (Architecture)
 
-- 4.1 [ ] Replace single-agent phases with Creator/Critic/Refiner teams that collaborate via propose-critique-refine cycles
+- 4.1 [x] Replace single-agent phases with Creator/Critic/Refiner teams that collaborate via propose-critique-refine cycles (REQ-0014 Phase 01 -- DONE)
   - **Shared pattern**: Each phase runs a 3-agent loop: Creator produces artifact → Critic reviews and challenges → Refiner synthesizes improvements. Max 3 rounds, convergence when Critic has zero blocking findings (warnings allowed). Each round produces a versioned artifact diff so progress is visible.
   - **Configurable**: Off for `-light` workflows (single agent, current behavior). On for `standard` and `epic`. Override with `--no-debate` flag to force single-agent mode. Opt-in via `/isdlc feature "desc" --debate` or per-phase in constitution (e.g., `debate_phases: [01, 03, 04, 06]`).
   - **Precedent**: Deep discovery Inception Party already uses this pattern for `/discover --new` — this extends it to all workflow phases.
@@ -285,7 +285,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
     3. **Add fallback metrics**: If `parseSizingFromImpactAnalysis()` fails, try extracting file count from quick-scan or requirements artifacts as a backup data source
   - **Files to change**: `src/claude/commands/isdlc.md` (STEP 3e-sizing, PATHs 1 and 3), possibly `src/claude/hooks/lib/common.cjs` (`parseSizingFromImpactAnalysis` fallback robustness)
   - **Complexity**: Low (control flow changes in 1-2 files, no new agents or infrastructure)
-- 8.3 [ ] Requirements elicitation interaction pattern redesign — replace the cold, generic 3-question opening ("What problem? Who will use this? How will you measure success?") with a conversational, context-aware interaction
+- 8.3 [x] Requirements elicitation interaction pattern redesign — replace the cold, generic 3-question opening ("What problem? Who will use this? How will you measure success?") with a conversational, context-aware interaction (integrated into REQ-0014 as FR-007 -- DONE)
   - **Problem**: When the user runs `/isdlc feature "Add payment processing"`, the agent ignores the description they already provided and dumps 3 generic questions. This feels like filling out a form, not collaborating with an expert. The same rigid pattern repeats at every sub-stage (5 sequential lenses, each with A/R/C menu). The current UX is dry, mechanical, and disengaging.
   - **Root cause**: The 3-question opening is hardcoded in two places — `00-sdlc-orchestrator.md` (line ~909, INTERACTIVE PROTOCOL injection) and `01-requirements-analyst.md` (lines ~27-29 invocation protocol + lines ~513-515 Step 1 first response). The orchestrator explicitly instructs: "Your FIRST response must ONLY contain these 3 questions - nothing else."
   - **Desired UX**:
@@ -312,6 +312,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
 ## Completed
 
 ### 2026-02-14
+- [x] REQ-0014: Multi-agent Requirements Team — Creator/Critic/Refiner debate loop for Phase 01 requirements elicitation (backlog 4.1 + 8.3). 2 new agents (Critic, Refiner), 5 modified files, debate loop orchestration, --debate/--no-debate flags, conversational Creator opening. 90 new tests, zero regressions, 2 implementation iterations. 8 FRs, 5 NFRs, 28 ACs
 - [x] REQ-0008: Backlog management integration — prompt-driven MCP delegation for Jira + Confluence backed BACKLOG.md. 5 modules (CLAUDE.md template, orchestrator extensions, requirements analyst Confluence context, command spec, hook verification). ~195 lines across 4 production files, 72 new tests, zero regressions, 2 implementation iterations. 9 FRs, 5 NFRs, 22 ACs
 - [x] REQ-0013: Supervised mode — per-phase review gates with Continue/Review/Redo menu, parallel change summaries, redo circuit breaker (max 3), session recovery. 4 new common.cjs helpers, STEP 3e-review in phase-loop controller, --supervised flag, 88 new tests (80 supervised + 8 gate-blocker), 1228/1228 CJS passing, 8 FRs, 6 NFRs, 35 ACs
 - [x] BUG-0015: branch-guard false positive after merge — added `branchExistsInGit()` using `git rev-parse --verify`, 4 new tests
