@@ -7,52 +7,12 @@
 
 ### Spec-Kit Learnings (from framework comparison 2026-02-11)
 
-- [x] Enhanced plan-to-tasks pipeline (REQ-0009 — DONE)
-  - [x] File-level task granularity — after design phase, decompose tasks.md into specific files/functions to create/modify (not just "write failing tests")
-  - [x] User-story traceability in tasks — tag every task back to a requirement (REQ-001, AC-003), not just group by phase
-  - [x] Explicit dependency graph — mark which tasks block which others, not just [P] for parallel
-  - [x] Dedicated task refinement step — between design and implementation, a pass that converts high-level design into file-level implementation tasks (enhance ORCH-012)
-  - [x] Mechanical execution mode — option for implementation agent to follow tasks literally rather than self-decomposing
 - [ ] Spike/explore workflow — parallel implementation branches from a single spec for tech stack comparison or architecture exploration (Spec-Kit's "Creative Exploration")
 - [ ] `/isdlc validate` command — on-demand artifact quality check (constitutional + completeness) without running a full workflow (Spec-Kit's `/speckit.checklist` + `/speckit.analyze`)
 - [ ] Progressive disclosure / lite mode — expose only constitution → requirements → implement → quality loop for simple projects, full lifecycle opt-in
-- [x] Research agents for greenfield — dedicated pre-architecture research step (library compatibility, benchmarks, security implications, org standards) before planning begins
-  - Already implemented via deep discovery Inception Party (BMAD-inspired): domain-researcher, technical-scout, solution-architect-party, security-advisor, devops-pragmatist + parallel research agents
 
-### Bugs Found During REQ-0009 Workflow (2026-02-11)
+### Performance (remaining from 2026-02-13 investigation)
 
-- [x] BUG: Redundant state tracking causes stale fields and hook blocks (BUG-0005 — FIXED)
-  - 6 hooks fixed to read `active_workflow.current_phase` first with fallback
-  - STEP 3e updated to sync `phase_status`, `active_agent`, and mark tasks.md checkboxes on phase completion
-- [x] BUG: Phase-loop controller delegates before marking state as in_progress (BUG-0006 — FIXED)
-  - Added STEP 3c-prime: pre-delegation state write before STEP 3d
-  - Removed redundant next-phase activation from STEP 3e step 6
-- [x] BUG: Test watcher circuit breaker trips on unparseable output (BUG-0007 — FIXED)
-- [x] BUG: Constitution validator false positive on delegation prompts (BUG-0008 — FIXED)
-  - detectPhaseDelegation() guard added to constitution-validator, gate-blocker, iteration-corridor
-- [x] BUG: Subagents overwrite state.json with stale/fabricated data (BUG-0009 — FIXED)
-  - Optimistic locking via state_version counter in writeState() + V7 block rule in state-write-validator
-- [x] BUG: Orchestrator finalize creates tasks but doesn't mark them completed (BUG-0010 — FIXED)
-  - Rewrote STEP 4 cleanup: CRITICAL mandatory loop marks ALL non-completed tasks
-
-### Bugs Found During REQ-0011 Workflow (2026-02-13)
-
-- [x] BUG: Git add/commit runs before quality-loop and code-review (BUG-0012 — FIXED)
-  - Phase-aware commit blocking in branch-guard.cjs v2.0.0, no-commit instructions in software-developer and quality-loop-engineer agents
-  - 17 new tests (T15-T31), 31/31 passing, 98.42% coverage
-
-- [x] BUG: phase-loop-controller false blocks on sub-agent Task calls (BUG-0013 — FIXED)
-  - Same-phase bypass in phase-loop-controller.cjs v1.2.0, 11 new tests (T13-T23), 23/23 passing, 93% coverage
-
-### Performance Investigation (2026-02-13)
-
-Findings from 4-agent parallel analysis of workflow speed bottlenecks. T1-T3 already completed (4-6x cumulative speedup). Remaining opportunities:
-
-- [x] T4-B: Parallel test execution — detect framework, apply parallel flags (Jest --workers, pytest -n auto, Vitest --threads, Go -parallel N)
-  - **Impact**: 3-5x speedup for test phases (Phase 07, 11, 16)
-  - **Complexity**: Low (prompt changes in environment-builder, integration-tester, quality-loop-engineer agents)
-  - **Fallback**: If parallel run fails, retry sequential with flakiness warning
-- [x] T4-A: Parallel test creation — test design agent spawns parallel sub-agents for large codebases
 - [ ] T5: Quality Loop true parallelism — Track A (testing) and Track B (QA) currently run sequentially despite being designed as parallel
   - **Impact**: 2x speedup for Phase 16 (1.5-2 min savings)
   - **Complexity**: Medium (spawn Track A + Track B as separate sub-agents, wait for both)
@@ -219,24 +179,7 @@ Findings from 4-agent parallel analysis of workflow speed bottlenecks. T1-T3 alr
   - Keep only durable state: workflow history summary, project-level config, skill usage stats
   - Prevents state.json from growing unbounded across workflows and avoids stale data bleeding into subsequent runs
   - Audit and restructure state.json schema for human readability — ensure the structure is well-organized, logically grouped, and understandable when inspected manually (not just machine-consumed)
-- [x] Blast radius coverage validation (REQ-0010 — DONE)
-  - blast-radius-validator.cjs hook in pre-task-dispatcher slot 9, feature-only, Phase 06 activation
-  - Parses impact-analysis.md, cross-references git diff, generates blast-radius-coverage.md
-  - 66 new tests, 982 CJS tests pass, fail-open on all error paths
-  - **Gate update**: Add to GATE-05: "All files from blast radius addressed or explicitly deferred with rationale"
-- [ ] Adaptive workflow sizing — framework auto-sizes features after Impact Analysis (Phase 02)
-  - **Problem**: The framework runs the same heavyweight process for all features regardless of size. Architecture + Design produce 16+ artifacts (~1-2 hours) even for trivial changes. Conversely, massive features get crammed into a single implementation phase with no decomposition.
-  - **Sizing decision point**: After Impact Analysis (Phase 02) completes — this is where the framework has real data (affected files, entry points, risk assessment, blast radius) to make an informed recommendation. Quick Scan (Phase 00) is too rough.
-  - **Three workflow intensities**:
-    - **`-light`** (small scope, ~1-5 files, low risk): Skip Phase 03 (Architecture) and Phase 04 (Design) — jump from Impact Analysis straight to Test Strategy. User can force with `/isdlc feature -light`.
-    - **standard** (medium scope, ~6-20 files): Current full workflow, no changes.
-    - **epic** (large scope, 20+ files or high risk): Decompose into sub-features, each getting its own mini-cycle (requirements → design → implement → test), with integration testing across all sub-features at the end.
-  - **UX**: After Impact Analysis, present sizing recommendation with rationale:
-    > "Impact Analysis complete: 3 files affected, low risk. Recommend lightweight workflow — skip architecture and design. [Accept] [Full workflow]"
-    > "Impact Analysis complete: 47 files affected, high risk across 4 modules. Recommend epic decomposition into sub-features. [Accept] [Standard workflow]"
-  - **Sizing inputs from Impact Analysis**: file count, module count, risk score, coupling assessment, test coverage gaps
-  - **No new flags beyond `-light`** — epic decomposition is always framework-recommended, never user-forced (too risky to skip decomposition)
-- [ ] Epic decomposition for large features (depends on adaptive workflow sizing above)
+- [ ] Epic decomposition for large features (depends on adaptive workflow sizing / REQ-0011)
   - **Trigger**: Impact Analysis estimates `large` scope (20+ files) or `high` risk
   - **Process**: After sizing decision, Requirements Analyst re-enters to break the feature into sub-features with clear boundaries
   - **Execution model**: Each sub-feature gets an independent mini-cycle with its own gates:
