@@ -7,28 +7,28 @@
 
 ### Spec-Kit Learnings (from framework comparison 2026-02-11)
 
-- [ ] Spike/explore workflow — parallel implementation branches from a single spec for tech stack comparison or architecture exploration (Spec-Kit's "Creative Exploration")
-- [ ] `/isdlc validate` command — on-demand artifact quality check (constitutional + completeness) without running a full workflow (Spec-Kit's `/speckit.checklist` + `/speckit.analyze`)
-- [ ] Progressive disclosure / lite mode — expose only constitution → requirements → implement → quality loop for simple projects, full lifecycle opt-in
+1. [ ] Spike/explore workflow — parallel implementation branches from a single spec for tech stack comparison or architecture exploration (Spec-Kit's "Creative Exploration")
+2. [ ] `/isdlc validate` command — on-demand artifact quality check (constitutional + completeness) without running a full workflow (Spec-Kit's `/speckit.checklist` + `/speckit.analyze`)
+3. [ ] Progressive disclosure / lite mode — expose only constitution → requirements → implement → quality loop for simple projects, full lifecycle opt-in
 
 ### Performance (remaining from 2026-02-13 investigation)
 
-- [ ] T5: Quality Loop true parallelism — Track A (testing) and Track B (QA) currently run sequentially despite being designed as parallel
-  - **Impact**: 2x speedup for Phase 16 (1.5-2 min savings)
-  - **Complexity**: Medium (spawn Track A + Track B as separate sub-agents, wait for both)
-- [ ] T6: Hook I/O optimization — reduce disk reads in dispatchers
-  - T6-A: Config caching — cache skills-manifest.json (50-200KB), iteration-requirements.json, workflows.json with mtime invalidation (saves 30-50ms per invocation)
-  - T6-B: writeState() double-read elimination — BUG-0009 optimistic locking reads disk to get version before writing, adds 10-20ms per write; trust in-memory version instead
-  - T6-C: getProjectRoot() caching — compute once per dispatcher, not per sub-hook (saves 5-10ms per hook)
-  - T6-D: Post-write/edit triple I/O consolidation — dispatcher + validators + workflow-completion-enforcer do 4-5 sequential state reads
-- [ ] T7: Agent prompt boilerplate extraction — ROOT RESOLUTION, MONOREPO, ITERATION protocols duplicated across 17 agents (~3,600 lines)
-  - Move remaining shared sections to CLAUDE.md (T2 follow-up)
-  - **Impact**: 2-3% speedup per agent delegation
-  - **Complexity**: Low (mechanical extraction)
+4. [ ] T5: Quality Loop true parallelism — Track A (testing) and Track B (QA) currently run sequentially despite being designed as parallel
+   - **Impact**: 2x speedup for Phase 16 (1.5-2 min savings)
+   - **Complexity**: Medium (spawn Track A + Track B as separate sub-agents, wait for both)
+5. [ ] T6: Hook I/O optimization — reduce disk reads in dispatchers
+   - T6-A: Config caching — cache skills-manifest.json (50-200KB), iteration-requirements.json, workflows.json with mtime invalidation (saves 30-50ms per invocation)
+   - T6-B: writeState() double-read elimination — BUG-0009 optimistic locking reads disk to get version before writing, adds 10-20ms per write; trust in-memory version instead
+   - T6-C: getProjectRoot() caching — compute once per dispatcher, not per sub-hook (saves 5-10ms per hook)
+   - T6-D: Post-write/edit triple I/O consolidation — dispatcher + validators + workflow-completion-enforcer do 4-5 sequential state reads
+6. [ ] T7: Agent prompt boilerplate extraction — ROOT RESOLUTION, MONOREPO, ITERATION protocols duplicated across 17 agents (~3,600 lines)
+   - Move remaining shared sections to CLAUDE.md (T2 follow-up)
+   - **Impact**: 2-3% speedup per agent delegation
+   - **Complexity**: Low (mechanical extraction)
 
 ### Parallel Workflows (Architecture)
 
-- [ ] Parallel workflow support — per-workflow state isolation enabling concurrent feature/fix sessions
+7. [ ] Parallel workflow support — per-workflow state isolation enabling concurrent feature/fix sessions
   - **Problem**: `single_active_workflow_per_project` rule blocks parallel work. A developer can't work on BUG-0013 while BUG-0012 is in progress. The constraint exists because `state.json` has a single `active_workflow` field and all hooks assume one active context.
   - **Design**: Split state into per-workflow files with a shared index:
     ```
@@ -50,7 +50,7 @@
 
 ### Multi-Agent Teams for Creative Phases (Architecture)
 
-- [ ] Replace single-agent phases with Creator/Critic/Refiner teams that collaborate via propose-critique-refine cycles
+8. [ ] Replace single-agent phases with Creator/Critic/Refiner teams that collaborate via propose-critique-refine cycles
   - **Shared pattern**: Each phase runs a 3-agent loop: Creator produces artifact → Critic reviews and challenges → Refiner synthesizes improvements. Max 3 rounds, convergence when Critic has zero blocking findings (warnings allowed). Each round produces a versioned artifact diff so progress is visible.
   - **Configurable**: Off for `-light` workflows (single agent, current behavior). On for `standard` and `epic`. Override with `--no-debate` flag to force single-agent mode. Opt-in via `/isdlc feature "desc" --debate` or per-phase in constitution (e.g., `debate_phases: [01, 03, 04, 06]`).
   - **Precedent**: Deep discovery Inception Party already uses this pattern for `/discover --new` — this extends it to all workflow phases.
@@ -93,16 +93,16 @@
     - **Implementation options**: (A) Single Task with 3 sub-agents, (B) Phase-Loop Controller manages loop explicitly, (C) New `collaborative-implementation-engineer` agent encapsulates all 3 roles
 
 **Framework Features:**
-- [ ] Improve search capabilities to help Claude be more effective
-- [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
-- [ ] Add /isdlc refactor command and workflow — pre-requisite: 100% automated E2E testing
-- [ ] Separate commands to manage deployments and operations
-- [ ] State.json pruning at workflow completion — actively prune stale/transient fields from state.json at the end of every feature or fix workflow
+9. [ ] Improve search capabilities to help Claude be more effective
+10. [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
+11. [ ] Add /isdlc refactor command and workflow — pre-requisite: 100% automated E2E testing
+12. [ ] Separate commands to manage deployments and operations
+13. [ ] State.json pruning at workflow completion — actively prune stale/transient fields from state.json at the end of every feature or fix workflow
   - After finalize phase, remove accumulated runtime data: iteration logs, hook activity traces, intermediate phase artifacts, resolved escalations
   - Keep only durable state: workflow history summary, project-level config, skill usage stats
   - Prevents state.json from growing unbounded across workflows and avoids stale data bleeding into subsequent runs
   - Audit and restructure state.json schema for human readability — ensure the structure is well-organized, logically grouped, and understandable when inspected manually (not just machine-consumed)
-- [ ] Epic decomposition for large features (depends on adaptive workflow sizing / REQ-0011)
+14. [ ] Epic decomposition for large features (depends on adaptive workflow sizing / REQ-0011)
   - **Trigger**: Impact Analysis estimates `large` scope (20+ files) or `high` risk
   - **Process**: After sizing decision, Requirements Analyst re-enters to break the feature into sub-features with clear boundaries
   - **Execution model**: Each sub-feature gets an independent mini-cycle with its own gates:
@@ -115,29 +115,29 @@
   - **Benefits**: Catch problems early per sub-feature, reduce context window pressure, intermediate quality gates, partial progress is usable
   - **State tracking**: `state.json` tracks parent feature + sub-features with individual phase progress
 
-- [ ] SonarQube integration
+15. [ ] SonarQube integration
 
 **Product/Vision:**
-- [ ] Board-driven autonomous development (read from board, develop without intervention when users are away)
-- [ ] Design systems using variant.ai
-- [ ] Feedback collector, analyser, and roadmap creator
-- [ ] Analytics manager (integrated with feedback collector/roadmap)
-- [ ] User auth and profile management
-- [ ] Marketing integration for SMBs
-- [ ] Backlog management integration — connect iSDLC workflows to external project management tools (Jira, Linear, GitHub Issues, Azure DevOps, etc.)
+16. [ ] Board-driven autonomous development (read from board, develop without intervention when users are away)
+17. [ ] Design systems using variant.ai
+18. [ ] Feedback collector, analyser, and roadmap creator
+19. [ ] Analytics manager (integrated with feedback collector/roadmap)
+20. [ ] User auth and profile management
+21. [ ] Marketing integration for SMBs
+22. [ ] Backlog management integration — connect iSDLC workflows to external project management tools (Jira, Linear, GitHub Issues, Azure DevOps, etc.)
   - Sync workflow status, phase progress, and gate results to board tickets automatically
   - Create/update tickets from iSDLC artifacts (requirements → epics/stories, bugs → issues)
   - Read from board to pick up next work item (feeds into board-driven autonomous development)
   - Pluggable adapter pattern — Jira first (Atlassian MCP already available), others via provider interface
 
 **Workflow Quality:**
-- [ ] Requirements debate before workflow start — for new features and bugs, engage in a structured discussion/debate about the requirement or issue before initiating the iSDLC workflow. Clarify scope, challenge assumptions, explore alternatives, and converge on a shared understanding. Only after the debate concludes should the workflow (feature/fix) be kicked off with a well-refined description.
+23. [ ] Requirements debate before workflow start — for new features and bugs, engage in a structured discussion/debate about the requirement or issue before initiating the iSDLC workflow. Clarify scope, challenge assumptions, explore alternatives, and converge on a shared understanding. Only after the debate concludes should the workflow (feature/fix) be kicked off with a well-refined description.
 
 **Investigation:**
-- [ ] Phase handshake audit — investigate whether the handshake between phases is working correctly (state transitions, artifact passing, gate validation, pre-delegation state writes, post-phase updates). Verify no data loss or stale state between phase boundaries.
+24. [ ] Phase handshake audit — investigate whether the handshake between phases is working correctly (state transitions, artifact passing, gate validation, pre-delegation state writes, post-phase updates). Verify no data loss or stale state between phase boundaries.
 
 **Developer Experience:**
-- [ ] Install script landing page and demo GIF — update the install script landing/README with a polished visual experience including an animated GIF demonstrating the framework in action (invisible framework flow, workflow progression, quality gates)
+25. [ ] Install script landing page and demo GIF — update the install script landing/README with a polished visual experience including an animated GIF demonstrating the framework in action (invisible framework flow, workflow progression, quality gates)
 
 ## Completed
 
