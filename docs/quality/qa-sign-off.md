@@ -1,83 +1,85 @@
-# QA Sign-Off: BUG-0015 / BUG-0016 Hook False Positives
+# QA Sign-Off -- BUG-0016-orchestrator-scope-overrun
 
-**Date**: 2026-02-14
 **Phase**: 08-code-review
-**Reviewer**: QA Engineer (Phase 08)
-**Workflow**: fix (BUG-0015-hook-false-positives)
+**Date**: 2026-02-14
+**Agent**: QA Engineer (Phase 08)
+**Workflow**: fix (BUG-0016-orchestrator-scope-overrun)
+
+---
+
+## GATE-08 Final Verdict: PASS
+
+All code review criteria met. The fix is approved for merge.
 
 ---
 
 ## GATE-08 Checklist
 
-| # | Criterion | Status | Evidence |
-|---|-----------|--------|----------|
-| 1 | Code review completed for all changes | PASS | 2 production files + 3 test files reviewed (see code-review-report.md) |
-| 2 | No critical code review issues open | PASS | 0 critical, 0 major, 0 minor findings |
-| 3 | Static analysis passing (no errors) | PASS | Syntax OK on all 5 files, 0 code smells, 0 security issues |
-| 4 | Code coverage meets thresholds | PASS | 24 new tests, 1280/1280 CJS pass, 559/561 ESM (2 pre-existing) |
-| 5 | Coding standards followed | PASS | CJS module system, JSDoc on all functions, consistent fail-open pattern |
-| 6 | Performance acceptable | PASS | branch-guard < 200ms budget maintained; state-file-guard < 50ms (regex only) |
-| 7 | Security review complete | PASS | No injection risk, trusted data sources, timeout guards |
-| 8 | QA sign-off obtained | PASS | This document |
+| Criterion | Status | Evidence |
+|-----------|--------|----------|
+| Code review completed for all changes | PASS | 1 production + 2 test files reviewed |
+| No critical code review issues open | PASS | 0 critical, 0 major, 0 minor findings |
+| Static analysis passing (no errors) | PASS | Syntax checks clean, no code smells |
+| Code coverage meets thresholds | PASS | 20/20 new tests, 1860/1861 total (1 pre-existing) |
+| Coding standards followed | PASS | ESM imports, JSDoc, consistent patterns |
+| Performance acceptable | PASS | No runtime code changed |
+| Security review complete | PASS | Prompt-only changes, no new inputs |
+| QA sign-off obtained | PASS | This document |
 
-## Requirements Coverage
+## Test Results Summary
 
-| Category | Count | Covered | Status |
-|----------|-------|---------|--------|
-| Functional Requirements (FR) | 6 | 6 | 100% |
-| Non-Functional Requirements (NFR) | 3 | 3 | 100% |
-| Acceptance Criteria (AC) | 12 | 12 | 100% |
-| BUG-0015 ACs | 4 | 4 | 100% |
-| BUG-0016 ACs | 8 | 8 | 100% |
+| Test Suite | Total | Pass | Fail | Notes |
+|------------|-------|------|------|-------|
+| New (orchestrator-scope-overrun) | 20 | 20 | 0 | All pass |
+| ESM (npm test) | 581 | 580 | 1 | TC-E09 pre-existing |
+| CJS (test:hooks) | 1280 | 1280 | 0 | Zero regressions |
+| **Combined** | **1861** | **1860** | **1** | 1 pre-existing only |
 
-## Constitutional Compliance
+## Requirement Coverage
+
+| Requirement | ACs | Tests | Covered |
+|-------------|-----|-------|---------|
+| FR-01 (MODE enforcement) | 5 | T05-T09 | 5/5 |
+| FR-02 (Stop instruction) | 4 | T01-T04 | 4/4 |
+| FR-03 (Transition guard) | 4 | T10-T14 | 4/4 |
+| FR-04 (Return format) | 3 | T15-T17 | 3/3 |
+| NFR-01 (No regression) | - | T09, T18 | YES |
+| NFR-02 (Positioning) | - | T19 | YES |
+| NFR-03 (Imperative language) | - | T20 | YES |
+
+**Total**: 16/16 ACs covered, 3/3 NFRs covered.
+
+## Constitutional Compliance (Phase 08 Articles)
 
 | Article | Status | Evidence |
 |---------|--------|----------|
-| V (Simplicity First) | COMPLIANT | Minimal targeted fixes; no over-engineering |
-| VI (Code Review Required) | COMPLIANT | This review completes the requirement |
-| VII (Artifact Traceability) | COMPLIANT | All tests trace to ACs; all code traces to FRs |
-| VIII (Documentation Currency) | COMPLIANT | JSDoc updated, version bumped, trace comments added |
-| IX (Quality Gate Integrity) | COMPLIANT | All gate criteria met; no shortcuts |
-| X (Fail-Safe Defaults) | COMPLIANT | Both fixes maintain fail-open behavior on errors |
-| XIII (Module Consistency) | COMPLIANT | CJS files, require/module.exports, .cjs extension |
-| XIV (State Management) | COMPLIANT | state.json read-only in hooks; no write operations |
+| V (Simplicity First) | PASS | Fix is minimal (+28 lines production), no unnecessary complexity |
+| VI (Code Review Required) | PASS | Full code review completed with this report |
+| VII (Artifact Traceability) | PASS | All code traces to requirements; traceability-matrix.csv complete |
+| VIII (Documentation Currency) | PASS | Agent prompt updated; no external docs need changes |
+| IX (Quality Gate Integrity) | PASS | GATE-08 validated with all required artifacts present |
 
-## Test Results
+## Files Changed
 
-| Suite | Pass | Fail | Total |
-|-------|------|------|-------|
-| Branch Guard Tests (incl. T32-T35) | 35 | 0 | 35 |
-| State File Guard Tests (incl. T16-T23 + unit) | 37 | 0 | 37 |
-| Cross-Hook Integration Tests | all | 0 | all |
-| Full CJS Hook Suite | 1280 | 0 | 1280 |
-| Full ESM Suite | 559 | 2 (pre-existing) | 561 |
-| npm audit | 0 vulnerabilities | -- | -- |
+| File | Change Type | Lines |
+|------|-------------|-------|
+| `src/claude/agents/00-sdlc-orchestrator.md` | Modified | +28 (3 prompt insertions) |
+| `lib/orchestrator-scope-overrun.test.js` | New | 556 lines (20 tests) |
+| `lib/early-branch-creation.test.js` | Modified | +1 (regex fix for step renumbering) |
 
-## Backward Compatibility
+## Artifacts Produced
 
-- branch-guard.cjs: additive change only (new check inserted before existing block logic); all 31 pre-existing tests pass with 5 adapted for branch existence
-- state-file-guard.cjs: behavioral change for inline scripts is intentional (bug fix); all 15 pre-existing tests pass, new `isInlineScriptWrite` export is additive
-- No new dependencies
-- No changes to settings.json hook registration
-- No changes to dispatcher configuration
-
-## Findings Summary
-
-| Severity | Count | Status |
-|----------|-------|--------|
-| Critical | 0 | -- |
-| Major | 0 | -- |
-| Minor | 0 | -- |
-| Info | 1 | Documented (shell interpolation, trusted source) |
+| Artifact | Path |
+|----------|------|
+| Code review report (quality) | docs/quality/code-review-report.md |
+| Quality metrics | docs/quality/quality-metrics.md |
+| Static analysis report | docs/quality/static-analysis-report.md |
+| Technical debt | docs/quality/technical-debt.md |
+| QA sign-off | docs/quality/qa-sign-off.md |
+| Code review report (requirement) | docs/requirements/BUG-0016-orchestrator-scope-overrun/code-review-report.md |
 
 ---
 
-## Decision
-
-**GATE-08: PASS**
-
-QA sign-off is granted. The hook false-positive fixes (BUG-0015 + BUG-0016) meet all quality criteria for progression to workflow finalization.
-
-**Signed**: QA Engineer (Phase 08)
-**Date**: 2026-02-14
+**Sign-off**: GATE-08 PASSED
+**Timestamp**: 2026-02-14T16:55:00.000Z
+**Recommendation**: APPROVE for merge to main

@@ -1,44 +1,35 @@
-# Technical Debt Assessment: BUG-0015 / BUG-0016 Hook False Positives
+# Technical Debt Assessment: BUG-0016 / BUG-0017 Orchestrator Scope Overrun
 
 **Date**: 2026-02-14
 **Phase**: 08-code-review
-**Workflow**: fix (BUG-0015-hook-false-positives)
+**Workflow**: fix (BUG-0016-orchestrator-scope-overrun)
 
 ---
 
 ## New Technical Debt
 
-None introduced. Both fixes are minimal, targeted changes that reduce false positives without adding complexity.
+### TD-NEW-01: Redundant MODE Instructions in 3 Locations (LOW)
+
+- **Files**: `src/claude/agents/00-sdlc-orchestrator.md`
+- **Description**: MODE enforcement instructions now appear in 3 places: top-level MODE ENFORCEMENT block, Section 4a Mode-Aware Guard, and Section 4 step 7.5. This redundancy is intentional for LLM prompt engineering (repetition reinforces compliance), but creates a maintenance burden if MODE definitions change.
+- **Recommendation**: When MODE definitions are next updated, ensure all 3 locations are updated simultaneously. Consider adding an in-file comment listing the 3 locations.
+- **Priority**: Low -- the redundancy is a feature, not a bug, for prompt engineering.
 
 ## Existing Technical Debt Addressed
 
-### TD-RESOLVED-01: Hook False Positives in Post-Merge Window (was HIGH)
+### TD-RESOLVED-01: Orchestrator Ignores init-and-phase-01 Boundary (was HIGH)
 
-- **Bug**: BUG-0015 -- branch-guard.cjs blocked commits to main after merge when state.json still showed active_workflow with status='active' for a deleted branch
-- **Resolution**: Added `branchExistsInGit()` verification. If the branch no longer exists in git, the hook allows the commit (fail-open).
-- **Net effect**: Reduces operational friction during the post-merge, pre-finalize window
-
-### TD-RESOLVED-02: Overly Broad Inline Script Blocking (was MEDIUM)
-
-- **Bug**: BUG-0016 -- state-file-guard.cjs treated ALL `node -e`, `python -c`, `ruby -e`, `perl -e` commands as writes, even read-only ones
-- **Resolution**: Added `isInlineScriptWrite()` that inspects the script body for actual write operations
-- **Net effect**: Read-only diagnostic commands (e.g., `node -e "console.log(JSON.parse(fs.readFileSync('.isdlc/state.json','utf8')).current_phase)"`) now pass through correctly
-
-## Informational Notes
-
-### I-01: Shell Interpolation in branchExistsInGit (LOW)
-
-- **File**: `src/claude/hooks/branch-guard.cjs`, line 74
-- **Description**: Branch name is interpolated into execSync template string. Data source is trusted (state.json written by orchestrator), and git branch name character restrictions prevent injection.
-- **Recommendation**: Consider refactoring to `spawnSync(['git', 'rev-parse', '--verify', ...])` with args array in a future cleanup pass.
-- **Priority**: Low -- no action needed now
+- **Bug**: BUG-0017 -- The orchestrator ran all workflow phases when invoked with `MODE: init-and-phase-01`, bypassing the phase-loop controller entirely
+- **Root cause**: Section 4a's "AUTOMATIC" phase transitions overrode the MODE parameter constraints in Section 3c
+- **Resolution**: Added 3 prompt-level safeguards at positions that the LLM reads before the automatic transition instructions
+- **Net effect**: The phase-loop controller now retains control after Phase 01, enabling per-phase task visibility, hook enforcement, and supervised review gates
 
 ## Summary
 
 | Category | Count | Status |
 |----------|-------|--------|
-| New Debt | 0 | -- |
-| Resolved Debt | 2 | CLOSED |
-| Informational | 1 | Documented |
+| New Debt | 1 (LOW) | Documented |
+| Resolved Debt | 1 (HIGH) | CLOSED |
+| Informational | 0 | -- |
 
-**Net Technical Debt Change**: -2 (two items resolved, zero introduced)
+**Net Technical Debt Change**: -1 (one HIGH resolved, one LOW introduced)
