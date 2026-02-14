@@ -50,7 +50,7 @@
 
 ### 4. Multi-Agent Teams for Creative Phases (Architecture)
 
-- 4.1 [~] Replace single-agent phases with Creator/Critic/Refiner teams that collaborate via propose-critique-refine cycles (1 of 4 phases done)
+- 4.1 [~] Replace single-agent phases with Creator/Critic/Refiner teams that collaborate via propose-critique-refine cycles (2 of 4 phases done)
   - **Shared pattern**: Each phase runs a 3-agent loop: Creator produces artifact → Critic reviews and challenges → Refiner synthesizes improvements. Max 3 rounds, convergence when Critic has zero blocking findings (warnings allowed). Each round produces a versioned artifact diff so progress is visible.
   - **Configurable**: Off for `-light` workflows (single agent, current behavior). On for `standard` and `epic`. Override with `--no-debate` flag to force single-agent mode. Opt-in via `/isdlc feature "desc" --debate` or per-phase in constitution (e.g., `debate_phases: [01, 03, 04, 06]`).
   - **Precedent**: Deep discovery Inception Party already uses this pattern for `/discover --new` — this extends it to all workflow phases.
@@ -60,7 +60,7 @@
     - **Creator** (requirements-analyst): Produces requirements-spec.md, user-stories.json, NFR matrix, traceability matrix.
     - **Critic** catches: vague/untestable ACs, orphan requirements, unmeasured NFRs, scope creep, missing compliance requirements, contradictions, missing edge cases, unstated assumptions
     - **Refiner** produces: testable Given/When/Then for every AC, quantified NFRs, complete traceability, risk mitigation, explicit assumption register
-  - **Phase 03 — Architecture Team** [ ] (Creator/Critic/Refiner):
+  - **Phase 03 — Architecture Team** [x] (REQ-0015 — DONE: 2 new agents, 87 tests, generalized debate engine with routing table, 8-check Critic, 8-strategy Refiner):
     - **Creator** (solution-architect): Produces architecture-overview.md, tech-stack-decision.md, database-design.md, security-architecture.md, ADRs.
     - **Critic** catches: NFR misalignment, incomplete STRIDE threat model, database design flaws, weak tech stack justification, single points of failure, unaddressed cost implications, missing observability, coupling contradictions
     - **Refiner** produces: complete ADRs with trade-offs, security hardening, HA adjustments, cost optimization, observability architecture
@@ -312,6 +312,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
 ## Completed
 
 ### 2026-02-14
+- [x] REQ-0015: Multi-agent Architecture Team — Creator/Critic/Refiner debate loop for Phase 03 architecture design (backlog 4.1 Phase 03). 2 new agents (Architecture Critic, Architecture Refiner), 3 modified files (orchestrator generalized debate engine with routing table, solution-architect Creator awareness, command flag descriptions). 87 new tests, zero regressions, 2 implementation iterations. 7 FRs, 4 NFRs, 30 ACs
 - [x] REQ-0014: Multi-agent Requirements Team — Creator/Critic/Refiner debate loop for Phase 01 requirements elicitation (backlog 4.1 + 8.3). 2 new agents (Critic, Refiner), 5 modified files, debate loop orchestration, --debate/--no-debate flags, conversational Creator opening. 90 new tests, zero regressions, 2 implementation iterations. 8 FRs, 5 NFRs, 28 ACs
 - [x] REQ-0008: Backlog management integration — prompt-driven MCP delegation for Jira + Confluence backed BACKLOG.md. 5 modules (CLAUDE.md template, orchestrator extensions, requirements analyst Confluence context, command spec, hook verification). ~195 lines across 4 production files, 72 new tests, zero regressions, 2 implementation iterations. 9 FRs, 5 NFRs, 22 ACs
 - [x] REQ-0013: Supervised mode — per-phase review gates with Continue/Review/Redo menu, parallel change summaries, redo circuit breaker (max 3), session recovery. 4 new common.cjs helpers, STEP 3e-review in phase-loop controller, --supervised flag, 88 new tests (80 supervised + 8 gate-blocker), 1228/1228 CJS passing, 8 FRs, 6 NFRs, 35 ACs
