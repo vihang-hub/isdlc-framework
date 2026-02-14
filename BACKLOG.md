@@ -50,7 +50,7 @@
 
 ### 4. Multi-Agent Teams for Creative Phases (Architecture)
 
-- 4.1 [~] Replace single-agent phases with Creator/Critic/Refiner teams that collaborate via propose-critique-refine cycles (2 of 4 phases done)
+- 4.1 [~] Replace single-agent phases with Creator/Critic/Refiner teams that collaborate via propose-critique-refine cycles (3 of 4 phases done)
   - **Shared pattern**: Each phase runs a 3-agent loop: Creator produces artifact → Critic reviews and challenges → Refiner synthesizes improvements. Max 3 rounds, convergence when Critic has zero blocking findings (warnings allowed). Each round produces a versioned artifact diff so progress is visible.
   - **Configurable**: Off for `-light` workflows (single agent, current behavior). On for `standard` and `epic`. Override with `--no-debate` flag to force single-agent mode. Opt-in via `/isdlc feature "desc" --debate` or per-phase in constitution (e.g., `debate_phases: [01, 03, 04, 06]`).
   - **Precedent**: Deep discovery Inception Party already uses this pattern for `/discover --new` — this extends it to all workflow phases.
@@ -64,7 +64,7 @@
     - **Creator** (solution-architect): Produces architecture-overview.md, tech-stack-decision.md, database-design.md, security-architecture.md, ADRs.
     - **Critic** catches: NFR misalignment, incomplete STRIDE threat model, database design flaws, weak tech stack justification, single points of failure, unaddressed cost implications, missing observability, coupling contradictions
     - **Refiner** produces: complete ADRs with trade-offs, security hardening, HA adjustments, cost optimization, observability architecture
-  - **Phase 04 — Design Team** [ ] (Creator/Critic/Refiner):
+  - **Phase 04 — Design Team** [x] (REQ-0016 — DONE: 2 new agents, 87 tests, DEBATE_ROUTING Phase 04 entry, 8-check Design Critic (DC-01..DC-08), 9-strategy Design Refiner, Creator awareness for system-designer):
     - **Creator** (system-designer): Produces interface-spec.yaml/openapi.yaml, module-designs/, wireframes/, error-taxonomy.md, validation-rules.json.
     - **Critic** catches: incomplete API specs, inconsistent patterns across modules, module overlap, validation gaps, missing idempotency, accessibility issues, error taxonomy holes, data flow bottlenecks
     - **Refiner** produces: OpenAPI 3.x contracts with complete error responses, unified error taxonomy, component variants for all states, validation rules at every boundary, idempotency keys
@@ -312,6 +312,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
 ## Completed
 
 ### 2026-02-14
+- [x] REQ-0016: Multi-agent Design Team — Creator/Critic/Refiner debate loop for Phase 04 design specifications (backlog 4.1 Phase 04). 2 new agents (Design Critic with 8 checks DC-01..DC-08, Design Refiner with 9 strategies), 3 modified files (orchestrator +1 DEBATE_ROUTING row, system-designer Creator awareness, command descriptions). 87 new tests, zero regressions, 1 implementation iteration. 7 FRs, 4 NFRs, 34 ACs
 - [x] REQ-0015: Multi-agent Architecture Team — Creator/Critic/Refiner debate loop for Phase 03 architecture design (backlog 4.1 Phase 03). 2 new agents (Architecture Critic, Architecture Refiner), 3 modified files (orchestrator generalized debate engine with routing table, solution-architect Creator awareness, command flag descriptions). 87 new tests, zero regressions, 2 implementation iterations. 7 FRs, 4 NFRs, 30 ACs
 - [x] REQ-0014: Multi-agent Requirements Team — Creator/Critic/Refiner debate loop for Phase 01 requirements elicitation (backlog 4.1 + 8.3). 2 new agents (Critic, Refiner), 5 modified files, debate loop orchestration, --debate/--no-debate flags, conversational Creator opening. 90 new tests, zero regressions, 2 implementation iterations. 8 FRs, 5 NFRs, 28 ACs
 - [x] REQ-0008: Backlog management integration — prompt-driven MCP delegation for Jira + Confluence backed BACKLOG.md. 5 modules (CLAUDE.md template, orchestrator extensions, requirements analyst Confluence context, command spec, hook verification). ~195 lines across 4 production files, 72 new tests, zero regressions, 2 implementation iterations. 9 FRs, 5 NFRs, 22 ACs
