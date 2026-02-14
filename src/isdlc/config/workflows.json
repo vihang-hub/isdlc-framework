@@ -33,6 +33,11 @@
           "description": "Force lightweight workflow (skip architecture and design phases)",
           "default": false,
           "flag": "-light"
+        },
+        "supervised": {
+          "description": "Enable supervised mode with review gates between phases",
+          "default": false,
+          "flag": "--supervised"
         }
       },
       "sizing": {
@@ -116,6 +121,11 @@
           "description": "Skip Phase 02 Tracing for simple bugs",
           "default": false,
           "flag": "--no-tracing"
+        },
+        "supervised": {
+          "description": "Enable supervised mode with review gates between phases",
+          "default": false,
+          "flag": "--supervised"
         }
       },
       "agent_modifiers": {

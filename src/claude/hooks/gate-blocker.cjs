@@ -528,6 +528,22 @@ function check(ctx) {
             return { decision: 'allow' };
         }
 
+        // =====================================================================
+        // Supervised Mode Note (REQ-0013):
+        // The supervised review gate (STEP 3e-review in isdlc.md) runs AFTER
+        // a phase completes and its gate requirements are satisfied. It operates
+        // at the phase-loop controller level, not at the hook level.
+        //
+        // Gate-blocker does NOT need to block for supervised mode -- it only
+        // validates iteration requirements (tests, constitutional, elicitation,
+        // delegation, artifacts). The review gate handles the user-facing
+        // pause/review/redo flow independently.
+        //
+        // When supervised_mode is active, the gate-blocker allows gate
+        // advancement as normal. The phase-loop controller's STEP 3e-review
+        // intercepts after advancement to present the review menu.
+        // =====================================================================
+
         debugLog('Gate advancement attempt detected');
 
         // Load state
@@ -717,6 +733,12 @@ function check(ctx) {
             } else {
                 genuineChecks.push(oneCheck);
             }
+        }
+
+        // Log supervised review context for debugging (REQ-0013)
+        if (state.active_workflow?.supervised_review?.status === 'reviewing') {
+            const msg = `[INFO] gate-blocker: supervised review in progress for phase '${state.active_workflow.supervised_review.phase}'. Gate check unaffected.`;
+            stderrMessages += msg + '\n';
         }
 
         // If all blocks were infrastructure, allow gate advancement
