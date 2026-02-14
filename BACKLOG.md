@@ -92,25 +92,68 @@
     - **Phase 08 becomes human-review only**: architecture decisions, business logic, design coherence, non-obvious security, merge approval
     - **Implementation options**: (A) Single Task with 3 sub-agents, (B) Phase-Loop Controller manages loop explicitly, (C) New `collaborative-implementation-engineer` agent encapsulates all 3 roles
 
-### 5. Framework Features
+### 5. Supervised Mode (Architecture)
 
-- 5.1 [ ] TOON format integration — adopt Token-Oriented Object Notation for agent prompts and state data to reduce token usage
+- 5.1 [ ] Supervised mode — configurable per-phase review gates with parallel change summaries, giving users control to review, edit, and course-correct between phases
+  - **Problem**: The framework is either fully autonomous (phases flow without pause) or broken (escalation on failure). There's no structured way for users to review phase output before the next phase consumes it. By the time the end-of-workflow Human Review Checkpoint fires, it's too late to fix Phase 03 architecture that Phase 06 already built on. Critical for existing project discovery where the user knows the codebase better than the agent.
+  - **Design**: A lightweight gate enhancement (not a new phase) with three components:
+    1. **Parallel summary generation**: During phase execution, a background sub-agent generates `.isdlc/reviews/phase-NN-summary.md` — file diffs, artifact list, key decisions made, links to all changed/created files
+    2. **Review gate at phase boundary**: Instead of auto-advancing, present summary + menu:
+       ```
+       Phase 03 (Architecture) complete. Summary: .isdlc/reviews/phase-03-summary.md
+
+       Changed files:
+         docs/architecture-overview.md (new)
+         docs/tech-stack-decision.md (new)
+         docs/database-design.md (new)
+
+       [Continue] → advance to next phase
+       [Review]   → pause for manual edits, resume when user says "continue"
+       [Redo]     → re-run phase with additional guidance
+       ```
+    3. **Resume after review**: Framework picks up from where it paused, consuming any user-edited files
+  - **Config**:
+    ```json
+    {
+      "supervised_mode": {
+        "enabled": false,
+        "review_phases": "all",
+        "parallel_summary": true,
+        "auto_advance_timeout": null
+      }
+    }
+    ```
+    - `review_phases`: `"all"` or array of specific phases (e.g., `["03", "04", "06"]`)
+    - `auto_advance_timeout`: `null` = wait forever, or minutes before auto-continuing
+  - **Builds on existing infrastructure**:
+    - Gate-blocker — add `supervised_mode.enabled` + `review_phases` check
+    - Phase-loop-controller — trigger parallel summary sub-agent during phase execution
+    - Escalation menu pattern — reuse Continue/Skip/Cancel UX
+    - Phase snapshots (REQ-0005) — already captures per-phase summaries
+    - `review-summary.md` — extend from end-of-workflow to per-phase
+    - `code_review.enabled` — precedent for config-driven behaviour change
+  - **Key use cases**: existing project discovery (architecture/design review), greenfield projects (requirements validation), any workflow where user domain knowledge exceeds agent's
+  - **Scope**: Medium — gate-blocker modification, parallel summary in phase-loop-controller, Continue/Review/Redo menu, config in state.json. No new agents needed.
+
+### 6. Framework Features
+
+- 6.1 [ ] TOON format integration — adopt Token-Oriented Object Notation for agent prompts and state data to reduce token usage
   - TOON (Token-Oriented Object Notation) reduces token consumption by 30-60% vs JSON while maintaining or improving LLM accuracy
   - Sweet spot: uniform arrays (tabular data like skill manifests, phase tables, workflow history) — field names declared once as header, rows follow
   - Less effective for deeply nested/non-uniform structures (keep JSON for those)
   - SDKs available: TypeScript, Python, Go, Rust, .NET ([github.com/toon-format/toon](https://github.com/toon-format/toon))
   - **Candidate areas**: skills-manifest.json, state.json arrays, agent prompt data injection, hook config loading
   - **Not a full JSON replacement** — complement for token-heavy tabular data only
-- 5.2 [ ] Improve search capabilities to help Claude be more effective
-- 5.3 [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
-- 5.4 [ ] Add /isdlc refactor command and workflow — pre-requisite: 100% automated E2E testing
-- 5.5 [ ] Separate commands to manage deployments and operations
-- 5.6 [ ] State.json pruning at workflow completion — actively prune stale/transient fields from state.json at the end of every feature or fix workflow
+- 6.2 [ ] Improve search capabilities to help Claude be more effective
+- 6.3 [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
+- 6.4 [ ] Add /isdlc refactor command and workflow — pre-requisite: 100% automated E2E testing
+- 6.5 [ ] Separate commands to manage deployments and operations
+- 6.6 [ ] State.json pruning at workflow completion — actively prune stale/transient fields from state.json at the end of every feature or fix workflow
   - After finalize phase, remove accumulated runtime data: iteration logs, hook activity traces, intermediate phase artifacts, resolved escalations
   - Keep only durable state: workflow history summary, project-level config, skill usage stats
   - Prevents state.json from growing unbounded across workflows and avoids stale data bleeding into subsequent runs
   - Audit and restructure state.json schema for human readability — ensure the structure is well-organized, logically grouped, and understandable when inspected manually (not just machine-consumed)
-- 5.7 [ ] Epic decomposition for large features (depends on adaptive workflow sizing / REQ-0011)
+- 6.7 [ ] Epic decomposition for large features (depends on adaptive workflow sizing / REQ-0011)
   - **Trigger**: Impact Analysis estimates `large` scope (20+ files) or `high` risk
   - **Process**: After sizing decision, Requirements Analyst re-enters to break the feature into sub-features with clear boundaries
   - **Execution model**: Each sub-feature gets an independent mini-cycle with its own gates:
@@ -122,7 +165,7 @@
     ```
   - **Benefits**: Catch problems early per sub-feature, reduce context window pressure, intermediate quality gates, partial progress is usable
   - **State tracking**: `state.json` tracks parent feature + sub-features with individual phase progress
-- 5.8 [ ] Ollama / local LLM support — enable and test the framework with Ollama-hosted open models
+- 6.8 [ ] Ollama / local LLM support — enable and test the framework with Ollama-hosted open models
   - Ollama v0.14+ natively implements the Anthropic Messages API, Claude Code supports it via 3 env vars (`ANTHROPIC_BASE_URL`, `ANTHROPIC_AUTH_TOKEN`, `ANTHROPIC_API_KEY`)
   - Quick start: `ollama launch claude` — or manual config with `claude --model <model>`
   - Recommended models: qwen3-coder, glm-4.7, gpt-oss:20b/120b (minimum 64k context window)
@@ -132,33 +175,33 @@
   - **Cloud variants**: Ollama `:cloud` models (e.g., `kimi-k2.5:cloud`) available for faster inference without API keys
   - **Not blocked by Anthropic**: In Jan 2026, Anthropic blocked third-party tools (OpenCode, xAI) from using Claude Pro/Max subscriptions to access proprietary Claude models (anti-arbitrage). Ollama + Claude Code is unaffected — it uses Anthropic's own CLI pointed at local open-source models, no Anthropic subscription or API key needed. Still working as of Feb 2026, though streaming and tool-calling edge cases are still being patched in Ollama.
   - Docs: [docs.ollama.com/integrations/claude-code](https://docs.ollama.com/integrations/claude-code)
-- 5.9 [ ] SonarQube integration
+- 6.9 [ ] SonarQube integration
 
-### 6. Product/Vision
+### 7. Product/Vision
 
-- 6.1 [ ] Board-driven autonomous development (read from board, develop without intervention when users are away)
-- 6.2 [ ] Design systems using variant.ai
-- 6.3 [ ] Feedback collector, analyser, and roadmap creator
-- 6.4 [ ] Analytics manager (integrated with feedback collector/roadmap)
-- 6.5 [ ] User auth and profile management
-- 6.6 [ ] Marketing integration for SMBs
-- 6.7 [ ] Backlog management integration — connect iSDLC workflows to external project management tools (Jira, Linear, GitHub Issues, Azure DevOps, etc.)
+- 7.1 [ ] Board-driven autonomous development (read from board, develop without intervention when users are away)
+- 7.2 [ ] Design systems using variant.ai
+- 7.3 [ ] Feedback collector, analyser, and roadmap creator
+- 7.4 [ ] Analytics manager (integrated with feedback collector/roadmap)
+- 7.5 [ ] User auth and profile management
+- 7.6 [ ] Marketing integration for SMBs
+- 7.7 [ ] Backlog management integration — connect iSDLC workflows to external project management tools (Jira, Linear, GitHub Issues, Azure DevOps, etc.)
   - Sync workflow status, phase progress, and gate results to board tickets automatically
   - Create/update tickets from iSDLC artifacts (requirements → epics/stories, bugs → issues)
   - Read from board to pick up next work item (feeds into board-driven autonomous development)
   - Pluggable adapter pattern — Jira first (Atlassian MCP already available), others via provider interface
 
-### 7. Workflow Quality
+### 8. Workflow Quality
 
-- 7.1 [ ] Requirements debate before workflow start — for new features and bugs, engage in a structured discussion/debate about the requirement or issue before initiating the iSDLC workflow. Clarify scope, challenge assumptions, explore alternatives, and converge on a shared understanding. Only after the debate concludes should the workflow (feature/fix) be kicked off with a well-refined description.
+- 8.1 [ ] Requirements debate before workflow start — for new features and bugs, engage in a structured discussion/debate about the requirement or issue before initiating the iSDLC workflow. Clarify scope, challenge assumptions, explore alternatives, and converge on a shared understanding. Only after the debate concludes should the workflow (feature/fix) be kicked off with a well-refined description.
 
-### 8. Investigation
+### 9. Investigation
 
-- 8.1 [ ] Phase handshake audit — investigate whether the handshake between phases is working correctly (state transitions, artifact passing, gate validation, pre-delegation state writes, post-phase updates). Verify no data loss or stale state between phase boundaries.
+- 9.1 [ ] Phase handshake audit — investigate whether the handshake between phases is working correctly (state transitions, artifact passing, gate validation, pre-delegation state writes, post-phase updates). Verify no data loss or stale state between phase boundaries.
 
-### 9. Developer Experience
+### 10. Developer Experience
 
-- 9.1 [ ] Install script landing page and demo GIF — update the install script landing/README with a polished visual experience including an animated GIF demonstrating the framework in action (invisible framework flow, workflow progression, quality gates)
+- 10.1 [ ] Install script landing page and demo GIF — update the install script landing/README with a polished visual experience including an animated GIF demonstrating the framework in action (invisible framework flow, workflow progression, quality gates)
 
 ## Completed
 
