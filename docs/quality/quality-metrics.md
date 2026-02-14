@@ -1,104 +1,61 @@
-# Quality Metrics: REQ-0008-backlog-management-integration
+# Quality Metrics: REQ-0014-backlog-scaffolding
 
 **Date**: 2026-02-14
 **Phase**: 08-code-review
-**Workflow**: Feature (REQ-0008)
-**Branch**: feature/REQ-0008-backlog-management-integration
+**Workflow**: Feature (REQ-0014)
 
 ---
 
-## Test Metrics
+## 1. Test Results
+
+| Suite | Pass | Fail | Total | Notes |
+|-------|------|------|-------|-------|
+| ESM (lib/*.test.js) | 598 | 1 | 599 | 1 pre-existing TC-E09 |
+| CJS (hooks/tests/*.test.cjs) | 1280 | 0 | 1280 | Clean |
+| **Total** | **1878** | **1** | **1879** | 0 regressions |
+
+### New Tests Added
+
+| File | New Tests | All Pass |
+|------|-----------|----------|
+| lib/installer.test.js | 15 | Yes (56/56 total) |
+| lib/uninstaller.test.js | 3 | Yes (22/22 total) |
+| **Total** | **18** | **18/18** |
+
+## 2. Code Metrics
 
 | Metric | Value | Threshold | Status |
 |--------|-------|-----------|--------|
-| New feature tests passing | 72/72 (100%) | 100% | PASS |
-| Full CJS suite passing | 450/493 (91.3%) | No new failures | PASS |
-| New regressions introduced | 0 | 0 | PASS |
-| Pre-existing failures | 43 (workflow-finalizer: 15, cleanup: 28) | Known/documented | PASS |
+| New production code | 20 lines | N/A | Minimal |
+| New test code | ~160 lines | N/A | 8:1 test-to-code ratio |
+| Cyclomatic complexity (BACKLOG block) | 2 | <10 | PASS |
+| Function length (generateBacklogMd) | 11 lines | <30 | PASS |
+| Total functions in installer.js | 9 | N/A | No change |
+| Total lines in installer.js | 1065 | N/A | +20 from baseline |
 
-## Coverage Metrics
+## 3. Coverage
 
-| Metric | Value | Threshold | Status |
-|--------|-------|-----------|--------|
-| Functional requirements covered | 9/9 (100%) | 80% | PASS |
-| Non-functional requirements covered | 5/5 (100%) | 80% | PASS |
-| Acceptance criteria covered | 21/21 (100%) | 80% | PASS |
-| Validation rules covered | 18/18 (100%) | 80% | PASS |
-| Module coverage (M1-M5) | 5/5 (100%) | 80% | PASS |
-| Test-to-AC traceability | 72 tests -> 21 ACs | Full traceability | PASS |
+| Requirement Type | Covered | Total | Percentage |
+|-----------------|---------|-------|------------|
+| Functional Requirements (FRs) | 4 | 4 | 100% |
+| Non-Functional Requirements (NFRs) | 2 | 2 | 100% |
+| Acceptance Criteria (ACs) | 12 | 12 | 100% |
+| Test Cases Specified | 18 | 18 | 100% |
+| Test Cases Implemented | 18 | 18 | 100% |
 
-## Code Quality Metrics
-
-| Metric | Value | Threshold | Status |
-|--------|-------|-----------|--------|
-| Critical issues | 0 | 0 | PASS |
-| High issues | 0 | 0 | PASS |
-| Medium issues | 0 | 0 | PASS |
-| Low issues | 1 | <= 5 | PASS |
-| Observations (informational) | 2 | No limit | INFO |
-
-## Complexity Metrics
-
-| Metric | Value | Notes |
-|--------|-------|-------|
-| Files modified (production) | 4 | Markdown/prompt files only |
-| Files verified (no-op) | 1 | menu-halt-enforcer.cjs |
-| Files added (test) | 5 | New test files |
-| Files extended (test) | 1 | menu-halt-enforcer.test.cjs (+3 tests) |
-| Runtime code changes | 0 | No .js/.cjs production code modified |
-| Lines added (production) | ~195 | Prompt/markdown content |
-| Lines added (test) | ~800 | 6 test files |
-| Cyclomatic complexity delta | 0 | No runtime code changes |
-
-## Static Analysis
+## 4. Security
 
 | Check | Result |
 |-------|--------|
-| JavaScript syntax check (menu-halt-enforcer.cjs) | PASS |
-| npm audit | PASS (0 vulnerabilities) |
-| Markdown formatting (CLAUDE.md.template) | PASS -- tables well-formed, sections properly structured |
-| Markdown formatting (orchestrator) | PASS -- existing patterns followed |
-| Markdown formatting (requirements analyst) | PASS -- consistent with existing sections |
-| Markdown formatting (isdlc.md) | PASS -- inline updates follow existing style |
+| No secrets in code | PASS |
+| No user input in template | PASS |
+| Path traversal protection | PASS (uses path.join) |
+| Dependency scan (npm audit) | 0 vulnerabilities |
 
-## Architecture Compliance
+## 5. Regression Check
 
-| ADR | Status |
-|-----|--------|
-| ADR-0001: Prompt-driven MCP delegation | PASS |
-| ADR-0002: BACKLOG.md as data store | PASS |
-| ADR-0003: MCP-managed authentication | PASS |
-| ADR-0004: Instruction-based adapter pattern | PASS |
-
-## Quality Gate Status (GATE-08)
-
-| Gate Item | Status |
-|-----------|--------|
-| Code review completed | PASS |
-| No critical findings | PASS (0 findings) |
-| Static analysis passing | PASS |
-| Test coverage meets thresholds | PASS (100% FR/NFR/AC/VR) |
-| Coding standards followed | PASS |
-| Performance acceptable | PASS (no runtime code paths) |
-| Security review complete | PASS (no credentials, MCP-managed auth) |
-| QA sign-off obtained | PASS |
-
----
-
-## Trend (Last 3 Feature Workflows)
-
-| Metric | REQ-0007 | REQ-0012 | REQ-0008 |
-|--------|----------|----------|----------|
-| Critical findings | 0 | 0 | 0 |
-| Total findings | 0 | 0 | 1 (low) |
-| Tests passing | 388/431 | 1727/1728 | 450/493 |
-| New tests written | 33 | 49 | 72 |
-| AC coverage | 14/14 | 28/28 | 21/21 |
-| Regressions | 0 | 0 | 0 |
-
-Note: Test suite size varies because suites ran at different points in the project's lifecycle (different feature branches, different pre-existing failures).
-
----
-
-**Status**: All quality metrics within acceptable thresholds.
-**Generated**: 2026-02-14T18:00:00Z
+| Baseline | Current | Delta |
+|----------|---------|-------|
+| 1860 tests | 1878 tests | +18 (all new) |
+| 1 pre-existing failure (TC-E09) | 1 pre-existing failure (TC-E09) | No change |
+| 0 vulnerabilities | 0 vulnerabilities | No change |
