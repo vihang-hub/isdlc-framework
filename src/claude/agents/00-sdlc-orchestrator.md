@@ -1032,6 +1032,7 @@ DEBATE_ROUTING:
 |-----------|--------------|-------------|--------------|----------------|------------------|
 | 01-requirements | 01-requirements-analyst.md | 01-requirements-critic.md | 01-requirements-refiner.md | requirements-spec.md, user-stories.json, nfr-matrix.md, traceability-matrix.csv | requirements-spec.md |
 | 03-architecture | 02-solution-architect.md | 02-architecture-critic.md | 02-architecture-refiner.md | architecture-overview.md, tech-stack-decision.md, database-design.md, security-architecture.md | architecture-overview.md |
+| 04-design | 03-system-designer.md | 03-design-critic.md | 03-design-refiner.md | interface-spec.yaml, module-designs/, error-taxonomy.md, validation-rules.json | interface-spec.yaml |
 
 Lookup logic:
 - IF current_phase IN DEBATE_ROUTING: use routing entry for phase-specific agents

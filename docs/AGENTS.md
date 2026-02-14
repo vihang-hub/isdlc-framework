@@ -1,14 +1,14 @@
 # iSDLC Agents
 
-This document provides detailed information about all 52 agents in the iSDLC framework.
+This document provides detailed information about all 54 agents in the iSDLC framework.
 
 ## Overview
 
-The framework's 52 agents are organized into five groups:
+The framework's 54 agents are organized into five groups:
 
 | Group | Count | Purpose |
 |-------|-------|---------|
-| [SDLC Agents](#sdlc-agents) | 20 | Execute development phases (1 orchestrator + 15 phase agents + 4 debate agents) |
+| [SDLC Agents](#sdlc-agents) | 22 | Execute development phases (1 orchestrator + 15 phase agents + 6 debate agents) |
 | [Discover Agents](#discover-agents) | 23 | Analyze projects before development begins (with inception party for new projects) |
 | [Quick Scan Agent](#quick-scan-agent-phase-00) | 1 | Lightweight scope estimation before requirements |
 | [Impact Analysis Agents](#impact-analysis-agents-phase-02) | 4 | Full feature impact analysis after requirements |
@@ -29,7 +29,9 @@ The 18 SDLC agents implement a 1-to-1 mapping between phases and agents (plus 2 
 | **03** | **Solution Architect** (Creator in debate mode) | System architecture, tech stack, database design | architecture-overview.md, tech-stack-decision.md, ADRs |
 | **03** | **Architecture Critic** (`02-architecture-critic`, debate mode) | Reviews architecture artifacts for NFR misalignment, STRIDE gaps, SPOF, cost issues | round-N-critique.md |
 | **03** | **Architecture Refiner** (`02-architecture-refiner`, debate mode) | Addresses architecture critique findings, enforces STRIDE coverage and HA design | Updated architecture artifacts, change log |
-| **04** | **System Designer** | API contracts, module design, UI/UX wireframes | openapi.yaml, module-designs/, wireframes/ |
+| **04** | **System Designer** (Creator in debate mode) | API contracts, module design, UI/UX wireframes | openapi.yaml, module-designs/, wireframes/ |
+| **04** | **Design Critic** (`03-design-critic`, debate mode) | Reviews design artifacts for incomplete API specs, inconsistent patterns, validation gaps, error taxonomy holes | round-N-critique.md |
+| **04** | **Design Refiner** (`03-design-refiner`, debate mode) | Addresses design critique findings, enforces complete API contracts, unified patterns, comprehensive validation | Updated design artifacts, change log |
 | **05** | **Test Design Engineer** | Test strategy, test cases, traceability | test-strategy.md, test-cases/, traceability-matrix.csv |
 | **06** | **Software Developer** | Implementation (TDD), unit tests, coding standards | source-code/, unit-tests/, coverage-report.html |
 | **07** | **Integration Tester** | Integration testing, E2E testing, API contract tests | integration-tests/, e2e-tests/, test-execution-report.md |
@@ -239,6 +241,8 @@ Agent definitions are located in `.claude/agents/`:
 ├── 01-requirements-analyst.md
 ├── 02-solution-architect.md
 ├── 03-system-designer.md
+├── 03-design-critic.md
+├── 03-design-refiner.md
 ├── 04-test-design-engineer.md
 ├── 05-software-developer.md
 ├── 06-integration-tester.md
