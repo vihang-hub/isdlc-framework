@@ -1015,6 +1015,164 @@ After user responds, follow the A/R/C menu pattern for each step.
 Only create artifacts when user selects [S] Save in Step 7.
 ```
 
+## 7.5 DEBATE LOOP ORCHESTRATION (Phase 01 Only)
+
+When the feature workflow reaches Phase 01, resolve debate mode before delegation.
+
+### Step 1: Resolve Debate Mode
+
+Read flags from the Task prompt and sizing from active_workflow:
+
+```
+debate_mode = resolveDebateMode():
+  IF flags.no_debate == true:  return false    // Explicit override
+  IF flags.debate == true:     return true     // Explicit override
+  IF flags.light == true:      return false    // Light = minimal process
+  IF sizing == "standard":     return true     // Default for standard
+  IF sizing == "epic":         return true     // Default for epic
+  ELSE:                        return true     // Debate is the new default
+```
+
+Write to state.json:
+- active_workflow.debate_mode = {resolved value}
+
+### Step 2: Conditional Delegation
+
+IF debate_mode == false:
+  - Delegate to 01-requirements-analyst.md as today (NO DEBATE_CONTEXT)
+  - STOP (single-agent path, unchanged)
+
+IF debate_mode == true:
+  - Initialize debate_state in active_workflow:
+    ```json
+    {
+      "debate_state": {
+        "round": 0,
+        "max_rounds": 3,
+        "converged": false,
+        "blocking_findings": null,
+        "rounds_history": []
+      }
+    }
+    ```
+  - Proceed to Step 3
+
+### Step 3: Creator Delegation (Round 1)
+
+debate_state.round = 1
+Update state.json with round number.
+
+Delegate to 01-requirements-analyst.md with Task prompt:
+```
+DEBATE_CONTEXT:
+  mode: creator
+  round: 1
+
+{Feature description from user}
+{Discovery context if available}
+
+Produce: requirements-spec.md, user-stories.json, nfr-matrix.md,
+         traceability-matrix.csv
+```
+
+After Creator completes:
+- Verify all 4 artifacts exist in artifact folder
+- Proceed to Step 4
+
+### Step 4: Critic-Refiner Loop
+
+WHILE debate_state.round <= debate_state.max_rounds
+      AND NOT debate_state.converged:
+
+  #### 4a: Critic Review
+  Delegate to 01-requirements-critic.md with Task prompt:
+  ```
+  DEBATE_CONTEXT:
+    round: {debate_state.round}
+
+  Review the following Phase 01 artifacts:
+  {list paths to all 4 artifacts}
+  {feature description for scope reference}
+  ```
+
+  After Critic completes:
+  - Read round-{N}-critique.md from artifact folder
+  - Parse BLOCKING findings count from the "## Summary" section
+  - Record in debate_state:
+    ```
+    rounds_history.push({
+      round: debate_state.round,
+      blocking: {count},
+      warnings: {count},
+      action: "pending"
+    })
+    ```
+  - Update state.json
+
+  #### 4b: Convergence Check
+  IF blocking_count == 0:
+    - debate_state.converged = true
+    - rounds_history[last].action = "converge"
+    - Update state.json
+    - BREAK (exit loop, proceed to Step 5)
+
+  IF debate_state.round >= debate_state.max_rounds:
+    - debate_state.converged = false
+    - rounds_history[last].action = "max-rounds-reached"
+    - Update state.json
+    - BREAK (exit loop, proceed to Step 5 with unconverged status)
+
+  #### 4c: Refiner Improvement
+  rounds_history[last].action = "refine"
+  Delegate to 01-requirements-refiner.md with Task prompt:
+  ```
+  DEBATE_CONTEXT:
+    round: {debate_state.round}
+
+  Improve the following artifacts based on the Critic's findings:
+  {list paths to all 4 artifacts}
+  {path to round-{N}-critique.md}
+  {feature description for context}
+  ```
+
+  After Refiner completes:
+  - Verify updated artifacts exist
+  - debate_state.round += 1
+  - Update state.json
+  - CONTINUE loop (Critic reviews again)
+
+### Step 5: Post-Loop Finalization
+
+#### Generate debate-summary.md
+
+Write debate-summary.md to artifact folder with:
+- Round count, convergence status
+- Per-round history (findings, actions)
+- Key changes summary
+
+#### Handle Unconverged Case
+IF debate_state.converged == false:
+  - Append to requirements-spec.md:
+    "[WARNING: Debate did not converge after {max_rounds} rounds.
+     {remaining_blocking} BLOCKING finding(s) remain.
+     See debate-summary.md for details.]"
+  - Log warning in state.json history
+
+#### Edge Cases
+
+| Edge Case | Handling |
+|-----------|---------|
+| Convergence on Round 1 (Critic finds 0 BLOCKING) | Refiner is NOT invoked. debate-summary.md notes "Converged on first review." |
+| Creator fails to produce all 4 artifacts | Log error, attempt debate with available artifacts. If requirements-spec.md missing, abort debate and fall back to single-agent mode. |
+| Critic produces malformed critique (cannot parse BLOCKING count) | Treat as 0 BLOCKING (fail-open per Article X). Log warning. |
+| Refiner does not address all BLOCKING findings | Next Critic round will re-flag them. Eventually hits max-rounds limit. |
+| Both --debate and --no-debate flags | --no-debate wins (conservative, per ADR-0003). |
+
+#### Update State
+- Update active_workflow.debate_state with final status
+- Log completion in state.json history
+- Proceed to Phase 01 gate validation
+
 ## 8. Phase Gate Validation
 
 Before advancing phases, rigorously validate phase gates.

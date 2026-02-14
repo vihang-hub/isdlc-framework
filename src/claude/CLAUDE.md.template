@@ -49,6 +49,15 @@ Progress updates, phase transitions, and quality checks remain fully visible to 
 
 Do NOT implement changes directly without going through a workflow. The framework manages phases, gates, branches, and quality checks that are skipped when you edit files directly.
 
+### Debate Mode (Multi-Agent Requirements)
+
+For standard and epic feature workflows, Phase 01 uses a multi-agent debate
+loop: Creator produces requirements, Critic reviews them, Refiner improves
+them. This runs automatically -- no user action needed.
+
+To disable: `/isdlc feature "description" --no-debate`
+To force enable (even for -light): `/isdlc feature "description" --debate`
+
 ---
 
 ## LLM Provider Configuration
