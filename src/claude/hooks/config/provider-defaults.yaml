@@ -44,38 +44,43 @@ providers:
     base_url: "http://localhost:11434"
     api_key: "ollama"
     auth_token: "ollama"
+    # Minimum recommended context window: 64k tokens
+    # Models below 64k are not recommended for iSDLC multi-agent workflows
     models:
       - id: "qwen3-coder"
         alias: "qwen-coder"
-        context_window: 32768
+        context_window: 131072
         capabilities:
           - coding
           - tool_use
         cost_tier: "free"
         min_vram_gb: 24
-      - id: "deepseek-coder-v2:16b"
-        alias: "deepseek"
+      - id: "glm-4.7"
+        alias: "glm"
+        context_window: 131072
+        capabilities:
+          - coding
+          - tool_use
+          - reasoning
+        cost_tier: "free"
+        min_vram_gb: 24
+      - id: "gpt-oss:20b"
+        alias: "gpt-oss-small"
         context_window: 65536
         capabilities:
           - coding
           - tool_use
         cost_tier: "free"
         min_vram_gb: 16
-      - id: "codellama:34b"
-        alias: "codellama"
-        context_window: 16384
-        capabilities:
-          - coding
-        cost_tier: "free"
-        min_vram_gb: 24
-      - id: "qwen2.5-coder:14b"
-        alias: "qwen25-coder"
-        context_window: 32768
+      - id: "gpt-oss:120b"
+        alias: "gpt-oss-large"
+        context_window: 65536
         capabilities:
           - coding
           - tool_use
+          - reasoning
         cost_tier: "free"
-        min_vram_gb: 12
+        min_vram_gb: 48
     health_check:
       endpoint: "/api/tags"
       timeout_ms: 2000

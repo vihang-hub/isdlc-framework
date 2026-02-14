@@ -51,6 +51,69 @@ Do NOT implement changes directly without going through a workflow. The framewor
 
 ---
 
+## LLM Provider Configuration
+
+The framework supports multiple LLM providers. Your provider was configured during installation.
+
+### Active Provider
+
+The framework auto-detects your provider based on:
+1. Environment variables (`ANTHROPIC_BASE_URL`)
+2. Project configuration (`.isdlc/providers.yaml`)
+3. Health probe (localhost:11434 for Ollama)
+4. Default: Anthropic API
+
+### Ollama Quick Start
+
+If using Ollama for local inference:
+
+```bash
+# Start Ollama server
+ollama serve
+
+# Pull a recommended model (choose based on your VRAM)
+ollama pull qwen3-coder       # 24GB VRAM - Best for iSDLC
+ollama pull glm-4.7            # 24GB VRAM - Strong reasoning
+ollama pull gpt-oss:20b        # 16GB VRAM - Budget option
+
+# Launch Claude Code (auto-detects Ollama)
+claude
+```
+
+### Manual Environment Variables
+
+For advanced users or custom setups:
+
+```bash
+# Ollama
+export ANTHROPIC_BASE_URL=http://localhost:11434
+export ANTHROPIC_AUTH_TOKEN=ollama
+export ANTHROPIC_API_KEY=""
+
+# Anthropic API (default)
+export ANTHROPIC_API_KEY=sk-ant-...
+```
+
+### Recommended Models (Minimum 64k Context)
+
+| Model | VRAM | Context | Best For |
+|-------|------|---------|----------|
+| qwen3-coder | 24GB | 128k | General coding, tool use |
+| glm-4.7 | 24GB | 128k | Reasoning + coding |
+| gpt-oss:20b | 16GB | 64k | Budget local inference |
+| gpt-oss:120b | 48GB | 64k | Premium local inference |
+
+### Known Limitations of Local Models
+
+- **Complex multi-agent workflows**: Open models may struggle with iSDLC's multi-phase orchestration. Quality may vary for architecture, design, and code review phases.
+- **Tool calling**: Support for structured tool calls varies by model. Some models may fail to produce valid JSON tool responses.
+- **Large context requirements**: iSDLC agents exchange large prompts. Models with less than 64k context may truncate important context.
+- **Structured output reliability**: JSON schema adherence varies. Gate validation and state management may encounter parsing errors.
+
+Use `/provider status` to check your provider health and `/provider set <mode>` to adjust routing.
+
+---
+
 ## Agent Framework Context
 
 Shared protocols referenced by all iSDLC agents. Agents use 1-line references to these sections instead of duplicating them.
