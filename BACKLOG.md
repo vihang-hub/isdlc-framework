@@ -301,33 +301,22 @@ Three modes controlling the developer's role during a workflow, activated via fe
   - **Relationship to other items**: Complements 4.1 (multi-agent teams — provides the persona council), subsumes the Phase 01 aspects of 8.1 (requirements debate). Does not affect bug fix flow.
   - **Complexity**: Medium (2 files to rewrite, possible new persona config, interaction pattern design, naming convention decision)
 
-### 9. Bugs
+### 9. Investigation
 
-- 9.1 [x] BUG-0015: branch-guard false positive after merge — **FIXED** (2026-02-14)
-  - Added `branchExistsInGit()` using `git rev-parse --verify refs/heads/{name}` — fail-open if branch deleted
-  - 4 new tests (T32-T35), 5 existing updated
-- 9.2 [x] BUG-0016: state-file-guard false positive on read-only Bash commands — **FIXED** (2026-02-14)
-  - Added `isInlineScriptWrite()` — inspects script body for actual write operations instead of blanket-blocking `node -e`
-  - 8 integration tests + 12 unit tests added
-- 9.3 [x] BUG-0017: Orchestrator exceeds `init-and-phase-01` scope — **FIXED** (2026-02-14)
-  - Added CRITICAL-level MODE ENFORCEMENT block at top of orchestrator prompt (before CORE MISSION)
-  - Added mode-aware guard in Section 4a (before automatic transitions)
-  - Added step 7.5 in Section 4 advancement algorithm (before delegate to next phase)
-  - 20 structural prompt validation tests, regression fix in early-branch-creation.test.js
+- 9.1 [ ] Phase handshake audit — investigate whether the handshake between phases is working correctly (state transitions, artifact passing, gate validation, pre-delegation state writes, post-phase updates). Verify no data loss or stale state between phase boundaries.
 
-### 10. Investigation
+### 10. Developer Experience
 
-- 10.1 [ ] Phase handshake audit — investigate whether the handshake between phases is working correctly (state transitions, artifact passing, gate validation, pre-delegation state writes, post-phase updates). Verify no data loss or stale state between phase boundaries.
-
-### 11. Developer Experience
-
-- 11.1 [ ] Install script landing page and demo GIF — update the install script landing/README with a polished visual experience including an animated GIF demonstrating the framework in action (invisible framework flow, workflow progression, quality gates)
+- 10.1 [ ] Install script landing page and demo GIF — update the install script landing/README with a polished visual experience including an animated GIF demonstrating the framework in action (invisible framework flow, workflow progression, quality gates)
 
 ## Completed
 
 ### 2026-02-14
 - [x] REQ-0008: Backlog management integration — prompt-driven MCP delegation for Jira + Confluence backed BACKLOG.md. 5 modules (CLAUDE.md template, orchestrator extensions, requirements analyst Confluence context, command spec, hook verification). ~195 lines across 4 production files, 72 new tests, zero regressions, 2 implementation iterations. 9 FRs, 5 NFRs, 22 ACs
 - [x] REQ-0013: Supervised mode — per-phase review gates with Continue/Review/Redo menu, parallel change summaries, redo circuit breaker (max 3), session recovery. 4 new common.cjs helpers, STEP 3e-review in phase-loop controller, --supervised flag, 88 new tests (80 supervised + 8 gate-blocker), 1228/1228 CJS passing, 8 FRs, 6 NFRs, 35 ACs
+- [x] BUG-0015: branch-guard false positive after merge — added `branchExistsInGit()` using `git rev-parse --verify`, 4 new tests
+- [x] BUG-0016: state-file-guard false positive on read-only Bash commands — added `isInlineScriptWrite()` to inspect script body, 20 tests
+- [x] BUG-0017: Orchestrator exceeds `init-and-phase-01` scope — MODE ENFORCEMENT block + mode-aware guards in orchestrator, 20 tests
 
 ### 2026-02-13
 - [x] BUG-0014: Early branch creation — moved branch creation from post-GATE-01 to workflow initialization time. All phases now execute on the feature/bugfix branch, keeping main untouched. 3 doc files (14 locations), 22 new tests, 0 regressions
