@@ -17,7 +17,13 @@
  * Fail-open: any error results in silent exit (exit 0, no output)
  *
  * Traces to: FR-04, AC-04, AC-04a-e, BUG-0012 FR-01 through FR-05, AC-07 through AC-20
- * Version: 2.0.0
+ * Branch existence verification (BUG-0015):
+ *   - Before blocking commits to main, verify the workflow branch exists in git
+ *   - If the branch was already deleted (post-merge, pre-finalize), allow the commit
+ *   - Uses `git rev-parse --verify refs/heads/{branch}` for verification
+ *   - Fail-open on any git error
+ *
+ * Version: 2.1.0
  */
 
 const {
@@ -54,6 +60,26 @@ function getCurrentBranch() {
     } catch (e) {
         debugLog('git rev-parse failed:', e.message);
         return null;
+    }
+}
+
+/**
+ * Verify that a branch exists in the local git repository.
+ * Uses `git rev-parse --verify refs/heads/{name}` which exits 0 if the ref exists.
+ * @param {string} branchName - The branch name to verify
+ * @returns {boolean} true if the branch exists, false otherwise
+ */
+function branchExistsInGit(branchName) {
+    try {
+        execSync(`git rev-parse --verify refs/heads/${branchName}`, {
+            encoding: 'utf8',
+            timeout: 3000,
+            stdio: ['pipe', 'pipe', 'pipe']
+        });
+        return true;
+    } catch (e) {
+        debugLog('Branch does not exist or git failed:', branchName, e.message);
+        return false;
     }
 }
 
@@ -102,6 +128,15 @@ async function main() {
             process.exit(0);
         }
 
+        // BUG-0015: Verify the workflow branch actually exists in git.
+        // After merge + branch deletion, state.json may still show status='active'
+        // until the orchestrator finalizes. In this window, allow commits.
+        const workflowBranchName = gitBranch.name || '';
+        if (workflowBranchName && !branchExistsInGit(workflowBranchName)) {
+            debugLog('Workflow branch no longer exists in git, allowing (fail-open):', workflowBranchName);
+            process.exit(0);
+        }
+
         // Get current branch from git
         const currentBranch = getCurrentBranch();
         if (!currentBranch) {
@@ -136,7 +171,6 @@ async function main() {
         // Phase-aware commit blocking on feature/bugfix branches (BUG-0012)
         // Only apply phase blocking if the current branch matches the workflow branch.
         // If on a different branch (e.g., hotfix/urgent), allow unconditionally.
-        const workflowBranchName = gitBranch.name || '';
         if (currentBranch !== workflowBranchName) {
             debugLog('Current branch does not match workflow branch, allowing');
             process.exit(0);
