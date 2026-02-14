@@ -303,16 +303,12 @@ Three modes controlling the developer's role during a workflow, activated via fe
 
 ### 9. Bugs
 
-- 9.1 [ ] BUG-0015: branch-guard false positive after merge — blocks commits to main when feature branch was already merged/deleted but state.json not yet finalized
-  - **Trigger**: Commit to main in the window between `git merge`/branch deletion and orchestrator finalize (state.json still has `active_workflow.git_branch.status: 'active'`)
-  - **Root cause**: Hook trusts state.json's `git_branch.status` without verifying the branch actually exists in git
-  - **Fix**: Add `git rev-parse --verify <branch>` check — if branch no longer exists, allow commit (fail-open)
-  - **Missing test**: Post-merge scenario where branch is deleted but state not finalized
-- 9.2 [ ] BUG-0016: state-file-guard false positive on read-only Bash commands — blocks `node -e` scripts that only read state.json
-  - **Trigger**: `node -e "...readFileSync('.isdlc/state.json')..."` blocked as a "write" because hook matches on `/\bnode\s+-e\b/` pattern
-  - **Root cause**: Syntactic pattern matching on command signature (`node -e`) instead of semantic analysis — assumes all inline scripts are writes
-  - **Fix**: For `node -e` commands, inspect script body for actual write operations (`writeFileSync`, `writeFile`, `appendFile`); if none found, treat as read-only
-  - **Missing test**: `node -e` with `readFileSync` only (no write operations)
+- 9.1 [x] BUG-0015: branch-guard false positive after merge — **FIXED** (2026-02-14)
+  - Added `branchExistsInGit()` using `git rev-parse --verify refs/heads/{name}` — fail-open if branch deleted
+  - 4 new tests (T32-T35), 5 existing updated
+- 9.2 [x] BUG-0016: state-file-guard false positive on read-only Bash commands — **FIXED** (2026-02-14)
+  - Added `isInlineScriptWrite()` — inspects script body for actual write operations instead of blanket-blocking `node -e`
+  - 8 integration tests + 12 unit tests added
 
 ### 10. Investigation
 
