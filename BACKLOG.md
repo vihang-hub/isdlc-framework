@@ -92,7 +92,15 @@
     - **Phase 08 becomes human-review only**: architecture decisions, business logic, design coherence, non-obvious security, merge approval
     - **Implementation options**: (A) Single Task with 3 sub-agents, (B) Phase-Loop Controller manages loop explicitly, (C) New `collaborative-implementation-engineer` agent encapsulates all 3 roles
 
-### 5. Supervised Mode (Architecture)
+### 5. Developer Engagement Modes (Architecture)
+
+Three modes controlling the developer's role during a workflow, activated via feature toggle:
+
+| Mode | Developer Role | Phases flow | When to use |
+|------|---------------|-------------|-------------|
+| **Auto** (default) | Minimal input — answer questions, approve final gate | Autonomous, no pause between phases | Routine tasks, high-confidence features, trusted patterns |
+| **Supervised** | Reviewer — inspect, edit, and course-correct between phases | Pause at configurable review gates | Existing projects, domain-heavy features, learning the codebase |
+| **Collaborative** | Reviewer + contributor — produce artifacts alongside the AI | Pause at review gates + suggest parallel human tasks + consume contributed artifacts | Complex features, developer has domain expertise, "boring AI" problem |
 
 - 5.1 [ ] Supervised mode — configurable per-phase review gates with parallel change summaries, giving users control to review, edit, and course-correct between phases
   - **Problem**: The framework is either fully autonomous (phases flow without pause) or broken (escalation on failure). There's no structured way for users to review phase output before the next phase consumes it. By the time the end-of-workflow Human Review Checkpoint fires, it's too late to fix Phase 03 architecture that Phase 06 already built on. Critical for existing project discovery where the user knows the codebase better than the agent.
@@ -134,6 +142,62 @@
     - `code_review.enabled` — precedent for config-driven behaviour change
   - **Key use cases**: existing project discovery (architecture/design review), greenfield projects (requirements validation), any workflow where user domain knowledge exceeds agent's
   - **Scope**: Medium — gate-blocker modification, parallel summary in phase-loop-controller, Continue/Review/Redo menu, config in state.json. No new agents needed.
+- 5.2 [ ] Collaborative mode — developer as co-contributor alongside the AI, with parallel human tasks and artifact drop-in
+  - **Problem**: In auto mode the developer sits idle for 15-60 minutes while the framework works. Supervised mode (5.1) keeps them engaged as a reviewer, but the developer still isn't *producing* anything. Developers with domain expertise want to contribute — draft acceptance criteria, research competitors, sketch edge cases, write test scenarios — but there's no mechanism to feed that work back into the active workflow.
+  - **Builds on**: Supervised mode (5.1) — collaborative mode is supervised mode + contribution capabilities. 5.1 is a prerequisite.
+  - **Design**:
+    1. **Parallel task suggestions**: At phase boundaries (and during long phases), the framework suggests concrete tasks the developer can work on while the AI continues. Tasks have clear artifact formats and file paths:
+       ```
+       Phase 06 (Implementation) starting — estimated 20 min.
+
+       While I work, you could prepare:
+         → Edge cases for payment validation    → .isdlc/contributions/edge-cases.md
+         → Domain notes on PCI-DSS compliance   → .isdlc/contributions/domain-research.md
+         → Draft acceptance criteria for Phase 2 → .isdlc/contributions/acceptance-criteria.md
+
+       Drop files in .isdlc/contributions/ — I'll pick them up at the next review gate.
+
+       [Continue] → I'll work autonomously
+       [Skip suggestions] → don't show these
+       ```
+    2. **Contribution drop-in**: `.isdlc/contributions/` directory watched at review gates. Any files placed there are read by the next phase agent as additional context. Contributions are tagged with the phase they were created during and the phase they're intended for.
+    3. **Contribution integration**: At each review gate, the framework lists consumed contributions and shows how they influenced the output:
+       ```
+       Contributions consumed:
+         ✓ edge-cases.md → 3 edge cases added to test-strategy.md
+         ✓ domain-research.md → PCI-DSS constraints added to NFR matrix
+         ○ acceptance-criteria.md → queued for next requirements phase
+       ```
+    4. **Task suggestion engine**: Per-phase lookup table of useful parallel human tasks, filtered by what's missing or weak in the current artifacts. Not a static list — contextual based on the feature being built.
+    5. **Backlog refinement as a contribution type**: While the AI works on implementation, the developer can refine the project backlog — analysing UX issues from real usage, spotting inconsistencies, capturing developer feedback, refining existing items with fresh context. This is product ownership work that the AI can't do because it requires lived experience with the system. The framework suggests backlog-related tasks when relevant:
+       ```
+       While I work, you could also:
+         → Review and refine upcoming backlog items    → BACKLOG.md
+         → Capture UX issues from your recent usage    → .isdlc/contributions/ux-feedback.md
+         → Note edge cases you've observed in production → .isdlc/contributions/observed-issues.md
+       ```
+       Backlog contributions are not consumed by the active workflow but are flagged at workflow completion for the developer to review and merge.
+  - **Config**:
+    ```json
+    {
+      "collaborative_mode": {
+        "enabled": false,
+        "suggest_tasks": true,
+        "contributions_dir": ".isdlc/contributions",
+        "auto_consume_at_gates": true
+      }
+    }
+    ```
+  - **Mode selection UX**: At workflow start, present mode choice (or read from config default):
+    ```
+    How would you like to work on this?
+    [A] Auto — I'll handle it, minimal input needed
+    [S] Supervised — pause for your review between phases
+    [C] Collaborative — suggest tasks you can work on in parallel
+    ```
+  - **Key use cases**: developer has domain expertise the AI lacks, long-running workflows where idle time is wasted, team onboarding (developer learns by contributing alongside AI), complex features requiring human judgement on edge cases
+  - **Scope**: Medium-large — contribution directory convention, task suggestion engine, gate integration, config. Depends on 5.1 (supervised mode) being complete first.
+  - **Complexity**: Medium — builds on supervised mode infrastructure, main new work is task suggestion engine and contribution consumption logic
 
 ### 6. Framework Features
 
@@ -185,15 +249,57 @@
 - 7.4 [ ] Analytics manager (integrated with feedback collector/roadmap)
 - 7.5 [ ] User auth and profile management
 - 7.6 [ ] Marketing integration for SMBs
-- 7.7 [ ] Backlog management integration — connect iSDLC workflows to external project management tools (Jira, Linear, GitHub Issues, Azure DevOps, etc.)
-  - Sync workflow status, phase progress, and gate results to board tickets automatically
-  - Create/update tickets from iSDLC artifacts (requirements → epics/stories, bugs → issues)
-  - Read from board to pick up next work item (feeds into board-driven autonomous development)
-  - Pluggable adapter pattern — Jira first (Atlassian MCP already available), others via provider interface
+- 7.7 [ ] Backlog management integration — curated local BACKLOG.md backed by Jira, with Confluence as input source
+  - **Problem**: Jira has hundreds of unsorted, unprioritised tickets. Nobody wants to trawl through that from the CLI. But Jira is the canonical source for ticket data in existing teams. BACKLOG.md provides a clean, curated, readable experience — but without Jira sync it's a disconnected island.
+  - **Design**: BACKLOG.md is the developer's curated working set. Jira is the canonical source for ticket content. Sync is lightweight — content flows in from Jira, status flows back.
+  - **UX** (invisible framework — all via natural language, no explicit commands):
+    | User says | Agent does (via CLAUDE.md instructions) |
+    |-----------|----------------------------------------|
+    | "Add PROJ-1234 to the backlog" | Pulls title, description, priority, linked Confluence pages from Jira via MCP → appends to BACKLOG.md |
+    | "Show me the backlog" | Reads BACKLOG.md, presents it |
+    | "Move PROJ-1235 above PROJ-1234" | Reorders in BACKLOG.md |
+    | "Refresh the backlog" | Re-pulls latest title/description/status from Jira for all tracked items, updates BACKLOG.md |
+    | "Let's work on PROJ-1234" | Agent detects intent, kicks off feature/fix workflow with Jira ticket as input |
+    | *(workflow completes)* | Agent syncs status back to Jira (e.g., In Progress → Done) |
+  - **Confluence as input source**: When a Jira ticket links to a Confluence spec/PRD, the framework pulls it automatically as context for the requirements phase. Instead of asking cold generic questions, the agent reads the linked spec and starts from a position of knowledge ("I've read the spec, here's my understanding, what's missing?"). Connects to 8.3 (requirements elicitation redesign).
+  - **What syncs where**:
+    - **Jira → BACKLOG.md**: ticket title, description, priority, linked Confluence URLs (on add and refresh)
+    - **BACKLOG.md → Jira**: status transitions only (In Progress, Done) — no content pushed back
+    - **Confluence → framework**: linked specs/PRDs pulled as requirements phase input — read-only, never written back
+  - **What it doesn't do**: full Jira board management, sprint planning, bulk import, two-way content sync, publishing artifacts to Confluence
+  - **Prerequisites**: Atlassian Rovo MCP server configured in Claude Code (`claude mcp add --transport sse atlassian https://mcp.atlassian.com/v1/sse`). Known gotcha: re-auth required multiple times per day (Atlassian bug, SSE transport being deprecated).
+  - **CLAUDE.md changes**: Add instructions for backlog management conventions — BACKLOG.md location, Jira ticket format in entries, when to sync status, how to handle linked Confluence pages
+  - **Pluggable adapter pattern**: Jira + Confluence first via Atlassian MCP. Others (Linear, GitHub Issues, Azure DevOps) via same pattern with different MCP servers.
+  - **Complexity**: Medium — MCP integration, BACKLOG.md read/write conventions, status sync logic, CLAUDE.md instructions. No new agents needed.
 
 ### 8. Workflow Quality
 
 - 8.1 [ ] Requirements debate before workflow start — for new features and bugs, engage in a structured discussion/debate about the requirement or issue before initiating the iSDLC workflow. Clarify scope, challenge assumptions, explore alternatives, and converge on a shared understanding. Only after the debate concludes should the workflow (feature/fix) be kicked off with a well-refined description.
+- 8.2 [ ] Sizing decision must always prompt the user — silent fallback paths bypass user consent
+  - **Problem**: The adaptive sizing flow (STEP 3e-sizing in `isdlc.md`) has 3 silent paths that skip the user prompt and auto-default to standard: PATH 1 (sizing disabled), PATH 2 (`-light` flag — this one is intentional), PATH 3 (impact analysis missing or unparseable). PATH 3 is the real issue — when `parseSizingFromImpactAnalysis()` returns null, the system silently defaults to standard and moves on. The user never knows a sizing decision was made for them.
+  - **Observed**: Ollama feature (7 files) had a clean impact analysis → PATH 4 → user was prompted. Supervised mode feature (4 files) likely had malformed/missing metadata block → PATH 3 → silently defaulted to standard, no prompt.
+  - **Expected**: The user should ALWAYS be asked to confirm the sizing decision, even when impact analysis fails. The only exception is the explicit `-light` flag (PATH 2), which is an intentional user override.
+  - **Fix**:
+    1. **PATH 3 (IA missing/unparseable)**: Instead of silently defaulting, warn the user that impact analysis couldn't be parsed, show what's known, and still present the Accept/Override/Show menu with a "standard" recommendation
+    2. **PATH 1 (sizing disabled)**: Consider whether this should also prompt, or at minimum log visibly that sizing was skipped due to config
+    3. **Add fallback metrics**: If `parseSizingFromImpactAnalysis()` fails, try extracting file count from quick-scan or requirements artifacts as a backup data source
+  - **Files to change**: `src/claude/commands/isdlc.md` (STEP 3e-sizing, PATHs 1 and 3), possibly `src/claude/hooks/lib/common.cjs` (`parseSizingFromImpactAnalysis` fallback robustness)
+  - **Complexity**: Low (control flow changes in 1-2 files, no new agents or infrastructure)
+- 8.3 [ ] Requirements elicitation interaction pattern redesign — replace the cold, generic 3-question opening ("What problem? Who will use this? How will you measure success?") with a conversational, context-aware interaction
+  - **Problem**: When the user runs `/isdlc feature "Add payment processing"`, the agent ignores the description they already provided and dumps 3 generic questions. This feels like filling out a form, not collaborating with an expert. The same rigid pattern repeats at every sub-stage (5 sequential lenses, each with A/R/C menu). The current UX is dry, mechanical, and disengaging.
+  - **Root cause**: The 3-question opening is hardcoded in two places — `00-sdlc-orchestrator.md` (line ~909, INTERACTIVE PROTOCOL injection) and `01-requirements-analyst.md` (lines ~27-29 invocation protocol + lines ~513-515 Step 1 first response). The orchestrator explicitly instructs: "Your FIRST response must ONLY contain these 3 questions - nothing else."
+  - **Desired UX**:
+    1. **Reflect first** — acknowledge and summarize what the user already said in their feature description
+    2. **Contextual follow-up** — ask ONE targeted question based on what's actually missing, not 3 generic ones
+    3. **Conversational deepening** — use the 5 lenses (Business/User/UX/Tech/Quality) organically as the conversation flows, not as rigid sequential stages
+    4. **Multi-perspective challenge** — optionally bring in persona voices (modeled on discover's Vision Council) to debate and surface blind spots, but only after initial context is established
+    5. **Lighter-weight gates** — keep A/R/C for major phase transitions, replace per-stage menus with natural conversational confirmation
+  - **Scope**: Feature workflow only (bug fix workflow is already lightweight at 2-4 turns with min 1 menu interaction)
+  - **Files to change**: `00-sdlc-orchestrator.md` (INTERACTIVE PROTOCOL), `01-requirements-analyst.md` (invocation protocol + Step 1 flow + sub-stage structure)
+  - **May include personas**: A "Requirements Council" (PM/UX advocate/Technical realist) could replace the 5 sequential lenses with parallel perspectives, inspired by discover's `party-personas.json` pattern. But personas are a means, not the goal — the goal is a conversational, context-aware interaction.
+  - **Prerequisite decision — persona naming consistency**: The framework currently has 3 conflicting conventions: (1) human names for Phase 1-2 discover personas (`FROM NADIA (Product Analyst):`), (2) role-only for Phase 3 discover personas (`D8 (Architecture Designer)`), (3) "lenses" for requirements (`Analyst Lens`, `Product Lens`). Documentation (AGENTS.md, ARCHITECTURE.md) uses roles only, never names. `party-personas.json` Phase 3 entries have `name == title` (e.g., `"name": "Architecture Designer"`, `"title": "Architecture Designer"`). Before adding personas to requirements, decide on one convention and apply it consistently across discover + requirements. Options: (A) names everywhere — give all personas human names, (B) roles everywhere — drop names, use role titles consistently, (C) keep names for interactive/debate phases, roles for artifact-production phases (current hybrid, but make it intentional).
+  - **Relationship to other items**: Complements 4.1 (multi-agent teams — provides the persona council), subsumes the Phase 01 aspects of 8.1 (requirements debate). Does not affect bug fix flow.
+  - **Complexity**: Medium (2 files to rewrite, possible new persona config, interaction pattern design, naming convention decision)
 
 ### 9. Investigation
 
