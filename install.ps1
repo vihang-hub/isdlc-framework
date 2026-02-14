@@ -538,47 +538,34 @@ if (-not $ClaudeCodeFound) {
 }
 Write-Host ""
 
-# ── Step 0g: Agent Model Configuration ───────────────────────
-# NOTE: Provider selection is disabled -- framework is Claude Code-specific.
-# Multi-provider support may be re-enabled in a future release.
-# ──────────────────────────────────────────────────────────────────────────────
-# Write-Banner "AGENT MODEL CONFIGURATION"
-#
-# Write-Warn "Claude Code is your primary AI assistant."
-# Write-Warn "This setting controls which models are used when Claude Code"
-# Write-Warn "delegates work to sub-agents (Task tool)."
-# Write-Host ""
-# Write-Host "  1) Claude Code -- Use Claude Code for everything (Recommended)"
-# Write-Host "  2) Quality     -- Anthropic API everywhere (best results, requires API key)"
-# Write-Host "  3) Free        -- Free-tier cloud (Groq, Together, Google) -- no GPU needed"
-# Write-Host "  4) Budget      -- Ollama locally if available, free cloud fallback"
-# Write-Host "  5) Local       -- Ollama only (offline/air-gapped, requires GPU)"
-# Write-Host "  6) Hybrid      -- Smart per-phase routing (advanced)"
-# Write-Host ""
-#
-# if (-not $Force) {
-#     $providerAnswer = Read-Host "  Choice [1]"
-#     if ([string]::IsNullOrEmpty($providerAnswer)) { $providerAnswer = "1" }
-# }
-# else {
-#     $providerAnswer = "1"
-# }
-#
-# switch ($providerAnswer) {
-#     "1" { $ProviderMode = "claude-code" }
-#     "2" { $ProviderMode = "quality" }
-#     "3" { $ProviderMode = "free" }
-#     "4" { $ProviderMode = "budget" }
-#     "5" { $ProviderMode = "local" }
-#     "6" { $ProviderMode = "hybrid" }
-#     default {
-#         $ProviderMode = "claude-code"
-#         Write-Warn "Invalid choice -- defaulting to Claude Code"
-#     }
-# }
-# Write-Success "Sub-agent model routing: $ProviderMode"
-# Write-Host ""
-$ProviderMode = "claude-code"
+# ── Step 0g: LLM Provider Selection ───────────────────────────
+
+Write-Banner "LLM PROVIDER SELECTION"
+
+Write-Warn "Choose how Claude Code connects to an LLM:"
+Write-Host ""
+Write-Host "  1) Claude Code (Anthropic API) -- Recommended"
+Write-Host "  2) Ollama (local LLM)"
+Write-Host ""
+
+if (-not $Force) {
+    $providerAnswer = Read-Host "  Choice [1]"
+    if ([string]::IsNullOrEmpty($providerAnswer)) { $providerAnswer = "1" }
+}
+else {
+    $providerAnswer = "1"
+}
+
+switch ($providerAnswer) {
+    "1" { $ProviderMode = "claude-code" }
+    "2" { $ProviderMode = "ollama" }
+    default {
+        $ProviderMode = "claude-code"
+        Write-Warn "Invalid choice -- defaulting to Claude Code"
+    }
+}
+Write-Success "Provider: $ProviderMode"
+Write-Host ""
 
 # Workflow track is determined by orchestrator at runtime
 $Track = "auto"
@@ -934,6 +921,7 @@ $stateObj = [PSCustomObject]@{
         description = ""
         is_new_project = $isNewProject
     }
+    provider_selection = $ProviderMode
     complexity_assessment = [PSCustomObject]@{
         level = $null
         track = $Track
@@ -1025,6 +1013,32 @@ $stateObj = [PSCustomObject]@{
 $statePath = Join-Path $isdlcDir "state.json"
 Write-JsonFile $statePath $stateObj
 Write-Success "Created state.json"
+
+# Create provider.env for Ollama users
+if ($ProviderMode -eq "ollama") {
+    $providerEnvContent = @"
+# iSDLC Ollama Provider Configuration
+# Created by installer. Edit to change provider settings.
+export ANTHROPIC_BASE_URL=http://localhost:11434
+export ANTHROPIC_AUTH_TOKEN=ollama
+export ANTHROPIC_API_KEY=""
+"@
+    $providerEnvPath = Join-Path $isdlcDir "provider.env"
+    Write-Utf8NoBom -Path $providerEnvPath -Content $providerEnvContent
+    Write-Success "Created .isdlc/provider.env (Ollama configuration)"
+
+    # Also create PowerShell variant for Windows users
+    $providerEnvPs1Content = @"
+# iSDLC Ollama Provider Configuration (PowerShell)
+# Created by installer. Edit to change provider settings.
+`$env:ANTHROPIC_BASE_URL = "http://localhost:11434"
+`$env:ANTHROPIC_AUTH_TOKEN = "ollama"
+`$env:ANTHROPIC_API_KEY = ""
+"@
+    $providerEnvPs1Path = Join-Path $isdlcDir "provider.env.ps1"
+    Write-Utf8NoBom -Path $providerEnvPs1Path -Content $providerEnvPs1Content
+    Write-Success "Created .isdlc/provider.env.ps1 (PowerShell variant)"
+}
 
 # ============================================================================
 # Step 3b/6: Monorepo setup
@@ -1480,46 +1494,64 @@ if ($isInteractive) {
 # Next Steps
 # ============================================================================
 
+if ($ProviderMode -eq "ollama") {
+    Write-Banner "PROVIDER CONFIGURED"
+    Write-Host "  We created " -NoNewline
+    Write-Host ".isdlc/provider.env" -ForegroundColor Green -NoNewline
+    Write-Host " with:"
+    Write-Host "    ANTHROPIC_BASE_URL=http://localhost:11434"
+    Write-Host "    ANTHROPIC_AUTH_TOKEN=ollama"
+    Write-Host '    ANTHROPIC_API_KEY=""'
+    Write-Host "  To change these settings, edit " -NoNewline
+    Write-Host ".isdlc/provider.env" -ForegroundColor Green
+    Write-Host ""
+}
+
 Write-Banner "NEXT STEPS"
 
+$step = 1
 if (-not $ClaudeCodeFound) {
-    Write-Host "  1. " -NoNewline
-    Write-Host "Install Claude Code:" -ForegroundColor Yellow
+    Write-Host "  $step. Install Claude Code: " -NoNewline
+    Write-Host "npm install -g @anthropic-ai/claude-code" -ForegroundColor Green
+    $step++
+}
+
+if ($ProviderMode -eq "ollama") {
+    Write-Host "  $step. Install Ollama (if not already installed):"
     Write-Host "     " -NoNewline
-    Write-Host "https://docs.anthropic.com/en/docs/claude-code/overview" -ForegroundColor Green
-    Write-Host "  2. Run " -NoNewline
-    Write-Host "claude" -ForegroundColor Green -NoNewline
-    Write-Host " to start Claude Code"
-    Write-Host "  3. Run " -NoNewline
-    Write-Host "/discover" -ForegroundColor Green -NoNewline
-    Write-Host " to:"
-    Write-Host "     * Analyze your project (or describe it if new)"
-    Write-Host "     * Research best practices for your stack"
-    Write-Host "     * Create a tailored constitution interactively"
-    Write-Host "  4. Run " -NoNewline
-    Write-Host "/isdlc feature" -ForegroundColor Green -NoNewline
-    Write-Host " to begin your workflow"
-    Write-Host "  5. Run " -NoNewline
-    Write-Host "/tour" -ForegroundColor Green -NoNewline
-    Write-Host " anytime to revisit the framework introduction"
+    Write-Host "https://ollama.com/download" -ForegroundColor Green
+    $step++
+    Write-Host "  $step. Pull a recommended model: " -NoNewline
+    Write-Host "ollama pull qwen3-coder" -ForegroundColor Green
+    $step++
+    Write-Host "  $step. Start the Ollama server: " -NoNewline
+    Write-Host "ollama serve" -ForegroundColor Green
+    $step++
+    Write-Host "  $step. Launch Claude Code with Ollama:"
+    Write-Host "     " -NoNewline
+    Write-Host ". .isdlc\provider.env.ps1; claude" -ForegroundColor Green
+    $step++
 }
 else {
-    Write-Host "  1. Run " -NoNewline
+    Write-Host "  $step. Run " -NoNewline
     Write-Host "claude" -ForegroundColor Green -NoNewline
-    Write-Host " to start Claude Code"
-    Write-Host "  2. Run " -NoNewline
-    Write-Host "/discover" -ForegroundColor Green -NoNewline
-    Write-Host " to:"
-    Write-Host "     * Analyze your project (or describe it if new)"
-    Write-Host "     * Research best practices for your stack"
-    Write-Host "     * Create a tailored constitution interactively"
-    Write-Host "  3. Run " -NoNewline
-    Write-Host "/isdlc feature" -ForegroundColor Green -NoNewline
-    Write-Host " to begin your workflow"
-    Write-Host "  4. Run " -NoNewline
-    Write-Host "/tour" -ForegroundColor Green -NoNewline
-    Write-Host " anytime to revisit the framework introduction"
+    Write-Host " to launch Claude Code"
+    $step++
+    Write-Host "  $step. Log in with your Anthropic account"
+    $step++
 }
+
+Write-Host "  $step. Run " -NoNewline
+Write-Host "/discover" -ForegroundColor Green -NoNewline
+Write-Host " to analyze your project and create a constitution"
+$step++
+Write-Host "  $step. Run " -NoNewline
+Write-Host "/isdlc feature" -ForegroundColor Green -NoNewline
+Write-Host " to begin your workflow"
+$step++
+Write-Host "  $step. Run " -NoNewline
+Write-Host "/tour" -ForegroundColor Green -NoNewline
+Write-Host " for the framework introduction"
 Write-Host ""
 
 if ($IsExistingProject) {

@@ -333,42 +333,28 @@ fi
 echo ""
 
 # ============================================================================
-# Agent model configuration (sub-agent routing)
+# Provider selection
 # ============================================================================
-# NOTE: Provider selection is disabled — framework is Claude Code-specific.
-# Multi-provider support may be re-enabled in a future release.
-# ──────────────────────────────────────────────────────────────────────────────
-# echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
-# echo -e "${CYAN}║           AGENT MODEL CONFIGURATION                        ║${NC}"
-# echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
-# echo ""
-# echo -e "${YELLOW}Claude Code is your primary AI assistant.${NC}"
-# echo -e "${YELLOW}This setting controls which models are used when Claude Code${NC}"
-# echo -e "${YELLOW}delegates work to sub-agents (Task tool).${NC}"
-# echo ""
-# echo "  1) Claude Code — Use Claude Code for everything (Recommended)"
-# echo "  2) Quality     — Anthropic API everywhere (best results, requires API key)"
-# echo "  3) Free        — Free-tier cloud (Groq, Together, Google) — no GPU needed"
-# echo "  4) Budget      — Ollama locally if available, free cloud fallback"
-# echo "  5) Local       — Ollama only (offline/air-gapped, requires GPU)"
-# echo "  6) Hybrid      — Smart per-phase routing (advanced)"
-# echo ""
-# read -p "Choice [1]: " PROVIDER_MODE_ANSWER
-# PROVIDER_MODE_ANSWER=${PROVIDER_MODE_ANSWER:-1}
-#
-# case "$PROVIDER_MODE_ANSWER" in
-#     1) PROVIDER_MODE="claude-code" ;;
-#     2) PROVIDER_MODE="quality" ;;
-#     3) PROVIDER_MODE="free" ;;
-#     4) PROVIDER_MODE="budget" ;;
-#     5) PROVIDER_MODE="local" ;;
-#     6) PROVIDER_MODE="hybrid" ;;
-#     *) PROVIDER_MODE="claude-code"
-#        echo -e "${YELLOW}  Invalid choice — defaulting to Claude Code${NC}" ;;
-# esac
-# echo -e "${GREEN}  ✓ Sub-agent model routing: $PROVIDER_MODE${NC}"
-# echo ""
-PROVIDER_MODE="claude-code"
+echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${CYAN}║              LLM PROVIDER SELECTION                        ║${NC}"
+echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
+echo ""
+echo -e "${YELLOW}Choose how Claude Code connects to an LLM:${NC}"
+echo ""
+echo "  1) Claude Code (Anthropic API) — Recommended"
+echo "  2) Ollama (local LLM)"
+echo ""
+read -p "Choice [1]: " PROVIDER_MODE_ANSWER
+PROVIDER_MODE_ANSWER=${PROVIDER_MODE_ANSWER:-1}
+
+case "$PROVIDER_MODE_ANSWER" in
+    1) PROVIDER_MODE="claude-code" ;;
+    2) PROVIDER_MODE="ollama" ;;
+    *) PROVIDER_MODE="claude-code"
+       echo -e "${YELLOW}  Invalid choice — defaulting to Claude Code${NC}" ;;
+esac
+echo -e "${GREEN}  ✓ Provider: $PROVIDER_MODE${NC}"
+echo ""
 
 # Workflow track is determined by orchestrator at runtime based on task complexity
 TRACK="auto"
@@ -678,6 +664,7 @@ cat > .isdlc/state.json << EOF
     "description": "",
     "is_new_project": $( [ "$IS_EXISTING_PROJECT" = true ] && echo "false" || echo "true" )
   },
+  "provider_selection": "$PROVIDER_MODE",
   "complexity_assessment": {
     "level": $COMPLEXITY_LEVEL,
     "track": "$TRACK",
@@ -768,6 +755,18 @@ cat > .isdlc/state.json << EOF
 EOF
 
 echo -e "${GREEN}  ✓ Created state.json${NC}"
+
+# Create provider.env for Ollama users
+if [ "$PROVIDER_MODE" = "ollama" ]; then
+    cat > "$PROJECT_ROOT/.isdlc/provider.env" << 'ENVEOF'
+# iSDLC Ollama Provider Configuration
+# Created by installer. Edit to change provider settings.
+export ANTHROPIC_BASE_URL=http://localhost:11434
+export ANTHROPIC_AUTH_TOKEN=ollama
+export ANTHROPIC_API_KEY=""
+ENVEOF
+    echo -e "${GREEN}  ✓ Created .isdlc/provider.env (Ollama configuration)${NC}"
+fi
 
 # ============================================================================
 # Step 3b: Monorepo setup (if monorepo detected and confirmed)
@@ -1233,29 +1232,53 @@ fi
 
 fi  # end interactive check
 
+if [ "$PROVIDER_MODE" = "ollama" ]; then
+    echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║               PROVIDER CONFIGURED                          ║${NC}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "  We created ${GREEN}.isdlc/provider.env${NC} with:"
+    echo "    ANTHROPIC_BASE_URL=http://localhost:11434"
+    echo "    ANTHROPIC_AUTH_TOKEN=ollama"
+    echo "    ANTHROPIC_API_KEY=\"\""
+    echo -e "  To change these settings, edit ${GREEN}.isdlc/provider.env${NC}"
+    echo ""
+fi
+
 echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
 echo -e "${CYAN}║                    NEXT STEPS                              ║${NC}"
 echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
+
+STEP=1
 if [ "$CLAUDE_CODE_FOUND" = false ]; then
-    echo -e "  1. ${YELLOW}Install Claude Code:${NC}"
-    echo -e "     ${GREEN}https://docs.anthropic.com/en/docs/claude-code/overview${NC}"
-    echo -e "  2. Run ${GREEN}claude${NC} to start Claude Code"
-    echo -e "  3. Run ${GREEN}/discover${NC} to:"
-    echo "     • Analyze your project (or describe it if new)"
-    echo "     • Research best practices for your stack"
-    echo "     • Create a tailored constitution interactively"
-    echo -e "  4. Run ${GREEN}/isdlc feature${NC} to begin your workflow"
-    echo -e "  5. Run ${GREEN}/tour${NC} anytime to revisit the framework introduction"
-else
-    echo -e "  1. Run ${GREEN}claude${NC} to start Claude Code"
-    echo -e "  2. Run ${GREEN}/discover${NC} to:"
-    echo "     • Analyze your project (or describe it if new)"
-    echo "     • Research best practices for your stack"
-    echo "     • Create a tailored constitution interactively"
-    echo -e "  3. Run ${GREEN}/isdlc feature${NC} to begin your workflow"
-    echo -e "  4. Run ${GREEN}/tour${NC} anytime to revisit the framework introduction"
+    echo -e "  ${STEP}. Install Claude Code: ${GREEN}npm install -g @anthropic-ai/claude-code${NC}"
+    STEP=$((STEP + 1))
 fi
+
+if [ "$PROVIDER_MODE" = "ollama" ]; then
+    echo -e "  ${STEP}. Install Ollama (if not already installed):"
+    echo -e "     ${GREEN}https://ollama.com/download${NC}"
+    STEP=$((STEP + 1))
+    echo -e "  ${STEP}. Pull a recommended model: ${GREEN}ollama pull qwen3-coder${NC}"
+    STEP=$((STEP + 1))
+    echo -e "  ${STEP}. Start the Ollama server: ${GREEN}ollama serve${NC}"
+    STEP=$((STEP + 1))
+    echo -e "  ${STEP}. Launch Claude Code with Ollama:"
+    echo -e "     ${GREEN}source .isdlc/provider.env && claude${NC}"
+    STEP=$((STEP + 1))
+else
+    echo -e "  ${STEP}. Run ${GREEN}claude${NC} to launch Claude Code"
+    STEP=$((STEP + 1))
+    echo -e "  ${STEP}. Log in with your Anthropic account"
+    STEP=$((STEP + 1))
+fi
+
+echo -e "  ${STEP}. Run ${GREEN}/discover${NC} to analyze your project and create a constitution"
+STEP=$((STEP + 1))
+echo -e "  ${STEP}. Run ${GREEN}/isdlc feature${NC} to begin your workflow"
+STEP=$((STEP + 1))
+echo -e "  ${STEP}. Run ${GREEN}/tour${NC} for the framework introduction"
 echo ""
 if [ "$IS_EXISTING_PROJECT" = true ]; then
     echo -e "${YELLOW}Note: Your existing project structure was not modified.${NC}"
