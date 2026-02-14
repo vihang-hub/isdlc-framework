@@ -413,9 +413,27 @@ When the user selects a workflow (via `/isdlc feature`, `/isdlc fix`, etc.), ini
    { "current_phase": "01-requirements" }
    ```
 
-6. **Delegate to the first phase agent** with any `agent_modifiers` from the workflow definition.
+6. **Supervised mode flag parsing** (REQ-0013):
+   - If the command arguments contain `--supervised`:
+     a. Remove `--supervised` from the description text
+     b. Set `supervised_mode` in state.json:
+        ```json
+        {
+          "supervised_mode": {
+            "enabled": true,
+            "review_phases": "all",
+            "parallel_summary": true,
+            "auto_advance_timeout": null
+          }
+        }
+        ```
+     c. Write state.json
+     d. Display confirmation: `Supervised mode: ENABLED (review gates after every phase)`
+   - If `--supervised` is NOT present: do NOT create or modify the `supervised_mode` block
 
-7. **Check `requires_branch`** from the workflow definition:
+7. **Delegate to the first phase agent** with any `agent_modifiers` from the workflow definition.
+
+8. **Check `requires_branch`** from the workflow definition:
    - If `true`: Create branch immediately during initialization (see Section 3a) — before Phase 01 delegation
    - If `false`: No branch operations for this workflow
 
@@ -655,7 +673,13 @@ All modes return JSON with `status`, plus mode-specific fields:
 
 1. **init-and-phase-01**: Run initialization (Section 3), create branch (3a), delegate to Phase 01, validate GATE-01, generate plan (3b). Return phases array.
 2. **single-phase**: Read `active_workflow`, delegate to PHASE agent, validate gate, update state. Return result.
-3. **finalize**: Human Review (if enabled) → merge branch → `collectPhaseSnapshots(state)` → prune (`pruneSkillUsageLog(20)`, `pruneCompletedPhases([])`, `pruneHistory(50,200)`, `pruneWorkflowHistory(50,200)`) → move to `workflow_history` (include `phase_snapshots`, `metrics`, `phases` array) → clear `active_workflow`.
+3. **finalize**: Human Review (if enabled) → merge branch → `collectPhaseSnapshots(state)` → prune (`pruneSkillUsageLog(20)`, `pruneCompletedPhases([])`, `pruneHistory(50,200)`, `pruneWorkflowHistory(50,200)`) → move to `workflow_history` (include `phase_snapshots`, `metrics`, `phases` array, and `review_history` if present) → clear `active_workflow`.
+   - **Review history preservation** (REQ-0013): When constructing `workflow_history` entry:
+     - Include `review_history` array if it exists (AC-08b)
+     - For supervised workflows with empty/missing `review_history`: include `review_history: []` (AC-08c)
+     - For non-supervised workflows: omit `review_history` entirely
+     - Delete `supervised_review` from `active_workflow` before archiving (transient state)
+     - Include `supervised_mode_enabled: true/false` in the workflow_history entry for audit trail
 4. **No mode**: Full workflow — all phases autonomously. Only mode that creates TaskCreate tasks.
 
 ## 4. Workflow Phase Advancement

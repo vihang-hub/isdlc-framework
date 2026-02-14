@@ -182,6 +182,26 @@ Select an option:
 Enter selection (1-5):
 ```
 
+**Supervised review recovery check** (before presenting SCENARIO 4 menu):
+
+1. Read `active_workflow.supervised_review` from state.json
+2. If `supervised_review` exists AND `supervised_review.status` is `"reviewing"` or `"gate_presented"`:
+   a. Display recovery banner:
+      ```
+      A review was in progress for Phase {NN} ({Phase Name}).
+      Summary: .isdlc/reviews/phase-{NN}-summary.md
+
+      [C] Continue to next phase
+      [R] Show summary and review again
+      ```
+   b. Handle user response:
+      - **[C] Continue**: Clear `supervised_review`, advance to next phase (proceed with standard SCENARIO 4 [1] Continue)
+      - **[R] Review**: Display summary file content, then present "When ready, say 'continue'" and wait
+3. If `supervised_review` exists AND `supervised_review.status` is `"redo_pending"`:
+   a. Display: "A redo was in progress for Phase {NN}. The phase will be re-run."
+   b. Proceed as if user selected [1] Continue (the phase-loop will re-run from the current phase)
+4. If `supervised_review` does not exist: proceed to standard SCENARIO 4 menu (no change)
+
 ---
 
 **After Selection Mapping:**
@@ -217,13 +237,17 @@ Enter selection (1-5):
 /isdlc feature "Feature description" --project api-service
 /isdlc feature -light "Feature description"
 /isdlc feature -light "Feature description" --project api-service
+/isdlc feature "Feature description" --supervised
+/isdlc feature -light "Feature description" --supervised
 /isdlc feature                        (no description — presents backlog picker)
 ```
 1. Validate constitution exists and is not a template
 2. Check no active workflow (block if one exists, suggest `/isdlc cancel` first)
 3. Parse flags from command arguments:
    - If args contain "-light": set flags.light = true, remove "-light" from description
+   - If args contain "--supervised": set flags.supervised = true, remove "--supervised" from description
 4. Initialize `active_workflow` in state.json with type `"feature"`, phases `["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]`, and flags: `{ light: flags.light || false }`
+   - If flags.supervised: pass `--supervised` flag to orchestrator init (sets supervised_mode.enabled=true in state)
 4. Delegate to Requirements Analyst (Phase 01) with `scope: "feature"`
 5. During initialization: creates `feature/REQ-NNNN-description` branch from main (before Phase 01)
 6. After GATE-08: merges branch to main, deletes branch
@@ -239,11 +263,15 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 /isdlc fix "Bug description"
 /isdlc fix "Bug description" --link https://mycompany.atlassian.net/browse/JIRA-1234
 /isdlc fix "Bug description" --project api-service
+/isdlc fix "Bug description" --supervised
 /isdlc fix                    (no description — presents backlog picker)
 ```
 1. Validate constitution exists and is not a template
 2. Check no active workflow
-3. Initialize `active_workflow` with type `"fix"` and phases `["01-requirements", "02-tracing", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]`
+3. Parse flags from command arguments:
+   - If args contain "--supervised": set flags.supervised = true, remove "--supervised" from description
+4. Initialize `active_workflow` with type `"fix"` and phases `["01-requirements", "02-tracing", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]`
+   - If flags.supervised: pass `--supervised` flag to orchestrator init (sets supervised_mode.enabled=true in state)
 4. If `--link` provided, pass it to Agent 01 as the external bug URL
 5. Delegate to Requirements Analyst (Phase 01) with `scope: "bug-report"`
 6. Agent 01 extracts external ID from URL and creates `BUG-NNNN-{external-id}/` folder
@@ -861,6 +889,112 @@ Use Task tool → {agent_name} with:
 12-test-deploy → release-engineer
 13-production → release-engineer
 ```
+
+**3e-review.** SUPERVISED REVIEW GATE (conditional) -- After the post-phase
+state update, check if a supervised review gate should fire.
+
+**Gate trigger check**:
+1. Read `supervised_mode` from state.json (already loaded in 3e)
+2. Call `readSupervisedModeConfig(state)` (from common.cjs via inline logic)
+   - If `config.enabled` is `false`: skip to 3e-sizing (no review gate)
+3. Call `shouldReviewPhase(config, phase_key)`
+   - If `false`: skip to 3e-sizing (this phase not in review_phases)
+4. Call `generatePhaseSummary(state, phase_key, projectRoot, { minimal: !config.parallel_summary })`
+   - Store the returned `summaryPath`
+   - If `null` (generation failed): log warning, skip to 3e-sizing (fail-open)
+5. Initialize `supervised_review` in state (if not already set for this phase):
+   ```json
+   {
+     "phase": "{phase_key}",
+     "status": "gate_presented",
+     "paused_at": null,
+     "resumed_at": null,
+     "redo_count": 0,
+     "redo_guidance_history": []
+   }
+   ```
+   Write to `active_workflow.supervised_review` in state.json.
+
+**REVIEW_LOOP**:
+6. Determine menu options:
+   a. Read `supervised_review.redo_count` from state
+   b. If `redo_count >= 3`:
+      - options = `[C] Continue`, `[R] Review`
+   c. Else:
+      - options = `[C] Continue`, `[R] Review`, `[D] Redo`
+
+7. Present review gate banner and wait for user response:
+   ```
+   --------------------------------------------
+   PHASE {NN} COMPLETE: {Phase Name}
+
+   Summary: {summaryPath}
+   Artifacts: {artifact_count} files created/modified
+   Duration: {duration}
+
+   [C] Continue -- advance to next phase
+   [R] Review -- pause for manual review/edits, resume when ready
+   [D] Redo -- re-run this phase with additional guidance
+
+   Your choice: _
+   --------------------------------------------
+   ```
+
+   Use `AskUserQuestion` to collect the user's response.
+
+8. Handle user response:
+
+   **CASE [C] Continue**:
+   a. Call `recordReviewAction(state, phase_key, 'continue', { timestamp: now })`
+   b. Delete `active_workflow.supervised_review` from state
+   c. Write state.json
+   d. PROCEED to 3e-sizing
+
+   **CASE [R] Review**:
+   a. Display the summary content inline (read the summary file and display it)
+   b. Display instructions:
+      "Review the artifacts listed above. Edit any files as needed.
+       When ready, say 'continue' to advance to the next phase."
+   c. Set `active_workflow.supervised_review.status` = `"reviewing"`
+   d. Set `active_workflow.supervised_review.paused_at` = current timestamp
+   e. Write state.json
+   f. WAIT for user input (use `AskUserQuestion` with freeform text prompt)
+   g. On user response (any confirmation like "continue", "done", "yes", "ok"):
+      i.   Set `supervised_review.status` = `"completed"`
+      ii.  Set `supervised_review.resumed_at` = current timestamp
+      iii. Call `recordReviewAction(state, phase_key, 'review',
+            { paused_at: supervised_review.paused_at, resumed_at: supervised_review.resumed_at })`
+      iv.  Delete `active_workflow.supervised_review` from state
+      v.   Write state.json
+      vi.  PROCEED to 3e-sizing
+
+   **CASE [D] Redo**:
+   a. Prompt: "What additional guidance should this phase consider?"
+   b. Capture guidance text from user (use `AskUserQuestion`)
+   c. Read current `supervised_review.redo_count` from state
+   d. Increment `supervised_review.redo_count` by 1
+   e. Append guidance to `supervised_review.redo_guidance_history`
+   f. Set `supervised_review.status` = `"redo_pending"`
+   g. Write state.json
+   h. Reset phase state for re-delegation:
+      i.  Set `phases[phase_key].status` = `"in_progress"`
+      ii. Set `active_workflow.phase_status[phase_key]` = `"in_progress"`
+      iii. Write state.json
+   i. Re-delegate to the same phase agent (same pattern as STEP 3d):
+      - Use the PHASE-AGENT table from STEP 3d
+      - Append to the original delegation prompt:
+        `"\nREDO GUIDANCE: {guidance text}"`
+   j. On return, re-execute STEP 3e logic:
+      - Set `phases[phase_key].status` = `"completed"`
+      - Set `phases[phase_key].summary` = (extract from agent result)
+      - Set `active_workflow.phase_status[phase_key]` = `"completed"`
+      - Write state.json
+   k. Call `recordReviewAction(state, phase_key, 'redo',
+        { redo_count: supervised_review.redo_count, guidance: guidance_text, timestamp: now })`
+   l. Re-generate summary:
+      - Call `generatePhaseSummary(state, phase_key, projectRoot, { minimal: !config.parallel_summary })`
+      - Update summaryPath
+   m. GOTO REVIEW_LOOP (step 6)
 
 **3e-sizing.** SIZING DECISION POINT (conditional) -- After the post-phase
 state update, check if adaptive workflow sizing should run.
