@@ -271,6 +271,52 @@ If `project.discovery_completed` is `false`, missing, or `state.json` does not e
 
 ---
 
+# CONFLUENCE CONTEXT (Jira-Backed Workflows)
+
+Before starting requirements capture, check if this workflow has linked Confluence pages.
+
+## Check for Confluence Context
+
+1. Read `.isdlc/state.json` -> `active_workflow.confluence_urls`
+2. If array is present and non-empty: proceed with Confluence context injection
+3. If absent, null, or empty: skip this section entirely (local-only workflow)
+
+## If Confluence Context Exists
+
+For each URL in `active_workflow.confluence_urls`:
+1. Call Atlassian MCP `getLinkedDocument(url)` to pull Confluence page content
+2. If MCP call succeeds: store page title and content (truncated to 5000 characters to prevent context window overflow)
+3. If MCP call fails: log warning, skip that page and continue (graceful degradation -- partial success is better than all-or-nothing)
+
+Display the Confluence context banner:
+
+```
+Confluence Context Loaded:
+- {N} page(s) retrieved
+- Pages: {page_title_1}, {page_title_2}, ...
+
+I'll use this context to inform our requirements discussion.
+```
+
+## Confluence Context Mapping
+
+| Confluence Content | How It's Used |
+|-------------------|---------------|
+| Spec/PRD document | Pre-fill Stage 1.1 (Business Context) -- start informed, not cold |
+| Technical design | Pre-fill Stage 1.4 (Technical Context) -- know constraints upfront |
+| Requirements list | Seed Stage 1.2 (User Context) -- known user stories from spec |
+| Acceptance criteria | Seed Stage 1.5 (Quality & Risk) -- known test scenarios from spec |
+
+## Workflow Augmentation
+
+When Confluence context exists, the requirements analyst starts from a position of knowledge. Instead of cold generic questions, present:
+
+"I've read the linked spec. Here's my understanding: {summary of Confluence content}. What's missing or different from what you envision?"
+
+This approach respects the user's time by not re-asking questions already answered in the linked specification documents.
+
+---
+
 # SCOPE DETECTION
 
 The requirements workflow adapts based on the `scope` modifier from the active workflow.

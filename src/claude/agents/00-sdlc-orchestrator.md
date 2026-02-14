@@ -291,21 +291,56 @@ When `/isdlc feature` or `/isdlc fix` is invoked **without** a description strin
 
 ## Feature Mode Sources
 
-1. **CLAUDE.md unchecked items**: Scan for `- [ ] <text>` / `- [] <text>` patterns. Strip prefix, keep sub-items as context (not selectable).
+1. **BACKLOG.md unchecked items**: Scan `BACKLOG.md` `## Open` section for `- N.N [ ] <text>` patterns (item number + checkbox + text). Parse metadata sub-bullets: extract `**Jira:**` ticket ID and `**Confluence:**` URLs from indented sub-bullets below each item. Display Jira-backed items with `[Jira: TICKET-ID]` suffix in picker options.
 2. **Cancelled feature workflows**: From `state.json` → `workflow_history` where `status == "cancelled"` AND `type == "feature"`. Deduplicate by description (most recent).
 
-**Order**: CLAUDE.md items first, then cancelled workflows. Always end with `[O] Other — Describe a new feature`.
+**Order**: BACKLOG.md items first, then cancelled workflows. Always end with `[O] Other — Describe a new feature`.
+
+**Backward compatibility**: If `BACKLOG.md` does not exist, fall back to scanning `CLAUDE.md` for `- [ ] <text>` / `- [] <text>` patterns (original behavior).
+
+**Picker display format:**
+```
+[1] Backlog management integration -- description [Jira: PROJ-1234]
+[2] Local-only item -- no Jira tag
+[3] Another Jira item [Jira: ABC-100]
+[O] Other — Describe a new feature
+```
 
 ## Fix Mode Sources
 
 1. **Cancelled fix workflows**: From `workflow_history` where `status == "cancelled"` AND `type == "fix"`. Deduplicate by description.
-2. **CLAUDE.md bug-related items**: Only items containing keywords: `fix`, `bug`, `broken`, `error`, `crash`, `regression`, `issue`, `defect`, `fail` (case-insensitive).
+2. **BACKLOG.md bug-related items**: Scan `BACKLOG.md` `## Open` section. Only items containing keywords: `fix`, `bug`, `broken`, `error`, `crash`, `regression`, `issue`, `defect`, `fail` (case-insensitive). Parse Jira metadata sub-bullets and display `[Jira: TICKET-ID]` suffix for Jira-backed items.
 
-**Order**: Cancelled fixes first, then bug-related CLAUDE.md items. Always end with `[O] Other — Describe a new bug`.
+**Order**: Cancelled fixes first, then bug-related BACKLOG.md items. Always end with `[O] Other — Describe a new bug`.
+
+**Backward compatibility**: If `BACKLOG.md` does not exist, fall back to scanning `CLAUDE.md` for bug-related items (original behavior).
+
+## Jira Metadata Parsing
+
+When reading items from `BACKLOG.md`, parse metadata sub-bullets below each item line:
+- `**Jira:**` sub-bullet → extract `jira_ticket_id` value
+- `**Confluence:**` sub-bullet(s) → collect into `confluence_urls` array
+- `**Priority:**`, `**Status:**` → available for display context
+
+An item is Jira-backed if and only if it has a `**Jira:**` sub-bullet.
+
+## Workflow Init with Jira Context
+
+When the user selects a Jira-backed item from the picker, add these fields to `active_workflow`:
+```json
+{
+  "jira_ticket_id": "PROJ-1234",
+  "confluence_urls": ["https://wiki.example.com/pages/spec-123"]
+}
+```
+
+**Absence semantics**: If the selected item is local-only (no `**Jira:**` sub-bullet), omit `jira_ticket_id` and `confluence_urls` entirely from `active_workflow` (do not set to null). All downstream consumers check for field presence before using.
+
+**Workflow type from Jira issue type**: If the item has Jira metadata, suggest workflow type based on issue type: Bug/Defect -> fix workflow, Story/Task/Epic -> feature workflow, other -> ask user.
 
 ## Presentation Rules
 
-- Use `AskUserQuestion` to present options. Max **15 items** from CLAUDE.md (overflow: `... and {N} more`). Truncate descriptions to **80 chars** with `...`.
+- Use `AskUserQuestion` to present options. Max **15 items** from BACKLOG.md (overflow: `... and {N} more`). Truncate descriptions to **80 chars** with `...`.
 - **Empty state**: Skip menu, prompt directly ("Describe the feature/bug you want to build/fix").
 - After selection: use chosen text as description → proceed to workflow initialization. Cancelled workflow re-selection creates a new (independent) workflow.
 
@@ -644,6 +679,21 @@ When the final phase gate passes AND `active_workflow.git_branch` exists (and hu
 
 1. Pre-merge: commit uncommitted changes (skip if clean)
 2. `git checkout main && git merge --no-ff {branch_name} -m "merge: {type} {artifact_folder} — all gates passed"`
+2.5. **JIRA STATUS SYNC (non-blocking):**
+   a) Read `active_workflow.jira_ticket_id`
+   b) If `jira_ticket_id` is absent or null: SKIP this step (local-only workflow)
+   c) If `jira_ticket_id` exists:
+      - Check MCP prerequisite (Atlassian MCP configured?)
+      - If MCP available: call `updateStatus(jira_ticket_id, "Done")` to transition the Jira ticket
+      - If transition succeeds: log "Jira {TICKET-ID} transitioned to Done"
+      - If transition fails: log WARNING, do NOT block finalize
+      - If MCP unavailable: log WARNING, do NOT block finalize
+   d) Update BACKLOG.md: find the item by `jira_ticket_id`, change `[ ]` to `[x]`, add `**Completed:** {date}` sub-bullet, move entire item block to `## Completed` section
+   e) Set `jira_sync_status` in `workflow_history` entry:
+      - `"synced"` if Jira transition succeeded
+      - `"failed"` if transition was attempted but failed
+      - absent/null if local-only workflow (no `jira_ticket_id`)
+   **CRITICAL**: This step is non-blocking. Any failure in Jira sync logs a warning and continues to step 3. The workflow MUST complete regardless of Jira sync outcome (Article X: Fail-Safe Defaults).
 3. On merge conflict: `git merge --abort` → escalate to human (list conflicting files, suggest `/isdlc advance` after manual resolution)
 4. Post-merge: `git branch -d {branch_name}`, update state.json `git_branch` to `status: "merged"` + commit SHA
 5. Announce merge with banner, proceed with completion logic

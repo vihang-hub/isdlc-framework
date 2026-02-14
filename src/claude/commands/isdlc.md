@@ -253,8 +253,9 @@ Enter selection (1-5):
 6. After GATE-08: merges branch to main, deletes branch
 
 **No-description behavior:** When `/isdlc feature` is invoked without a description (no quoted text, no feature ID), the orchestrator presents a **backlog picker** instead of immediately asking for a description. The backlog picker scans:
-- `CLAUDE.md` for unchecked items (`- [ ] ...`) in the Next Session section
+- `BACKLOG.md` `## Open` section for unchecked items (`- N.N [ ] ...`), with `[Jira: TICKET-ID]` suffix for Jira-backed items
 - `.isdlc/state.json` → `workflow_history` for cancelled feature workflows
+- Falls back to `CLAUDE.md` scanning if `BACKLOG.md` does not exist
 - User can also choose `[O] Other` to describe a new feature manually
 See the BACKLOG PICKER section in the orchestrator agent for full details.
 
@@ -282,7 +283,8 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 
 **No-description behavior:** When `/isdlc fix` is invoked without a description, the orchestrator presents a **backlog picker** that scans:
 - `.isdlc/state.json` → `workflow_history` for cancelled fix workflows
-- `CLAUDE.md` for unchecked items containing bug-related keywords (fix, bug, broken, error, crash, regression, issue)
+- `BACKLOG.md` `## Open` section for unchecked items containing bug-related keywords (fix, bug, broken, error, crash, regression, issue), with `[Jira: TICKET-ID]` suffix for Jira-backed items
+- Falls back to `CLAUDE.md` scanning if `BACKLOG.md` does not exist
 - User can also choose `[O] Other` to describe a new bug manually
 See the BACKLOG PICKER section in the orchestrator agent for full details.
 
@@ -1150,7 +1152,13 @@ Use Task tool → sdlc-orchestrator with:
   (include MONOREPO CONTEXT if applicable)
 ```
 
-The orchestrator runs the Human Review Checkpoint (if code_review.enabled), merges the branch, collects workflow progress snapshots (`collectPhaseSnapshots()`), applies state pruning, moves the workflow to `workflow_history` (with `phases`, `phase_snapshots`, and `metrics`), and clears `active_workflow`.
+The orchestrator runs the Human Review Checkpoint (if code_review.enabled), merges the branch, and then performs a **non-blocking Jira status sync** if `active_workflow.jira_ticket_id` exists:
+- Calls `updateStatus(jira_ticket_id, "Done")` via Atlassian MCP to transition the Jira ticket
+- Updates `BACKLOG.md`: marks item `[x]`, moves to `## Completed` section
+- Sets `jira_sync_status` in `workflow_history` (`"synced"`, `"failed"`, or absent for local-only)
+- Any Jira sync failure logs a warning but does **not** block workflow completion (non-blocking)
+
+After Jira sync, the orchestrator collects workflow progress snapshots (`collectPhaseSnapshots()`), applies state pruning, moves the workflow to `workflow_history` (with `phases`, `phase_snapshots`, and `metrics`), and clears `active_workflow`.
 
 **CRITICAL — MANDATORY CLEANUP (must execute even if finalize output is long):**
 

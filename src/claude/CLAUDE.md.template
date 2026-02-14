@@ -114,6 +114,87 @@ Use `/provider status` to check your provider health and `/provider set <mode>` 
 
 ---
 
+## Backlog Management
+
+### BACKLOG.md Format Convention
+
+The project backlog lives in `BACKLOG.md` at the repository root. It uses a structured markdown format with two required sections:
+
+**Document structure:**
+```
+## Open
+- N.N [ ] Title -- Description
+  - **Jira:** TICKET-ID
+  - **Priority:** High
+  - **Confluence:** https://wiki.example.com/pages/spec
+  - **Status:** In Progress
+
+- N.N [ ] Local item (no sub-bullets)
+
+## Completed
+- N.N [x] Done item -- Description
+  - **Jira:** TICKET-ID
+  - **Completed:** 2026-02-14
+```
+
+**Item line format:** `- {N.N} [{status}] {Title} -- {Description}`
+- Pattern: `/^- (\d+(?:\.\d+)*) \[([ x~])\] (.+)$/`
+- Status characters: ` ` (open), `x` (done), `~` (in progress)
+- Description is optional (separated by ` -- `)
+
+**Metadata sub-bullets** (indented 2 spaces below item line):
+- `**Jira:**` -- Jira ticket ID (e.g., `PROJ-1234`). Presence of this key marks the item as Jira-backed.
+- `**Priority:**` -- Priority level from Jira (`Highest`, `High`, `Medium`, `Low`, `Lowest`)
+- `**Confluence:**` -- Linked Confluence page URL (repeatable for multiple pages). Must be HTTPS.
+- `**Status:**` -- Current Jira workflow status (free text)
+- `**Completed:**` -- ISO 8601 date when item was completed (added on completion)
+
+Items without a `**Jira:**` sub-bullet are local-only and not synced with any external tool.
+
+### Backlog Operations
+
+When the user expresses a backlog-related intent, detect and execute the appropriate operation. No new slash commands are needed -- these operations are triggered by natural language.
+
+| User Says | Framework Does |
+|-----------|---------------|
+| "Add PROJ-1234 to the backlog" / "Import PROJ-1234" | MCP prerequisite check -> pull ticket via Atlassian MCP -> append to BACKLOG.md with metadata sub-bullets |
+| "Refresh the backlog" / "Sync backlog from Jira" | For each Jira-backed item in BACKLOG.md -> re-pull from Jira via MCP -> update in-place (Jira wins for title/priority/status, local wins for ordering) |
+| "Move X above Y" / "Reorder the backlog" / "Prioritize item N.N" | Read BACKLOG.md -> reorder items locally -> write back. Local-only operation, never syncs priority back to Jira. |
+| "Let's work on PROJ-1234" / "Start item N.N" | Find item in BACKLOG.md -> determine workflow type (Bug/Defect -> fix, Story/Task/Epic -> feature, other -> ask user) -> invoke workflow |
+| "Show me the backlog" / "What's in the backlog" | Read and display BACKLOG.md contents |
+
+### MCP Prerequisite Check
+
+Before any Jira or Confluence operation, verify the Atlassian MCP server is configured:
+
+1. Check if the Atlassian MCP server is available in Claude Code
+2. If **not configured**, display setup instructions:
+   ```
+   Atlassian MCP server not configured.
+   To enable Jira/Confluence integration:
+   claude mcp add --transport sse atlassian https://mcp.atlassian.com/v1/sse
+
+   Local backlog operations still work without MCP.
+   ```
+3. If configured but **auth expired**, display re-authentication instructions
+4. If configured and authenticated, proceed with the MCP tool call
+
+**Graceful degradation:** All local backlog operations (view, reorder, manual add) work without MCP. Only Jira import, refresh, and Confluence context require MCP connectivity.
+
+### Adapter Interface
+
+The backlog integration uses a conceptual adapter pattern. Each external tool maps these three operations:
+
+| Method | Purpose | Jira+Confluence Implementation |
+|--------|---------|-------------------------------|
+| `getTicket(id)` | Retrieve ticket data for import | Atlassian MCP `jira_get_issue` |
+| `updateStatus(id, status)` | Transition ticket status on workflow completion | Atlassian MCP `jira_transition_issue` |
+| `getLinkedDocument(url)` | Pull linked document content for context | Atlassian MCP `confluence_get_page` |
+
+**Adding a new integration** (e.g., Linear, GitHub Issues): Add a new section to CLAUDE.md mapping these three methods to the tool's MCP server calls. No framework code changes required.
+
+---
+
 ## Agent Framework Context
 
 Shared protocols referenced by all iSDLC agents. Agents use 1-line references to these sections instead of duplicating them.
