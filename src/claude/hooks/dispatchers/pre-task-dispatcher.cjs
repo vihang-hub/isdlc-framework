@@ -96,13 +96,13 @@ async function main() {
             process.exit(0);
         }
 
-        // 2. Read state once
-        const state = readState();
+        // 2. Read state once (BUG 0.6 fix: default null to {} for safe context)
+        const state = readState() || {};
 
-        // 3. Load configs once
-        const manifest = loadManifest();
-        const requirements = loadIterationRequirements();
-        const workflows = loadWorkflowDefinitions();
+        // 3. Load configs once (BUG 0.6 fix: default null to {} for safe context)
+        const manifest = loadManifest() || {};
+        const requirements = loadIterationRequirements() || {};
+        const workflows = loadWorkflowDefinitions() || {};
 
         // 4. Build ctx
         const ctx = { input, state, manifest, requirements, workflows };
@@ -117,6 +117,24 @@ async function main() {
                         phase: timeout.phase,
                         reason: `Phase active for ${timeout.elapsed}min, limit ${timeout.limit}min`
                     });
+                    // BUG 0.12 fix: Emit structured degradation hint for downstream agents
+                    try {
+                        const hint = {
+                            type: 'timeout_degradation',
+                            phase: timeout.phase,
+                            elapsed: timeout.elapsed,
+                            limit: timeout.limit,
+                            actions: [
+                                'reduce_debate_rounds',
+                                'reduce_parallelism',
+                                'skip_optional_steps'
+                            ]
+                        };
+                        console.error(`DEGRADATION_HINT: ${JSON.stringify(hint)}`);
+                    } catch (hintErr) {
+                        // Fail-open: hint generation errors must not block (AC-12d)
+                        debugLog('pre-task-dispatcher: hint generation error:', hintErr.message);
+                    }
                 }
             } catch (e) {
                 // Fail-open: timeout check errors should never block

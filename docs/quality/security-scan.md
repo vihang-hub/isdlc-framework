@@ -1,39 +1,42 @@
-# Security Scan: REQ-0018-quality-loop-true-parallelism
+# Security Scan: BUG-0006-batch-b-hook-bugs
 
 **Phase**: 16-quality-loop
 **Date**: 2026-02-15
-**Branch**: feature/REQ-0018-quality-loop-true-parallelism
+**Tools**: npm audit + manual SAST review
 
-## SAST Scan (QL-008)
+## SAST Security Scan (QL-008)
 
-**Tool**: NOT CONFIGURED (no Semgrep, CodeQL, or similar SAST tool)
+No dedicated SAST tool configured (no Semgrep, Snyk Code, or CodeQL). Manual review performed on all 3 modified source files.
 
-### Manual Security Review of New/Modified Files
+### Files Reviewed
 
-| File | Type | Risk Assessment |
-|------|------|-----------------|
-| `16-quality-loop-engineer.md` | Agent prompt (markdown) | No executable code, no secrets, no injection vectors |
-| `quality-loop-parallelism.test.cjs` | CJS test file | Read-only operations (fs.readFileSync), no network access, no secrets |
+| File | Lines Modified | Security Issues |
+|------|---------------|-----------------|
+| src/claude/hooks/dispatchers/pre-task-dispatcher.cjs | ~30 (BUG 0.6 + 0.12 fixes) | 0 |
+| src/claude/hooks/test-adequacy-blocker.cjs | ~10 (BUG 0.7 fix) | 0 |
+| src/claude/hooks/menu-tracker.cjs | ~5 (BUG 0.11 fix) | 0 |
 
 ### Security Checks Performed
 
-| Check | Result |
-|-------|--------|
-| Hardcoded secrets or API keys | NONE FOUND |
-| Credential file references | NONE FOUND |
-| Network access in test files | NONE -- all tests are local file reads |
-| File write operations in tests | NONE -- all tests are read-only |
-| eval() or Function() usage | NONE FOUND |
-| Child process spawning in tests | NONE FOUND |
-| Path traversal vulnerabilities | NONE -- all paths are relative to project root |
+| Check | Description | Result |
+|-------|-------------|--------|
+| Code injection | No `eval()`, `Function()`, or template literals with user input | PASS |
+| Command injection | No `exec()`, `execSync()`, `spawn()`, or `child_process` | PASS |
+| Path traversal | No user-controlled file path construction | PASS |
+| Prototype pollution | No `Object.assign()` with user input, no `__proto__` access | PASS |
+| Hardcoded secrets | No API keys, tokens, passwords, or credentials | PASS |
+| Sensitive data exposure | No PII logging, no credential logging | PASS |
+| Denial of service | No unbounded loops on user input, no regex DoS patterns | PASS |
+| Error information leakage | Errors caught and logged to debugLog only, not exposed | PASS |
 
-### Constitutional Article V (Security by Design) Compliance
+### Specific Fix Security Review
 
-| Requirement | Status |
-|-------------|--------|
-| No new executable code introduced | PASS (prompt-only change) |
-| No new dependencies added | PASS |
-| No new network access patterns | PASS |
+| Bug | Fix Description | Security Assessment |
+|-----|-----------------|---------------------|
+| BUG 0.6 | Null coalescing defaults (`\|\| {}`) for context fields | SAFE: Default values are empty objects, no injection vector |
+| BUG 0.7 | Phase prefix change from `'16-'` to `'15-upgrade'` | SAFE: String comparison, no user input involved |
+| BUG 0.11 | typeof guard on iteration_requirements | SAFE: Type validation prevents prototype pollution from corrupt state |
+| BUG 0.12 | Structured JSON degradation hint in stderr | SAFE: Static action strings, no user input in JSON, wrapped in try/catch |
 
 ## Dependency Audit (QL-009)
 
@@ -49,24 +52,28 @@ found 0 vulnerabilities
 | Moderate | 0 |
 | Low | 0 |
 
-### Dependency Summary
+### Dependencies
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| chalk | ^5.3.0 | Terminal color output |
-| fs-extra | ^11.2.0 | Enhanced file operations |
-| prompts | ^2.4.2 | Interactive CLI prompts |
-| semver | ^7.6.0 | Semantic version parsing |
+| Package | Version | Status |
+|---------|---------|--------|
+| chalk | ^5.3.0 | No known vulnerabilities |
+| fs-extra | ^11.2.0 | No known vulnerabilities |
+| prompts | ^2.4.2 | No known vulnerabilities |
+| semver | ^7.6.0 | No known vulnerabilities |
 
-No new dependencies were added by REQ-0018.
+### No New Dependencies
+
+This bug fix does not add any new dependencies. All changes are to existing production code within the project's hook infrastructure.
 
 ## Summary
 
-- Critical vulnerabilities: 0
-- High vulnerabilities: 0
-- Medium vulnerabilities: 0
-- Low vulnerabilities: 0
-- SAST findings: 0 (manual review -- no automated SAST tool)
-- New dependencies: 0
+| Category | Finding |
+|----------|---------|
+| Critical vulnerabilities | 0 |
+| High vulnerabilities | 0 |
+| Medium vulnerabilities | 0 |
+| Low vulnerabilities | 0 |
+| New dependencies added | 0 |
+| SAST findings | 0 |
 
-**Security scan: PASS**
+**Security scan verdict: PASS**

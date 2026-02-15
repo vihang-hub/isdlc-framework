@@ -164,7 +164,9 @@ function check(ctx) {
         // Initialize state structure
         if (!state.phases) state.phases = {};
         if (!state.phases[currentPhase]) state.phases[currentPhase] = { status: 'in_progress' };
-        if (!state.phases[currentPhase].iteration_requirements) {
+        // BUG 0.11 fix: type-check iteration_requirements -- reset if not a plain object
+        const iterReqs = state.phases[currentPhase].iteration_requirements;
+        if (!iterReqs || typeof iterReqs !== 'object' || Array.isArray(iterReqs)) {
             state.phases[currentPhase].iteration_requirements = {};
         }
 
