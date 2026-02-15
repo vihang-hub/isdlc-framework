@@ -30,7 +30,7 @@
   - **Fix**: Add type check after parse: `if (!incomingState || typeof incomingState !== 'object') return null;`
   - **Files**: `src/claude/hooks/state-write-validator.cjs`
 
-#### Batch B — High: Inconsistent Hook Behavior (5 bugs, 4 files)
+#### Batch B — High: Inconsistent Hook Behavior (3 remaining, 4 fixed)
 
 - 0.4 [ ] **BUG: Phase index bounds not validated in gate-blocker**
   - **Severity**: High — fragile phase matching can misalign phases
@@ -44,17 +44,9 @@
   - **Fix**: Check for empty object, not just falsy: `const workflows = (ctx.workflows && Object.keys(ctx.workflows).length > 0) ? ctx.workflows : loadFallback();`
   - **Files**: `src/claude/hooks/gate-blocker.cjs`
 
-- 0.6 [ ] **BUG: Dispatcher passes null context to all hooks**
-  - **Severity**: High — 9 hooks receive potentially-null state/manifest/requirements with inconsistent null handling
-  - **Root cause**: `pre-task-dispatcher.cjs:100-105` — `readState()`, `loadManifest()`, `loadIterationRequirements()`, `loadWorkflowDefinitions()` can all return null, passed directly to hooks.
-  - **Fix**: Validate context object after loading; provide safe defaults for null values so hooks don't each need their own null guards.
-  - **Files**: `src/claude/hooks/dispatchers/pre-task-dispatcher.cjs`
+- 0.6 [x] ~~**BUG: Dispatcher passes null context to all hooks**~~ (BUG-0006)
 
-- 0.7 [ ] **BUG: test-adequacy-blocker fires on wrong phases**
-  - **Severity**: High — quality loop delegations incorrectly trigger upgrade-specific validation
-  - **Root cause**: `test-adequacy-blocker.cjs:35,61` checks both `phase.startsWith('16-')` (quality loop) AND `phase.startsWith('14-upgrade')`. Quality loop is not an upgrade phase.
-  - **Fix**: Remove `phase.startsWith('16-')` from upgrade phase detection, or separate the two concerns into distinct checks.
-  - **Files**: `src/claude/hooks/test-adequacy-blocker.cjs`
+- 0.7 [x] ~~**BUG: test-adequacy-blocker fires on wrong phases**~~ (BUG-0006)
 
 - 0.8 [ ] **BUG: Supervised review doesn't coordinate with gate-blocker**
   - **Severity**: High — user can advance phases while supervised review menu is active
@@ -62,7 +54,7 @@
   - **Fix**: Gate-blocker should block phase advancement when `supervised_review.status === 'reviewing'`.
   - **Files**: `src/claude/hooks/gate-blocker.cjs`
 
-#### Batch C — Medium: Correctness & UX (4 bugs)
+#### Batch C — Medium: Correctness & UX (2 remaining, 2 fixed)
 
 - 0.9 [ ] **BUG: Misleading artifact error messages**
   - **Severity**: Medium — confusing UX, gate blocks reported incorrectly
@@ -76,17 +68,9 @@
   - **Fix**: Require version field on incoming state even during migration, or add a migration-specific lock.
   - **Files**: `src/claude/hooks/state-write-validator.cjs`
 
-- 0.11 [ ] **BUG: Menu tracker unsafe nested object initialization**
-  - **Severity**: Medium — TypeError when state is corrupted
-  - **Root cause**: `menu-tracker.cjs:165-172` — if `iteration_requirements` exists but is not an object (corrupted state), accessing `.interactive_elicitation` throws TypeError.
-  - **Fix**: Add type check: `if (typeof iterReqs !== 'object' || iterReqs === null) iterReqs = {};`
-  - **Files**: `src/claude/hooks/menu-tracker.cjs`
+- 0.11 [x] ~~**BUG: Menu tracker unsafe nested object initialization**~~ (BUG-0006)
 
-- 0.12 [ ] **BUG: Phase timeout advisory only — never enforced**
-  - **Severity**: Medium — performance budgets silently exceeded
-  - **Root cause**: `pre-task-dispatcher.cjs:111-120` logs timeout warnings but never blocks or triggers graceful degradation.
-  - **Fix**: Implement degradation actions (reduce debate rounds, reduce parallelism) when budget exceeded. Related to backlog 2.4.
-  - **Files**: `src/claude/hooks/dispatchers/pre-task-dispatcher.cjs`
+- 0.12 [x] ~~**BUG: Phase timeout advisory only — never enforced**~~ (BUG-0006)
 
 #### Batch D — Low: Maintainability & Tech Debt (5 items)
 
@@ -421,6 +405,51 @@ Three modes controlling the developer's role during a workflow, activated via fe
 - 7.4 [ ] Analytics manager (integrated with feedback collector/roadmap)
 - 7.5 [ ] User auth and profile management
 - 7.6 [ ] Marketing integration for SMBs
+- 7.8 [ ] GitHub Issues adapter — second backlog provider alongside Jira, using `gh` CLI instead of Atlassian MCP
+  - **Problem**: The backlog adapter pattern (REQ-0008) is currently Jira-only. For GitHub-hosted projects, developers already have `gh` CLI authenticated and don't want to configure Atlassian MCP just for issue tracking. GitHub Issues is the natural home for bugs and features in open-source projects.
+  - **Design**: Same pluggable adapter pattern as Jira — BACKLOG.md remains the curated working set, GitHub Issues is the external source. Provider detected from metadata sub-bullet key (`**GitHub:**` vs `**Jira:**`).
+  - **UX** (invisible framework — all via natural language):
+    | User says | Agent does |
+    |-----------|-----------|
+    | "Add #42 to the backlog" | `gh issue view 42 --json title,body,labels` → appends to BACKLOG.md with `**GitHub:** #42` |
+    | "Refresh the backlog" | `gh issue list --label isdlc-bug,isdlc-feature --json` → updates BACKLOG.md items |
+    | "Let's work on #42" | Kicks off fix/feature workflow with issue body as input |
+    | *(workflow completes)* | Merge commit includes `Fixes #42` → GitHub auto-closes, BACKLOG.md updated |
+    | *(workflow cancelled)* | `gh issue comment 42 --body "Workflow cancelled at Phase {N}"` |
+  - **Setup UX — user-confirmed auto-detection** (not silent — always present options and get confirmation):
+    1. **Install time** (`npx isdlc`): Detect GitHub remote from `.git/config` + check `gh auth status`. If both present, show:
+       ```
+       GitHub detected: vihang-hub/isdlc-framework
+       gh CLI: authenticated ✓
+
+       Enable GitHub Issues integration?
+       [Y] Yes — sync bugs/features to GitHub Issues
+       [N] No  — use BACKLOG.md only (can enable later)
+       ```
+       If user confirms: auto-create labels (`isdlc-bug`, `isdlc-feature`, `severity-critical`, `severity-high`, `severity-medium`, `severity-low`), add `.github/ISSUE_TEMPLATE/bug_report.yml` and `feature_request.yml`, set `github_issues.enabled: true` in state.json.
+    2. **Discover time** (`/discover`): If not enabled at install, re-detect and present the same confirmation during project analysis. Constitution generation can include an article about issue tracking policy.
+    3. **First workflow** (lazy): If not enabled at install or discover, detect on first `/isdlc fix` or `/isdlc feature` and offer: "This project is on GitHub. Want me to create an Issue for this and track it there? [Y/n]"
+    - **All 3 detection points require explicit user confirmation** — never silently enable. User can also enable later with `"enable github issues"` (natural language intent detection in CLAUDE.md).
+  - **What syncs where**:
+    - **GitHub → BACKLOG.md**: issue title, body, labels, linked PR URLs (on add and refresh)
+    - **BACKLOG.md → GitHub**: status only — `gh issue close --reason completed` on workflow completion
+    - **Issue body → framework**: pulled as requirements phase input (replaces Confluence context for GitHub projects)
+  - **Auto-close via commit message**: Finalize step adds `Fixes #N` to the merge commit message. GitHub auto-closes the Issue — zero extra API calls.
+  - **Label auto-creation** (idempotent, on first enable):
+    - `isdlc-bug`, `isdlc-feature` — workflow type
+    - `severity-critical`, `severity-high`, `severity-medium`, `severity-low` — priority mapping
+    - Skip if labels already exist
+  - **Issue templates** (optional, on first enable):
+    - `.github/ISSUE_TEMPLATE/bug_report.yml` — structured bug template matching iSDLC fields (severity, files affected, repro steps)
+    - `.github/ISSUE_TEMPLATE/feature_request.yml` — feature template with description, acceptance criteria
+    - External contributors file Issues in the right format → iSDLC can parse them
+  - **Milestone mapping** (optional): batch grouping → GitHub milestones (e.g., "Batch A — Gate Bypass Fixes")
+  - **Coexistence**: Both Jira and GitHub adapters can be active simultaneously. Provider detected from `**Jira:**` vs `**GitHub:**` metadata sub-bullet in BACKLOG.md. Mixed backlogs supported.
+  - **Files to change**: `CLAUDE.md.template` (add GitHub operations to intent table), `00-sdlc-orchestrator.md` (backlog picker: detect `**GitHub:**` metadata, route to `gh` CLI; finalize: `gh issue close` + `Fixes #N` in commit), `01-requirements-analyst.md` (issue body as context, replacing Confluence), `isdlc.md` (command spec updates), hooks/tests (extend VR-003 for `#N` format), installer (`lib/installer.js` or `install.sh` — GitHub detection + confirmation prompt + label creation)
+  - **Prerequisites**: `gh` CLI installed and authenticated (`gh auth status`). No MCP server needed.
+  - **Advantages over Jira adapter**: no MCP auth headaches (Atlassian re-auth bug), `gh` already installed for most GitHub users, auto-close via commit message (zero API calls), richer label/milestone system, external contributor intake via templates
+  - **Builds on**: REQ-0008 (Jira adapter pattern), REQ-0012 (invisible framework — natural language intent detection)
+  - **Complexity**: Medium — same adapter pattern as Jira but simpler (gh CLI vs MCP). ~6 files to modify, ~1 new test file. Most work is in orchestrator + installer.
 - 7.7 [x] Backlog management integration — curated local BACKLOG.md backed by Jira, with Confluence as input source (REQ-0008 -- DONE)
   - **Problem**: Jira has hundreds of unsorted, unprioritised tickets. Nobody wants to trawl through that from the CLI. But Jira is the canonical source for ticket data in existing teams. BACKLOG.md provides a clean, curated, readable experience — but without Jira sync it's a disconnected island.
   - **Design**: BACKLOG.md is the developer's curated working set. Jira is the canonical source for ticket content. Sync is lightweight — content flows in from Jira, status flows back.
@@ -525,6 +554,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
 ## Completed
 
 ### 2026-02-15
+- [x] BUG-0006: Batch B hook bugs — 4 fixes across 3 files: dispatcher null context defaults (0.6, `pre-task-dispatcher.cjs`), test-adequacy wrong phase detection prefix (0.7, `test-adequacy-blocker.cjs`), menu tracker unsafe nested init (0.11, `menu-tracker.cjs`), phase timeout degradation hints (0.12, `pre-task-dispatcher.cjs`). 48 new tests, zero regressions, 2 implementation iterations. 4 FRs, 3 NFRs, 21 ACs.
 - [x] BUG-0004: Orchestrator overrides conversational opening with old 3-question protocol — replaced stale INTERACTIVE PROTOCOL block (lines 1007-1016 of 00-sdlc-orchestrator.md) with CONVERSATIONAL PROTOCOL matching the requirements analyst's REQ-0014 INVOCATION PROTOCOL. 1 file modified, 17 new tests, zero regressions, 1 implementation iteration. 2 FRs, 2 NFRs, 9 ACs (backlog 0.1 original)
 - [x] REQ-0018: Quality Loop true parallelism — explicit dual-Task spawning for Track A (testing) + Track B (automated QA) in 16-quality-loop-engineer.md (backlog 2.1). Grouping strategy table (A1 unit, A2 system/integration, A3 E2E; B1 static analysis, B2 constitutional/coverage), internal parallelism guidance, consolidated merging protocol, iteration loop with parallel re-execution, FINAL SWEEP/FULL SCOPE compat, scope detection (50+/10-49/<10 thresholds). 40 new tests, zero regressions, 2 implementation iterations, light workflow. 7 FRs, 4 NFRs, 23 ACs.
 - [x] REQ-0015 (local): Impact Analysis cross-validation Verifier (Approach A) — new M4 agent (cross-validation-verifier.md) that cross-checks M1/M2/M3 findings after parallel execution, before consolidation. Pipeline verification pattern with 3-tier fail-open, 5 finding types (MISSING_FROM_BLAST_RADIUS, ORPHAN_IMPACT, RISK_SCORING_GAP, UNDERTESTED_CRITICAL_PATH, INCOMPLETE_ANALYSIS), IA-401/IA-402 skills. 1 new agent, 1 new skill, 3 modified files, 33 new tests, zero regressions, 9/9 gates passed first try. 7 FRs, 3 NFRs, 28 ACs (backlog 4.2 Approach A)
