@@ -9,26 +9,11 @@
 
 #### Batch A — Critical: Gate Bypass Risk (fix first — 2 files)
 
-- 0.1 [ ] **BUG: Dual phase-status tracking causes inconsistent gate decisions**
-  - **Severity**: Critical — gates pass/fail inconsistently depending on which state path has data
-  - **Symptom**: Same action gets blocked in one session but passes in another
-  - **Root cause**: `gate-blocker.cjs:646-652` checks BOTH `active_workflow.phase_status[phase]` AND `state.phases[phase]` for completion. These two locations can diverge — if `phase_status` says "completed" but `state.phases[phase]` has incomplete iteration data, the gate incorrectly allows advancement.
-  - **Fix**: Pick ONE canonical source for phase completion status and use it consistently. Reconcile or remove the other.
-  - **Files**: `src/claude/hooks/gate-blocker.cjs`
+- 0.1 [x] ~~**BUG: Dual phase-status tracking causes inconsistent gate decisions**~~ (BUG-0007)
 
-- 0.2 [ ] **BUG: Missing PHASE_STATUS_ORDINAL disables phase regression checks**
-  - **Severity**: Critical — invalid phase status transitions silently allowed
-  - **Symptom**: Phase status can regress (e.g., `completed` → `in_progress`) without any block
-  - **Root cause**: `state-write-validator.cjs:293-294` references `PHASE_STATUS_ORDINAL[incomingStatus]` and `PHASE_STATUS_ORDINAL[diskStatus]` but the constant is never defined. Both evaluate to `undefined`, so the regression check (line 297-298) always skips.
-  - **Fix**: Add the missing constant: `const PHASE_STATUS_ORDINAL = { 'pending': 0, 'in_progress': 1, 'completed': 2 };`
-  - **Files**: `src/claude/hooks/state-write-validator.cjs`
+- 0.2 [x] ~~**BUG: Missing PHASE_STATUS_ORDINAL disables phase regression checks**~~ (BUG-0007 — confirmed already fixed, verification test added)
 
-- 0.3 [ ] **BUG: Null safety gap in state version lock check**
-  - **Severity**: Critical — potential state corruption
-  - **Symptom**: TypeError or silent corruption when incoming state parses as non-object JSON (e.g., `null`, `"string"`, `123`)
-  - **Root cause**: `state-write-validator.cjs:220-230` — `JSON.parse(incomingContent)` succeeds but result isn't validated as an object before accessing `.state_version`.
-  - **Fix**: Add type check after parse: `if (!incomingState || typeof incomingState !== 'object') return null;`
-  - **Files**: `src/claude/hooks/state-write-validator.cjs`
+- 0.3 [x] ~~**BUG: Null safety gap in state version lock check**~~ (BUG-0007)
 
 #### Batch B — High: Inconsistent Hook Behavior (3 remaining, 4 fixed)
 
@@ -554,6 +539,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
 ## Completed
 
 ### 2026-02-15
+- [x] BUG-0007: Batch A gate bypass bugs — 2 fixes across 2 files: phase-status early-return bypass removed in gate-blocker.cjs (0.1), null/type guards added to state-write-validator.cjs checkVersionLock() (0.3). Bug 0.2 (PHASE_STATUS_ORDINAL) confirmed already fixed with verification test. 16 new tests, zero regressions, 1 implementation iteration. 3 bugs analyzed, 13 ACs, 3 NFRs.
 - [x] BUG-0006: Batch B hook bugs — 4 fixes across 3 files: dispatcher null context defaults (0.6, `pre-task-dispatcher.cjs`), test-adequacy wrong phase detection prefix (0.7, `test-adequacy-blocker.cjs`), menu tracker unsafe nested init (0.11, `menu-tracker.cjs`), phase timeout degradation hints (0.12, `pre-task-dispatcher.cjs`). 48 new tests, zero regressions, 2 implementation iterations. 4 FRs, 3 NFRs, 21 ACs.
 - [x] BUG-0004: Orchestrator overrides conversational opening with old 3-question protocol — replaced stale INTERACTIVE PROTOCOL block (lines 1007-1016 of 00-sdlc-orchestrator.md) with CONVERSATIONAL PROTOCOL matching the requirements analyst's REQ-0014 INVOCATION PROTOCOL. 1 file modified, 17 new tests, zero regressions, 1 implementation iteration. 2 FRs, 2 NFRs, 9 ACs (backlog 0.1 original)
 - [x] REQ-0018: Quality Loop true parallelism — explicit dual-Task spawning for Track A (testing) + Track B (automated QA) in 16-quality-loop-engineer.md (backlog 2.1). Grouping strategy table (A1 unit, A2 system/integration, A3 E2E; B1 static analysis, B2 constitutional/coverage), internal parallelism guidance, consolidated merging protocol, iteration loop with parallel re-execution, FINAL SWEEP/FULL SCOPE compat, scope detection (50+/10-49/<10 thresholds). 40 new tests, zero regressions, 2 implementation iterations, light workflow. 7 FRs, 4 NFRs, 23 ACs.
