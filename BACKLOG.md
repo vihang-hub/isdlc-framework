@@ -146,6 +146,56 @@
   - **Complexity**: Medium-large (2-3 sessions through full iSDLC workflow)
   - **Prerequisite**: BUG-0013 (phase-loop-controller same-phase bypass) should be done first to reduce false blocks during parallel work
 
+- 3.2 [ ] Pre-analysis pipeline — `/isdlc analyze` command to pre-compute analytical phases for the next task while the current workflow runs
+  - **Problem**: During Phase 06 (implementation) the developer waits 10-30 minutes with nothing to do. They know what the next task will be (from BACKLOG.md) but can't start working on it until the current workflow finishes. Today the only option is manual backlog grooming. The framework could use this idle time to pre-compute the non-interactive analytical phases for the next task, so when the developer starts it, the analysis is already done.
+  - **Key insight**: Phases 00 (quick-scan) and 02 (impact analysis) are **read-only** — they analyze the codebase and produce documents, never write code. They can safely run alongside an implementation phase with zero file conflict. Phase 01 (requirements) is interactive and cannot be pre-cooked.
+  - **Design**:
+    1. **New command**: `/isdlc analyze "Add payment processing"` (or natural language: "analyze the next backlog item")
+    2. **Runs phases 00 + 02 only** — non-interactive, purely analytical. No state.json workflow creation, no branch, no hooks. Just Task agents producing artifacts.
+    3. **Artifacts saved to staging area**:
+       ```
+       .isdlc/
+         pre-analysis/
+           add-payment-processing/
+             quick-scan.md          ← Phase 00 output
+             impact-analysis.md     ← Phase 02 output
+             meta.json              ← { description, created_at, source_branch, analyzed_files_hash }
+           another-feature/
+             ...
+       ```
+    4. **Consumption at workflow start**: When `/isdlc feature "Add payment processing"` runs, the phase-loop checks `.isdlc/pre-analysis/` for a matching slug. If found:
+       - Show summary of what was pre-analyzed
+       - Staleness check: compare `analyzed_files_hash` against current codebase state. If files changed significantly since analysis, warn and offer to re-run
+       - Offer: "Pre-analysis found (2 hours ago). Use it? [Y] Use pre-analysis / [N] Run fresh / [R] Review first"
+       - If accepted: inject artifacts as context for Phase 01 (requirements gets richer starting context) and skip Phase 02 (impact analysis already done)
+    5. **Cleanup**: Pre-analysis artifacts deleted after consumption or after 7 days (whichever comes first). `/isdlc analyze --clean` removes all.
+  - **UX flow**:
+    ```
+    Terminal 1: /isdlc feature "user auth"     ← workflow running, currently in Phase 06
+    Terminal 2: /isdlc analyze "payment API"    ← pre-analysis for next task
+
+    ... later, after auth workflow completes ...
+
+    Terminal 1: /isdlc feature "payment API"
+    > Pre-analysis found for "payment API" (35 min ago)
+    >   Quick scan: 12 files in scope, 3 modules affected
+    >   Impact analysis: medium blast radius, 2 coupling hotspots
+    > Use pre-analysis? [Y/N/R]
+    ```
+  - **Intent detection in CLAUDE.md.template**: Add patterns like "analyze the next item", "pre-analyze {description}", "start analysis for {description}" → route to `/isdlc analyze`
+  - **Files to change**: `src/claude/commands/isdlc.md` (new SCENARIO for analyze command, consumption logic in phase-loop STEP 3), `src/claude/CLAUDE.md.template` (intent detection patterns), `.gitignore` (ensure `.isdlc/pre-analysis/` is ignored)
+  - **What it intentionally does NOT do**:
+    - No state.json workflow creation — pre-analysis is not a workflow, it's a staging computation
+    - No branch creation — analysis runs on whatever branch you're on
+    - No hook enforcement — no gates, no iteration requirements. This is draft analysis, not gated output
+    - No Phase 01 (requirements) — that's interactive, needs the developer, runs at normal workflow time
+    - No Phase 03 (architecture) — depends on requirements output, so can't run before Phase 01
+  - **Relationship to other backlog items**:
+    - Stepping stone to 3.1 (parallel workflows) — if this proves valuable, 3.1 adds full state isolation for concurrent workflows
+    - Complements 5.2 (collaborative mode) — pre-analysis keeps the developer engaged during idle time, similar to collaborative mode's task suggestions
+    - Independent of 5.1 (supervised mode) — no dependency
+  - **Complexity**: Low-medium — new command scenario in isdlc.md, consumption check in phase-loop, staging directory convention, intent detection. No hook changes, no state schema changes, no new agents.
+
 ### 4. Multi-Agent Teams (Architecture)
 
 - 4.1 [x] Replace single-agent phases with Creator/Critic/Refiner teams that collaborate via propose-critique-refine cycles (5 of 5 phases done)
