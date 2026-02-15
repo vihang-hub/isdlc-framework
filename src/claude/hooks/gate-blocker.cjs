@@ -578,7 +578,11 @@ function check(ctx) {
             debugLog('Active workflow:', activeWorkflow.type, '| Phase:', currentPhase);
 
             // Load workflow definition for sequence validation (prefer ctx.workflows)
-            const workflows = ctx.workflows || loadWorkflowDefinitionsFromCommon() || loadWorkflowDefinitions();
+            // BUG-0008 fix (0.5): Check for .workflows sub-property, not just truthiness.
+            // An empty {} is truthy but has no .workflows, preventing fallback loading.
+            const workflows = (ctx.workflows && ctx.workflows.workflows ? ctx.workflows : null)
+                || loadWorkflowDefinitionsFromCommon()
+                || loadWorkflowDefinitions();
             if (workflows && workflows.workflows) {
                 workflowDef = workflows.workflows[activeWorkflow.type];
             }
@@ -588,18 +592,29 @@ function check(ctx) {
                 const workflowPhases = activeWorkflow.phases || workflowDef.phases;
                 const phaseIndex = activeWorkflow.current_phase_index;
 
-                // Verify current phase matches expected position in workflow
-                if (phaseIndex != null && workflowPhases[phaseIndex] !== currentPhase) {
-                    const stopReason =
-                        `GATE BLOCKED: Workflow state mismatch. ` +
-                        `Expected phase '${workflowPhases[phaseIndex]}' at index ${phaseIndex} ` +
-                        `but current is '${currentPhase}'.`;
-                    return { decision: 'block', stopReason };
-                }
+                // BUG-0008 fix (0.4): Validate workflowPhases is a non-empty array
+                // and phaseIndex is a valid non-negative finite number before indexing.
+                // Invalid values skip sequence validation (fail-safe per Article X).
+                const validPhases = Array.isArray(workflowPhases) && workflowPhases.length > 0;
+                const validIndex = typeof phaseIndex === 'number' && Number.isFinite(phaseIndex) && phaseIndex >= 0;
 
-                // Check if this is the last phase (advancement would complete the workflow)
-                if (phaseIndex != null && phaseIndex >= workflowPhases.length - 1) {
-                    debugLog('At last workflow phase — gate check applies, advancement completes workflow');
+                if (validPhases && validIndex) {
+                    // Verify current phase matches expected position in workflow
+                    if (phaseIndex < workflowPhases.length && workflowPhases[phaseIndex] !== currentPhase) {
+                        const stopReason =
+                            `GATE BLOCKED: Workflow state mismatch. ` +
+                            `Expected phase '${workflowPhases[phaseIndex]}' at index ${phaseIndex} ` +
+                            `but current is '${currentPhase}'.`;
+                        return { decision: 'block', stopReason };
+                    }
+
+                    // Check if this is the last phase (advancement would complete the workflow)
+                    if (phaseIndex >= workflowPhases.length - 1) {
+                        debugLog('At last workflow phase — gate check applies, advancement completes workflow');
+                    }
+                } else {
+                    debugLog('Skipping sequence validation: invalid workflowPhases or phaseIndex',
+                        { validPhases, validIndex, phaseIndex });
                 }
             }
         } else {
@@ -645,6 +660,30 @@ function check(ctx) {
         // BUG-0007 fix (0.1): Removed early-return bypass on active_workflow.phase_status.
         // state.phases[phase] is the single canonical source for gate decisions.
         // The five requirement checks below handle all cases correctly.
+
+        // BUG-0008 fix (0.8): Block gate advancement when supervised review is active.
+        // This check is EARLY (before iteration requirements) because supervised review
+        // is an organizational gate — the human must approve before any advancement.
+        const supervisedReview = state.active_workflow?.supervised_review;
+        if (supervisedReview) {
+            if (supervisedReview.status === 'reviewing') {
+                const reviewPhase = supervisedReview.phase || currentPhase;
+                const stopReason =
+                    `GATE BLOCKED: Supervised review in progress for phase '${reviewPhase}'. ` +
+                    `Phase advancement is blocked until the supervised review is approved or rejected.`;
+                return { decision: 'block', stopReason };
+            }
+            if (supervisedReview.status === 'rejected') {
+                const reviewPhase = supervisedReview.phase || currentPhase;
+                const rejectReason = supervisedReview.reason || 'No reason provided';
+                const stopReason =
+                    `GATE BLOCKED: Supervised review rejected for phase '${reviewPhase}'. ` +
+                    `Reason: ${rejectReason}. Address the review feedback before advancing.`;
+                return { decision: 'block', stopReason };
+            }
+            // 'approved' or other statuses — proceed to normal gate logic
+            debugLog('Supervised review status:', supervisedReview.status, '— proceeding with gate check');
+        }
 
         // Get phase state
         const phaseState = state.phases?.[currentPhase] || {};
@@ -733,11 +772,10 @@ function check(ctx) {
             }
         }
 
-        // Log supervised review context for debugging (REQ-0013)
-        if (state.active_workflow?.supervised_review?.status === 'reviewing') {
-            const msg = `[INFO] gate-blocker: supervised review in progress for phase '${state.active_workflow.supervised_review.phase}'. Gate check unaffected.`;
-            stderrMessages += msg + '\n';
-        }
+        // BUG-0008 fix (0.8): Supervised review blocking is now handled earlier (before iteration
+        // requirements). The early-exit check above blocks for 'reviewing' and 'rejected' statuses.
+        // This section is no longer needed — the code that was here logged "Gate check unaffected"
+        // which was the bug (it allowed advancement during review).
 
         // If all blocks were infrastructure, allow gate advancement
         if (genuineChecks.length === 0) {
