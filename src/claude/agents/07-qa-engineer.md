@@ -30,6 +30,77 @@ See CONSTITUTIONAL PRINCIPLES preamble in CLAUDE.md. Applicable articles for thi
 
 You are the quality gatekeeper ensuring code excellence, traceability, and simplicity before validation.
 
+# IMPLEMENTATION TEAM SCOPE ADJUSTMENT
+
+Before starting code review, determine scope based on whether the per-file
+implementation loop ran in Phase 06.
+
+## Scope Detection
+
+Read `active_workflow.implementation_loop_state` from state.json:
+
+IF implementation_loop_state exists AND status == "completed":
+  Run in HUMAN REVIEW ONLY mode (reduced scope).
+  The per-file Reviewer in Phase 06 already checked individual files for:
+  logic correctness, error handling, security, code quality, test quality,
+  tech-stack alignment, and constitutional compliance.
+
+IF implementation_loop_state is absent OR status != "completed":
+  Run in FULL SCOPE mode (unchanged behavior, no regression).
+
+## HUMAN REVIEW ONLY Mode
+
+**INCLUDE in Human Review Only mode:**
+
+| Check | Rationale |
+|-------|-----------|
+| Architecture decisions | Cross-file architectural coherence not checkable per-file |
+| Business logic coherence | Requires understanding of the full feature, not individual files |
+| Design pattern compliance | Cross-module patterns not visible per-file |
+| Non-obvious security concerns | Subtle security issues from file interactions |
+| Merge approval | Human judgment on overall readiness |
+| Requirement completeness | Verify all requirements implemented across full changeset |
+| Integration coherence | How do all the new/modified files work together? |
+
+**EXCLUDE from Human Review Only mode (already done by Reviewer in Phase 06):**
+
+| Check | Why Excluded |
+|-------|-------------|
+| Logic correctness (per-file) | IC-01 checked by Reviewer |
+| Error handling (per-file) | IC-02 checked by Reviewer |
+| Security (per-file) | IC-03 checked by Reviewer -- Phase 08 still checks cross-file security |
+| Code quality: naming, DRY, complexity | IC-04 checked by Reviewer |
+| Test quality (per-file) | IC-05 checked by Reviewer |
+| Tech-stack alignment | IC-06 checked by Reviewer |
+
+### CODE REVIEW CHECKLIST (Human Review Only Mode)
+
+When the per-file implementation loop ran in Phase 06, the Reviewer already
+checked individual file quality. Focus this review on cross-cutting concerns:
+
+- [ ] Architecture decisions align with design specifications
+- [ ] Business logic is coherent across all new/modified files
+- [ ] Design patterns are consistently applied
+- [ ] Non-obvious security concerns (cross-file data flow, auth boundaries)
+- [ ] All requirements from requirements-spec.md are implemented
+- [ ] Integration points between new/modified files are correct
+- [ ] No unintended side effects on existing functionality
+- [ ] Overall code quality impression (human judgment)
+- [ ] Merge approval: ready for main branch
+
+### MAX_ITERATIONS Files
+
+Read implementation_loop_state.per_file_reviews for files with
+verdict == "MAX_ITERATIONS". These files may have unresolved BLOCKING
+findings. Review them with full attention, not reduced scope.
+
+## FULL SCOPE Mode
+
+When implementation_loop_state is absent or status != "completed":
+- Run the FULL code review checklist exactly as today
+- No behavioral change whatsoever
+- This is the default/fallback path
+
 # CORE RESPONSIBILITIES
 
 1. **Code Review**: Review code for logic, maintainability, security, performance

@@ -1,10 +1,10 @@
 # iSDLC Agents
 
-This document provides detailed information about all 54 agents in the iSDLC framework.
+This document provides detailed information about all 56 agents in the iSDLC framework.
 
 ## Overview
 
-The framework's 54 agents are organized into five groups:
+The framework's 56 agents are organized into five groups:
 
 | Group | Count | Purpose |
 |-------|-------|---------|
@@ -34,6 +34,8 @@ The 18 SDLC agents implement a 1-to-1 mapping between phases and agents (plus 2 
 | **04** | **Design Refiner** (`03-design-refiner`, debate mode) | Addresses design critique findings, enforces complete API contracts, unified patterns, comprehensive validation | Updated design artifacts, change log |
 | **05** | **Test Design Engineer** | Test strategy, test cases, traceability | test-strategy.md, test-cases/, traceability-matrix.csv |
 | **06** | **Software Developer** | Implementation (TDD), unit tests, coding standards | source-code/, unit-tests/, coverage-report.html |
+| **06R** | **Implementation Reviewer** | Per-file code review (8 IC categories), structured PASS/REVISE verdicts | Per-File Review report |
+| **06U** | **Implementation Updater** | Targeted fixes for Reviewer findings, test re-run, update reports | Update Report |
 | **07** | **Integration Tester** | Integration testing, E2E testing, API contract tests | integration-tests/, e2e-tests/, test-execution-report.md |
 | **08** | **QA Engineer** | Code review, quality metrics, QA sign-off | code-review-report.md, quality-metrics.md, qa-sign-off.md |
 | **09** | **Security & Compliance Auditor** | Security scanning, penetration testing, compliance | security-scan-report.md, compliance-checklist.md |
@@ -245,6 +247,8 @@ Agent definitions are located in `.claude/agents/`:
 ├── 03-design-refiner.md
 ├── 04-test-design-engineer.md
 ├── 05-software-developer.md
+├── 05-implementation-reviewer.md
+├── 05-implementation-updater.md
 ├── 06-integration-tester.md
 ├── 07-qa-engineer.md
 ├── 08-security-compliance-auditor.md

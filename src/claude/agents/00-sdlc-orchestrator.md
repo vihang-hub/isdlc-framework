@@ -1210,6 +1210,231 @@ IF debate_state.converged == false:
 - Log completion in state.json history
 - Proceed to phase gate validation
 
+## 7.6 IMPLEMENTATION LOOP ORCHESTRATION (Per-File)
+
+When the feature workflow reaches Phase 06 (implementation) AND debate mode is active,
+use the per-file Writer/Reviewer/Updater loop defined in this section. This loop is
+SEPARATE from the DEBATE_ROUTING table (Section 7.5) per ADR-0001.
+
+### Implementation Agent Routing Table
+
+IMPLEMENTATION_ROUTING:
+
+| Phase Key         | Writer Agent              | Reviewer Agent                   | Updater Agent                   | Max Cycles/File |
+|-------------------|---------------------------|----------------------------------|---------------------------------|-----------------|
+| 06-implementation | 05-software-developer.md  | 05-implementation-reviewer.md    | 05-implementation-updater.md    | 3               |
+
+**Lookup logic:**
+```
+IF current_phase IN IMPLEMENTATION_ROUTING AND debate_mode == true:
+  Use per-file loop protocol (Section 7.6 Steps 2-5)
+IF current_phase IN IMPLEMENTATION_ROUTING AND debate_mode == false:
+  Delegate to Writer agent only (no WRITER_CONTEXT, no per-file loop)
+ELSE:
+  Fall through to DEBATE_ROUTING (Section 7.5) or standard delegation
+```
+
+**Phase Resolution Order:**
+1. Check IMPLEMENTATION_ROUTING first (Section 7.6)
+2. If not found, check DEBATE_ROUTING (Section 7.5)
+3. If not found, use standard single-agent delegation
+
+Phase 06 is ONLY in IMPLEMENTATION_ROUTING. Phases 01/03/04 are ONLY in DEBATE_ROUTING.
+No phase appears in both tables.
+
+### Step 1: Resolve Debate Mode (Reuse from Section 7.5)
+
+```
+debate_mode = resolveDebateMode()   // Same function as Section 7.5
+```
+
+This is the SAME function defined in Section 7.5 Step 1. It reads flags
+(--debate/--no-debate) and sizing to determine debate mode. No duplication.
+
+### Step 2: Initialize implementation_loop_state
+
+If debate_mode == true and current_phase IN IMPLEMENTATION_ROUTING:
+
+```json
+{
+  "implementation_loop_state": {
+    "phase": "06-implementation",
+    "status": "in_progress",
+    "started_at": "{ISO-8601}",
+    "completed_at": null,
+    "total_files_planned": null,
+    "files_completed": [],
+    "files_remaining": [],
+    "current_file": null,
+    "current_cycle": null,
+    "per_file_reviews": [],
+    "summary": null
+  }
+}
+```
+
+Write to `active_workflow.implementation_loop_state` in state.json immediately.
+The orchestrator owns this state -- sub-agents do NOT write to state.json.
+
+**Re-entry handling:** If implementation_loop_state already exists AND status == "in_progress":
+- Resume from last incomplete file
+- Do not re-initialize -- preserve existing per_file_reviews
+
+### Step 3: Writer Delegation (First Call)
+
+Delegate to the Writer agent (IMPLEMENTATION_ROUTING.writer) with WRITER_CONTEXT
+via the Task tool as a separate invocation:
+
+```
+WRITER_CONTEXT:
+  mode: writer
+  per_file_loop: true
+  tdd_ordering: true
+
+{Feature description}
+{Design specifications from Phase 04}
+{Test strategy from Phase 05}
+{Task plan from tasks.md}
+
+Produce ONE file at a time. After writing each file, announce the file path
+and STOP. Wait for the review cycle to complete before proceeding.
+
+TDD ordering: write the test file FIRST, then the production file.
+```
+
+After Writer returns:
+1. Extract file path from Writer's output (FILE_PRODUCED: {path})
+2. Update implementation_loop_state: current_file, current_cycle = 1
+3. Proceed to Step 4
+
+### Step 4: Per-File Loop
+
+For each file the Writer produces:
+
+#### 4a: Reviewer Review
+
+Delegate to Reviewer (IMPLEMENTATION_ROUTING.reviewer) via the Task tool
+as a separate invocation:
+
+```
+REVIEW_CONTEXT:
+  file_path: {path to file}
+  file_number: {N} of {total}
+  cycle: {current_cycle}
+  tech_stack: {from state.json project.tech_stack}
+  constitution_path: {from state.json constitution.path}
+
+Review this file against 8 mandatory check categories.
+Produce structured output with verdict: PASS or REVISE.
+```
+
+After Reviewer returns:
+1. Parse verdict (PASS or REVISE)
+2. Parse BLOCKING, WARNING, INFO counts from Summary section
+3. Record in per_file_reviews
+4. Update state.json
+
+#### 4b: Verdict Processing
+
+```
+IF verdict == PASS:
+  Move file from files_remaining to files_completed
+  Set current_file = null
+  Proceed to next file (delegate back to Writer -- Step 3)
+
+IF verdict == REVISE AND current_cycle < max_cycles (3):
+  Proceed to Step 4c (Updater)
+
+IF verdict == REVISE AND current_cycle >= max_cycles (3):
+  Accept file with MAX_ITERATIONS warning
+  Update per_file_reviews: verdict = "MAX_ITERATIONS"
+  Move file to files_completed
+  Log warning: "File {path} accepted with MAX_ITERATIONS warning after 3 cycles."
+  Proceed to next file
+```
+
+#### 4c: Updater Fix
+
+Delegate to Updater (IMPLEMENTATION_ROUTING.updater) via the Task tool
+as a separate invocation:
+
+```
+UPDATE_CONTEXT:
+  file_path: {path to file}
+  cycle: {current_cycle}
+  reviewer_verdict: REVISE
+  findings:
+    blocking: [{findings from Reviewer}]
+    warning: [{findings from Reviewer}]
+
+Address ALL BLOCKING findings. Re-run tests after fixes.
+Produce an update report with each finding's disposition.
+```
+
+After Updater returns:
+1. Parse update report for actions (fixed/deferred/disputed)
+2. Update per_file_reviews with updater_actions
+3. Increment current_cycle
+4. Delegate back to Reviewer (Step 4a) for re-review
+
+### Step 5: Post-Loop Finalization
+
+When all files are processed (files_remaining is empty):
+
+1. Update implementation_loop_state:
+   - status = "completed"
+   - completed_at = ISO-8601 timestamp
+   - summary with total_files, passed_first_review, required_revision,
+     average_cycles, max_iterations_warnings
+
+2. Generate per-file-loop-summary.md in the artifact folder
+
+3. Write state.json with final implementation_loop_state
+
+4. Log completion in state.json history
+
+5. Proceed to phase gate validation (Section 8)
+
+### File Ordering Protocol
+
+The orchestrator determines file processing order:
+
+**Primary ordering:** Task plan order from tasks.md.
+
+**TDD pairing rule:** Test file first, production file second.
+
+**Fallback ordering:**
+1. Test files before production files
+2. Foundation/utility files before dependent files
+3. Alphabetical within each group
+
+### Writer Re-delegation Protocol
+
+After a file passes review:
+```
+WRITER_CONTEXT:
+  mode: writer
+  per_file_loop: true
+  tdd_ordering: true
+  files_completed: [{list of completed files}]
+  current_file_number: {N+1}
+
+Continue implementation. Produce the NEXT file.
+If all files are complete, announce "ALL_FILES_COMPLETE".
+```
+
+### Sub-Agent Error Handling
+
+| Error | Handling |
+|-------|---------|
+| Writer produces no files | Log warning, set status="completed" with 0 files, proceed |
+| Writer produces non-existent file path | Skip file with WARNING, proceed to next |
+| Reviewer output unparseable (cannot extract verdict) | Treat as PASS (fail-open per Article X); log warning |
+| Reviewer always returns REVISE | Max 3 cycles per file, then accept with MAX_ITERATIONS |
+| Updater fails to return update report | Log warning, proceed to Reviewer re-review |
+| Updater crashes or times out | Log error, treat cycle as complete, proceed to re-review |
+| Task tool delegation fails | Log error, skip file with [ERROR] tag, proceed to next file |
+
 ## 8. Phase Gate Validation
 
 Before advancing phases, rigorously validate phase gates.

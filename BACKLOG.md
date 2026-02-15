@@ -25,6 +25,37 @@
   - Move remaining shared sections to CLAUDE.md (T2 follow-up)
   - **Impact**: 2-3% speedup per agent delegation
   - **Complexity**: Low (mechanical extraction)
+- 2.4 [ ] Performance budget and guardrail system — enforce per-workflow timing limits and track regression as new features land
+  - **Problem**: The framework has been optimised from ~4x to ~1.2-1.5x overhead (T1-T3 done). But upcoming backlog items add significant agent calls — Creator/Critic/Refiner debates across 4 creative phases could add 12+ extra agent runs (~20-40 min worst case), Phase 06 Writer/Reviewer/Updater adds 2N calls for N files, and fan-out spawns multiple parallel agents. Without a performance budget, these features will erode the gains incrementally and nobody will notice until the framework feels slow again.
+  - **Design**:
+    1. **Per-workflow timing instrumentation**: Record wall-clock time per phase, per agent call, and per hook dispatcher invocation in `state.json` under `phases[phase].timing`. Already have `console.time()` in dispatchers — extend to full phase timing.
+    2. **Performance budget per intensity**:
+       | Intensity | Target Overhead | Max Agent Calls | Max Debate Rounds |
+       |-----------|----------------|-----------------|-------------------|
+       | Light | ≤1.2x native | No debates, no fan-out | 0 |
+       | Standard | ≤2x native | Debates on creative phases, basic fan-out | 2 per phase |
+       | Epic | ≤3x native | Full debates + fan-out + cross-validation | 3 per phase |
+    3. **Budget enforcement**: At each phase boundary, the phase-loop-controller checks elapsed time against the budget. If over budget:
+       - Log warning with breakdown (which phase/agent consumed the most time)
+       - For debate phases: reduce remaining `max_rounds` to 1 (force convergence)
+       - For fan-out: reduce parallelism (fewer chunks)
+       - Never block — degrade gracefully, don't halt the workflow
+    4. **Regression tracking**: At workflow completion, append timing summary to `workflow_history`. Compare against rolling average of last 5 workflows of same intensity. Flag if >20% slower with breakdown of where time went.
+    5. **Dashboard at completion**: Show timing summary when workflow finishes:
+       ```
+       Workflow completed in 47m 12s (standard budget: 60m)
+         Phase 01 (Requirements):  8m 32s  [2 debate rounds]
+         Phase 02 (Impact):        1m 04s
+         Phase 03 (Architecture):  9m 18s  [2 debate rounds]
+         Phase 04 (Design):        7m 45s  [1 debate round]
+         Phase 05 (Test Strategy): 3m 12s
+         Phase 06 (Implementation): 12m 41s [8 files, 3 review cycles]
+         Phase 16 (Quality Loop):  2m 48s  [4-way fan-out]
+         Phase 08 (Code Review):   1m 52s
+       ```
+  - **What it protects**: Every new backlog item (4.1 debates, 4.2 cross-validation, 4.3 fan-out, 5.2 collaborative mode) must stay within the intensity budget. If a feature consistently blows the budget, it gets flagged for optimisation before the next release.
+  - **Builds on**: T1-T3 dispatcher timing, state.json workflow_history (REQ-0005), sizing intensity system (REQ-0011)
+  - **Complexity**: Medium — instrumentation is straightforward, budget enforcement needs careful degradation logic
 
 ### 3. Parallel Workflows (Architecture)
 
@@ -48,7 +79,7 @@
   - **Complexity**: Medium-large (2-3 sessions through full iSDLC workflow)
   - **Prerequisite**: BUG-0013 (phase-loop-controller same-phase bypass) should be done first to reduce false blocks during parallel work
 
-### 4. Multi-Agent Teams for Creative Phases (Architecture)
+### 4. Multi-Agent Teams (Architecture)
 
 - 4.1 [~] Replace single-agent phases with Creator/Critic/Refiner teams that collaborate via propose-critique-refine cycles (3 of 4 phases done)
   - **Shared pattern**: Each phase runs a 3-agent loop: Creator produces artifact → Critic reviews and challenges → Refiner synthesizes improvements. Max 3 rounds, convergence when Critic has zero blocking findings (warnings allowed). Each round produces a versioned artifact diff so progress is visible.
@@ -68,19 +99,12 @@
     - **Creator** (system-designer): Produces interface-spec.yaml/openapi.yaml, module-designs/, wireframes/, error-taxonomy.md, validation-rules.json.
     - **Critic** catches: incomplete API specs, inconsistent patterns across modules, module overlap, validation gaps, missing idempotency, accessibility issues, error taxonomy holes, data flow bottlenecks
     - **Refiner** produces: OpenAPI 3.x contracts with complete error responses, unified error taxonomy, component variants for all states, validation rules at every boundary, idempotency keys
-  - **Phase 06 — Implementation Team** [ ] (Writer/Reviewer/Updater — specialized per-file loop):
+  - **Phase 06 — Implementation Team** [ ] (Writer/Reviewer/Updater):
     - **Problem**: Code is written in Phase 06, then waits for Phase 16 (quality loop) and Phase 08 (code review) to find issues. By then context is cold, fixes require re-reading, and the sequential overhead adds 15-30 minutes per workflow.
     - **Writer** (software-developer) — writes code following tasks.md, TDD, produces files
-    - **Reviewer** (code-reviewer) — reviews each file as it's written, flags issues immediately, checks constitutional compliance, validates skill/tech-stack alignment
+    - **Reviewer** (code-reviewer) — reviews files, flags issues immediately, checks constitutional compliance, validates skill/tech-stack alignment
     - **Updater** (code-updater) — takes reviewer feedback, applies fixes, re-runs tests, confirms resolution
-    - **Per-file loop** (unlike other phases which loop per-artifact):
-      ```
-      Writer produces file A → Reviewer reviews A → issues found?
-        YES → Updater fixes A → Reviewer re-reviews → loop until clean
-        NO  → Writer moves to file B → Reviewer reviews B → ...
-      All files done → Final quality sweep (security scan, full test suite, coverage)
-      ```
-    - **In-loop reviewer checks** (per file, immediate — while context is hot):
+    - **Reviewer checks** (immediate — while context is hot):
       - Logic correctness, error handling, security (injection prevention, no hardcoded secrets)
       - Code quality (naming, DRY, single responsibility, complexity), test quality
       - Skill/tech-stack alignment (flag wrong patterns for project's stack)
@@ -90,7 +114,45 @@
       - Proposed: `06-implementation-loop (writer+reviewer+updater) → 16-final-sweep → 08-human-review`
     - **Final sweep** (Phase 16, batch): full test suite, coverage (≥80% unit, ≥70% integration), mutation testing (≥80%), npm audit, SAST scan, build verification, lint/type check, traceability matrix, technical debt assessment
     - **Phase 08 becomes human-review only**: architecture decisions, business logic, design coherence, non-obvious security, merge approval
+    - **Review strategy by intensity** (avoids naive per-file 2N call explosion):
+      - **Light** — Review-aware Writer + single audit: embed reviewer checklist in Writer prompt so it self-checks during writing, then one independent Reviewer audit over the full changeset. **2 Task calls total.**
+      - **Standard** — Group-based review + threshold skip: Writer produces files in logical groups (by module/directory), Reviewer reviews each group as a batch, Updater fixes per group. Simple files (types, config, re-exports, interfaces) skip review. **~4-6 Task calls** for a typical 15-file changeset.
+      - **Epic** — Group-based review (no threshold skip) or fan-out: full review of all groups, or fan-out N parallel Reviewers across file chunks for large changesets (15+ files). **~6-10 calls**, or parallel for faster wall-clock time.
+    - **Additional speedup options** (can layer on top of any strategy):
+      - **Progressive review**: full review on first 2-3 files to establish quality patterns, then lightweight spot-checks for remaining files. Re-triggers full review only if spot-check finds issues.
+      - **Diff-based review**: for modifications to existing files, Reviewer only reviews the diff, not the entire file. Smaller context = faster per review.
     - **Implementation options**: (A) Single Task with 3 sub-agents, (B) Phase-Loop Controller manages loop explicitly, (C) New `collaborative-implementation-engineer` agent encapsulates all 3 roles
+  - **Phase 05 — Test Strategy Team** [ ] (Creator/Critic/Refiner):
+    - **Creator** (test-design-engineer): Produces test-strategy.md, test-cases/, traceability-matrix.csv
+    - **Critic** catches: missing edge cases, untested error paths, over-reliance on unit tests, no performance/load test plan, coverage gaps against requirements, missing negative test cases, test data gaps, flaky test risk
+    - **Refiner** produces: complete test pyramid with rationale, Given/When/Then for every AC, explicit negative test cases, test data strategy, flaky-test mitigation, coverage targets mapped to risk areas
+- 4.2 [ ] Impact Analysis cross-validation — add a verification step to Phase 02 that cross-checks findings across M1/M2/M3
+  - **Problem**: M1 (Impact Analyzer), M2 (Entry Point Finder), and M3 (Risk Assessor) run in parallel and the orchestrator consolidates their reports. But nobody verifies consistency — M1 might say 7 files affected while M2 found entry points in 9 files, or M3's risk score might not account for coupling that M1 identified. Inconsistencies flow silently into sizing and downstream phases.
+  - **Pattern**: Cross-validation — a Verifier agent reads all three reports and checks for contradictions, gaps, and missed connections
+  - **Design**: After M1/M2/M3 complete and before consolidation, spawn a Verifier agent that:
+    1. Cross-references file lists (M1 affected files vs M2 entry point chains — are there files in one but not the other?)
+    2. Validates risk scoring (does M3's risk level account for M1's coupling analysis and M2's chain depth?)
+    3. Checks completeness (are all M2 entry points covered in M1's blast radius?)
+    4. Flags inconsistencies for the orchestrator to resolve or surface to the user
+  - **Impact on sizing**: More accurate file counts and risk scores → more reliable sizing decisions (connects to 8.2)
+  - **Complexity**: Low-medium — one new agent, runs after the existing parallel phase, no restructuring needed
+- 4.3 [ ] Fan-out/fan-in parallelism for execution-heavy phases — split work across N parallel agents for throughput
+  - **Problem**: Phases 16 (Quality Loop) and 08 (Code Review) process large volumes of work sequentially or in limited parallelism. For a project with 1000+ tests or 20+ changed files, this is a bottleneck.
+  - **Pattern**: Fan-out/fan-in — divide work into N chunks, spawn N agents in parallel, merge results
+  - **Phase 16 — Quality Loop fan-out**:
+    - Split test suite into N chunks based on total test count (e.g., 1000 tests ÷ 4 agents = 250 each)
+    - Each agent runs their chunk independently, reports pass/fail/coverage
+    - Orchestrator merges results — any failures bubble up, coverage is aggregated
+    - Supersedes backlog 2.1 (true parallelism for Track A + Track B) — this goes further by parallelising within each track
+    - **Scaling heuristic**: 1 agent per ~250 tests, max 8 agents (diminishing returns beyond that due to orchestration overhead)
+  - **Phase 08 — Code Review fan-out**:
+    - Split changed files across multiple reviewer agents (by module, directory, or file count)
+    - Each reviewer checks their subset: logic correctness, security, code quality, constitutional compliance
+    - Orchestrator merges findings into a single review report, deduplicates, prioritises
+    - Especially valuable for large changesets (20+ files) where single-agent review loses context
+    - If Phase 06 already has Writer/Reviewer/Updater (4.1), Phase 08 fan-out is for the final human-review preparation — assembling a comprehensive report quickly
+  - **Shared infrastructure**: Both use the same fan-out/fan-in orchestration — chunk splitter, parallel Task spawner, result merger. Build once, reuse.
+  - **Complexity**: Medium — chunk splitting logic, parallel agent spawning, result merging. Builds on existing Task tool parallelism.
 
 ### 5. Developer Engagement Modes (Architecture)
 
