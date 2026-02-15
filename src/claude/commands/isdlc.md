@@ -274,7 +274,7 @@ Enter selection (1-5):
 `--no-debate` wins (Article X: Fail-Safe Defaults).
 
 **Debate-enabled phases:** The debate loop currently supports Phase 01 (Requirements),
-Phase 03 (Architecture), and Phase 04 (Design). Other phases use single-agent delegation
+Phase 03 (Architecture), Phase 04 (Design), and Phase 05 (Test Strategy). Other phases use single-agent delegation
 regardless of debate flags. See the orchestrator's DEBATE_ROUTING table for the
 authoritative list.
 
