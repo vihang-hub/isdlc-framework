@@ -1,26 +1,37 @@
-# Technical Debt Assessment -- BUG-0017 Batch C Hook Bugs
+# Technical Debt Assessment -- BUG-0009 Batch D Tech Debt
 
 **Date**: 2026-02-15
 **Phase**: 08-code-review
-**Workflow**: Fix (BUG-0017-batch-c-hooks)
+**Workflow**: Fix (BUG-0009-batch-d-tech-debt)
 
 ---
 
-## 1. New Technical Debt Introduced
+## 1. Technical Debt Resolved by This Batch
 
-**None.** Both fixes are minimal, targeted, and follow existing patterns. No new abstractions, no new dependencies, no deferred work.
+This batch resolves 4 pre-existing tech debt items from BACKLOG.md:
+
+| Item | Description | Resolution |
+|------|-------------|------------|
+| 0.13 | Hardcoded phase prefixes scattered across 5 hook files | Centralized in PHASE_PREFIXES constant |
+| 0.14 | Inconsistent null-check patterns (&&-chains vs optional chaining) | Standardized to optional chaining for property reads |
+| 0.15 | detectPhaseDelegation() undocumented | Added comprehensive JSDoc (60 lines) |
+| 0.16 | Dead code else branch in gate-blocker.cjs | Simplified to direct state.current_phase assignment |
 
 ---
 
-## 2. Existing Technical Debt Observations
+## 2. New Technical Debt Introduced
 
-### TD-001: Pre-existing test failures (documentation drift)
+**None.** All changes are non-behavioral refactoring. No new abstractions, no new dependencies, no deferred work.
+
+---
+
+## 3. Remaining Technical Debt Observations
+
+### TD-001: Pre-existing test failures (workflow-finalizer)
 
 **Type**: Test debt
-**Impact**: Low (not caused by BUG-0017)
-**Details**: 2 ESM test failures:
-  - TC-E09: README.md references "40 agents" but project has grown
-  - TC-13-01: prompt-format.test.js expects 48 agent files but finds 59
+**Impact**: Low (not caused by BUG-0009)
+**Details**: 43 failures in workflow-finalizer.test.cjs -- pre-existing across all recent workflows.
 **Recommendation**: Track as maintenance backlog item.
 
 ### TD-002: No ESLint configuration
@@ -28,31 +39,36 @@
 **Type**: Tooling debt
 **Impact**: Low
 **Details**: No automated linting. Manual review substitutes.
-**Recommendation**: Add ESLint in a future workflow.
+**Recommendation**: Add ESLint in a future workflow (BACKLOG item).
 
-### TD-003: gate-blocker.cjs coverage at 67.55%
+### TD-003: Remaining inline phase strings in non-scoped files
 
-**Type**: Testing debt
-**Impact**: Low (below 80% threshold but pre-existing; new code paths are fully tested)
-**Details**: Pre-existing coverage gap in cloud config triggers, complex self-healing paths. Not introduced or worsened by BUG-0017.
-**Recommendation**: Track as backlog item for dedicated gate-blocker coverage improvement.
+**Type**: Consistency debt
+**Impact**: Low
+**Details**: Phase strings `'01-requirements'`, `'06-implementation'` remain in:
+  - `log-skill-usage.cjs:87` (default fallback)
+  - `plan-surfacer.cjs:30` (EARLY_PHASES set -- different usage pattern)
+  - `menu-tracker.cjs:147` (phase check)
+  - `common.cjs:1470,2453` (lookup maps)
+These were deliberately excluded from BUG-0009 scope because they are in different usage contexts (sets, maps, files not targeted by the requirements).
+**Recommendation**: Consider extending PHASE_PREFIXES adoption in a future housekeeping pass.
 
-### TD-004: Duplicate disk read in V7 and V8
+### TD-004: No coverage tooling
 
-**Type**: Performance debt
-**Impact**: Negligible (performance tests pass within budget)
-**Details**: checkVersionLock() and checkPhaseFieldProtection() each read state.json independently. Could share a single read. However, V7 short-circuits before V8, so sharing would couple execution order. Current design is correct.
-**Recommendation**: No action required. Monitor if additional validation rules are added.
+**Type**: Tooling debt
+**Impact**: Medium
+**Details**: No c8/istanbul/nyc configured. Coverage is assessed qualitatively, not quantitatively.
+**Recommendation**: Add coverage tooling in a future workflow.
 
 ---
 
-## 3. Technical Debt Summary
+## 4. Technical Debt Summary
 
-| Category | New Items | Pre-Existing | Total |
-|----------|-----------|-------------|-------|
-| Testing | 0 | 2 (failures, coverage) | 2 |
-| Tooling | 0 | 1 (ESLint) | 1 |
-| Performance | 0 | 1 (disk read, negligible) | 1 |
-| **Total** | **0** | **4** | **4** |
+| Category | Resolved | New | Pre-Existing | Total Remaining |
+|----------|----------|-----|-------------|----------------|
+| Code consistency | 4 | 0 | 1 (remaining inline strings) | 1 |
+| Testing | 0 | 0 | 1 (workflow-finalizer failures) | 1 |
+| Tooling | 0 | 0 | 2 (ESLint, coverage) | 2 |
+| **Total** | **4** | **0** | **4** | **4** |
 
-**New debt introduced by BUG-0017**: 0 items.
+**Net debt change**: -4 resolved, +0 introduced = **net reduction of 4 items**.

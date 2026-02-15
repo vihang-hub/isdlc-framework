@@ -12,6 +12,22 @@ const fs = require('fs');
 const path = require('path');
 
 // =========================================================================
+// Phase Prefixes (BUG-0009 item 0.13)
+// =========================================================================
+
+/**
+ * Centralized phase prefix constants used across hook files.
+ * Replaces scattered inline string literals to reduce copy-paste errors
+ * when phase naming changes.
+ * @type {Readonly<{UPGRADE: string, IMPLEMENTATION: string, REQUIREMENTS: string}>}
+ */
+const PHASE_PREFIXES = Object.freeze({
+    UPGRADE: '15-upgrade',
+    IMPLEMENTATION: '06-implementation',
+    REQUIREMENTS: '01-requirements'
+});
+
+// =========================================================================
 // Protected State Fields & Patterns (REQ-HARDENING)
 // =========================================================================
 
@@ -1096,6 +1112,18 @@ function isSetupCommand(text) {
  *   5. If still no match, scan for phase name patterns like "01-requirements" or "phase 01".
  *   6. If no match, return not-a-delegation.
  *
+ * Edge cases:
+ *   - Non-Task tool calls (Read, Write, Bash, etc.) always return NOT_DELEGATION immediately.
+ *   - Setup commands (containing keywords like "initialize", "configure") are excluded
+ *     even when the tool_name is 'Task', to avoid false positives on setup sub-agents.
+ *   - Agents whose phase is 'all' or 'setup' are excluded from delegation detection
+ *     because they are not phase-specific (e.g., sdlc-orchestrator).
+ *   - If the skills-manifest file is missing or unreadable, the manifest-based agent
+ *     scanning step (Step 4) is silently skipped (fail-safe).
+ *   - The phase pattern regex fallback (Step 5) matches patterns like "01-requirements"
+ *     or "phase 06-implementation" in the combined prompt/description text.
+ *   - Null or undefined parsedInput returns NOT_DELEGATION (no throw).
+ *
  * @param {object} parsedInput - Parsed stdin JSON from Claude Code hook protocol
  * @param {string} parsedInput.tool_name - The tool being invoked (must be 'Task')
  * @param {object} [parsedInput.tool_input] - Tool input parameters
@@ -1108,6 +1136,29 @@ function isSetupCommand(text) {
  *   targetPhase: string|null,
  *   agentName: string|null
  * }}
+ *
+ * @throws {never} Never throws -- returns NOT_DELEGATION on all error paths
+ *   (null input, missing fields, manifest read failures, etc.)
+ *
+ * @example
+ * // Typical usage in a PreToolUse hook:
+ * const delegation = detectPhaseDelegation(parsedInput);
+ * if (delegation.isDelegation) {
+ *     console.log(`Delegation to phase: ${delegation.targetPhase}`);
+ *     console.log(`Agent: ${delegation.agentName}`);
+ * }
+ *
+ * @example
+ * // Non-Task tool call returns NOT_DELEGATION:
+ * detectPhaseDelegation({ tool_name: 'Read', tool_input: {} });
+ * // => { isDelegation: false, targetPhase: null, agentName: null }
+ *
+ * @see gate-blocker.cjs - Uses detectPhaseDelegation to identify gate advancement attempts
+ * @see constitution-validator.cjs - Uses detectPhaseDelegation to scope constitutional checks
+ * @see phase-loop-controller.cjs - Uses detectPhaseDelegation to track phase progress
+ * @see test-adequacy-blocker.cjs - Uses detectPhaseDelegation to identify upgrade delegations
+ * @see phase-sequence-guard.cjs - Uses detectPhaseDelegation to enforce phase ordering
+ * @see iteration-corridor.cjs - Uses detectPhaseDelegation to scope iteration enforcement
  */
 function detectPhaseDelegation(parsedInput) {
     const NOT_DELEGATION = { isDelegation: false, targetPhase: null, agentName: null };
@@ -2735,6 +2786,8 @@ function recordReviewAction(state, phaseKey, action, details = {}) {
 
 module.exports = {
     getProjectRoot,
+    // Phase prefixes (BUG-0009 item 0.13)
+    PHASE_PREFIXES,
     // Protected state fields & patterns (REQ-HARDENING)
     STATE_JSON_PATTERN,
     PROTECTED_STATE_FIELDS,
