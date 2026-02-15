@@ -1,8 +1,8 @@
-# Static Analysis Report: REQ-0015-ia-cross-validation-verifier
+# Static Analysis Report: BUG-0004-orchestrator-overrides-conversational-opening
 
 **Date**: 2026-02-15
 **Phase**: 08-code-review
-**Workflow**: Feature (REQ-0015)
+**Workflow**: Bug Fix (BUG-0004)
 
 ---
 
@@ -12,85 +12,76 @@ All JavaScript test files pass Node.js syntax validation:
 
 | File | Status |
 |------|--------|
-| lib/cross-validation-verifier.test.js | PASS |
+| tests/prompt-verification/orchestrator-conversational-opening.test.js | PASS (17/17 tests run successfully) |
 
-All markdown files are well-formed:
+Modified markdown file is well-formed:
 
 | File | Frontmatter | Sections | Status |
 |------|-------------|----------|--------|
-| cross-validation-verifier.md | Valid YAML | 15+ sections | PASS |
-| impact-analysis-orchestrator.md | Valid YAML | 20+ sections | PASS |
-| cross-validation/SKILL.md | Valid YAML (primary) | 8 sections | PASS |
-| impact-consolidation/SKILL.md | Valid YAML | 6 sections | PASS |
-
-JSON file is valid:
-
-| File | Status | Notes |
-|------|--------|-------|
-| skills-manifest.json | PASS | Parses without error; 242 entries consistent across all sections |
+| 00-sdlc-orchestrator.md | Valid YAML | 20+ sections | PASS |
 
 ## 2. Linting
 
-ESLint is not configured for this project (no `eslint.config.js`). Manual review performed.
+ESLint is not configured for this project. Manual review performed.
 
 **Manual checks**:
 
 | Check | Status | Notes |
 |-------|--------|-------|
-| Consistent import usage | PASS | ESM imports (node:test, node:assert/strict, node:fs, node:path, node:url) |
+| Consistent import usage | PASS | ESM imports (node:test, node:assert/strict, node:fs, node:path) |
 | No unused variables | PASS | All variables referenced |
-| Consistent path resolution | PASS | Uses `resolve(fileURLToPath(import.meta.url), '..')` pattern |
-| No hardcoded paths | PASS | All paths use `join()` / `resolve()` |
-| Consistent assertion style | PASS | Uses `assert.ok`, `assert.match`, `assert.equal` |
+| Consistent path resolution | PASS | Uses `import.meta.dirname` + `join()` pattern |
+| No hardcoded paths | PASS | All paths use `join()` with PROJECT_ROOT |
+| Consistent assertion style | PASS | Uses `assert.ok` with `!content.includes()` and `content.includes()` |
 | No console.log pollution | PASS | No console output in test file |
 
 ## 3. Type Checking
 
-No TypeScript configuration present. Project uses plain JavaScript (ESM + CJS).
+No TypeScript configuration present. Project uses plain JavaScript (ESM).
 
 **Manual type checks**:
 
 | Check | Status | Notes |
 |-------|--------|-------|
 | Variable initialization | PASS | All variables initialized before use |
-| Null/undefined guards | PASS | `existsSync()` checks before `readFileSync()` |
-| JSON.parse safety | PASS | Only called on known-valid manifest file |
+| Null/undefined guards | PASS | `readFileSync` on known-existing agent files |
+| String method safety | PASS | `.includes()` on strings, no null risk |
 
 ## 4. Complexity Analysis
 
-| File | Lines | Nesting Depth | Functions | Complexity |
-|------|-------|---------------|-----------|------------|
-| cross-validation-verifier.test.js | 423 | 3 (describe/it/assert) | 33 test functions | Low |
-| cross-validation-verifier.md | 461 | N/A (markdown) | 6 logical steps | Low |
-| SKILL.md (cross-validation) | 154 | N/A (markdown) | 2 skill definitions | Low |
+| File | Lines Changed | Nesting Depth | Functions | Complexity |
+|------|--------------|---------------|-----------|------------|
+| orchestrator-conversational-opening.test.js | 301 (new) | 3 (describe/it/assert) | 17 test functions | Low |
+| 00-sdlc-orchestrator.md | +40/-6 | N/A (markdown prompt) | 0 | Low |
 
-**No cyclomatic complexity concerns.** The test file follows a flat structure with independent assertions per test case.
+**No cyclomatic complexity concerns.** Test file follows flat structure with independent assertions.
 
 ## 5. Code Smell Detection
 
 | Smell | Status | Notes |
 |-------|--------|-------|
 | Long methods (>50 lines) | PASS | All test functions are 5-15 lines |
-| Duplicate code | PASS | Repeated `assert.ok(agentContent)` guards are intentional defensive checks, not duplication |
+| Duplicate code | PASS | `readAgent()` helper eliminates repetitive file reading |
 | Dead code | PASS | No unreachable code |
-| Magic numbers | PASS | Threshold of 100 chars (TC-01.1) is documented |
-| God objects | PASS | No monolithic structures |
-| Feature envy | N/A | Not applicable to test/config files |
+| Magic numbers | PASS | None present |
+| Stale references | MINOR | Line 984 references "INTERACTIVE PROTOCOL" (renamed to CONVERSATIONAL) |
 
 ## 6. Dependency Analysis
 
 | Check | Status |
 |-------|--------|
 | npm audit | 0 vulnerabilities |
-| No new dependencies added | PASS -- feature uses only existing Node.js built-ins |
+| No new dependencies added | PASS -- no new packages |
 | No deprecated APIs used | PASS |
 
 ## 7. Cross-File Consistency
 
 | Check | Status | Notes |
 |-------|--------|-------|
-| Agent frontmatter matches manifest | PASS | IA-401, IA-402 in both |
-| SKILL.md references match agent | PASS | Agent references IA-401, IA-402 |
-| Test file references match source files | PASS | All paths resolve correctly |
-| Orchestrator references verifier agent | PASS | "cross-validation-verifier" referenced |
-| Consolidation SKILL.md references M4 | PASS | M4 mentioned in process and inputs |
+| Orchestrator protocol matches analyst | PASS | Semantically equivalent (AC-2.1) |
+| Both files reference DEBATE_CONTEXT | PASS | AC-2.2 verified |
+| Both files include 50-word threshold | PASS | AC-2.3 verified |
+| Both files include A/R/C menu pattern | PASS | AC-2.1 verified |
+| Orchestrator delegation table references analyst | PASS | Line 984 |
+| DEBATE_ROUTING section intact | PASS | Line 1052+ |
+| Analyst INVOCATION PROTOCOL intact | PASS | Lines 19-65 unchanged |

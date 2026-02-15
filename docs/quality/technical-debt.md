@@ -1,66 +1,75 @@
-# Technical Debt Assessment: REQ-0015-ia-cross-validation-verifier
+# Technical Debt Assessment: BUG-0004-orchestrator-overrides-conversational-opening
 
 **Date**: 2026-02-15
 **Phase**: 08-code-review
-**Workflow**: Feature (REQ-0015)
+**Workflow**: Bug Fix (BUG-0004)
 
 ---
 
 ## 1. New Technical Debt Introduced
 
-### TD-NEW-001: Two skill definitions in one SKILL.md file
+None. This bug fix is a clean text replacement with no new debt.
 
-**Type**: Convention debt
-**Impact**: Low
-**Files**: `src/claude/skills/impact-analysis/cross-validation/SKILL.md`
-**Details**: IA-401 (cross-validation-execution) and IA-402 (finding-categorization) are bundled in a single SKILL.md file. All other skill directories in the project have one skill per SKILL.md. The second skill (IA-402) uses an inline YAML code block rather than standard frontmatter.
-**Recommendation**: Split into two directories (`cross-validation-execution/SKILL.md` and `finding-categorization/SKILL.md`) in a future cleanup. Low priority since the manifest correctly maps both skill IDs.
+## 2. Technical Debt Resolved by This Fix
 
----
+### TD-RESOLVED-001: Stale protocol copy in orchestrator
 
-## 2. Existing Technical Debt Observations
+**Type**: Consistency debt
+**Resolved**: Yes
+**Details**: The orchestrator had a stale copy of the Phase 01 delegation protocol (the old 3-question INTERACTIVE PROTOCOL from pre-REQ-0014). This fix replaces it with the current conversational protocol matching REQ-0014. This was a form of technical debt created during REQ-0014 when the analyst's protocol was updated but the orchestrator's copy was not.
 
-### TD-001: Pre-existing test failures (documentation drift)
+## 3. Existing Technical Debt Observations
+
+### TD-001: Pre-existing test failures (43 hook + 1 E2E)
 
 **Type**: Test debt
-**Impact**: Low (not caused by REQ-0015; 0 new failures introduced)
-**Details**: 2 ESM test failures:
-  - TC-E09: README.md references "40 agents" but the project has grown beyond that count
-  - TC-13-01: prompt-format.test.js expects 48 agent files but finds 57 (sub-agents added in prior features)
-**Recommendation**: Create a maintenance task to update README agent counts and prompt-format test expectations.
+**Impact**: Low (not caused by BUG-0004; 0 new failures introduced)
+**Details**: 44 pre-existing failures across 3 suites:
+  - `cleanup-completed-workflow.test.cjs`: 28 failures (hook not yet implemented)
+  - `workflow-finalizer.test.cjs`: 15 failures (hook not yet implemented)
+  - `cli-lifecycle.test.js`: 1 failure (missing test-helpers.js import)
+**Recommendation**: Existing documented debt. No action for this fix.
 
-### TD-002: No ESLint configuration
+### TD-002: Delegation table references "INTERACTIVE PROTOCOL" (line 984)
+
+**Type**: Naming consistency debt
+**Impact**: Low (cosmetic -- does not affect behavior)
+**Details**: Line 984 of `00-sdlc-orchestrator.md` still says `INTERACTIVE PROTOCOL (below)` while the block header at line 1007 now reads `CONVERSATIONAL PROTOCOL`. This is a residual inconsistency from the fix that renamed the block header but did not update the table reference.
+**Recommendation**: Fix before merge. Single-word replacement on line 984.
+
+### TD-003: Protocol text duplication between orchestrator and analyst
+
+**Type**: Duplication debt
+**Impact**: Low (architecturally necessary)
+**Details**: The conversational protocol text exists in two places: `01-requirements-analyst.md` (lines 23-65) and `00-sdlc-orchestrator.md` (lines 1008-1050). The orchestrator cannot dynamically include the analyst's file content at delegation time, so the duplication is architecturally necessary. Future changes to the protocol must update both files.
+**Recommendation**: This is a known trade-off. Consider adding a comment in both files noting the duplication and cross-referencing the other file. No immediate action required.
+
+### TD-004: No ESLint configuration
 
 **Type**: Tooling debt
 **Impact**: Low
-**Details**: The project has no `eslint.config.js`. Manual review substitutes for automated linting. Framework-wide concern, not specific to REQ-0015.
-**Recommendation**: Consider adding ESLint in a future workflow.
+**Details**: Pre-existing. No `eslint.config.js`. Manual review substitutes for automated linting.
+**Recommendation**: Track as backlog item.
 
-### TD-003: No mutation testing framework
+### TD-005: No mutation testing framework
 
 **Type**: Testing debt
 **Impact**: Low
-**Details**: Article XI (Integration Testing Integrity) requires mutation testing with >=80% score. No mutation testing framework is installed. This is a pre-existing gap.
-**Recommendation**: Track as a backlog item for framework-wide mutation testing setup.
-
-### TD-004: Orchestrator file growing large (889 lines)
-
-**Type**: Maintainability debt
-**Impact**: Low (currently well-structured)
-**Details**: `impact-analysis-orchestrator.md` is now 889 lines after adding M4 integration. It handles both feature and upgrade workflows with full M1-M4 orchestration. Adding further sub-agents would push this past 1000 lines.
-**Recommendation**: Monitor growth. Consider extracting upgrade workflow into a separate file if additional sub-agents are added.
+**Details**: Pre-existing. No mutation testing framework installed.
+**Recommendation**: Track as backlog item.
 
 ---
 
-## 3. Technical Debt Summary
+## 4. Technical Debt Summary
 
-| Category | New Items | Pre-Existing | Total |
-|----------|-----------|-------------|-------|
-| Convention | 1 (SKILL.md bundling) | 0 | 1 |
-| Testing | 0 | 2 (failures, mutation) | 2 |
-| Tooling | 0 | 1 (ESLint) | 1 |
-| Maintainability | 0 | 1 (orchestrator size) | 1 |
-| **Total** | **1** | **4** | **5** |
+| Category | New Items | Resolved | Pre-Existing | Total Open |
+|----------|-----------|----------|-------------|------------|
+| Consistency | 0 | 1 (stale protocol) | 1 (table reference) | 1 |
+| Duplication | 0 | 0 | 1 (protocol in 2 files) | 1 |
+| Testing | 0 | 0 | 2 (failures, mutation) | 2 |
+| Tooling | 0 | 0 | 1 (ESLint) | 1 |
+| **Total** | **0** | **1** | **5** | **5** |
 
-**New debt introduced by REQ-0015**: 1 item (low severity, convention-only)
+**New debt introduced by BUG-0004**: 0 items
+**Debt resolved by BUG-0004**: 1 item (stale protocol copy)
 **No functional, security, or performance debt introduced.**
