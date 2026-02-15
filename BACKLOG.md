@@ -81,7 +81,7 @@
 
 ### 4. Multi-Agent Teams (Architecture)
 
-- 4.1 [~] Replace single-agent phases with Creator/Critic/Refiner teams that collaborate via propose-critique-refine cycles (3 of 4 phases done)
+- 4.1 [x] Replace single-agent phases with Creator/Critic/Refiner teams that collaborate via propose-critique-refine cycles (4 of 4 phases done)
   - **Shared pattern**: Each phase runs a 3-agent loop: Creator produces artifact → Critic reviews and challenges → Refiner synthesizes improvements. Max 3 rounds, convergence when Critic has zero blocking findings (warnings allowed). Each round produces a versioned artifact diff so progress is visible.
   - **Configurable**: Off for `-light` workflows (single agent, current behavior). On for `standard` and `epic`. Override with `--no-debate` flag to force single-agent mode. Opt-in via `/isdlc feature "desc" --debate` or per-phase in constitution (e.g., `debate_phases: [01, 03, 04, 06]`).
   - **Precedent**: Deep discovery Inception Party already uses this pattern for `/discover --new` — this extends it to all workflow phases.
@@ -99,7 +99,7 @@
     - **Creator** (system-designer): Produces interface-spec.yaml/openapi.yaml, module-designs/, wireframes/, error-taxonomy.md, validation-rules.json.
     - **Critic** catches: incomplete API specs, inconsistent patterns across modules, module overlap, validation gaps, missing idempotency, accessibility issues, error taxonomy holes, data flow bottlenecks
     - **Refiner** produces: OpenAPI 3.x contracts with complete error responses, unified error taxonomy, component variants for all states, validation rules at every boundary, idempotency keys
-  - **Phase 06 — Implementation Team** [ ] (Writer/Reviewer/Updater):
+  - **Phase 06 — Implementation Team** [x] (REQ-0017 — DONE: 2 new agents, 86 tests, IMPLEMENTATION_ROUTING in Section 7.6, 8-check Reviewer (IC-01..IC-08), 6-step Updater fix protocol, Writer awareness, Phase 16 final sweep + Phase 08 human review only):
     - **Problem**: Code is written in Phase 06, then waits for Phase 16 (quality loop) and Phase 08 (code review) to find issues. By then context is cold, fixes require re-reading, and the sequential overhead adds 15-30 minutes per workflow.
     - **Writer** (software-developer) — writes code following tasks.md, TDD, produces files
     - **Reviewer** (code-reviewer) — reviews files, flags issues immediately, checks constitutional compliance, validates skill/tech-stack alignment
@@ -126,16 +126,28 @@
     - **Creator** (test-design-engineer): Produces test-strategy.md, test-cases/, traceability-matrix.csv
     - **Critic** catches: missing edge cases, untested error paths, over-reliance on unit tests, no performance/load test plan, coverage gaps against requirements, missing negative test cases, test data gaps, flaky test risk
     - **Refiner** produces: complete test pyramid with rationale, Given/When/Then for every AC, explicit negative test cases, test data strategy, flaky-test mitigation, coverage targets mapped to risk areas
-- 4.2 [ ] Impact Analysis cross-validation — add a verification step to Phase 02 that cross-checks findings across M1/M2/M3
-  - **Problem**: M1 (Impact Analyzer), M2 (Entry Point Finder), and M3 (Risk Assessor) run in parallel and the orchestrator consolidates their reports. But nobody verifies consistency — M1 might say 7 files affected while M2 found entry points in 9 files, or M3's risk score might not account for coupling that M1 identified. Inconsistencies flow silently into sizing and downstream phases.
-  - **Pattern**: Cross-validation — a Verifier agent reads all three reports and checks for contradictions, gaps, and missed connections
-  - **Design**: After M1/M2/M3 complete and before consolidation, spawn a Verifier agent that:
-    1. Cross-references file lists (M1 affected files vs M2 entry point chains — are there files in one but not the other?)
-    2. Validates risk scoring (does M3's risk level account for M1's coupling analysis and M2's chain depth?)
-    3. Checks completeness (are all M2 entry points covered in M1's blast radius?)
-    4. Flags inconsistencies for the orchestrator to resolve or surface to the user
+- 4.2 [ ] Impact Analysis cross-validation — improve Phase 02 accuracy by enabling agents to cross-check findings
+  - **Problem**: M1 (Impact Analyzer), M2 (Entry Point Finder), and M3 (Risk Assessor) run in parallel but in **complete isolation** — no SendMessage, no cross-referencing, no awareness of each other's findings. The orchestrator consolidates after all complete, but nobody verifies consistency. M1 might say 7 files affected while M2 found entry points in 9 files, or M3's risk score might not account for coupling that M1 identified. Inconsistencies flow silently into sizing and downstream phases.
+  - **Approach A — Post-hoc Verifier** (simpler, no restructuring):
+    - After M1/M2/M3 complete and before consolidation, spawn a Verifier agent that:
+      1. Cross-references file lists (M1 affected files vs M2 entry point chains — files in one but not the other?)
+      2. Validates risk scoring (does M3's risk level account for M1's coupling analysis and M2's chain depth?)
+      3. Checks completeness (are all M2 entry points covered in M1's blast radius?)
+      4. Flags inconsistencies for the orchestrator to resolve or surface to the user
+    - **Cost**: +1 Task call after existing parallel phase
+    - **Limitation**: Catches inconsistencies after the fact but can't improve what the agents found. If M1 missed a file, the Verifier can flag the gap but can't go analyse it.
+  - **Approach B — Cross-pollination during execution** (richer, requires restructuring):
+    - M1/M2/M3 still launch in parallel but share interim findings via SendMessage during execution:
+      - M2 discovers a call chain through 3 modules → tells M1 to check those modules for coupling
+      - M1 finds high coupling in a file → tells M3 to raise the risk score for that area
+      - M3 identifies a test coverage gap → tells M2 to trace whether that gap is in a critical path
+    - Pattern: **parallel with cross-pollination** — agents run simultaneously but broadcast interim discoveries. Lighter than full propose-critique-converge (no debate rounds, no convergence protocol), heavier than pure isolation.
+    - Modeled on discover Phase 3's cross-review pattern (D8/D14/D15 review each other's outputs) but applied during execution, not after.
+    - **Cost**: Same 3 Task calls but longer execution (agents wait for messages). Message budget: max 6 cross-messages total (2 per agent) to prevent runaway communication.
+    - **Benefit**: Agents can act on each other's findings — M1 can re-analyse modules M2 flagged, M3 can adjust risk based on M1's coupling data. Better results, not just better validation.
+  - **Recommendation**: Start with Approach A (low risk, immediate value), evolve to Approach B if inconsistency rate is high.
   - **Impact on sizing**: More accurate file counts and risk scores → more reliable sizing decisions (connects to 8.2)
-  - **Complexity**: Low-medium — one new agent, runs after the existing parallel phase, no restructuring needed
+  - **Complexity**: A = Low-medium (one new agent). B = Medium (SendMessage protocol, message budget, interim finding format)
 - 4.3 [ ] Fan-out/fan-in parallelism for execution-heavy phases — split work across N parallel agents for throughput
   - **Problem**: Phases 16 (Quality Loop) and 08 (Code Review) process large volumes of work sequentially or in limited parallelism. For a project with 1000+ tests or 20+ changed files, this is a bottleneck.
   - **Pattern**: Fan-out/fan-in — divide work into N chunks, spawn N agents in parallel, merge results
@@ -372,6 +384,9 @@ Three modes controlling the developer's role during a workflow, activated via fe
 - 10.1 [ ] Install script landing page and demo GIF — update the install script landing/README with a polished visual experience including an animated GIF demonstrating the framework in action (invisible framework flow, workflow progression, quality gates)
 
 ## Completed
+
+### 2026-02-15
+- [x] REQ-0017: Multi-agent Implementation Team — Writer/Reviewer/Updater per-file debate loop for Phase 06 implementation (backlog 4.1 Phase 06). 2 new agents (Implementation Reviewer with 8 IC checks IC-01..IC-08, Implementation Updater with 6-step fix protocol), 4 modified agents (orchestrator IMPLEMENTATION_ROUTING Section 7.6, software-developer Writer awareness, quality-loop final sweep, qa-engineer human review only). 86 new tests, zero regressions, 1 implementation iteration. 7 FRs, 4 NFRs, 34 ACs. Completes backlog 4.1 (all 4 debate team phases done).
 
 ### 2026-02-14
 - [x] REQ-0016: Multi-agent Design Team — Creator/Critic/Refiner debate loop for Phase 04 design specifications (backlog 4.1 Phase 04). 2 new agents (Design Critic with 8 checks DC-01..DC-08, Design Refiner with 9 strategies), 3 modified files (orchestrator +1 DEBATE_ROUTING row, system-designer Creator awareness, command descriptions). 87 new tests, zero regressions, 1 implementation iteration. 7 FRs, 4 NFRs, 34 ACs
