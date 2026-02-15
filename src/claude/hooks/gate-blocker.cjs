@@ -494,7 +494,14 @@ function checkArtifactPresenceRequirement(phaseState, phaseRequirements, state, 
     for (const [dir, dirPaths] of Object.entries(pathsByDir)) {
         const anyExists = dirPaths.some(p => fs.existsSync(path.join(projectRoot, p)));
         if (!anyExists) {
-            missingArtifacts.push(dirPaths[0]); // Report first variant as missing
+            if (dirPaths.length === 1) {
+                missingArtifacts.push(dirPaths[0]);
+            } else {
+                // BUG-0017: Show all variant alternatives in the error message
+                const first = dirPaths[0];
+                const alternatives = dirPaths.slice(1).map(p => path.basename(p)).join(', ');
+                missingArtifacts.push(`${first} (or ${alternatives})`);
+            }
         }
     }
 

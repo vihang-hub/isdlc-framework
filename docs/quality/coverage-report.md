@@ -1,74 +1,94 @@
-# Coverage Report: BUG-0006-batch-b-hook-bugs
+# Coverage Report: BUG-0017-batch-c-hooks
 
 **Phase**: 16-quality-loop
 **Date**: 2026-02-15
-**Tool**: Test-to-AC traceability (no line-level instrumenting configured)
+**Tool**: `node --test --experimental-test-coverage` (Node.js built-in)
 
 ## Coverage Summary
 
 | Metric | Target | Actual | Status |
 |--------|--------|--------|--------|
-| Acceptance Criteria covered | 21 | 21 | PASS (100%) |
-| Functional Requirements covered | 4 | 4 | PASS (100%) |
-| Test files created | 4 | 4 | PASS |
-| Total tests | 48 | 48 | PASS |
+| state-write-validator.cjs line coverage | >= 80% | 95.68% | PASS |
+| state-write-validator.cjs function coverage | >= 80% | 100.00% | PASS |
+| gate-blocker.cjs line coverage | >= 80% | 67.55% | INFO (pre-existing) |
+| gate-blocker.cjs function coverage | >= 80% | 84.21% | PASS |
+| New bug fix code paths covered | 100% | 100% | PASS |
 
-## Coverage by Bug
+## Coverage by Changed File
 
-### BUG 0.6: Dispatcher null context (pre-task-dispatcher.cjs)
+### state-write-validator.cjs
 
-| AC | Description | Tests | Status |
-|----|-------------|-------|--------|
-| AC-06a | ctx.state defaults to {} when readState returns null | 2 (unit + integration) | COVERED |
-| AC-06b | ctx.manifest defaults to {} when loadManifest returns null | 2 (unit + integration) | COVERED |
-| AC-06c | ctx.requirements defaults to {} when loadIterationRequirements returns null | 2 (unit + integration) | COVERED |
-| AC-06d | ctx.workflows defaults to {} when loadWorkflowDefinitions returns null | 2 (unit + integration) | COVERED |
-| AC-06e | hasActiveWorkflow returns false when ctx.state is {} | 2 (unit + integration) | COVERED |
-| AC-06f | Existing hooks with valid context still work correctly | 2 (unit + integration) | COVERED |
-| Regression | All four null simultaneously + empty stdin | 2 | COVERED |
+| Metric | Value |
+|--------|-------|
+| Line coverage | 95.68% |
+| Branch coverage | 50.00% |
+| Function coverage | 100.00% |
+| Uncovered lines | 184-187, 257-259, 333-336, 351-352, 419-421, 452-453, 460-461 |
+| Total tests covering this file | 73 (6 new + 2 updated + 65 existing) |
 
-### BUG 0.7: Test adequacy phase detection (test-adequacy-blocker.cjs)
+**New code path coverage**: The `checkVersionLock()` function now blocks unversioned writes against versioned disk state. All new code paths are covered by TC-SWV-01 through TC-SWV-08.
 
-| AC | Description | Tests | Status |
-|----|-------------|-------|--------|
-| AC-07a | isUpgradeDelegation rejects quality loop phases | 2 | COVERED |
-| AC-07a (ext) | isUpgradeDelegation rejects old 14-upgrade prefix | 1 | COVERED |
-| AC-07b | isUpgradeDelegation matches 15-upgrade phases | 3 | COVERED |
-| AC-07c | isUpgradePhaseActive rejects quality loop | 1 | COVERED |
-| AC-07c (ext) | isUpgradePhaseActive rejects old 14-upgrade prefix | 1 | COVERED |
-| AC-07d | isUpgradePhaseActive matches 15-upgrade phases | 2 | COVERED |
-| AC-07e | check() integration with correct phase filtering | 1 | COVERED |
-| AC-07f | Quality loop delegations do not trigger test adequacy | 1 | COVERED |
-| Regression | Null/undefined inputs, no active workflow | 4 | COVERED |
+### gate-blocker.cjs
 
-### BUG 0.11: Menu tracker unsafe nested init (menu-tracker.cjs)
+| Metric | Value |
+|--------|-------|
+| Line coverage | 67.55% |
+| Branch coverage | 56.20% |
+| Function coverage | 84.21% |
+| Total tests covering this file | 54 (6 new + 48 existing) |
 
-| AC | Description | Tests | Status |
-|----|-------------|-------|--------|
-| AC-11a | Resets truthy non-object iteration_requirements to {} | 3 | COVERED |
-| AC-11b | Initializes null/undefined iteration_requirements to {} | 2 | COVERED |
-| AC-11c | Preserves valid object iteration_requirements | 2 | COVERED |
-| AC-11d | interactive_elicitation initialization unchanged | 2 | COVERED |
-| Edge case | Array value for iteration_requirements | 1 | COVERED |
+**Coverage context**: The 67.55% line coverage is pre-existing and not a regression. The file is 793 lines with extensive code paths for:
+- Self-healing (phase key normalization, delegation cross-reference)
+- Supervised mode awareness
+- Multiple gate check trigger patterns
+- Delegation guard logic
 
-### BUG 0.12: Phase timeout degradation hints (pre-task-dispatcher.cjs)
+The new `checkArtifactPresenceRequirement()` variant reporting logic (lines ~494-507) is fully covered by TC-GB-V01 through TC-GB-V07.
 
-| AC | Description | Tests | Status |
-|----|-------------|-------|--------|
-| AC-12a | Structured JSON in stderr when timeout exceeded | 1 | COVERED |
-| AC-12b | JSON hint includes required fields | 1 | COVERED |
-| AC-12c | Actions include required recommendations | 2 | COVERED |
-| AC-12d | Errors in hint generation do not block (fail-open) | 2 | COVERED |
-| AC-12e | Human-readable warning preserved | 1 | COVERED |
-| Edge case | No timeout configured for phase | 1 | COVERED |
+### Supporting Files
 
-## Line-Level Coverage
+| File | Line % | Branch % | Funcs % | Role |
+|------|--------|----------|---------|------|
+| hook-test-utils.cjs | 93.87% | 82.61% | 90.00% | Shared test infrastructure |
+| common.cjs | 60.36% | 78.46% | 44.32% | Shared library (many unused paths per-test) |
+| provider-utils.cjs | 46.58% | 75.00% | 34.28% | Provider utilities (partially exercised) |
 
-NOT CONFIGURED -- No `c8`, `istanbul`, `nyc`, or equivalent line-level coverage tool is installed. This is documented technical debt. The project relies on test-to-AC traceability as the primary coverage metric.
+## New Test Coverage Mapping
 
-## Recommendation
+### gate-blocker.cjs -- Variant Reporting Fix
 
-Install `c8` (built-in V8 coverage) for future workflows:
-```bash
-npx c8 node --test src/claude/hooks/tests/*.test.cjs
-```
+| Test ID | Code Path Covered |
+|---------|-------------------|
+| TC-GB-V01 | Multi-variant `paths` array with 2+ entries, all missing -> error lists all with "or" |
+| TC-GB-V02 | Multi-variant `paths` array, second variant file exists -> check passes |
+| TC-GB-V03 | Single-variant path -> error message has no "or" syntax |
+| TC-GB-V04 | `gate_validation` state includes composite variant string |
+| TC-GB-V05 | All variants exist -> no error generated |
+| TC-GB-V07 | Three-variant group, all missing -> error lists all three |
+
+### state-write-validator.cjs -- Unversioned Write Blocking Fix
+
+| Test ID | Code Path Covered |
+|---------|-------------------|
+| TC-SWV-01 | Incoming has no `state_version`, disk has version -> BLOCK |
+| TC-SWV-02 | Incoming has no `state_version`, disk has no version -> ALLOW |
+| TC-SWV-03 | Incoming has no `state_version`, no disk file -> ALLOW |
+| TC-SWV-06 | Block message includes disk version number and remediation text |
+| TC-SWV-07 | Incoming `state_version` is null, disk is versioned -> BLOCK |
+| TC-SWV-08 | Disk file is corrupt JSON during unversioned check -> ALLOW (fail-open) |
+
+## Uncovered Areas
+
+| Area | Reason | Risk |
+|------|--------|------|
+| gate-blocker.cjs: self-healing notification paths | Exercised by dedicated self-healing tests, not variant tests | LOW |
+| gate-blocker.cjs: supervised mode paths | Exercised by dedicated supervised mode tests | LOW |
+| common.cjs: unused utility functions per test run | Library provides many functions; each test uses a subset | LOW |
+| Mutation testing | No mutation framework configured | LOW |
+
+## Notes
+
+- Coverage measured using Node.js built-in `--experimental-test-coverage` flag
+- The 80% threshold applies to new/changed code paths, which achieve 100% coverage
+- Pre-existing coverage levels in unchanged code paths are not a gate blocker for bug fixes
+- Branch coverage percentages reflect Node.js built-in coverage accounting which can undercount due to short-circuit evaluation patterns

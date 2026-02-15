@@ -340,8 +340,8 @@ describe('BUG-0009: Version Check (V7)', () => {
         assert.equal(result.stdout, '', 'Should not block on newer version');
     });
 
-    // T19: Allow when incoming state_version is missing (backward compat)
-    it('T19: allows write when incoming state_version is missing', () => {
+    // T19: Block when incoming state_version is missing but disk is versioned (BUG-0017 fix)
+    it('T19: blocks write when incoming state_version is missing but disk is versioned', () => {
         const statePath = writeStateFile(tmpDir, {
             state_version: 5,
             phases: {}
@@ -351,11 +351,14 @@ describe('BUG-0009: Version Check (V7)', () => {
         };
         const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
         assert.equal(result.exitCode, 0);
-        assert.equal(result.stdout, '', 'Should allow when incoming version missing');
+        assert.ok(
+            result.stdout.includes('"continue":false') || result.stdout.includes('"continue": false'),
+            'Should BLOCK when incoming version missing but disk is versioned'
+        );
     });
 
-    // T20: Allow when incoming state_version is null (backward compat)
-    it('T20: allows write when incoming state_version is null', () => {
+    // T20: Block when incoming state_version is null but disk is versioned (BUG-0017 fix)
+    it('T20: blocks write when incoming state_version is null but disk is versioned', () => {
         const statePath = writeStateFile(tmpDir, {
             state_version: 5,
             phases: {}
@@ -366,7 +369,10 @@ describe('BUG-0009: Version Check (V7)', () => {
         };
         const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
         assert.equal(result.exitCode, 0);
-        assert.equal(result.stdout, '', 'Should allow when incoming version is null');
+        assert.ok(
+            result.stdout.includes('"continue":false') || result.stdout.includes('"continue": false'),
+            'Should BLOCK when incoming version null but disk is versioned'
+        );
     });
 
     // T21: Allow when disk state_version is missing (migration case)
@@ -561,6 +567,125 @@ describe('BUG-0009: Version Check (V7)', () => {
         // Should fail-open: no block
         assert.ok(!result.stdout.includes('"continue":false') && !result.stdout.includes('"continue": false'),
             `Should fail-open on bad JSON, got: ${result.stdout}`);
+    });
+
+    // ===================================================================
+    // BUG-0017: Version Lock Bypass (unversioned incoming vs versioned disk)
+    // Traces to: AC-2.1, AC-2.2, AC-2.3, AC-2.6, NFR-1, NFR-2
+    // ===================================================================
+
+    // TC-SWV-01: Unversioned incoming BLOCKED when disk is versioned
+    it('TC-SWV-01: blocks unversioned incoming write when disk is versioned', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 5,
+            phases: {}
+        });
+        const incomingState = {
+            phases: {}
+            // No state_version field
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.ok(
+            result.stdout.includes('"continue":false') || result.stdout.includes('"continue": false'),
+            `Should block unversioned write against versioned disk, got: ${result.stdout}`
+        );
+        assert.ok(
+            result.stdout.includes('state_version') || result.stdout.includes('version'),
+            `Block message should mention version requirement, got: ${result.stdout}`
+        );
+    });
+
+    // TC-SWV-02: Unversioned incoming ALLOWED when disk is also unversioned
+    it('TC-SWV-02: allows unversioned incoming when disk is also unversioned', () => {
+        const statePath = writeStateFile(tmpDir, {
+            phases: { '01-requirements': { status: 'pending' } }
+            // No state_version on disk
+        });
+        const incomingState = {
+            phases: { '01-requirements': { status: 'in_progress' } }
+            // No state_version
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.stdout, '', 'Should allow when both lack version (legacy compat)');
+    });
+
+    // TC-SWV-03: Unversioned incoming ALLOWED when no disk file exists
+    it('TC-SWV-03: allows unversioned incoming when no disk file exists', () => {
+        const statePath = path.join(tmpDir, '.isdlc', 'state.json');
+        // Remove disk file
+        if (fs.existsSync(statePath)) {
+            fs.unlinkSync(statePath);
+        }
+        const incomingState = {
+            phases: {}
+            // No state_version
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.equal(result.stdout, '', 'Should allow when no disk file exists (first write)');
+    });
+
+    // TC-SWV-06: Block message is actionable (includes disk version and instructions)
+    it('TC-SWV-06: block message is actionable with disk version and instructions', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 10,
+            phases: {}
+        });
+        const incomingState = {
+            phases: {}
+            // No state_version field
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.ok(
+            result.stdout.includes('"continue":false') || result.stdout.includes('"continue": false'),
+            `Should block, got: ${result.stdout}`
+        );
+        // Message should be actionable -- includes disk version and instructions
+        assert.ok(result.stdout.includes('10'),
+            `Block message should include disk version number, got: ${result.stdout}`);
+        assert.ok(
+            result.stdout.includes('state_version') && result.stdout.includes('Include'),
+            `Block message should instruct to include state_version, got: ${result.stdout}`
+        );
+    });
+
+    // TC-SWV-07: Null incoming state_version BLOCKED when disk is versioned
+    it('TC-SWV-07: blocks null incoming state_version when disk is versioned', () => {
+        const statePath = writeStateFile(tmpDir, {
+            state_version: 5,
+            phases: {}
+        });
+        const incomingState = {
+            state_version: null,
+            phases: {}
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        assert.ok(
+            result.stdout.includes('"continue":false') || result.stdout.includes('"continue": false'),
+            `Should block null incoming version against versioned disk, got: ${result.stdout}`
+        );
+    });
+
+    // TC-SWV-08: Fail-open on disk read error during unversioned check
+    it('TC-SWV-08: fail-open on corrupt disk file during unversioned check', () => {
+        const statePath = path.join(tmpDir, '.isdlc', 'state.json');
+        // Write corrupt JSON to disk
+        fs.writeFileSync(statePath, 'THIS IS NOT JSON {{{', 'utf8');
+        const incomingState = {
+            phases: {}
+            // No state_version
+        };
+        const result = runHook(tmpDir, makeWriteStdinWithContent(statePath, incomingState));
+        assert.equal(result.exitCode, 0);
+        // Should fail-open when disk cannot be parsed
+        assert.ok(
+            !result.stdout.includes('"continue":false') && !result.stdout.includes('"continue": false'),
+            `Should fail-open on corrupt disk file, got: ${result.stdout}`
+        );
     });
 });
 

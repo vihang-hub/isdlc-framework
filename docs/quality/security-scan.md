@@ -1,42 +1,44 @@
-# Security Scan: BUG-0006-batch-b-hook-bugs
+# Security Scan: BUG-0017-batch-c-hooks
 
 **Phase**: 16-quality-loop
 **Date**: 2026-02-15
-**Tools**: npm audit + manual SAST review
+**Branch**: fix/BUG-0017-batch-c-hooks
 
-## SAST Security Scan (QL-008)
+## SAST Scan (QL-008)
 
-No dedicated SAST tool configured (no Semgrep, Snyk Code, or CodeQL). Manual review performed on all 3 modified source files.
+**Tool**: NOT CONFIGURED (no Semgrep, CodeQL, or similar SAST tool)
 
-### Files Reviewed
+### Manual Security Review of Modified Files
 
-| File | Lines Modified | Security Issues |
-|------|---------------|-----------------|
-| src/claude/hooks/dispatchers/pre-task-dispatcher.cjs | ~30 (BUG 0.6 + 0.12 fixes) | 0 |
-| src/claude/hooks/test-adequacy-blocker.cjs | ~10 (BUG 0.7 fix) | 0 |
-| src/claude/hooks/menu-tracker.cjs | ~5 (BUG 0.11 fix) | 0 |
+| File | Type | Changes | Risk Assessment |
+|------|------|---------|-----------------|
+| `gate-blocker.cjs` | CJS hook (PreToolUse) | Fixed `checkArtifactPresenceRequirement()` to show all variant paths in error messages | LOW -- error message formatting only, no new I/O |
+| `state-write-validator.cjs` | CJS hook (PostToolUse) | Fixed `checkVersionLock()` to block unversioned writes against versioned disk state | LOW -- read-only disk check, no new write operations |
+| `test-gate-blocker-extended.test.cjs` | CJS test | 6 new tests for variant reporting | LOW -- test-only, uses spawnSync for subprocess testing |
+| `state-write-validator.test.cjs` | CJS test | 6 new tests + 2 updated for version blocking | LOW -- test-only, uses spawnSync for subprocess testing |
 
 ### Security Checks Performed
 
-| Check | Description | Result |
-|-------|-------------|--------|
-| Code injection | No `eval()`, `Function()`, or template literals with user input | PASS |
-| Command injection | No `exec()`, `execSync()`, `spawn()`, or `child_process` | PASS |
-| Path traversal | No user-controlled file path construction | PASS |
-| Prototype pollution | No `Object.assign()` with user input, no `__proto__` access | PASS |
-| Hardcoded secrets | No API keys, tokens, passwords, or credentials | PASS |
-| Sensitive data exposure | No PII logging, no credential logging | PASS |
-| Denial of service | No unbounded loops on user input, no regex DoS patterns | PASS |
-| Error information leakage | Errors caught and logged to debugLog only, not exposed | PASS |
+| Check | Result |
+|-------|--------|
+| Hardcoded secrets or API keys | NONE FOUND |
+| Credential file references | NONE FOUND |
+| eval() or Function() usage | NONE FOUND |
+| debugger statements | NONE FOUND |
+| Child process spawning in source files | NONE (tests use spawnSync for integration testing -- expected pattern) |
+| Path traversal vulnerabilities | NONE |
+| Prototype pollution vectors | NONE |
+| Regex denial-of-service (ReDoS) | NONE -- no new regex patterns introduced |
 
-### Specific Fix Security Review
+### Constitutional Article V (Security by Design) Compliance
 
-| Bug | Fix Description | Security Assessment |
-|-----|-----------------|---------------------|
-| BUG 0.6 | Null coalescing defaults (`\|\| {}`) for context fields | SAFE: Default values are empty objects, no injection vector |
-| BUG 0.7 | Phase prefix change from `'16-'` to `'15-upgrade'` | SAFE: String comparison, no user input involved |
-| BUG 0.11 | typeof guard on iteration_requirements | SAFE: Type validation prevents prototype pollution from corrupt state |
-| BUG 0.12 | Structured JSON degradation hint in stderr | SAFE: Static action strings, no user input in JSON, wrapped in try/catch |
+| Requirement | Status |
+|-------------|--------|
+| No new executable code patterns introduced | PASS (bug fixes modify existing patterns) |
+| No new dependencies added | PASS |
+| No new network access patterns | PASS |
+| No new file write operations | PASS |
+| Error messages do not leak sensitive data | PASS (messages show file path variants only) |
 
 ## Dependency Audit (QL-009)
 
@@ -52,28 +54,24 @@ found 0 vulnerabilities
 | Moderate | 0 |
 | Low | 0 |
 
-### Dependencies
+### Dependency Summary
 
-| Package | Version | Status |
-|---------|---------|--------|
-| chalk | ^5.3.0 | No known vulnerabilities |
-| fs-extra | ^11.2.0 | No known vulnerabilities |
-| prompts | ^2.4.2 | No known vulnerabilities |
-| semver | ^7.6.0 | No known vulnerabilities |
+| Package | Version | Purpose |
+|---------|---------|---------|
+| chalk | ^5.3.0 | Terminal color output |
+| fs-extra | ^11.2.0 | Enhanced file operations |
+| prompts | ^2.4.2 | Interactive CLI prompts |
+| semver | ^7.6.0 | Semantic version parsing |
 
-### No New Dependencies
-
-This bug fix does not add any new dependencies. All changes are to existing production code within the project's hook infrastructure.
+No new dependencies were added by BUG-0017.
 
 ## Summary
 
-| Category | Finding |
-|----------|---------|
-| Critical vulnerabilities | 0 |
-| High vulnerabilities | 0 |
-| Medium vulnerabilities | 0 |
-| Low vulnerabilities | 0 |
-| New dependencies added | 0 |
-| SAST findings | 0 |
+- Critical vulnerabilities: 0
+- High vulnerabilities: 0
+- Medium vulnerabilities: 0
+- Low vulnerabilities: 0
+- SAST findings: 0 (manual review -- no automated SAST tool)
+- New dependencies: 0
 
-**Security scan verdict: PASS**
+**Security scan: PASS**

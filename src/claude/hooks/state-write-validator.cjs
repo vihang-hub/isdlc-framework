@@ -135,12 +135,8 @@ function checkVersionLock(filePath, toolInput, toolName) {
 
         const incomingVersion = incomingState.state_version;
 
-        // Backward compat: if incoming has no state_version, allow
-        if (incomingVersion === undefined || incomingVersion === null) {
-            return null;
-        }
-
-        // Read current disk state_version
+        // Read current disk state_version BEFORE checking incoming version
+        // BUG-0017: Must read disk first to detect unversioned writes against versioned disk
         let diskVersion;
         try {
             if (!fs.existsSync(filePath)) {
@@ -157,6 +153,24 @@ function checkVersionLock(filePath, toolInput, toolName) {
         } catch (e) {
             // Fail-open: error reading disk file
             return null;
+        }
+
+        // BUG-0017: If incoming has no state_version, check disk before allowing
+        if (incomingVersion === undefined || incomingVersion === null) {
+            // If disk also has no version, allow (legacy compat / both unversioned)
+            if (diskVersion === undefined || diskVersion === null) {
+                return null;
+            }
+            // Disk has version but incoming does not — BLOCK with actionable message
+            const reason = `Unversioned write rejected: disk state has state_version ${diskVersion} but incoming write has no state_version. Include state_version in your write. Re-read .isdlc/state.json before writing.`;
+            console.error(`[state-write-validator] V7 BLOCK: ${reason}`);
+            logHookEvent('state-write-validator', 'block', {
+                reason: `V7: incoming has no state_version, disk has ${diskVersion}`
+            });
+            return {
+                decision: 'block',
+                stopReason: reason
+            };
         }
 
         // Migration case: disk has no state_version

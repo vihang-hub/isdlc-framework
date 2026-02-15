@@ -1,8 +1,8 @@
-# Quality Metrics: BUG-0004-orchestrator-overrides-conversational-opening
+# Quality Metrics -- BUG-0017 Batch C Hook Bugs
 
 **Date**: 2026-02-15
 **Phase**: 08-code-review
-**Workflow**: Bug Fix (BUG-0004)
+**Workflow**: Fix (BUG-0017-batch-c-hooks)
 
 ---
 
@@ -10,22 +10,22 @@
 
 | Suite | Total | Pass | Fail | Skip |
 |-------|-------|------|------|------|
-| New tests (orchestrator-conversational-opening.test.js) | 17 | 17 | 0 | 0 |
-| Regression -- prompt-verification/*.test.js | 49 | 49 | 0 | 0 |
-| Regression -- e2e/cli-lifecycle.test.js | 1 | 0 | 1 | 0 |
-| Regression -- hooks/tests/*.test.cjs | 887 | 844 | 43 | 0 |
-| **Total** | **937** | **893** | **44** | **0** |
+| Gate-blocker extended (TC-GB-*) | 54 | 54 | 0 | 0 |
+| State-write-validator (T1-T67 + TC-SWV-*) | 73 | 73 | 0 | 0 |
+| CJS hooks suite (npm run test:hooks) | 1380 | 1380 | 0 | 0 |
+| ESM suite (npm test) | 632 | 630 | 2 | 0 |
+| **Combined** | **2012** | **2010** | **2** | **0** |
 
 **New regressions**: 0
-**Pre-existing failures**: 44 (28 cleanup-completed-workflow, 15 workflow-finalizer, 1 cli-lifecycle)
+**Pre-existing failures**: 2 (TC-E09 README agent count, TC-13-01 agent file count)
 
 ## 2. Requirements Coverage
 
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
-| FRs implemented | 2/2 | 100% | PASS |
-| ACs covered by tests | 9/9 | 100% | PASS |
-| NFRs validated | 2/2 | 100% | PASS |
+| FRs implemented | 6/6 | 100% | PASS |
+| ACs covered by tests | 16/16 | 100% | PASS |
+| NFRs validated | 4/4 | 100% | PASS |
 | Orphan code | 0 | 0 | PASS |
 | Unimplemented requirements | 0 | 0 | PASS |
 
@@ -35,34 +35,39 @@
 |--------|-------|--------|--------|
 | Critical findings | 0 | 0 | PASS |
 | Major findings | 0 | 0 | PASS |
-| Minor findings | 1 | -- | Noted (cosmetic reference mismatch) |
-| Informational findings | 1 | -- | Noted (text divergence) |
+| Minor findings | 0 | 0 | PASS |
+| Informational findings | 1 | -- | Noted |
 | Syntax errors | 0 | 0 | PASS |
 | npm audit vulnerabilities | 0 | 0 | PASS |
-| TODO/FIXME markers | 0 | 0 | PASS |
+| No eval/Function/prototype pollution | 0 | 0 | PASS |
+| Module system compliance (CJS) | PASS | CJS | PASS |
+| New dependencies | 0 | 0 | PASS |
 
 ## 4. File Metrics
 
 | File | Lines Changed | Type | Description |
-|------|--------------|------|-------------|
-| 00-sdlc-orchestrator.md | +40/-6 | Modified | Replaced INTERACTIVE PROTOCOL with CONVERSATIONAL PROTOCOL |
-| orchestrator-conversational-opening.test.js | 301 | New | 17 prompt content verification tests |
+|------|---------------|------|-------------|
+| gate-blocker.cjs | ~10 | Bug fix | Variant error reporting |
+| state-write-validator.cjs | ~30 | Bug fix | Version lock bypass |
+| test-gate-blocker-extended.test.cjs | +260 | Tests | 6 new test cases |
+| state-write-validator.test.cjs | +110 | Tests | 6 new + 2 updated |
+| **Total source lines changed** | **~40** | -- | Minimal, targeted fixes |
 
-## 5. Change Complexity
+## 5. Coverage
 
-| Metric | Value |
-|--------|-------|
-| Files modified | 1 |
-| Net lines added | +34 |
-| Cyclomatic complexity | N/A (prompt-only, no executable code) |
-| Blast radius | LOW (single file, single text block) |
-| Risk level | LOW |
+| Module | Line Coverage | Target | Status |
+|--------|-------------|--------|--------|
+| state-write-validator.cjs | 95.68% | >= 80% | PASS |
+| gate-blocker.cjs | 67.55% | >= 80% | INFO (pre-existing) |
 
-## 6. Security Metrics
+Note: gate-blocker.cjs coverage is at its pre-existing level. The new code paths (variant reporting) are fully tested by TC-GB-V01..V07. The gap is in pre-existing untested branches (cloud config triggers, complex self-healing paths).
 
-| Check | Result |
-|-------|--------|
-| No secrets in code | PASS |
-| No executable code modified | PASS (Markdown prompt change only) |
-| No injection vectors | PASS |
-| npm audit clean | PASS (0 vulnerabilities) |
+## 6. Constitutional Compliance
+
+| Article | Status | Evidence |
+|---------|--------|----------|
+| V (Simplicity First) | PASS | Minimal changes, no over-engineering |
+| VI (Code Review Required) | PASS | This code review document |
+| VII (Artifact Traceability) | PASS | Full traceability matrix in artifact folder |
+| VIII (Documentation Currency) | PASS | Implementation notes updated |
+| IX (Quality Gate Integrity) | PASS | GATE-16 passed, GATE-08 validated here |

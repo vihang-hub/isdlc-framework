@@ -1,24 +1,21 @@
-# Static Analysis Report: BUG-0004-orchestrator-overrides-conversational-opening
+# Static Analysis Report -- BUG-0017 Batch C Hook Bugs
 
 **Date**: 2026-02-15
 **Phase**: 08-code-review
-**Workflow**: Bug Fix (BUG-0004)
+**Workflow**: Fix (BUG-0017-batch-c-hooks)
 
 ---
 
 ## 1. Parse Check
 
-All JavaScript test files pass Node.js syntax validation:
+All modified JavaScript files pass Node.js syntax validation:
 
 | File | Status |
 |------|--------|
-| tests/prompt-verification/orchestrator-conversational-opening.test.js | PASS (17/17 tests run successfully) |
-
-Modified markdown file is well-formed:
-
-| File | Frontmatter | Sections | Status |
-|------|-------------|----------|--------|
-| 00-sdlc-orchestrator.md | Valid YAML | 20+ sections | PASS |
+| src/claude/hooks/gate-blocker.cjs | PASS |
+| src/claude/hooks/state-write-validator.cjs | PASS |
+| src/claude/hooks/tests/test-gate-blocker-extended.test.cjs | PASS |
+| src/claude/hooks/tests/state-write-validator.test.cjs | PASS |
 
 ## 2. Linting
 
@@ -28,60 +25,55 @@ ESLint is not configured for this project. Manual review performed.
 
 | Check | Status | Notes |
 |-------|--------|-------|
-| Consistent import usage | PASS | ESM imports (node:test, node:assert/strict, node:fs, node:path) |
+| Consistent import usage | PASS | CJS require() in all files |
 | No unused variables | PASS | All variables referenced |
-| Consistent path resolution | PASS | Uses `import.meta.dirname` + `join()` pattern |
-| No hardcoded paths | PASS | All paths use `join()` with PROJECT_ROOT |
-| Consistent assertion style | PASS | Uses `assert.ok` with `!content.includes()` and `content.includes()` |
-| No console.log pollution | PASS | No console output in test file |
+| No console.log in check() | PASS | Only console.error for block messages |
+| No hardcoded paths | PASS | Uses path.join()/path.basename() |
+| Consistent assertion style | PASS | assert.ok, assert.equal throughout |
 
-## 3. Type Checking
-
-No TypeScript configuration present. Project uses plain JavaScript (ESM).
-
-**Manual type checks**:
+## 3. Security Analysis
 
 | Check | Status | Notes |
 |-------|--------|-------|
-| Variable initialization | PASS | All variables initialized before use |
-| Null/undefined guards | PASS | `readFileSync` on known-existing agent files |
-| String method safety | PASS | `.includes()` on strings, no null risk |
+| No eval() | PASS | Not found in changed files |
+| No new Function() | PASS | Not found |
+| No __proto__ access | PASS | Not found |
+| No child_process in production | PASS | Only in test helpers |
+| No dynamic require() | PASS | All require() paths are static |
+| Template literal injection | PASS | Only numeric/string interpolation in messages |
 
-## 4. Complexity Analysis
+## 4. Module System Compliance (Article XIII)
 
-| File | Lines Changed | Nesting Depth | Functions | Complexity |
-|------|--------------|---------------|-----------|------------|
-| orchestrator-conversational-opening.test.js | 301 (new) | 3 (describe/it/assert) | 17 test functions | Low |
-| 00-sdlc-orchestrator.md | +40/-6 | N/A (markdown prompt) | 0 | Low |
+| Check | Status | Notes |
+|-------|--------|-------|
+| Hook files use .cjs extension | PASS | CommonJS as required |
+| Hook files use require() | PASS | No ESM imports |
+| Test files use .cjs extension | PASS | Matches hook module system |
+| No module boundary violations | PASS | CJS throughout |
 
-**No cyclomatic complexity concerns.** Test file follows flat structure with independent assertions.
+## 5. Complexity Analysis
 
-## 5. Code Smell Detection
+| File | Change Size | Nesting Depth | Cyclomatic Impact |
+|------|------------|---------------|-------------------|
+| gate-blocker.cjs | ~10 lines | Same (no new nesting) | +0 (replaces existing if/else) |
+| state-write-validator.cjs | ~30 lines | Same (no new nesting) | +2 (two new conditional branches) |
+
+**No complexity increase.** The state-write-validator change restructures existing conditionals; cyclomatic complexity is unchanged because the new branches replace the early return.
+
+## 6. Code Smell Detection
 
 | Smell | Status | Notes |
 |-------|--------|-------|
-| Long methods (>50 lines) | PASS | All test functions are 5-15 lines |
-| Duplicate code | PASS | `readAgent()` helper eliminates repetitive file reading |
-| Dead code | PASS | No unreachable code |
-| Magic numbers | PASS | None present |
-| Stale references | MINOR | Line 984 references "INTERACTIVE PROTOCOL" (renamed to CONVERSATIONAL) |
+| Long methods (>50 lines) | PASS | checkVersionLock is 81 lines (below 100 threshold) |
+| Duplicate code | INFO | Disk read in V7 and V8 are separate by design (see observation) |
+| Dead code | PASS | No unreachable paths |
+| Magic numbers | PASS | No magic numbers introduced |
+| Inconsistent naming | PASS | diskVersion/incomingVersion pattern consistent |
 
-## 6. Dependency Analysis
+## 7. Dependency Analysis
 
 | Check | Status |
 |-------|--------|
 | npm audit | 0 vulnerabilities |
-| No new dependencies added | PASS -- no new packages |
-| No deprecated APIs used | PASS |
-
-## 7. Cross-File Consistency
-
-| Check | Status | Notes |
-|-------|--------|-------|
-| Orchestrator protocol matches analyst | PASS | Semantically equivalent (AC-2.1) |
-| Both files reference DEBATE_CONTEXT | PASS | AC-2.2 verified |
-| Both files include 50-word threshold | PASS | AC-2.3 verified |
-| Both files include A/R/C menu pattern | PASS | AC-2.1 verified |
-| Orchestrator delegation table references analyst | PASS | Line 984 |
-| DEBATE_ROUTING section intact | PASS | Line 1052+ |
-| Analyst INVOCATION PROTOCOL intact | PASS | Lines 19-65 unchanged |
+| No new dependencies | PASS |
+| No deprecated APIs | PASS |
