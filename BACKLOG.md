@@ -392,13 +392,54 @@ Three modes controlling the developer's role during a workflow, activated via fe
   - **Relationship to other items**: Complements 4.1 (multi-agent teams — provides the persona council), subsumes the Phase 01 aspects of 8.1 (requirements debate). Does not affect bug fix flow.
   - **Complexity**: Medium (2 files to rewrite, possible new persona config, interaction pattern design, naming convention decision)
 
-### 9. Investigation
+### 9. Code Quality Gaps
 
-- 9.1 [ ] Phase handshake audit — investigate whether the handshake between phases is working correctly (state transitions, artifact passing, gate validation, pre-delegation state writes, post-phase updates). Verify no data loss or stale state between phase boundaries.
+- 9.1 [ ] Coverage threshold discrepancy — Constitution mandates 95% unit coverage but Phase 16 only enforces 80%
+  - **Problem**: Article II of the constitution requires ≥95% unit test coverage and ≥85% integration test coverage, with 100% for critical paths. But `iteration-requirements.json` for Phase 16 sets `min_coverage_percent: 80`. The constitutional requirement is aspirational — nothing enforces it. This means code can pass all gates while violating the constitution.
+  - **Options**:
+    - (A) **Raise the Phase 16 threshold to 95%** to match the constitution — risks blocking workflows on legacy codebases or projects where 95% is impractical
+    - (B) **Lower the constitutional requirement to 80%** — honest about what's enforced, but weakens the quality bar
+    - (C) **Tiered enforcement by intensity** — light: 60%, standard: 80%, epic: 95%. Constitution states the aspirational target, iteration-requirements enforces the practical one per intensity
+    - **Recommendation**: Option C — matches the existing intensity system. Constitution remains the north star, enforcement is pragmatic.
+  - **Files to change**: `iteration-requirements.json` (per-intensity thresholds), possibly `constitution.md` (add note about intensity-based enforcement)
+  - **Complexity**: Low
 
-### 10. Developer Experience
+- 9.2 [ ] No automated complexity measurement — IC-04 relies on agent judgment, not tooling
+  - **Problem**: The Implementation Reviewer's IC-04 check says "cyclomatic complexity >10 = BLOCKING" but this is pure agent judgment. No eslint-plugin-complexity, radon (Python), gocyclo (Go), or similar tool actually measures complexity. The agent estimates by reading the code — it can miss deeply nested logic or undercount decision points.
+  - **Design**: Integrate automated complexity measurement into the quality pipeline:
+    1. **Phase 16 Track B**: Add complexity analysis as a new check (QL-012). Detect available tool by project type:
+       - JavaScript/TypeScript: `eslint-plugin-complexity` or `escomplex`
+       - Python: `radon cc` or `flake8 --max-complexity`
+       - Go: `gocyclo`
+       - Java: PMD or Checkstyle complexity rules
+    2. **Feed results into IC-04**: If automated metrics are available, the Implementation Reviewer uses them instead of estimating. If not available, falls back to agent judgment (current behavior).
+    3. **Threshold**: Configurable per project in `state.json → project.quality_thresholds.max_cyclomatic_complexity` (default: 10)
+  - **Same pattern as existing tool detection**: Phase 16 already detects eslint, tsc, jest, etc. This adds complexity tools to that detection.
+  - **Complexity**: Low-medium — new QL skill, tool detection patterns, optional IC-04 data source
 
-- 10.1 [ ] Install script landing page and demo GIF — update the install script landing/README with a polished visual experience including an animated GIF demonstrating the framework in action (invisible framework flow, workflow progression, quality gates)
+- 9.3 [ ] Agent-judgment quality checks lack automated backing — IC-01 through IC-07 have no tooling validation
+  - **Problem**: All per-file checks in the Implementation Reviewer are agent judgment. The agent decides if there's a security issue (IC-03), a DRY violation (IC-04), or a missing error handler (IC-02). This is valuable but inconsistent — different agent runs may catch different issues. There's no automated baseline to validate against.
+  - **Design**: Where automated tools exist, run them as a validation layer alongside agent judgment:
+    | IC Check | Automated Tool Candidate |
+    |----------|------------------------|
+    | IC-01 (Logic) | No good automation — keep agent-only |
+    | IC-02 (Error handling) | eslint no-empty-catch, no-unhandled-rejection rules |
+    | IC-03 (Security) | semgrep, eslint-plugin-security, bandit (Python) |
+    | IC-04 (Quality) | eslint-plugin-complexity, sonarqube (backlog 6.9) |
+    | IC-05 (Tests) | No good automation — keep agent-only |
+    | IC-06 (Tech-stack) | Package.json/tsconfig validation — partially automatable |
+    | IC-07 (Constitution) | No automation — constitutional compliance is semantic |
+  - **Approach**: Don't replace agent judgment — augment it. If an automated tool finds an issue the agent missed, flag it. If the agent finds something the tool missed, that's the value of agent judgment. The combination catches more than either alone.
+  - **Prerequisite**: 6.9 (SonarQube integration) would cover IC-02, IC-03, IC-04 in one tool. If SonarQube lands first, this item shrinks significantly.
+  - **Complexity**: Medium — tool integration, result merging, fallback-to-agent-only when tools unavailable
+
+### 10. Investigation
+
+- 10.1 [ ] Phase handshake audit — investigate whether the handshake between phases is working correctly (state transitions, artifact passing, gate validation, pre-delegation state writes, post-phase updates). Verify no data loss or stale state between phase boundaries.
+
+### 11. Developer Experience
+
+- 11.1 [ ] Install script landing page and demo GIF — update the install script landing/README with a polished visual experience including an animated GIF demonstrating the framework in action (invisible framework flow, workflow progression, quality gates)
 
 ## Completed
 
