@@ -1,39 +1,53 @@
-# Lint Report: REQ-0018-quality-loop-true-parallelism
+# Lint Report: BUG-0006-batch-b-hook-bugs
 
 **Phase**: 16-quality-loop
 **Date**: 2026-02-15
-**Branch**: feature/REQ-0018-quality-loop-true-parallelism
+**Tool**: Manual syntax validation (`node -c`) -- no linter configured
 
-## Linter Configuration
+## Lint Configuration
 
-| Tool | Status |
-|------|--------|
+| Setting | Value |
+|---------|-------|
 | ESLint | NOT CONFIGURED |
 | Prettier | NOT CONFIGURED |
-| markdownlint | NOT CONFIGURED |
+| package.json lint script | `echo 'No linter configured'` (no-op) |
+| .eslintrc.* | NOT FOUND |
+| .prettierrc.* | NOT FOUND |
 
-The project `package.json` scripts.lint is `echo 'No linter configured'`. No `.eslintrc*`, `.prettierrc*`, or `.markdownlint*` files found.
+## Syntax Validation Results
 
-## Manual Structural Checks
+All modified and new files pass Node.js syntax checking:
 
-In lieu of automated linting, the following structural checks were performed on new/modified files:
+| File | Path | Result |
+|------|------|--------|
+| pre-task-dispatcher.cjs | src/claude/hooks/dispatchers/ | PASS |
+| test-adequacy-blocker.cjs | src/claude/hooks/ | PASS |
+| menu-tracker.cjs | src/claude/hooks/ | PASS |
+| dispatcher-null-context.test.cjs | src/claude/hooks/tests/ | PASS |
+| test-adequacy-phase-detection.test.cjs | src/claude/hooks/tests/ | PASS |
+| menu-tracker-unsafe-init.test.cjs | src/claude/hooks/tests/ | PASS |
+| dispatcher-timeout-hints.test.cjs | src/claude/hooks/tests/ | PASS |
 
-### Agent Files (Markdown)
+**Total files checked**: 7
+**Errors**: 0
+**Warnings**: 0
 
-| File | Frontmatter | Sections | Size | Status |
-|------|-------------|----------|------|--------|
-| `16-quality-loop-engineer.md` | Valid YAML (name, description, model, owned_skills) | Phase Overview, CRITICAL, FINAL SWEEP, FULL SCOPE, MANDATORY ITERATION, Tool Discovery, Parallel Execution Protocol, Grouping Strategy, GATE-16, Constitutional Articles, Output Artifacts, Task List, Skill Observability, Suggested Prompts | 17,182 bytes (362 lines) | PASS |
+## Manual Code Quality Checks
 
-### Test Files (CJS)
+| Pattern | Check | Result |
+|---------|-------|--------|
+| No `var` declarations | All files use `const`/`let` | PASS |
+| No `eval()` | No eval usage found | PASS |
+| No `exec()`/`execSync()` | No child_process usage | PASS |
+| JSDoc present | All exported functions have JSDoc | PASS |
+| `'use strict'` in CJS | Present in dispatcher (entry point) | PASS |
+| Consistent indentation | 4-space indentation throughout | PASS |
+| Semicolons | Consistent semicolon usage | PASS |
 
-| File | Syntax Valid | Pattern | Status |
-|------|-------------|---------|--------|
-| `quality-loop-parallelism.test.cjs` | Yes (40/40 pass) | describe/it with assert | PASS |
+## Recommendation
 
-## Summary
-
-- Errors: 0
-- Warnings: 0 (no linter to produce warnings)
-- Informational: Linting tools not configured (pre-existing condition)
-
-**Recommendation**: Consider adding ESLint for `.cjs` test files and markdownlint for `.md` agent files in a future improvement cycle.
+Configure ESLint for future workflows to automate these checks:
+```bash
+npm install --save-dev eslint
+npx eslint --init
+```

@@ -1,45 +1,74 @@
-# Coverage Report: REQ-0018-quality-loop-true-parallelism
+# Coverage Report: BUG-0006-batch-b-hook-bugs
 
 **Phase**: 16-quality-loop
 **Date**: 2026-02-15
-**Tool**: Structural coverage via prompt-verification tests (no line-level instrumenting)
+**Tool**: Test-to-AC traceability (no line-level instrumenting configured)
 
 ## Coverage Summary
 
 | Metric | Target | Actual | Status |
 |--------|--------|--------|--------|
-| Acceptance Criteria | 100% | 23/23 (100%) | PASS |
-| Functional Requirements | 100% | 7/7 (100%) | PASS |
-| Non-Functional Requirements | 100% | 4/4 (100%) | PASS |
+| Acceptance Criteria covered | 21 | 21 | PASS (100%) |
+| Functional Requirements covered | 4 | 4 | PASS (100%) |
+| Test files created | 4 | 4 | PASS |
+| Total tests | 48 | 48 | PASS |
 
-## Coverage by Test Suite
+## Coverage by Bug
 
-### quality-loop-parallelism.test.cjs (40 tests)
+### BUG 0.6: Dispatcher null context (pre-task-dispatcher.cjs)
 
-| Suite | Tests | Coverage Focus |
-|-------|-------|----------------|
-| FR-001: Parallel Spawning | 5 | Two Task calls, Track A+B prompts, wait-for-both |
-| FR-002: Internal Track Parallelism | 5 | Sub-groups, MAY/SHOULD language, independent reporting, consolidation |
-| FR-003: Grouping Strategy | 8 | Logical/task-count modes, A1-A3/B1-B2 composition, lookup table, unconfigured skip |
-| FR-004: Consolidated Result Merging | 4 | Pass/fail by track+group, ANY failure rule, Parallel Execution Summary |
-| FR-005: Iteration Loop | 4 | Failure consolidation, both-track re-run, circuit breaker |
-| FR-006: FINAL SWEEP Compatibility | 4 | Exclusion list preserved, grouping strategy ref, FULL SCOPE mode |
-| FR-007: Scope Detection | 3 | 50+ threshold, <10 guidance, Track A specific |
-| NFR | 4 | Prompt-only change, backward compat, track timing, performance ref |
-| Regression | 3 | Frontmatter, GATE-16 checklist, Tool Discovery Protocol |
+| AC | Description | Tests | Status |
+|----|-------------|-------|--------|
+| AC-06a | ctx.state defaults to {} when readState returns null | 2 (unit + integration) | COVERED |
+| AC-06b | ctx.manifest defaults to {} when loadManifest returns null | 2 (unit + integration) | COVERED |
+| AC-06c | ctx.requirements defaults to {} when loadIterationRequirements returns null | 2 (unit + integration) | COVERED |
+| AC-06d | ctx.workflows defaults to {} when loadWorkflowDefinitions returns null | 2 (unit + integration) | COVERED |
+| AC-06e | hasActiveWorkflow returns false when ctx.state is {} | 2 (unit + integration) | COVERED |
+| AC-06f | Existing hooks with valid context still work correctly | 2 (unit + integration) | COVERED |
+| Regression | All four null simultaneously + empty stdin | 2 | COVERED |
 
-Covered ACs: AC-001 through AC-023 (all 23)
+### BUG 0.7: Test adequacy phase detection (test-adequacy-blocker.cjs)
 
-## Uncovered Areas
+| AC | Description | Tests | Status |
+|----|-------------|-------|--------|
+| AC-07a | isUpgradeDelegation rejects quality loop phases | 2 | COVERED |
+| AC-07a (ext) | isUpgradeDelegation rejects old 14-upgrade prefix | 1 | COVERED |
+| AC-07b | isUpgradeDelegation matches 15-upgrade phases | 3 | COVERED |
+| AC-07c | isUpgradePhaseActive rejects quality loop | 1 | COVERED |
+| AC-07c (ext) | isUpgradePhaseActive rejects old 14-upgrade prefix | 1 | COVERED |
+| AC-07d | isUpgradePhaseActive matches 15-upgrade phases | 2 | COVERED |
+| AC-07e | check() integration with correct phase filtering | 1 | COVERED |
+| AC-07f | Quality loop delegations do not trigger test adequacy | 1 | COVERED |
+| Regression | Null/undefined inputs, no active workflow | 4 | COVERED |
 
-| Area | Reason | Risk |
-|------|--------|------|
-| Line-level code coverage | No `c8` or `istanbul` configured | LOW -- agent is a markdown prompt |
-| Mutation testing | No mutation framework configured | LOW -- prompt-verification tests check content presence |
-| Runtime behavior | Agents run inside Claude Code, cannot be unit-tested at runtime | ACCEPTED -- tested through structural verification |
+### BUG 0.11: Menu tracker unsafe nested init (menu-tracker.cjs)
 
-## Notes
+| AC | Description | Tests | Status |
+|----|-------------|-------|--------|
+| AC-11a | Resets truthy non-object iteration_requirements to {} | 3 | COVERED |
+| AC-11b | Initializes null/undefined iteration_requirements to {} | 2 | COVERED |
+| AC-11c | Preserves valid object iteration_requirements | 2 | COVERED |
+| AC-11d | interactive_elicitation initialization unchanged | 2 | COVERED |
+| Edge case | Array value for iteration_requirements | 1 | COVERED |
 
-- Coverage methodology: Prompt-verification testing reads `.md` files and asserts required sections, keywords, and patterns exist
-- This approach provides structural coverage equivalent to >80% for markdown-based agent files
-- Line-level coverage is not meaningful for markdown prompt files
+### BUG 0.12: Phase timeout degradation hints (pre-task-dispatcher.cjs)
+
+| AC | Description | Tests | Status |
+|----|-------------|-------|--------|
+| AC-12a | Structured JSON in stderr when timeout exceeded | 1 | COVERED |
+| AC-12b | JSON hint includes required fields | 1 | COVERED |
+| AC-12c | Actions include required recommendations | 2 | COVERED |
+| AC-12d | Errors in hint generation do not block (fail-open) | 2 | COVERED |
+| AC-12e | Human-readable warning preserved | 1 | COVERED |
+| Edge case | No timeout configured for phase | 1 | COVERED |
+
+## Line-Level Coverage
+
+NOT CONFIGURED -- No `c8`, `istanbul`, `nyc`, or equivalent line-level coverage tool is installed. This is documented technical debt. The project relies on test-to-AC traceability as the primary coverage metric.
+
+## Recommendation
+
+Install `c8` (built-in V8 coverage) for future workflows:
+```bash
+npx c8 node --test src/claude/hooks/tests/*.test.cjs
+```

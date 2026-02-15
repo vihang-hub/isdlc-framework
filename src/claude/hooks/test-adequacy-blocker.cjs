@@ -32,8 +32,7 @@ function isUpgradeDelegation(delegation) {
     if (!delegation || !delegation.isDelegation) return false;
     const phase = delegation.targetPhase || '';
     const agent = (delegation.agentName || '').toLowerCase();
-    return phase.startsWith('16-') ||
-           phase.startsWith('14-upgrade') ||
+    return phase.startsWith('15-upgrade') ||
            agent.includes('upgrade');
 }
 
@@ -59,7 +58,7 @@ function isUpgradeFromPromptText(input) {
  */
 function isUpgradePhaseActive(state) {
     const phase = (state.active_workflow && state.active_workflow.current_phase) || '';
-    return phase.startsWith('16-') || phase.startsWith('14-upgrade');
+    return phase.startsWith('15-upgrade');
 }
 
 /**
