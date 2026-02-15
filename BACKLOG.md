@@ -5,22 +5,102 @@
 
 ## Open
 
-### 0. Bugs (High Priority)
+### 0. Bugs
 
-- 0.1 [ ] **BUG: Orchestrator overrides conversational opening with old 3-question protocol**
-  - **Severity**: High — breaks REQ-0014's conversational requirements elicitation for every feature workflow
-  - **Symptom**: Requirements analyst dumps 3 generic questions ("What problem? Who will use this? How will you measure success?") instead of reflecting back the user's description and asking targeted follow-ups. The agent does not engage the user or summarise their requirements.
-  - **Root cause**: `00-sdlc-orchestrator.md` line ~1009 injects the old INTERACTIVE PROTOCOL into the Task prompt when delegating to Phase 01:
-    ```
-    Your FIRST response must ONLY contain these 3 questions - nothing else:
-    1. What problem are you solving? 2. Who will use this? 3. How will you know this project succeeded?
-    Do NOT: do research, present understanding, list features, or provide analysis.
-    ```
-    This overrides the agent's own conversational opening (lines 42-58 of `01-requirements-analyst.md`) which was updated in REQ-0014 to reflect back, ask contextual questions, and weave lenses organically.
-  - **Fix**: Replace the old INTERACTIVE PROTOCOL block in `00-sdlc-orchestrator.md` (lines ~1007-1016) with the new conversational protocol that matches what's already in the agent. The orchestrator should inject instructions consistent with the agent's own behaviour, not contradict them.
-  - **Files to change**: `00-sdlc-orchestrator.md` (remove/replace old INTERACTIVE PROTOCOL block)
-  - **No enforcement gap**: The conversational opening is prompt-only — no hook verifies the agent actually reflected back the description. Consider whether hook enforcement is needed or if fixing the orchestrator injection is sufficient.
-  - **Complexity**: Low — single file change, replace one text block
+#### Batch A — Critical: Gate Bypass Risk (fix first — 2 files)
+
+- 0.1 [ ] **BUG: Dual phase-status tracking causes inconsistent gate decisions**
+  - **Severity**: Critical — gates pass/fail inconsistently depending on which state path has data
+  - **Symptom**: Same action gets blocked in one session but passes in another
+  - **Root cause**: `gate-blocker.cjs:646-652` checks BOTH `active_workflow.phase_status[phase]` AND `state.phases[phase]` for completion. These two locations can diverge — if `phase_status` says "completed" but `state.phases[phase]` has incomplete iteration data, the gate incorrectly allows advancement.
+  - **Fix**: Pick ONE canonical source for phase completion status and use it consistently. Reconcile or remove the other.
+  - **Files**: `src/claude/hooks/gate-blocker.cjs`
+
+- 0.2 [ ] **BUG: Missing PHASE_STATUS_ORDINAL disables phase regression checks**
+  - **Severity**: Critical — invalid phase status transitions silently allowed
+  - **Symptom**: Phase status can regress (e.g., `completed` → `in_progress`) without any block
+  - **Root cause**: `state-write-validator.cjs:293-294` references `PHASE_STATUS_ORDINAL[incomingStatus]` and `PHASE_STATUS_ORDINAL[diskStatus]` but the constant is never defined. Both evaluate to `undefined`, so the regression check (line 297-298) always skips.
+  - **Fix**: Add the missing constant: `const PHASE_STATUS_ORDINAL = { 'pending': 0, 'in_progress': 1, 'completed': 2 };`
+  - **Files**: `src/claude/hooks/state-write-validator.cjs`
+
+- 0.3 [ ] **BUG: Null safety gap in state version lock check**
+  - **Severity**: Critical — potential state corruption
+  - **Symptom**: TypeError or silent corruption when incoming state parses as non-object JSON (e.g., `null`, `"string"`, `123`)
+  - **Root cause**: `state-write-validator.cjs:220-230` — `JSON.parse(incomingContent)` succeeds but result isn't validated as an object before accessing `.state_version`.
+  - **Fix**: Add type check after parse: `if (!incomingState || typeof incomingState !== 'object') return null;`
+  - **Files**: `src/claude/hooks/state-write-validator.cjs`
+
+#### Batch B — High: Inconsistent Hook Behavior (5 bugs, 4 files)
+
+- 0.4 [ ] **BUG: Phase index bounds not validated in gate-blocker**
+  - **Severity**: High — fragile phase matching can misalign phases
+  - **Root cause**: `gate-blocker.cjs:589-604` — no check for `phaseIndex < 0`, no validation that `workflowPhases` is an array before accessing indices.
+  - **Fix**: Add bounds checking and array validation before phase index operations.
+  - **Files**: `src/claude/hooks/gate-blocker.cjs`
+
+- 0.5 [ ] **BUG: Empty workflows object prevents fallback loading**
+  - **Severity**: High — hooks operate on stale/empty workflow definitions
+  - **Root cause**: `gate-blocker.cjs:581-584` — `ctx.workflows || fallback1 || fallback2` never triggers fallbacks because empty `{}` is truthy.
+  - **Fix**: Check for empty object, not just falsy: `const workflows = (ctx.workflows && Object.keys(ctx.workflows).length > 0) ? ctx.workflows : loadFallback();`
+  - **Files**: `src/claude/hooks/gate-blocker.cjs`
+
+- 0.6 [ ] **BUG: Dispatcher passes null context to all hooks**
+  - **Severity**: High — 9 hooks receive potentially-null state/manifest/requirements with inconsistent null handling
+  - **Root cause**: `pre-task-dispatcher.cjs:100-105` — `readState()`, `loadManifest()`, `loadIterationRequirements()`, `loadWorkflowDefinitions()` can all return null, passed directly to hooks.
+  - **Fix**: Validate context object after loading; provide safe defaults for null values so hooks don't each need their own null guards.
+  - **Files**: `src/claude/hooks/dispatchers/pre-task-dispatcher.cjs`
+
+- 0.7 [ ] **BUG: test-adequacy-blocker fires on wrong phases**
+  - **Severity**: High — quality loop delegations incorrectly trigger upgrade-specific validation
+  - **Root cause**: `test-adequacy-blocker.cjs:35,61` checks both `phase.startsWith('16-')` (quality loop) AND `phase.startsWith('14-upgrade')`. Quality loop is not an upgrade phase.
+  - **Fix**: Remove `phase.startsWith('16-')` from upgrade phase detection, or separate the two concerns into distinct checks.
+  - **Files**: `src/claude/hooks/test-adequacy-blocker.cjs`
+
+- 0.8 [ ] **BUG: Supervised review doesn't coordinate with gate-blocker**
+  - **Severity**: High — user can advance phases while supervised review menu is active
+  - **Root cause**: `gate-blocker.cjs:739-742` explicitly says "Gate check unaffected" during supervised review. The supervised review controller should block advancement, but gate-blocker doesn't enforce this.
+  - **Fix**: Gate-blocker should block phase advancement when `supervised_review.status === 'reviewing'`.
+  - **Files**: `src/claude/hooks/gate-blocker.cjs`
+
+#### Batch C — Medium: Correctness & UX (4 bugs)
+
+- 0.9 [ ] **BUG: Misleading artifact error messages**
+  - **Severity**: Medium — confusing UX, gate blocks reported incorrectly
+  - **Root cause**: `gate-blocker.cjs:486-498` reports first variant as missing even when another valid variant (e.g., `.md` instead of `.yaml`) exists and satisfies the requirement.
+  - **Fix**: Report the actual missing variants, not just the first in the list.
+  - **Files**: `src/claude/hooks/gate-blocker.cjs`
+
+- 0.10 [ ] **BUG: Version lock bypass during state migration**
+  - **Severity**: Medium — unversioned incoming state can overwrite versioned disk state
+  - **Root cause**: `state-write-validator.cjs:128-143` — migration case skips V7 check entirely when disk has no `state_version`, allowing stale writes.
+  - **Fix**: Require version field on incoming state even during migration, or add a migration-specific lock.
+  - **Files**: `src/claude/hooks/state-write-validator.cjs`
+
+- 0.11 [ ] **BUG: Menu tracker unsafe nested object initialization**
+  - **Severity**: Medium — TypeError when state is corrupted
+  - **Root cause**: `menu-tracker.cjs:165-172` — if `iteration_requirements` exists but is not an object (corrupted state), accessing `.interactive_elicitation` throws TypeError.
+  - **Fix**: Add type check: `if (typeof iterReqs !== 'object' || iterReqs === null) iterReqs = {};`
+  - **Files**: `src/claude/hooks/menu-tracker.cjs`
+
+- 0.12 [ ] **BUG: Phase timeout advisory only — never enforced**
+  - **Severity**: Medium — performance budgets silently exceeded
+  - **Root cause**: `pre-task-dispatcher.cjs:111-120` logs timeout warnings but never blocks or triggers graceful degradation.
+  - **Fix**: Implement degradation actions (reduce debate rounds, reduce parallelism) when budget exceeded. Related to backlog 2.4.
+  - **Files**: `src/claude/hooks/dispatchers/pre-task-dispatcher.cjs`
+
+#### Batch D — Low: Maintainability & Tech Debt (5 items)
+
+- 0.13 [ ] **DEBT: Hardcoded phase prefixes in 3+ hook files**
+  - Phase strings like `startsWith('15-upgrade')` scattered across `gate-blocker.cjs`, `skill-validator.cjs`, `test-adequacy-blocker.cjs`. Should be centralized in a `PHASE_CATEGORIES` constant.
+
+- 0.14 [ ] **DEBT: Inconsistent null-check patterns across hooks**
+  - Mix of optional chaining (`state?.active_workflow?.current_phase`) and explicit checks (`if (state && state.active_workflow)`). Pick one, apply consistently.
+
+- 0.15 [ ] **DEBT: `detectPhaseDelegation()` undocumented**
+  - Called by 5+ hooks in `lib/common.cjs` but contract (params, return shape, edge cases) is not documented. Maintenance risk.
+
+- 0.16 [ ] **DEBT: Dead code from BUG-0005 fix**
+  - `gate-blocker.cjs:606-607` — redundant fallback branch that never executes after the primary branch (line 577) already resolves `currentPhase`.
 
 ### 1. Spec-Kit Learnings (from framework comparison 2026-02-11)
 
@@ -445,6 +525,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
 ## Completed
 
 ### 2026-02-15
+- [x] BUG-0004: Orchestrator overrides conversational opening with old 3-question protocol — replaced stale INTERACTIVE PROTOCOL block (lines 1007-1016 of 00-sdlc-orchestrator.md) with CONVERSATIONAL PROTOCOL matching the requirements analyst's REQ-0014 INVOCATION PROTOCOL. 1 file modified, 17 new tests, zero regressions, 1 implementation iteration. 2 FRs, 2 NFRs, 9 ACs (backlog 0.1 original)
 - [x] REQ-0018: Quality Loop true parallelism — explicit dual-Task spawning for Track A (testing) + Track B (automated QA) in 16-quality-loop-engineer.md (backlog 2.1). Grouping strategy table (A1 unit, A2 system/integration, A3 E2E; B1 static analysis, B2 constitutional/coverage), internal parallelism guidance, consolidated merging protocol, iteration loop with parallel re-execution, FINAL SWEEP/FULL SCOPE compat, scope detection (50+/10-49/<10 thresholds). 40 new tests, zero regressions, 2 implementation iterations, light workflow. 7 FRs, 4 NFRs, 23 ACs.
 - [x] REQ-0015 (local): Impact Analysis cross-validation Verifier (Approach A) — new M4 agent (cross-validation-verifier.md) that cross-checks M1/M2/M3 findings after parallel execution, before consolidation. Pipeline verification pattern with 3-tier fail-open, 5 finding types (MISSING_FROM_BLAST_RADIUS, ORPHAN_IMPACT, RISK_SCORING_GAP, UNDERTESTED_CRITICAL_PATH, INCOMPLETE_ANALYSIS), IA-401/IA-402 skills. 1 new agent, 1 new skill, 3 modified files, 33 new tests, zero regressions, 9/9 gates passed first try. 7 FRs, 3 NFRs, 28 ACs (backlog 4.2 Approach A)
 - [x] REQ-0017: Multi-agent Implementation Team — Writer/Reviewer/Updater per-file debate loop for Phase 06 implementation (backlog 4.1 Phase 06). 2 new agents (Implementation Reviewer with 8 IC checks IC-01..IC-08, Implementation Updater with 6-step fix protocol), 4 modified agents (orchestrator IMPLEMENTATION_ROUTING Section 7.6, software-developer Writer awareness, quality-loop final sweep, qa-engineer human review only). 86 new tests, zero regressions, 1 implementation iteration. 7 FRs, 4 NFRs, 34 ACs. Completes backlog 4.1 (all 4 debate team phases done).
