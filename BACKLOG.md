@@ -15,29 +15,17 @@
 
 - 0.3 [x] ~~**BUG: Null safety gap in state version lock check**~~ (BUG-0007)
 
-#### Batch B — High: Inconsistent Hook Behavior (3 remaining, 4 fixed)
+#### Batch B — High: Inconsistent Hook Behavior (0 remaining, 7 fixed)
 
-- 0.4 [ ] **BUG: Phase index bounds not validated in gate-blocker**
-  - **Severity**: High — fragile phase matching can misalign phases
-  - **Root cause**: `gate-blocker.cjs:589-604` — no check for `phaseIndex < 0`, no validation that `workflowPhases` is an array before accessing indices.
-  - **Fix**: Add bounds checking and array validation before phase index operations.
-  - **Files**: `src/claude/hooks/gate-blocker.cjs`
+- 0.4 [x] ~~**BUG: Phase index bounds not validated in gate-blocker**~~ (BUG-0008)
 
-- 0.5 [ ] **BUG: Empty workflows object prevents fallback loading**
-  - **Severity**: High — hooks operate on stale/empty workflow definitions
-  - **Root cause**: `gate-blocker.cjs:581-584` — `ctx.workflows || fallback1 || fallback2` never triggers fallbacks because empty `{}` is truthy.
-  - **Fix**: Check for empty object, not just falsy: `const workflows = (ctx.workflows && Object.keys(ctx.workflows).length > 0) ? ctx.workflows : loadFallback();`
-  - **Files**: `src/claude/hooks/gate-blocker.cjs`
+- 0.5 [x] ~~**BUG: Empty workflows object prevents fallback loading**~~ (BUG-0008)
 
 - 0.6 [x] ~~**BUG: Dispatcher passes null context to all hooks**~~ (BUG-0006)
 
 - 0.7 [x] ~~**BUG: test-adequacy-blocker fires on wrong phases**~~ (BUG-0006)
 
-- 0.8 [ ] **BUG: Supervised review doesn't coordinate with gate-blocker**
-  - **Severity**: High — user can advance phases while supervised review menu is active
-  - **Root cause**: `gate-blocker.cjs:739-742` explicitly says "Gate check unaffected" during supervised review. The supervised review controller should block advancement, but gate-blocker doesn't enforce this.
-  - **Fix**: Gate-blocker should block phase advancement when `supervised_review.status === 'reviewing'`.
-  - **Files**: `src/claude/hooks/gate-blocker.cjs`
+- 0.8 [x] ~~**BUG: Supervised review doesn't coordinate with gate-blocker**~~ (BUG-0008)
 
 #### Batch C — Medium: Correctness & UX (2 remaining, 2 fixed)
 
@@ -589,6 +577,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
 ## Completed
 
 ### 2026-02-15
+- [x] BUG-0008: Batch B inconsistent hook behavior — 3 fixes in gate-blocker.cjs: phase index bounds validation with Array.isArray + length + typeof/isFinite checks (0.4), empty workflows object fallback loading via .workflows sub-property check (0.5), supervised review coordination blocking gate advancement when status is 'reviewing' or 'rejected' (0.8). 20 new tests, zero regressions, 1 implementation iteration. 3 bugs, 17 ACs, 4 NFRs.
 - [x] BUG-0007: Batch A gate bypass bugs — 2 fixes across 2 files: phase-status early-return bypass removed in gate-blocker.cjs (0.1), null/type guards added to state-write-validator.cjs checkVersionLock() (0.3). Bug 0.2 (PHASE_STATUS_ORDINAL) confirmed already fixed with verification test. 16 new tests, zero regressions, 1 implementation iteration. 3 bugs analyzed, 13 ACs, 3 NFRs.
 - [x] BUG-0006: Batch B hook bugs — 4 fixes across 3 files: dispatcher null context defaults (0.6, `pre-task-dispatcher.cjs`), test-adequacy wrong phase detection prefix (0.7, `test-adequacy-blocker.cjs`), menu tracker unsafe nested init (0.11, `menu-tracker.cjs`), phase timeout degradation hints (0.12, `pre-task-dispatcher.cjs`). 48 new tests, zero regressions, 2 implementation iterations. 4 FRs, 3 NFRs, 21 ACs.
 - [x] BUG-0004: Orchestrator overrides conversational opening with old 3-question protocol — replaced stale INTERACTIVE PROTOCOL block (lines 1007-1016 of 00-sdlc-orchestrator.md) with CONVERSATIONAL PROTOCOL matching the requirements analyst's REQ-0014 INVOCATION PROTOCOL. 1 file modified, 17 new tests, zero regressions, 1 implementation iteration. 2 FRs, 2 NFRs, 9 ACs (backlog 0.1 original)
