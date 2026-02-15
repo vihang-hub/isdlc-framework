@@ -642,11 +642,9 @@ function check(ctx) {
             }
         }
 
-        // If the active workflow already marks this phase as completed, skip iteration checks.
-        if (activeWorkflow?.phase_status?.[currentPhase] === 'completed') {
-            debugLog('Phase already completed in active_workflow.phase_status, skipping gate checks');
-            return { decision: 'allow', stderr: stderrMessages.trim() || undefined };
-        }
+        // BUG-0007 fix (0.1): Removed early-return bypass on active_workflow.phase_status.
+        // state.phases[phase] is the single canonical source for gate decisions.
+        // The five requirement checks below handle all cases correctly.
 
         // Get phase state
         const phaseState = state.phases?.[currentPhase] || {};
