@@ -1067,6 +1067,7 @@ DEBATE_ROUTING:
 | 01-requirements | 01-requirements-analyst.md | 01-requirements-critic.md | 01-requirements-refiner.md | requirements-spec.md, user-stories.json, nfr-matrix.md, traceability-matrix.csv | requirements-spec.md |
 | 03-architecture | 02-solution-architect.md | 02-architecture-critic.md | 02-architecture-refiner.md | architecture-overview.md, tech-stack-decision.md, database-design.md, security-architecture.md | architecture-overview.md |
 | 04-design | 03-system-designer.md | 03-design-critic.md | 03-design-refiner.md | interface-spec.yaml, module-designs/, error-taxonomy.md, validation-rules.json | interface-spec.yaml |
+| 05-test-strategy | 04-test-design-engineer.md | 04-test-strategy-critic.md | 04-test-strategy-refiner.md | test-strategy.md, test-cases/, traceability-matrix.csv, test-data-plan.md | test-strategy.md |
 
 Lookup logic:
 - IF current_phase IN DEBATE_ROUTING: use routing entry for phase-specific agents
@@ -1273,7 +1274,7 @@ ELSE:
 2. If not found, check DEBATE_ROUTING (Section 7.5)
 3. If not found, use standard single-agent delegation
 
-Phase 06 is ONLY in IMPLEMENTATION_ROUTING. Phases 01/03/04 are ONLY in DEBATE_ROUTING.
+Phase 06 is ONLY in IMPLEMENTATION_ROUTING. Phases 01/03/04/05 are ONLY in DEBATE_ROUTING.
 No phase appears in both tables.
 
 ### Step 1: Resolve Debate Mode (Reuse from Section 7.5)
