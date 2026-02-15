@@ -27,19 +27,11 @@
 
 - 0.8 [x] ~~**BUG: Supervised review doesn't coordinate with gate-blocker**~~ (BUG-0008)
 
-#### Batch C — Medium: Correctness & UX (2 remaining, 2 fixed)
+#### Batch C — Medium: Correctness & UX (0 remaining, 4 fixed)
 
-- 0.9 [ ] **BUG: Misleading artifact error messages**
-  - **Severity**: Medium — confusing UX, gate blocks reported incorrectly
-  - **Root cause**: `gate-blocker.cjs:486-498` reports first variant as missing even when another valid variant (e.g., `.md` instead of `.yaml`) exists and satisfies the requirement.
-  - **Fix**: Report the actual missing variants, not just the first in the list.
-  - **Files**: `src/claude/hooks/gate-blocker.cjs`
+- 0.9 [x] ~~**BUG: Misleading artifact error messages**~~ (BUG-0017)
 
-- 0.10 [ ] **BUG: Version lock bypass during state migration**
-  - **Severity**: Medium — unversioned incoming state can overwrite versioned disk state
-  - **Root cause**: `state-write-validator.cjs:128-143` — migration case skips V7 check entirely when disk has no `state_version`, allowing stale writes.
-  - **Fix**: Require version field on incoming state even during migration, or add a migration-specific lock.
-  - **Files**: `src/claude/hooks/state-write-validator.cjs`
+- 0.10 [x] ~~**BUG: Version lock bypass during state migration**~~ (BUG-0017)
 
 - 0.11 [x] ~~**BUG: Menu tracker unsafe nested object initialization**~~ (BUG-0006)
 
@@ -577,6 +569,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
 ## Completed
 
 ### 2026-02-15
+- [x] BUG-0017: Batch C hook bugs — 2 fixes across 2 files: misleading artifact error messages in gate-blocker.cjs reporting actual missing variants instead of first variant (0.9), state-write-validator version lock bypass during migration requiring version field on incoming state (0.10). Quality reports updated. 137 new state-write-validator tests.
 - [x] BUG-0008: Batch B inconsistent hook behavior — 3 fixes in gate-blocker.cjs: phase index bounds validation with Array.isArray + length + typeof/isFinite checks (0.4), empty workflows object fallback loading via .workflows sub-property check (0.5), supervised review coordination blocking gate advancement when status is 'reviewing' or 'rejected' (0.8). 20 new tests, zero regressions, 1 implementation iteration. 3 bugs, 17 ACs, 4 NFRs.
 - [x] BUG-0007: Batch A gate bypass bugs — 2 fixes across 2 files: phase-status early-return bypass removed in gate-blocker.cjs (0.1), null/type guards added to state-write-validator.cjs checkVersionLock() (0.3). Bug 0.2 (PHASE_STATUS_ORDINAL) confirmed already fixed with verification test. 16 new tests, zero regressions, 1 implementation iteration. 3 bugs analyzed, 13 ACs, 3 NFRs.
 - [x] BUG-0006: Batch B hook bugs — 4 fixes across 3 files: dispatcher null context defaults (0.6, `pre-task-dispatcher.cjs`), test-adequacy wrong phase detection prefix (0.7, `test-adequacy-blocker.cjs`), menu tracker unsafe nested init (0.11, `menu-tracker.cjs`), phase timeout degradation hints (0.12, `pre-task-dispatcher.cjs`). 48 new tests, zero regressions, 2 implementation iterations. 4 FRs, 3 NFRs, 21 ACs.
