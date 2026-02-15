@@ -125,6 +125,14 @@ function checkVersionLock(filePath, toolInput, toolName) {
             return null;
         }
 
+        // BUG-0007 fix (0.3): Explicit type guard after JSON.parse for incoming content.
+        // JSON.parse can return null, numbers, booleans, strings -- all valid JSON but
+        // not valid state objects. Guard before property access to avoid silent TypeError.
+        if (!incomingState || typeof incomingState !== 'object') {
+            debugLog('V7 version check skipped: incoming content parsed to', typeof incomingState, '— not an object');
+            return null; // fail-open
+        }
+
         const incomingVersion = incomingState.state_version;
 
         // Backward compat: if incoming has no state_version, allow
@@ -140,6 +148,11 @@ function checkVersionLock(filePath, toolInput, toolName) {
             }
             const diskContent = fs.readFileSync(filePath, 'utf8');
             const diskState = JSON.parse(diskContent);
+            // BUG-0007 fix (0.3): Explicit type guard after JSON.parse for disk content.
+            if (!diskState || typeof diskState !== 'object') {
+                debugLog('V7 version check skipped: disk state parsed to', typeof diskState, '— not an object');
+                return null; // fail-open
+            }
             diskVersion = diskState.state_version;
         } catch (e) {
             // Fail-open: error reading disk file
