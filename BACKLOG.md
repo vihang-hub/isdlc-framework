@@ -178,51 +178,6 @@
 
 ### 4. Multi-Agent Teams (Architecture)
 
-- 4.1 [x] Replace single-agent phases with Creator/Critic/Refiner teams that collaborate via propose-critique-refine cycles (5 of 5 phases done)
-  - **Shared pattern**: Each phase runs a 3-agent loop: Creator produces artifact → Critic reviews and challenges → Refiner synthesizes improvements. Max 3 rounds, convergence when Critic has zero blocking findings (warnings allowed). Each round produces a versioned artifact diff so progress is visible.
-  - **Configurable**: Off for `-light` workflows (single agent, current behavior). On for `standard` and `epic`. Override with `--no-debate` flag to force single-agent mode. Opt-in via `/isdlc feature "desc" --debate` or per-phase in constitution (e.g., `debate_phases: [01, 03, 04, 06]`).
-  - **Precedent**: Deep discovery Inception Party already uses this pattern for `/discover --new` — this extends it to all workflow phases.
-  - **Sequencing**: Phase 01 done first (REQ-0014), then extend to 03/04/06.
-  - **Complexity**: Large (new agent roles, loop protocol, convergence logic, phase restructuring)
-  - **Phase 01 — Requirements Team** [x] (REQ-0014 — DONE: 2 new agents, 90 tests, --debate/--no-debate flags, conversational Creator, debate loop orchestration)
-    - **Creator** (requirements-analyst): Produces requirements-spec.md, user-stories.json, NFR matrix, traceability matrix.
-    - **Critic** catches: vague/untestable ACs, orphan requirements, unmeasured NFRs, scope creep, missing compliance requirements, contradictions, missing edge cases, unstated assumptions
-    - **Refiner** produces: testable Given/When/Then for every AC, quantified NFRs, complete traceability, risk mitigation, explicit assumption register
-  - **Phase 03 — Architecture Team** [x] (REQ-0015 — DONE: 2 new agents, 87 tests, generalized debate engine with routing table, 8-check Critic, 8-strategy Refiner):
-    - **Creator** (solution-architect): Produces architecture-overview.md, tech-stack-decision.md, database-design.md, security-architecture.md, ADRs.
-    - **Critic** catches: NFR misalignment, incomplete STRIDE threat model, database design flaws, weak tech stack justification, single points of failure, unaddressed cost implications, missing observability, coupling contradictions
-    - **Refiner** produces: complete ADRs with trade-offs, security hardening, HA adjustments, cost optimization, observability architecture
-  - **Phase 04 — Design Team** [x] (REQ-0016 — DONE: 2 new agents, 87 tests, DEBATE_ROUTING Phase 04 entry, 8-check Design Critic (DC-01..DC-08), 9-strategy Design Refiner, Creator awareness for system-designer):
-    - **Creator** (system-designer): Produces interface-spec.yaml/openapi.yaml, module-designs/, wireframes/, error-taxonomy.md, validation-rules.json.
-    - **Critic** catches: incomplete API specs, inconsistent patterns across modules, module overlap, validation gaps, missing idempotency, accessibility issues, error taxonomy holes, data flow bottlenecks
-    - **Refiner** produces: OpenAPI 3.x contracts with complete error responses, unified error taxonomy, component variants for all states, validation rules at every boundary, idempotency keys
-  - **Phase 06 — Implementation Team** [x] (REQ-0017 — DONE: 2 new agents, 86 tests, IMPLEMENTATION_ROUTING in Section 7.6, 8-check Reviewer (IC-01..IC-08), 6-step Updater fix protocol, Writer awareness, Phase 16 final sweep + Phase 08 human review only):
-    - **Problem**: Code is written in Phase 06, then waits for Phase 16 (quality loop) and Phase 08 (code review) to find issues. By then context is cold, fixes require re-reading, and the sequential overhead adds 15-30 minutes per workflow.
-    - **Writer** (software-developer) — writes code following tasks.md, TDD, produces files
-    - **Reviewer** (code-reviewer) — reviews files, flags issues immediately, checks constitutional compliance, validates skill/tech-stack alignment
-    - **Updater** (code-updater) — takes reviewer feedback, applies fixes, re-runs tests, confirms resolution
-    - **Reviewer checks** (immediate — while context is hot):
-      - Logic correctness, error handling, security (injection prevention, no hardcoded secrets)
-      - Code quality (naming, DRY, single responsibility, complexity), test quality
-      - Skill/tech-stack alignment (flag wrong patterns for project's stack)
-      - Constitutional compliance (spec primacy, TDD, simplicity, traceability)
-    - **Phase restructuring**:
-      - Current: `06-implementation → 16-quality-loop → 08-code-review`
-      - Proposed: `06-implementation-loop (writer+reviewer+updater) → 16-final-sweep → 08-human-review`
-    - **Final sweep** (Phase 16, batch): full test suite, coverage (≥80% unit, ≥70% integration), mutation testing (≥80%), npm audit, SAST scan, build verification, lint/type check, traceability matrix, technical debt assessment
-    - **Phase 08 becomes human-review only**: architecture decisions, business logic, design coherence, non-obvious security, merge approval
-    - **Review strategy by intensity** (avoids naive per-file 2N call explosion):
-      - **Light** — Review-aware Writer + single audit: embed reviewer checklist in Writer prompt so it self-checks during writing, then one independent Reviewer audit over the full changeset. **2 Task calls total.**
-      - **Standard** — Group-based review + threshold skip: Writer produces files in logical groups (by module/directory), Reviewer reviews each group as a batch, Updater fixes per group. Simple files (types, config, re-exports, interfaces) skip review. **~4-6 Task calls** for a typical 15-file changeset.
-      - **Epic** — Group-based review (no threshold skip) or fan-out: full review of all groups, or fan-out N parallel Reviewers across file chunks for large changesets (15+ files). **~6-10 calls**, or parallel for faster wall-clock time.
-    - **Additional speedup options** (can layer on top of any strategy):
-      - **Progressive review**: full review on first 2-3 files to establish quality patterns, then lightweight spot-checks for remaining files. Re-triggers full review only if spot-check finds issues.
-      - **Diff-based review**: for modifications to existing files, Reviewer only reviews the diff, not the entire file. Smaller context = faster per review.
-    - **Implementation options**: (A) Single Task with 3 sub-agents, (B) Phase-Loop Controller manages loop explicitly, (C) New `collaborative-implementation-engineer` agent encapsulates all 3 roles
-  - **Phase 05 — Test Strategy Team** [x] (REQ-0016 — DONE: 2 new agents, 88 tests, DEBATE_ROUTING Phase 05 entry, 8-check Test Strategy Critic (TC-01..TC-08), fix-strategy Refiner, Creator awareness for test-design-engineer):
-    - **Creator** (test-design-engineer): Produces test-strategy.md, test-cases/, traceability-matrix.csv
-    - **Critic** catches: missing edge cases, untested error paths, over-reliance on unit tests, no performance/load test plan, coverage gaps against requirements, missing negative test cases, test data gaps, flaky test risk
-    - **Refiner** produces: complete test pyramid with rationale, Given/When/Then for every AC, explicit negative test cases, test data strategy, flaky-test mitigation, coverage targets mapped to risk areas
 - 4.2 [~] Impact Analysis cross-validation — improve Phase 02 accuracy by enabling agents to cross-check findings (Approach A DONE — REQ-0015, Approach B still open)
   - **Problem**: M1 (Impact Analyzer), M2 (Entry Point Finder), and M3 (Risk Assessor) run in parallel but in **complete isolation** — no SendMessage, no cross-referencing, no awareness of each other's findings. The orchestrator consolidates after all complete, but nobody verifies consistency. M1 might say 7 files affected while M2 found entry points in 9 files, or M3's risk score might not account for coupling that M1 identified. Inconsistencies flow silently into sizing and downstream phases.
   - **Approach A — Post-hoc Verifier** [x] (DONE — REQ-0015: cross-validation-verifier.md agent, Step 3.5 in orchestrator, IA-401/IA-402 skills, 3-tier fail-open, 33 tests):
@@ -569,6 +524,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
 ## Completed
 
 ### 2026-02-15
+- [x] 4.1: Multi-agent debate teams — Creator/Critic/Refiner loops for 5 phases (01 Requirements, 03 Architecture, 04 Design, 05 Test Strategy, 06 Implementation). 10 new agents, 438 tests across REQ-0014/0015/0016/0017. Generalized debate engine with routing table, --debate/--no-debate flags, per-intensity configuration, Phase 16 final sweep + Phase 08 human-review-only restructuring.
 - [x] BUG-0017: Batch C hook bugs — 2 fixes across 2 files: misleading artifact error messages in gate-blocker.cjs reporting actual missing variants instead of first variant (0.9), state-write-validator version lock bypass during migration requiring version field on incoming state (0.10). Quality reports updated. 137 new state-write-validator tests.
 - [x] BUG-0008: Batch B inconsistent hook behavior — 3 fixes in gate-blocker.cjs: phase index bounds validation with Array.isArray + length + typeof/isFinite checks (0.4), empty workflows object fallback loading via .workflows sub-property check (0.5), supervised review coordination blocking gate advancement when status is 'reviewing' or 'rejected' (0.8). 20 new tests, zero regressions, 1 implementation iteration. 3 bugs, 17 ACs, 4 NFRs.
 - [x] BUG-0007: Batch A gate bypass bugs — 2 fixes across 2 files: phase-status early-return bypass removed in gate-blocker.cjs (0.1), null/type guards added to state-write-validator.cjs checkVersionLock() (0.3). Bug 0.2 (PHASE_STATUS_ORDINAL) confirmed already fixed with verification test. 16 new tests, zero regressions, 1 implementation iteration. 3 bugs analyzed, 13 ACs, 3 NFRs.
