@@ -122,55 +122,105 @@
   - **Complexity**: Medium-large (2-3 sessions through full iSDLC workflow)
   - **Prerequisite**: ~~BUG-0013 (phase-loop-controller same-phase bypass)~~ DONE
 
-- 3.2 [ ] Pre-analysis pipeline — `/isdlc analyze` command to pre-compute analytical phases for the next task while the current workflow runs
-  - **Problem**: During Phase 06 (implementation) the developer waits 10-30 minutes with nothing to do. They know what the next task will be (from BACKLOG.md) but can't start working on it until the current workflow finishes. Today the only option is manual backlog grooming. The framework could use this idle time to pre-compute the non-interactive analytical phases for the next task, so when the developer starts it, the analysis is already done.
-  - **Key insight**: Phases 00 (quick-scan) and 02 (impact analysis) are **read-only** — they analyze the codebase and produce documents, never write code. They can safely run alongside an implementation phase with zero file conflict. Phase 01 (requirements) is interactive and cannot be pre-cooked.
+- 3.2 [ ] Preparation pipeline — decouple requirements capture from implementation via Phase A (preparation) and Phase B (execution) split
+  - **Problem**: The current workflow is monolithic — requirements gathering, analysis, and implementation all run sequentially in a single session. The developer waits 10-30 minutes during implementation with nothing to do. They can't prepare the next item because state.json is locked to the active workflow. BACKLOG.md has grown to 650+ lines because detailed specs are stored inline, making it hard to scan and expensive to load into context.
+  - **Key insight**: Requirements capture is interactive (needs the user) but doesn't need the workflow machinery (state.json, hooks, gates, branches). By splitting the lifecycle into Phase A (preparation) and Phase B (execution), preparation runs completely outside the workflow — no state.json, no locks, no conflicts. Phase A and Phase B can run in parallel for different items.
   - **Design**:
-    1. **New command**: `/isdlc analyze "Add payment processing"` (or natural language: "analyze the next backlog item")
-    2. **Runs phases 00 + 02 only** — non-interactive, purely analytical. No state.json workflow creation, no branch, no hooks. Just Task agents producing artifacts.
-    3. **Artifacts saved to staging area**:
-       ```
-       .isdlc/
-         pre-analysis/
-           add-payment-processing/
-             quick-scan.md          ← Phase 00 output
-             impact-analysis.md     ← Phase 02 output
-             meta.json              ← { description, created_at, source_branch, analyzed_files_hash }
-           another-feature/
-             ...
-       ```
-    4. **Consumption at workflow start**: When `/isdlc feature "Add payment processing"` runs, the phase-loop checks `.isdlc/pre-analysis/` for a matching slug. If found:
-       - Show summary of what was pre-analyzed
-       - Staleness check: compare `analyzed_files_hash` against current codebase state. If files changed significantly since analysis, warn and offer to re-run
-       - Offer: "Pre-analysis found (2 hours ago). Use it? [Y] Use pre-analysis / [N] Run fresh / [R] Review first"
-       - If accepted: inject artifacts as context for Phase 01 (requirements gets richer starting context) and skip Phase 02 (impact analysis already done)
-    5. **Cleanup**: Pre-analysis artifacts deleted after consumption or after 7 days (whichever comes first). `/isdlc analyze --clean` removes all.
-  - **UX flow**:
-    ```
-    Terminal 1: /isdlc feature "user auth"     ← workflow running, currently in Phase 06
-    Terminal 2: /isdlc analyze "payment API"    ← pre-analysis for next task
+    - **Phase A: Preparation** (any time, user-engaged, no state.json)
+      1. **Intake**: User says "add Jira-1250 to the backlog" (or GitHub issue, or manual description)
+      2. System pulls content from source (Jira via MCP, GitHub via `gh`, or user-provided description)
+      3. Creates lightweight entry in BACKLOG.md (ID + heading + link to requirements folder)
+      4. Creates `docs/requirements/{slug}/` folder with `draft.md` from the source content
+      5. Offers: "Do you want me to do a deep analysis and keep it ready for implementation?"
+      6. If yes: runs quick scan (Phase 00) → spawns requirements capture with roles/personas (Phase 01) → produces full `requirements.md`
+      7. All artifacts written to `docs/requirements/{slug}/` — no state.json, no hooks, no branch
+    - **Phase B: Execution** (when ready, mostly autonomous, uses full workflow machinery)
+      1. User says "start Jira-1250" (or "let's work on Jira-1250")
+      2. System reads BACKLOG.md entry → locates `docs/requirements/{slug}/`
+      3. Staleness check: has the codebase changed significantly since Phase A? Warn if so, offer to refresh requirements
+      4. Creates branch, initializes workflow in state.json
+      5. **Skips Phase 00 + 01** (already done in Phase A) — starts from Phase 02 (impact analysis)
+      6. Runs full workflow: impact analysis → architecture → design → test strategy → implementation → quality loop → code review
+      7. On completion: updates BACKLOG.md (marks complete), closes Jira/GitHub issue
+  - **BACKLOG.md restructure**: Becomes a lightweight index, not a spec repository
+    ```markdown
+    ## Open
+    ### 3. Parallel Workflows
+    - 3.1 [ ] Parallel workflow support → [requirements](docs/requirements/3.1-parallel-workflow-support/)
+    - 3.2 [ ] Preparation pipeline → [requirements](docs/requirements/3.2-preparation-pipeline/)
 
-    ... later, after auth workflow completes ...
-
-    Terminal 1: /isdlc feature "payment API"
-    > Pre-analysis found for "payment API" (35 min ago)
-    >   Quick scan: 12 files in scope, 3 modules affected
-    >   Impact analysis: medium blast radius, 2 coupling hotspots
-    > Use pre-analysis? [Y/N/R]
+    ## Completed
+    - [x] 4.1 Multi-agent debate teams (2026-02-15)
     ```
-  - **Intent detection in CLAUDE.md.template**: Add patterns like "analyze the next item", "pre-analyze {description}", "start analysis for {description}" → route to `/isdlc analyze`
-  - **Files to change**: `src/claude/commands/isdlc.md` (new SCENARIO for analyze command, consumption logic in phase-loop STEP 3), `src/claude/CLAUDE.md.template` (intent detection patterns), `.gitignore` (ensure `.isdlc/pre-analysis/` is ignored)
-  - **What it intentionally does NOT do**:
-    - No state.json workflow creation — pre-analysis is not a workflow, it's a staging computation
-    - No branch creation — analysis runs on whatever branch you're on
-    - No hook enforcement — no gates, no iteration requirements. This is draft analysis, not gated output
-    - No Phase 01 (requirements) — that's interactive, needs the developer, runs at normal workflow time
-    - No Phase 03 (architecture) — depends on requirements output, so can't run before Phase 01
-  - **Relationship to other backlog items**:
-    - Stepping stone to 3.1 (parallel workflows) — if this proves valuable, 3.1 adds full state isolation for concurrent workflows
-    - Complements 5.2 (collaborative mode) — pre-analysis keeps the developer engaged during idle time, similar to collaborative mode's task suggestions
-    - Independent of 5.1 (supervised mode) — no dependency
-  - **Complexity**: Low-medium — new command scenario in isdlc.md, consumption check in phase-loop, staging directory convention, intent detection. No hook changes, no state schema changes, no new agents.
+    Detailed specs move from inline in BACKLOG.md to `docs/requirements/{slug}/draft.md`. Drops BACKLOG.md from ~650 lines to ~80.
+  - **Requirements folder structure** (accumulates over the lifecycle):
+    ```
+    docs/requirements/{slug}/
+      draft.md              ← Phase A step 4: initial spec from Jira/GitHub/user
+      quick-scan.md         ← Phase A step 6: codebase analysis
+      requirements.md       ← Phase A step 6: full requirements with ACs, NFRs, user stories
+      meta.json             ← { source, source_id, created_at, phase_a_completed, codebase_hash }
+      impact-analysis.md    ← Phase B: written during workflow execution
+      architecture.md       ← Phase B: written during workflow execution
+      ...                   ← all subsequent phase artifacts accumulate here
+    ```
+    When the item completes, the folder already contains the full history — draft through to final artifacts. No archival step needed.
+  - **Parallelism — zero conflict by design**:
+    ```
+    Terminal 1 (Phase B): /isdlc feature "Jira-1250"
+      → state.json locked to this workflow
+      → hooks active, gates enforced
+      → branch: feature/jira-1250
+
+    Terminal 2 (Phase A): /isdlc analyze "Jira-1251"
+      → NO state.json interaction
+      → NO hooks, NO gates, NO branch
+      → writes only to docs/requirements/jira-1251/
+    ```
+    Phase A and Phase B share no resources. Multiple Phase A sessions can run concurrently. Only one Phase B workflow runs at a time (until 3.1 lands).
+  - **UX flows**:
+    ```
+    # Intake + immediate preparation
+    User: "Add Jira-1250 to the backlog"
+    System: OK, I've pulled Jira-1250 "Add payment processing". Created backlog
+            entry and draft at docs/requirements/jira-1250/draft.md.
+            Want me to do a deep analysis and keep it ready for implementation?
+    User: "Yes"
+    System: <runs quick scan, requirements capture with personas>
+    System: Done. Requirements ready at docs/requirements/jira-1250/requirements.md.
+            3 user stories, 12 ACs, 4 NFRs captured.
+
+    # Later — execution (can be hours/days later, different session)
+    User: "Start Jira-1250"
+    System: Found prepared requirements for Jira-1250 (2 hours ago).
+            Quick scan: 8 files in scope, 2 modules affected.
+            Starting from Phase 02 (impact analysis). <creates branch, runs workflow>
+    ```
+  - **Source-agnostic intake**: Same folder structure regardless of source:
+    | Source | What happens at intake |
+    |--------|----------------------|
+    | Jira (7.7) | Pull ticket + linked Confluence → `draft.md` |
+    | GitHub Issues (7.8) | Pull issue body + labels → `draft.md` |
+    | Manual | User provides description → `draft.md` |
+    | Existing backlog | Migrate inline spec from BACKLOG.md → `draft.md` |
+  - **Intent detection in CLAUDE.md.template**: Add patterns:
+    - "add {ticket} to the backlog" → intake flow
+    - "analyze {ticket/description}" → Phase A (intake + preparation)
+    - "start {ticket}" / "let's work on {ticket}" → Phase B (execution)
+  - **Files to change**: `src/claude/commands/isdlc.md` (new SCENARIO for analyze command, Phase B consumption logic in phase-loop STEP 3), `src/claude/CLAUDE.md.template` (intent detection patterns for intake/analyze/start), BACKLOG.md (restructure to index format — one-time migration)
+  - **What Phase A intentionally does NOT do**:
+    - No state.json — preparation is not a workflow
+    - No branch creation — runs on whatever branch you're on
+    - No hook enforcement — no gates, no iteration requirements
+    - No impact analysis (Phase 02) — codebase may change between Phase A and B, always run fresh in Phase B
+    - No architecture/design — depends on impact analysis output
+  - **Subsumes / connects to**:
+    - 7.7 (Jira adapter) — intake step writes to `docs/requirements/`
+    - 7.8 (GitHub Issues adapter) — intake step writes to `docs/requirements/`
+    - 8.1 (requirements debate before workflow) — the persona-based elicitation in Phase A IS this debate
+    - Complements 5.2 (collaborative mode) — developer stays engaged during Phase A preparation
+    - Independent of 3.1 (parallel workflows) — parallelism achieved without state isolation because Phase A doesn't use state.json
+  - **Complexity**: Medium — new command scenario, requirements folder convention, BACKLOG.md restructure + migration, phase-loop consumption logic, intent detection. No hook changes, no state schema changes, no new agents needed (reuses existing requirements-analyst with personas).
 
 ### 4. Multi-Agent Teams (Architecture)
 
