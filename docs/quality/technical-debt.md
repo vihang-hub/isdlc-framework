@@ -1,72 +1,66 @@
-# Technical Debt Assessment: REQ-0017-multi-agent-implementation-team
+# Technical Debt Assessment: REQ-0015-ia-cross-validation-verifier
 
 **Date**: 2026-02-15
 **Phase**: 08-code-review
-**Workflow**: Feature (REQ-0017)
+**Workflow**: Feature (REQ-0015)
 
 ---
 
 ## 1. New Technical Debt Introduced
 
-**None.** This feature adds 2 new agent files and modifies 4 existing agents following established patterns. No shortcuts, workarounds, or deferred decisions were identified.
+### TD-NEW-001: Two skill definitions in one SKILL.md file
+
+**Type**: Convention debt
+**Impact**: Low
+**Files**: `src/claude/skills/impact-analysis/cross-validation/SKILL.md`
+**Details**: IA-401 (cross-validation-execution) and IA-402 (finding-categorization) are bundled in a single SKILL.md file. All other skill directories in the project have one skill per SKILL.md. The second skill (IA-402) uses an inline YAML code block rather than standard frontmatter.
+**Recommendation**: Split into two directories (`cross-validation-execution/SKILL.md` and `finding-categorization/SKILL.md`) in a future cleanup. Low priority since the manifest correctly maps both skill IDs.
+
+---
 
 ## 2. Existing Technical Debt Observations
 
-### TD-001: 43 pre-existing CJS test failures
+### TD-001: Pre-existing test failures (documentation drift)
 
 **Type**: Test debt
-**Impact**: Low (not caused by this feature; 0 new failures introduced)
-**Details**: The full CJS suite runs 847 tests with 43 pre-existing failures in `cleanup-completed-workflow.test.cjs` (28) and `workflow-finalizer.test.cjs` (15). These failures exist in unrelated modules and were present before REQ-0014 through REQ-0017. All 86 new tests and 176 regression tests pass.
-**Recommendation**: Track separately; do not block this feature.
+**Impact**: Low (not caused by REQ-0015; 0 new failures introduced)
+**Details**: 2 ESM test failures:
+  - TC-E09: README.md references "40 agents" but the project has grown beyond that count
+  - TC-13-01: prompt-format.test.js expects 48 agent files but finds 57 (sub-agents added in prior features)
+**Recommendation**: Create a maintenance task to update README agent counts and prompt-format test expectations.
 
 ### TD-002: No ESLint configuration
 
 **Type**: Tooling debt
 **Impact**: Low
-**Details**: The project has no `eslint.config.js`. Manual review substitutes for automated linting. Framework-wide concern, not specific to this feature.
-**Recommendation**: Consider adding ESLint in a future `/isdlc upgrade` workflow.
+**Details**: The project has no `eslint.config.js`. Manual review substitutes for automated linting. Framework-wide concern, not specific to REQ-0015.
+**Recommendation**: Consider adding ESLint in a future workflow.
 
-### TD-003: Routing tables in markdown, not machine-readable
+### TD-003: No mutation testing framework
 
-**Type**: Architecture debt
-**Impact**: Low (but growing)
-**Details**: The orchestrator now has two routing tables in markdown format: DEBATE_ROUTING (3 entries for Phases 01/03/04) and IMPLEMENTATION_ROUTING (1 entry for Phase 06). Agents parse these by reading the markdown file. If more implementation-team-enabled phases are added (e.g., Phase 05 Test Strategy), consider extracting to a JSON config.
-**Recommendation**: Monitor; extract to config if either table exceeds 4 entries.
+**Type**: Testing debt
+**Impact**: Low
+**Details**: Article XI (Integration Testing Integrity) requires mutation testing with >=80% score. No mutation testing framework is installed. This is a pre-existing gap.
+**Recommendation**: Track as a backlog item for framework-wide mutation testing setup.
 
-### TD-004: Orchestrator file size growing
+### TD-004: Orchestrator file growing large (889 lines)
 
-**Type**: Complexity debt
-**Impact**: Low-Medium
-**Details**: The orchestrator file (00-sdlc-orchestrator.md) has grown by 226 lines with Section 7.6 addition. The file is large overall (~1,500+ lines). Each debate team adds new routing sections. Future additions should consider whether sections can be modularized.
-**Recommendation**: Monitor; if file exceeds 2,000 lines, consider modular section includes.
+**Type**: Maintainability debt
+**Impact**: Low (currently well-structured)
+**Details**: `impact-analysis-orchestrator.md` is now 889 lines after adding M4 integration. It handles both feature and upgrade workflows with full M1-M4 orchestration. Adding further sub-agents would push this past 1000 lines.
+**Recommendation**: Monitor growth. Consider extracting upgrade workflow into a separate file if additional sub-agents are added.
 
-## 3. Deferred Items
+---
 
-| Item | Reason | Impact |
-|------|--------|--------|
-| Debate loop for Phase 05 (Test Strategy) | Out of scope (REQ-0017 covers Phase 06 only) | None -- routing tables designed for extension |
-| Performance benchmarking of per-file loop | NFR-001 specifies 30-second overhead per file but runtime is LLM-dependent | Monitoring via implementation_loop_state is sufficient |
-| Extracting routing to JSON config | Only 2 routing tables with 4 total entries | None for current scale |
+## 3. Technical Debt Summary
 
-## 4. TODO/FIXME Scan
+| Category | New Items | Pre-Existing | Total |
+|----------|-----------|-------------|-------|
+| Convention | 1 (SKILL.md bundling) | 0 | 1 |
+| Testing | 0 | 2 (failures, mutation) | 2 |
+| Tooling | 0 | 1 (ESLint) | 1 |
+| Maintainability | 0 | 1 (orchestrator size) | 1 |
+| **Total** | **1** | **4** | **5** |
 
-Scanned all 13 source files for TODO, FIXME, HACK, WORKAROUND, and XXX markers:
-
-| Marker | Count |
-|--------|-------|
-| TODO | 0 |
-| FIXME | 0 |
-| HACK | 0 |
-| WORKAROUND | 0 |
-| XXX | 0 |
-
-## 5. Summary
-
-| Category | New Debt | Existing Debt | Risk |
-|----------|----------|---------------|------|
-| Code quality | 0 | 0 | None |
-| Test coverage | 0 | 43 pre-existing failures | Low |
-| Tooling | 0 | No ESLint | Low |
-| Architecture | 0 | Markdown routing tables (4 entries) | Low |
-| Complexity | 0 | Orchestrator file size growing | Low-Medium |
-| **Overall** | **0** | **4 items** | **Low** |
+**New debt introduced by REQ-0015**: 1 item (low severity, convention-only)
+**No functional, security, or performance debt introduced.**

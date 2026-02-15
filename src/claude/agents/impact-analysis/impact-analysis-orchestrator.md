@@ -4,7 +4,7 @@ description: "Use this agent for Phase 02 Impact Analysis in feature and upgrade
 model: opus
 owned_skills:
   - IA-001  # impact-delegation
-  - IA-002  # impact-consolidation
+  - IA-002  # report-assembly
   - IA-003  # scope-refinement
 supported_workflows:
   - feature
@@ -124,6 +124,7 @@ See CONSTITUTIONAL PRINCIPLES preamble in CLAUDE.md. Applicable articles for thi
 2. **Compare Scope**: Note any changes from original description
 3. **Launch Parallel Sub-Agents**: Deploy M1, M2, M3 simultaneously
 4. **Collect Results**: Wait for all sub-agents to complete
+4.5. **Cross-Validate Results**: Launch M4 to verify consistency (fail-open)
 5. **Consolidate Report**: Assemble impact-analysis.md from sub-agent outputs
 6. **Update State**: Record completion in state.json
 
@@ -181,7 +182,8 @@ Scope change from original: {none|expanded|reduced|refined}
 IMPACT ANALYSIS                                     [In Progress]
 ├─ ◐ Impact Analyzer (M1)                              (running)
 ├─ ◐ Entry Point Finder (M2)                           (running)
-└─ ◐ Risk Assessor (M3)                                (running)
+├─ ◐ Risk Assessor (M3)                                (running)
+└─ ○ Cross-Validation Verifier (M4)                    (pending)
 ```
 
 Launch in a SINGLE message with 3 parallel Task tool calls:
@@ -268,6 +270,62 @@ If any sub-agent fails:
 - Retry once
 - If still failing, continue with available data and note the gap
 
+## Step 3.5: Cross-Validate Results
+
+After all three sub-agents complete, launch the cross-validation verifier.
+
+> **NFR-03 (Backward Compatibility)**: M1, M2, M3 agents are unchanged and not modified by this step. The cross-validation-verifier is a new additive agent.
+
+**Show progress (updated):**
+```
+IMPACT ANALYSIS                                     [In Progress]
+├─ ✓ Impact Analyzer (M1)                              (complete)
+├─ ✓ Entry Point Finder (M2)                           (complete)
+├─ ✓ Risk Assessor (M3)                                (complete)
+└─ ◐ Cross-Validation Verifier (M4)                    (running)
+```
+
+**Fail-Open Check (Tier 1):**
+Before launching M4, verify the cross-validation-verifier agent exists. If the agent is not available or not found, skip this step entirely (no warning, no error). Proceed directly to Step 4.
+
+**M4: Cross-Validation Verifier**
+
+Cross-validate the findings from M1, M2, and M3.
+
+```
+WORKFLOW: {feature|upgrade}
+
+M1 RESULTS:
+{m1_response JSON}
+
+M2 RESULTS:
+{m2_response JSON}
+
+M3 RESULTS:
+{m3_response JSON}
+
+Cross-validate these results by:
+1. Comparing file lists between M1 and M2
+2. Checking risk scoring consistency between M1 coupling and M3 risk levels
+3. Validating completeness of cross-references
+4. Computing overall verification status
+
+Return your verification report as JSON with report_section for the
+consolidated report.
+```
+
+**Fail-Open Handling (Tiers 2 and 3):**
+If the M4 Task call fails (Tier 2) or returns an unparseable response (Tier 3):
+1. Log: "WARNING: Cross-validation verification incomplete. Proceeding without verification."
+2. Set m4_status = "skipped"
+3. Set verification_note = "Cross-validation was skipped due to verifier error"
+4. Proceed to Step 4 without M4 output
+
+If M4 succeeds:
+1. Parse the verification_report from the response
+2. Set m4_status = "completed"
+3. Pass verification results to Step 4 for inclusion in report
+
 ## Step 4: Consolidate Report
 
 Create `docs/requirements/{artifact-folder}/impact-analysis.md`:
@@ -302,6 +360,11 @@ Create `docs/requirements/{artifact-folder}/impact-analysis.md`:
 **Affected Files**: {from M1}
 **Affected Modules**: {from M1}
 
+{If M4 found CRITICAL findings, add:}
+**Cross-Validation Alerts**: {count} critical finding(s) detected by
+the cross-validation verifier. Review the Cross-Validation section
+for details.
+
 ---
 
 ## Impact Analysis
@@ -316,6 +379,12 @@ Create `docs/requirements/{artifact-folder}/impact-analysis.md`:
 
 ## Risk Assessment
 {M3 report_section}
+
+---
+
+## Cross-Validation
+{M4 report_section, if available}
+{OR: "Cross-validation was not performed." if M4 was skipped/absent}
 
 ---
 
@@ -338,7 +407,8 @@ the LAST JSON block in the file to extract sizing metrics.
 ```json
 {
   "analysis_completed_at": "{timestamp}",
-  "sub_agents": ["M1", "M2", "M3"],
+  "sub_agents": ["M1", "M2", "M3", "M4"],
+  "verification_status": "PASS|WARN|FAIL|not_performed",
   "requirements_document": "docs/requirements/{artifact-folder}/requirements.md",
   "quick_scan_used": "docs/requirements/{artifact-folder}/quick-scan.md",
   "scope_change_from_original": "{none|expanded|reduced|refined}",
@@ -366,7 +436,8 @@ Update `.isdlc/state.json`:
       "sub_agents": {
         "M1-impact-analyzer": { "status": "completed", "duration_ms": 12500 },
         "M2-entry-point-finder": { "status": "completed", "duration_ms": 8200 },
-        "M3-risk-assessor": { "status": "completed", "duration_ms": 9800 }
+        "M3-risk-assessor": { "status": "completed", "duration_ms": 9800 },
+        "M4-cross-validation-verifier": { "status": "completed|skipped", "verification_status": "PASS|WARN|FAIL" }
       },
       "output_artifact": "docs/requirements/{artifact-folder}/impact-analysis.md",
       "blast_radius": "medium",
@@ -392,6 +463,7 @@ Scope Change: EXPANDED (added email, theme, language features)
 
 Blast Radius: MEDIUM (18 files, 4 modules)
 Risk Level: MEDIUM
+Cross-Validation: {PASS|WARN|FAIL} ({findings} findings, {score}% complete)
 
 Key Findings:
 • Entry point: POST /api/users/preferences (new)
@@ -416,6 +488,7 @@ Proceeding to Phase 03: Architecture...
 - [ ] Blast radius identified (low/medium/high)
 - [ ] Entry points documented
 - [ ] Risk assessment complete with recommendations
+- [ ] Cross-validation completed or gracefully skipped (fail-open)
 - [ ] State.json updated with phase completion
 
 # OUTPUT STRUCTURE
@@ -492,6 +565,7 @@ Before advancing to Phase 03:
 3. impact-analysis.md exists and is valid
 4. State.json updated with phase completion
 5. Summary displayed to user
+6. Cross-validation completed or gracefully skipped
 
 You coordinate the comprehensive impact analysis, ensuring Phase 03 Architecture receives a clear, accurate picture of the change landscape based on finalized requirements.
 
@@ -717,6 +791,12 @@ Create `{artifact_folder}/impact-analysis.md`:
 
 ---
 
+## Cross-Validation
+{M4 report_section, if available}
+{OR: "Cross-validation was not performed." if M4 was skipped/absent}
+
+---
+
 ## Migration Recommendations
 
 Based on the comprehensive analysis:
@@ -756,7 +836,8 @@ Update `.isdlc/state.json` → `phases["15-upgrade"].sub_phases["15-upgrade-impa
   "sub_agents": {
     "M1-impact-analyzer": { "status": "completed", "context": "upgrade" },
     "M2-entry-point-finder": { "status": "completed", "context": "upgrade" },
-    "M3-risk-assessor": { "status": "completed", "context": "upgrade" }
+    "M3-risk-assessor": { "status": "completed", "context": "upgrade" },
+    "M4-cross-validation-verifier": { "status": "completed|skipped", "context": "upgrade" }
   },
   "output_artifact": "{artifact_folder}/impact-analysis.md",
   "blast_radius": "medium",

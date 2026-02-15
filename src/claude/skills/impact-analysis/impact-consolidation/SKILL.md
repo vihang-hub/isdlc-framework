@@ -1,6 +1,6 @@
 ---
 name: impact-consolidation
-description: Consolidate results from parallel sub-agents into unified impact analysis report
+description: Consolidate results from parallel sub-agents and cross-validation verifier into unified impact analysis report
 skill_id: IA-002
 owner: impact-analysis-orchestrator
 collaborators: []
@@ -25,6 +25,7 @@ Collect and merge results from all three sub-agents (M1, M2, M3) into a comprehe
 - All sub-agents (M1, M2, M3) completed
 - JSON responses received from each agent
 - Requirements context available
+- M4 verification report (optional, fail-open)
 
 ## Process
 
@@ -35,6 +36,7 @@ Collect and merge results from all three sub-agents (M1, M2, M3) into a comprehe
    - M1: Impact summary with blast radius
    - M2: Entry points with implementation order
    - M3: Risk assessment with recommendations
+   - M4: Verification report with findings (if available)
 3. Handle any failed agents (retry or note gap)
 ```
 
@@ -54,6 +56,7 @@ For each response:
 3. Determine overall risk level (from M3)
 4. Merge entry points (from M2) with risk data (M3)
 5. Combine implementation recommendations
+6. Include Cross-Validation section (if M4 data available)
 ```
 
 ### Step 4: Generate Report
@@ -64,6 +67,7 @@ Create impact-analysis.md with:
 3. M1 Impact Analysis section
 4. M2 Entry Points section
 5. M3 Risk Assessment section
+5.5. M4 Cross-Validation section (if available; otherwise note "not performed")
 6. Consolidated recommendations
 7. Metadata JSON block
 ```
@@ -75,6 +79,7 @@ Create impact-analysis.md with:
 | m2_response | Object | Yes | Entry Point Finder results |
 | m3_response | Object | Yes | Risk Assessor results |
 | requirements_context | Object | Yes | Original requirements context |
+| m4_response | Object | No | Cross-Validation Verifier results |
 
 ## Outputs
 | Output | Type | Description |
