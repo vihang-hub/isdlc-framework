@@ -30,9 +30,10 @@
 
 ### 2. Performance (remaining from 2026-02-13 investigation)
 
-- 2.1 [ ] T5: Quality Loop true parallelism — Track A (testing) and Track B (QA) currently run sequentially despite being designed as parallel
+- 2.1 [x] T5: Quality Loop true parallelism — Track A (testing) and Track B (QA) currently run sequentially despite being designed as parallel
   - **Impact**: 2x speedup for Phase 16 (1.5-2 min savings)
   - **Complexity**: Medium (spawn Track A + Track B as separate sub-agents, wait for both)
+  - REQ-0018 — DONE: Explicit dual-Task spawning in 16-quality-loop-engineer.md, grouping strategy table (A1/A2/A3 + B1/B2), internal parallelism guidance, consolidated merging, iteration loop, FINAL SWEEP compat, scope detection. 40 tests, zero regressions, light workflow.
 - 2.2 [ ] T6: Hook I/O optimization — reduce disk reads in dispatchers
   - T6-A: Config caching — cache skills-manifest.json (50-200KB), iteration-requirements.json, workflows.json with mtime invalidation (saves 30-50ms per invocation)
   - T6-B: writeState() double-read elimination — BUG-0009 optimistic locking reads disk to get version before writing, adds 10-20ms per write; trust in-memory version instead
@@ -444,6 +445,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
 ## Completed
 
 ### 2026-02-15
+- [x] REQ-0018: Quality Loop true parallelism — explicit dual-Task spawning for Track A (testing) + Track B (automated QA) in 16-quality-loop-engineer.md (backlog 2.1). Grouping strategy table (A1 unit, A2 system/integration, A3 E2E; B1 static analysis, B2 constitutional/coverage), internal parallelism guidance, consolidated merging protocol, iteration loop with parallel re-execution, FINAL SWEEP/FULL SCOPE compat, scope detection (50+/10-49/<10 thresholds). 40 new tests, zero regressions, 2 implementation iterations, light workflow. 7 FRs, 4 NFRs, 23 ACs.
 - [x] REQ-0015 (local): Impact Analysis cross-validation Verifier (Approach A) — new M4 agent (cross-validation-verifier.md) that cross-checks M1/M2/M3 findings after parallel execution, before consolidation. Pipeline verification pattern with 3-tier fail-open, 5 finding types (MISSING_FROM_BLAST_RADIUS, ORPHAN_IMPACT, RISK_SCORING_GAP, UNDERTESTED_CRITICAL_PATH, INCOMPLETE_ANALYSIS), IA-401/IA-402 skills. 1 new agent, 1 new skill, 3 modified files, 33 new tests, zero regressions, 9/9 gates passed first try. 7 FRs, 3 NFRs, 28 ACs (backlog 4.2 Approach A)
 - [x] REQ-0017: Multi-agent Implementation Team — Writer/Reviewer/Updater per-file debate loop for Phase 06 implementation (backlog 4.1 Phase 06). 2 new agents (Implementation Reviewer with 8 IC checks IC-01..IC-08, Implementation Updater with 6-step fix protocol), 4 modified agents (orchestrator IMPLEMENTATION_ROUTING Section 7.6, software-developer Writer awareness, quality-loop final sweep, qa-engineer human review only). 86 new tests, zero regressions, 1 implementation iteration. 7 FRs, 4 NFRs, 34 ACs. Completes backlog 4.1 (all 4 debate team phases done).
 
