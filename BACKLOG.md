@@ -7,7 +7,7 @@
 
 ### 0. Bugs
 
-#### Batch A — Critical: Gate Bypass Risk (fix first — 2 files)
+#### Batch A — Critical: Gate Bypass Risk (0 remaining, 3 fixed)
 
 - 0.1 [x] ~~**BUG: Dual phase-status tracking causes inconsistent gate decisions**~~ (BUG-0007)
 
@@ -108,7 +108,7 @@
          Phase 16 (Quality Loop):  2m 48s  [4-way fan-out]
          Phase 08 (Code Review):   1m 52s
        ```
-  - **What it protects**: Every new backlog item (4.1 debates, 4.2 cross-validation, 4.3 fan-out, 5.2 collaborative mode) must stay within the intensity budget. If a feature consistently blows the budget, it gets flagged for optimisation before the next release.
+  - **What it protects**: Every new backlog item (~~4.1 debates~~ DONE, 4.2B cross-pollination, 4.3 fan-out, 5.2 collaborative mode) must stay within the intensity budget. If a feature consistently blows the budget, it gets flagged for optimisation before the next release.
   - **Builds on**: T1-T3 dispatcher timing, state.json workflow_history (REQ-0005), sizing intensity system (REQ-0011)
   - **Complexity**: Medium — instrumentation is straightforward, budget enforcement needs careful degradation logic
 
@@ -132,7 +132,7 @@
   - **Migration scope**: ~20 files reference `readState()` — all dispatchers, standalone hooks, and common.cjs utilities need to resolve workflow-scoped state instead of global state.
   - **Performance impact**: +10-20ms per hook invocation (index read + branch resolution). Mitigated by caching within dispatcher runs.
   - **Complexity**: Medium-large (2-3 sessions through full iSDLC workflow)
-  - **Prerequisite**: BUG-0013 (phase-loop-controller same-phase bypass) should be done first to reduce false blocks during parallel work
+  - **Prerequisite**: ~~BUG-0013 (phase-loop-controller same-phase bypass)~~ DONE
 
 - 3.2 [ ] Pre-analysis pipeline — `/isdlc analyze` command to pre-compute analytical phases for the next task while the current workflow runs
   - **Problem**: During Phase 06 (implementation) the developer waits 10-30 minutes with nothing to do. They know what the next task will be (from BACKLOG.md) but can't start working on it until the current workflow finishes. Today the only option is manual backlog grooming. The framework could use this idle time to pre-compute the non-interactive analytical phases for the next task, so when the developer starts it, the analysis is already done.
