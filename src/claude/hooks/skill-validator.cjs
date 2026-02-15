@@ -28,7 +28,8 @@ const {
     loadManifest,
     loadExternalManifest,
     normalizeAgentName,
-    debugLog
+    debugLog,
+    PHASE_PREFIXES
 } = require('./lib/common.cjs');
 
 /**
@@ -92,7 +93,7 @@ function check(ctx) {
         debugLog('Enforcement mode:', enforcementMode);
 
         // Get current phase — BUG-0005 (AC-03d): prefer active_workflow.current_phase
-        const currentPhase = state.active_workflow?.current_phase || state.current_phase || '01-requirements';
+        const currentPhase = state.active_workflow?.current_phase || state.current_phase || PHASE_PREFIXES.REQUIREMENTS;
         debugLog('Current phase:', currentPhase);
 
         // Load manifest

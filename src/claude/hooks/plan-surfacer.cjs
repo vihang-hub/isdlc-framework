@@ -15,7 +15,8 @@
 const {
     debugLog,
     logHookEvent,
-    resolveTasksPath
+    resolveTasksPath,
+    PHASE_PREFIXES
 } = require('./lib/common.cjs');
 
 const fs = require('fs');
@@ -265,7 +266,7 @@ function check(ctx) {
         }
 
         // === NEW: Optional format validation (warning only, AC-08b, AC-08c) ===
-        if (currentPhase === '06-implementation') {
+        if (currentPhase === PHASE_PREFIXES.IMPLEMENTATION) {
             const warnings = validateTasksFormat(tasksPath, state);
             if (warnings.length > 0) {
                 const warningText = warnings.join('\n');

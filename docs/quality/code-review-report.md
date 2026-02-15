@@ -1,43 +1,44 @@
-# Code Review Report -- BUG-0017 Batch C Hook Bugs
+# Code Review Report -- BUG-0009 Batch D Tech Debt
 
 | Field | Value |
 |-------|-------|
-| Bug ID | BUG-0017 |
-| Description | Batch C bugs: gate-blocker artifact variant errors, state-write-validator version lock bypass |
+| Bug ID | BUG-0009 |
+| Description | Batch D tech debt: centralize phase prefixes, standardize null checks, document detectPhaseDelegation, remove dead code |
 | Reviewer | QA Engineer (Phase 08) |
 | Date | 2026-02-15 |
-| Verdict | PASS -- 0 critical, 0 major, 0 minor, 1 informational finding |
+| Verdict | PASS -- 0 critical, 0 major, 0 minor, 0 informational findings |
 
 ---
 
 ## 1. Scope
 
-4 files reviewed (2 production, 2 test):
+7 production files modified, 4 test files created (31 tests). All changes are non-behavioral refactoring (maintainability improvements).
 
-### Modified Files (2)
-- `src/claude/hooks/gate-blocker.cjs` -- ~10 lines changed in `checkArtifactPresenceRequirement()` (lines 494-506)
-- `src/claude/hooks/state-write-validator.cjs` -- ~30 lines changed in `checkVersionLock()` (lines 107-188)
-
-### Test Files (2)
-- `src/claude/hooks/tests/test-gate-blocker-extended.test.cjs` -- 6 new tests (TC-GB-V01..V07)
-- `src/claude/hooks/tests/state-write-validator.test.cjs` -- 6 new tests (TC-SWV-01..08) + 2 updated (T19, T20)
+### Modified Files (7)
+- `src/claude/hooks/lib/common.cjs` -- Added PHASE_PREFIXES constant + JSDoc for detectPhaseDelegation
+- `src/claude/hooks/test-adequacy-blocker.cjs` -- Use PHASE_PREFIXES, optional chaining
+- `src/claude/hooks/dispatchers/pre-task-dispatcher.cjs` -- Use PHASE_PREFIXES
+- `src/claude/hooks/skill-validator.cjs` -- Use PHASE_PREFIXES
+- `src/claude/hooks/plan-surfacer.cjs` -- Use PHASE_PREFIXES
+- `src/claude/hooks/state-write-validator.cjs` -- Optional chaining
+- `src/claude/hooks/gate-blocker.cjs` -- Dead code removal
 
 ## 2. Verdict
 
-**PASS**: 0 CRITICAL, 0 MAJOR, 0 MINOR, 1 INFO finding.
-1380/1380 CJS suite. 630/632 ESM (2 pre-existing). All ACs traced.
+**PASS**: 0 CRITICAL, 0 MAJOR, 0 MINOR, 0 INFO findings.
+31/31 new tests. 965/1008 full suite (43 pre-existing in workflow-finalizer.test.cjs). Zero regressions. All 18 ACs traced.
 
-See detailed per-file review in `docs/requirements/BUG-0017-batch-c-hooks/code-review-report.md`.
+See detailed per-file review in `docs/requirements/BUG-0009-batch-d-tech-debt/code-review-report.md`.
 
 ## 3. Summary Metrics
 
 | Metric | Value |
 |--------|-------|
-| Tests passing (CJS) | 1380/1380 (100%) |
-| Tests passing (ESM) | 630/632 (2 pre-existing) |
-| New tests | 12 |
-| Updated tests | 2 |
-| AC coverage | 100% (FR-1..FR-6, AC-1.1..AC-2.7 traced) |
+| Tests passing (new) | 31/31 (100%) |
+| Tests passing (full hook suite) | 965/1008 (43 pre-existing) |
+| New regressions | 0 |
+| AC coverage | 18/18 (100%) |
+| NFR compliance | 3/3 (100%) |
 | npm audit | 0 vulnerabilities |
 | Static analysis | 0 issues |
 | Constitutional | All applicable articles PASS (V, VI, VII, VIII, IX) |

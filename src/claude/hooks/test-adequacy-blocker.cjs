@@ -15,7 +15,8 @@
 const {
     debugLog,
     logHookEvent,
-    detectPhaseDelegation
+    detectPhaseDelegation,
+    PHASE_PREFIXES
 } = require('./lib/common.cjs');
 
 /**
@@ -32,7 +33,7 @@ function isUpgradeDelegation(delegation) {
     if (!delegation || !delegation.isDelegation) return false;
     const phase = delegation.targetPhase || '';
     const agent = (delegation.agentName || '').toLowerCase();
-    return phase.startsWith('15-upgrade') ||
+    return phase.startsWith(PHASE_PREFIXES.UPGRADE) ||
            agent.includes('upgrade');
 }
 
@@ -57,8 +58,8 @@ function isUpgradeFromPromptText(input) {
  * @returns {boolean}
  */
 function isUpgradePhaseActive(state) {
-    const phase = (state.active_workflow && state.active_workflow.current_phase) || '';
-    return phase.startsWith('15-upgrade');
+    const phase = state.active_workflow?.current_phase || '';
+    return phase.startsWith(PHASE_PREFIXES.UPGRADE);
 }
 
 /**
@@ -102,7 +103,7 @@ function check(ctx) {
         }
 
         // Check coverage data from discovery context
-        const coverage = state.discovery_context && state.discovery_context.coverage_summary;
+        const coverage = state.discovery_context?.coverage_summary;
         if (!coverage) {
             debugLog('No coverage data, allowing (fail-open) with warning');
             logHookEvent('test-adequacy-blocker', 'skip', {
@@ -134,8 +135,8 @@ function check(ctx) {
         }
 
         // Block: inadequate test coverage
-        const targetPhase = (delegation && delegation.targetPhase) ||
-            (state.active_workflow && state.active_workflow.current_phase) ||
+        const targetPhase = delegation?.targetPhase ||
+            state.active_workflow?.current_phase ||
             'upgrade';
         const reason = `Test adequacy insufficient: ${issues.join('; ')}`;
         logHookEvent('test-adequacy-blocker', 'block', {
