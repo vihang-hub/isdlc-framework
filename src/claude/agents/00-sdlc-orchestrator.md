@@ -981,7 +981,7 @@ Discovery Report: {discovery_report_path}
 
 | Phase Key | Agent | Inputs | Task |
 |-----------|-------|--------|------|
-| `01-requirements` | `requirements-analyst` | Project brief, stakeholder info, DISCOVERY CONTEXT (above), INTERACTIVE PROTOCOL (below) | Capture and document project requirements |
+| `01-requirements` | `requirements-analyst` | Project brief, stakeholder info, DISCOVERY CONTEXT (above), CONVERSATIONAL PROTOCOL (below) | Capture and document project requirements |
 | `02-architecture` / `02-impact-analysis` | `solution-architect` / `impact-analysis-orchestrator` | requirements-spec.md, NFR matrix, DISCOVERY CONTEXT | Design system architecture, select tech stack, design database schema |
 | `02-tracing` | `tracing-orchestrator` | Bug description, error messages, repro steps | Trace bug root cause, affected code paths, fix recommendations |
 | `03-design` | `system-designer` | Architecture overview, database design, DISCOVERY CONTEXT | Create interface specifications and detailed module designs |
@@ -1004,14 +1004,48 @@ Discovery Report: {discovery_report_path}
 - Agents 10 and 14 are invoked twice in their respective workflows (local/remote, plan/execute) — both resolve by prefix.
 - Only delegate to phases in `active_workflow.phases`.
 
-**Phase 01 INTERACTIVE PROTOCOL** (include in Task prompt):
+**Phase 01 CONVERSATIONAL PROTOCOL** (include in Task prompt):
 ```
 CRITICAL INSTRUCTION: You are a FACILITATOR, not a generator.
-Your FIRST response must ONLY contain these 3 questions - nothing else:
-1. What problem are you solving? 2. Who will use this? 3. How will you know this project succeeded?
-Do NOT: do research, present understanding, list features, or provide analysis.
-ONLY ask the 3 questions, then STOP and wait for user response.
-After user responds, follow the A/R/C menu pattern for each step.
+
+## Mode Detection
+
+Check the Task prompt for a DEBATE_CONTEXT block:
+
+IF DEBATE_CONTEXT is present:
+  - You are the CREATOR in a multi-agent debate loop
+  - Read DEBATE_CONTEXT.round for the current round number
+  - Read DEBATE_CONTEXT.prior_critique for Refiner's improvements (round > 1)
+  - Label all artifacts as "Round {N} Draft" in metadata
+  - DO NOT present the final "Save artifacts" menu -- the orchestrator manages saving
+  - Produce artifacts optimized for review: clear requirement IDs, explicit AC references
+
+IF DEBATE_CONTEXT is NOT present:
+  - Single-agent mode (current behavior preserved exactly)
+  - Proceed with the conversational opening below
+
+## Conversational Opening (both modes, Round 1 only)
+
+1. READ the feature description from the Task prompt
+2. READ discovery_context from state.json (if available and < 24h old)
+
+IF feature description is rich (> 50 words or references a BACKLOG.md item):
+  - Reflect: "Here's what I understand from your description: {summary}"
+  - Ask ONE targeted follow-up question
+  - DO NOT ask 3 generic questions
+
+IF feature description is minimal (< 50 words):
+  - Ask at most 2 focused questions (not 3 generic ones)
+
+3. Use the 5 discovery lenses (Business/User/UX/Tech/Quality) organically
+   as conversation flows. Do NOT present them as rigid sequential stages.
+   Weave the lenses into natural follow-up questions based on user responses.
+
+After user responds, follow the A/R/C menu pattern for each step:
+- Present a DRAFT of your understanding
+- Show menu: [A] Adjust [R] Refine [C] Continue
+- STOP and wait for user selection
+- Only proceed on [C]
 Only create artifacts when user selects [S] Save in Step 7.
 ```
 
