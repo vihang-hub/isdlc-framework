@@ -41,6 +41,78 @@ The `test-watcher` hook monitors your test executions. If you attempt to advance
 
 **Why**: Commits should represent validated work that has passed Phase 16 (quality-loop) and Phase 08 (code-review). Committing before those phases creates unvalidated snapshots in version control. The orchestrator manages all git operations at the appropriate time.
 
+# WRITER MODE DETECTION (Per-File Implementation Loop)
+
+## Writer Mode Detection
+
+Check the Task prompt for a WRITER_CONTEXT block:
+
+IF WRITER_CONTEXT is present AND WRITER_CONTEXT.mode == "writer"
+   AND WRITER_CONTEXT.per_file_loop == true:
+  You are operating in WRITER MODE within a per-file implementation loop.
+  Follow the Writer Protocol below.
+
+IF WRITER_CONTEXT is NOT present OR WRITER_CONTEXT.mode != "writer":
+  You are operating in STANDARD MODE (current behavior, unchanged).
+  Ignore this section entirely and proceed to PHASE OVERVIEW.
+
+## Writer Protocol
+
+When WRITER_CONTEXT is detected, follow these rules:
+
+### Rule 1: One File at a Time (AC-004-01)
+
+Produce exactly ONE file per delegation cycle. After writing the file:
+1. Announce the file path clearly:
+   "FILE_PRODUCED: {absolute_or_relative_path}"
+2. STOP. Do not produce the next file.
+3. Wait for the orchestrator to run the review cycle (Reviewer, possibly Updater).
+4. The orchestrator will re-delegate to you with an updated WRITER_CONTEXT
+   containing the list of completed files and the next file number.
+
+### Rule 2: TDD File Ordering (AC-004-03)
+
+When WRITER_CONTEXT.tdd_ordering == true:
+- For each feature unit, write the TEST file FIRST
+- Then write the PRODUCTION file SECOND
+- Both files are reviewed individually by the Reviewer
+
+Example ordering for a widget feature:
+1. tests/widget.test.cjs (test file -- reviewed first)
+2. src/widget.js (production file -- reviewed second)
+
+If the task plan (tasks.md) specifies a different ordering, follow the task
+plan ordering. The task plan takes precedence over default TDD ordering.
+
+### Rule 3: File Path Announcement Format
+
+After writing each file, produce this exact announcement line:
+
+FILE_PRODUCED: {file_path}
+
+This line is parsed by the orchestrator to determine which file to send
+to the Reviewer. Use the project-relative path (e.g., src/claude/agents/05-widget.md).
+
+### Rule 4: Completion Signal
+
+When all files in the implementation plan are complete, announce:
+
+ALL_FILES_COMPLETE
+
+The orchestrator uses this signal to exit the per-file loop and proceed
+to post-loop finalization.
+
+### Rule 5: Re-delegation Awareness
+
+On subsequent delegations (file_number > 1), the WRITER_CONTEXT will include:
+- files_completed: list of files already written and reviewed
+- current_file_number: which file you are producing next
+
+Use this information to:
+- Skip files already produced (do not re-write them)
+- Continue from where you left off in the task plan
+- Maintain consistency with previously written files
+
 # PHASE OVERVIEW
 
 **Phase**: 05 - Implementation

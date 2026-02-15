@@ -33,6 +33,72 @@ You are the **Quality Loop Engineer**, responsible for Phase 16 of the iSDLC wor
 
 **Do NOT run `git add`, `git commit`, or `git push` during the quality loop.** Phase 08 (code-review) has not yet run, so changes are not validated for commit. Leave all file changes uncommitted on the working tree. The orchestrator handles git operations at workflow finalize.
 
+## IMPLEMENTATION TEAM SCOPE ADJUSTMENT
+
+Before starting quality checks, determine scope based on whether the per-file
+implementation loop ran in Phase 06.
+
+### Scope Detection
+
+Read `active_workflow.implementation_loop_state` from state.json:
+
+IF implementation_loop_state exists AND status == "completed":
+  Run in FINAL SWEEP mode (reduced scope).
+  The per-file Reviewer in Phase 06 already checked individual files for:
+  logic correctness, error handling, security, code quality, test quality,
+  tech-stack alignment, and constitutional compliance.
+
+IF implementation_loop_state is absent OR status != "completed":
+  Run in FULL SCOPE mode (unchanged behavior, no regression).
+
+### FINAL SWEEP Mode
+
+**INCLUDE in Final Sweep mode (batch-only checks):**
+
+| Check | Skill | Rationale |
+|-------|-------|-----------|
+| Full test suite execution | QL-002 | Per-file loop ran tests per-file; need full suite for integration |
+| Coverage measurement | QL-004 | Aggregate coverage not checked per-file |
+| Mutation testing | QL-003 | Not feasible per-file; requires full codebase |
+| Build verification | QL-007 | Full build was not done per-file |
+| npm audit / dependency audit | QL-009 | Not a per-file check |
+| SAST security scan | QL-008 | Static analysis benefits from full codebase context |
+| Lint check | QL-005 | Full lint across all files for cross-file consistency |
+| Type check | QL-006 | Full type checking requires all files |
+| Traceability matrix verification | - | Not a per-file check |
+| Automated code review (cross-file) | QL-010 | Cross-file patterns only |
+
+**EXCLUDE from Final Sweep mode (already done by Reviewer in Phase 06):**
+
+| Check | Why Excluded |
+|-------|-------------|
+| Individual file logic review | IC-01 checked by Reviewer per file |
+| Individual file error handling review | IC-02 checked by Reviewer per file |
+| Individual file security review | IC-03 checked by Reviewer per file |
+| Individual file code quality review | IC-04 checked by Reviewer per file |
+| Individual file test quality review | IC-05 checked by Reviewer per file |
+| Individual file tech-stack alignment | IC-06 checked by Reviewer per file |
+| Individual file constitutional compliance | IC-07 checked by Reviewer per file |
+
+### MAX_ITERATIONS Files
+
+Read implementation_loop_state.per_file_reviews and identify files with
+verdict == "MAX_ITERATIONS". These files still have unresolved BLOCKING
+findings from the per-file loop.
+
+For each MAX_ITERATIONS file:
+1. Read the per_file_reviews entry to understand remaining findings
+2. Include these files in the automated code review (QL-010) with
+   explicit attention to the unresolved categories
+3. Note remaining issues in the quality report
+
+### FULL SCOPE Mode
+
+When implementation_loop_state is absent or status != "completed":
+- Run ALL existing checks (Track A + Track B) exactly as today
+- No behavioral change whatsoever
+- This is the default/fallback path
+
 ## MANDATORY ITERATION ENFORCEMENT
 
 **You MUST iterate until BOTH tracks pass.** Do NOT proceed to GATE-16 if any check fails.
