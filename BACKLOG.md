@@ -37,19 +37,15 @@
 
 - 0.12 [x] ~~**BUG: Phase timeout advisory only — never enforced**~~ (BUG-0006)
 
-#### Batch D — Low: Maintainability & Tech Debt (5 items)
+#### Batch D — Low: Maintainability & Tech Debt (0 remaining, 4 fixed)
 
-- 0.13 [ ] **DEBT: Hardcoded phase prefixes in 3+ hook files**
-  - Phase strings like `startsWith('15-upgrade')` scattered across `gate-blocker.cjs`, `skill-validator.cjs`, `test-adequacy-blocker.cjs`. Should be centralized in a `PHASE_CATEGORIES` constant.
+- 0.13 [x] ~~**DEBT: Hardcoded phase prefixes in 3+ hook files**~~ (BUG-0009)
 
-- 0.14 [ ] **DEBT: Inconsistent null-check patterns across hooks**
-  - Mix of optional chaining (`state?.active_workflow?.current_phase`) and explicit checks (`if (state && state.active_workflow)`). Pick one, apply consistently.
+- 0.14 [x] ~~**DEBT: Inconsistent null-check patterns across hooks**~~ (BUG-0009)
 
-- 0.15 [ ] **DEBT: `detectPhaseDelegation()` undocumented**
-  - Called by 5+ hooks in `lib/common.cjs` but contract (params, return shape, edge cases) is not documented. Maintenance risk.
+- 0.15 [x] ~~**DEBT: `detectPhaseDelegation()` undocumented**~~ (BUG-0009)
 
-- 0.16 [ ] **DEBT: Dead code from BUG-0005 fix**
-  - `gate-blocker.cjs:606-607` — redundant fallback branch that never executes after the primary branch (line 577) already resolves `currentPhase`.
+- 0.16 [x] ~~**DEBT: Dead code from BUG-0005 fix**~~ (BUG-0009)
 
 ### 1. Spec-Kit Learnings (from framework comparison 2026-02-11)
 
