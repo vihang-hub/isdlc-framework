@@ -126,9 +126,9 @@
     - **Creator** (test-design-engineer): Produces test-strategy.md, test-cases/, traceability-matrix.csv
     - **Critic** catches: missing edge cases, untested error paths, over-reliance on unit tests, no performance/load test plan, coverage gaps against requirements, missing negative test cases, test data gaps, flaky test risk
     - **Refiner** produces: complete test pyramid with rationale, Given/When/Then for every AC, explicit negative test cases, test data strategy, flaky-test mitigation, coverage targets mapped to risk areas
-- 4.2 [ ] Impact Analysis cross-validation — improve Phase 02 accuracy by enabling agents to cross-check findings
+- 4.2 [~] Impact Analysis cross-validation — improve Phase 02 accuracy by enabling agents to cross-check findings (Approach A DONE — REQ-0015, Approach B still open)
   - **Problem**: M1 (Impact Analyzer), M2 (Entry Point Finder), and M3 (Risk Assessor) run in parallel but in **complete isolation** — no SendMessage, no cross-referencing, no awareness of each other's findings. The orchestrator consolidates after all complete, but nobody verifies consistency. M1 might say 7 files affected while M2 found entry points in 9 files, or M3's risk score might not account for coupling that M1 identified. Inconsistencies flow silently into sizing and downstream phases.
-  - **Approach A — Post-hoc Verifier** (simpler, no restructuring):
+  - **Approach A — Post-hoc Verifier** [x] (DONE — REQ-0015: cross-validation-verifier.md agent, Step 3.5 in orchestrator, IA-401/IA-402 skills, 3-tier fail-open, 33 tests):
     - After M1/M2/M3 complete and before consolidation, spawn a Verifier agent that:
       1. Cross-references file lists (M1 affected files vs M2 entry point chains — files in one but not the other?)
       2. Validates risk scoring (does M3's risk level account for M1's coupling analysis and M2's chain depth?)
@@ -386,6 +386,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
 ## Completed
 
 ### 2026-02-15
+- [x] REQ-0015 (local): Impact Analysis cross-validation Verifier (Approach A) — new M4 agent (cross-validation-verifier.md) that cross-checks M1/M2/M3 findings after parallel execution, before consolidation. Pipeline verification pattern with 3-tier fail-open, 5 finding types (MISSING_FROM_BLAST_RADIUS, ORPHAN_IMPACT, RISK_SCORING_GAP, UNDERTESTED_CRITICAL_PATH, INCOMPLETE_ANALYSIS), IA-401/IA-402 skills. 1 new agent, 1 new skill, 3 modified files, 33 new tests, zero regressions, 9/9 gates passed first try. 7 FRs, 3 NFRs, 28 ACs (backlog 4.2 Approach A)
 - [x] REQ-0017: Multi-agent Implementation Team — Writer/Reviewer/Updater per-file debate loop for Phase 06 implementation (backlog 4.1 Phase 06). 2 new agents (Implementation Reviewer with 8 IC checks IC-01..IC-08, Implementation Updater with 6-step fix protocol), 4 modified agents (orchestrator IMPLEMENTATION_ROUTING Section 7.6, software-developer Writer awareness, quality-loop final sweep, qa-engineer human review only). 86 new tests, zero regressions, 1 implementation iteration. 7 FRs, 4 NFRs, 34 ACs. Completes backlog 4.1 (all 4 debate team phases done).
 
 ### 2026-02-14
