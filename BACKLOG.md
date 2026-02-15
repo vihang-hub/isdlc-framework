@@ -99,19 +99,12 @@
     - **Creator** (system-designer): Produces interface-spec.yaml/openapi.yaml, module-designs/, wireframes/, error-taxonomy.md, validation-rules.json.
     - **Critic** catches: incomplete API specs, inconsistent patterns across modules, module overlap, validation gaps, missing idempotency, accessibility issues, error taxonomy holes, data flow bottlenecks
     - **Refiner** produces: OpenAPI 3.x contracts with complete error responses, unified error taxonomy, component variants for all states, validation rules at every boundary, idempotency keys
-  - **Phase 06 — Implementation Team** [ ] (Writer/Reviewer/Updater — specialized per-file loop):
+  - **Phase 06 — Implementation Team** [ ] (Writer/Reviewer/Updater):
     - **Problem**: Code is written in Phase 06, then waits for Phase 16 (quality loop) and Phase 08 (code review) to find issues. By then context is cold, fixes require re-reading, and the sequential overhead adds 15-30 minutes per workflow.
     - **Writer** (software-developer) — writes code following tasks.md, TDD, produces files
-    - **Reviewer** (code-reviewer) — reviews each file as it's written, flags issues immediately, checks constitutional compliance, validates skill/tech-stack alignment
+    - **Reviewer** (code-reviewer) — reviews files, flags issues immediately, checks constitutional compliance, validates skill/tech-stack alignment
     - **Updater** (code-updater) — takes reviewer feedback, applies fixes, re-runs tests, confirms resolution
-    - **Per-file loop** (unlike other phases which loop per-artifact):
-      ```
-      Writer produces file A → Reviewer reviews A → issues found?
-        YES → Updater fixes A → Reviewer re-reviews → loop until clean
-        NO  → Writer moves to file B → Reviewer reviews B → ...
-      All files done → Final quality sweep (security scan, full test suite, coverage)
-      ```
-    - **In-loop reviewer checks** (per file, immediate — while context is hot):
+    - **Reviewer checks** (immediate — while context is hot):
       - Logic correctness, error handling, security (injection prevention, no hardcoded secrets)
       - Code quality (naming, DRY, single responsibility, complexity), test quality
       - Skill/tech-stack alignment (flag wrong patterns for project's stack)
@@ -121,6 +114,13 @@
       - Proposed: `06-implementation-loop (writer+reviewer+updater) → 16-final-sweep → 08-human-review`
     - **Final sweep** (Phase 16, batch): full test suite, coverage (≥80% unit, ≥70% integration), mutation testing (≥80%), npm audit, SAST scan, build verification, lint/type check, traceability matrix, technical debt assessment
     - **Phase 08 becomes human-review only**: architecture decisions, business logic, design coherence, non-obvious security, merge approval
+    - **Review strategy by intensity** (avoids naive per-file 2N call explosion):
+      - **Light** — Review-aware Writer + single audit: embed reviewer checklist in Writer prompt so it self-checks during writing, then one independent Reviewer audit over the full changeset. **2 Task calls total.**
+      - **Standard** — Group-based review + threshold skip: Writer produces files in logical groups (by module/directory), Reviewer reviews each group as a batch, Updater fixes per group. Simple files (types, config, re-exports, interfaces) skip review. **~4-6 Task calls** for a typical 15-file changeset.
+      - **Epic** — Group-based review (no threshold skip) or fan-out: full review of all groups, or fan-out N parallel Reviewers across file chunks for large changesets (15+ files). **~6-10 calls**, or parallel for faster wall-clock time.
+    - **Additional speedup options** (can layer on top of any strategy):
+      - **Progressive review**: full review on first 2-3 files to establish quality patterns, then lightweight spot-checks for remaining files. Re-triggers full review only if spot-check finds issues.
+      - **Diff-based review**: for modifications to existing files, Reviewer only reviews the diff, not the entire file. Smaller context = faster per review.
     - **Implementation options**: (A) Single Task with 3 sub-agents, (B) Phase-Loop Controller manages loop explicitly, (C) New `collaborative-implementation-engineer` agent encapsulates all 3 roles
   - **Phase 05 — Test Strategy Team** [ ] (Creator/Critic/Refiner):
     - **Creator** (test-design-engineer): Produces test-strategy.md, test-cases/, traceability-matrix.csv
