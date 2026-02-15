@@ -5,6 +5,23 @@
 
 ## Open
 
+### 0. Bugs (High Priority)
+
+- 0.1 [ ] **BUG: Orchestrator overrides conversational opening with old 3-question protocol**
+  - **Severity**: High — breaks REQ-0014's conversational requirements elicitation for every feature workflow
+  - **Symptom**: Requirements analyst dumps 3 generic questions ("What problem? Who will use this? How will you measure success?") instead of reflecting back the user's description and asking targeted follow-ups. The agent does not engage the user or summarise their requirements.
+  - **Root cause**: `00-sdlc-orchestrator.md` line ~1009 injects the old INTERACTIVE PROTOCOL into the Task prompt when delegating to Phase 01:
+    ```
+    Your FIRST response must ONLY contain these 3 questions - nothing else:
+    1. What problem are you solving? 2. Who will use this? 3. How will you know this project succeeded?
+    Do NOT: do research, present understanding, list features, or provide analysis.
+    ```
+    This overrides the agent's own conversational opening (lines 42-58 of `01-requirements-analyst.md`) which was updated in REQ-0014 to reflect back, ask contextual questions, and weave lenses organically.
+  - **Fix**: Replace the old INTERACTIVE PROTOCOL block in `00-sdlc-orchestrator.md` (lines ~1007-1016) with the new conversational protocol that matches what's already in the agent. The orchestrator should inject instructions consistent with the agent's own behaviour, not contradict them.
+  - **Files to change**: `00-sdlc-orchestrator.md` (remove/replace old INTERACTIVE PROTOCOL block)
+  - **No enforcement gap**: The conversational opening is prompt-only — no hook verifies the agent actually reflected back the description. Consider whether hook enforcement is needed or if fixing the orchestrator injection is sufficient.
+  - **Complexity**: Low — single file change, replace one text block
+
 ### 1. Spec-Kit Learnings (from framework comparison 2026-02-11)
 
 - 1.1 [ ] Spike/explore workflow — parallel implementation branches from a single spec for tech stack comparison or architecture exploration (Spec-Kit's "Creative Exploration")

@@ -1,4 +1,4 @@
-# Coverage Report: REQ-0017-multi-agent-implementation-team
+# Coverage Report: REQ-0018-quality-loop-true-parallelism
 
 **Phase**: 16-quality-loop
 **Date**: 2026-02-15
@@ -8,58 +8,33 @@
 
 | Metric | Target | Actual | Status |
 |--------|--------|--------|--------|
-| Acceptance Criteria | 100% | 35/35 (100%) | PASS |
+| Acceptance Criteria | 100% | 23/23 (100%) | PASS |
 | Functional Requirements | 100% | 7/7 (100%) | PASS |
 | Non-Functional Requirements | 100% | 4/4 (100%) | PASS |
-| Validation Rules | 80% | 32/32 (100%) | PASS |
 
-## Coverage by Module
+## Coverage by Test Suite
 
-### M1: Implementation Reviewer Agent (05-implementation-reviewer.md)
+### quality-loop-parallelism.test.cjs (40 tests)
 
-| Test File | Tests | Coverage Focus |
-|-----------|-------|----------------|
-| `implementation-debate-reviewer.test.cjs` | 20 | 8 IC categories, severity levels, verdict format, convergence, read-only constraint, file-type matrix, line references, structured output |
+| Suite | Tests | Coverage Focus |
+|-------|-------|----------------|
+| FR-001: Parallel Spawning | 5 | Two Task calls, Track A+B prompts, wait-for-both |
+| FR-002: Internal Track Parallelism | 5 | Sub-groups, MAY/SHOULD language, independent reporting, consolidation |
+| FR-003: Grouping Strategy | 8 | Logical/task-count modes, A1-A3/B1-B2 composition, lookup table, unconfigured skip |
+| FR-004: Consolidated Result Merging | 4 | Pass/fail by track+group, ANY failure rule, Parallel Execution Summary |
+| FR-005: Iteration Loop | 4 | Failure consolidation, both-track re-run, circuit breaker |
+| FR-006: FINAL SWEEP Compatibility | 4 | Exclusion list preserved, grouping strategy ref, FULL SCOPE mode |
+| FR-007: Scope Detection | 3 | 50+ threshold, <10 guidance, Track A specific |
+| NFR | 4 | Prompt-only change, backward compat, track timing, performance ref |
+| Regression | 3 | Frontmatter, GATE-16 checklist, Tool Discovery Protocol |
 
-Covered ACs: AC-01 through AC-12 (Reviewer-specific)
-
-### M2: Implementation Updater Agent (05-implementation-updater.md)
-
-| Test File | Tests | Coverage Focus |
-|-----------|-------|----------------|
-| `implementation-debate-updater.test.cjs` | 16 | BLOCKING fix requirement, WARNING triage, test re-run, update report, dispute mechanism, minimality, single-file constraint, file size |
-
-Covered ACs: AC-13 through AC-20 (Updater-specific)
-
-### M3: IMPLEMENTATION_ROUTING + Per-File Loop (00-sdlc-orchestrator.md)
-
-| Test File | Tests | Coverage Focus |
-|-----------|-------|----------------|
-| `implementation-debate-orchestrator.test.cjs` | 22 | Routing table, per-file loop protocol, implementation_loop_state, error handling, DEBATE_ROUTING separation, file ordering, WRITER_CONTEXT, Task tool delegation |
-
-Covered ACs: AC-21 through AC-30 (Orchestrator-specific)
-
-### M4: Writer Role Awareness (05-software-developer.md)
-
-| Test File | Tests | Coverage Focus |
-|-----------|-------|----------------|
-| `implementation-debate-writer.test.cjs` | 10 | WRITER_CONTEXT detection, sequential file production, FILE_PRODUCED format, TDD ordering, ALL_FILES_COMPLETE signal, backward compatibility |
-
-Covered ACs: AC-31 through AC-34 (Writer-specific)
-
-### M5/M6: Phase Scope Adjustments + Integration
-
-| Test File | Tests | Coverage Focus |
-|-----------|-------|----------------|
-| `implementation-debate-integration.test.cjs` | 18 | Phase 16 scope adjustment, Phase 08 scope adjustment, backward compatibility, structural consistency, debate routing preservation, agent naming conventions |
-
-Covered ACs: AC-35 + cross-cutting NFR-001 through NFR-004
+Covered ACs: AC-001 through AC-023 (all 23)
 
 ## Uncovered Areas
 
 | Area | Reason | Risk |
 |------|--------|------|
-| Line-level code coverage | No `c8` or `istanbul` configured | LOW -- agents are markdown prompts |
+| Line-level code coverage | No `c8` or `istanbul` configured | LOW -- agent is a markdown prompt |
 | Mutation testing | No mutation framework configured | LOW -- prompt-verification tests check content presence |
 | Runtime behavior | Agents run inside Claude Code, cannot be unit-tested at runtime | ACCEPTED -- tested through structural verification |
 
