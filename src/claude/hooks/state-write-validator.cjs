@@ -54,8 +54,7 @@ function validatePhase(phaseName, phaseData, filePath) {
     }
 
     // Rule V2: interactive_elicitation
-    const elicit = phaseData.iteration_requirements &&
-                   phaseData.iteration_requirements.interactive_elicitation;
+    const elicit = phaseData.iteration_requirements?.interactive_elicitation;
     if (elicit && elicit.completed === true) {
         const menuCount = elicit.menu_interactions;
         if (menuCount === undefined || menuCount === null || menuCount < 1) {
@@ -70,8 +69,7 @@ function validatePhase(phaseName, phaseData, filePath) {
     }
 
     // Rule V3: test_iteration
-    const testIter = phaseData.iteration_requirements &&
-                     phaseData.iteration_requirements.test_iteration;
+    const testIter = phaseData.iteration_requirements?.test_iteration;
     if (testIter && testIter.completed === true) {
         const iterCount = testIter.current_iteration;
         if (iterCount === undefined || iterCount === null || iterCount < 1) {
@@ -253,7 +251,7 @@ function checkPhaseFieldProtection(filePath, toolInput, toolName) {
         }
 
         // AC-01c, AC-03c: If incoming has no active_workflow, nothing to check
-        const incomingAW = incomingState && incomingState.active_workflow;
+        const incomingAW = incomingState?.active_workflow;
         if (!incomingAW || typeof incomingAW !== 'object') {
             return null;
         }
@@ -272,7 +270,7 @@ function checkPhaseFieldProtection(filePath, toolInput, toolName) {
         }
 
         // AC-01d, AC-03c: If disk has no active_workflow, allow (workflow init)
-        const diskAW = diskState && diskState.active_workflow;
+        const diskAW = diskState?.active_workflow;
         if (!diskAW || typeof diskAW !== 'object') {
             return null;
         }

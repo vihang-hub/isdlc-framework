@@ -37,7 +37,8 @@ const {
     outputBlockResponse,
     debugLog,
     checkPhaseTimeout,
-    logHookEvent
+    logHookEvent,
+    PHASE_PREFIXES
 } = require('../lib/common.cjs');
 
 // Import hook check functions
@@ -70,7 +71,7 @@ const HOOKS = [
     { name: 'test-adequacy-blocker', check: testAdequacyBlockerCheck, shouldActivate: (ctx) => {
         if (!ctx.state?.active_workflow) return false;
         const phase = ctx.state.active_workflow.current_phase || '';
-        return phase.startsWith('15-upgrade');
+        return phase.startsWith(PHASE_PREFIXES.UPGRADE);
     }},
     { name: 'blast-radius-validator', check: blastRadiusValidatorCheck, shouldActivate: (ctx) => {
         // CON-005: Feature workflows only
@@ -78,7 +79,7 @@ const HOOKS = [
         if (ctx.state.active_workflow.type !== 'feature') return false;
         // AC-001-06: Phase 06 implementation only
         const phase = ctx.state.active_workflow.current_phase || '';
-        return phase === '06-implementation';
+        return phase === PHASE_PREFIXES.IMPLEMENTATION;
     }}
 ];
 

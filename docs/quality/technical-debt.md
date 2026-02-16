@@ -1,74 +1,74 @@
-# Technical Debt Assessment: REQ-0017 Fan-Out/Fan-In Parallelism
+# Technical Debt Assessment -- BUG-0009 Batch D Tech Debt
 
-**Date**: 2026-02-16
+**Date**: 2026-02-15
 **Phase**: 08-code-review
-**Workflow**: Feature (REQ-0017-fan-out-fan-in-parallelism)
+**Workflow**: Fix (BUG-0009-batch-d-tech-debt)
 
 ---
 
-## 1. New Technical Debt Introduced
+## 1. Technical Debt Resolved by This Batch
 
-### TD-REQ17-001: Duplicate Observability Header in SKILL.md
+This batch resolves 4 pre-existing tech debt items from BACKLOG.md:
 
-**Type**: Documentation debt
-**Impact**: Very Low
-**Details**: `src/claude/skills/quality-loop/fan-out-engine/SKILL.md` contains two `## Observability` sections (lines 129 and 169). The first has detailed content with JSON examples; the second has a brief one-line note. Content is not contradictory but is duplicated.
-**Effort**: Trivial (2 minutes -- merge or remove the second section)
-**Recommendation**: Address in next maintenance pass.
-
-### TD-REQ17-002: Validation-Rules Error Code Duplication
-
-**Type**: Documentation debt
-**Impact**: Very Low
-**Details**: In `validation-rules.json`, rules VR-CFG-006, VR-CFG-007, and VR-CFG-008 all reference `ERR-CFG-005` in their `on_failure` field instead of unique codes. This is a design artifact, not executable code, so there is no runtime impact.
-**Effort**: Trivial (5 minutes)
-**Recommendation**: Address when validation-rules.json is next edited.
+| Item | Description | Resolution |
+|------|-------------|------------|
+| 0.13 | Hardcoded phase prefixes scattered across 5 hook files | Centralized in PHASE_PREFIXES constant |
+| 0.14 | Inconsistent null-check patterns (&&-chains vs optional chaining) | Standardized to optional chaining for property reads |
+| 0.15 | detectPhaseDelegation() undocumented | Added comprehensive JSDoc (60 lines) |
+| 0.16 | Dead code else branch in gate-blocker.cjs | Simplified to direct state.current_phase assignment |
 
 ---
 
-## 2. Pre-Existing Technical Debt (Unchanged by REQ-0017)
+## 2. New Technical Debt Introduced
 
-### TD-PRE-001: Pre-existing test failures (documentation drift)
+**None.** All changes are non-behavioral refactoring. No new abstractions, no new dependencies, no deferred work.
+
+---
+
+## 3. Remaining Technical Debt Observations
+
+### TD-001: Pre-existing test failures (workflow-finalizer)
 
 **Type**: Test debt
-**Impact**: Low
-**Details**: 3 pre-existing test failures:
-  - TC-E09: README.md references "40 agents" but project has grown
-  - TC-13-01: prompt-format.test.js expects 48 agent files but finds 59
-  - gate-blocker-extended supervised_review stderr logging test
+**Impact**: Low (not caused by BUG-0009)
+**Details**: 43 failures in workflow-finalizer.test.cjs -- pre-existing across all recent workflows.
 **Recommendation**: Track as maintenance backlog item.
 
-### TD-PRE-002: No ESLint configuration
+### TD-002: No ESLint configuration
 
 **Type**: Tooling debt
 **Impact**: Low
 **Details**: No automated linting. Manual review substitutes.
-**Recommendation**: Add ESLint in a future workflow.
+**Recommendation**: Add ESLint in a future workflow (BACKLOG item).
 
-### TD-PRE-003: gate-blocker.cjs coverage at 67.55%
+### TD-003: Remaining inline phase strings in non-scoped files
 
-**Type**: Testing debt
-**Impact**: Low (below 80% threshold but pre-existing)
-**Details**: Pre-existing coverage gap in cloud config triggers, complex self-healing paths.
-**Recommendation**: Track as backlog item.
+**Type**: Consistency debt
+**Impact**: Low
+**Details**: Phase strings `'01-requirements'`, `'06-implementation'` remain in:
+  - `log-skill-usage.cjs:87` (default fallback)
+  - `plan-surfacer.cjs:30` (EARLY_PHASES set -- different usage pattern)
+  - `menu-tracker.cjs:147` (phase check)
+  - `common.cjs:1470,2453` (lookup maps)
+These were deliberately excluded from BUG-0009 scope because they are in different usage contexts (sets, maps, files not targeted by the requirements).
+**Recommendation**: Consider extending PHASE_PREFIXES adoption in a future housekeeping pass.
 
-### TD-PRE-004: skills-manifest.json skill_count sum mismatch
+### TD-004: No coverage tooling
 
-**Type**: Data consistency debt
-**Impact**: Very Low (informational only; manifest is local-only and not git-tracked)
-**Details**: Sum of all ownership[].skill_count values (251) does not match total_skills (243). This is a pre-existing condition caused by some skills being counted in multiple agents. The delta introduced by REQ-0017 (+1 to skill_count, +1 to total_skills) is correct.
-**Recommendation**: Track for future manifest reconciliation.
+**Type**: Tooling debt
+**Impact**: Medium
+**Details**: No c8/istanbul/nyc configured. Coverage is assessed qualitatively, not quantitatively.
+**Recommendation**: Add coverage tooling in a future workflow.
 
 ---
 
-## 3. Technical Debt Trend
+## 4. Technical Debt Summary
 
-| Category | New (REQ-0017) | Pre-Existing | Total |
-|----------|---------------|-------------|-------|
-| Documentation | 2 (trivial) | 0 | 2 |
-| Testing | 0 | 2 (failures, coverage) | 2 |
-| Tooling | 0 | 1 (ESLint) | 1 |
-| Data consistency | 0 | 1 (manifest sums) | 1 |
-| **Total** | **2** | **4** | **6** |
+| Category | Resolved | New | Pre-Existing | Total Remaining |
+|----------|----------|-----|-------------|----------------|
+| Code consistency | 4 | 0 | 1 (remaining inline strings) | 1 |
+| Testing | 0 | 0 | 1 (workflow-finalizer failures) | 1 |
+| Tooling | 0 | 0 | 2 (ESLint, coverage) | 2 |
+| **Total** | **4** | **0** | **4** | **4** |
 
-**Assessment**: REQ-0017 introduces 2 items of very low/trivial impact documentation debt. No structural, architectural, or testing debt was introduced. The feature is well-implemented with comprehensive test coverage.
+**Net debt change**: -4 resolved, +0 introduced = **net reduction of 4 items**.

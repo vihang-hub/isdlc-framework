@@ -1,8 +1,8 @@
-# Quality Metrics: REQ-0017 Fan-Out/Fan-In Parallelism
+# Quality Metrics -- BUG-0009 Batch D Tech Debt
 
-**Date**: 2026-02-16
+**Date**: 2026-02-15
 **Phase**: 08-code-review
-**Workflow**: Feature (REQ-0017-fan-out-fan-in-parallelism)
+**Workflow**: Fix (BUG-0009-batch-d-tech-debt)
 
 ---
 
@@ -10,99 +10,74 @@
 
 | Suite | Total | Pass | Fail | Skip |
 |-------|-------|------|------|------|
-| Fan-out manifest (TC-M*) | 6 | 6 | 0 | 0 |
-| Fan-out config (TC-C*) | 10 | 10 | 0 | 0 |
-| Fan-out protocol (TC-P*) | 18 | 18 | 0 | 0 |
-| Fan-out integration (TC-I*) | 12 | 12 | 0 | 0 |
-| **New REQ-0017 tests** | **46** | **46** | **0** | **0** |
-| CJS hooks suite (npm run test:hooks) | 1426 | 1425 | 1 | 0 |
-| ESM suite (npm test) | 632 | 630 | 2 | 0 |
-| **Combined** | **2058** | **2055** | **3** | **0** |
+| batch-d-phase-prefixes.test.cjs | 10 | 10 | 0 | 0 |
+| batch-d-null-checks.test.cjs | 10 | 10 | 0 | 0 |
+| batch-d-jsdoc-documentation.test.cjs | 6 | 6 | 0 | 0 |
+| batch-d-dead-code-removal.test.cjs | 5 | 5 | 0 | 0 |
+| **New tests total** | **31** | **31** | **0** | **0** |
+| Full hook suite (npm run test:hooks) | 1008 | 965 | 43 | 0 |
 
 **New regressions**: 0
-**Pre-existing failures**: 3 (TC-E09 README agent count, TC-13-01 agent file count, gate-blocker-extended supervised_review stderr)
+**Pre-existing failures**: 43 (all in workflow-finalizer.test.cjs)
 
 ## 2. Requirements Coverage
 
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
-| FRs implemented | 7/7 | 100% | PASS |
-| FR acceptance criteria covered by tests | 33/33 | 100% | PASS |
-| NFRs validated | 4/4 | 100% | PASS |
-| Constraints verified | 5/5 | 100% | PASS |
+| ACs covered by tests | 18/18 | 100% | PASS |
+| NFRs validated | 3/3 | 100% | PASS |
 | Orphan code | 0 | 0 | PASS |
 | Unimplemented requirements | 0 | 0 | PASS |
-| ADRs documented | 4 | >= 1 | PASS |
-
-### Requirement-to-Test Traceability
-
-| Requirement | Test Coverage |
-|-------------|---------------|
-| FR-001 (Shared engine) | TC-M01..M06, TC-P01..P05, TC-I01 |
-| FR-002 (Chunk splitting) | TC-P02, TC-I05 |
-| FR-003 (Parallel spawner) | TC-P03, TC-P16 |
-| FR-004 (Result merger) | TC-P04, TC-I06 |
-| FR-005 (Phase 16 fan-out) | TC-P06..P09, TC-I01, TC-I03, TC-I11, TC-P16, TC-P18 |
-| FR-006 (Phase 08 fan-out) | TC-P10..P13, TC-I02, TC-I04, TC-I11 |
-| FR-007 (Configuration) | TC-C01..C10, TC-I08..I10 |
-| NFR-001 (Performance) | TC-P18 |
-| NFR-002 (Reliability) | TC-P14 |
-| NFR-003 (Backward compat) | TC-P15, TC-C04, TC-I06 |
-| NFR-004 (Observability) | TC-P17, TC-I12 |
+| Tech debt items resolved | 4/4 | 100% | PASS |
 
 ## 3. Code Quality
 
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
 | Critical findings | 0 | 0 | PASS |
-| High findings | 0 | 0 | PASS |
-| Medium findings | 0 | 0 | PASS |
-| Low findings | 1 | -- | Noted (duplicate header in SKILL.md) |
-| Informational findings | 1 | -- | Noted (validation-rules error codes) |
+| Major findings | 0 | 0 | PASS |
+| Minor findings | 0 | 0 | PASS |
+| Informational findings | 0 | -- | PASS |
 | Syntax errors | 0 | 0 | PASS |
 | npm audit vulnerabilities | 0 | 0 | PASS |
-| Security findings | 0 | 0 | PASS |
-| Module system compliance | PASS | CJS tests | PASS |
+| No eval/Function/prototype pollution | 0 | 0 | PASS |
+| Module system compliance (CJS) | PASS | CJS | PASS |
 | New dependencies | 0 | 0 | PASS |
 
 ## 4. File Metrics
 
-| File | Type | Lines Changed | Description |
-|------|------|---------------|-------------|
-| 16-quality-loop-engineer.md | Modified | +167 | Fan-Out Protocol for Track A |
-| 07-qa-engineer.md | Modified | +97 | Fan-Out Protocol for code review |
-| isdlc.md | Modified | +6 | --no-fan-out flag parsing |
-| skills-manifest.json | Modified | +3 | QL-012 registration |
-| fan-out-engine/SKILL.md | New | 172 | Skill documentation |
-| test-fan-out-manifest.test.cjs | New | 103 | 6 manifest tests |
-| test-fan-out-config.test.cjs | New | 236 | 10 config tests |
-| test-fan-out-protocol.test.cjs | New | 283 | 18 protocol tests |
-| test-fan-out-integration.test.cjs | New | 217 | 12 integration tests |
-| test-quality-loop.test.cjs | Modified | +1 | skill_count update |
-| test-strategy-debate-team.test.cjs | Modified | +1 | total_skills update |
+| File | Lines Added | Lines Removed | Type |
+|------|------------|---------------|------|
+| lib/common.cjs | 53 | 0 | Constant + JSDoc |
+| test-adequacy-blocker.cjs | 8 | 7 | Refactor |
+| pre-task-dispatcher.cjs | 4 | 3 | Refactor |
+| skill-validator.cjs | 3 | 2 | Refactor |
+| plan-surfacer.cjs | 3 | 2 | Refactor |
+| state-write-validator.cjs | 4 | 6 | Refactor |
+| gate-blocker.cjs | 3 | 2 | Dead code removal |
+| **Total source** | **78** | **22** | **Net +56** |
+| Test files (4 new) | 676 | 0 | Tests |
 
-**Production lines changed**: ~445 (all markdown + JSON)
-**Test lines added**: ~839
-**Test-to-code ratio**: 1.9:1 (healthy)
+## 5. Complexity Analysis
 
-## 5. Test Quality Metrics
+| File | Cyclomatic Impact | Nesting Change | Assessment |
+|------|-------------------|----------------|------------|
+| common.cjs | +0 (constant only) | None | No impact |
+| test-adequacy-blocker.cjs | +0 (equivalent refactor) | None | No impact |
+| pre-task-dispatcher.cjs | +0 (equivalent refactor) | None | No impact |
+| skill-validator.cjs | +0 (equivalent refactor) | None | No impact |
+| plan-surfacer.cjs | +0 (equivalent refactor) | None | No impact |
+| state-write-validator.cjs | -2 (simplified &&-chains) | None | Slight improvement |
+| gate-blocker.cjs | -1 (removed dead branch) | None | Slight improvement |
 
-| Metric | Value | Assessment |
-|--------|-------|------------|
-| New tests | 46 | Comprehensive |
-| Test categories | 4 distinct | Good separation of concerns |
-| Average assertions per test | 1.7 | Appropriate (focused tests) |
-| Edge cases tested | Boundary values (min=1, max=8), absent configs, disabled flags | Good |
-| Integration coverage | 12 cross-component tests | Excellent |
-| Requirement tracing | All 46 tests trace to specific FRs/NFRs | Complete |
+**Net cyclomatic complexity change**: -3 (improvement)
 
 ## 6. Constitutional Compliance
 
 | Article | Status | Evidence |
 |---------|--------|----------|
-| V (Simplicity First) | PASS | Protocol-based approach; no unnecessary executable code |
-| VI (Code Review Required) | PASS | This code review performed before gate passage |
-| VII (Artifact Traceability) | PASS | Full traceability matrix; no orphan code or requirements |
-| VIII (Documentation Currency) | PASS | SKILL.md, agent files, manifest all updated |
-| IX (Quality Gate Integrity) | PASS | GATE-16 passed, GATE-08 validated |
-| X (Fail-Safe Defaults) | PASS | Partial failure handling, below-threshold skip |
+| V (Simplicity First) | PASS | Reduced complexity, no over-engineering |
+| VI (Code Review Required) | PASS | This code review document |
+| VII (Artifact Traceability) | PASS | 18/18 ACs traced to tests |
+| VIII (Documentation Currency) | PASS | JSDoc added for detectPhaseDelegation |
+| IX (Quality Gate Integrity) | PASS | GATE-16 passed, GATE-08 validated here |

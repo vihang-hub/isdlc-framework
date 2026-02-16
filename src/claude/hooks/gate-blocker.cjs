@@ -625,8 +625,9 @@ function check(ctx) {
                 }
             }
         } else {
-            // BUG-0005 (AC-03e): prefer active_workflow.current_phase even in fallback branch
-            currentPhase = state.active_workflow?.current_phase || state.current_phase;
+            // BUG-0009 (0.16): Simplified -- activeWorkflow is falsy in this branch,
+            // so optional chaining on it would always yield undefined. Use fallback directly.
+            currentPhase = state.current_phase;
         }
 
         if (!currentPhase) {
