@@ -433,6 +433,56 @@ function checkAgentDelegationRequirement(phaseState, phaseRequirements, state, c
 }
 
 /**
+ * Load artifact-paths.json — single source of truth for artifact paths per phase.
+ * BUG-0020: Created to resolve path mismatch between agents and gate-blocker.
+ *
+ * Checks .claude/hooks/config/ and .isdlc/config/ paths.
+ * Returns null on missing file or parse error (fail-open for backward compat).
+ *
+ * @returns {object|null} Parsed artifact-paths.json or null
+ */
+function loadArtifactPaths() {
+    const { getProjectRoot } = require('./lib/common.cjs');
+    const projectRoot = getProjectRoot();
+    const configPaths = [
+        path.join(projectRoot, '.claude', 'hooks', 'config', 'artifact-paths.json'),
+        path.join(projectRoot, '.isdlc', 'config', 'artifact-paths.json')
+    ];
+
+    for (const configPath of configPaths) {
+        if (fs.existsSync(configPath)) {
+            try {
+                return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            } catch (e) {
+                debugLog('Error loading artifact-paths.json:', e.message);
+            }
+        }
+    }
+    return null;
+}
+
+/**
+ * Get artifact paths for a specific phase from artifact-paths.json.
+ * Falls back to null if artifact-paths.json is missing or phase is not in it.
+ *
+ * BUG-0020: artifact-paths.json overrides iteration-requirements.json inline paths.
+ *
+ * @param {string} phaseKey - The phase key (e.g., '03-architecture')
+ * @returns {string[]|null} Array of path templates, or null if not found
+ */
+function getArtifactPathsForPhase(phaseKey) {
+    const artifactPathsConfig = loadArtifactPaths();
+    if (!artifactPathsConfig || !artifactPathsConfig.phases) {
+        return null;
+    }
+    const phaseConfig = artifactPathsConfig.phases[phaseKey];
+    if (!phaseConfig || !Array.isArray(phaseConfig.paths) || phaseConfig.paths.length === 0) {
+        return null;
+    }
+    return phaseConfig.paths;
+}
+
+/**
  * Resolve template placeholders in artifact paths.
  * Substitutes {artifact_folder} from state.active_workflow.artifact_folder.
  * @param {string[]} paths - Paths with template placeholders
@@ -460,6 +510,11 @@ function resolveArtifactPaths(paths, state) {
 /**
  * Check if required artifacts are present for the current phase.
  * For phases with artifact_validation config, checks that files exist on disk.
+ *
+ * BUG-0020: Prefers artifact-paths.json as the source of truth for artifact paths.
+ * Falls back to iteration-requirements.json inline paths if artifact-paths.json
+ * is missing or does not cover the current phase.
+ *
  * Fail-open: missing config or unresolvable paths pass the check.
  */
 function checkArtifactPresenceRequirement(phaseState, phaseRequirements, state, currentPhase) {
@@ -468,7 +523,9 @@ function checkArtifactPresenceRequirement(phaseState, phaseRequirements, state, 
         return { satisfied: true, reason: 'not_required' };
     }
 
-    const paths = artifactReq.paths;
+    // BUG-0020: Prefer artifact-paths.json as source of truth, fall back to inline paths
+    const artifactPathsOverride = getArtifactPathsForPhase(currentPhase);
+    const paths = artifactPathsOverride || artifactReq.paths;
     if (!paths || paths.length === 0) {
         return { satisfied: true, reason: 'no_paths_configured' };
     }

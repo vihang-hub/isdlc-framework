@@ -1,4 +1,4 @@
-# Coverage Report: REQ-0020-t6-hook-io-optimization
+# Coverage Report: BUG-0020-GH-4
 
 **Phase**: 16-quality-loop
 **Date**: 2026-02-16
@@ -8,81 +8,65 @@
 
 | Metric | Target | Actual | Status |
 |--------|--------|--------|--------|
-| Acceptance criteria | 80% | 100% (20/20) | PASS |
-| Functional requirements | 100% | 100% (5/5) | PASS |
-| NFR requirements | -- | 100% (3/3) | PASS |
-| New test cases passing | 100% | 100% (46/46) | PASS |
+| BUG-0020 acceptance criteria | 80% | 100% | PASS |
+| Changed functions with tests | 80% | 100% (4/4) | PASS |
+| BUG-0020 test cases passing | 100% | 100% (23/23) | PASS |
 | Regression tests passing | 100% | 100% (0 new failures) | PASS |
 
 ## Requirement Traceability Matrix
 
-### FR-001: Config File Caching with mtime Invalidation
+### Drift Detection Tests (artifact-path-consistency.test.cjs)
 
-| AC | Test Cases | Status |
-|----|------------|--------|
-| AC-001a: First load reads from disk and caches | TC-001a-01, TC-001a-02, TC-001a-03, TC-001a-04 | COVERED |
-| AC-001b: File modification triggers re-read | TC-001b-01, TC-001b-02 | COVERED |
-| AC-001c: Unchanged mtime returns cached copy | TC-001c-01 | COVERED |
-| AC-001d: Missing/corrupt file returns null | TC-001d-01, TC-001d-02, TC-001d-03 | COVERED |
-| AC-001e: Monorepo isolation (project-scoped keys) | TC-001e-01 | COVERED |
+| Test ID | Description | Status |
+|---------|-------------|--------|
+| TC-APC-01 | artifact-paths.json exists and is valid JSON | PASS |
+| TC-APC-02 | covers all phases with artifact_validation | PASS |
+| TC-APC-03 | paths match iteration-requirements.json paths | PASS |
+| TC-APC-04 | all paths contain {artifact_folder} template variable | PASS |
+| TC-APC-05 | artifact-paths.json schema is valid | PASS |
+| TC-APC-06 | Phase 01 paths aligned (docs/requirements/) | PASS |
+| TC-APC-07 | Phase 03 paths aligned (docs/requirements/) | PASS |
+| TC-APC-08 | Phase 04 paths aligned (docs/requirements/) | PASS |
+| TC-APC-09 | Phase 05 paths aligned (docs/requirements/) | PASS |
+| TC-APC-10 | Phase 08 paths aligned (docs/requirements/) | PASS |
+| TC-APC-11 | detects mismatch when iteration-requirements.json has old paths | PASS |
+| TC-APC-12 | no orphan phases in artifact-paths.json | PASS |
 
-### FR-002: getProjectRoot() Per-Process Caching
+### Reproduction Tests (test-gate-blocker-extended.test.cjs)
 
-| AC | Test Cases | Status |
-|----|------------|--------|
-| AC-002a: Second call returns cached value | TC-002a-01, TC-002a-02 | COVERED |
-| AC-002b: CLAUDE_PROJECT_DIR shortcut cached | TC-002b-01, TC-002b-02 | COVERED |
-| AC-002c: Cache consistent when env unchanged | TC-002c-01, TC-002c-02 | COVERED |
+| Test ID | Description | Status |
+|---------|-------------|--------|
+| TC-BUG20-RED01 | Phase 03 artifact at docs/requirements/ passes gate | PASS |
+| TC-BUG20-RED02 | Phase 04 artifact at docs/requirements/ passes gate | PASS |
+| TC-BUG20-RED03 | Phase 05 artifact at docs/requirements/ passes gate | PASS |
+| TC-BUG20-RED04 | Phase 08 artifact at docs/requirements/ passes gate | PASS |
+| TC-BUG20-RED05 | Phase 01 requirements path is correct (baseline) | PASS |
 
-### FR-003: State Read Consolidation
+### Integration Tests (test-gate-blocker-extended.test.cjs)
 
-| AC | Test Cases | Status |
-|----|------------|--------|
-| AC-003a: Single disk read for V7 + V8 | TC-003a-01, TC-003a-02, TC-003a-03 | COVERED |
-| AC-003b: diskState parameter passed to V7 and V8 | TC-003b-01, TC-003b-02 | COVERED |
-| AC-003c: Validates incoming content, not disk | TC-003c-01, TC-003c-02 | COVERED |
-| AC-003d: Fail-open when disk unavailable | TC-003d-01, TC-003d-02 | COVERED |
-
-### FR-004: ctx.manifest Passthrough
-
-| AC | Test Cases | Status |
-|----|------------|--------|
-| AC-004a: Uses provided manifest | TC-004a-01, TC-004a-02 | COVERED |
-| AC-004b: Standalone compatibility | TC-004b-01, TC-004b-02 | COVERED |
-| AC-004c: gate-blocker passes ctx.manifest | TC-004c-01, TC-004c-02 | COVERED |
-| AC-004d: Existing ctx.requirements verified | TC-004d-01, TC-004d-02 | COVERED |
-
-### FR-005: Verified Batch Write Pattern
-
-| AC | Test Cases | Status |
-|----|------------|--------|
-| AC-005a: Dispatchers write at most once | TC-005a-01, TC-005a-02, TC-005a-03 | COVERED |
-| AC-005b: State modifications accumulated | TC-005b-01 | COVERED |
-| AC-005c: WCE manages own state | TC-005c-01, TC-005c-02 | COVERED |
-| AC-005d: post-write-edit skips writeState | TC-005d-01 | COVERED |
-
-### NFR Coverage
-
-| NFR | Test Cases | Status |
-|-----|------------|--------|
-| NFR-001: Performance (cache reduces I/O) | TC-NFR001-01, TC-NFR001-02 | COVERED |
-| NFR-003: Correctness (V7/V8 regression) | TC-NFR003-01, TC-NFR003-02 | COVERED |
-| NFR-004: Observability (debug logging) | TC-NFR004-01 | COVERED |
+| Test ID | Description | Status |
+|---------|-------------|--------|
+| TC-BUG20-INT01 | gate-blocker uses artifact-paths.json over iteration-requirements.json | PASS |
+| TC-BUG20-INT02 | falls back to iteration-requirements.json when artifact-paths.json missing | PASS |
+| TC-BUG20-INT03 | falls back gracefully when artifact-paths.json is malformed | PASS |
+| TC-BUG20-INT04 | blocks when artifact missing even with correct artifact-paths.json | PASS |
+| TC-BUG20-INT05 | {artifact_folder} template resolution works | PASS |
+| TC-BUG20-INT06 | falls back for phase not in artifact-paths.json | PASS |
 
 ## Per-File Coverage
 
-| File | Lines Changed | Test Cases | Functions Tested |
-|------|--------------|------------|-----------------|
-| `src/claude/hooks/lib/common.cjs` | 144 added, 74 removed | 17 | `_loadConfigWithCache`, `getProjectRoot`, `_resetCaches`, `_getCacheStats`, `loadManifest`, `loadIterationRequirements`, `loadWorkflowDefinitions` |
-| `src/claude/hooks/state-write-validator.cjs` | 112 added, 74 removed | 9 | `checkVersionLock`, `checkPhaseFieldProtection`, `check` |
-| `src/claude/hooks/gate-blocker.cjs` | 12 added, 74 removed | 8 | `checkAgentDelegationRequirement` |
-| `src/claude/hooks/tests/test-io-optimization.test.cjs` | 46 new tests | -- | -- |
+| File | Changes | Test Cases | Functions Tested |
+|------|---------|------------|-----------------|
+| `src/claude/hooks/config/artifact-paths.json` | NEW | 12 (TC-APC-*) | N/A (config file) |
+| `src/claude/hooks/config/iteration-requirements.json` | 4 paths corrected | TC-APC-03, RED01-05 | N/A (config file) |
+| `src/claude/hooks/gate-blocker.cjs` | 3 functions added | 11 (TC-BUG20-*) | `loadArtifactPaths`, `getArtifactPathsForPhase`, `resolveArtifactPaths` |
+| `src/claude/hooks/tests/readme-fixes.test.cjs` | 1 path correction | 24/24 pass | N/A (test file) |
 
 ## Regression Suite Results
 
 | Suite | Total | Pass | Fail | New Regressions |
 |-------|-------|------|------|-----------------|
-| CJS hook tests | 1564 | 1563 | 1 pre-existing | 0 |
 | ESM lib tests | 632 | 629 | 3 pre-existing | 0 |
-| I/O optimization tests | 46 | 46 | 0 | 0 |
-| **Total** | **2242** | **2238** | **4 pre-existing** | **0** |
+| CJS hook tests | ~380+ | All | 1 pre-existing | 0 |
+| BUG-0020 tests | 23 | 23 | 0 | 0 |
+| **New Regressions** | -- | -- | -- | **0** |

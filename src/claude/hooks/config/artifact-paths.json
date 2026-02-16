@@ -1,0 +1,31 @@
+{
+  "version": "1.0.0",
+  "description": "Single source of truth for artifact paths per phase. BUG-0020: Resolves path mismatch between agents and gate-blocker.",
+  "phases": {
+    "01-requirements": {
+      "paths": [
+        "docs/requirements/{artifact_folder}/requirements-spec.md"
+      ]
+    },
+    "03-architecture": {
+      "paths": [
+        "docs/requirements/{artifact_folder}/architecture-overview.md"
+      ]
+    },
+    "04-design": {
+      "paths": [
+        "docs/requirements/{artifact_folder}/module-design.md"
+      ]
+    },
+    "05-test-strategy": {
+      "paths": [
+        "docs/requirements/{artifact_folder}/test-strategy.md"
+      ]
+    },
+    "08-code-review": {
+      "paths": [
+        "docs/requirements/{artifact_folder}/review-summary.md"
+      ]
+    }
+  }
+}
