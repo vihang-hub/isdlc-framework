@@ -1,8 +1,8 @@
-# Quality Metrics -- BUG-0018-GH-2 Backlog Picker Pattern Mismatch
+# Quality Metrics -- BUG-0019-GH-1 Blast Radius Relaxation Fix
 
 **Date**: 2026-02-16
 **Phase**: 08-code-review
-**Workflow**: Fix (BUG-0018-GH-2)
+**Workflow**: Fix (BUG-0019-GH-1)
 
 ---
 
@@ -10,67 +10,82 @@
 
 | Suite | Total | Pass | Fail | Skip |
 |-------|-------|------|------|------|
-| test-backlog-picker-content.test.cjs | 26 | 26 | 0 | 0 |
-| **New tests total** | **26** | **26** | **0** | **0** |
-| Full CJS suite (npm run test:hooks) | 1452 | 1451 | 1 | 0 |
-| Full ESM suite (npm test) | 632 | 629 | 3 | 0 |
-| **Combined** | **2084** | **2080** | **4** | **0** |
+| test-blast-radius-step3f.test.cjs | 66 | 66 | 0 | 0 |
+| **New tests total** | **66** | **66** | **0** | **0** |
+| Full CJS suite (npm run test:hooks) | 1518 | 1517 | 1 | 0 |
+| **Combined (CJS only -- BUG-0019 touches CJS)** | **1518** | **1517** | **1** | **0** |
 
 **New regressions**: 0
-**Pre-existing failures**: 4 (TC-E09 agent count, T43 template match, TC-13-01 agent file count, supervised_review gate-blocker)
+**Pre-existing failures**: 1 (supervised_review gate-blocker-extended test -- verified pre-existing via git stash)
 
-**Net test impact**: Stashing the BUG-0018 changes and running the base branch shows 5 CJS failures, confirming all 4 remaining failures are pre-existing and BUG-0018 introduces zero new failures.
+## 2. Acceptance Criteria Coverage
 
-## 2. Requirements Coverage
+| Metric | Value |
+|--------|-------|
+| Total Functional ACs | 19 |
+| Total NFRs | 3 |
+| Total Criteria | 22 |
+| Covered | 22 |
+| Uncovered | 0 |
+| **AC Coverage** | **100%** |
 
-| Metric | Value | Target | Status |
-|--------|-------|--------|--------|
-| ACs covered by tests | 19/19 | 100% | PASS |
-| NFRs validated | 3/3 | 100% | PASS |
-| Orphan code | 0 | 0 | PASS |
-| Unimplemented requirements | 0 | 0 | PASS |
-| FRs implemented | 5/5 | 100% | PASS |
+## 3. Code Metrics
 
-## 3. Code Quality
+### New File: `blast-radius-step3f-helpers.cjs`
 
-| Metric | Value | Target | Status |
-|--------|-------|--------|--------|
-| Critical findings | 0 | 0 | PASS |
-| Major findings | 0 | 0 | PASS |
-| Minor findings | 0 | 0 | PASS |
-| Suggestions | 2 | -- | Note |
-| npm audit vulnerabilities | 0 | 0 | PASS |
-| Module system compliance (CJS) | PASS | CJS | PASS |
-| New dependencies | 0 | 0 | PASS |
-| Synced files verified | PASS | Identical | PASS |
+| Metric | Value |
+|--------|-------|
+| Total lines | 440 |
+| Exported functions | 9 |
+| Exported constants | 2 |
+| Internal helper functions | 1 (escapeRegex) |
+| Average function length | 20 lines |
+| Longest function | `buildBlastRadiusRedelegationContext()` at 61 lines |
+| Cyclomatic complexity (estimated) | Low (max 3 per function, simple branching) |
+| JSDoc coverage | 100% (all exported functions) |
+| Null guard coverage | 100% (all public functions) |
+| Module pattern | CommonJS (`'use strict'`, `module.exports`) |
 
-## 4. File Metrics
+### New File: `test-blast-radius-step3f.test.cjs`
 
-| File | Lines Changed | Type |
-|------|--------------|------|
-| src/claude/agents/00-sdlc-orchestrator.md | ~15 lines modified | Markdown (suffix stripping instructions) |
-| src/claude/commands/isdlc.md | 1 line added | Markdown (design note) |
-| .claude/agents/00-sdlc-orchestrator.md | Synced copy | Verified identical to src |
-| src/claude/hooks/tests/test-backlog-picker-content.test.cjs | 531 lines added (new file) | CJS test file |
-| **Total production** | **~16** | **Net +16** |
-| **Total test** | **531** | **New file** |
+| Metric | Value |
+|--------|-------|
+| Total lines | 842 |
+| Test cases | 66 |
+| Describe blocks | 10 |
+| Test fixtures | 9 (3 block messages, 4 tasks.md variants, 3 req-spec variants) |
+| Factory functions | 2 (featurePhase06State, stateRetriesAtLimit) |
+| Execution time | 54ms |
 
-## 5. Complexity Analysis
+### Modified: `isdlc.md` STEP 3f-blast-radius
 
-| File | Complexity Impact | Assessment |
-|------|-------------------|------------|
-| 00-sdlc-orchestrator.md | N/A (markdown) | Instructions added are clear and unambiguous |
-| isdlc.md | N/A (markdown) | Single explanatory paragraph |
-| test-backlog-picker-content.test.cjs | Low | 5 well-defined helper functions, linear test structure |
+| Metric | Value |
+|--------|-------|
+| New lines added | ~48 |
+| Steps in blast-radius handler | 7 |
+| Prohibitions listed | 4 |
+| Escalation options | 3 (Defer, Skip, Cancel) |
 
-**Net cyclomatic complexity change**: 0 (no executable code modified)
+### Modified: `00-sdlc-orchestrator.md` Section 8.1
 
-## 6. Constitutional Compliance
+| Metric | Value |
+|--------|-------|
+| New lines added | ~15 |
+| Guardrail rules | 5 |
 
-| Article | Status | Evidence |
-|---------|--------|----------|
-| V (Simplicity First) | PASS | Minimal change to fix root cause; no over-engineering |
-| VI (Code Review Required) | PASS | This code review and QA sign-off |
-| VII (Artifact Traceability) | PASS | 19/19 ACs traced to tests and implementation |
-| VIII (Documentation Currency) | PASS | Orchestrator updated to reflect new format, design note added for start action |
-| IX (Quality Gate Integrity) | PASS | GATE-16 passed, GATE-08 validated here |
+## 4. Regression Analysis
+
+| Verification | Result |
+|-------------|--------|
+| blast-radius-validator.cjs unchanged | PASS (git diff empty) |
+| Existing blast-radius-validator exports intact | PASS (TC-REG-03) |
+| formatBlockMessage output format stable | PASS (TC-REG-02) |
+| Generic Retry/Skip/Cancel preserved | PASS (TC-REG-01) |
+| Synced copies match source | PASS (diff verified) |
+
+## 5. Complexity Assessment
+
+**Overall complexity**: Low-Medium
+- The helper module is a pure-logic library with no I/O, no async, no side effects (except state mutation by explicit design).
+- The STEP 3f-blast-radius instructions are a linear 7-step flow with one conditional (retry limit check).
+- The orchestrator guardrails are documentation-only changes.

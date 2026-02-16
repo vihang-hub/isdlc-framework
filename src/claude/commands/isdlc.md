@@ -1305,8 +1305,52 @@ state update, check if adaptive workflow sizing should run.
 
 **3f.** On return, check the result status:
 - `"passed"` or successful completion → Mark task as `completed` **with strikethrough**: update both `status` to `completed` AND `subject` to `~~[N] {base subject}~~` (wrap the original `[N] subject` in `~~`). Continue to next phase.
-- `"blocked_by_hook"` → Display blocker banner (same format as 3c), use `AskUserQuestion` for Retry/Skip/Cancel
+- `"blocked_by_hook"` → Check which hook caused the block (see **3f-blast-radius** below for blast-radius-validator blocks, otherwise use the generic path):
+  - **Generic hook block (non-blast-radius)**: Display blocker banner (same format as 3c), use `AskUserQuestion` for Retry/Skip/Cancel
+  - **Blast-radius-validator block**: Follow the specialized handling in **3f-blast-radius** below
 - Any other error → Display error, use `AskUserQuestion` for Retry/Skip/Cancel
+
+**3f-blast-radius.** BLAST RADIUS BLOCK HANDLING (Traces to: BUG-0019, FR-01 through FR-05)
+
+When the `blocked_by_hook` status comes from `blast-radius-validator` (the block message contains `"BLAST RADIUS COVERAGE INCOMPLETE"`), follow this specialized handling instead of the generic Retry/Skip/Cancel:
+
+1. **Parse unaddressed files from block message**: Extract the list of unaddressed file paths and their expected change types from the block message. The format is:
+   ```
+     - path/to/file (expected: CHANGE_TYPE)
+   ```
+   Use `parseBlockMessageFiles()` from `src/claude/hooks/lib/blast-radius-step3f-helpers.cjs` or parse inline using the pattern above.
+
+2. **Check for valid deferrals in requirements-spec.md**: Read `docs/requirements/{artifact_folder}/requirements-spec.md` and look for a `## Deferred Files` section. Only files explicitly listed there with justification are valid deferrals. Use `isValidDeferral()` from the helpers. Remove valid deferrals from the unaddressed list. Auto-generated deferrals (added by agents to blast-radius-coverage.md without requirements-spec.md backing) are NOT valid.
+
+3. **Cross-reference unaddressed files against tasks.md**: Read `docs/isdlc/tasks.md` and match each remaining unaddressed file against task entries. Use `matchFilesToTasks()` from the helpers. For each file, identify the corresponding task ID (TNNNN) and its status. Flag any discrepancy where a task is marked `[X]` (completed) but the file is still unaddressed in git diff.
+
+4. **Check retry counter**: Read `blast_radius_retries` from `state.json`. If the counter has reached the maximum of 3 retries, escalate to the user with a summary of remaining unaddressed files and their matched tasks. Use `isBlastRadiusRetryExceeded()` from the helpers. Increment the counter using `incrementBlastRadiusRetry()` and log the retry using `logBlastRadiusRetry()`.
+
+5. **Re-delegate to implementation agent (Phase 06)**: If retries remain, re-delegate to the `software-developer` agent with a prompt that includes:
+   - The specific list of unaddressed file paths and their expected change types
+   - The matched task IDs and descriptions from tasks.md
+   - **CRITICAL PROHIBITIONS**: The re-delegation prompt MUST include these prohibitions:
+     - "DO NOT modify impact-analysis.md — it is read-only after Phase 02"
+     - "DO NOT add deferral entries to blast-radius-coverage.md"
+     - "DO NOT modify state.json blast radius metadata to circumvent validation"
+     - "MUST NOT auto-generate deferrals — only requirements-spec.md Deferred Files are valid"
+   Use `formatRedelegationPrompt()` from the helpers to build the prompt, or include these elements inline.
+
+6. **After re-implementation, retry the gate**: After the re-delegated implementation completes, loop back to STEP 3d to re-run the phase delegation (which will trigger blast-radius-validator again). This is the natural retry path — the phase-loop re-enters at the delegation step.
+
+7. **Escalation on retry limit exceeded (max 3 retries)**: If 3 blast-radius re-implementation attempts have been made and files remain unaddressed, present an escalation menu to the user:
+   ```
+   BLAST RADIUS: Re-implementation retry limit (3) exceeded.
+   Remaining unaddressed files: {count}
+   {file list with change types}
+
+   Options:
+   [D] Defer with justification — Add files to requirements-spec.md Deferred Files section
+   [S] Skip (override) — Continue without full blast radius coverage
+   [C] Cancel workflow
+   ```
+
+**IMPORTANT**: The `impact-analysis.md` file is READ-ONLY after Phase 02. The phase-loop controller and all agents MUST NOT modify it to circumvent blast radius validation. The only valid way to exclude a file from blast radius enforcement is to list it in the `## Deferred Files` section of `requirements-spec.md` with justification.
 
 #### STEP 4: FINALIZE — Complete the workflow
 

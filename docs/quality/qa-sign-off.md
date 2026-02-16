@@ -1,82 +1,84 @@
-# QA Sign-Off: BUG-0018-GH-2 -- Backlog Picker Pattern Mismatch
+# QA Sign-Off: BUG-0019-GH-1 -- Blast Radius Relaxation Fix
 
 **Phase**: 08-code-review
 **Generated**: 2026-02-16
 **Agent**: QA Engineer (Phase 08)
-**Workflow**: Fix (BUG-0018-GH-2)
+**Workflow**: Fix (BUG-0019-GH-1)
 
 ---
 
 ## GATE-08 Checklist
 
-| # | Check | Status | Notes |
-|---|-------|--------|-------|
-| 1 | Code review completed for all changes | PASS | 4 files reviewed (3 modified + 1 synced copy) |
+| # | Gate Criterion | Status | Evidence |
+|---|---------------|--------|----------|
+| 1 | Code review completed for all changes | PASS | 4 production files + 2 synced copies reviewed in `docs/requirements/BUG-0019-GH-1/code-review-report.md` |
 | 2 | No critical code review issues open | PASS | 0 critical, 0 major, 0 minor findings |
-| 3 | Static analysis passing (no errors) | PASS | All files parse cleanly; no new lint issues |
-| 4 | Code coverage meets thresholds | PASS | 19/19 ACs covered (100%); 26/26 tests pass |
-| 5 | Coding standards followed | PASS | CJS convention, naming, structure all consistent |
-| 6 | Performance acceptable | PASS | NFR-3 satisfied (markdown-only change, no measurable latency) |
-| 7 | Security review complete | PASS | No security surface area; npm audit 0 vulnerabilities |
+| 3 | Static analysis passing (no errors) | PASS | `node --check` passes on both new files; no syntax errors |
+| 4 | Code coverage meets thresholds | PASS | 100% acceptance criteria coverage (22/22) |
+| 5 | Coding standards followed | PASS | CJS module pattern, JSDoc documentation, null guards, traceability annotations |
+| 6 | Performance acceptable | PASS | 66 tests execute in 54ms; helper functions are O(n) with small input sets |
+| 7 | Security review complete | PASS | No eval, no hardcoded secrets, regex injection mitigated via escapeRegex() |
 | 8 | QA sign-off obtained | PASS | This document |
 
 ---
 
-## Code Review Summary
+## Constitutional Compliance
 
-| File | Change | Verdict |
-|------|--------|---------|
-| src/claude/agents/00-sdlc-orchestrator.md | ~15 lines: suffix-stripping instructions in BACKLOG PICKER | PASS |
-| src/claude/commands/isdlc.md | 1 line: design note for `start` action reuse | PASS |
-| .claude/agents/00-sdlc-orchestrator.md | Synced copy (verified identical via diff) | PASS |
-| src/claude/hooks/tests/test-backlog-picker-content.test.cjs | 531 lines: 26 new content-verification tests | PASS |
-
----
-
-## Regression Analysis
-
-| Suite | Pass | Fail | New Regressions |
-|-------|------|------|-----------------|
-| New tests (backlog picker) | 26 | 0 | 0 |
-| CJS hooks (npm run test:hooks) | 1451 | 1 | 0 |
-| ESM lib (npm test) | 629 | 3 | 0 |
-| **Total** | **2106** | **4** | **0** |
-
-All 4 failures are pre-existing on the base branch (confirmed by stashing changes and re-running). BUG-0018-GH-2 introduces zero new test failures.
+| Article | Requirement | Verdict |
+|---------|-------------|---------|
+| Article V (Simplicity First) | No unnecessary complexity | PASS -- Helper functions are single-purpose. STEP 3f flow is minimal and linear. No premature abstractions. |
+| Article VI (Code Review Required) | Code review completed | PASS -- Detailed review in `docs/requirements/BUG-0019-GH-1/code-review-report.md`. |
+| Article VII (Artifact Traceability) | Code traces to requirements | PASS -- All 9 exported functions have `Traces to:` annotations. All 19 ACs + 3 NFRs traced to test cases. No orphan code or requirements. |
+| Article VIII (Documentation Currency) | Documentation current | PASS -- Orchestrator Section 8.1 documents guardrails. STEP 3f documents new flow. JSDoc on all exports. |
+| Article IX (Quality Gate Integrity) | Required artifacts exist | PASS -- code-review-report.md, quality-metrics.md, static-analysis-report.md, technical-debt.md, qa-sign-off.md all produced. |
 
 ---
 
-## Constitutional Compliance (Articles V, VI, VII, VIII, IX)
+## Test Verification Summary
 
-| Article | Status | Evidence |
-|---------|--------|----------|
-| V (Simplicity First) | PASS | Minimal fix: ~15 lines of markdown instruction changes address root cause directly. No over-engineering. |
-| VI (Code Review Required) | PASS | Full code review completed by QA Engineer; all files inspected; findings documented in code-review-report.md |
-| VII (Artifact Traceability) | PASS | Complete traceability: 5 FRs + 3 NFRs -> 19 ACs -> 26 tests -> 4 files. No orphan code, no unimplemented requirements. |
-| VIII (Documentation Currency) | PASS | Orchestrator updated to reflect new BACKLOG.md format. Design note added for `start` action reuse. Test file includes header documentation with requirement traces. |
-| IX (Quality Gate Integrity) | PASS | GATE-16 passed in Phase 16. GATE-08 validated here with all 8 checklist items passing. |
+| Test Suite | Total | Pass | Fail | New Regressions |
+|-----------|-------|------|------|-----------------|
+| test-blast-radius-step3f.test.cjs (NEW) | 66 | 66 | 0 | -- |
+| Full CJS suite (npm run test:hooks) | 1518 | 1517 | 1 | 0 |
 
----
-
-## Artifacts Produced (Phase 08)
-
-| Artifact | Path |
-|----------|------|
-| Code Review Report (requirement-specific) | `docs/requirements/BUG-0018-GH-2/code-review-report.md` |
-| Code Review Report (global) | `docs/quality/code-review-report.md` |
-| Quality Metrics | `docs/quality/quality-metrics.md` |
-| Static Analysis Report | `docs/quality/static-analysis-report.md` |
-| Technical Debt Assessment | `docs/quality/technical-debt.md` |
-| QA Sign-Off | `docs/quality/qa-sign-off.md` |
-| Gate Validation | `docs/.validations/gate-08-code-review.json` |
+The 1 CJS failure (supervised_review in gate-blocker-extended) is pre-existing and unrelated to BUG-0019. Verified via `git stash` to confirm the failure exists on main without the BUG-0019 changes.
 
 ---
 
-## Verdict
+## Requirement Coverage
 
-**GATE-08: PASS**
+All 5 functional requirements (FR-01 through FR-05) with 19 acceptance criteria and 3 non-functional requirements have been verified:
 
-The BUG-0018-GH-2 fix passes all code review and quality checks with zero critical/major/minor findings, zero regressions, and full constitutional compliance. 26 new tests provide 100% acceptance criteria coverage. The fix is ready for workflow completion (merge to main).
+- **FR-01** (Return to Implementation): 4 ACs verified -- re-delegation with file list, prohibitions against impact-analysis.md and state.json modification
+- **FR-02** (Task Plan Cross-Reference): 4 ACs verified -- tasks.md reading, matching, prompt inclusion, discrepancy detection
+- **FR-03** (Retry Loop): 4 ACs verified -- gate re-run, max 3 retries, escalation, logging
+- **FR-04** (Explicit Deferral): 4 ACs verified -- requirements-spec.md validation, auto-generated deferral rejection
+- **FR-05** (STEP 3f Enhancement): 5 ACs verified -- detection, extraction, matching, re-delegation, gate re-run
+- **NFR-01** (No Regression): Verified via unchanged validator + regression tests
+- **NFR-02** (Backward Compatibility): Verified via preserved generic handler + regression test
+- **NFR-03** (Logging): Verified via retry log with iteration/count/tasks/timestamp
 
-**Signed off by**: QA Engineer (Phase 08)
-**Timestamp**: 2026-02-16
+---
+
+## Regression Verification
+
+| Check | Method | Result |
+|-------|--------|--------|
+| blast-radius-validator.cjs unchanged | `git diff main` | Empty diff |
+| Validator exports intact | TC-REG-03 | PASS |
+| formatBlockMessage format stable | TC-REG-02 | PASS |
+| Generic block handling preserved | TC-REG-01 | PASS |
+| Synced copies match source | `diff` command | Identical |
+
+---
+
+## Decision
+
+**GATE-08 VERDICT: PASS**
+
+All gate criteria satisfied. Code review complete with 0 blocking findings. 66/66 new tests passing. 0 new regressions. Full constitutional compliance on all 5 applicable articles. Ready for workflow finalization.
+
+---
+
+**Signed**: QA Engineer (Phase 08)
+**Date**: 2026-02-16
