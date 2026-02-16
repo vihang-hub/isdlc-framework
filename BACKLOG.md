@@ -5,6 +5,17 @@
 
 ## Open
 
+### 0. Bugs
+
+- 0.19 [ ] **BUG: Artifact path mismatch between agents and gate-blocker — no single source of truth**
+  - **Severity**: High — 4 of 5 phases with artifact validation are mismatched; causes gate blocks
+  - **Root cause**: Agent OUTPUT STRUCTURE sections and `iteration-requirements.json` `artifact_validation.paths` are defined independently with no shared source of truth. They drifted as agents were refactored.
+  - **Observed**: Phase 08 gate blocked during REQ-0020 — hook expected `docs/reviews/{artifact_folder}/review-summary.md`, agent wrote to `docs/requirements/{artifact_folder}/code-review-report.md`
+  - **Mismatch scope**: Phase 03 (architecture), 04 (design), 05 (test-strategy), 08 (code-review) — only Phase 01 (requirements) matches
+  - **Fix**: Create a shared `artifact-paths.json` template as the single source of truth. Gate-blocker reads it for validation, agents reference it for output paths. Drift becomes structurally impossible. Add a validation test to catch future mismatches.
+  - **Files**: `src/claude/hooks/config/iteration-requirements.json`, `src/claude/hooks/gate-blocker.cjs`, `src/claude/agents/02-solution-architect.md`, `src/claude/agents/03-system-designer.md`, `src/claude/agents/04-test-design-engineer.md`, `src/claude/agents/07-qa-engineer.md`
+  - **GitHub**: [#4](https://github.com/vihang-hub/isdlc-framework/issues/4)
+
 ### 1. Spec-Kit Learnings (from framework comparison 2026-02-11)
 
 - 1.1 [ ] Spike/explore workflow — parallel implementation branches from a single spec for tech stack comparison or architecture exploration (Spec-Kit's "Creative Exploration")
