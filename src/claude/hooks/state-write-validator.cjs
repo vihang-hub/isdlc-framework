@@ -102,7 +102,14 @@ function validatePhase(phaseName, phaseData, filePath) {
  * @returns {{ decision: string, stopReason?: string, stderr?: string } | null}
  *   Returns a block/allow result if V7 applies, or null to continue to other rules.
  */
-function checkVersionLock(filePath, toolInput, toolName) {
+/**
+ * @param {string} filePath - Path to the state.json file
+ * @param {object} toolInput - The tool_input from the hook event
+ * @param {string} toolName - 'Write' or 'Edit'
+ * @param {object|null} [diskState] - Pre-read disk state (FR-003), or null if unavailable
+ * @returns {{ decision: string, stopReason?: string, stderr?: string } | null}
+ */
+function checkVersionLock(filePath, toolInput, toolName, diskState) {
     // V7 only applies to Write events (Edit reads from disk post-write)
     if (toolName !== 'Write') {
         return null;
@@ -112,7 +119,7 @@ function checkVersionLock(filePath, toolInput, toolName) {
         // Parse incoming content to get incoming state_version
         const incomingContent = toolInput.content;
         if (!incomingContent || typeof incomingContent !== 'string') {
-            return null; // No content to check — allow
+            return null; // No content to check -- allow
         }
 
         let incomingState;
@@ -124,34 +131,23 @@ function checkVersionLock(filePath, toolInput, toolName) {
         }
 
         // BUG-0007 fix (0.3): Explicit type guard after JSON.parse for incoming content.
-        // JSON.parse can return null, numbers, booleans, strings -- all valid JSON but
-        // not valid state objects. Guard before property access to avoid silent TypeError.
         if (!incomingState || typeof incomingState !== 'object') {
-            debugLog('V7 version check skipped: incoming content parsed to', typeof incomingState, '— not an object');
+            debugLog('V7 version check skipped: incoming content parsed to', typeof incomingState, '-- not an object');
             return null; // fail-open
         }
 
         const incomingVersion = incomingState.state_version;
 
-        // Read current disk state_version BEFORE checking incoming version
-        // BUG-0017: Must read disk first to detect unversioned writes against versioned disk
-        let diskVersion;
-        try {
-            if (!fs.existsSync(filePath)) {
-                return null; // No disk file — allow (first write)
+        // AC-003b: Use pre-read diskState instead of reading from disk
+        // AC-003d: diskState is null when file does not exist -- fail-open
+        if (!diskState || typeof diskState !== 'object') {
+            // Backward compat: if diskState not provided, allow (fail-open)
+            if (incomingVersion === undefined || incomingVersion === null) {
+                return null; // Both unversioned
             }
-            const diskContent = fs.readFileSync(filePath, 'utf8');
-            const diskState = JSON.parse(diskContent);
-            // BUG-0007 fix (0.3): Explicit type guard after JSON.parse for disk content.
-            if (!diskState || typeof diskState !== 'object') {
-                debugLog('V7 version check skipped: disk state parsed to', typeof diskState, '— not an object');
-                return null; // fail-open
-            }
-            diskVersion = diskState.state_version;
-        } catch (e) {
-            // Fail-open: error reading disk file
-            return null;
+            return null; // No disk to compare against
         }
+        const diskVersion = diskState.state_version;
 
         // BUG-0017: If incoming has no state_version, check disk before allowing
         if (incomingVersion === undefined || incomingVersion === null) {
@@ -159,7 +155,7 @@ function checkVersionLock(filePath, toolInput, toolName) {
             if (diskVersion === undefined || diskVersion === null) {
                 return null;
             }
-            // Disk has version but incoming does not — BLOCK with actionable message
+            // Disk has version but incoming does not -- BLOCK with actionable message
             const reason = `Unversioned write rejected: disk state has state_version ${diskVersion} but incoming write has no state_version. Include state_version in your write. Re-read .isdlc/state.json before writing.`;
             console.error(`[state-write-validator] V7 BLOCK: ${reason}`);
             logHookEvent('state-write-validator', 'block', {
@@ -229,7 +225,14 @@ const PHASE_STATUS_ORDINAL = {
  * @returns {{ decision: string, stopReason?: string } | null}
  *   Returns a block result if V8 detects regression, or null to continue.
  */
-function checkPhaseFieldProtection(filePath, toolInput, toolName) {
+/**
+ * @param {string} filePath - Path to the state.json file
+ * @param {object} toolInput - The tool_input from the hook event
+ * @param {string} toolName - 'Write' or 'Edit'
+ * @param {object|null} [diskState] - Pre-read disk state (FR-003), or null if unavailable
+ * @returns {{ decision: string, stopReason?: string } | null}
+ */
+function checkPhaseFieldProtection(filePath, toolInput, toolName, diskState) {
     // V8 only applies to Write events (AC-04a, AC-04b)
     if (toolName !== 'Write') {
         return null;
@@ -256,16 +259,9 @@ function checkPhaseFieldProtection(filePath, toolInput, toolName) {
             return null;
         }
 
-        // Read current disk state
-        let diskState;
-        try {
-            if (!fs.existsSync(filePath)) {
-                return null; // AC-03b: Fail-open when disk file missing
-            }
-            const diskContent = fs.readFileSync(filePath, 'utf8');
-            diskState = JSON.parse(diskContent);
-        } catch (e) {
-            // AC-03b: Fail-open on disk read error
+        // AC-003b: Use pre-read diskState instead of reading from disk
+        // AC-003d: diskState is null when file does not exist -- fail-open
+        if (!diskState || typeof diskState !== 'object') {
             return null;
         }
 
@@ -377,26 +373,52 @@ function check(ctx) {
 
         debugLog('State.json write detected:', filePath);
 
-        // Rule V7: Version check (BUG-0009) — runs BEFORE content validation
-        const v7Result = checkVersionLock(filePath, toolInput, input.tool_name);
+        // FR-003 / AC-003a: Read disk state ONCE for V7 + V8
+        let diskState = null;
+        try {
+            if (fs.existsSync(filePath)) {
+                const diskContent = fs.readFileSync(filePath, 'utf8');
+                const parsed = JSON.parse(diskContent);
+                if (parsed && typeof parsed === 'object') {
+                    diskState = parsed;
+                }
+            }
+        } catch (e) {
+            // AC-003d: fail-open, diskState remains null
+            debugLog('Could not read disk state for V7/V8:', e.message);
+        }
+
+        // Rule V7: Version check (BUG-0009) -- uses diskState
+        const v7Result = checkVersionLock(filePath, toolInput, input.tool_name, diskState);
         if (v7Result && v7Result.decision === 'block') {
             return v7Result;
         }
 
-        // Rule V8: Phase field protection (BUG-0011) — runs after V7, before V1-V3
-        const v8Result = checkPhaseFieldProtection(filePath, toolInput, input.tool_name);
+        // Rule V8: Phase field protection (BUG-0011) -- uses same diskState
+        const v8Result = checkPhaseFieldProtection(filePath, toolInput, input.tool_name, diskState);
         if (v8Result && v8Result.decision === 'block') {
             return v8Result;
         }
 
-        // Read the file from disk (it was just written)
+        // V1-V3: Validate state content for suspicious patterns
         let stateData;
-        try {
-            const content = fs.readFileSync(filePath, 'utf8');
-            stateData = JSON.parse(content);
-        } catch (e) {
-            debugLog('Could not read/parse state.json:', e.message);
-            return { decision: 'allow' };
+        if (input.tool_name === 'Write' && toolInput.content && typeof toolInput.content === 'string') {
+            // AC-003c: Parse from incoming content when available (avoids re-reading disk)
+            try {
+                stateData = JSON.parse(toolInput.content);
+            } catch (e) {
+                debugLog('Could not parse incoming state content:', e.message);
+                return { decision: 'allow' };
+            }
+        } else {
+            // Edit events or Write without content: read from disk
+            try {
+                const content = fs.readFileSync(filePath, 'utf8');
+                stateData = JSON.parse(content);
+            } catch (e) {
+                debugLog('Could not read/parse state.json:', e.message);
+                return { decision: 'allow' };
+            }
         }
 
         // Validate each phase

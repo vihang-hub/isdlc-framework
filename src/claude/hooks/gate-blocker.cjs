@@ -360,20 +360,21 @@ function checkElicitationRequirement(phaseState, phaseRequirements) {
  * Check if agent delegation requirement is satisfied
  * Verifies the expected agent for the current phase was invoked at least once
  */
-function checkAgentDelegationRequirement(phaseState, phaseRequirements, state, currentPhase) {
+function checkAgentDelegationRequirement(phaseState, phaseRequirements, state, currentPhase, manifest) {
     const delegationReq = phaseRequirements.agent_delegation_validation;
     if (!delegationReq || !delegationReq.enabled) {
         return { satisfied: true, reason: 'not_required' };
     }
 
-    const manifest = loadManifest();
-    if (!manifest || !manifest.ownership) {
+    // AC-004c: Use provided manifest, fall back to loadManifest() (AC-004b: standalone compat)
+    const resolvedManifest = manifest || loadManifest();
+    if (!resolvedManifest || !resolvedManifest.ownership) {
         return { satisfied: true, reason: 'no_manifest' };
     }
 
     // Find agent that owns this phase
     let expectedAgent = null;
-    for (const [agent, info] of Object.entries(manifest.ownership)) {
+    for (const [agent, info] of Object.entries(resolvedManifest.ownership)) {
         if (info.phase === currentPhase) {
             expectedAgent = agent;
             break;
@@ -727,7 +728,8 @@ function check(ctx) {
         }
 
         // 4. Agent delegation check
-        const delegationCheck = checkAgentDelegationRequirement(phaseState, phaseReq, state, currentPhase);
+        // AC-004a: Pass ctx.manifest to avoid redundant loadManifest() call
+        const delegationCheck = checkAgentDelegationRequirement(phaseState, phaseReq, state, currentPhase, ctx.manifest || null);
         if (!delegationCheck.satisfied) {
             checks.push({
                 requirement: 'agent_delegation',
