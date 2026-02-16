@@ -250,6 +250,7 @@ Enter selection (1-5):
    - If args contain "--supervised": set flags.supervised = true, remove "--supervised" from description
    - If args contain "--debate": set flags.debate = true, remove "--debate" from description
    - If args contain "--no-debate": set flags.no_debate = true, remove "--no-debate" from description
+   - If args contain "--no-fan-out": set flags.no_fan_out = true, remove "--no-fan-out" from description
 4. Initialize `active_workflow` in state.json with type `"feature"`, phases `["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]`, and flags: `{ light: flags.light || false }`
    - If flags.supervised: pass `--supervised` flag to orchestrator init (sets supervised_mode.enabled=true in state)
    - If flags.debate or flags.no_debate: pass to orchestrator for debate mode resolution
@@ -263,6 +264,7 @@ Enter selection (1-5):
 |------|--------|---------|
 | `--debate` | Force debate mode ON (multi-agent debate team: requirements + architecture) | Implied for standard/epic sizing |
 | `--no-debate` | Force debate mode OFF (single-agent mode for all phases) | Implied for -light |
+| `--no-fan-out` | Disable fan-out parallelism in Phase 16 and Phase 08 (use single-agent execution) | Off (fan-out enabled by default) |
 
 **Flag precedence** (highest to lowest):
 1. `--no-debate` -- always wins (conservative override)
@@ -309,6 +311,7 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 2. Check no active workflow
 3. Parse flags from command arguments:
    - If args contain "--supervised": set flags.supervised = true, remove "--supervised" from description
+   - If args contain "--no-fan-out": set flags.no_fan_out = true, remove "--no-fan-out" from description
 4. Initialize `active_workflow` with type `"fix"` and phases `["01-requirements", "02-tracing", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]`
    - If flags.supervised: pass `--supervised` flag to orchestrator init (sets supervised_mode.enabled=true in state)
 4. If `--link` provided, pass it to Agent 01 as the external bug URL

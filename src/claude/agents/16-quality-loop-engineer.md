@@ -14,6 +14,7 @@ owned_skills:
   - QL-009  # dependency-audit
   - QL-010  # automated-code-review
   - QL-011  # quality-report-generation
+  - QL-012  # fan-out-orchestration
 ---
 
 # Phase 16: Quality Loop Engineer
@@ -164,7 +165,103 @@ Spawn as a Task sub-agent with the following checks:
 
 Track B MAY internally parallelize its work by spawning sub-agents for groups B1 and B2 (see Grouping Strategy below). Each sub-group SHOULD report results independently, and the Track B sub-agent MUST consolidate all sub-group results into a single Track B result before returning.
 
+## Fan-Out Protocol (Track A)
+
+When the test suite is large enough, Track A uses the fan-out engine (QL-012) to
+split tests across multiple parallel chunk agents for faster execution.
+Track B is unchanged and not affected by fan-out -- it continues as a single QA sub-agent.
+
+### Activation
+
+The Track A sub-agent decides whether to fan out:
+
+1. Read fan_out config from state.json (see Configuration Resolution below)
+2. IF fan-out is disabled (any reason): use single-agent path (existing behavior)
+3. Count test files: T = number of test files discovered by framework detection
+4. IF T < min_tests_threshold (default 250): use single-agent path
+5. COMPUTE N = min(ceil(T / tests_per_agent), max_agents)
+6. IF N <= 1: use single-agent path
+7. OTHERWISE: use fan-out path with N chunks
+
+### Configuration Resolution
+
+Read from state.json with this precedence (highest to lowest):
+1. `active_workflow.flags.no_fan_out` (CLI flag -- overrides all)
+2. `fan_out.phase_overrides["16-quality-loop"].enabled` (per-phase)
+3. `fan_out.enabled` (global)
+4. Default: true
+
+Phase-specific defaults:
+- tests_per_agent: 250
+- min_tests_threshold: 250
+- max_agents: 8 (maximum, hard cap)
+- strategy: round-robin
+- timeout_per_chunk_ms: 600000
+
+### Chunk Splitting
+
+Use the round-robin strategy from the fan-out engine:
+1. Discover all test files using framework detection
+2. Sort test file paths alphabetically (determinism guarantee)
+3. Split into N chunks using round-robin distribution
+4. Each chunk receives approximately T/N test files
+
+### Chunk Agent Prompt
+
+Each chunk agent receives a prompt with:
+- Role: fan-out chunk test runner for Phase 16 Quality Loop, Track A
+- Context: phase, chunk index, strategy, item counts
+- Test file list for this chunk only
+- Full Track A pipeline instructions (build, lint, type-check, test, coverage)
+- Read-only constraints (see below)
+- Return format specification
+
+**CRITICAL CONSTRAINTS for chunk agents:**
+1. Do NOT write to .isdlc/state.json -- the parent agent manages state
+2. Do NOT run git add, git commit, git push, or any git write operations
+3. Do NOT modify source files -- chunk agents are read-only
+4. Do NOT spawn sub-agents -- chunk agents are leaf agents
+5. Run ONLY the test files listed -- do not run the full test suite
+6. Include chunk_index in the response
+
+### Result Merging
+
+After all N chunk agents return:
+1. Parse each chunk result
+2. If a chunk failed to return structured results, mark it as status: "failed"
+3. Aggregate pass/fail/skip counts (sum across all chunks)
+4. Union coverage at line level (lines covered by ANY chunk count as covered)
+5. Collect all failures with source_chunk annotation
+6. Merge check results: any FAIL in any chunk = overall FAIL
+7. Return merged result in the same schema as single-agent Track A result
+
+### Partial Failure Handling
+
+If K of N chunks fail (status != "completed"):
+- Merge results from the N-K successful chunks
+- Mark merged result as `degraded: true`
+- Include failed chunk details in `fan_out_summary.failures`
+- The overall Track A result reflects partial data
+- The iteration loop will retry the full phase (all N chunks) on failure
+
+### Interaction with Existing Dual-Track Model
+
+Fan-out operates WITHIN Track A only. The dual-track model is unchanged:
+- Track A (fan-out enabled): Split tests -> N parallel chunks -> merge
+- Track B (no fan-out, no changes): Single QA sub-agent (unchanged)
+- Consolidation: Merge Track A + Track B results (unchanged)
+
+The quality-loop-engineer spawns Track A + Track B as 2 parallel Tasks (existing).
+Track A internally spawns N chunk Tasks (new). These are nested, not at the same level.
+
+Orchestration overhead is designed to stay below 5% of total execution time.
+
 ### Grouping Strategy for Internal Parallelism
+
+**NOTE**: When fan-out is active (test count >= threshold), the A1/A2/A3 grouping
+below is NOT used. Fan-out replaces it with N chunk agents, each running the full
+Track A pipeline. The grouping below applies ONLY when fan-out is inactive
+(test count below threshold or fan-out disabled).
 
 Each track MAY further parallelize its internal work using one of two modes:
 
@@ -245,8 +342,45 @@ After both tracks complete, update `phases[phase].test_results` in state.json wi
         "A3": ["QL-003"],
         "B1": ["QL-008", "QL-009"],
         "B2": ["QL-010"]
+      },
+      "fan_out": {
+        "used": false,
+        "total_items": 0,
+        "chunk_count": 0,
+        "strategy": "none"
       }
     }
+  }
+}
+```
+
+When fan-out is active, the `fan_out` section is populated with actual values:
+
+```json
+{
+  "fan_out": {
+    "used": true,
+    "total_items": 1050,
+    "chunk_count": 5,
+    "strategy": "round-robin",
+    "chunks": [
+      { "index": 0, "item_count": 210, "elapsed_ms": 42000, "status": "completed" }
+    ],
+    "merge_elapsed_ms": 500,
+    "total_elapsed_ms": 42500,
+    "degraded": false,
+    "failures": []
+  }
+}
+```
+
+And the `track_timing.track_a.groups` array uses chunk identifiers instead of A1/A2/A3:
+
+```json
+{
+  "track_timing": {
+    "track_a": { "elapsed_ms": 42500, "groups": ["chunk-0", "chunk-1", "chunk-2", "chunk-3", "chunk-4"] },
+    "track_b": { "elapsed_ms": 32000, "groups": ["B1", "B2"] }
   }
 }
 ```
@@ -258,6 +392,18 @@ After both tracks complete, merge results into a unified report:
 1. **Pass/fail for every individual check**, organized by track and group (Track A > Group A1 > QL-007 PASS, QL-005 PASS, QL-006 PASS, etc.)
 2. If ANY check in either track fails, the consolidated result MUST be marked as **FAILED** with a structured list of all failures across both tracks
 3. Track-level pass/fail summary: Track A PASS/FAIL, Track B PASS/FAIL
+
+When fan-out was used in Track A, the Track A result is already a merged result
+from N chunk agents. The consolidation step treats it identically to a single-agent
+Track A result because the schema is the same (backward compatible).
+
+The `quality-report.md` MUST include a **Parallelism Summary** section when fan-out was used:
+- Number of chunk agents
+- Strategy used (round-robin)
+- Items per chunk
+- Per-chunk timing
+- Duplicates removed (0 for tests -- chunks are disjoint)
+- Degraded status
 
 The `quality-report.md` MUST include a **Parallel Execution Summary** section showing:
 - Which checks ran in parallel (group composition and group breakdown)
@@ -336,6 +482,7 @@ This agent's owned skills are documented for observability. The skill manifest t
 | QL-009 | dependency-audit | Dependency vulnerability audit |
 | QL-010 | automated-code-review | Automated code review patterns |
 | QL-011 | quality-report-generation | Generating unified quality report |
+| QL-012 | fan-out-orchestration | Splitting work across N parallel chunk agents |
 
 ## SUGGESTED PROMPTS
 

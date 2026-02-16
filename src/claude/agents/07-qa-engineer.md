@@ -101,6 +101,100 @@ When implementation_loop_state is absent or status != "completed":
 - No behavioral change whatsoever
 - This is the default/fallback path
 
+## Fan-Out Protocol (Code Review)
+
+When the changeset is large enough, this agent uses the fan-out engine (QL-012)
+to split file review across multiple parallel reviewer agents.
+
+### Activation
+
+1. Read fan_out config from state.json
+2. IF fan-out is disabled (flag, global, or per-phase): review all files as single agent
+3. Gather changed files: run `git diff --name-only main...HEAD` (or base branch)
+4. Filter to relevant file types (exclude binary, lockfiles, generated files):
+   - INCLUDE: .js, .cjs, .mjs, .ts, .tsx, .jsx, .md, .json, .yaml, .yml, .sh, .ps1
+   - EXCLUDE: package-lock.json, yarn.lock, *.min.js, coverage/*, node_modules/*
+5. Count remaining files: F
+6. IF F < min_files_threshold (default 5): review all files as single agent
+7. COMPUTE N = min(ceil(F / files_per_agent), max_agents)
+8. IF N <= 1: review all files as single agent
+9. OTHERWISE: use fan-out path with N chunks
+
+### Configuration Resolution
+
+Read from state.json with this precedence (highest to lowest):
+1. `active_workflow.flags.no_fan_out` (CLI flag)
+2. `fan_out.phase_overrides["08-code-review"].enabled` (per-phase)
+3. `fan_out.enabled` (global)
+4. Default: true
+
+Phase-specific defaults:
+- files_per_agent: 7
+- min_files_threshold: 5
+- max_agents: 8 (maximum, hard cap)
+- strategy: group-by-directory
+- timeout_per_chunk_ms: 600000
+
+### Chunk Splitting
+
+Use the group-by-directory strategy from the fan-out engine:
+1. Group changed files by parent directory
+2. Sort directory groups by name (determinism)
+3. Use first-fit-decreasing to assign groups to N chunks
+4. Files in the same directory stay together for contextual review
+
+### Reviewer Chunk Agent Prompt
+
+Each chunk reviewer agent receives a prompt with:
+- Role: fan-out chunk code reviewer for Phase 08 Code Review
+- Context: phase, chunk index, strategy, item counts, scope mode
+- File list for this chunk (grouped by directory)
+- Review instructions appropriate to scope mode (FULL SCOPE or HUMAN REVIEW ONLY)
+- Structured finding format: file, line_start, line_end, severity, category, description, suggestion
+- Cross-cutting concern reporting format
+- Read-only constraints
+
+**CRITICAL CONSTRAINTS for chunk agents:**
+1. Do NOT write to .isdlc/state.json
+2. Do NOT run git add, git commit, git push, or any git write operations
+3. Do NOT modify source files
+4. Do NOT spawn sub-agents
+5. Include chunk_index in the response
+
+### Result Merging
+
+After all N reviewer agents return:
+1. Parse each chunk result
+2. If a chunk failed to return structured results, mark it as status: "failed"
+3. Collect all findings from successful chunks
+4. Deduplicate: same file + same category + overlapping line ranges = duplicate
+   (keep finding with longer description; tie-break by lower chunk_index)
+5. Sort by severity: critical > high > medium > low
+   (within same severity: sort by file path, then line_start)
+6. Collect all cross-cutting concerns, merge by affected_files overlap
+7. Aggregate summary counts
+8. Generate code-review-report.md with the merged findings
+
+### Cross-Cutting Concern Detection
+
+Cross-cutting concerns can originate from two sources:
+1. **Within a chunk**: A chunk reviewer identifies concerns spanning files in its chunk
+2. **Across chunks**: The merger detects patterns across chunk boundaries
+
+For across-chunk detection, after merging:
+- IF the same file appears in findings from 2+ chunks: flag as potential cross-cutting
+- IF findings in different chunks reference the same exported function/class: flag as
+  potential cross-cutting
+- These detected concerns are marked as "merger-detected" vs "reviewer-reported"
+
+### Partial Failure Handling
+
+If K of N reviewers fail:
+- Merge findings from the N-K successful reviewers
+- Mark result as degraded: true
+- Log which file chunks were NOT reviewed (from failed chunks)
+- Include a "Review Coverage Gaps" section in the report listing unreviewed files
+
 # CORE RESPONSIBILITIES
 
 1. **Code Review**: Review code for logic, maintainability, security, performance
