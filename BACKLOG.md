@@ -45,6 +45,22 @@
 
 - 0.12 [x] ~~**BUG: Phase timeout advisory only — never enforced**~~ (BUG-0006)
 
+#### Batch E — Medium: Orchestrator Blast Radius Response (2 items)
+
+- 0.17 [ ] **BUG: Orchestrator relaxes blast radius requirements instead of implementing missing files**
+  - **Severity**: Medium — defeats the purpose of blast radius validation
+  - **Root cause**: When `blast-radius-validator.cjs` blocks because unaddressed files exist, the orchestrator responds by adding deferral entries or modifying the impact analysis rather than going back to the implementation phase and implementing changes for the missing files.
+  - **Fix**: When blast radius blocks, the orchestrator should re-enter the implementation phase targeting the unaddressed files — not modify the blast radius requirements.
+  - **Files**: `src/claude/agents/00-sdlc-orchestrator.md`, `src/claude/hooks/blast-radius-validator.cjs`
+  - **GitHub**: [#1](https://github.com/vihang-hub/isdlc-framework/issues/1)
+
+- 0.18 [ ] **BUG: No task plan integration when blast radius coverage is incomplete**
+  - **Severity**: Medium — missed opportunity to leverage existing task tracking
+  - **Root cause**: `docs/isdlc/tasks.md` already contains tasks for all impacted files, but when blast radius blocks, there is no mechanism to cross-reference unaddressed files against the task plan and re-execute skipped tasks.
+  - **Fix**: Add logic to cross-reference unaddressed files against `tasks.md`, identify skipped/incomplete tasks, and re-execute them.
+  - **Files**: `src/claude/agents/00-sdlc-orchestrator.md`, `src/claude/commands/isdlc.md`
+  - **GitHub**: [#1](https://github.com/vihang-hub/isdlc-framework/issues/1)
+
 #### Batch D — Low: Maintainability & Tech Debt (5 items)
 
 - 0.13 [ ] **DEBT: Hardcoded phase prefixes in 3+ hook files**
