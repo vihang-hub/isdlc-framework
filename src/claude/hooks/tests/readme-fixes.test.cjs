@@ -420,10 +420,10 @@ describe('Artifact Presence Validation (Fix 3)', () => {
     });
 
     it('allows when either variant of design artifact exists', () => {
-        // Design phase allows interface-spec.yaml OR interface-spec.md
-        const artifactDir = path.join(tmpDir, 'docs', 'design', 'REQ-0001-test-feature');
+        // BUG-0020: Design phase artifact path corrected to docs/requirements/
+        const artifactDir = path.join(tmpDir, 'docs', 'requirements', 'REQ-0001-test-feature');
         fs.mkdirSync(artifactDir, { recursive: true });
-        fs.writeFileSync(path.join(artifactDir, 'interface-spec.md'), '# Interface Spec');
+        fs.writeFileSync(path.join(artifactDir, 'module-design.md'), '# Module Design');
 
         const state = {
             iteration_enforcement: { enabled: true },

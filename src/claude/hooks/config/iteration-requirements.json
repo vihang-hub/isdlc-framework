@@ -116,7 +116,7 @@
       "artifact_validation": {
         "enabled": true,
         "paths": [
-          "docs/architecture/{artifact_folder}/architecture-overview.md"
+          "docs/requirements/{artifact_folder}/architecture-overview.md"
         ]
       }
     },
@@ -144,8 +144,7 @@
       "artifact_validation": {
         "enabled": true,
         "paths": [
-          "docs/design/{artifact_folder}/interface-spec.yaml",
-          "docs/design/{artifact_folder}/interface-spec.md"
+          "docs/requirements/{artifact_folder}/module-design.md"
         ]
       }
     },
@@ -169,7 +168,7 @@
       "artifact_validation": {
         "enabled": true,
         "paths": [
-          "docs/testing/{artifact_folder}/test-strategy.md"
+          "docs/requirements/{artifact_folder}/test-strategy.md"
         ]
       },
       "atdd_validation": {
@@ -350,7 +349,7 @@
       "artifact_validation": {
         "enabled": true,
         "paths": [
-          "docs/reviews/{artifact_folder}/review-summary.md"
+          "docs/requirements/{artifact_folder}/review-summary.md"
         ]
       }
     },
