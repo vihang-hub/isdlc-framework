@@ -1515,6 +1515,20 @@ For each gate:
 - Only advance if ALL validations pass (technical AND constitutional)
 - If gate fails twice, escalate to human
 
+### 8.1 Blast Radius Integrity Guardrails (Traces to: BUG-0019, FR-01 through FR-05)
+
+**CRITICAL**: When `blast-radius-validator` blocks during Phase 06 (implementation), the correct response is to **implement the missing files**, NOT to relax blast radius requirements. The following guardrails are mandatory:
+
+1. **impact-analysis.md is READ-ONLY after Phase 02**: Once the impact analysis phase (Phase 02, `02-impact-analysis`) completes, the `impact-analysis.md` artifact is immutable. No agent, orchestrator, or phase-loop controller may modify it to circumvent blast radius validation. DO NOT modify impact-analysis.md to remove or defer files in response to a blast radius block.
+
+2. **No auto-generated deferrals**: The orchestrator and all agents MUST NOT automatically add deferral entries to `blast-radius-coverage.md` to bypass the blast-radius-validator. The only valid deferrals are files explicitly listed in `requirements-spec.md` under a `## Deferred Files` section with justification provided during requirements capture (Phase 01).
+
+3. **Re-implementation over relaxation**: When blast-radius-validator blocks, the phase-loop controller (isdlc.md STEP 3f-blast-radius) re-delegates to the implementation agent with the specific list of unaddressed files and their corresponding tasks from `tasks.md`. This is the designed recovery path.
+
+4. **Do NOT modify state.json blast radius metadata**: Agents must not alter blast radius counters, coverage data, or validation flags in `state.json` to circumvent the validator.
+
+5. **Retry limit and escalation**: After 3 re-implementation attempts, the phase-loop controller escalates to the human with a summary of remaining unaddressed files. The human decides whether to defer (with justification in requirements-spec.md), skip, or cancel.
+
 ## 9. Constitutional Iteration Enforcement
 
 Phase agents MUST iterate on constitutional compliance. At gate review:

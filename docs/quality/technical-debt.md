@@ -1,80 +1,72 @@
-# Technical Debt Assessment -- BUG-0018-GH-2 Backlog Picker Pattern Mismatch
+# Technical Debt Assessment -- BUG-0019-GH-1 Blast Radius Relaxation Fix
 
 **Date**: 2026-02-16
 **Phase**: 08-code-review
-**Workflow**: Fix (BUG-0018-GH-2)
+**Workflow**: Fix (BUG-0019-GH-1)
 
 ---
 
 ## 1. Technical Debt Addressed by This Fix
 
-| Item | Description | Resolution |
-|------|-------------|------------|
-| Pattern mismatch | Orchestrator picker did not handle `-> [requirements](...)` suffix | Added suffix-stripping instructions to both feature and fix modes |
-| Missing documentation | `start` action reuse mechanism undocumented | Design note added to isdlc.md |
-| Zero test coverage | No tests existed for backlog picker content | 26 new content-verification tests created |
+### TD-RESOLVED-01: Generic Hook Block Handling (Bug 0.17)
 
----
+**Previous state**: STEP 3f treated all hook blocks identically with a generic Retry/Skip/Cancel menu. No hook-specific handling existed.
+**Resolution**: Added `3f-blast-radius` branch with specialized 7-step handling including file parsing, task cross-reference, prohibitions, and retry loop.
+**Impact**: Eliminated the root cause of blast radius relaxation by providing specific re-implementation instructions.
 
-## 2. New Technical Debt Introduced
+### TD-RESOLVED-02: Missing Task Plan Integration (Bug 0.18)
 
-**None.** The fix adds clear, minimal instructions to markdown agent files and a well-structured test file. No deferred work, no workarounds, no shortcuts.
+**Previous state**: `docs/isdlc/tasks.md` was never read during blast radius block handling, leaving the orchestrator unaware of which tasks corresponded to unaddressed files.
+**Resolution**: `matchFilesToTasks()` cross-references unaddressed files against tasks.md, identifying task IDs, statuses, and discrepancies.
+**Impact**: The orchestrator now provides actionable task-level guidance during re-delegation.
 
----
+### TD-RESOLVED-03: No Orchestrator Guardrails
 
-## 3. Pre-Existing Technical Debt Observations
+**Previous state**: `00-sdlc-orchestrator.md` had zero mentions of blast radius, deferral, or impact-analysis immutability. LLM agents defaulted to path of least resistance.
+**Resolution**: Section 8.1 adds 5 explicit guardrail rules with MUST/MUST NOT constraints.
+**Impact**: Agents now have clear prohibitions against modifying impact-analysis.md or auto-generating deferrals.
 
-### TD-001: Pre-existing test failures (4 across 2 suites)
+## 2. Technical Debt Introduced (New)
 
-**Type**: Test debt
-**Impact**: Low (not caused by BUG-0018)
-**Details**:
-- TC-E09: README.md expects "40 agents" but project now has 59
-- T43: Template Workflow-First section 70% content match vs 80% threshold
-- TC-13-01: Agent file count expects 48, project has 59
-- supervised_review gate-blocker test: AssertionError in gate-blocker-extended.test.cjs
-**Recommendation**: Track as maintenance backlog items. The first three relate to agent count growth since baseline.
+### TD-NEW-01: No `resetBlastRadiusRetries()` Helper (Low Priority)
 
-### TD-002: No ESLint configuration
+**Location**: `blast-radius-step3f-helpers.cjs`
+**Description**: When a workflow completes, `blast_radius_retries` and `blast_radius_retry_log` become stale in state.json. They are implicitly cleared when the orchestrator finalize step moves the active workflow to `workflow_history` and clears `active_workflow`. However, there is no explicit helper to reset these fields, which could cause confusion if a future maintainer accesses them between workflows.
+**Risk**: Low -- the fields are workflow-scoped and become irrelevant when the workflow ends.
+**Remediation cost**: Trivial (5-line function + 1 test).
+**Recommendation**: Defer. Consider adding during the next state management cleanup.
 
-**Type**: Tooling debt
-**Impact**: Low
-**Details**: No automated linting. Manual review substitutes.
-**Recommendation**: Add ESLint in a future workflow (BACKLOG item).
+### TD-NEW-02: Blast Radius Validator Deferral Source Not Verified (Out of Scope per FR-04)
 
-### TD-003: No coverage tooling
+**Location**: `blast-radius-validator.cjs` (unchanged)
+**Description**: The validator currently accepts any file listed in `blast-radius-coverage.md` with a "deferred" status, regardless of whether that deferral appears in `requirements-spec.md`. The fix addresses this at the STEP 3f level by validating deferrals against requirements-spec.md before the validator runs, but the validator itself does not perform this check.
+**Risk**: Low-Medium -- an agent that writes directly to blast-radius-coverage.md (bypassing STEP 3f) could still circumvent validation. However, the orchestrator guardrails and STEP 3f prohibitions make this unlikely.
+**Remediation cost**: Medium (requires changes to blast-radius-validator.cjs which was explicitly out of scope for this fix per requirements-spec.md Section "Out of Scope").
+**Recommendation**: Track as a future enhancement (Batch F or later). The current fix addresses the symptom at the orchestrator level; the validator-level fix is defense-in-depth.
 
-**Type**: Tooling debt
-**Impact**: Medium
-**Details**: No c8/istanbul/nyc configured. Coverage is assessed by AC mapping, not line/branch metrics.
-**Recommendation**: Add coverage tooling in a future workflow.
+## 3. Pre-Existing Technical Debt (Observed, Not Introduced)
 
-### TD-004: Backlog picker relies on markdown instructions, not executable code
+### TD-PRE-01: No Linter Configured
 
-**Type**: Architectural observation
-**Impact**: Low
-**Details**: The backlog picker pattern matching is defined in natural-language instructions in `00-sdlc-orchestrator.md`, not in executable code. This means the "tests" are content-verification checks (regex over markdown) rather than unit tests of parsing logic. This is a fundamental design choice of the iSDLC agent architecture -- agent behavior is defined in markdown, not in code modules.
-**Recommendation**: No action needed. The content-verification approach is appropriate for the current architecture. If the picker grows more complex, consider extracting parsing logic into a testable utility function.
+**Impact**: Cannot run automated style checks. Manual review required for each change.
+**Status**: Known. Tracked separately.
 
-### TD-005: Phase A writes index format that previously had no consumer awareness
+### TD-PRE-02: No Code Coverage Tool Configured
 
-**Type**: Integration risk
-**Impact**: Medium (now mitigated by this fix)
-**Details**: Phase A in `isdlc.md` (line 257) writes BACKLOG.md entries with `-> [requirements](...)` suffix. The consumer (backlog picker in orchestrator) was not updated when Phase A was introduced (REQ-0019). This pattern of producer/consumer disconnect could recur if BACKLOG.md format changes again.
-**Recommendation**: The cross-reference test (TC-CROSS-01) now guards against this specific disconnect. Consider adding a general BACKLOG.md format contract test that validates producer and consumer agree on the format.
+**Impact**: Cannot measure line/branch coverage automatically. Requirements-level coverage analysis used instead.
+**Status**: Known. Tracked separately.
 
----
+### TD-PRE-03: 4 Pre-Existing Test Failures
 
-## 4. Technical Debt Summary
+**Tests**: TC-E09 (agent count in README), T43 (template drift), TC-13-01 (agent file count), supervised_review (gate-blocker test)
+**Impact**: Low -- all are drift-related, not functionality bugs.
+**Status**: Known and documented in Phase 16 quality reports.
 
-| Category | Resolved | New | Pre-Existing | Total Remaining |
-|----------|----------|-----|-------------|----------------|
-| Pattern mismatch | 1 | 0 | 0 | 0 |
-| Documentation | 1 | 0 | 0 | 0 |
-| Test coverage | 1 | 0 | 1 (pre-existing failures) | 1 |
-| Tooling | 0 | 0 | 2 (ESLint, coverage) | 2 |
-| Architecture | 0 | 0 | 1 (markdown-based picker) | 1 |
-| Integration | 0 | 0 | 1 (format disconnect risk, now mitigated) | 0 |
-| **Total** | **3** | **0** | **5** | **4** |
+## 4. Summary
 
-**Net debt change**: -3 resolved, +0 introduced = **net reduction of 3 items**.
+| Category | Count | Details |
+|----------|-------|---------|
+| Debt resolved | 3 | Generic hook handling, missing task integration, missing guardrails |
+| Debt introduced | 2 | No reset helper (trivial), validator deferral source (deferred) |
+| Pre-existing debt | 3 | No linter, no coverage tool, test drift |
+| **Net debt change** | **-1** | Resolved more than introduced |
