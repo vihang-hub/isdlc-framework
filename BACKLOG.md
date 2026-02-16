@@ -14,7 +14,7 @@
 ### 2. Performance (remaining from 2026-02-13 investigation)
 
 - 2.1 [x] T5: Quality Loop true parallelism (REQ-0018 — DONE: dual-Task spawning for Track A + Track B, grouping strategy, 40 tests)
-- 2.2 [ ] T6: Hook I/O optimization — reduce disk reads in dispatchers
+- 2.2 [ ] T6: Hook I/O optimization — reduce disk reads in dispatchers -> [requirements](docs/requirements/REQ-0020-t6-hook-io-optimization/)
   - T6-A: Config caching — cache skills-manifest.json (50-200KB), iteration-requirements.json, workflows.json with mtime invalidation (saves 30-50ms per invocation)
   - T6-B: writeState() double-read elimination — BUG-0009 optimistic locking reads disk to get version before writing, adds 10-20ms per write; trust in-memory version instead
   - T6-C: getProjectRoot() caching — compute once per dispatcher, not per sub-hook (saves 5-10ms per hook)

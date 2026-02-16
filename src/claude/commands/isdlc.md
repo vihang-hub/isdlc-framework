@@ -243,7 +243,12 @@ Phase A runs OUTSIDE the workflow machinery. No state.json, no hooks, no gates, 
    - **Manual description**: User provides the description directly.
    - **Existing BACKLOG.md migration**: Migrate inline spec content to `docs/requirements/{slug}/draft.md`.
 
-2. Derive the slug from the item title or description (lowercase, hyphens, max 50 characters). For ticket IDs, use the ticket ID as part of the slug (e.g., `jira-1250-payment-processing`).
+2. Derive the slug with a `REQ-NNNN` or `BUG-NNNN` prefix:
+   a. **Determine prefix**: If the description contains bug-related keywords (fix, bug, broken, error, crash, regression), use `BUG`. Otherwise use `REQ`.
+   b. **Determine next ID number**: Read `.isdlc/state.json` → `counters.next_req_id` (for REQ) or `counters.next_bug_id` (for BUG). This is a **read-only** access — Phase A does NOT increment or write the counter. If state.json is unreadable or missing, scan `docs/requirements/` for existing `REQ-NNNN-*` or `BUG-NNNN-*` folders, extract the highest NNNN, and use NNNN+1.
+   c. **Derive description suffix**: From the item title or description (lowercase, hyphens, max 40 characters). For ticket IDs, include the ticket ID (e.g., `jira-1250-payment-processing`).
+   d. **Compose slug**: `{PREFIX}-{NNNN zero-padded}-{description-suffix}` (e.g., `REQ-0020-t6-hook-io-optimization`, `BUG-0021-login-crash-on-empty-password`).
+   e. **Collision check**: If a folder with this slug already exists in `docs/requirements/`, increment the number until a unique slug is found.
 
 3. Check if `docs/requirements/{slug}/` already exists:
    - If it already exists: ask "This item already has a draft. Update it or skip?" Do NOT overwrite without confirmation.
@@ -276,7 +281,7 @@ Phase A runs OUTSIDE the workflow machinery. No state.json, no hooks, no gates, 
 
 **Phase A Constraints -- CRITICAL**
 
-- **No state.json**: Phase A does NOT read or write `.isdlc/state.json`. It is not a workflow.
+- **No state.json writes**: Phase A does NOT write to `.isdlc/state.json`. It MAY read state.json for counter values (step 2b) but never modifies it. Counter increment happens in Phase B when the orchestrator initializes the workflow.
 - **No hooks**: No hook enforcement, no gate validations, no iteration requirements.
 - **No branches**: No git branch creation or checkout. Runs on whatever branch is currently checked out.
 - **No .isdlc/ writes**: Phase A writes only to `docs/requirements/{slug}/` and `BACKLOG.md`. It does NOT write to `.isdlc/` directory.
@@ -884,7 +889,7 @@ Use the **Phase-Loop Controller** protocol. This runs phases one at a time in th
 When the action is `start`, the Phase-Loop Controller performs Phase B validation BEFORE launching the orchestrator:
 1. Run the validation steps from the `start` action definition above (meta.json checks, staleness detection)
 2. If validation passes, launch the orchestrator with `MODE: init-and-phase-01` but with `PREPARED_REQUIREMENTS: docs/requirements/{slug}/` and `SKIP_PHASES: ["00-quick-scan", "01-requirements"]`
-3. The orchestrator creates the branch, initializes state.json with `artifact_folder` set to the Phase A slug, and returns immediately (Phase 01 already completed in Phase A)
+3. The orchestrator creates the branch, initializes state.json with `artifact_folder` set to the Phase A slug, and returns immediately (Phase 01 already completed in Phase A). **Counter sync**: The Phase A slug already contains a `REQ-NNNN` or `BUG-NNNN` prefix (assigned during Phase A step 2). The orchestrator extracts the NNNN number from the slug and ensures `counters.next_req_id` or `counters.next_bug_id` is at least NNNN+1 (advance the counter past the Phase A assigned ID without double-allocating).
 4. The `phases[]` array starts from `02-impact-analysis`, and `next_phase_index` is `0` (pointing to the first phase in the reduced array)
 
 **Standard init (all other actions):**
