@@ -72,6 +72,13 @@
 
 - 11.1 [ ] Install script landing page and demo GIF -> [requirements](docs/requirements/11.1-install-landing-page/)
 
+### 12. Bugs
+
+- 12.1 [ ] Backlog picker pattern mismatch after BACKLOG.md restructure (REQ-0019 follow-up) — [GitHub #2](https://github.com/vihang-hub/isdlc-framework/issues/2)
+  - Orchestrator backlog picker in `00-sdlc-orchestrator.md` needs pattern update for new index format
+  - `workflows.json` may need `start` workflow entry for Phase B
+  - 5 backlog test files need verification against new format
+
 ## Completed
 
 - [x] 3.2 Preparation pipeline (2026-02-16, REQ-0019)
