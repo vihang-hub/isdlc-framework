@@ -1,94 +1,88 @@
-# Coverage Report: BUG-0017-batch-c-hooks
+# Coverage Report: REQ-0020-t6-hook-io-optimization
 
 **Phase**: 16-quality-loop
-**Date**: 2026-02-15
-**Tool**: `node --test --experimental-test-coverage` (Node.js built-in)
+**Date**: 2026-02-16
+**Tool**: `node --test` (Node.js built-in test runner)
 
 ## Coverage Summary
 
 | Metric | Target | Actual | Status |
 |--------|--------|--------|--------|
-| state-write-validator.cjs line coverage | >= 80% | 95.68% | PASS |
-| state-write-validator.cjs function coverage | >= 80% | 100.00% | PASS |
-| gate-blocker.cjs line coverage | >= 80% | 67.55% | INFO (pre-existing) |
-| gate-blocker.cjs function coverage | >= 80% | 84.21% | PASS |
-| New bug fix code paths covered | 100% | 100% | PASS |
+| Acceptance criteria | 80% | 100% (20/20) | PASS |
+| Functional requirements | 100% | 100% (5/5) | PASS |
+| NFR requirements | -- | 100% (3/3) | PASS |
+| New test cases passing | 100% | 100% (46/46) | PASS |
+| Regression tests passing | 100% | 100% (0 new failures) | PASS |
 
-## Coverage by Changed File
+## Requirement Traceability Matrix
 
-### state-write-validator.cjs
+### FR-001: Config File Caching with mtime Invalidation
 
-| Metric | Value |
-|--------|-------|
-| Line coverage | 95.68% |
-| Branch coverage | 50.00% |
-| Function coverage | 100.00% |
-| Uncovered lines | 184-187, 257-259, 333-336, 351-352, 419-421, 452-453, 460-461 |
-| Total tests covering this file | 73 (6 new + 2 updated + 65 existing) |
+| AC | Test Cases | Status |
+|----|------------|--------|
+| AC-001a: First load reads from disk and caches | TC-001a-01, TC-001a-02, TC-001a-03, TC-001a-04 | COVERED |
+| AC-001b: File modification triggers re-read | TC-001b-01, TC-001b-02 | COVERED |
+| AC-001c: Unchanged mtime returns cached copy | TC-001c-01 | COVERED |
+| AC-001d: Missing/corrupt file returns null | TC-001d-01, TC-001d-02, TC-001d-03 | COVERED |
+| AC-001e: Monorepo isolation (project-scoped keys) | TC-001e-01 | COVERED |
 
-**New code path coverage**: The `checkVersionLock()` function now blocks unversioned writes against versioned disk state. All new code paths are covered by TC-SWV-01 through TC-SWV-08.
+### FR-002: getProjectRoot() Per-Process Caching
 
-### gate-blocker.cjs
+| AC | Test Cases | Status |
+|----|------------|--------|
+| AC-002a: Second call returns cached value | TC-002a-01, TC-002a-02 | COVERED |
+| AC-002b: CLAUDE_PROJECT_DIR shortcut cached | TC-002b-01, TC-002b-02 | COVERED |
+| AC-002c: Cache consistent when env unchanged | TC-002c-01, TC-002c-02 | COVERED |
 
-| Metric | Value |
-|--------|-------|
-| Line coverage | 67.55% |
-| Branch coverage | 56.20% |
-| Function coverage | 84.21% |
-| Total tests covering this file | 54 (6 new + 48 existing) |
+### FR-003: State Read Consolidation
 
-**Coverage context**: The 67.55% line coverage is pre-existing and not a regression. The file is 793 lines with extensive code paths for:
-- Self-healing (phase key normalization, delegation cross-reference)
-- Supervised mode awareness
-- Multiple gate check trigger patterns
-- Delegation guard logic
+| AC | Test Cases | Status |
+|----|------------|--------|
+| AC-003a: Single disk read for V7 + V8 | TC-003a-01, TC-003a-02, TC-003a-03 | COVERED |
+| AC-003b: diskState parameter passed to V7 and V8 | TC-003b-01, TC-003b-02 | COVERED |
+| AC-003c: Validates incoming content, not disk | TC-003c-01, TC-003c-02 | COVERED |
+| AC-003d: Fail-open when disk unavailable | TC-003d-01, TC-003d-02 | COVERED |
 
-The new `checkArtifactPresenceRequirement()` variant reporting logic (lines ~494-507) is fully covered by TC-GB-V01 through TC-GB-V07.
+### FR-004: ctx.manifest Passthrough
 
-### Supporting Files
+| AC | Test Cases | Status |
+|----|------------|--------|
+| AC-004a: Uses provided manifest | TC-004a-01, TC-004a-02 | COVERED |
+| AC-004b: Standalone compatibility | TC-004b-01, TC-004b-02 | COVERED |
+| AC-004c: gate-blocker passes ctx.manifest | TC-004c-01, TC-004c-02 | COVERED |
+| AC-004d: Existing ctx.requirements verified | TC-004d-01, TC-004d-02 | COVERED |
 
-| File | Line % | Branch % | Funcs % | Role |
-|------|--------|----------|---------|------|
-| hook-test-utils.cjs | 93.87% | 82.61% | 90.00% | Shared test infrastructure |
-| common.cjs | 60.36% | 78.46% | 44.32% | Shared library (many unused paths per-test) |
-| provider-utils.cjs | 46.58% | 75.00% | 34.28% | Provider utilities (partially exercised) |
+### FR-005: Verified Batch Write Pattern
 
-## New Test Coverage Mapping
+| AC | Test Cases | Status |
+|----|------------|--------|
+| AC-005a: Dispatchers write at most once | TC-005a-01, TC-005a-02, TC-005a-03 | COVERED |
+| AC-005b: State modifications accumulated | TC-005b-01 | COVERED |
+| AC-005c: WCE manages own state | TC-005c-01, TC-005c-02 | COVERED |
+| AC-005d: post-write-edit skips writeState | TC-005d-01 | COVERED |
 
-### gate-blocker.cjs -- Variant Reporting Fix
+### NFR Coverage
 
-| Test ID | Code Path Covered |
-|---------|-------------------|
-| TC-GB-V01 | Multi-variant `paths` array with 2+ entries, all missing -> error lists all with "or" |
-| TC-GB-V02 | Multi-variant `paths` array, second variant file exists -> check passes |
-| TC-GB-V03 | Single-variant path -> error message has no "or" syntax |
-| TC-GB-V04 | `gate_validation` state includes composite variant string |
-| TC-GB-V05 | All variants exist -> no error generated |
-| TC-GB-V07 | Three-variant group, all missing -> error lists all three |
+| NFR | Test Cases | Status |
+|-----|------------|--------|
+| NFR-001: Performance (cache reduces I/O) | TC-NFR001-01, TC-NFR001-02 | COVERED |
+| NFR-003: Correctness (V7/V8 regression) | TC-NFR003-01, TC-NFR003-02 | COVERED |
+| NFR-004: Observability (debug logging) | TC-NFR004-01 | COVERED |
 
-### state-write-validator.cjs -- Unversioned Write Blocking Fix
+## Per-File Coverage
 
-| Test ID | Code Path Covered |
-|---------|-------------------|
-| TC-SWV-01 | Incoming has no `state_version`, disk has version -> BLOCK |
-| TC-SWV-02 | Incoming has no `state_version`, disk has no version -> ALLOW |
-| TC-SWV-03 | Incoming has no `state_version`, no disk file -> ALLOW |
-| TC-SWV-06 | Block message includes disk version number and remediation text |
-| TC-SWV-07 | Incoming `state_version` is null, disk is versioned -> BLOCK |
-| TC-SWV-08 | Disk file is corrupt JSON during unversioned check -> ALLOW (fail-open) |
+| File | Lines Changed | Test Cases | Functions Tested |
+|------|--------------|------------|-----------------|
+| `src/claude/hooks/lib/common.cjs` | 144 added, 74 removed | 17 | `_loadConfigWithCache`, `getProjectRoot`, `_resetCaches`, `_getCacheStats`, `loadManifest`, `loadIterationRequirements`, `loadWorkflowDefinitions` |
+| `src/claude/hooks/state-write-validator.cjs` | 112 added, 74 removed | 9 | `checkVersionLock`, `checkPhaseFieldProtection`, `check` |
+| `src/claude/hooks/gate-blocker.cjs` | 12 added, 74 removed | 8 | `checkAgentDelegationRequirement` |
+| `src/claude/hooks/tests/test-io-optimization.test.cjs` | 46 new tests | -- | -- |
 
-## Uncovered Areas
+## Regression Suite Results
 
-| Area | Reason | Risk |
-|------|--------|------|
-| gate-blocker.cjs: self-healing notification paths | Exercised by dedicated self-healing tests, not variant tests | LOW |
-| gate-blocker.cjs: supervised mode paths | Exercised by dedicated supervised mode tests | LOW |
-| common.cjs: unused utility functions per test run | Library provides many functions; each test uses a subset | LOW |
-| Mutation testing | No mutation framework configured | LOW |
-
-## Notes
-
-- Coverage measured using Node.js built-in `--experimental-test-coverage` flag
-- The 80% threshold applies to new/changed code paths, which achieve 100% coverage
-- Pre-existing coverage levels in unchanged code paths are not a gate blocker for bug fixes
-- Branch coverage percentages reflect Node.js built-in coverage accounting which can undercount due to short-circuit evaluation patterns
+| Suite | Total | Pass | Fail | New Regressions |
+|-------|-------|------|------|-----------------|
+| CJS hook tests | 1564 | 1563 | 1 pre-existing | 0 |
+| ESM lib tests | 632 | 629 | 3 pre-existing | 0 |
+| I/O optimization tests | 46 | 46 | 0 | 0 |
+| **Total** | **2242** | **2238** | **4 pre-existing** | **0** |

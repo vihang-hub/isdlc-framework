@@ -1,8 +1,8 @@
-# Lint Report: BUG-0017-batch-c-hooks
+# Lint Report: REQ-0020-t6-hook-io-optimization
 
 **Phase**: 16-quality-loop
-**Date**: 2026-02-15
-**Branch**: fix/BUG-0017-batch-c-hooks
+**Date**: 2026-02-16
+**Branch**: feature/REQ-0019-fan-out-fan-in-parallelism
 
 ## Linter Configuration
 
@@ -10,52 +10,45 @@
 |------|--------|
 | ESLint | NOT CONFIGURED |
 | Prettier | NOT CONFIGURED |
-| markdownlint | NOT CONFIGURED |
+| TypeScript (tsc) | NOT APPLICABLE (pure JavaScript) |
+| JSHint | NOT CONFIGURED |
 
-The project `package.json` scripts.lint is `echo 'No linter configured'`. No `.eslintrc*`, `.prettierrc*`, or `.markdownlint*` files found.
+## Automated Code Review (Substitute Analysis)
 
-## Manual Structural Checks
+Since no formal linter is configured, an automated code review was performed on all 4 changed/new files.
 
-In lieu of automated linting, the following structural checks were performed on new/modified files:
+### Results by File
 
-### Hook Source Files (CJS)
+| File | Blockers | Errors | Warnings | Info |
+|------|----------|--------|----------|------|
+| `src/claude/hooks/lib/common.cjs` | 0 | 0 | 3 | 1 |
+| `src/claude/hooks/state-write-validator.cjs` | 0 | 0 | 1 | 1 |
+| `src/claude/hooks/gate-blocker.cjs` | 0 | 0 | 1 | 1 |
+| `src/claude/hooks/tests/test-io-optimization.test.cjs` | 0 | 0 | 0 | 0 |
+| **Total** | **0** | **0** | **5** | **3** |
 
-| File | Syntax Valid | Exports Correct | Error Messages | Status |
-|------|-------------|-----------------|----------------|--------|
-| `gate-blocker.cjs` | Yes (runs in 54 tests) | `module.exports = { check }` | Actionable, includes all variants | PASS |
-| `state-write-validator.cjs` | Yes (runs in 73 tests) | `module.exports = { check }` | Actionable, includes version numbers | PASS |
+### Warning Details
 
-### Test Files (CJS)
+All warnings are in **pre-existing code** not introduced by T6 changes:
 
-| File | Syntax Valid | Pattern | Tests | Status |
-|------|-------------|---------|-------|--------|
-| `test-gate-blocker-extended.test.cjs` | Yes (54/54 pass) | describe/it with assert | 54 total (6 new) | PASS |
-| `state-write-validator.test.cjs` | Yes (73/73 pass) | describe/it with assert | 73 total (6 new, 2 updated) | PASS |
+| # | File | Line | Issue | Pre-existing? |
+|---|------|------|-------|---------------|
+| W1 | common.cjs | 1022 | `console.log` in production code | Yes -- hook protocol output (intentional) |
+| W2 | common.cjs | 1242 | `console.log` in production code | Yes -- hook protocol output (intentional) |
+| W3 | common.cjs | 1243 | `console.log` in production code | Yes -- hook protocol output (intentional) |
+| W4 | state-write-validator.cjs | 485 | `console.log` in production code | Yes -- hook protocol output (intentional) |
+| W5 | gate-blocker.cjs | 858 | `console.log` in production code | Yes -- hook protocol output (intentional) |
 
-### Code Quality Patterns
+**Note**: These `console.log` calls output JSON to stdout as part of the hook communication protocol. They are not debug statements and are functionally required.
 
-| Check | Files Reviewed | Result |
-|-------|---------------|--------|
-| No debugger statements | 4 files | PASS |
-| No eval() usage | 4 files | PASS |
-| No TODO/FIXME/HACK markers | 4 files | PASS |
-| No hardcoded absolute paths in source files | 2 source files | PASS |
-| Consistent indentation | 4 files | PASS |
-| Consistent naming conventions | 4 files | PASS |
+### Info Details
 
-### Informational Findings
+| # | File | Issue |
+|---|------|-------|
+| I1 | common.cjs | 1 line uses non-strict equality (`==`) -- pre-existing |
+| I2 | state-write-validator.cjs | 4 lines exceed 150 characters -- pre-existing |
+| I3 | gate-blocker.cjs | 4 lines exceed 150 characters -- pre-existing |
 
-| Finding | Severity | Context |
-|---------|----------|---------|
-| Missing `'use strict'` in gate-blocker.cjs | INFO | Pre-existing across 22/28 hook files |
-| Missing `'use strict'` in state-write-validator.cjs | INFO | Pre-existing across 22/28 hook files |
+## Verdict
 
-These are not regressions -- they are a project-wide pre-existing condition. Only 6 hook files (dispatchers + state-file-guard) include `'use strict'`.
-
-## Summary
-
-- Errors: 0
-- Warnings: 0 (no linter to produce warnings)
-- Informational: 2 (pre-existing `'use strict'` absence, not blocking)
-
-**Lint check: PASS**
+**PASS** -- Zero blockers, zero errors. All warnings are pre-existing and intentional. No lint issues introduced by T6 changes.
