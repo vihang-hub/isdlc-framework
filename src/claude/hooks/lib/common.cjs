@@ -12,6 +12,32 @@ const fs = require('fs');
 const path = require('path');
 
 // =========================================================================
+// Per-Process Caching (REQ-0020: T6 Hook I/O Optimization)
+// =========================================================================
+
+/**
+ * Cached project root path. Set on first getProjectRoot() call.
+ * Per-process lifetime -- garbage-collected when process exits.
+ * @type {string|null}
+ */
+let _cachedProjectRoot = null;
+
+/**
+ * The CLAUDE_PROJECT_DIR value at the time of caching.
+ * Used to detect env var changes (important for test environments).
+ * @type {string|undefined}
+ */
+let _cachedProjectDirEnv = undefined;
+
+/**
+ * Config file cache. Key: "{projectRoot}:{configFileName}".
+ * Value: { mtimeMs: number, data: object }.
+ * Per-process lifetime -- garbage-collected when process exits.
+ * @type {Map<string, { mtimeMs: number, data: object }>}
+ */
+const _configCache = new Map();
+
+// =========================================================================
 // Phase Prefixes (BUG-0009 item 0.13)
 // =========================================================================
 
@@ -67,22 +93,96 @@ function stateFileExistsOnDisk(projectId) {
  * @returns {string} Project root path
  */
 function getProjectRoot() {
-    // Use CLAUDE_PROJECT_DIR if available
+    // FR-002: Return cached value if available (AC-002a, AC-002c)
+    // Invalidate cache if CLAUDE_PROJECT_DIR changed since last caching
+    if (_cachedProjectRoot !== null) {
+        const currentEnv = process.env.CLAUDE_PROJECT_DIR;
+        if (currentEnv === _cachedProjectDirEnv) {
+            return _cachedProjectRoot;
+        }
+        // Env changed -- invalidate and re-resolve
+        _cachedProjectRoot = null;
+        _cachedProjectDirEnv = undefined;
+    }
+
+    // AC-002b: CLAUDE_PROJECT_DIR shortcut (existing behavior preserved)
     if (process.env.CLAUDE_PROJECT_DIR) {
-        return process.env.CLAUDE_PROJECT_DIR;
+        _cachedProjectRoot = process.env.CLAUDE_PROJECT_DIR;
+        _cachedProjectDirEnv = process.env.CLAUDE_PROJECT_DIR;
+        return _cachedProjectRoot;
     }
 
     // Fallback: traverse up to find .isdlc folder
     let dir = process.cwd();
     while (dir !== path.parse(dir).root) {
         if (fs.existsSync(path.join(dir, '.isdlc'))) {
-            return dir;
+            _cachedProjectRoot = dir;
+            _cachedProjectDirEnv = process.env.CLAUDE_PROJECT_DIR;
+            return _cachedProjectRoot;
         }
         dir = path.dirname(dir);
     }
 
     // Default to current directory
-    return process.cwd();
+    _cachedProjectRoot = process.cwd();
+    _cachedProjectDirEnv = process.env.CLAUDE_PROJECT_DIR;
+    return _cachedProjectRoot;
+}
+
+/**
+ * Load a JSON config file with mtime-based caching (FR-001).
+ * Cache key: "{projectRoot}:{configName}" for monorepo isolation (AC-001e).
+ *
+ * @param {string} configPath - Absolute path to the config file
+ * @param {string} configName - Short name for cache key (e.g., 'skills-manifest')
+ * @returns {object|null} Parsed JSON data or null if file missing/invalid
+ */
+function _loadConfigWithCache(configPath, configName) {
+    const cacheKey = `${getProjectRoot()}:${configName}`;
+
+    try {
+        const stat = fs.statSync(configPath);
+        const currentMtime = stat.mtimeMs;
+
+        const cached = _configCache.get(cacheKey);
+        if (cached && cached.mtimeMs === currentMtime) {
+            // AC-001c: mtime unchanged, return cached copy
+            debugLog(`Config cache HIT: ${configName}`);
+            return cached.data;
+        }
+
+        // AC-001a (first load) or AC-001b (mtime changed): read from disk
+        const data = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        _configCache.set(cacheKey, { mtimeMs: currentMtime, data });
+        debugLog(`Config cache MISS: ${configName} (${cached ? 'mtime changed' : 'first load'})`);
+        return data;
+    } catch (e) {
+        // AC-001d: file does not exist or read error -- return null, do NOT cache
+        debugLog(`Config cache ERROR: ${configName} -- ${e.code || e.message}`);
+        return null;
+    }
+}
+
+/**
+ * Reset all caches. For testing only.
+ * @private
+ */
+function _resetCaches() {
+    _cachedProjectRoot = null;
+    _cachedProjectDirEnv = undefined;
+    _configCache.clear();
+}
+
+/**
+ * Get cache statistics. For testing only.
+ * @private
+ * @returns {{ projectRootCached: boolean, configCacheSize: number }}
+ */
+function _getCacheStats() {
+    return {
+        projectRootCached: _cachedProjectRoot !== null,
+        configCacheSize: _configCache.size
+    };
 }
 
 // =========================================================================
@@ -759,12 +859,7 @@ function loadManifest() {
     if (!manifestPath) {
         return null;
     }
-
-    try {
-        return JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-    } catch (e) {
-        return null;
-    }
+    return _loadConfigWithCache(manifestPath, 'skills-manifest');
 }
 
 /**
@@ -1994,13 +2089,10 @@ function loadIterationRequirements() {
     ];
 
     for (const configPath of configPaths) {
-        if (fs.existsSync(configPath)) {
-            try {
-                return JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            } catch (e) {
-                debugLog('Error loading iteration requirements:', e.message);
-                return null;
-            }
+        // FR-001: Use statSync inside _loadConfigWithCache to check existence + cache
+        const result = _loadConfigWithCache(configPath, 'iteration-requirements');
+        if (result !== null) {
+            return result;
         }
     }
     return null;
@@ -2022,13 +2114,10 @@ function loadWorkflowDefinitions() {
     ];
 
     for (const configPath of configPaths) {
-        if (fs.existsSync(configPath)) {
-            try {
-                return JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            } catch (e) {
-                debugLog('Error loading workflow definitions:', e.message);
-                return null;
-            }
+        // FR-001: Use _loadConfigWithCache for mtime-based caching
+        const result = _loadConfigWithCache(configPath, 'workflows');
+        if (result !== null) {
+            return result;
         }
     }
     return null;
@@ -2879,3 +2968,10 @@ module.exports = {
     generatePhaseSummary,
     recordReviewAction
 };
+
+// Test-only exports (not part of public API) -- REQ-0020 FR-001/FR-002
+if (process.env.NODE_ENV === 'test' || process.env.ISDLC_TEST_MODE === '1') {
+    module.exports._resetCaches = _resetCaches;
+    module.exports._getCacheStats = _getCacheStats;
+    module.exports._loadConfigWithCache = _loadConfigWithCache;
+}
