@@ -229,6 +229,61 @@ Enter selection (1-5):
 
 ---
 
+### SCENARIO 5: Phase A -- Preparation Pipeline
+
+Phase A runs OUTSIDE the workflow machinery. No state.json, no hooks, no gates, no branches. It writes only to `docs/requirements/{slug}/`. Phase A and an active Phase B workflow can run in parallel because they share zero resources.
+
+**Trigger**: User says "add {ticket} to the backlog", "analyze {description}", or invokes `/isdlc analyze`.
+
+**Phase A Step 1: Intake**
+
+1. Determine the source:
+   - **Jira URL or ticket ID**: Pull ticket content via Atlassian MCP (`jira_get_issue`). If Jira MCP is unavailable, report "Jira MCP unavailable. Please paste the ticket description manually." and fallback to manual intake.
+   - **GitHub issue URL or `#N`**: Pull issue content via `gh issue view N --json title,body,labels`. If `gh` CLI is unavailable or not authenticated, report "GitHub CLI unavailable or not authenticated. Please paste the issue description manually." and fallback to manual intake.
+   - **Manual description**: User provides the description directly.
+   - **Existing BACKLOG.md migration**: Migrate inline spec content to `docs/requirements/{slug}/draft.md`.
+
+2. Derive the slug from the item title or description (lowercase, hyphens, max 50 characters). For ticket IDs, use the ticket ID as part of the slug (e.g., `jira-1250-payment-processing`).
+
+3. Check if `docs/requirements/{slug}/` already exists:
+   - If it already exists: ask "This item already has a draft. Update it or skip?" Do NOT overwrite without confirmation.
+   - If updating: overwrite `draft.md` with fresh content, preserve `meta.json.created_at`, set `meta.json.updated_at` to current timestamp.
+   - If skip: stop here.
+
+4. Create `docs/requirements/{slug}/` folder with:
+   - `draft.md` containing the source content (with source attribution for Jira/GitHub)
+   - `meta.json` with fields: `{ "source": "jira"|"github"|"manual"|"backlog-migration", "source_id": "<ticket-id-or-null>", "slug": "<slug>", "created_at": "<ISO-8601>", "phase_a_completed": false, "codebase_hash": "<git-HEAD-short-SHA>" }`
+
+5. Append a one-line index entry to BACKLOG.md in the `## Open` section: `- {id} [ ] {title} -> [requirements](docs/requirements/{slug}/)`
+
+**Phase A Step 2: Deep Analysis (optional)**
+
+6. After intake, offer: "Want me to do a deep analysis and keep it ready for implementation?"
+   - If user **declines**: only `draft.md` and `meta.json` exist in the folder. `meta.json.phase_a_completed` remains `false`. Stop here.
+   - If user **accepts**: proceed to step 7.
+
+7. Run quick scan (Phase 00 logic -- codebase analysis without state.json):
+   - Write `quick-scan.md` to the requirements folder containing codebase scope estimate, keyword matches, estimated file count.
+
+8. Run full requirements capture with personas (Phase 01 logic -- without state.json, hooks, or branches):
+   - Write `requirements.md` to the folder containing FRs with IDs, ACs in Given/When/Then format, NFRs with measurable metrics, and user stories.
+   - Use the persona-based elicitation flow (same as the requirements-analyst Creator role).
+
+9. Update `meta.json`:
+   - Set `phase_a_completed` to `true`
+   - Set `codebase_hash` to current git HEAD short SHA
+   - If `phase_a_completed` field is missing or absent, treat it as `false` (defensive default).
+
+**Phase A Constraints -- CRITICAL**
+
+- **No state.json**: Phase A does NOT read or write `.isdlc/state.json`. It is not a workflow.
+- **No hooks**: No hook enforcement, no gate validations, no iteration requirements.
+- **No branches**: No git branch creation or checkout. Runs on whatever branch is currently checked out.
+- **No .isdlc/ writes**: Phase A writes only to `docs/requirements/{slug}/` and `BACKLOG.md`. It does NOT write to `.isdlc/` directory.
+- **Interrupted safety**: `meta.json.phase_a_completed` is set to `true` only as the final step. If Phase A is interrupted, the field remains `false`, preventing Phase B from consuming incomplete artifacts.
+
+---
+
 ### Actions
 
 **feature** - Implement a new feature end-to-end
@@ -510,6 +565,51 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 
 ---
 
+**analyze** - Run Phase A preparation pipeline (intake + optional deep analysis)
+```
+/isdlc analyze "Add payment processing"
+/isdlc analyze "Jira-1250"
+/isdlc analyze "#42"
+```
+1. Does NOT require an active workflow -- Phase A runs outside workflow machinery
+2. Does NOT read or write state.json, does NOT create branches, does NOT invoke hooks
+3. Executes the Phase A Preparation Pipeline (SCENARIO 5 above):
+   - Intake: detect source (Jira, GitHub, manual), create `docs/requirements/{slug}/` with `draft.md` and `meta.json`
+   - Offer deep analysis: if accepted, produce `quick-scan.md` and `requirements.md`
+4. All artifacts written to `docs/requirements/{slug}/` only
+
+---
+
+**start** - Start Phase B execution from prepared requirements
+```
+/isdlc start "Jira-1250"
+/isdlc start "payment-processing"
+/isdlc start 3.2
+```
+Phase B consumption: locates prepared requirements and begins workflow from Phase 02.
+
+1. Locate the matching requirements folder: search `docs/requirements/` for a folder matching the item slug, ID, or ticket reference
+2. **Validate meta.json** (NFR-001 reliability checks -- every error includes the specific file path, what is wrong, and the remediation command):
+   - If `meta.json` is missing: ERROR "Missing meta.json in docs/requirements/{slug}/. Cannot verify preparation status. Run Phase A first: /isdlc analyze \"{item}\"" -- do NOT proceed
+   - If `meta.json` is malformed JSON: ERROR "Corrupted meta.json in docs/requirements/{slug}/. Cannot parse preparation metadata. Re-run Phase A: /isdlc analyze \"{item}\"" -- do NOT proceed
+   - If `phase_a_completed` is missing (field absent): treat as `false` (defensive default per NFR-001)
+   - If `phase_a_completed` is `false`: ERROR "Requirements for '{item}' are incomplete (draft only, no deep analysis). Complete Phase A first: /isdlc analyze \"{item}\"" -- do NOT proceed
+   - If `requirements.md` does not exist on disk despite `phase_a_completed == true`: ERROR "requirements.md missing from docs/requirements/{slug}/ despite meta.json indicating completion. Re-run Phase A deep analysis: /isdlc analyze \"{item}\"" -- do NOT proceed
+3. **Staleness check**: Compare `meta.json.codebase_hash` to current git HEAD short SHA
+   - If `codebase_hash` is null or empty: treat as stale (worst-case assumption per NFR-001)
+   - Count commits between the two SHAs using `git rev-list --count {hash}..HEAD`
+   - If more than 10 commits: warn "Codebase has changed significantly since requirements were captured ({N} commits). Recommend refreshing requirements." and present menu:
+     - **[P] Proceed anyway** -- log staleness acknowledgment in `active_workflow` metadata, continue
+     - **[R] Refresh requirements** -- re-run Phase A deep analysis
+     - **[C] Cancel** -- abort, do not create branch or initialize state
+4. If no matching requirements folder found: ERROR "No prepared requirements found for '{item}'. Run intake first: /isdlc analyze \"{item}\" or use /isdlc feature to start from scratch."
+5. Create branch, initialize `active_workflow` in state.json with type `"feature"` and phases starting from `02-impact-analysis` (skip Phase 00 and Phase 01 -- already completed in Phase A)
+6. Phase B writes all subsequent artifacts (impact-analysis.md, architecture.md, etc.) into the same `docs/requirements/{slug}/` folder alongside the Phase A artifacts
+7. Phase B reads requirements from `docs/requirements/{slug}/requirements.md` (the Phase A artifact)
+8. Execute remaining phases via the Phase-Loop Controller (STEP 3)
+
+---
+
 **discover** - Analyze project and create tailored constitution
 ```
 /isdlc discover
@@ -686,6 +786,8 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 | `/isdlc test run` | test-run | 11 → 07 | strict | none |
 | `/isdlc test generate` | test-generate | 05 → 06 → 11 → 07 → 08 | strict | none |
 | `/isdlc upgrade` | upgrade | 15-plan → 15-execute → 08 | strict | `upgrade/{name}-v{ver}` |
+| `/isdlc analyze` | phase-a | *(outside workflow)* | none | none |
+| `/isdlc start` | prepared-feature | 02(IA) → 03 → 04 → 05 → 06 → 16(QL) → 08 | strict | `feature/REQ-NNNN-...` |
 | `/isdlc reverse-engineer` | *(alias → `/discover --existing`)* | — | — | — |
 
 **Enforcement rules:**
@@ -717,6 +819,12 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 /isdlc upgrade "typescript" --project api-service
 /isdlc upgrade "node"
 /isdlc upgrade "express"
+/isdlc analyze "Add payment processing"
+/isdlc analyze "Jira-1250"
+/isdlc analyze "#42"
+/isdlc start "Jira-1250"
+/isdlc start "payment-processing"
+/isdlc start 3.2
 /isdlc reverse-engineer
 /isdlc reverse-engineer --scope domain --target "payments"
 /isdlc reverse-engineer --priority critical --atdd-ready
@@ -755,11 +863,26 @@ When this command is invoked:
 2. Pass the action and any flags to the agent
 3. The orchestrator handles it and returns
 
+**If action is `analyze`** (Phase A -- runs outside workflow machinery):
+1. Execute Phase A Preparation Pipeline (SCENARIO 5) directly -- no orchestrator needed
+2. Does NOT check for active workflow, does NOT initialize state.json
+3. Runs intake + optional deep analysis, writes to `docs/requirements/{slug}/`
+
 **If action is a WORKFLOW command** (feature, fix, test-run, test-generate, start, upgrade) **with description:**
 
 Use the **Phase-Loop Controller** protocol. This runs phases one at a time in the foreground, giving the user visible task progress and immediate hook-blocker escalation.
 
 #### STEP 1: INIT — Launch orchestrator for init + Phase 01
+
+**Phase B consumption (when ACTION is `start`):**
+
+When the action is `start`, the Phase-Loop Controller performs Phase B validation BEFORE launching the orchestrator:
+1. Run the validation steps from the `start` action definition above (meta.json checks, staleness detection)
+2. If validation passes, launch the orchestrator with `MODE: init-and-phase-01` but with `PREPARED_REQUIREMENTS: docs/requirements/{slug}/` and `SKIP_PHASES: ["00-quick-scan", "01-requirements"]`
+3. The orchestrator creates the branch, initializes state.json with `artifact_folder` set to the Phase A slug, and returns immediately (Phase 01 already completed in Phase A)
+4. The `phases[]` array starts from `02-impact-analysis`, and `next_phase_index` is `0` (pointing to the first phase in the reduced array)
+
+**Standard init (all other actions):**
 
 ```
 Use Task tool → sdlc-orchestrator with:
@@ -1218,6 +1341,8 @@ After the orchestrator returns from finalize, execute this cleanup loop immediat
 /isdlc fix          → Task → orchestrator → Backlog Picker (fix) → Phase-Loop Controller
 /isdlc feature ...  → Phase-Loop Controller (init → tasks → direct-agent-loop → finalize)
 /isdlc fix ...      → Phase-Loop Controller (init → tasks → direct-agent-loop → finalize)
+/isdlc analyze ...  → Phase A Preparation Pipeline (no workflow, no state.json)
+/isdlc start ...    → Phase-Loop Controller (validate meta → init from Phase 02 → direct-agent-loop → finalize)
 /isdlc test run     → Phase-Loop Controller (init → tasks → direct-agent-loop → finalize)
 /isdlc test generate → Phase-Loop Controller (init → tasks → direct-agent-loop → finalize)
 /isdlc upgrade ...  → Phase-Loop Controller (init → tasks → direct-agent-loop → finalize)
