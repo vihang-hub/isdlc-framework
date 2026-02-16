@@ -5,55 +5,6 @@
 
 ## Open
 
-### 0. Bugs
-
-#### Batch A — Critical: Gate Bypass Risk (0 remaining, 3 fixed)
-
-- 0.1 [x] ~~**BUG: Dual phase-status tracking causes inconsistent gate decisions**~~ (BUG-0007)
-
-- 0.2 [x] ~~**BUG: Missing PHASE_STATUS_ORDINAL disables phase regression checks**~~ (BUG-0007 — confirmed already fixed, verification test added)
-
-- 0.3 [x] ~~**BUG: Null safety gap in state version lock check**~~ (BUG-0007)
-
-#### Batch B — High: Inconsistent Hook Behavior (0 remaining, 7 fixed)
-
-- 0.4 [x] ~~**BUG: Phase index bounds not validated in gate-blocker**~~ (BUG-0008)
-
-- 0.5 [x] ~~**BUG: Empty workflows object prevents fallback loading**~~ (BUG-0008)
-
-- 0.6 [x] ~~**BUG: Dispatcher passes null context to all hooks**~~ (BUG-0006)
-
-- 0.7 [x] ~~**BUG: test-adequacy-blocker fires on wrong phases**~~ (BUG-0006)
-
-- 0.8 [x] ~~**BUG: Supervised review doesn't coordinate with gate-blocker**~~ (BUG-0008)
-
-#### Batch C — Medium: Correctness & UX (0 remaining, 4 fixed)
-
-- 0.9 [x] ~~**BUG: Misleading artifact error messages**~~ (BUG-0017)
-
-- 0.10 [x] ~~**BUG: Version lock bypass during state migration**~~ (BUG-0017)
-
-- 0.11 [x] ~~**BUG: Menu tracker unsafe nested object initialization**~~ (BUG-0006)
-
-- 0.12 [x] ~~**BUG: Phase timeout advisory only — never enforced**~~ (BUG-0006)
-
-#### Batch E — Medium: Orchestrator Blast Radius Response (0 remaining, 2 fixed)
-
-- 0.17 [x] ~~**BUG: Orchestrator relaxes blast radius requirements instead of implementing missing files**~~ (BUG-0019)
-
-- 0.18 [x] ~~**BUG: No task plan integration when blast radius coverage is incomplete**~~ (BUG-0019)
-
-#### Batch D — Low: Maintainability & Tech Debt (0 remaining, 4 fixed)
-
-- 0.13 [x] ~~**DEBT: Hardcoded phase prefixes in 3+ hook files**~~ (BUG-0009)
-
-- 0.14 [x] ~~**DEBT: Inconsistent null-check patterns across hooks**~~ (BUG-0009)
-
-- 0.15 [x] ~~**DEBT: `detectPhaseDelegation()` undocumented**~~ (BUG-0009)
-
-- 0.16 [x] ~~**DEBT: Dead code from BUG-0005 fix**~~
-  - `gate-blocker.cjs:606-607` — redundant fallback branch that never executes after the primary branch (line 577) already resolves `currentPhase`.
-
 ### 1. Spec-Kit Learnings (from framework comparison 2026-02-11)
 
 - 1.1 [ ] Spike/explore workflow — parallel implementation branches from a single spec for tech stack comparison or architecture exploration (Spec-Kit's "Creative Exploration")
@@ -62,10 +13,7 @@
 
 ### 2. Performance (remaining from 2026-02-13 investigation)
 
-- 2.1 [x] T5: Quality Loop true parallelism — Track A (testing) and Track B (QA) currently run sequentially despite being designed as parallel
-  - **Impact**: 2x speedup for Phase 16 (1.5-2 min savings)
-  - **Complexity**: Medium (spawn Track A + Track B as separate sub-agents, wait for both)
-  - REQ-0018 — DONE: Explicit dual-Task spawning in 16-quality-loop-engineer.md, grouping strategy table (A1/A2/A3 + B1/B2), internal parallelism guidance, consolidated merging, iteration loop, FINAL SWEEP compat, scope detection. 40 tests, zero regressions, light workflow.
+- 2.1 [x] T5: Quality Loop true parallelism (REQ-0018 — DONE: dual-Task spawning for Track A + Track B, grouping strategy, 40 tests)
 - 2.2 [ ] T6: Hook I/O optimization — reduce disk reads in dispatchers
   - T6-A: Config caching — cache skills-manifest.json (50-200KB), iteration-requirements.json, workflows.json with mtime invalidation (saves 30-50ms per invocation)
   - T6-B: writeState() double-read elimination — BUG-0009 optimistic locking reads disk to get version before writing, adds 10-20ms per write; trust in-memory version instead
@@ -129,103 +77,16 @@
   - **Complexity**: Medium-large (2-3 sessions through full iSDLC workflow)
   - **Prerequisite**: ~~BUG-0013 (phase-loop-controller same-phase bypass)~~ DONE
 
-- 3.2 [ ] Pre-analysis pipeline — `/isdlc analyze` command to pre-compute analytical phases for the next task while the current workflow runs
-  - **Problem**: During Phase 06 (implementation) the developer waits 10-30 minutes with nothing to do. They know what the next task will be (from BACKLOG.md) but can't start working on it until the current workflow finishes. Today the only option is manual backlog grooming. The framework could use this idle time to pre-compute the non-interactive analytical phases for the next task, so when the developer starts it, the analysis is already done.
-  - **Key insight**: Phases 00 (quick-scan) and 02 (impact analysis) are **read-only** — they analyze the codebase and produce documents, never write code. They can safely run alongside an implementation phase with zero file conflict. Phase 01 (requirements) is interactive and cannot be pre-cooked.
-  - **Design**:
-    1. **New command**: `/isdlc analyze "Add payment processing"` (or natural language: "analyze the next backlog item")
-    2. **Runs phases 00 + 02 only** — non-interactive, purely analytical. No state.json workflow creation, no branch, no hooks. Just Task agents producing artifacts.
-    3. **Artifacts saved to staging area**:
-       ```
-       .isdlc/
-         pre-analysis/
-           add-payment-processing/
-             quick-scan.md          ← Phase 00 output
-             impact-analysis.md     ← Phase 02 output
-             meta.json              ← { description, created_at, source_branch, analyzed_files_hash }
-           another-feature/
-             ...
-       ```
-    4. **Consumption at workflow start**: When `/isdlc feature "Add payment processing"` runs, the phase-loop checks `.isdlc/pre-analysis/` for a matching slug. If found:
-       - Show summary of what was pre-analyzed
-       - Staleness check: compare `analyzed_files_hash` against current codebase state. If files changed significantly since analysis, warn and offer to re-run
-       - Offer: "Pre-analysis found (2 hours ago). Use it? [Y] Use pre-analysis / [N] Run fresh / [R] Review first"
-       - If accepted: inject artifacts as context for Phase 01 (requirements gets richer starting context) and skip Phase 02 (impact analysis already done)
-    5. **Cleanup**: Pre-analysis artifacts deleted after consumption or after 7 days (whichever comes first). `/isdlc analyze --clean` removes all.
-  - **UX flow**:
-    ```
-    Terminal 1: /isdlc feature "user auth"     ← workflow running, currently in Phase 06
-    Terminal 2: /isdlc analyze "payment API"    ← pre-analysis for next task
-
-    ... later, after auth workflow completes ...
-
-    Terminal 1: /isdlc feature "payment API"
-    > Pre-analysis found for "payment API" (35 min ago)
-    >   Quick scan: 12 files in scope, 3 modules affected
-    >   Impact analysis: medium blast radius, 2 coupling hotspots
-    > Use pre-analysis? [Y/N/R]
-    ```
-  - **Intent detection in CLAUDE.md.template**: Add patterns like "analyze the next item", "pre-analyze {description}", "start analysis for {description}" → route to `/isdlc analyze`
-  - **Files to change**: `src/claude/commands/isdlc.md` (new SCENARIO for analyze command, consumption logic in phase-loop STEP 3), `src/claude/CLAUDE.md.template` (intent detection patterns), `.gitignore` (ensure `.isdlc/pre-analysis/` is ignored)
-  - **What it intentionally does NOT do**:
-    - No state.json workflow creation — pre-analysis is not a workflow, it's a staging computation
-    - No branch creation — analysis runs on whatever branch you're on
-    - No hook enforcement — no gates, no iteration requirements. This is draft analysis, not gated output
-    - No Phase 01 (requirements) — that's interactive, needs the developer, runs at normal workflow time
-    - No Phase 03 (architecture) — depends on requirements output, so can't run before Phase 01
-  - **Relationship to other backlog items**:
-    - Stepping stone to 3.1 (parallel workflows) — if this proves valuable, 3.1 adds full state isolation for concurrent workflows
-    - Complements 5.2 (collaborative mode) — pre-analysis keeps the developer engaged during idle time, similar to collaborative mode's task suggestions
-    - Independent of 5.1 (supervised mode) — no dependency
-  - **Complexity**: Low-medium — new command scenario in isdlc.md, consumption check in phase-loop, staging directory convention, intent detection. No hook changes, no state schema changes, no new agents.
+- 3.2 [x] Pre-analysis pipeline — `/isdlc analyze` and `/isdlc start` commands for pre-workflow requirements capture and consumption (REQ-0019 — DONE)
+  - Implemented as Phase A Preparation Pipeline: `/isdlc analyze` runs intake + optional deep analysis outside workflow machinery (no state.json, no hooks, no branches), writes to `docs/requirements/{slug}/`
+  - `/isdlc start` consumes Phase A artifacts, validates `meta.json`, staleness checks, begins workflow from Phase 02
+  - Evolved beyond original spec: full requirements capture (not just quick-scan + impact analysis), Jira/GitHub/manual intake sources, BACKLOG.md index integration
 
 ### 4. Multi-Agent Teams (Architecture)
 
-- 4.1 [x] Replace single-agent phases with Creator/Critic/Refiner teams that collaborate via propose-critique-refine cycles (5 of 5 phases done)
-  - **Shared pattern**: Each phase runs a 3-agent loop: Creator produces artifact → Critic reviews and challenges → Refiner synthesizes improvements. Max 3 rounds, convergence when Critic has zero blocking findings (warnings allowed). Each round produces a versioned artifact diff so progress is visible.
-  - **Configurable**: Off for `-light` workflows (single agent, current behavior). On for `standard` and `epic`. Override with `--no-debate` flag to force single-agent mode. Opt-in via `/isdlc feature "desc" --debate` or per-phase in constitution (e.g., `debate_phases: [01, 03, 04, 06]`).
-  - **Precedent**: Deep discovery Inception Party already uses this pattern for `/discover --new` — this extends it to all workflow phases.
-  - **Sequencing**: Phase 01 done first (REQ-0014), then extend to 03/04/06.
-  - **Complexity**: Large (new agent roles, loop protocol, convergence logic, phase restructuring)
-  - **Phase 01 — Requirements Team** [x] (REQ-0014 — DONE: 2 new agents, 90 tests, --debate/--no-debate flags, conversational Creator, debate loop orchestration)
-    - **Creator** (requirements-analyst): Produces requirements-spec.md, user-stories.json, NFR matrix, traceability matrix.
-    - **Critic** catches: vague/untestable ACs, orphan requirements, unmeasured NFRs, scope creep, missing compliance requirements, contradictions, missing edge cases, unstated assumptions
-    - **Refiner** produces: testable Given/When/Then for every AC, quantified NFRs, complete traceability, risk mitigation, explicit assumption register
-  - **Phase 03 — Architecture Team** [x] (REQ-0015 — DONE: 2 new agents, 87 tests, generalized debate engine with routing table, 8-check Critic, 8-strategy Refiner):
-    - **Creator** (solution-architect): Produces architecture-overview.md, tech-stack-decision.md, database-design.md, security-architecture.md, ADRs.
-    - **Critic** catches: NFR misalignment, incomplete STRIDE threat model, database design flaws, weak tech stack justification, single points of failure, unaddressed cost implications, missing observability, coupling contradictions
-    - **Refiner** produces: complete ADRs with trade-offs, security hardening, HA adjustments, cost optimization, observability architecture
-  - **Phase 04 — Design Team** [x] (REQ-0016 — DONE: 2 new agents, 87 tests, DEBATE_ROUTING Phase 04 entry, 8-check Design Critic (DC-01..DC-08), 9-strategy Design Refiner, Creator awareness for system-designer):
-    - **Creator** (system-designer): Produces interface-spec.yaml/openapi.yaml, module-designs/, wireframes/, error-taxonomy.md, validation-rules.json.
-    - **Critic** catches: incomplete API specs, inconsistent patterns across modules, module overlap, validation gaps, missing idempotency, accessibility issues, error taxonomy holes, data flow bottlenecks
-    - **Refiner** produces: OpenAPI 3.x contracts with complete error responses, unified error taxonomy, component variants for all states, validation rules at every boundary, idempotency keys
-  - **Phase 06 — Implementation Team** [x] (REQ-0017 — DONE: 2 new agents, 86 tests, IMPLEMENTATION_ROUTING in Section 7.6, 8-check Reviewer (IC-01..IC-08), 6-step Updater fix protocol, Writer awareness, Phase 16 final sweep + Phase 08 human review only):
-    - **Problem**: Code is written in Phase 06, then waits for Phase 16 (quality loop) and Phase 08 (code review) to find issues. By then context is cold, fixes require re-reading, and the sequential overhead adds 15-30 minutes per workflow.
-    - **Writer** (software-developer) — writes code following tasks.md, TDD, produces files
-    - **Reviewer** (code-reviewer) — reviews files, flags issues immediately, checks constitutional compliance, validates skill/tech-stack alignment
-    - **Updater** (code-updater) — takes reviewer feedback, applies fixes, re-runs tests, confirms resolution
-    - **Reviewer checks** (immediate — while context is hot):
-      - Logic correctness, error handling, security (injection prevention, no hardcoded secrets)
-      - Code quality (naming, DRY, single responsibility, complexity), test quality
-      - Skill/tech-stack alignment (flag wrong patterns for project's stack)
-      - Constitutional compliance (spec primacy, TDD, simplicity, traceability)
-    - **Phase restructuring**:
-      - Current: `06-implementation → 16-quality-loop → 08-code-review`
-      - Proposed: `06-implementation-loop (writer+reviewer+updater) → 16-final-sweep → 08-human-review`
-    - **Final sweep** (Phase 16, batch): full test suite, coverage (≥80% unit, ≥70% integration), mutation testing (≥80%), npm audit, SAST scan, build verification, lint/type check, traceability matrix, technical debt assessment
-    - **Phase 08 becomes human-review only**: architecture decisions, business logic, design coherence, non-obvious security, merge approval
-    - **Review strategy by intensity** (avoids naive per-file 2N call explosion):
-      - **Light** — Review-aware Writer + single audit: embed reviewer checklist in Writer prompt so it self-checks during writing, then one independent Reviewer audit over the full changeset. **2 Task calls total.**
-      - **Standard** — Group-based review + threshold skip: Writer produces files in logical groups (by module/directory), Reviewer reviews each group as a batch, Updater fixes per group. Simple files (types, config, re-exports, interfaces) skip review. **~4-6 Task calls** for a typical 15-file changeset.
-      - **Epic** — Group-based review (no threshold skip) or fan-out: full review of all groups, or fan-out N parallel Reviewers across file chunks for large changesets (15+ files). **~6-10 calls**, or parallel for faster wall-clock time.
-    - **Additional speedup options** (can layer on top of any strategy):
-      - **Progressive review**: full review on first 2-3 files to establish quality patterns, then lightweight spot-checks for remaining files. Re-triggers full review only if spot-check finds issues.
-      - **Diff-based review**: for modifications to existing files, Reviewer only reviews the diff, not the entire file. Smaller context = faster per review.
-    - **Implementation options**: (A) Single Task with 3 sub-agents, (B) Phase-Loop Controller manages loop explicitly, (C) New `collaborative-implementation-engineer` agent encapsulates all 3 roles
-  - **Phase 05 — Test Strategy Team** [x] (REQ-0016 — DONE: 2 new agents, 88 tests, DEBATE_ROUTING Phase 05 entry, 8-check Test Strategy Critic (TC-01..TC-08), fix-strategy Refiner, Creator awareness for test-design-engineer):
-    - **Creator** (test-design-engineer): Produces test-strategy.md, test-cases/, traceability-matrix.csv
-    - **Critic** catches: missing edge cases, untested error paths, over-reliance on unit tests, no performance/load test plan, coverage gaps against requirements, missing negative test cases, test data gaps, flaky test risk
-    - **Refiner** produces: complete test pyramid with rationale, Given/When/Then for every AC, explicit negative test cases, test data strategy, flaky-test mitigation, coverage targets mapped to risk areas
+- 4.1 [x] Multi-agent debate teams for all creative phases — Creator/Critic/Refiner propose-critique-refine cycles (5/5 phases done)
+  - Phase 01 Requirements (REQ-0014: 90 tests), Phase 03 Architecture (REQ-0015: 87 tests), Phase 04 Design (REQ-0016: 87 tests), Phase 05 Test Strategy (REQ-0016: 88 tests), Phase 06 Implementation (REQ-0017: 86 tests — Writer/Reviewer/Updater variant)
+  - Configurable: off for `-light`, on for standard/epic, `--debate`/`--no-debate` flags
 - 4.2 [~] Impact Analysis cross-validation — improve Phase 02 accuracy by enabling agents to cross-check findings (Approach A DONE — REQ-0015, Approach B still open)
   - **Problem**: M1 (Impact Analyzer), M2 (Entry Point Finder), and M3 (Risk Assessor) run in parallel but in **complete isolation** — no SendMessage, no cross-referencing, no awareness of each other's findings. The orchestrator consolidates after all complete, but nobody verifies consistency. M1 might say 7 files affected while M2 found entry points in 9 files, or M3's risk score might not account for coupling that M1 identified. Inconsistencies flow silently into sizing and downstream phases.
   - **Approach A — Post-hoc Verifier** [x] (DONE — REQ-0015: cross-validation-verifier.md agent, Step 3.5 in orchestrator, IA-401/IA-402 skills, 3-tier fail-open, 33 tests):
@@ -248,23 +109,7 @@
   - **Recommendation**: Start with Approach A (low risk, immediate value), evolve to Approach B if inconsistency rate is high.
   - **Impact on sizing**: More accurate file counts and risk scores → more reliable sizing decisions (connects to 8.2)
   - **Complexity**: A = Low-medium (one new agent). B = Medium (SendMessage protocol, message budget, interim finding format)
-- 4.3 [x] Fan-out/fan-in parallelism for execution-heavy phases — split work across N parallel agents for throughput (REQ-0017 — DONE)
-  - **Problem**: Phases 16 (Quality Loop) and 08 (Code Review) process large volumes of work sequentially or in limited parallelism. For a project with 1000+ tests or 20+ changed files, this is a bottleneck.
-  - **Pattern**: Fan-out/fan-in — divide work into N chunks, spawn N agents in parallel, merge results
-  - **Phase 16 — Quality Loop fan-out**:
-    - Split test suite into N chunks based on total test count (e.g., 1000 tests ÷ 4 agents = 250 each)
-    - Each agent runs their chunk independently, reports pass/fail/coverage
-    - Orchestrator merges results — any failures bubble up, coverage is aggregated
-    - Supersedes backlog 2.1 (true parallelism for Track A + Track B) — this goes further by parallelising within each track
-    - **Scaling heuristic**: 1 agent per ~250 tests, max 8 agents (diminishing returns beyond that due to orchestration overhead)
-  - **Phase 08 — Code Review fan-out**:
-    - Split changed files across multiple reviewer agents (by module, directory, or file count)
-    - Each reviewer checks their subset: logic correctness, security, code quality, constitutional compliance
-    - Orchestrator merges findings into a single review report, deduplicates, prioritises
-    - Especially valuable for large changesets (20+ files) where single-agent review loses context
-    - If Phase 06 already has Writer/Reviewer/Updater (4.1), Phase 08 fan-out is for the final human-review preparation — assembling a comprehensive report quickly
-  - **Shared infrastructure**: Both use the same fan-out/fan-in orchestration — chunk splitter, parallel Task spawner, result merger. Build once, reuse.
-  - **Complexity**: Medium — chunk splitting logic, parallel agent spawning, result merging. Builds on existing Task tool parallelism.
+- 4.3 [x] Fan-out/fan-in parallelism for Phase 16 + Phase 08 (REQ-0017 — DONE: shared fan-out engine QL-012, chunk splitter, 250-test/5-file thresholds, max 8 agents, `--no-fan-out` flag, 46 tests)
 
 ### 5. Developer Engagement Modes (Architecture)
 
@@ -276,46 +121,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
 | **Supervised** | Reviewer — inspect, edit, and course-correct between phases | Pause at configurable review gates | Existing projects, domain-heavy features, learning the codebase |
 | **Collaborative** | Reviewer + contributor — produce artifacts alongside the AI | Pause at review gates + suggest parallel human tasks + consume contributed artifacts | Complex features, developer has domain expertise, "boring AI" problem |
 
-- 5.1 [x] Supervised mode — configurable per-phase review gates with parallel change summaries, giving users control to review, edit, and course-correct between phases (REQ-0013 — DONE)
-  - **Problem**: The framework is either fully autonomous (phases flow without pause) or broken (escalation on failure). There's no structured way for users to review phase output before the next phase consumes it. By the time the end-of-workflow Human Review Checkpoint fires, it's too late to fix Phase 03 architecture that Phase 06 already built on. Critical for existing project discovery where the user knows the codebase better than the agent.
-  - **Design**: A lightweight gate enhancement (not a new phase) with three components:
-    1. **Parallel summary generation**: During phase execution, a background sub-agent generates `.isdlc/reviews/phase-NN-summary.md` — file diffs, artifact list, key decisions made, links to all changed/created files
-    2. **Review gate at phase boundary**: Instead of auto-advancing, present summary + menu:
-       ```
-       Phase 03 (Architecture) complete. Summary: .isdlc/reviews/phase-03-summary.md
-
-       Changed files:
-         docs/architecture-overview.md (new)
-         docs/tech-stack-decision.md (new)
-         docs/database-design.md (new)
-
-       [Continue] → advance to next phase
-       [Review]   → pause for manual edits, resume when user says "continue"
-       [Redo]     → re-run phase with additional guidance
-       ```
-    3. **Resume after review**: Framework picks up from where it paused, consuming any user-edited files
-  - **Config**:
-    ```json
-    {
-      "supervised_mode": {
-        "enabled": false,
-        "review_phases": "all",
-        "parallel_summary": true,
-        "auto_advance_timeout": null
-      }
-    }
-    ```
-    - `review_phases`: `"all"` or array of specific phases (e.g., `["03", "04", "06"]`)
-    - `auto_advance_timeout`: `null` = wait forever, or minutes before auto-continuing
-  - **Builds on existing infrastructure**:
-    - Gate-blocker — add `supervised_mode.enabled` + `review_phases` check
-    - Phase-loop-controller — trigger parallel summary sub-agent during phase execution
-    - Escalation menu pattern — reuse Continue/Skip/Cancel UX
-    - Phase snapshots (REQ-0005) — already captures per-phase summaries
-    - `review-summary.md` — extend from end-of-workflow to per-phase
-    - `code_review.enabled` — precedent for config-driven behaviour change
-  - **Key use cases**: existing project discovery (architecture/design review), greenfield projects (requirements validation), any workflow where user domain knowledge exceeds agent's
-  - **Scope**: Medium — gate-blocker modification, parallel summary in phase-loop-controller, Continue/Review/Redo menu, config in state.json. No new agents needed.
+- 5.1 [x] Supervised mode — per-phase review gates with Continue/Review/Redo menu, parallel change summaries, redo circuit breaker (REQ-0013 — DONE: 4 common.cjs helpers, STEP 3e-review, `--supervised` flag, 88 tests)
 - 5.2 [ ] Collaborative mode — developer as co-contributor alongside the AI, with parallel human tasks and artifact drop-in
   - **Problem**: In auto mode the developer sits idle for 15-60 minutes while the framework works. Supervised mode (5.1) keeps them engaged as a reviewer, but the developer still isn't *producing* anything. Developers with domain expertise want to contribute — draft acceptance criteria, research competitors, sketch edge cases, write test scenarios — but there's no mechanism to feed that work back into the active workflow.
   - **Builds on**: Supervised mode (5.1) — collaborative mode is supervised mode + contribution capabilities. 5.1 is a prerequisite.
@@ -468,28 +274,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
   - **Advantages over Jira adapter**: no MCP auth headaches (Atlassian re-auth bug), `gh` already installed for most GitHub users, auto-close via commit message (zero API calls), richer label/milestone system, external contributor intake via templates
   - **Builds on**: REQ-0008 (Jira adapter pattern), REQ-0012 (invisible framework — natural language intent detection)
   - **Complexity**: Medium — same adapter pattern as Jira but simpler (gh CLI vs MCP). ~6 files to modify, ~1 new test file. Most work is in orchestrator + installer.
-- 7.7 [x] Backlog management integration — curated local BACKLOG.md backed by Jira, with Confluence as input source (REQ-0008 -- DONE)
-  - **Problem**: Jira has hundreds of unsorted, unprioritised tickets. Nobody wants to trawl through that from the CLI. But Jira is the canonical source for ticket data in existing teams. BACKLOG.md provides a clean, curated, readable experience — but without Jira sync it's a disconnected island.
-  - **Design**: BACKLOG.md is the developer's curated working set. Jira is the canonical source for ticket content. Sync is lightweight — content flows in from Jira, status flows back.
-  - **UX** (invisible framework — all via natural language, no explicit commands):
-    | User says | Agent does (via CLAUDE.md instructions) |
-    |-----------|----------------------------------------|
-    | "Add PROJ-1234 to the backlog" | Pulls title, description, priority, linked Confluence pages from Jira via MCP → appends to BACKLOG.md |
-    | "Show me the backlog" | Reads BACKLOG.md, presents it |
-    | "Move PROJ-1235 above PROJ-1234" | Reorders in BACKLOG.md |
-    | "Refresh the backlog" | Re-pulls latest title/description/status from Jira for all tracked items, updates BACKLOG.md |
-    | "Let's work on PROJ-1234" | Agent detects intent, kicks off feature/fix workflow with Jira ticket as input |
-    | *(workflow completes)* | Agent syncs status back to Jira (e.g., In Progress → Done) |
-  - **Confluence as input source**: When a Jira ticket links to a Confluence spec/PRD, the framework pulls it automatically as context for the requirements phase. Instead of asking cold generic questions, the agent reads the linked spec and starts from a position of knowledge ("I've read the spec, here's my understanding, what's missing?"). Connects to 8.3 (requirements elicitation redesign).
-  - **What syncs where**:
-    - **Jira → BACKLOG.md**: ticket title, description, priority, linked Confluence URLs (on add and refresh)
-    - **BACKLOG.md → Jira**: status transitions only (In Progress, Done) — no content pushed back
-    - **Confluence → framework**: linked specs/PRDs pulled as requirements phase input — read-only, never written back
-  - **What it doesn't do**: full Jira board management, sprint planning, bulk import, two-way content sync, publishing artifacts to Confluence
-  - **Prerequisites**: Atlassian Rovo MCP server configured in Claude Code (`claude mcp add --transport sse atlassian https://mcp.atlassian.com/v1/sse`). Known gotcha: re-auth required multiple times per day (Atlassian bug, SSE transport being deprecated).
-  - **CLAUDE.md changes**: Add instructions for backlog management conventions — BACKLOG.md location, Jira ticket format in entries, when to sync status, how to handle linked Confluence pages
-  - **Pluggable adapter pattern**: Jira + Confluence first via Atlassian MCP. Others (Linear, GitHub Issues, Azure DevOps) via same pattern with different MCP servers.
-  - **Complexity**: Medium — MCP integration, BACKLOG.md read/write conventions, status sync logic, CLAUDE.md instructions. No new agents needed.
+- 7.7 [x] Backlog management integration — Jira + Confluence backed BACKLOG.md with prompt-driven MCP delegation (REQ-0008 — DONE: 4 production files, 72 tests)
 
 ### 8. Workflow Quality
 
@@ -504,21 +289,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
     3. **Add fallback metrics**: If `parseSizingFromImpactAnalysis()` fails, try extracting file count from quick-scan or requirements artifacts as a backup data source
   - **Files to change**: `src/claude/commands/isdlc.md` (STEP 3e-sizing, PATHs 1 and 3), possibly `src/claude/hooks/lib/common.cjs` (`parseSizingFromImpactAnalysis` fallback robustness)
   - **Complexity**: Low (control flow changes in 1-2 files, no new agents or infrastructure)
-- 8.3 [x] Requirements elicitation interaction pattern redesign — replace the cold, generic 3-question opening ("What problem? Who will use this? How will you measure success?") with a conversational, context-aware interaction (integrated into REQ-0014 as FR-007 -- DONE)
-  - **Problem**: When the user runs `/isdlc feature "Add payment processing"`, the agent ignores the description they already provided and dumps 3 generic questions. This feels like filling out a form, not collaborating with an expert. The same rigid pattern repeats at every sub-stage (5 sequential lenses, each with A/R/C menu). The current UX is dry, mechanical, and disengaging.
-  - **Root cause**: The 3-question opening is hardcoded in two places — `00-sdlc-orchestrator.md` (line ~909, INTERACTIVE PROTOCOL injection) and `01-requirements-analyst.md` (lines ~27-29 invocation protocol + lines ~513-515 Step 1 first response). The orchestrator explicitly instructs: "Your FIRST response must ONLY contain these 3 questions - nothing else."
-  - **Desired UX**:
-    1. **Reflect first** — acknowledge and summarize what the user already said in their feature description
-    2. **Contextual follow-up** — ask ONE targeted question based on what's actually missing, not 3 generic ones
-    3. **Conversational deepening** — use the 5 lenses (Business/User/UX/Tech/Quality) organically as the conversation flows, not as rigid sequential stages
-    4. **Multi-perspective challenge** — optionally bring in persona voices (modeled on discover's Vision Council) to debate and surface blind spots, but only after initial context is established
-    5. **Lighter-weight gates** — keep A/R/C for major phase transitions, replace per-stage menus with natural conversational confirmation
-  - **Scope**: Feature workflow only (bug fix workflow is already lightweight at 2-4 turns with min 1 menu interaction)
-  - **Files to change**: `00-sdlc-orchestrator.md` (INTERACTIVE PROTOCOL), `01-requirements-analyst.md` (invocation protocol + Step 1 flow + sub-stage structure)
-  - **May include personas**: A "Requirements Council" (PM/UX advocate/Technical realist) could replace the 5 sequential lenses with parallel perspectives, inspired by discover's `party-personas.json` pattern. But personas are a means, not the goal — the goal is a conversational, context-aware interaction.
-  - **Prerequisite decision — persona naming consistency**: The framework currently has 3 conflicting conventions: (1) human names for Phase 1-2 discover personas (`FROM NADIA (Product Analyst):`), (2) role-only for Phase 3 discover personas (`D8 (Architecture Designer)`), (3) "lenses" for requirements (`Analyst Lens`, `Product Lens`). Documentation (AGENTS.md, ARCHITECTURE.md) uses roles only, never names. `party-personas.json` Phase 3 entries have `name == title` (e.g., `"name": "Architecture Designer"`, `"title": "Architecture Designer"`). Before adding personas to requirements, decide on one convention and apply it consistently across discover + requirements. Options: (A) names everywhere — give all personas human names, (B) roles everywhere — drop names, use role titles consistently, (C) keep names for interactive/debate phases, roles for artifact-production phases (current hybrid, but make it intentional).
-  - **Relationship to other items**: Complements 4.1 (multi-agent teams — provides the persona council), subsumes the Phase 01 aspects of 8.1 (requirements debate). Does not affect bug fix flow.
-  - **Complexity**: Medium (2 files to rewrite, possible new persona config, interaction pattern design, naming convention decision)
+- 8.3 [x] Requirements elicitation redesign — conversational, context-aware interaction replacing generic 3-question opening (REQ-0014 FR-007 — DONE: integrated into Creator/Critic/Refiner debate team)
 
 ### 9. Code Quality Gaps
 
