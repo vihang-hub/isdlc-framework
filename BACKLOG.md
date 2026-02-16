@@ -14,11 +14,7 @@
 ### 2. Performance (remaining from 2026-02-13 investigation)
 
 - 2.1 [x] T5: Quality Loop true parallelism (REQ-0018 — DONE: dual-Task spawning for Track A + Track B, grouping strategy, 40 tests)
-- 2.2 [ ] T6: Hook I/O optimization — reduce disk reads in dispatchers -> [requirements](docs/requirements/REQ-0020-t6-hook-io-optimization/)
-  - T6-A: Config caching — cache skills-manifest.json (50-200KB), iteration-requirements.json, workflows.json with mtime invalidation (saves 30-50ms per invocation)
-  - T6-B: writeState() double-read elimination — BUG-0009 optimistic locking reads disk to get version before writing, adds 10-20ms per write; trust in-memory version instead
-  - T6-C: getProjectRoot() caching — compute once per dispatcher, not per sub-hook (saves 5-10ms per hook)
-  - T6-D: Post-write/edit triple I/O consolidation — dispatcher + validators + workflow-completion-enforcer do 4-5 sequential state reads
+- 2.2 [x] T6: Hook I/O optimization (REQ-0020 — DONE: config mtime caching, getProjectRoot() per-process cache, state-write-validator single-read consolidation, ctx.manifest passthrough, 46 tests)
 - 2.3 [ ] T7: Agent prompt boilerplate extraction — ROOT RESOLUTION, MONOREPO, ITERATION protocols duplicated across 17 agents (~3,600 lines)
   - Move remaining shared sections to CLAUDE.md (T2 follow-up)
   - **Impact**: 2-3% speedup per agent delegation
@@ -343,6 +339,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
 ## Completed
 
 ### 2026-02-16
+- [x] REQ-0020: T6 Hook I/O optimization — config file mtime caching (`_configCache` Map with `_loadConfigWithCache()`), `getProjectRoot()` per-process cache, state-write-validator single-read consolidation (`diskState` parameter to V7/V8), `ctx.manifest` passthrough in gate-blocker `checkAgentDelegationRequirement()`. 3 production files modified (common.cjs, state-write-validator.cjs, gate-blocker.cjs), 46 new tests, zero regressions, 1 implementation iteration. 5 FRs, 4 NFRs, 19 ACs (backlog 2.2).
 - [x] BUG-0019: Blast radius response bugs (GitHub #1, Batch E bugs 0.17 + 0.18) — new `blast-radius-step3f-helpers.cjs` with re-implementation targeting for unaddressed files + `tasks.md` cross-referencing for skipped/incomplete tasks. Modified orchestrator STEP 3f and phase-loop integration. 66 new tests, zero regressions, 2 implementation iterations. 5 FRs, 3 NFRs, 19 ACs.
 - [x] BUG-0018: Backlog picker pattern mismatch after BACKLOG.md restructure (GitHub #2, REQ-0019 follow-up) — updated orchestrator BACKLOG PICKER to strip `-> [requirements](...)` suffix from item titles in both feature and fix modes. Added `start` action design note in isdlc.md. 26 new tests (`test-backlog-picker-content.test.cjs`), zero regressions, 1 implementation iteration. 5 FRs, 3 NFRs, 19 ACs.
 - [x] REQ-0017: Fan-out/fan-in parallelism — shared fan-out engine (QL-012 skill) with chunk splitter, parallel Task spawner, and result merger. Phase 16 Track A test splitting (250-test threshold, max 8 agents, round-robin strategy, union coverage aggregation). Phase 08 code review file splitting (5-file threshold, max 8 agents, group-by-directory strategy, finding deduplication, cross-cutting concerns). --no-fan-out CLI flag. Protocol-only implementation (markdown, no executable code). 4 ADRs, 5 modified files, 1 new skill file, 46 new tests, zero regressions, 1 implementation iteration. 7 FRs, 4 NFRs, 35 ACs (backlog 4.3).
