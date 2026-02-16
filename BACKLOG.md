@@ -5,48 +5,6 @@
 
 ## Open
 
-### 0. Bugs
-
-#### Batch A — Critical: Gate Bypass Risk (0 remaining, 3 fixed)
-
-- 0.1 [x] ~~**BUG: Dual phase-status tracking causes inconsistent gate decisions**~~ (BUG-0007)
-
-- 0.2 [x] ~~**BUG: Missing PHASE_STATUS_ORDINAL disables phase regression checks**~~ (BUG-0007 — confirmed already fixed, verification test added)
-
-- 0.3 [x] ~~**BUG: Null safety gap in state version lock check**~~ (BUG-0007)
-
-#### Batch B — High: Inconsistent Hook Behavior (0 remaining, 7 fixed)
-
-- 0.4 [x] ~~**BUG: Phase index bounds not validated in gate-blocker**~~ (BUG-0008)
-
-- 0.5 [x] ~~**BUG: Empty workflows object prevents fallback loading**~~ (BUG-0008)
-
-- 0.6 [x] ~~**BUG: Dispatcher passes null context to all hooks**~~ (BUG-0006)
-
-- 0.7 [x] ~~**BUG: test-adequacy-blocker fires on wrong phases**~~ (BUG-0006)
-
-- 0.8 [x] ~~**BUG: Supervised review doesn't coordinate with gate-blocker**~~ (BUG-0008)
-
-#### Batch C — Medium: Correctness & UX (0 remaining, 4 fixed)
-
-- 0.9 [x] ~~**BUG: Misleading artifact error messages**~~ (BUG-0017)
-
-- 0.10 [x] ~~**BUG: Version lock bypass during state migration**~~ (BUG-0017)
-
-- 0.11 [x] ~~**BUG: Menu tracker unsafe nested object initialization**~~ (BUG-0006)
-
-- 0.12 [x] ~~**BUG: Phase timeout advisory only — never enforced**~~ (BUG-0006)
-
-#### Batch D — Low: Maintainability & Tech Debt (0 remaining, 4 fixed)
-
-- 0.13 [x] ~~**DEBT: Hardcoded phase prefixes in 3+ hook files**~~ (BUG-0009)
-
-- 0.14 [x] ~~**DEBT: Inconsistent null-check patterns across hooks**~~ (BUG-0009)
-
-- 0.15 [x] ~~**DEBT: `detectPhaseDelegation()` undocumented**~~ (BUG-0009)
-
-- 0.16 [x] ~~**DEBT: Dead code from BUG-0005 fix**~~ (BUG-0009)
-
 ### 1. Spec-Kit Learnings (from framework comparison 2026-02-11)
 
 - 1.1 [ ] Spike/explore workflow — parallel implementation branches from a single spec for tech stack comparison or architecture exploration (Spec-Kit's "Creative Exploration")
@@ -207,7 +165,8 @@
     - "add {ticket} to the backlog" → intake flow
     - "analyze {ticket/description}" → Phase A (intake + preparation)
     - "start {ticket}" / "let's work on {ticket}" → Phase B (execution)
-  - **Files to change**: `src/claude/commands/isdlc.md` (new SCENARIO for analyze command, Phase B consumption logic in phase-loop STEP 3), `src/claude/CLAUDE.md.template` (intent detection patterns for intake/analyze/start), BACKLOG.md (restructure to index format — one-time migration)
+  - **Files to change**: `src/claude/commands/isdlc.md` (new SCENARIO for analyze command, Phase B consumption logic in phase-loop STEP 3), `src/claude/CLAUDE.md.template` (intent detection patterns for intake/analyze/start — the invisible framework layer so the user just talks naturally and Claude Code routes to the right flow), project-level `CLAUDE.md` in dogfooding repo (mirror the intent patterns so this project itself uses the preparation pipeline), BACKLOG.md (restructure to index format — one-time migration)
+  - **Invisible framework principle**: The user never runs `/isdlc analyze` directly. They say "add Jira-1250 to the backlog" or "analyze the payment feature" and CLAUDE.md intent detection routes it. Both `src/claude/CLAUDE.md.template` (for installed projects) and the dogfooding project's own `CLAUDE.md` must have matching patterns. This is the same pattern used for REQ-0012 (invisible framework).
   - **What Phase A intentionally does NOT do**:
     - No state.json — preparation is not a workflow
     - No branch creation — runs on whatever branch you're on
@@ -570,6 +529,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
 ## Completed
 
 ### 2026-02-15
+- [x] BUG-0009: Batch D tech debt — 4 fixes across 7 files: centralized hardcoded phase prefixes into PHASE_PREFIXES constant in common.cjs (0.13), standardized null-check patterns to optional chaining in test-adequacy-blocker.cjs and state-write-validator.cjs (0.14), documented detectPhaseDelegation() with @example/@see/@throws in common.cjs (0.15), removed dead code else branch in gate-blocker.cjs (0.16). 31 new tests, zero regressions, 3 implementation iterations. 4 items, 18 ACs, 3 NFRs. **All bug batches now complete: A (3), B (7), C (4), D (4) = 18 bugs/debt items resolved.**
 - [x] 4.1: Multi-agent debate teams — Creator/Critic/Refiner loops for 5 phases (01 Requirements, 03 Architecture, 04 Design, 05 Test Strategy, 06 Implementation). 10 new agents, 438 tests across REQ-0014/0015/0016/0017. Generalized debate engine with routing table, --debate/--no-debate flags, per-intensity configuration, Phase 16 final sweep + Phase 08 human-review-only restructuring.
 - [x] BUG-0017: Batch C hook bugs — 2 fixes across 2 files: misleading artifact error messages in gate-blocker.cjs reporting actual missing variants instead of first variant (0.9), state-write-validator version lock bypass during migration requiring version field on incoming state (0.10). Quality reports updated. 137 new state-write-validator tests.
 - [x] BUG-0008: Batch B inconsistent hook behavior — 3 fixes in gate-blocker.cjs: phase index bounds validation with Array.isArray + length + typeof/isFinite checks (0.4), empty workflows object fallback loading via .workflows sub-property check (0.5), supervised review coordination blocking gate advancement when status is 'reviewing' or 'rejected' (0.8). 20 new tests, zero regressions, 1 implementation iteration. 3 bugs, 17 ACs, 4 NFRs.
