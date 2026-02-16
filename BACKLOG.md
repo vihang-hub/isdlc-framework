@@ -37,21 +37,11 @@
 
 - 0.12 [x] ~~**BUG: Phase timeout advisory only — never enforced**~~ (BUG-0006)
 
-#### Batch E — Medium: Orchestrator Blast Radius Response (2 items)
+#### Batch E — Medium: Orchestrator Blast Radius Response (0 remaining, 2 fixed)
 
-- 0.17 [ ] **BUG: Orchestrator relaxes blast radius requirements instead of implementing missing files**
-  - **Severity**: Medium — defeats the purpose of blast radius validation
-  - **Root cause**: When `blast-radius-validator.cjs` blocks because unaddressed files exist, the orchestrator responds by adding deferral entries or modifying the impact analysis rather than going back to the implementation phase and implementing changes for the missing files.
-  - **Fix**: When blast radius blocks, the orchestrator should re-enter the implementation phase targeting the unaddressed files — not modify the blast radius requirements.
-  - **Files**: `src/claude/agents/00-sdlc-orchestrator.md`, `src/claude/hooks/blast-radius-validator.cjs`
-  - **GitHub**: [#1](https://github.com/vihang-hub/isdlc-framework/issues/1)
+- 0.17 [x] ~~**BUG: Orchestrator relaxes blast radius requirements instead of implementing missing files**~~ (BUG-0019)
 
-- 0.18 [ ] **BUG: No task plan integration when blast radius coverage is incomplete**
-  - **Severity**: Medium — missed opportunity to leverage existing task tracking
-  - **Root cause**: `docs/isdlc/tasks.md` already contains tasks for all impacted files, but when blast radius blocks, there is no mechanism to cross-reference unaddressed files against the task plan and re-execute skipped tasks.
-  - **Fix**: Add logic to cross-reference unaddressed files against `tasks.md`, identify skipped/incomplete tasks, and re-execute them.
-  - **Files**: `src/claude/agents/00-sdlc-orchestrator.md`, `src/claude/commands/isdlc.md`
-  - **GitHub**: [#1](https://github.com/vihang-hub/isdlc-framework/issues/1)
+- 0.18 [x] ~~**BUG: No task plan integration when blast radius coverage is incomplete**~~ (BUG-0019)
 
 #### Batch D — Low: Maintainability & Tech Debt (0 remaining, 4 fixed)
 
@@ -582,6 +572,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
 ## Completed
 
 ### 2026-02-16
+- [x] BUG-0019: Blast radius response bugs (GitHub #1, Batch E bugs 0.17 + 0.18) — new `blast-radius-step3f-helpers.cjs` with re-implementation targeting for unaddressed files + `tasks.md` cross-referencing for skipped/incomplete tasks. Modified orchestrator STEP 3f and phase-loop integration. 66 new tests, zero regressions, 2 implementation iterations. 5 FRs, 3 NFRs, 19 ACs.
 - [x] BUG-0018: Backlog picker pattern mismatch after BACKLOG.md restructure (GitHub #2, REQ-0019 follow-up) — updated orchestrator BACKLOG PICKER to strip `-> [requirements](...)` suffix from item titles in both feature and fix modes. Added `start` action design note in isdlc.md. 26 new tests (`test-backlog-picker-content.test.cjs`), zero regressions, 1 implementation iteration. 5 FRs, 3 NFRs, 19 ACs.
 - [x] REQ-0017: Fan-out/fan-in parallelism — shared fan-out engine (QL-012 skill) with chunk splitter, parallel Task spawner, and result merger. Phase 16 Track A test splitting (250-test threshold, max 8 agents, round-robin strategy, union coverage aggregation). Phase 08 code review file splitting (5-file threshold, max 8 agents, group-by-directory strategy, finding deduplication, cross-cutting concerns). --no-fan-out CLI flag. Protocol-only implementation (markdown, no executable code). 4 ADRs, 5 modified files, 1 new skill file, 46 new tests, zero regressions, 1 implementation iteration. 7 FRs, 4 NFRs, 35 ACs (backlog 4.3).
 
