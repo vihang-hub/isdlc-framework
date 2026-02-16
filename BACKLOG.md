@@ -7,7 +7,7 @@
 
 ### 0. Bugs
 
-- 0.19 [ ] **BUG: Artifact path mismatch between agents and gate-blocker — no single source of truth**
+- 0.19 [x] **BUG: Artifact path mismatch between agents and gate-blocker — no single source of truth** *(Fixed: BUG-0020-GH-4, merged b777cee)*
   - **Severity**: High — 4 of 5 phases with artifact validation are mismatched; causes gate blocks
   - **Root cause**: Agent OUTPUT STRUCTURE sections and `iteration-requirements.json` `artifact_validation.paths` are defined independently with no shared source of truth. They drifted as agents were refactored.
   - **Observed**: Phase 08 gate blocked during REQ-0020 — hook expected `docs/reviews/{artifact_folder}/review-summary.md`, agent wrote to `docs/requirements/{artifact_folder}/code-review-report.md`
