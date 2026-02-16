@@ -291,7 +291,7 @@ When `/isdlc feature` or `/isdlc fix` is invoked **without** a description strin
 
 ## Feature Mode Sources
 
-1. **BACKLOG.md unchecked items**: Scan `BACKLOG.md` `## Open` section for `- N.N [ ] <text>` patterns (item number + checkbox + text). Parse metadata sub-bullets: extract `**Jira:**` ticket ID and `**Confluence:**` URLs from indented sub-bullets below each item. Display Jira-backed items with `[Jira: TICKET-ID]` suffix in picker options.
+1. **BACKLOG.md unchecked items**: Scan `BACKLOG.md` `## Open` section for `- N.N [ ] <text>` patterns (item number + checkbox + text). Skip checked `[x]` items (these are completed and often have ~~strikethrough~~ formatting). **Suffix stripping**: if the captured `<text>` contains a trailing `-> [requirements](...)` or `-> [design](...)` link suffix, strip it to produce the clean title. Items without a `->` suffix pass through unchanged. Parse metadata sub-bullets: extract `**Jira:**` ticket ID and `**Confluence:**` URLs from indented sub-bullets below each item. Display Jira-backed items with `[Jira: TICKET-ID]` suffix in picker options.
 2. **Cancelled feature workflows**: From `state.json` → `workflow_history` where `status == "cancelled"` AND `type == "feature"`. Deduplicate by description (most recent).
 
 **Order**: BACKLOG.md items first, then cancelled workflows. Always end with `[O] Other — Describe a new feature`.
@@ -309,7 +309,7 @@ When `/isdlc feature` or `/isdlc fix` is invoked **without** a description strin
 ## Fix Mode Sources
 
 1. **Cancelled fix workflows**: From `workflow_history` where `status == "cancelled"` AND `type == "fix"`. Deduplicate by description.
-2. **BACKLOG.md bug-related items**: Scan `BACKLOG.md` `## Open` section. Only items containing keywords: `fix`, `bug`, `broken`, `error`, `crash`, `regression`, `issue`, `defect`, `fail` (case-insensitive). Parse Jira metadata sub-bullets and display `[Jira: TICKET-ID]` suffix for Jira-backed items.
+2. **BACKLOG.md bug-related items**: Scan `BACKLOG.md` `## Open` section for `- N.N [ ] <text>` patterns. Skip checked `[x]` items. Apply the same suffix stripping as feature mode: strip any trailing `-> [requirements](...)` or `-> [design](...)` link suffix from the captured text. Only include items containing keywords: `fix`, `bug`, `broken`, `error`, `crash`, `regression`, `issue`, `defect`, `fail` (case-insensitive). Parse Jira metadata sub-bullets and display `[Jira: TICKET-ID]` suffix for Jira-backed items.
 
 **Order**: Cancelled fixes first, then bug-related BACKLOG.md items. Always end with `[O] Other — Describe a new bug`.
 
@@ -342,7 +342,7 @@ When the user selects a Jira-backed item from the picker, add these fields to `a
 
 - Use `AskUserQuestion` to present options. Max **15 items** from BACKLOG.md (overflow: `... and {N} more`). Truncate descriptions to **80 chars** with `...`.
 - **Empty state**: Skip menu, prompt directly ("Describe the feature/bug you want to build/fix").
-- After selection: use chosen text as description → proceed to workflow initialization. Cancelled workflow re-selection creates a new (independent) workflow.
+- After selection: use the clean title (after suffix stripping) as the workflow description → proceed to workflow initialization. Cancelled workflow re-selection creates a new (independent) workflow.
 
 ---
 

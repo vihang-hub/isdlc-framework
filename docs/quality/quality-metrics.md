@@ -1,8 +1,8 @@
-# Quality Metrics -- BUG-0009 Batch D Tech Debt
+# Quality Metrics -- BUG-0018-GH-2 Backlog Picker Pattern Mismatch
 
-**Date**: 2026-02-15
+**Date**: 2026-02-16
 **Phase**: 08-code-review
-**Workflow**: Fix (BUG-0009-batch-d-tech-debt)
+**Workflow**: Fix (BUG-0018-GH-2)
 
 ---
 
@@ -10,25 +10,26 @@
 
 | Suite | Total | Pass | Fail | Skip |
 |-------|-------|------|------|------|
-| batch-d-phase-prefixes.test.cjs | 10 | 10 | 0 | 0 |
-| batch-d-null-checks.test.cjs | 10 | 10 | 0 | 0 |
-| batch-d-jsdoc-documentation.test.cjs | 6 | 6 | 0 | 0 |
-| batch-d-dead-code-removal.test.cjs | 5 | 5 | 0 | 0 |
-| **New tests total** | **31** | **31** | **0** | **0** |
-| Full hook suite (npm run test:hooks) | 1008 | 965 | 43 | 0 |
+| test-backlog-picker-content.test.cjs | 26 | 26 | 0 | 0 |
+| **New tests total** | **26** | **26** | **0** | **0** |
+| Full CJS suite (npm run test:hooks) | 1452 | 1451 | 1 | 0 |
+| Full ESM suite (npm test) | 632 | 629 | 3 | 0 |
+| **Combined** | **2084** | **2080** | **4** | **0** |
 
 **New regressions**: 0
-**Pre-existing failures**: 43 (all in workflow-finalizer.test.cjs)
+**Pre-existing failures**: 4 (TC-E09 agent count, T43 template match, TC-13-01 agent file count, supervised_review gate-blocker)
+
+**Net test impact**: Stashing the BUG-0018 changes and running the base branch shows 5 CJS failures, confirming all 4 remaining failures are pre-existing and BUG-0018 introduces zero new failures.
 
 ## 2. Requirements Coverage
 
 | Metric | Value | Target | Status |
 |--------|-------|--------|--------|
-| ACs covered by tests | 18/18 | 100% | PASS |
+| ACs covered by tests | 19/19 | 100% | PASS |
 | NFRs validated | 3/3 | 100% | PASS |
 | Orphan code | 0 | 0 | PASS |
 | Unimplemented requirements | 0 | 0 | PASS |
-| Tech debt items resolved | 4/4 | 100% | PASS |
+| FRs implemented | 5/5 | 100% | PASS |
 
 ## 3. Code Quality
 
@@ -37,47 +38,39 @@
 | Critical findings | 0 | 0 | PASS |
 | Major findings | 0 | 0 | PASS |
 | Minor findings | 0 | 0 | PASS |
-| Informational findings | 0 | -- | PASS |
-| Syntax errors | 0 | 0 | PASS |
+| Suggestions | 2 | -- | Note |
 | npm audit vulnerabilities | 0 | 0 | PASS |
-| No eval/Function/prototype pollution | 0 | 0 | PASS |
 | Module system compliance (CJS) | PASS | CJS | PASS |
 | New dependencies | 0 | 0 | PASS |
+| Synced files verified | PASS | Identical | PASS |
 
 ## 4. File Metrics
 
-| File | Lines Added | Lines Removed | Type |
-|------|------------|---------------|------|
-| lib/common.cjs | 53 | 0 | Constant + JSDoc |
-| test-adequacy-blocker.cjs | 8 | 7 | Refactor |
-| pre-task-dispatcher.cjs | 4 | 3 | Refactor |
-| skill-validator.cjs | 3 | 2 | Refactor |
-| plan-surfacer.cjs | 3 | 2 | Refactor |
-| state-write-validator.cjs | 4 | 6 | Refactor |
-| gate-blocker.cjs | 3 | 2 | Dead code removal |
-| **Total source** | **78** | **22** | **Net +56** |
-| Test files (4 new) | 676 | 0 | Tests |
+| File | Lines Changed | Type |
+|------|--------------|------|
+| src/claude/agents/00-sdlc-orchestrator.md | ~15 lines modified | Markdown (suffix stripping instructions) |
+| src/claude/commands/isdlc.md | 1 line added | Markdown (design note) |
+| .claude/agents/00-sdlc-orchestrator.md | Synced copy | Verified identical to src |
+| src/claude/hooks/tests/test-backlog-picker-content.test.cjs | 531 lines added (new file) | CJS test file |
+| **Total production** | **~16** | **Net +16** |
+| **Total test** | **531** | **New file** |
 
 ## 5. Complexity Analysis
 
-| File | Cyclomatic Impact | Nesting Change | Assessment |
-|------|-------------------|----------------|------------|
-| common.cjs | +0 (constant only) | None | No impact |
-| test-adequacy-blocker.cjs | +0 (equivalent refactor) | None | No impact |
-| pre-task-dispatcher.cjs | +0 (equivalent refactor) | None | No impact |
-| skill-validator.cjs | +0 (equivalent refactor) | None | No impact |
-| plan-surfacer.cjs | +0 (equivalent refactor) | None | No impact |
-| state-write-validator.cjs | -2 (simplified &&-chains) | None | Slight improvement |
-| gate-blocker.cjs | -1 (removed dead branch) | None | Slight improvement |
+| File | Complexity Impact | Assessment |
+|------|-------------------|------------|
+| 00-sdlc-orchestrator.md | N/A (markdown) | Instructions added are clear and unambiguous |
+| isdlc.md | N/A (markdown) | Single explanatory paragraph |
+| test-backlog-picker-content.test.cjs | Low | 5 well-defined helper functions, linear test structure |
 
-**Net cyclomatic complexity change**: -3 (improvement)
+**Net cyclomatic complexity change**: 0 (no executable code modified)
 
 ## 6. Constitutional Compliance
 
 | Article | Status | Evidence |
 |---------|--------|----------|
-| V (Simplicity First) | PASS | Reduced complexity, no over-engineering |
-| VI (Code Review Required) | PASS | This code review document |
-| VII (Artifact Traceability) | PASS | 18/18 ACs traced to tests |
-| VIII (Documentation Currency) | PASS | JSDoc added for detectPhaseDelegation |
+| V (Simplicity First) | PASS | Minimal change to fix root cause; no over-engineering |
+| VI (Code Review Required) | PASS | This code review and QA sign-off |
+| VII (Artifact Traceability) | PASS | 19/19 ACs traced to tests and implementation |
+| VIII (Documentation Currency) | PASS | Orchestrator updated to reflect new format, design note added for start action |
 | IX (Quality Gate Integrity) | PASS | GATE-16 passed, GATE-08 validated here |
