@@ -593,6 +593,7 @@ Three modes controlling the developer's role during a workflow, activated via fe
 ## Completed
 
 ### 2026-02-16
+- [x] BUG-0018: Backlog picker pattern mismatch after BACKLOG.md restructure (GitHub #2, REQ-0019 follow-up) — updated orchestrator BACKLOG PICKER to strip `-> [requirements](...)` suffix from item titles in both feature and fix modes. Added `start` action design note in isdlc.md. 26 new tests (`test-backlog-picker-content.test.cjs`), zero regressions, 1 implementation iteration. 5 FRs, 3 NFRs, 19 ACs.
 - [x] REQ-0017: Fan-out/fan-in parallelism — shared fan-out engine (QL-012 skill) with chunk splitter, parallel Task spawner, and result merger. Phase 16 Track A test splitting (250-test threshold, max 8 agents, round-robin strategy, union coverage aggregation). Phase 08 code review file splitting (5-file threshold, max 8 agents, group-by-directory strategy, finding deduplication, cross-cutting concerns). --no-fan-out CLI flag. Protocol-only implementation (markdown, no executable code). 4 ADRs, 5 modified files, 1 new skill file, 46 new tests, zero regressions, 1 implementation iteration. 7 FRs, 4 NFRs, 35 ACs (backlog 4.3).
 
 ### 2026-02-15
