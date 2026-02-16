@@ -611,6 +611,8 @@ Phase B consumption: locates prepared requirements and begins workflow from Phas
 7. Phase B reads requirements from `docs/requirements/{slug}/requirements.md` (the Phase A artifact)
 8. Execute remaining phases via the Phase-Loop Controller (STEP 3)
 
+**Design note -- workflow reuse**: The `start` action intentionally reuses the `feature` workflow definition from `workflows.json` (with Phase 00 and Phase 01 skipped). It does not have its own entry in `workflows.json` because the phase sequence from 02 onward is identical to the feature workflow. The only difference is the entry point (Phase 02 instead of Phase 00).
+
 ---
 
 **discover** - Analyze project and create tailored constitution
