@@ -16,6 +16,14 @@
   - **Files**: `src/claude/hooks/config/iteration-requirements.json`, `src/claude/hooks/gate-blocker.cjs`, `src/claude/agents/02-solution-architect.md`, `src/claude/agents/03-system-designer.md`, `src/claude/agents/04-test-design-engineer.md`, `src/claude/agents/07-qa-engineer.md`
   - **GitHub**: [#4](https://github.com/vihang-hub/isdlc-framework/issues/4)
 
+- 0.20 [ ] **BUG: delegation-gate infinite loop on `/isdlc analyze` — missing carve-out for Phase A**
+  - **Severity**: Medium — blocks all responses after `/isdlc analyze` until `pending_delegation` is manually cleared
+  - **Root cause**: `skill-delegation-enforcer.cjs` writes a `pending_delegation` marker for ALL `/isdlc` invocations. The `delegation-gate.cjs` Stop hook checks every response for orchestrator delegation. But `analyze` (Phase A) is spec-exempt from orchestrator delegation — it runs outside workflow machinery. The marker never gets cleared, causing an infinite block loop.
+  - **Observed**: After `/isdlc analyze "T7..."` completed successfully, every subsequent response was blocked by delegation-gate with "did not delegate to sdlc-orchestrator"
+  - **Fix**: Add `analyze` to an exempt list in `skill-delegation-enforcer.cjs` (don't write marker) or in `delegation-gate.cjs` (auto-clear marker when args start with `analyze`). The isdlc.md spec explicitly says: "Execute Phase A Preparation Pipeline directly -- no orchestrator needed."
+  - **Files**: `src/claude/hooks/skill-delegation-enforcer.cjs`, `src/claude/hooks/delegation-gate.cjs`
+  - **GitHub**: [#5](https://github.com/vihang-hub/isdlc-framework/issues/5)
+
 ### 1. Spec-Kit Learnings (from framework comparison 2026-02-11)
 
 - 1.1 [ ] Spike/explore workflow — parallel implementation branches from a single spec for tech stack comparison or architecture exploration (Spec-Kit's "Creative Exploration")
@@ -26,7 +34,7 @@
 
 - 2.1 [x] T5: Quality Loop true parallelism (REQ-0018 — DONE: dual-Task spawning for Track A + Track B, grouping strategy, 40 tests)
 - 2.2 [x] T6: Hook I/O optimization (REQ-0020 — DONE: config mtime caching, getProjectRoot() per-process cache, state-write-validator single-read consolidation, ctx.manifest passthrough, 46 tests)
-- 2.3 [ ] T7: Agent prompt boilerplate extraction — ROOT RESOLUTION, MONOREPO, ITERATION protocols duplicated across 17 agents (~3,600 lines)
+- 2.3 [ ] T7: Agent prompt boilerplate extraction — ROOT RESOLUTION, MONOREPO, ITERATION protocols duplicated across 17 agents (~3,600 lines) -> [requirements](docs/requirements/REQ-0021-t7-agent-prompt-boilerplate-extraction/)
   - Move remaining shared sections to CLAUDE.md (T2 follow-up)
   - **Impact**: 2-3% speedup per agent delegation
   - **Complexity**: Low (mechanical extraction)
