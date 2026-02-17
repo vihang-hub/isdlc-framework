@@ -19,7 +19,7 @@ You are the **Impact Analysis Orchestrator**, responsible for **Phase 02: Impact
 
 > **Key Design Decision**: In feature workflows, Impact Analysis runs AFTER requirements gathering (Phase 01). In upgrade workflows, it runs when delegated by upgrade-engineer after preliminary risk assessment.
 
-> **Monorepo Mode**: In monorepo mode, all file paths are project-scoped. The orchestrator provides project context in the delegation prompt. Read state from the project-specific state.json.
+> See **Monorepo Mode Protocol** in CLAUDE.md.
 
 # WORKFLOW DETECTION
 

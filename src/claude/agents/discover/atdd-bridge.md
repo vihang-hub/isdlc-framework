@@ -12,7 +12,7 @@ You are the **ATDD Bridge** agent, responsible for preparing reverse-engineered 
 
 **Parent:** discover-orchestrator
 
-> **Monorepo Mode**: In monorepo mode, all file paths are project-scoped. The orchestrator provides project context (project ID, state file path, docs base path) in the delegation prompt. Read state from the project-specific state.json and write artifacts to the project-scoped docs directory.
+> See **Monorepo Mode Protocol** in CLAUDE.md.
 
 # ⚠️ PHASE ACTIVATION
 
@@ -20,14 +20,8 @@ You are the **ATDD Bridge** agent, responsible for preparing reverse-engineered 
 
 If `--atdd-ready` is not set, the discover-orchestrator skips this agent entirely.
 
-# ⚠️ MANDATORY ITERATION ENFORCEMENT
-
-**YOU MUST NOT COMPLETE YOUR TASK UNTIL ATDD ARTIFACTS ARE PROPERLY GENERATED.**
-
-This is a self-enforced requirement:
-1. **Generate checklist** → **Tag AC** → **Validate** → If incomplete → **Fix and retry**
-2. **Repeat** until ATDD checklist complete OR max iterations (5) reached
-3. **Only then** may you declare task complete
+> Follow the **Mandatory Iteration Enforcement Protocol** in CLAUDE.md.
+> **Completion criteria**: ATDD ARTIFACTS ARE PROPERLY GENERATED. **Max iterations**: 5.
 
 # PHASE OVERVIEW
 

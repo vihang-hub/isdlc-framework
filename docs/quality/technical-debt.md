@@ -1,72 +1,72 @@
-# Technical Debt Assessment -- BUG-0019-GH-1 Blast Radius Relaxation Fix
+# Technical Debt Assessment -- REQ-0021 T7 Agent Prompt Boilerplate Extraction
 
-**Date**: 2026-02-16
+**Date**: 2026-02-17
 **Phase**: 08-code-review
-**Workflow**: Fix (BUG-0019-GH-1)
+**Workflow**: Feature (REQ-0021 -- T7 Agent Prompt Boilerplate Extraction)
 
 ---
 
-## 1. Technical Debt Addressed by This Fix
+## 1. Technical Debt Resolved by This Feature
 
-### TD-RESOLVED-01: Generic Hook Block Handling (Bug 0.17)
+### TD-RESOLVED-01: Agent Prompt Duplication (Major)
 
-**Previous state**: STEP 3f treated all hook blocks identically with a generic Retry/Skip/Cancel menu. No hook-specific handling existed.
-**Resolution**: Added `3f-blast-radius` branch with specialized 7-step handling including file parsing, task cross-reference, prohibitions, and retry loop.
-**Impact**: Eliminated the root cause of blast radius relaxation by providing specific re-implementation instructions.
+**Previous state**: 4 categories of boilerplate protocols were duplicated across 26-29 agent files (~255 lines of total duplication). Updating any shared protocol required modifying up to 26 files, risking drift and inconsistency.
+**Resolution**: Extracted all 4 categories into 5 shared sections in CLAUDE.md. Each agent now uses a 1-line reference.
+**Impact**: Maintenance burden reduced from N files to 1 file. Drift risk eliminated. 100% duplication removed.
 
-### TD-RESOLVED-02: Missing Task Plan Integration (Bug 0.18)
+### TD-RESOLVED-02: Monorepo Blockquote Variant Drift (Minor)
 
-**Previous state**: `docs/isdlc/tasks.md` was never read during blast radius block handling, leaving the orchestrator unaware of which tasks corresponded to unaddressed files.
-**Resolution**: `matchFilesToTasks()` cross-references unaddressed files against tasks.md, identifying task IDs, statuses, and discrepancies.
-**Impact**: The orchestrator now provides actionable task-level guidance during re-delegation.
+**Previous state**: 3 different wordings of the monorepo mode guidance existed across agents (full form, short form, orchestrator-specific). While semantically equivalent, the variation made it unclear which was canonical.
+**Resolution**: All 3 variants are now documented in a single CLAUDE.md section with explicit "full form" and "analysis-scoped form" labels. Agents reference the appropriate form.
+**Impact**: Canonical wording established. No more ambiguity about which variant to use.
 
-### TD-RESOLVED-03: No Orchestrator Guardrails
+### TD-RESOLVED-03: Orchestrator Protocol Duplication (Medium)
 
-**Previous state**: `00-sdlc-orchestrator.md` had zero mentions of blast radius, deferral, or impact-analysis immutability. LLM agents defaulted to path of least resistance.
-**Resolution**: Section 8.1 adds 5 explicit guardrail rules with MUST/MUST NOT constraints.
-**Impact**: Agents now have clear prohibitions against modifying impact-analysis.md or auto-generating deferrals.
+**Previous state**: ROOT RESOLUTION (5 steps, ~10 lines) and MONOREPO CONTEXT RESOLUTION (~55 lines including path routing table and delegation template) were duplicated in both `00-sdlc-orchestrator.md` and `discover-orchestrator.md`. Changes to resolution logic required updating both files.
+**Resolution**: Extracted to CLAUDE.md. Both orchestrators now reference the same shared protocol.
+**Impact**: Resolution protocol has a single source of truth. Risk of orchestrator divergence eliminated.
 
 ## 2. Technical Debt Introduced (New)
 
-### TD-NEW-01: No `resetBlastRadiusRetries()` Helper (Low Priority)
+### TD-NEW-01: CLAUDE.md Size Growth (Low)
 
-**Location**: `blast-radius-step3f-helpers.cjs`
-**Description**: When a workflow completes, `blast_radius_retries` and `blast_radius_retry_log` become stale in state.json. They are implicitly cleared when the orchestrator finalize step moves the active workflow to `workflow_history` and clears `active_workflow`. However, there is no explicit helper to reset these fields, which could cause confusion if a future maintainer accesses them between workflows.
-**Risk**: Low -- the fields are workflow-scoped and become irrelevant when the workflow ends.
-**Remediation cost**: Trivial (5-line function + 1 test).
-**Recommendation**: Defer. Consider adding during the next state management cleanup.
+**Location**: `/CLAUDE.md`
+**Description**: CLAUDE.md grew from ~149 to 252 lines. Every agent delegation now loads 252 lines of project instructions regardless of which protocols it uses. Agents that do not use monorepo mode (most in single-project installations) still load the monorepo sections.
+**Risk**: Low -- 103 lines is modest. Claude Code context windows are large. Token cost is fractional.
+**Remediation**: If CLAUDE.md continues growing in future features, consider a table-of-contents approach or conditional loading (would require Claude Code runtime support).
+**Recommendation**: Monitor. Set an informal budget alert at 400 lines.
 
-### TD-NEW-02: Blast Radius Validator Deferral Source Not Verified (Out of Scope per FR-04)
+### TD-NEW-02: Implicit Coupling Between CLAUDE.md Section Names and Agent References (Low)
 
-**Location**: `blast-radius-validator.cjs` (unchanged)
-**Description**: The validator currently accepts any file listed in `blast-radius-coverage.md` with a "deferred" status, regardless of whether that deferral appears in `requirements-spec.md`. The fix addresses this at the STEP 3f level by validating deferrals against requirements-spec.md before the validator runs, but the validator itself does not perform this check.
-**Risk**: Low-Medium -- an agent that writes directly to blast-radius-coverage.md (bypassing STEP 3f) could still circumvent validation. However, the orchestrator guardrails and STEP 3f prohibitions make this unlikely.
-**Remediation cost**: Medium (requires changes to blast-radius-validator.cjs which was explicitly out of scope for this fix per requirements-spec.md Section "Out of Scope").
-**Recommendation**: Track as a future enhancement (Batch F or later). The current fix addresses the symptom at the orchestrator level; the validator-level fix is defense-in-depth.
+**Location**: 37 agent reference lines across 29 files
+**Description**: Agent files reference CLAUDE.md sections by exact section name (e.g., "Mandatory Iteration Enforcement Protocol"). If a section is renamed in CLAUDE.md, the agent references become broken pointers. There is no automated validation that references resolve correctly.
+**Risk**: Low -- section names are descriptive and unlikely to change. Any future section rename is a controlled refactoring task.
+**Remediation cost**: Could add a CI check that greps agent files for reference patterns and validates they exist in CLAUDE.md.
+**Recommendation**: Defer. The coupling is inherent to the centralization approach and accepted in the architecture ADR.
 
 ## 3. Pre-Existing Technical Debt (Observed, Not Introduced)
 
 ### TD-PRE-01: No Linter Configured
 
-**Impact**: Cannot run automated style checks. Manual review required for each change.
+**Impact**: Cannot run automated style checks. Manual review required.
 **Status**: Known. Tracked separately.
 
 ### TD-PRE-02: No Code Coverage Tool Configured
 
-**Impact**: Cannot measure line/branch coverage automatically. Requirements-level coverage analysis used instead.
+**Impact**: Cannot measure line/branch coverage automatically.
 **Status**: Known. Tracked separately.
 
 ### TD-PRE-03: 4 Pre-Existing Test Failures
 
-**Tests**: TC-E09 (agent count in README), T43 (template drift), TC-13-01 (agent file count), supervised_review (gate-blocker test)
-**Impact**: Low -- all are drift-related, not functionality bugs.
-**Status**: Known and documented in Phase 16 quality reports.
+**Tests**: TC-E09 (agent count 48 vs actual 59), T43, TC-13-01 (agent file count), supervised_review (gate-blocker)
+**Impact**: Low -- drift-related, not functionality bugs.
+**Status**: Known and documented in previous Phase 16 quality reports.
 
 ## 4. Summary
 
 | Category | Count | Details |
 |----------|-------|---------|
-| Debt resolved | 3 | Generic hook handling, missing task integration, missing guardrails |
-| Debt introduced | 2 | No reset helper (trivial), validator deferral source (deferred) |
+| Debt resolved | 3 | Prompt duplication (major), monorepo variant drift (minor), orchestrator duplication (medium) |
+| Debt introduced | 2 | CLAUDE.md size growth (low), implicit name coupling (low) |
 | Pre-existing debt | 3 | No linter, no coverage tool, test drift |
-| **Net debt change** | **-1** | Resolved more than introduced |
+| **Net debt change** | **-1** | Resolved more than introduced; resolved items were higher severity |

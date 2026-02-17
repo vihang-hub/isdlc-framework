@@ -13,11 +13,8 @@
 
 ### 2. Performance (remaining from 2026-02-13 investigation)
 
-- 2.3 [ ] T7: Agent prompt boilerplate extraction — ROOT RESOLUTION, MONOREPO, ITERATION protocols duplicated across 17 agents (~3,600 lines) -> [requirements](docs/requirements/REQ-0021-t7-agent-prompt-boilerplate-extraction/)
-  - Move remaining shared sections to CLAUDE.md (T2 follow-up)
-  - **Impact**: 2-3% speedup per agent delegation
-  - **Complexity**: Low (mechanical extraction)
-- 2.4 [ ] Performance budget and guardrail system — enforce per-workflow timing limits and track regression as new features land
+- 2.3 [x] T7: Agent prompt boilerplate extraction — ROOT RESOLUTION, MONOREPO, ITERATION protocols duplicated across 17 agents (~3,600 lines) -> [requirements](docs/requirements/REQ-0021-t7-agent-prompt-boilerplate-extraction/) **Completed: 2026-02-17**
+- 2.4 [ ] Performance budget and guardrail system — enforce per-workflow timing limits and track regression as new features land -> [requirements](docs/requirements/REQ-0022-performance-budget-guardrails/)
   - **Problem**: The framework has been optimised from ~4x to ~1.2-1.5x overhead (T1-T3 done). But upcoming backlog items add significant agent calls — Creator/Critic/Refiner debates across 4 creative phases could add 12+ extra agent runs (~20-40 min worst case), Phase 06 Writer/Reviewer/Updater adds 2N calls for N files, and fan-out spawns multiple parallel agents. Without a performance budget, these features will erode the gains incrementally and nobody will notice until the framework feels slow again.
   - **Design**:
     1. **Per-workflow timing instrumentation**: Record wall-clock time per phase, per agent call, and per hook dispatcher invocation in `state.json` under `phases[phase].timing`. Already have `console.time()` in dispatchers — extend to full phase timing.
@@ -312,11 +309,77 @@
 
 ### 11. Developer Experience
 
+- 11.2 [ ] BUG-0022: Phase A Step 8 skips interactive requirements elicitation — generates requirements inline instead of delegating to requirements-analyst agent *(GitHub #6)*
+  - **Problem**: Phase A Step 8 says "use the persona-based elicitation flow (same as the requirements-analyst Creator role)" but `isdlc.md` doesn't explicitly instruct a Task delegation. The executor writes `requirements.md` directly without questions, A/R/C menus, or persona identification.
+  - **Observed in**: REQ-0021 (T7 boilerplate extraction), REQ-0022 (performance budget guardrails) — both had zero user interaction during requirements capture
+  - **Fix**: Make Step 8 explicit — delegate to `requirements-analyst` via Task tool in Phase A mode (no state.json, no hooks, no branches). Agent runs full interactive 5-step flow, returns `requirements.md`.
+  - **Severity**: Medium — requirements quality degraded without user validation
+  - **Complexity**: Low — control flow change in `isdlc.md` Step 8, no new files
+
 - 11.1 [ ] Install script landing page and demo GIF — update the install script landing/README with a polished visual experience including an animated GIF demonstrating the framework in action (invisible framework flow, workflow progression, quality gates)
+
+### 12. Backlog Management UX (from 2026-02-17 gap analysis)
+
+- 12.1 [ ] BUG-0023: Phase A cannot pull Jira ticket content — `jira_get_issue` MCP not implemented *(GitHub #7)*
+  - **Problem**: Phase A Step 1 specifies pulling ticket content via Atlassian MCP but no MCP skill or delegation code exists. Users must manually copy-paste Jira ticket content.
+  - **Impact**: Breaks seamless Jira-link-to-analysis flow
+  - **Complexity**: Medium — needs MCP skill file + Phase A delegation code
+
+- 12.2 [ ] BUG-0024: Phase A BACKLOG.md append not implemented and format missing Jira metadata *(GitHub #8)*
+  - **Problem**: Phase A Step 5 specifies appending to BACKLOG.md but (a) no code does the write, and (b) the entry format lacks `**Jira:**` / `**Confluence:**` sub-bullets that the backlog picker expects.
+  - **Impact**: Items analyzed via Phase A are never recorded in BACKLOG.md. Backlog picker can't find them with Jira metadata.
+  - **Complexity**: Low — format spec update + write implementation in Phase A executor
+
+- 12.3 [ ] Post-Phase-A picker — offer to implement analyzed item or analyze another *(GitHub #9)*
+  - **Problem**: After Phase A deep analysis completes, the system ends silently. No menu offering implementation or further analysis. User must manually know about `/isdlc start`.
+  - **Design**: Scan `docs/requirements/*/meta.json` for `phase_a_completed: true` items without matching completed workflows. Present picker with age/staleness. Offer: Implement / Analyze another / Done.
+  - **Complexity**: Medium — new post-Phase-A UI, meta.json scan, workflow_history cross-reference
+
+- 12.4 [ ] Parallel analysis vs single implementation UX message *(GitHub #10)*
+  - **Problem**: When a workflow is active, starting implementation hard-blocks without explaining that analyses can still run in parallel. Should inform user about the parallel analysis capability and offer to analyze more.
+  - **Complexity**: Low — UX message change in workflow start check
+
+- 12.5 [ ] BUG-0025: BACKLOG.md completion marking not implemented — items not marked done after finalize *(GitHub #11)*
+  - **Problem**: Orchestrator finalize step 2.5d specifies marking items `[x]`, adding `**Completed:** {date}`, and moving to `## Completed` section. None implemented. BACKLOG.md unchanged after workflow completion.
+  - **Complexity**: Medium — BACKLOG.md parsing + rewrite logic in finalize step
+
+- 12.6 [ ] Auto-move completed BACKLOG.md headings when all items are done *(GitHub #12)*
+  - **Problem**: When all items under a `###` heading are `[x]`, the entire heading block should move to `## Completed`. Currently not specified or implemented.
+  - **Design**: After marking an item `[x]`, check if all siblings under same heading are also `[x]`. If yes, move entire heading block. Append `— COMPLETED {date}` suffix.
+  - **Complexity**: Low-medium — extends the completion marking logic from 12.5
+
+- 12.7 [ ] BUG-0026: Jira `updateStatus` at finalize not implemented — tickets not transitioned to Done *(GitHub #13)*
+  - **Problem**: Orchestrator finalize specifies calling `updateStatus(jira_ticket_id, "Done")` via Atlassian MCP and setting `jira_sync_status` in workflow_history. Not implemented. Jira tickets stay in original status.
+  - **Related**: 12.1 (Jira read) + this (Jira write) together complete the Jira lifecycle
+  - **Complexity**: Medium — needs MCP skill file + non-blocking finalize integration
+
+### 13. Skills Extensibility (from 2026-02-17 brainstorm)
+
+- 13.1 [ ] Custom skill management — add, wire, and inject user-provided skills into workflows *(GitHub #14)*
+  - **Problem**: Users have no way to add domain-specific skills to the framework. External skills directory and manifest exist but there's no user-facing command, no interactive wiring session, and no runtime injection.
+  - **Design**: Unified interactive session for adding and re-wiring skills:
+    - **Stage 1 — Acquire**: User drops a `.md` file into `.claude/skills/external/` or provides a path/URL. Framework validates frontmatter.
+    - **Stage 2 — Wire**: Interactive session walks user through agent/phase binding. User selects which agents should have access (from grouped list). User selects delivery type (context block / instruction / reference). Injection mode is always-on.
+    - **Stage 3 — Confirm**: Summary with [S] Save / [A] Adjust / [X] Cancel. On save, registers in `external-skills-manifest.json` with new `bindings` schema: `{ agents, phases, injection_mode: "always", delivery_type }`.
+    - **Runtime**: Phase-loop controller STEP 3d reads external manifest, matches skills to current agent/phase, reads `.md` files, appends formatted blocks to agent Task prompt.
+    - **Re-wiring**: "Use X skill during Y phase" triggers same session with current bindings pre-filled.
+  - **Entry points**: Natural language ("add a skill", "wire nestjs to implementation") or explicit `/isdlc skill add <path>`, `/isdlc skill wire <name>`
+  - **Files**: `isdlc.md` (new actions + STEP 3d injection), `CLAUDE.md` (intent detection), `external-skills-manifest.json` (schema extension), `common.cjs` (skill loading utilities), new `skill-manager.md` agent
+  - **Complexity**: Medium
+
+- 13.2 [ ] BUG-0027: Built-in skills (243 SKILL.md files) never injected into agent Task prompts at runtime *(GitHub #15)*
+  - **Problem**: 243 SKILL.md files exist across 17 categories. Each agent declares `owned_skills:` in frontmatter. But NO code reads these files and delivers them to agents. The skills manifest is consumed by hooks for observability logging only — not for capability delivery. ~50,000+ lines of domain expertise are dead weight.
+  - **Evidence**: Phase-loop controller STEP 3d has zero references to skills/SKILL.md/inject. No `loadSkillContent()` function in common.cjs. Agent files have no instruction to read their owned skills. The entire skills architecture (manifest, ownership, IDs, categories) exists for logging, not delivery.
+  - **Recommended fix (Option B — summaries + on-demand)**: Inject a skill index (name + one-line description + file path) into agent Task prompts. Agents read specific SKILL.md files when relevant. Low token overhead (one line per skill), agents that need a skill can Read it.
+  - **Shares injection point with 13.1**: Both built-in and custom skills inject at STEP 3d. Implement together or sequentially.
+  - **Files**: `isdlc.md` (STEP 3d skill injection), `common.cjs` (`getAgentSkillIndex()` utility), 48 agent files (add "consult your owned skills" instruction — mechanical)
+  - **Severity**: Medium-high — entire skills architecture underutilized
+  - **Complexity**: Medium
 
 ## Completed
 
 ### 2026-02-17
+- [x] REQ-0021: T7 Agent prompt boilerplate extraction — extracted ROOT RESOLUTION, MONOREPO, SKILL OBSERVABILITY, SUGGESTED PROMPTS, and CONSTITUTIONAL PRINCIPLES protocols from 29 agent files into shared CLAUDE.md subsections. Agents now use 1-line references. ~3,600 lines removed, 113 lines added to CLAUDE.md. 29 agent files modified, 1 test file updated, zero regressions. 12 FRs, 6 NFRs (backlog 2.3).
 - [x] BUG-0021: delegation-gate infinite loop on `/isdlc analyze` — missing carve-out for Phase A *(GitHub #5, merged 27ae7cf)*
   - Added `EXEMPT_ACTIONS = new Set(['analyze'])` to `skill-delegation-enforcer.cjs` (primary fix) and `delegation-gate.cjs` (defense-in-depth). 22 new tests, zero regressions.
 - [x] BUG-0020: Artifact path mismatch between agents and gate-blocker — no single source of truth *(GitHub #4, merged b777cee)*

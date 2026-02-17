@@ -1,90 +1,91 @@
-# Static Analysis Report: BUG-0021-GH-5
+# Static Analysis Report -- REQ-0021 T7 Agent Prompt Boilerplate Extraction
 
 **Date**: 2026-02-17
 **Phase**: 08-code-review
-**Workflow**: Fix (BUG-0021-GH-5 -- delegation-gate infinite loop on /isdlc analyze)
+**Workflow**: Feature (REQ-0021 -- T7 Agent Prompt Boilerplate Extraction)
 
 ---
 
-## 1. Parse Check
+## 1. Change Profile
 
-| File | Tool | Result |
-|------|------|--------|
-| `src/claude/hooks/skill-delegation-enforcer.cjs` | `node --check` | PASS |
-| `src/claude/hooks/delegation-gate.cjs` | `node --check` | PASS |
-| `src/claude/hooks/tests/test-skill-delegation-enforcer.test.cjs` | `node --check` | PASS (via node --test) |
-| `src/claude/hooks/tests/test-delegation-gate.test.cjs` | `node --check` | PASS (via node --test) |
+This is a pure markdown refactoring. No production JavaScript code was added or modified. One test file was updated (assertions restructured, not new logic). Static analysis scope is adapted accordingly.
 
-## 2. Lint Check
+## 2. Markdown Structure Validation
 
-**Status**: NOT CONFIGURED
-**Details**: No ESLint, Prettier, or other linter is installed in the project. `npm run lint` echoes "No linter configured".
-
-## 3. Type Check
-
-**Status**: NOT APPLICABLE
-**Details**: Project is JavaScript (no TypeScript, no tsconfig.json).
-
-## 4. Security Scan (Manual SAST)
+### CLAUDE.md
 
 | Check | Result | Notes |
 |-------|--------|-------|
-| `eval()` usage | CLEAN | None found in modified files |
-| `new Function()` usage | CLEAN | None found |
-| `console.log` in production code | EXPECTED | Used for hook protocol output (stdout = JSON for Claude Code) |
-| Hardcoded paths | CLEAN | No absolute paths; all paths from `common.cjs` helpers |
-| Hardcoded credentials | CLEAN | None found |
-| Regex denial of service (ReDoS) | CLEAN | Pattern `^(?:--?\w+\s+)*(\w+)` is linear -- no nested quantifiers, no overlapping alternatives |
-| Dynamic regex injection | NOT APPLICABLE | Regex is hardcoded constant, not built from user input |
-| `'use strict'` directive | NOT PRESENT | `.cjs` extension + `require()` pattern used instead (common for Node.js hooks) |
-| TODO/FIXME markers | CLEAN | None found |
-| Prototype pollution | CLEAN | No `Object.assign` from user input, Set constructor uses literal array |
+| Heading hierarchy | PASS | H1 > H2 > H3 > H4, no level skips |
+| Section count under "Agent Framework Context" | 8 | 3 pre-existing + 5 new |
+| Section order per FR-012 | PASS | Matches required order exactly |
+| Total line count | 252 | Within 280-line budget |
+| No orphan links | PASS | All references resolve to valid sections |
 
-### ReDoS Analysis Detail
+### Agent Files (29 modified)
 
-The regex `^(?:--?\w+\s+)*(\w+)` was analyzed for catastrophic backtracking:
-- The outer group `(?:--?\w+\s+)*` matches flag tokens separated by whitespace.
-- `\w+` and `\s+` do not overlap (word chars vs whitespace), preventing catastrophic backtracking.
-- The `^` anchor prevents the engine from retrying at every position.
-- **Verdict**: Safe. Linear-time matching for all inputs.
+| Check | Result | Notes |
+|-------|--------|-------|
+| YAML frontmatter valid (--- delimiters) | PASS | All 29 files verified |
+| Reference format consistent | PASS | All use `> See **Section** in CLAUDE.md.` pattern |
+| No broken cross-references | PASS | All referenced CLAUDE.md sections exist |
+| Blockquote formatting | PASS | All references use `>` blockquote prefix |
 
-## 5. Module System Check
+## 3. Test File Analysis
 
-| Check | Result |
-|-------|--------|
-| Uses `require()` (not `import`) | PASS |
-| Uses `module.exports` (not `export`) | N/A (no exports, hook is self-contained) |
-| File extension `.cjs` | PASS |
-| Compatible with Node 20+ | PASS |
-| No ESM-only packages imported | PASS |
+### branch-guard.test.cjs (T27-T31)
 
-## 6. Dependency Analysis
+| Check | Result | Notes |
+|-------|--------|-------|
+| Parse check (`node --check`) | PASS | Via npm run test:hooks execution |
+| `require()` / CommonJS usage | PASS | Consistent .cjs module system |
+| Test assertions valid | PASS | All 5 tests use `assert.ok()` with regex patterns |
+| Backward-compatible patterns | PASS | Tests use `||` fallback (accept reference OR inline content) |
+| `PROJECT_ROOT` path resolution | PASS | Correctly resolves 4 levels up from test dir |
+| `CLAUDE_MD` path | PASS | `path.join(PROJECT_ROOT, 'CLAUDE.md')` is correct |
+
+## 4. Lint Check
+
+**Status**: NOT CONFIGURED (no ESLint/Prettier in project)
+
+## 5. Type Check
+
+**Status**: NOT APPLICABLE (JavaScript project, no TypeScript)
+
+## 6. Security Scan (Manual SAST)
+
+| Check | Result | Notes |
+|-------|--------|-------|
+| Secrets in markdown | CLEAN | No API keys, tokens, or credentials in any modified file |
+| Path traversal in test | CLEAN | `path.resolve(__dirname, ...)` uses relative navigation only |
+| Injection in test assertions | CLEAN | Regex patterns are hardcoded constants |
+
+## 7. Dependency Analysis
 
 **New dependencies introduced**: 0
-- Both hooks use only `common.cjs` helpers (readState, writeState, readStdin, debugLog, etc.).
-- Test files use `node:test`, `node:assert/strict`, `child_process`, `fs`, `path` -- all Node.js built-ins.
-- Test utilities use existing `hook-test-utils.cjs`.
+- No new npm packages
+- No new Node.js built-in imports
+- Test file uses existing `fs`, `path`, `node:test`, `node:assert/strict`
 
-**npm audit**: 0 vulnerabilities (verified during Phase 16).
+## 8. Reference Line Length Analysis (NFR-004)
 
-## 7. Code Complexity
+| File | Line | Length | Status |
+|------|------|--------|--------|
+| discover-orchestrator.md:62 | Root Resolution + Monorepo Context reference | 180 chars | EXCEEDS 120 (Should Have) |
+| All other reference lines | Various | < 120 chars | PASS |
 
-| File | Approx CC | If Branches | For Loops | Try/Catch | Assessment |
-|------|-----------|-------------|-----------|-----------|------------|
-| skill-delegation-enforcer.cjs | 8 | 5 | 0 | 2 | Low |
-| delegation-gate.cjs | 24 | 16 | 1 | 6 | Moderate (pre-existing) |
+**Verdict**: 1 of 37 reference lines exceeds the "Should Have" 120-character limit. Non-blocking.
 
-**BUG-0021 contribution**: +1 branch per file (the `EXEMPT_ACTIONS.has()` check).
-
-## 8. Summary
+## 9. Summary
 
 | Category | Status |
 |----------|--------|
-| Parse/syntax | PASS |
+| Markdown structure | PASS |
+| YAML frontmatter | PASS |
+| Reference integrity | PASS |
+| Test file syntax | PASS |
 | Lint | NOT CONFIGURED |
 | Type check | NOT APPLICABLE |
 | Security (SAST) | PASS |
-| ReDoS | PASS (linear pattern) |
-| Module system | PASS |
 | Dependencies | PASS (0 new) |
-| Complexity | ACCEPTABLE |
+| Reference brevity | 36/37 PASS, 1 MINOR |

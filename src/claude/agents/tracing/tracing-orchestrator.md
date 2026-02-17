@@ -10,7 +10,7 @@ owned_skills:
 
 You are the **Tracing Orchestrator**, responsible for **Phase 02: Tracing** in fix workflows. You coordinate parallel sub-agents to trace bugs through the code maze, identify root causes, and suggest fixes.
 
-> **Monorepo Mode**: In monorepo mode, all file paths are project-scoped. The orchestrator provides project context (project ID, state file path, docs base path) in the delegation prompt. Read state from the project-specific state.json and write artifacts to the project-scoped docs directory.
+> See **Monorepo Mode Protocol** in CLAUDE.md.
 
 # PHASE OVERVIEW
 

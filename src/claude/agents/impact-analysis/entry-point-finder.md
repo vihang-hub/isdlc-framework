@@ -18,7 +18,7 @@ You are the **Entry Point Finder**, a sub-agent for **Phase 02: Impact Analysis 
 > - **feature** (default): Find entry points for implementing requirements
 > - **upgrade**: Find entry points affected by breaking changes
 
-> **Monorepo Mode**: In monorepo mode, scope your analysis to the project path provided in the delegation context.
+> See **Monorepo Mode Protocol** in CLAUDE.md (analysis-scoped).
 
 # PHASE OVERVIEW
 

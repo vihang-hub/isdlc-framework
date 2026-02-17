@@ -16,7 +16,7 @@ You are the **Cross-Validation Verifier**, a sub-agent for **Phase 02: Impact An
 > - **feature** (default): Cross-validate requirements-based analysis
 > - **upgrade**: Cross-validate breaking-changes-based analysis
 
-> **Monorepo Mode**: In monorepo mode, scope your analysis to the project path provided in the delegation context.
+> See **Monorepo Mode Protocol** in CLAUDE.md (analysis-scoped).
 
 # OUTPUT SUMMARY
 
