@@ -1,8 +1,8 @@
-# Quality Metrics -- BUG-0019-GH-1 Blast Radius Relaxation Fix
+# Quality Metrics: BUG-0021-GH-5
 
-**Date**: 2026-02-16
+**Date**: 2026-02-17
 **Phase**: 08-code-review
-**Workflow**: Fix (BUG-0019-GH-1)
+**Workflow**: Fix (BUG-0021-GH-5 -- delegation-gate infinite loop on /isdlc analyze)
 
 ---
 
@@ -10,82 +10,83 @@
 
 | Suite | Total | Pass | Fail | Skip |
 |-------|-------|------|------|------|
-| test-blast-radius-step3f.test.cjs | 66 | 66 | 0 | 0 |
-| **New tests total** | **66** | **66** | **0** | **0** |
-| Full CJS suite (npm run test:hooks) | 1518 | 1517 | 1 | 0 |
-| **Combined (CJS only -- BUG-0019 touches CJS)** | **1518** | **1517** | **1** | **0** |
+| test-skill-delegation-enforcer.test.cjs | 23 | 23 | 0 | 0 |
+| test-delegation-gate.test.cjs | 32 | 32 | 0 | 0 |
+| **BUG-0021 specific** | **55** | **55** | **0** | **0** |
+| Full CJS suite (npm run test:hooks) | 1608 | 1607 | 1 | 0 |
+| Full ESM suite (npm test) | 632 | 629 | 3 | 0 |
 
 **New regressions**: 0
-**Pre-existing failures**: 1 (supervised_review gate-blocker-extended test -- verified pre-existing via git stash)
+**Pre-existing failures**: 4 (1 CJS gate-blocker-extended supervised_review + 3 ESM, all verified pre-existing)
 
 ## 2. Acceptance Criteria Coverage
 
 | Metric | Value |
 |--------|-------|
-| Total Functional ACs | 19 |
-| Total NFRs | 3 |
-| Total Criteria | 22 |
-| Covered | 22 |
+| Total Functional Requirements | 4 (FR-01 through FR-04) |
+| Total Non-Functional Requirements | 3 (NFR-01 through NFR-03) |
+| Total Acceptance Criteria | 8 (AC-01 through AC-08) |
+| Covered by tests | 8/8 |
 | Uncovered | 0 |
 | **AC Coverage** | **100%** |
 
 ## 3. Code Metrics
 
-### New File: `blast-radius-step3f-helpers.cjs`
+### Modified: skill-delegation-enforcer.cjs
 
 | Metric | Value |
 |--------|-------|
-| Total lines | 440 |
-| Exported functions | 9 |
-| Exported constants | 2 |
-| Internal helper functions | 1 (escapeRegex) |
-| Average function length | 20 lines |
-| Longest function | `buildBlastRadiusRedelegationContext()` at 61 lines |
-| Cyclomatic complexity (estimated) | Low (max 3 per function, simple branching) |
-| JSDoc coverage | 100% (all exported functions) |
-| Null guard coverage | 100% (all public functions) |
-| Module pattern | CommonJS (`'use strict'`, `module.exports`) |
+| Total lines | 113 |
+| Lines added (BUG-0021) | 15 |
+| Cyclomatic complexity (approx) | 8 (low) |
+| Functions | 1 (main) |
+| New branches added | 1 (exempt action check) |
+| Test:code ratio | 3.3:1 (368 test lines / 113 prod lines) |
+| Fail-open paths | All error paths exit 0 |
 
-### New File: `test-blast-radius-step3f.test.cjs`
+### Modified: delegation-gate.cjs
 
 | Metric | Value |
 |--------|-------|
-| Total lines | 842 |
-| Test cases | 66 |
-| Describe blocks | 10 |
-| Test fixtures | 9 (3 block messages, 4 tasks.md variants, 3 req-spec variants) |
-| Factory functions | 2 (featurePhase06State, stateRetriesAtLimit) |
-| Execution time | 54ms |
+| Total lines | 221 |
+| Lines added (BUG-0021) | 18 |
+| Cyclomatic complexity (approx) | 24 (moderate, pre-existing) |
+| Functions | 3 (findDelegation, clearMarkerAndResetErrors, main) |
+| New branches added | 1 (exempt action auto-clear) |
+| Test:code ratio | 4.5:1 (984 test lines / 221 prod lines) |
+| Fail-open paths | All error paths exit 0 |
 
-### Modified: `isdlc.md` STEP 3f-blast-radius
+### Test Files
+
+| File | Lines | Tests | New Tests |
+|------|-------|-------|-----------|
+| test-skill-delegation-enforcer.test.cjs | 368 | 23 | 12 |
+| test-delegation-gate.test.cjs | 984 | 32 | 10 |
+| **Total** | **1352** | **55** | **22** |
+
+## 4. Change Footprint
 
 | Metric | Value |
 |--------|-------|
-| New lines added | ~48 |
-| Steps in blast-radius handler | 7 |
-| Prohibitions listed | 4 |
-| Escalation options | 3 (Defer, Skip, Cancel) |
+| Production files modified | 2 |
+| Test files modified | 2 |
+| Total production lines added | 33 |
+| Total test lines added | 325 |
+| Test:production ratio | 9.8:1 |
+| New dependencies | 0 |
+| Config files modified | 0 |
 
-### Modified: `00-sdlc-orchestrator.md` Section 8.1
-
-| Metric | Value |
-|--------|-------|
-| New lines added | ~15 |
-| Guardrail rules | 5 |
-
-## 4. Regression Analysis
+## 5. Regression Analysis
 
 | Verification | Result |
 |-------------|--------|
-| blast-radius-validator.cjs unchanged | PASS (git diff empty) |
-| Existing blast-radius-validator exports intact | PASS (TC-REG-03) |
-| formatBlockMessage output format stable | PASS (TC-REG-02) |
-| Generic Retry/Skip/Cancel preserved | PASS (TC-REG-01) |
-| Synced copies match source | PASS (diff verified) |
+| Pre-existing enforcer tests (11) | All pass |
+| Pre-existing gate tests (22) | All pass |
+| Full CJS hook suite (1608 tests) | 1607 pass, 1 pre-existing failure |
+| Full ESM suite (632 tests) | 629 pass, 3 pre-existing failures |
+| Runtime hooks synced (diff) | Identical |
+| Non-exempt actions still enforced | Verified (feature, fix, upgrade, discover) |
 
-## 5. Complexity Assessment
+## 6. Summary
 
-**Overall complexity**: Low-Medium
-- The helper module is a pure-logic library with no I/O, no async, no side effects (except state mutation by explicit design).
-- The STEP 3f-blast-radius instructions are a linear 7-step flow with one conditional (retry limit check).
-- The orchestrator guardrails are documentation-only changes.
+All quality metrics meet or exceed thresholds. Zero regressions. Zero vulnerabilities. Test-to-code ratio is healthy at 9.8:1 for new code. All 8 acceptance criteria have test coverage. The change footprint is minimal at 33 lines of production code.

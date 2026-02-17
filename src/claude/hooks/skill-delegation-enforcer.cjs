@@ -28,6 +28,13 @@ const DELEGATION_MAP = {
     'discover': 'discover-orchestrator'
 };
 
+/**
+ * BUG-0021: Subcommands that run inline (Phase A) without orchestrator delegation.
+ * When the first non-flag word in args matches, skip writing pending_delegation
+ * and skip the mandatory delegation context message.
+ */
+const EXEMPT_ACTIONS = new Set(['analyze']);
+
 async function main() {
     try {
         const inputStr = await readStdin();
@@ -56,6 +63,14 @@ async function main() {
         // Only enforce for /isdlc and /discover
         const requiredAgent = DELEGATION_MAP[skill];
         if (!requiredAgent) {
+            process.exit(0);
+        }
+
+        // BUG-0021: Parse the action (first non-flag word) from args.
+        // Handles: 'analyze "desc"', '--verbose analyze "desc"', empty args.
+        const action = (args.match(/^(?:--?\w+\s+)*(\w+)/) || [])[1] || '';
+        if (EXEMPT_ACTIONS.has(action.toLowerCase())) {
+            debugLog(`Skill delegation enforcer: /${skill} ${action} is exempt from delegation`);
             process.exit(0);
         }
 

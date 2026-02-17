@@ -1,72 +1,66 @@
-# Coverage Report: BUG-0020-GH-4
+# Coverage Report: BUG-0021-GH-5
 
 **Phase**: 16-quality-loop
-**Date**: 2026-02-16
+**Date**: 2026-02-17
 **Tool**: `node --test` (Node.js built-in test runner)
 
 ## Coverage Summary
 
 | Metric | Target | Actual | Status |
 |--------|--------|--------|--------|
-| BUG-0020 acceptance criteria | 80% | 100% | PASS |
-| Changed functions with tests | 80% | 100% (4/4) | PASS |
-| BUG-0020 test cases passing | 100% | 100% (23/23) | PASS |
+| BUG-0021 acceptance criteria | 80% | 100% (AC-01 through AC-08) | PASS |
+| Changed functions with tests | 80% | 100% (2/2) | PASS |
+| BUG-0021 test cases passing | 100% | 100% (22/22 new) | PASS |
 | Regression tests passing | 100% | 100% (0 new failures) | PASS |
 
 ## Requirement Traceability Matrix
 
-### Drift Detection Tests (artifact-path-consistency.test.cjs)
+### skill-delegation-enforcer.cjs -- EXEMPT_ACTIONS Tests (12 new)
 
-| Test ID | Description | Status |
-|---------|-------------|--------|
-| TC-APC-01 | artifact-paths.json exists and is valid JSON | PASS |
-| TC-APC-02 | covers all phases with artifact_validation | PASS |
-| TC-APC-03 | paths match iteration-requirements.json paths | PASS |
-| TC-APC-04 | all paths contain {artifact_folder} template variable | PASS |
-| TC-APC-05 | artifact-paths.json schema is valid | PASS |
-| TC-APC-06 | Phase 01 paths aligned (docs/requirements/) | PASS |
-| TC-APC-07 | Phase 03 paths aligned (docs/requirements/) | PASS |
-| TC-APC-08 | Phase 04 paths aligned (docs/requirements/) | PASS |
-| TC-APC-09 | Phase 05 paths aligned (docs/requirements/) | PASS |
-| TC-APC-10 | Phase 08 paths aligned (docs/requirements/) | PASS |
-| TC-APC-11 | detects mismatch when iteration-requirements.json has old paths | PASS |
-| TC-APC-12 | no orphan phases in artifact-paths.json | PASS |
+| Test ID | Acceptance Criteria | Description | Status |
+|---------|-------------------|-------------|--------|
+| TC-01 | AC-01, AC-03 | Does NOT write pending_delegation marker for "analyze" action | PASS |
+| TC-02 | AC-02 | Parses action "analyze" from args with description | PASS |
+| TC-03 | AC-04 | Still writes pending_delegation marker for "feature" action | PASS |
+| TC-04 | AC-04 | Still writes pending_delegation marker for "fix" action | PASS |
+| TC-05 | AC-04 | Still writes pending_delegation marker for "upgrade" action | PASS |
+| TC-06 | AC-06 | Falls through to normal enforcement when args are empty | PASS |
+| TC-07 | AC-06 | Falls through to normal enforcement when args are missing | PASS |
+| TC-08 | Edge | Parses action "analyze" even with leading flags | PASS |
+| TC-09 | Edge | Handles ANALYZE in uppercase (case-insensitive) | PASS |
+| TC-10 | Edge | Skips marker for exempt action even with leading slash on skill name | PASS |
+| TC-11 | AC-04 | Discover skill still enforces delegation (not affected by EXEMPT_ACTIONS) | PASS |
+| TC-12 | AC-03 | Logs exempt action to stderr when debug mode enabled | PASS |
 
-### Reproduction Tests (test-gate-blocker-extended.test.cjs)
+### delegation-gate.cjs -- Defense-in-Depth Tests (10 new)
 
-| Test ID | Description | Status |
-|---------|-------------|--------|
-| TC-BUG20-RED01 | Phase 03 artifact at docs/requirements/ passes gate | PASS |
-| TC-BUG20-RED02 | Phase 04 artifact at docs/requirements/ passes gate | PASS |
-| TC-BUG20-RED03 | Phase 05 artifact at docs/requirements/ passes gate | PASS |
-| TC-BUG20-RED04 | Phase 08 artifact at docs/requirements/ passes gate | PASS |
-| TC-BUG20-RED05 | Phase 01 requirements path is correct (baseline) | PASS |
-
-### Integration Tests (test-gate-blocker-extended.test.cjs)
-
-| Test ID | Description | Status |
-|---------|-------------|--------|
-| TC-BUG20-INT01 | gate-blocker uses artifact-paths.json over iteration-requirements.json | PASS |
-| TC-BUG20-INT02 | falls back to iteration-requirements.json when artifact-paths.json missing | PASS |
-| TC-BUG20-INT03 | falls back gracefully when artifact-paths.json is malformed | PASS |
-| TC-BUG20-INT04 | blocks when artifact missing even with correct artifact-paths.json | PASS |
-| TC-BUG20-INT05 | {artifact_folder} template resolution works | PASS |
-| TC-BUG20-INT06 | falls back for phase not in artifact-paths.json | PASS |
+| Test ID | Acceptance Criteria | Description | Status |
+|---------|-------------------|-------------|--------|
+| TC-13 | AC-05 | Auto-clears pending_delegation for exempt "analyze" action without blocking | PASS |
+| TC-14 | AC-05 | Logs auto-clear of exempt marker to stderr when debug enabled | PASS |
+| TC-15 | AC-05 | Still blocks for non-exempt "feature" action (regression) | PASS |
+| TC-16 | AC-05 | Still blocks for non-exempt "fix" action (regression) | PASS |
+| TC-17 | Edge | Auto-clears exempt marker when args have leading flags | PASS |
+| TC-18 | AC-06 | Does NOT auto-clear when pending args are empty | PASS |
+| TC-19 | AC-06 | Does NOT crash when pending marker has no args field | PASS |
+| TC-20 | Edge | Handles ANALYZE in uppercase in pending marker (case-insensitive) | PASS |
+| TC-21 | Edge | Resets error count when auto-clearing exempt marker | PASS |
+| TC-22 | AC-05 | Still blocks for non-exempt "fix" action (regression, duplicate confirm) | PASS |
 
 ## Per-File Coverage
 
-| File | Changes | Test Cases | Functions Tested |
+| File | Changes | Test Cases | Key Paths Tested |
 |------|---------|------------|-----------------|
-| `src/claude/hooks/config/artifact-paths.json` | NEW | 12 (TC-APC-*) | N/A (config file) |
-| `src/claude/hooks/config/iteration-requirements.json` | 4 paths corrected | TC-APC-03, RED01-05 | N/A (config file) |
-| `src/claude/hooks/gate-blocker.cjs` | 3 functions added | 11 (TC-BUG20-*) | `loadArtifactPaths`, `getArtifactPathsForPhase`, `resolveArtifactPaths` |
-| `src/claude/hooks/tests/readme-fixes.test.cjs` | 1 path correction | 24/24 pass | N/A (test file) |
+| `src/claude/hooks/skill-delegation-enforcer.cjs` | Added EXEMPT_ACTIONS, action parsing, early exit | 12 new + 11 existing = 23 total | exempt skip, non-exempt passthrough, edge cases |
+| `src/claude/hooks/delegation-gate.cjs` | Added EXEMPT_ACTIONS, defense-in-depth auto-clear | 10 new + 22 existing = 32 total | auto-clear, non-exempt block, edge cases |
+| `src/claude/hooks/tests/test-skill-delegation-enforcer.test.cjs` | 12 new test cases | N/A (test file) | -- |
+| `src/claude/hooks/tests/test-delegation-gate.test.cjs` | 10 new test cases | N/A (test file) | -- |
 
 ## Regression Suite Results
 
 | Suite | Total | Pass | Fail | New Regressions |
 |-------|-------|------|------|-----------------|
 | ESM lib tests | 632 | 629 | 3 pre-existing | 0 |
-| CJS hook tests | ~380+ | All | 1 pre-existing | 0 |
-| BUG-0020 tests | 23 | 23 | 0 | 0 |
+| CJS hook tests | 1608 | 1607 | 1 pre-existing | 0 |
+| BUG-0021 tests | 22 | 22 | 0 | 0 |
 | **New Regressions** | -- | -- | -- | **0** |
