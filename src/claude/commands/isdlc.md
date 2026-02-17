@@ -403,11 +403,11 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
 /isdlc test generate
 ```
 1. Present test type selection: Unit, System, E2E (single-select)
-2. Initialize `active_workflow` with type `"test-generate"` and phases `["05-test-strategy", "06-implementation", "11-local-testing", "07-testing", "08-code-review"]`
-3. Phase 04: Analyze code and design test cases
-4. Phase 05: Write the test code
-5. Phase 06: Run new tests to verify they work
-6. Phase 07: Review test quality
+2. Initialize `active_workflow` with type `"test-generate"` and phases `["05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]`
+3. Phase 05: Analyze code and design test cases
+4. Phase 06: Write the test code
+5. Phase 16: Run quality loop including build verification, test execution, and automated QA
+6. Phase 08: Review test quality
 
 **cancel** - Cancel the active workflow
 ```
@@ -794,7 +794,7 @@ Each subcommand maps to a predefined workflow with a fixed, non-skippable phase 
 | `/isdlc feature` | feature | 00 → 01 → 02(IA) → 03 → 04 → 05 → 06 → 16(QL) → 08 | strict | `feature/REQ-NNNN-...` |
 | `/isdlc fix` | fix | 01 → 02(trace) → 05 → 06 → 16(QL) → 08 | strict | `bugfix/BUG-NNNN-...` |
 | `/isdlc test run` | test-run | 11 → 07 | strict | none |
-| `/isdlc test generate` | test-generate | 05 → 06 → 11 → 07 → 08 | strict | none |
+| `/isdlc test generate` | test-generate | 05 → 06 → 16(QL) → 08 | strict | none |
 | `/isdlc upgrade` | upgrade | 15-plan → 15-execute → 08 | strict | `upgrade/{name}-v{ver}` |
 | `/isdlc analyze` | phase-a | *(outside workflow)* | none | none |
 | `/isdlc start` | prepared-feature | 02(IA) → 03 → 04 → 05 → 06 → 16(QL) → 08 | strict | `feature/REQ-NNNN-...` |

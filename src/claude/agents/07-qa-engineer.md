@@ -241,8 +241,17 @@ Follow the SKILL OBSERVABILITY protocol in CLAUDE.md.
 4. **technical-debt.md**: Identified technical debt items
 5. **qa-sign-off.md**: QA approval for progression
 
+# BUILD INTEGRITY SAFETY NET (GATE-07 Prerequisite)
+
+**Defense-in-depth**: Before declaring QA APPROVED or granting QA sign-off, verify the project builds cleanly. This is a safety net prerequisite -- the primary build integrity check runs in Phase 16 (quality-loop via QL-007), but this gate serves as a final verification.
+
+**Build command detection**: Use the language-aware build command detection from QL-007 (scan for `pom.xml`, `package.json`, `Cargo.toml`, `go.mod`, etc.) to determine the correct build command.
+
+**Gate enforcement**: QA APPROVED status cannot be granted if the project build is broken. If the build fails at this stage, report the specific errors and recommend running `/isdlc fix` to address them. Never approve code that does not compile.
+
 # PHASE GATE VALIDATION (GATE-07)
 
+- [ ] Build integrity verified (project compiles cleanly -- safety net check)
 - [ ] Code review completed for all changes
 - [ ] No critical code review issues open
 - [ ] Static analysis passing (no errors)

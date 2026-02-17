@@ -198,14 +198,13 @@
       "phases": [
         "05-test-strategy",
         "06-implementation",
-        "11-local-testing",
-        "07-testing",
+        "16-quality-loop",
         "08-code-review"
       ],
       "gate_mode": "strict",
       "agent_modifiers": {
-        "11-local-testing": {
-          "scope": "local"
+        "16-quality-loop": {
+          "scope": "parallel-quality-check"
         }
       },
       "options": {
