@@ -367,7 +367,7 @@
   - **Files**: `isdlc.md` (new actions + STEP 3d injection), `CLAUDE.md` (intent detection), `external-skills-manifest.json` (schema extension), `common.cjs` (skill loading utilities), new `skill-manager.md` agent
   - **Complexity**: Medium
 
-- 13.2 [ ] BUG-0027: Built-in skills (243 SKILL.md files) never injected into agent Task prompts at runtime *(GitHub #15)*
+- 13.2 [ ] BUG-0027: Built-in skills (243 SKILL.md files) never injected into agent Task prompts at runtime *(GitHub #15)* -> [requirements](docs/requirements/BUG-0027-GH-15/)
   - **Problem**: 243 SKILL.md files exist across 17 categories. Each agent declares `owned_skills:` in frontmatter. But NO code reads these files and delivers them to agents. The skills manifest is consumed by hooks for observability logging only — not for capability delivery. ~50,000+ lines of domain expertise are dead weight.
   - **Evidence**: Phase-loop controller STEP 3d has zero references to skills/SKILL.md/inject. No `loadSkillContent()` function in common.cjs. Agent files have no instruction to read their owned skills. The entire skills architecture (manifest, ownership, IDs, categories) exists for logging, not delivery.
   - **Recommended fix (Option B — summaries + on-demand)**: Inject a skill index (name + one-line description + file path) into agent Task prompts. Agents read specific SKILL.md files when relevant. Low token overhead (one line per skill), agents that need a skill can Read it.
@@ -375,19 +375,16 @@
   - **Files**: `isdlc.md` (STEP 3d skill injection), `common.cjs` (`getAgentSkillIndex()` utility), 48 agent files (add "consult your owned skills" instruction — mechanical)
   - **Severity**: Medium-high — entire skills architecture underutilized
   - **Complexity**: Medium
+  - **Phase A**: Analyzed 2026-02-17 — quick-scan + requirements ready
 
 ### 14. Gate-Blocker Artifact Validation (from BUG-0022-GH-1 workflow observation)
 
-- 14.1 [ ] BUG: artifact-paths.json has wrong filenames that don't match agent output — gate-blocker blocks valid phases [Gitea: #2] [GitHub: #16]
-  - **Problem**: `artifact-paths.json` (gate-blocker's source of truth) contains hand-authored filenames that don't match what phase agents actually produce. Phase 08 expects `review-summary.md` but QA Engineer writes `code-review-report.md`. `review-summary.md` is only created by the orchestrator during finalize (post-gate). Phase 01 also blocked when orchestrator simulated instead of delegating.
-  - **Root cause**: `artifact-paths.json` was created in BUG-0020 with assumed filenames. REQ-0021 (output templates) didn't touch artifact-paths.json or iteration-requirements.json.
-  - **Severity**: High — blocks every workflow at Phase 01 and Phase 08 with false positives
-  - **Suggested fix**: Audit all phases in `artifact-paths.json` against actual agent output. Remove entries for post-gate artifacts. Ideally derive from agent output templates to prevent future drift.
-  - **Files**: `src/claude/hooks/config/artifact-paths.json`, `src/claude/hooks/config/iteration-requirements.json`, `src/claude/hooks/gate-blocker.cjs`, `src/claude/agents/07-qa-engineer.md`, `src/claude/agents/00-sdlc-orchestrator.md`
+- 14.1 [x] BUG-0010-GH-16: artifact-paths.json filename mismatches — gate-blocker blocks valid phases [GitHub: #16] **Completed: 2026-02-17**
 
 ## Completed
 
 ### 2026-02-17
+- [x] BUG-0010-GH-16: artifact-paths.json filename mismatches — Phase 08 `review-summary.md` → `code-review-report.md`, Phase 01 fix workflow artifact validation disabled. 13 new tests, zero regressions. 2 bugs, 6 ACs, 3 NFRs *(GitHub #16, merged b25fbdd)* (backlog 14.1).
 - [x] BUG-0022-GH-1: /isdlc test generate declares QA APPROVED while project build is broken *(Gitea #1, GitHub #16, merged 506d4de)*
   - Updated test-generate workflow from legacy pipeline (phases 11+07) to Phase 16 quality-loop. Added Build Integrity Check Protocol to quality-loop-engineer with language-aware build detection, mechanical auto-fix loop (max 3 iterations), honest failure reporting for logical issues. Added GATE-08 build integrity safety net. 39 new tests, zero regressions. 5 files modified + 1 new test file.
 - [x] REQ-0021: T7 Agent prompt boilerplate extraction — extracted ROOT RESOLUTION, MONOREPO, SKILL OBSERVABILITY, SUGGESTED PROMPTS, and CONSTITUTIONAL PRINCIPLES protocols from 29 agent files into shared CLAUDE.md subsections. Agents now use 1-line references. ~3,600 lines removed, 113 lines added to CLAUDE.md. 29 agent files modified, 1 test file updated, zero regressions. 12 FRs, 6 NFRs (backlog 2.3).
