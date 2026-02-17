@@ -1,14 +1,14 @@
-# Quality Report: BUG-0020-GH-4
+# Quality Report: BUG-0021-GH-5
 
 **Phase**: 16-quality-loop
-**Date**: 2026-02-16
+**Date**: 2026-02-17
 **Quality Loop Iteration**: 1 (both tracks passed first run)
-**Branch**: fix/BUG-0020-GH-4-artifact-path-mismatch
-**Fix**: Artifact path mismatch between agents and gate-blocker (GitHub #4)
+**Branch**: bugfix/BUG-0021-GH-5
+**Fix**: delegation-gate infinite loop on /isdlc analyze -- missing Phase A carve-out (GitHub #5)
 
 ## Executive Summary
 
-All quality checks pass. Zero new regressions detected. The fix creates `artifact-paths.json` as a single source of truth for artifact paths, corrects 4 mismatched paths in `iteration-requirements.json`, updates `gate-blocker.cjs` with `loadArtifactPaths()` and `getArtifactPathsForPhase()` functions, and adds 23 new tests covering drift detection and path resolution. All 23 BUG-0020 tests pass. The full test suite shows 4 pre-existing failures, none introduced by this fix.
+All quality checks pass. Zero new regressions detected. The fix adds `EXEMPT_ACTIONS` carve-out to both `skill-delegation-enforcer.cjs` (skip marker + enforcement message for exempt actions) and `delegation-gate.cjs` (defense-in-depth auto-clear of stale markers for exempt actions). 22 new tests cover the exempt action behavior across both hooks. All 55 combined tests for the two modified hooks pass. The full test suite shows 4 pre-existing failures, none introduced by this fix.
 
 ## Track A: Testing Results
 
@@ -16,22 +16,21 @@ All quality checks pass. Zero new regressions detected. The fix creates `artifac
 
 | Item | Status |
 |------|--------|
-| Node.js runtime | v24.10.0 (meets >=20.0.0 requirement) |
+| Node.js runtime | v24.x (meets >=20.0.0 requirement) |
 | CJS module loading | PASS |
-| JSON config parsing | PASS |
-| Syntax check (`node --check`) | PASS (all 3 changed CJS files) |
+| Syntax check (`node -c`) | PASS (both changed CJS files) |
 
 ### Test Execution (QL-002)
 
 | Suite | Tests | Pass | Fail | Duration |
 |-------|-------|------|------|----------|
-| ESM suite (`lib/*.test.js`) | 632 | 629 | 3 | ~10s |
-| CJS hooks (`*.test.cjs`) | ~380+ | All pass | 0 new | ~5s |
+| ESM suite (`npm test`) | 632 | 629 | 3 pre-existing | ~10s |
+| CJS hooks (`npm run test:hooks`) | 1608 | 1607 | 1 pre-existing | ~5s |
 | Characterization tests | Pass | Pass | 0 | -- |
 | E2E tests | Pass | Pass | 0 | -- |
-| **BUG-0020 tests** | **23** | **23** | **0** | **<1s** |
+| **BUG-0021 focused tests** | **55** | **55** | **0** | **<1s** |
 
-### Pre-Existing Failures (not caused by BUG-0020)
+### Pre-Existing Failures (not caused by BUG-0021)
 
 | Test | File | Cause |
 |------|------|-------|
@@ -44,9 +43,14 @@ All quality checks pass. Zero new regressions detected. The fix creates `artifac
 
 | Metric | Value | Threshold | Status |
 |--------|-------|-----------|--------|
-| BUG-0020 acceptance criteria | 100% | 80% | PASS |
-| Changed functions with tests | 4/4 (100%) | 80% | PASS |
-| BUG-0020 test cases | 23/23 | -- | PASS |
+| BUG-0021 acceptance criteria covered | 100% (AC-01 through AC-08) | 80% | PASS |
+| Changed functions with tests | 2/2 (100%) | 80% | PASS |
+| BUG-0021 test cases | 22/22 new (12 enforcer + 10 gate) | -- | PASS |
+| Total hook tests for modified files | 55/55 | -- | PASS |
+
+### Mutation Testing (QL-003)
+
+NOT CONFIGURED -- No mutation testing framework available.
 
 ## Track B: Automated QA Results
 
@@ -54,7 +58,7 @@ All quality checks pass. Zero new regressions detected. The fix creates `artifac
 |-------|--------|-------|
 | Lint (QL-005) | N/A | Not configured |
 | Type check (QL-006) | N/A | Pure JavaScript |
-| SAST (QL-008) | PASS | 0 critical/high |
+| SAST (QL-008) | PASS | 0 critical/high findings |
 | Dependency audit (QL-009) | PASS | 0 vulnerabilities |
 | Code review (QL-010) | PASS | 0 blockers |
 

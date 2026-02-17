@@ -24,6 +24,13 @@ const {
 } = require('./lib/common.cjs');
 
 /**
+ * BUG-0021: Subcommands that run inline without orchestrator delegation.
+ * Defense-in-depth: if a pending_delegation marker exists for an exempt action,
+ * auto-clear it without blocking.
+ */
+const EXEMPT_ACTIONS = new Set(['analyze']);
+
+/**
  * Check if the skill_usage_log contains a delegation to the required agent
  * that occurred after the pending_delegation was written.
  *
@@ -92,6 +99,17 @@ async function main() {
         }
 
         debugLog('Delegation gate: pending delegation found:', pending);
+
+        // BUG-0021: Defense-in-depth — auto-clear exempt action markers.
+        // If the pending marker's args contain an exempt action (e.g., 'analyze'),
+        // clear the marker without blocking.
+        const pendingArgs = (pending.args || '');
+        const pendingAction = (pendingArgs.match(/^(?:--?\w+\s+)*(\w+)/) || [])[1] || '';
+        if (EXEMPT_ACTIONS.has(pendingAction.toLowerCase())) {
+            debugLog('Delegation gate: pending delegation is for exempt action, auto-clearing');
+            clearMarkerAndResetErrors();
+            process.exit(0);
+        }
 
         // Read state to check skill_usage_log
         const state = readState();
