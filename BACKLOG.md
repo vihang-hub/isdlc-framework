@@ -5,25 +5,6 @@
 
 ## Open
 
-### 0. Bugs
-
-- 0.19 [x] **BUG: Artifact path mismatch between agents and gate-blocker — no single source of truth** *(Fixed: BUG-0020-GH-4, merged b777cee)*
-  - **Severity**: High — 4 of 5 phases with artifact validation are mismatched; causes gate blocks
-  - **Root cause**: Agent OUTPUT STRUCTURE sections and `iteration-requirements.json` `artifact_validation.paths` are defined independently with no shared source of truth. They drifted as agents were refactored.
-  - **Observed**: Phase 08 gate blocked during REQ-0020 — hook expected `docs/reviews/{artifact_folder}/review-summary.md`, agent wrote to `docs/requirements/{artifact_folder}/code-review-report.md`
-  - **Mismatch scope**: Phase 03 (architecture), 04 (design), 05 (test-strategy), 08 (code-review) — only Phase 01 (requirements) matches
-  - **Fix**: Create a shared `artifact-paths.json` template as the single source of truth. Gate-blocker reads it for validation, agents reference it for output paths. Drift becomes structurally impossible. Add a validation test to catch future mismatches.
-  - **Files**: `src/claude/hooks/config/iteration-requirements.json`, `src/claude/hooks/gate-blocker.cjs`, `src/claude/agents/02-solution-architect.md`, `src/claude/agents/03-system-designer.md`, `src/claude/agents/04-test-design-engineer.md`, `src/claude/agents/07-qa-engineer.md`
-  - **GitHub**: [#4](https://github.com/vihang-hub/isdlc-framework/issues/4)
-
-- 0.20 [ ] **BUG: delegation-gate infinite loop on `/isdlc analyze` — missing carve-out for Phase A**
-  - **Severity**: Medium — blocks all responses after `/isdlc analyze` until `pending_delegation` is manually cleared
-  - **Root cause**: `skill-delegation-enforcer.cjs` writes a `pending_delegation` marker for ALL `/isdlc` invocations. The `delegation-gate.cjs` Stop hook checks every response for orchestrator delegation. But `analyze` (Phase A) is spec-exempt from orchestrator delegation — it runs outside workflow machinery. The marker never gets cleared, causing an infinite block loop.
-  - **Observed**: After `/isdlc analyze "T7..."` completed successfully, every subsequent response was blocked by delegation-gate with "did not delegate to sdlc-orchestrator"
-  - **Fix**: Add `analyze` to an exempt list in `skill-delegation-enforcer.cjs` (don't write marker) or in `delegation-gate.cjs` (auto-clear marker when args start with `analyze`). The isdlc.md spec explicitly says: "Execute Phase A Preparation Pipeline directly -- no orchestrator needed."
-  - **Files**: `src/claude/hooks/skill-delegation-enforcer.cjs`, `src/claude/hooks/delegation-gate.cjs`
-  - **GitHub**: [#5](https://github.com/vihang-hub/isdlc-framework/issues/5)
-
 ### 1. Spec-Kit Learnings (from framework comparison 2026-02-11)
 
 - 1.1 [ ] Spike/explore workflow — parallel implementation branches from a single spec for tech stack comparison or architecture exploration (Spec-Kit's "Creative Exploration")
@@ -32,8 +13,6 @@
 
 ### 2. Performance (remaining from 2026-02-13 investigation)
 
-- 2.1 [x] T5: Quality Loop true parallelism (REQ-0018 — DONE: dual-Task spawning for Track A + Track B, grouping strategy, 40 tests)
-- 2.2 [x] T6: Hook I/O optimization (REQ-0020 — DONE: config mtime caching, getProjectRoot() per-process cache, state-write-validator single-read consolidation, ctx.manifest passthrough, 46 tests)
 - 2.3 [ ] T7: Agent prompt boilerplate extraction — ROOT RESOLUTION, MONOREPO, ITERATION protocols duplicated across 17 agents (~3,600 lines) -> [requirements](docs/requirements/REQ-0021-t7-agent-prompt-boilerplate-extraction/)
   - Move remaining shared sections to CLAUDE.md (T2 follow-up)
   - **Impact**: 2-3% speedup per agent delegation
@@ -92,16 +71,8 @@
   - **Complexity**: Medium-large (2-3 sessions through full iSDLC workflow)
   - **Prerequisite**: ~~BUG-0013 (phase-loop-controller same-phase bypass)~~ DONE
 
-- 3.2 [x] Pre-analysis pipeline — `/isdlc analyze` and `/isdlc start` commands for pre-workflow requirements capture and consumption (REQ-0019 — DONE)
-  - Implemented as Phase A Preparation Pipeline: `/isdlc analyze` runs intake + optional deep analysis outside workflow machinery (no state.json, no hooks, no branches), writes to `docs/requirements/{slug}/`
-  - `/isdlc start` consumes Phase A artifacts, validates `meta.json`, staleness checks, begins workflow from Phase 02
-  - Evolved beyond original spec: full requirements capture (not just quick-scan + impact analysis), Jira/GitHub/manual intake sources, BACKLOG.md index integration
-
 ### 4. Multi-Agent Teams (Architecture)
 
-- 4.1 [x] Multi-agent debate teams for all creative phases — Creator/Critic/Refiner propose-critique-refine cycles (5/5 phases done)
-  - Phase 01 Requirements (REQ-0014: 90 tests), Phase 03 Architecture (REQ-0015: 87 tests), Phase 04 Design (REQ-0016: 87 tests), Phase 05 Test Strategy (REQ-0016: 88 tests), Phase 06 Implementation (REQ-0017: 86 tests — Writer/Reviewer/Updater variant)
-  - Configurable: off for `-light`, on for standard/epic, `--debate`/`--no-debate` flags
 - 4.2 [~] Impact Analysis cross-validation — improve Phase 02 accuracy by enabling agents to cross-check findings (Approach A DONE — REQ-0015, Approach B still open)
   - **Problem**: M1 (Impact Analyzer), M2 (Entry Point Finder), and M3 (Risk Assessor) run in parallel but in **complete isolation** — no SendMessage, no cross-referencing, no awareness of each other's findings. The orchestrator consolidates after all complete, but nobody verifies consistency. M1 might say 7 files affected while M2 found entry points in 9 files, or M3's risk score might not account for coupling that M1 identified. Inconsistencies flow silently into sizing and downstream phases.
   - **Approach A — Post-hoc Verifier** [x] (DONE — REQ-0015: cross-validation-verifier.md agent, Step 3.5 in orchestrator, IA-401/IA-402 skills, 3-tier fail-open, 33 tests):
@@ -124,19 +95,9 @@
   - **Recommendation**: Start with Approach A (low risk, immediate value), evolve to Approach B if inconsistency rate is high.
   - **Impact on sizing**: More accurate file counts and risk scores → more reliable sizing decisions (connects to 8.2)
   - **Complexity**: A = Low-medium (one new agent). B = Medium (SendMessage protocol, message budget, interim finding format)
-- 4.3 [x] Fan-out/fan-in parallelism for Phase 16 + Phase 08 (REQ-0017 — DONE: shared fan-out engine QL-012, chunk splitter, 250-test/5-file thresholds, max 8 agents, `--no-fan-out` flag, 46 tests)
 
 ### 5. Developer Engagement Modes (Architecture)
 
-Three modes controlling the developer's role during a workflow, activated via feature toggle:
-
-| Mode | Developer Role | Phases flow | When to use |
-|------|---------------|-------------|-------------|
-| **Auto** (default) | Minimal input — answer questions, approve final gate | Autonomous, no pause between phases | Routine tasks, high-confidence features, trusted patterns |
-| **Supervised** | Reviewer — inspect, edit, and course-correct between phases | Pause at configurable review gates | Existing projects, domain-heavy features, learning the codebase |
-| **Collaborative** | Reviewer + contributor — produce artifacts alongside the AI | Pause at review gates + suggest parallel human tasks + consume contributed artifacts | Complex features, developer has domain expertise, "boring AI" problem |
-
-- 5.1 [x] Supervised mode — per-phase review gates with Continue/Review/Redo menu, parallel change summaries, redo circuit breaker (REQ-0013 — DONE: 4 common.cjs helpers, STEP 3e-review, `--supervised` flag, 88 tests)
 - 5.2 [ ] Collaborative mode — developer as co-contributor alongside the AI, with parallel human tasks and artifact drop-in
   - **Problem**: In auto mode the developer sits idle for 15-60 minutes while the framework works. Supervised mode (5.1) keeps them engaged as a reviewer, but the developer still isn't *producing* anything. Developers with domain expertise want to contribute — draft acceptance criteria, research competitors, sketch edge cases, write test scenarios — but there's no mechanism to feed that work back into the active workflow.
   - **Builds on**: Supervised mode (5.1) — collaborative mode is supervised mode + contribution capabilities. 5.1 is a prerequisite.
@@ -289,7 +250,6 @@ Three modes controlling the developer's role during a workflow, activated via fe
   - **Advantages over Jira adapter**: no MCP auth headaches (Atlassian re-auth bug), `gh` already installed for most GitHub users, auto-close via commit message (zero API calls), richer label/milestone system, external contributor intake via templates
   - **Builds on**: REQ-0008 (Jira adapter pattern), REQ-0012 (invisible framework — natural language intent detection)
   - **Complexity**: Medium — same adapter pattern as Jira but simpler (gh CLI vs MCP). ~6 files to modify, ~1 new test file. Most work is in orchestrator + installer.
-- 7.7 [x] Backlog management integration — Jira + Confluence backed BACKLOG.md with prompt-driven MCP delegation (REQ-0008 — DONE: 4 production files, 72 tests)
 
 ### 8. Workflow Quality
 
@@ -304,7 +264,6 @@ Three modes controlling the developer's role during a workflow, activated via fe
     3. **Add fallback metrics**: If `parseSizingFromImpactAnalysis()` fails, try extracting file count from quick-scan or requirements artifacts as a backup data source
   - **Files to change**: `src/claude/commands/isdlc.md` (STEP 3e-sizing, PATHs 1 and 3), possibly `src/claude/hooks/lib/common.cjs` (`parseSizingFromImpactAnalysis` fallback robustness)
   - **Complexity**: Low (control flow changes in 1-2 files, no new agents or infrastructure)
-- 8.3 [x] Requirements elicitation redesign — conversational, context-aware interaction replacing generic 3-question opening (REQ-0014 FR-007 — DONE: integrated into Creator/Critic/Refiner debate team)
 
 ### 9. Code Quality Gaps
 
@@ -357,128 +316,119 @@ Three modes controlling the developer's role during a workflow, activated via fe
 
 ## Completed
 
+### 2026-02-17
+- [x] BUG-0021: delegation-gate infinite loop on `/isdlc analyze` — missing carve-out for Phase A *(GitHub #5, merged 27ae7cf)*
+  - Added `EXEMPT_ACTIONS = new Set(['analyze'])` to `skill-delegation-enforcer.cjs` (primary fix) and `delegation-gate.cjs` (defense-in-depth). 22 new tests, zero regressions.
+- [x] BUG-0020: Artifact path mismatch between agents and gate-blocker — no single source of truth *(GitHub #4, merged b777cee)*
+  - Created `artifact-paths.json` as single source of truth, corrected 4 mismatched paths in `iteration-requirements.json`, updated `gate-blocker.cjs`. 23 new tests, zero regressions.
+
 ### 2026-02-16
 - [x] REQ-0020: T6 Hook I/O optimization — config file mtime caching (`_configCache` Map with `_loadConfigWithCache()`), `getProjectRoot()` per-process cache, state-write-validator single-read consolidation (`diskState` parameter to V7/V8), `ctx.manifest` passthrough in gate-blocker `checkAgentDelegationRequirement()`. 3 production files modified (common.cjs, state-write-validator.cjs, gate-blocker.cjs), 46 new tests, zero regressions, 1 implementation iteration. 5 FRs, 4 NFRs, 19 ACs (backlog 2.2).
+- [x] REQ-0019: Pre-analysis pipeline — `/isdlc analyze` and `/isdlc start` commands for pre-workflow requirements capture and consumption (backlog 3.2). Phase A Preparation Pipeline runs outside workflow machinery, `/isdlc start` consumes Phase A artifacts from Phase 02.
 - [x] BUG-0019: Blast radius response bugs (GitHub #1, Batch E bugs 0.17 + 0.18) — new `blast-radius-step3f-helpers.cjs` with re-implementation targeting for unaddressed files + `tasks.md` cross-referencing for skipped/incomplete tasks. Modified orchestrator STEP 3f and phase-loop integration. 66 new tests, zero regressions, 2 implementation iterations. 5 FRs, 3 NFRs, 19 ACs.
 - [x] BUG-0018: Backlog picker pattern mismatch after BACKLOG.md restructure (GitHub #2, REQ-0019 follow-up) — updated orchestrator BACKLOG PICKER to strip `-> [requirements](...)` suffix from item titles in both feature and fix modes. Added `start` action design note in isdlc.md. 26 new tests (`test-backlog-picker-content.test.cjs`), zero regressions, 1 implementation iteration. 5 FRs, 3 NFRs, 19 ACs.
-- [x] REQ-0017: Fan-out/fan-in parallelism — shared fan-out engine (QL-012 skill) with chunk splitter, parallel Task spawner, and result merger. Phase 16 Track A test splitting (250-test threshold, max 8 agents, round-robin strategy, union coverage aggregation). Phase 08 code review file splitting (5-file threshold, max 8 agents, group-by-directory strategy, finding deduplication, cross-cutting concerns). --no-fan-out CLI flag. Protocol-only implementation (markdown, no executable code). 4 ADRs, 5 modified files, 1 new skill file, 46 new tests, zero regressions, 1 implementation iteration. 7 FRs, 4 NFRs, 35 ACs (backlog 4.3).
+- [x] REQ-0018: Quality Loop true parallelism — explicit dual-Task spawning for Track A (testing) + Track B (automated QA) in 16-quality-loop-engineer.md (backlog 2.1). Grouping strategy table, internal parallelism guidance, consolidated merging protocol. 40 new tests, zero regressions, 2 implementation iterations. 7 FRs, 4 NFRs, 23 ACs.
+- [x] REQ-0017: Fan-out/fan-in parallelism — shared fan-out engine (QL-012 skill) with chunk splitter, parallel Task spawner, and result merger. Phase 16 Track A test splitting + Phase 08 code review file splitting. --no-fan-out CLI flag. 46 new tests, zero regressions, 1 implementation iteration. 7 FRs, 4 NFRs, 35 ACs (backlog 4.3).
 
 ### 2026-02-15
-- [x] BUG-0017: Batch C hook bugs — 2 fixes across 2 files: misleading artifact error messages in gate-blocker.cjs reporting actual missing variants instead of first variant (0.9), state-write-validator version lock bypass during migration requiring version field on incoming state (0.10). Quality reports updated. 137 new state-write-validator tests.
-- [x] BUG-0009: Batch D tech debt — centralize phase prefixes into PHASE_CATEGORIES constant (0.13), standardize null checks to optional chaining (0.14), document detectPhaseDelegation() contract (0.15), remove dead code from BUG-0005 fix (0.16). 4 items, zero regressions.
-- [x] BUG-0008: Batch B inconsistent hook behavior — 3 fixes in gate-blocker.cjs: phase index bounds validation with Array.isArray + length + typeof/isFinite checks (0.4), empty workflows object fallback loading via .workflows sub-property check (0.5), supervised review coordination blocking gate advancement when status is 'reviewing' or 'rejected' (0.8). 20 new tests, zero regressions, 1 implementation iteration. 3 bugs, 17 ACs, 4 NFRs.
-- [x] BUG-0007: Batch A gate bypass bugs — 2 fixes across 2 files: phase-status early-return bypass removed in gate-blocker.cjs (0.1), null/type guards added to state-write-validator.cjs checkVersionLock() (0.3). Bug 0.2 (PHASE_STATUS_ORDINAL) confirmed already fixed with verification test. 16 new tests, zero regressions, 1 implementation iteration. 3 bugs analyzed, 13 ACs, 3 NFRs.
-- [x] BUG-0006: Batch B hook bugs — 4 fixes across 3 files: dispatcher null context defaults (0.6, `pre-task-dispatcher.cjs`), test-adequacy wrong phase detection prefix (0.7, `test-adequacy-blocker.cjs`), menu tracker unsafe nested init (0.11, `menu-tracker.cjs`), phase timeout degradation hints (0.12, `pre-task-dispatcher.cjs`). 48 new tests, zero regressions, 2 implementation iterations. 4 FRs, 3 NFRs, 21 ACs.
-- [x] BUG-0004: Orchestrator overrides conversational opening with old 3-question protocol — replaced stale INTERACTIVE PROTOCOL block (lines 1007-1016 of 00-sdlc-orchestrator.md) with CONVERSATIONAL PROTOCOL matching the requirements analyst's REQ-0014 INVOCATION PROTOCOL. 1 file modified, 17 new tests, zero regressions, 1 implementation iteration. 2 FRs, 2 NFRs, 9 ACs (backlog 0.1 original)
-- [x] REQ-0018: Quality Loop true parallelism — explicit dual-Task spawning for Track A (testing) + Track B (automated QA) in 16-quality-loop-engineer.md (backlog 2.1). Grouping strategy table (A1 unit, A2 system/integration, A3 E2E; B1 static analysis, B2 constitutional/coverage), internal parallelism guidance, consolidated merging protocol, iteration loop with parallel re-execution, FINAL SWEEP/FULL SCOPE compat, scope detection (50+/10-49/<10 thresholds). 40 new tests, zero regressions, 2 implementation iterations, light workflow. 7 FRs, 4 NFRs, 23 ACs.
-- [x] REQ-0015 (local): Impact Analysis cross-validation Verifier (Approach A) — new M4 agent (cross-validation-verifier.md) that cross-checks M1/M2/M3 findings after parallel execution, before consolidation. Pipeline verification pattern with 3-tier fail-open, 5 finding types (MISSING_FROM_BLAST_RADIUS, ORPHAN_IMPACT, RISK_SCORING_GAP, UNDERTESTED_CRITICAL_PATH, INCOMPLETE_ANALYSIS), IA-401/IA-402 skills. 1 new agent, 1 new skill, 3 modified files, 33 new tests, zero regressions, 9/9 gates passed first try. 7 FRs, 3 NFRs, 28 ACs (backlog 4.2 Approach A)
-- [x] REQ-0016 (local): Multi-agent Test Strategy Team — Creator/Critic/Refiner debate loop for Phase 05 test strategy (backlog 4.1 Phase 05). 2 new agents (Test Strategy Critic with 8 checks TC-01..TC-08, Test Strategy Refiner with fix strategies), 4 modified files (orchestrator DEBATE_ROUTING +1 row, test-design-engineer Creator awareness, isdlc.md debate phases docs, skills-manifest Phase 05 entries). 88 new tests, zero regressions, 2 implementation iterations. 7 FRs, 4 NFRs, 34 ACs. Completes backlog 4.1 (all 5 debate team phases done).
-- [x] REQ-0017: Multi-agent Implementation Team — Writer/Reviewer/Updater per-file debate loop for Phase 06 implementation (backlog 4.1 Phase 06). 2 new agents (Implementation Reviewer with 8 IC checks IC-01..IC-08, Implementation Updater with 6-step fix protocol), 4 modified agents (orchestrator IMPLEMENTATION_ROUTING Section 7.6, software-developer Writer awareness, quality-loop final sweep, qa-engineer human review only). 86 new tests, zero regressions, 1 implementation iteration. 7 FRs, 4 NFRs, 34 ACs.
+- [x] BUG-0017: Batch C hook bugs — misleading artifact error messages in gate-blocker.cjs (0.9), state-write-validator version lock bypass during migration (0.10). 137 new state-write-validator tests.
+- [x] BUG-0009: Batch D tech debt — centralize phase prefixes (0.13), standardize null checks (0.14), document detectPhaseDelegation() (0.15), remove dead code (0.16). 4 items, zero regressions.
+- [x] BUG-0008: Batch B inconsistent hook behavior — phase index bounds validation (0.4), empty workflows object fallback (0.5), supervised review coordination (0.8). 20 new tests, zero regressions. 3 bugs, 17 ACs, 4 NFRs.
+- [x] BUG-0007: Batch A gate bypass bugs — phase-status early-return bypass (0.1), null/type guards in checkVersionLock() (0.3). Bug 0.2 confirmed already fixed. 16 new tests, zero regressions. 3 bugs, 13 ACs, 3 NFRs.
+- [x] BUG-0006: Batch B hook bugs — dispatcher null context defaults (0.6), test-adequacy wrong phase detection (0.7), menu tracker unsafe nested init (0.11), phase timeout degradation hints (0.12). 48 new tests, zero regressions. 4 FRs, 3 NFRs, 21 ACs.
+- [x] BUG-0004: Orchestrator overrides conversational opening — replaced stale 3-question protocol with conversational protocol. 17 new tests, zero regressions. 2 FRs, 2 NFRs, 9 ACs.
+- [x] REQ-0016: Multi-agent Design Team (Phase 04) + Multi-agent Test Strategy Team (Phase 05) — Creator/Critic/Refiner debate loops. 175 new tests total, zero regressions.
+- [x] REQ-0017: Multi-agent Implementation Team (Phase 06) — Writer/Reviewer/Updater per-file debate loop. 86 new tests, zero regressions. 7 FRs, 4 NFRs, 34 ACs.
+- [x] REQ-0015: Multi-agent Architecture Team (Phase 03) + Impact Analysis cross-validation Verifier (Approach A). 120 new tests total, zero regressions.
+- [x] REQ-0014: Multi-agent Requirements Team (Phase 01) — Creator/Critic/Refiner debate loop, --debate/--no-debate flags, conversational Creator opening (backlog 4.1 + 8.3). 90 new tests, zero regressions. 8 FRs, 5 NFRs, 28 ACs.
+- [x] REQ-0013: Supervised mode — per-phase review gates with Continue/Review/Redo menu, parallel change summaries, redo circuit breaker, session recovery. 88 new tests, zero regressions. 8 FRs, 6 NFRs, 35 ACs (backlog 5.1).
+- [x] REQ-0008: Backlog management integration — Jira + Confluence backed BACKLOG.md with prompt-driven MCP delegation. 72 new tests, zero regressions. 9 FRs, 5 NFRs, 22 ACs (backlog 7.7).
+- [x] BUG-0015: branch-guard false positive after merge — added `branchExistsInGit()`, 4 new tests.
+- [x] BUG-0016: state-file-guard false positive on read-only Bash commands — added `isInlineScriptWrite()`, 20 tests.
+- [x] BUG-0017: Orchestrator exceeds `init-and-phase-01` scope — MODE ENFORCEMENT block + mode-aware guards, 20 tests.
 
 ### 2026-02-14
-- [x] REQ-0016: Multi-agent Design Team — Creator/Critic/Refiner debate loop for Phase 04 design specifications (backlog 4.1 Phase 04). 2 new agents (Design Critic with 8 checks DC-01..DC-08, Design Refiner with 9 strategies), 3 modified files (orchestrator +1 DEBATE_ROUTING row, system-designer Creator awareness, command descriptions). 87 new tests, zero regressions, 1 implementation iteration. 7 FRs, 4 NFRs, 34 ACs
-- [x] REQ-0015: Multi-agent Architecture Team — Creator/Critic/Refiner debate loop for Phase 03 architecture design (backlog 4.1 Phase 03). 2 new agents (Architecture Critic, Architecture Refiner), 3 modified files (orchestrator generalized debate engine with routing table, solution-architect Creator awareness, command flag descriptions). 87 new tests, zero regressions, 2 implementation iterations. 7 FRs, 4 NFRs, 30 ACs
-- [x] REQ-0014: Multi-agent Requirements Team — Creator/Critic/Refiner debate loop for Phase 01 requirements elicitation (backlog 4.1 + 8.3). 2 new agents (Critic, Refiner), 5 modified files, debate loop orchestration, --debate/--no-debate flags, conversational Creator opening. 90 new tests, zero regressions, 2 implementation iterations. 8 FRs, 5 NFRs, 28 ACs
-- [x] REQ-0008: Backlog management integration — prompt-driven MCP delegation for Jira + Confluence backed BACKLOG.md. 5 modules (CLAUDE.md template, orchestrator extensions, requirements analyst Confluence context, command spec, hook verification). ~195 lines across 4 production files, 72 new tests, zero regressions, 2 implementation iterations. 9 FRs, 5 NFRs, 22 ACs
-- [x] REQ-0013: Supervised mode — per-phase review gates with Continue/Review/Redo menu, parallel change summaries, redo circuit breaker (max 3), session recovery. 4 new common.cjs helpers, STEP 3e-review in phase-loop controller, --supervised flag, 88 new tests (80 supervised + 8 gate-blocker), 1228/1228 CJS passing, 8 FRs, 6 NFRs, 35 ACs
-- [x] BUG-0015: branch-guard false positive after merge — added `branchExistsInGit()` using `git rev-parse --verify`, 4 new tests
-- [x] BUG-0016: state-file-guard false positive on read-only Bash commands — added `isInlineScriptWrite()` to inspect script body, 20 tests
-- [x] BUG-0017: Orchestrator exceeds `init-and-phase-01` scope — MODE ENFORCEMENT block + mode-aware guards in orchestrator, 20 tests
+- [x] REQ-0016: Multi-agent Design Team — Creator/Critic/Refiner debate loop for Phase 04 design specifications. 87 new tests, zero regressions. 7 FRs, 4 NFRs, 34 ACs.
+- [x] REQ-0015: Multi-agent Architecture Team — Creator/Critic/Refiner debate loop for Phase 03 architecture design. 87 new tests, zero regressions. 7 FRs, 4 NFRs, 30 ACs.
+- [x] REQ-0014: Multi-agent Requirements Team — Creator/Critic/Refiner debate loop for Phase 01 requirements elicitation (backlog 4.1 + 8.3). 90 new tests, 2 implementation iterations. 8 FRs, 5 NFRs, 28 ACs.
+- [x] REQ-0008: Backlog management integration — prompt-driven MCP delegation for Jira + Confluence backed BACKLOG.md. 72 new tests, 2 implementation iterations. 9 FRs, 5 NFRs, 22 ACs.
+- [x] REQ-0013: Supervised mode — per-phase review gates, --supervised flag. 88 new tests. 8 FRs, 6 NFRs, 35 ACs.
+- [x] BUG-0015: branch-guard false positive after merge — added `branchExistsInGit()`, 4 new tests.
+- [x] BUG-0016: state-file-guard false positive on read-only Bash — added `isInlineScriptWrite()`, 20 tests.
+- [x] BUG-0017: Orchestrator exceeds `init-and-phase-01` scope — MODE ENFORCEMENT block, 20 tests.
 
 ### 2026-02-13
-- [x] BUG-0014: Early branch creation — moved branch creation from post-GATE-01 to workflow initialization time. All phases now execute on the feature/bugfix branch, keeping main untouched. 3 doc files (14 locations), 22 new tests, 0 regressions
-- [x] REQ-0012: Invisible framework — CLAUDE.md rewrite for auto-intent-detection, consent protocol, edge case handling. Users never need to know slash commands exist. 49 tests, 28/28 ACs, 4/4 NFRs, light workflow (93 min)
-- [x] BUG-0013: Phase-loop-controller false blocks — same-phase bypass in phase-loop-controller.cjs v1.2.0, 11 new tests, 23/23 passing, 93% coverage
-- [x] BUG-0012: Premature git commits — phase-aware commit blocking in branch-guard.cjs v2.0.0, no-commit instructions in agents, 17 new tests
-- [x] REQ-0011: Adaptive workflow sizing — 3 intensities (light/standard/epic), `-light` flag, sizing functions in common.cjs, STEP 3e-sizing in isdlc.md
-- [x] BUG-0011: Subagent phase state overwrite — V8 checkPhaseFieldProtection() in state-write-validator.cjs, blocks phase index/status regression
+- [x] BUG-0014: Early branch creation — moved branch creation to workflow init time. 22 new tests, 0 regressions.
+- [x] REQ-0012: Invisible framework — CLAUDE.md rewrite for auto-intent-detection. 49 tests, 28/28 ACs, light workflow.
+- [x] BUG-0013: Phase-loop-controller false blocks — same-phase bypass v1.2.0, 11 new tests.
+- [x] BUG-0012: Premature git commits — phase-aware commit blocking v2.0.0, 17 new tests.
+- [x] REQ-0011: Adaptive workflow sizing — 3 intensities, `-light` flag, sizing functions, STEP 3e-sizing.
+- [x] BUG-0011: Subagent phase state overwrite — V8 checkPhaseFieldProtection().
 
 ### 2026-02-12
-- [x] BUG-0010: Orchestrator finalize stale tasks — rewrote STEP 4 cleanup as CRITICAL mandatory loop
-- [x] BUG-0009: Subagent state.json drift — optimistic locking via state_version counter, writeState() auto-increment, V7 block rule
-- [x] Blast radius coverage validation (REQ-0010) — new blast-radius-validator.cjs hook, pre-task-dispatcher slot 9, 66 tests, 982 CJS pass
-- [x] BUG-0008: Constitution validator false positive on delegation prompts — detectPhaseDelegation() guard in 3 hooks
-- [x] BUG-0007: Test watcher circuit breaker false positives — inconclusive classification, skip circuit breaker
+- [x] BUG-0010: Orchestrator finalize stale tasks — rewrote STEP 4 cleanup as mandatory loop.
+- [x] BUG-0009: Subagent state.json drift — optimistic locking via state_version counter, V7 block rule.
+- [x] REQ-0010: Blast radius coverage validation — new blast-radius-validator.cjs hook, 66 tests, 982 CJS pass.
+- [x] BUG-0008: Constitution validator false positive on delegation prompts — detectPhaseDelegation() guard.
+- [x] BUG-0007: Test watcher circuit breaker false positives — inconclusive classification.
 
 ### 2026-02-11
-- [x] Enhanced plan-to-tasks pipeline (REQ-0009) — file-level granularity, traceability, dependency graph, refinement step, mechanical mode
-- [x] Split large files: installer.js (~845 lines) and common.cjs (~1460 lines)
-- [x] npx and npm publishing
-- [x] Update Node version (REQ-0008) — Node 18→20 minimum, CI matrix [20,22,24], constitution v1.2.0
-- [x] Add BMAD party mode for requirements
-- [x] Fix: `/isdlc start` should only be offered for new projects, not existing projects
+- [x] REQ-0009: Enhanced plan-to-tasks pipeline — file-level granularity, traceability, dependency graph.
+- [x] Split large files: installer.js (~845 lines) and common.cjs (~1460 lines).
+- [x] npx and npm publishing.
+- [x] REQ-0008: Update Node version — Node 18→20 minimum, CI matrix [20,22,24].
+- [x] Add BMAD party mode for requirements.
+- [x] Fix: `/isdlc start` should only be offered for new projects.
 
 ### 2026-02-10
-- [x] Performance optimization (REQ-0010) — see docs/PERFORMANCE-PLAN.md
-  - [x] T1: Hook dispatcher consolidation (~2x speedup)
-    - 21 hooks refactored to `check(ctx)` pattern, 5 dispatchers created
-    - settings.json: 26 hook entries → 10 (5 dispatchers + 5 standalone)
-    - 1132 total tests (446 ESM + 686 CJS), all passing
-  - [x] T2: Prompt optimization (~1.3-1.5x additional)
-    - Extracted 3 shared protocols to CLAUDE.md (~50 lines): SKILL OBSERVABILITY, SUGGESTED PROMPTS, CONSTITUTIONAL PRINCIPLES
-    - Created CLAUDE.md.template for installers, updated installer.js/install.sh/install.ps1
-    - 21 agents: SKILL OBSERVABILITY → 1-line reference
-    - 17 agents: SUGGESTED PROMPTS → 1-line reference + agent-specific [2] option
-    - 20 agents: CONSTITUTIONAL PRINCIPLES → 1-line reference + article list
-    - Orchestrator: 2,260 → 1,185 lines (47.6% reduction)
-  - [x] T3: Orchestrator bypass + conditional hooks (~1.5-2x additional)
-    - T3-B: 5 dispatchers gain `shouldActivate` guards
-    - T3-A: Phase-loop controller delegates directly to phase agents, bypassing orchestrator
-    - PHASE→AGENT table + post-phase state update protocol in isdlc.md STEP 3d-3e
-    - Orchestrator only invoked for init-and-phase-01 and finalize
-- [x] Workflow progress snapshots in workflow_history (REQ-0005)
+- [x] REQ-0010: Performance optimization — T1 dispatcher consolidation, T2 prompt optimization, T3 orchestrator bypass + conditional hooks.
+- [x] REQ-0005: Workflow progress snapshots in workflow_history.
 
 ### 2026-02-09
-- [x] Self-healing hook system
-  - Three-layer: pre-validate → diagnose (genuine/infrastructure/stale) → auto-remediate
-  - `normalizePhaseKey()`, `diagnoseBlockCause()`, `outputSelfHealNotification()`
-  - Canonicalized phase keys across workflows.json, PHASE_AGENT_MAP, orchestrator/command tables
-  - 917 total tests (362 ESM + 555 CJS)
+- [x] Self-healing hook system — normalizePhaseKey(), diagnoseBlockCause(), outputSelfHealNotification(). 917 total tests.
 
 ### 2026-02-08
-- [x] Foreground task visibility and hook escalation
-- [x] Skill delegation enforcement hooks (skill-delegation-enforcer.cjs, delegation-gate.cjs)
-- [x] Reduce hook noise when no SDLC workflow active
-- [x] Rename hook files .js → .cjs for Node 24 compatibility
-- [x] Claude Code detection and rework provider section in installers
-- [x] Post-install tour with /tour command → replaced with interactive use-case-driven guide
-- [x] Preserve uninstall.sh and update.sh during install
-- [x] Remove stale convert-manifest.sh
-- [x] Formalize hooks API contract (REQ-0003)
-- [x] Framework-controlled suggested prompts (REQ-0003)
-- [x] Enforce advisory behaviors — Phase 2 — 7 hooks + logging infrastructure (REQ-0005)
-- [x] PowerShell scripts for Windows (REQ-0002)
-- [x] Manual code review break (REQ-0002)
+- [x] Foreground task visibility and hook escalation.
+- [x] Skill delegation enforcement hooks.
+- [x] Reduce hook noise when no SDLC workflow active.
+- [x] Rename hook files .js → .cjs for Node 24 compatibility.
+- [x] Claude Code detection and rework provider section.
+- [x] Post-install tour → interactive use-case-driven guide.
+- [x] Preserve uninstall.sh and update.sh during install.
+- [x] Remove stale convert-manifest.sh.
+- [x] REQ-0003: Formalize hooks API contract + suggested prompts.
+- [x] REQ-0005: Enforce advisory behaviors — 7 hooks + logging.
+- [x] REQ-0002: PowerShell scripts for Windows + manual code review break.
 
 ### 2026-02-07
-- [x] Fix skill count discrepancy and regenerate mapping docs
-- [x] Add in-place update mechanism (update.sh + lib/updater.js)
-- [x] Post-discovery walkthrough (DE-002)
-- [x] Clean handover from /discover to /sdlc start (DE-003)
-- [x] Remove --shallow option from /discover (DE-004)
-- [x] Review /discover presentation and UX (DE-005)
-- [x] Extend /discover behavior extraction to markdown files (DE-001)
+- [x] Fix skill count discrepancy and regenerate mapping docs.
+- [x] Add in-place update mechanism (update.sh + lib/updater.js).
+- [x] Post-discovery walkthrough (DE-002).
+- [x] Clean handover from /discover to /sdlc start (DE-003).
+- [x] Remove --shallow option from /discover (DE-004).
+- [x] Review /discover presentation and UX (DE-005).
+- [x] Extend /discover behavior extraction to markdown files (DE-001).
 
 ### 2026-02-06
-- [x] Agent delegation validation in gate-blocker (#4d)
-- [x] Wire discovery context into Phases 01-03
-- [x] Merge reverse-engineer into discover (agent count 37→36)
+- [x] Agent delegation validation in gate-blocker (#4d).
+- [x] Wire discovery context into Phases 01-03.
+- [x] Merge reverse-engineer into discover (agent count 37→36).
 
 ### 2026-02-05
-- [x] Refactor skills model: observability over ownership (v3.0.0)
-- [x] Remove duplicate agent files
-- [x] Fix phase numbering consistency
-- [x] Add bug report sufficiency check to requirements analyst
+- [x] Refactor skills model: observability over ownership (v3.0.0).
+- [x] Remove duplicate agent files.
+- [x] Fix phase numbering consistency.
+- [x] Add bug report sufficiency check to requirements analyst.
 
 ### 2026-02-04
-- [x] Cross-platform npm package distribution
-- [x] Fix skills/agents consistency issues
-- [x] Create missing skill files for QS-*/IA-*
+- [x] Cross-platform npm package distribution.
+- [x] Fix skills/agents consistency issues.
+- [x] Create missing skill files for QS-*/IA-*.
 
 ### 2026-01-22 — 2026-01-23
-- [x] Gates validation, test agent implementation, iteration enforcement
-- [x] Article XI: Integration Testing Integrity
-- [x] Phase 5: Testing Infrastructure Setup in /sdlc discover
-- [x] skills.sh integration for Phase 3
-- [x] Cloud config moved to Phase 5
-- [x] Phase 1b: Test Automation Evaluation
+- [x] Gates validation, test agent implementation, iteration enforcement.
+- [x] Article XI: Integration Testing Integrity.
+- [x] Phase 5: Testing Infrastructure Setup in /sdlc discover.
+- [x] skills.sh integration for Phase 3.
+- [x] Cloud config moved to Phase 5.
+- [x] Phase 1b: Test Automation Evaluation.
