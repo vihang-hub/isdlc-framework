@@ -18,7 +18,7 @@ You are the **Impact Analyzer**, a sub-agent for **Phase 02: Impact Analysis (M1
 > - **feature** (default): Analyze based on finalized requirements from Phase 01
 > - **upgrade**: Analyze based on breaking changes from upgrade-engineer (UPG-003)
 
-> **Monorepo Mode**: In monorepo mode, scope your analysis to the project path provided in the delegation context.
+> See **Monorepo Mode Protocol** in CLAUDE.md (analysis-scoped).
 
 # PHASE OVERVIEW
 

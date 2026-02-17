@@ -1,32 +1,29 @@
-# Code Review Report -- BUG-0019-GH-1 Blast Radius Relaxation Fix
+# Code Review Report -- REQ-0021 T7 Agent Prompt Boilerplate Extraction
 
 | Field | Value |
 |-------|-------|
-| Bug ID | BUG-0019 |
-| Description | Orchestrator relaxes blast radius requirements instead of implementing missing files, and no task plan integration when blast radius coverage is incomplete (GitHub #1, Batch E bugs 0.17 + 0.18) |
+| Req ID | REQ-0021 |
+| Feature | T7 - Agent Prompt Boilerplate Extraction |
 | Reviewer | QA Engineer (Phase 08) |
-| Date | 2026-02-16 |
-| Verdict | PASS -- 0 critical, 0 major, 0 minor, 1 suggestion (cosmetic) |
+| Date | 2026-02-17 |
+| Verdict | PASS -- 0 critical, 0 major, 1 minor (NFR-004 advisory), 1 observation |
 
 ---
 
 ## 1. Scope
 
-1 new production file (440 lines), 1 new test file (66 tests), 2 modified markdown files (agent + command), 2 synced copies verified identical. Changes add blast-radius-specific block handling to the phase-loop controller STEP 3f with task cross-reference, deferral validation, retry loop, and orchestrator guardrails.
-
-### New Files (2)
-- `src/claude/hooks/lib/blast-radius-step3f-helpers.cjs` -- 9 helper functions + 2 exported constants for blast-radius block handling
-- `src/claude/hooks/tests/test-blast-radius-step3f.test.cjs` -- 66 test cases across 10 describe blocks
-
-### Modified Files (2 + 2 synced)
-- `src/claude/commands/isdlc.md` -- STEP 3f enhanced with blast-radius-specific branch (3f-blast-radius), 7-step handling flow
-- `src/claude/agents/00-sdlc-orchestrator.md` -- Section 8.1 Blast Radius Integrity Guardrails (5 rules)
-- `.claude/commands/isdlc.md` -- Synced copy (verified identical via diff)
-- `.claude/agents/00-sdlc-orchestrator.md` -- Synced copy (verified identical via diff)
+Pure markdown refactoring: 4 categories of duplicated boilerplate extracted from 29 agent .md files into 5 shared subsections in CLAUDE.md. 1 test file updated. No functional logic changes. 31 files changed total (120 insertions, 246 deletions).
 
 ## 2. Verdict
 
-**PASS**: 0 CRITICAL, 0 MAJOR, 0 MINOR findings. 1 cosmetic suggestion (no action required).
-66/66 new tests passing. Full CJS suite: 1517/1518 (1 pre-existing failure, 0 new). All 19 ACs + 3 NFRs traced. blast-radius-validator.cjs confirmed unchanged (NFR-01).
+**PASS**: All 12 FRs and 5 "Must Have" NFRs satisfied. Content equivalence verified across all 4 extraction categories. All 7 agent-specific iteration criteria preserved. Zero new regressions. Tests T27-T31 updated correctly.
 
-See detailed per-file review in `docs/requirements/BUG-0019-GH-1/code-review-report.md`.
+See detailed per-file review in `docs/requirements/REQ-0021-t7-agent-prompt-boilerplate-extraction/code-review-report.md`.
+
+## 3. Findings Summary
+
+| # | Severity | Finding |
+|---|----------|---------|
+| M-01 | MINOR | discover-orchestrator reference line at 180 chars exceeds NFR-004 "Should Have" 120-char limit |
+| O-01 | INFO | Net line savings 63 vs NFR-001 target of 130; per-delegation savings are real |
+| O-02 | INFO | BACKLOG.md changes (+42 lines) are workflow maintenance, outside REQ-0021 scope |

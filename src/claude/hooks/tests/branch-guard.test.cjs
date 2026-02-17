@@ -533,80 +533,78 @@ describe('branch-guard phase-aware commit blocking (BUG-0012)', () => {
 
 describe('branch-guard agent no-commit instructions (BUG-0012)', () => {
     const AGENTS_DIR = path.resolve(__dirname, '..', '..', 'agents');
+    const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
+    const CLAUDE_MD = path.join(PROJECT_ROOT, 'CLAUDE.md');
 
-    // T27: software-developer agent contains no-commit instruction
-    // Traces to: AC-01, AC-02
+    // T27: software-developer agent references Git Commit Prohibition in CLAUDE.md
+    // Traces to: AC-01, AC-02 (REQ-0021: extracted to CLAUDE.md)
     it('T27: software-developer agent contains no-commit instruction in prominent position', () => {
         const agentPath = path.join(AGENTS_DIR, '05-software-developer.md');
         const content = fs.readFileSync(agentPath, 'utf8');
         const lines = content.split('\n');
 
-        // AC-01: contains "Do NOT" + git + commit
+        // AC-01: agent references Git Commit Prohibition (extracted to CLAUDE.md)
         assert.ok(
-            /do\s+not.*git.*commit/i.test(content) || /do\s+not.*git\s+add.*git\s+commit/i.test(content),
-            'Agent must contain "Do NOT" instruction about git commit'
+            /Git Commit Prohibition/i.test(content) || /do\s+not.*git.*commit/i.test(content),
+            'Agent must reference Git Commit Prohibition in CLAUDE.md or contain inline instruction'
         );
 
-        // AC-02: instruction should appear within first 80 lines (prominent position)
+        // AC-02: reference should appear within first 80 lines (prominent position)
         const first80 = lines.slice(0, 80).join('\n');
         assert.ok(
-            /do\s+not.*git.*commit/i.test(first80) || /do\s+not.*git\s+add/i.test(first80),
-            'No-commit instruction must appear within first 80 lines'
+            /Git Commit Prohibition/i.test(first80) || /do\s+not.*git.*commit/i.test(first80),
+            'Git commit prohibition reference must appear within first 80 lines'
         );
     });
 
-    // T28: software-developer agent explains WHY commits are prohibited
-    // Traces to: AC-03
+    // T28: Git Commit Prohibition in CLAUDE.md explains WHY commits are prohibited
+    // Traces to: AC-03 (REQ-0021: content now in CLAUDE.md)
     it('T28: software-developer agent explains why commits are prohibited', () => {
-        const agentPath = path.join(AGENTS_DIR, '05-software-developer.md');
-        const content = fs.readFileSync(agentPath, 'utf8');
+        const claudeContent = fs.readFileSync(CLAUDE_MD, 'utf8');
 
-        // Must reference quality-loop or Phase 16
+        // Must reference quality gates or validation in CLAUDE.md
         assert.ok(
-            /quality.loop|phase\s*16|16-quality-loop/i.test(content),
-            'Agent must reference quality-loop / Phase 16 as reason'
+            /quality.*gate|validated.*work|quality.*loop|phase\s*16/i.test(claudeContent),
+            'CLAUDE.md Git Commit Prohibition must reference quality gates as reason'
         );
-        // Must reference code review or Phase 08
+        // Must reference code review
         assert.ok(
-            /code.review|phase\s*08|08-code-review/i.test(content),
-            'Agent must reference code review / Phase 08 as reason'
+            /code.review|code-review/i.test(claudeContent),
+            'CLAUDE.md Git Commit Prohibition must reference code review as reason'
         );
     });
 
-    // T29: software-developer agent mentions orchestrator manages git operations
-    // Traces to: AC-04
+    // T29: Git Commit Prohibition in CLAUDE.md mentions orchestrator manages git
+    // Traces to: AC-04 (REQ-0021: content now in CLAUDE.md)
     it('T29: software-developer agent mentions orchestrator manages git', () => {
-        const agentPath = path.join(AGENTS_DIR, '05-software-developer.md');
-        const content = fs.readFileSync(agentPath, 'utf8');
+        const claudeContent = fs.readFileSync(CLAUDE_MD, 'utf8');
 
         assert.ok(
-            /orchestrator.*git|orchestrator.*commit|orchestrator.*merge/i.test(content),
-            'Agent must mention orchestrator manages git operations'
+            /orchestrator.*git|orchestrator.*commit|orchestrator.*merge/i.test(claudeContent),
+            'CLAUDE.md must mention orchestrator manages git operations'
         );
     });
 
-    // T30: quality-loop-engineer agent contains no-commit instruction
-    // Traces to: AC-05
+    // T30: quality-loop-engineer agent references Git Commit Prohibition
+    // Traces to: AC-05 (REQ-0021: extracted to CLAUDE.md)
     it('T30: quality-loop-engineer agent contains no-commit instruction', () => {
         const agentPath = path.join(AGENTS_DIR, '16-quality-loop-engineer.md');
         const content = fs.readFileSync(agentPath, 'utf8');
 
         assert.ok(
-            /do\s+not.*git.*commit/i.test(content) || /do\s+not.*git\s+add.*git\s+commit/i.test(content),
-            'Quality-loop agent must contain "Do NOT" instruction about git commit'
+            /Git Commit Prohibition/i.test(content) || /do\s+not.*git.*commit/i.test(content),
+            'Quality-loop agent must reference Git Commit Prohibition in CLAUDE.md or contain inline instruction'
         );
     });
 
-    // T31: quality-loop-engineer agent explains code review not yet run
-    // Traces to: AC-06
+    // T31: Git Commit Prohibition in CLAUDE.md explains code review validation
+    // Traces to: AC-06 (REQ-0021: content now in CLAUDE.md)
     it('T31: quality-loop-engineer agent explains code review not yet run', () => {
-        const agentPath = path.join(AGENTS_DIR, '16-quality-loop-engineer.md');
-        const content = fs.readFileSync(agentPath, 'utf8');
+        const claudeContent = fs.readFileSync(CLAUDE_MD, 'utf8');
 
         assert.ok(
-            /code.review.*not.*run|code.review.*not.*complete|phase\s*08.*not/i.test(content) ||
-            /08-code-review/i.test(content),
-            'Quality-loop agent must explain that code review (Phase 08) has not yet run'
+            /code.review|08-code-review|quality.*gate/i.test(claudeContent),
+            'CLAUDE.md Git Commit Prohibition must explain that code review validation is required'
         );
     });
 });

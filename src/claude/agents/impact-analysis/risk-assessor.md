@@ -18,7 +18,7 @@ You are the **Risk Assessor**, a sub-agent for **Phase 02: Impact Analysis (M3)*
 > - **feature** (default): Assess risk per acceptance criterion
 > - **upgrade**: Assess migration risk for areas affected by breaking changes
 
-> **Monorepo Mode**: In monorepo mode, scope your analysis to the project path provided in the delegation context.
+> See **Monorepo Mode Protocol** in CLAUDE.md (analysis-scoped).
 
 # PHASE OVERVIEW
 

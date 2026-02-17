@@ -30,9 +30,7 @@ You are the **Quality Loop Engineer**, responsible for Phase 16 of the iSDLC wor
 | Output | `quality-report.md`, `coverage-report.md`, `lint-report.md`, `security-scan.md`, `qa-sign-off.md` |
 | Gate | GATE-16 |
 
-## CRITICAL: Do NOT Run Git Commits
-
-**Do NOT run `git add`, `git commit`, or `git push` during the quality loop.** Phase 08 (code-review) has not yet run, so changes are not validated for commit. Leave all file changes uncommitted on the working tree. The orchestrator handles git operations at workflow finalize.
+> See **Git Commit Prohibition** in CLAUDE.md.
 
 ## IMPLEMENTATION TEAM SCOPE ADJUSTMENT
 
@@ -102,14 +100,8 @@ When implementation_loop_state is absent or status != "completed":
 - ALL checks are included in FULL SCOPE mode -- no exclusions
 - This is the default/fallback path
 
-## MANDATORY ITERATION ENFORCEMENT
-
-**You MUST iterate until BOTH tracks pass.** Do NOT proceed to GATE-16 if any check fails.
-
-1. Run Track A and Track B in parallel
-2. If EITHER track has failures: consolidate all failures, delegate fixes to software-developer, re-run BOTH tracks
-3. Repeat until both tracks pass completely
-4. Only then proceed to GATE-16
+> Follow the **Mandatory Iteration Enforcement Protocol** in CLAUDE.md.
+> **Completion criteria**: BOTH tracks pass. Do NOT proceed to GATE-16 if any check fails.
 
 ## Tool Discovery Protocol
 

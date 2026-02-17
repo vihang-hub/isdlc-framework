@@ -42,73 +42,7 @@ If no MODE parameter is present, proceed with full-workflow mode (original behav
 
 Coordinate the smooth progression of projects through all 13 SDLC phases, ensuring quality gates are met, artifacts are complete, and agents work in harmony to deliver high-quality software from requirements to production operations.
 
-# ROOT RESOLUTION (Before anything else)
-
-Resolve the **project root** — the directory containing `.isdlc/` — before any other action.
-
-1. Check if `.isdlc/` exists in CWD
-2. If **not found**, walk up parent directories (`../`, `../../`, etc.) looking for a directory that contains `.isdlc/state.json` or `.isdlc/monorepo.json`
-3. When found, treat that directory as the **project root** for all subsequent `.isdlc/` and `.claude/` path references
-4. Record the relative path from that root to the original CWD (e.g., if root is `~/projects/my-app` and CWD is `~/projects/my-app/FE`, the relative path is `FE`). This becomes the **CWD-relative path** used for monorepo project matching.
-5. If `.isdlc/` is not found in CWD or any parent, report that the framework is not installed
-
-# SECTION 0: PROJECT CONTEXT RESOLUTION (MONOREPO)
-
-After root resolution, determine if this is a monorepo installation and resolve the active project context.
-
-## Detection
-
-1. Check if `.isdlc/monorepo.json` exists at the resolved project root
-2. If **NO** → single-project mode. Skip this section entirely. All paths work as before.
-3. If **YES** → monorepo mode. Resolve the active project before proceeding.
-
-## Project Resolution (Monorepo Mode)
-
-Resolve the active project in this priority order:
-1. **`--project {id}` flag** — if the user passed `--project` on the command, use that project
-2. **CWD-based detection** — use the **CWD-relative path** from ROOT RESOLUTION and match against registered project paths in `monorepo.json` (longest prefix match)
-3. **`default_project` in `monorepo.json`** — use the configured default
-4. **Prompt the user** — if none of the above resolves, present project selection (SCENARIO 0 from the `/isdlc` command)
-
-## Monorepo Path Routing
-
-Once the active project is resolved, ALL paths are scoped to that project:
-
-| Resource | Single-Project Path | Monorepo Path |
-|----------|-------------------|---------------|
-| State file | `.isdlc/state.json` | `.isdlc/projects/{project-id}/state.json` |
-| Constitution | `docs/isdlc/constitution.md` | `docs/isdlc/projects/{project-id}/constitution.md` (if exists), else `docs/isdlc/constitution.md` |
-| External skills | `.claude/skills/external/` | `.isdlc/projects/{project-id}/skills/external/` |
-| External manifest | `docs/isdlc/external-skills-manifest.json` | `docs/isdlc/projects/{project-id}/external-skills-manifest.json` |
-| Skill report | `docs/isdlc/skill-customization-report.md` | `docs/isdlc/projects/{project-id}/skill-customization-report.md` |
-| Requirements docs | `docs/requirements/` | `docs/{project-id}/requirements/` or `{project-path}/docs/requirements/` (depends on `docs_location` in monorepo.json) |
-| Architecture docs | `docs/architecture/` | `docs/{project-id}/architecture/` or `{project-path}/docs/architecture/` (depends on `docs_location`) |
-| Design docs | `docs/design/` | `docs/{project-id}/design/` or `{project-path}/docs/design/` (depends on `docs_location`) |
-| Git branch prefix | `feature/REQ-NNNN-name` | `{project-id}/feature/REQ-NNNN-name` |
-| Git branch prefix | `bugfix/BUG-NNNN-id` | `{project-id}/bugfix/BUG-NNNN-id` |
-
-## Project Context in Delegation
-
-When delegating to any phase agent in monorepo mode, include this context in the Task prompt:
-```
-MONOREPO CONTEXT:
-- Project ID: {project-id}
-- Project Name: {project-name}
-- Project Path: {project-path}
-- State File: .isdlc/projects/{project-id}/state.json
-- Docs Base: {resolved docs path — docs/{project-id}/ if docs_location="root" or absent, {project-path}/docs/ if docs_location="project"}
-- Constitution: {resolved constitution path}
-- External Skills: .isdlc/projects/{project-id}/skills/external/
-- External Manifest: docs/isdlc/projects/{project-id}/external-skills-manifest.json
-- Skill Report: docs/isdlc/projects/{project-id}/skill-customization-report.md
-```
-
-## Workflow Independence
-
-In monorepo mode, the `single_active_workflow_per_project` rule applies:
-- Each project can have ONE active workflow at a time
-- Different projects can have active workflows simultaneously
-- Counters (next_req_id, next_bug_id) are per-project in each project's state.json
+> See **Root Resolution Protocol** and **Project Context Resolution (Monorepo)** in CLAUDE.md.
 
 # NO-ARGUMENT INVOCATION (INTERACTIVE MENU)
 

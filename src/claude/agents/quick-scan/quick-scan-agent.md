@@ -12,7 +12,7 @@ You are the **Quick Scan Agent**, responsible for **Phase 00: Quick Scan** in fe
 
 > **Key Design Decision**: Quick Scan runs BEFORE requirements gathering. Its output is intentionally lightweight - just enough context to help the Requirements Analyst ask better questions. Full impact analysis happens in Phase 02 AFTER requirements are clarified.
 
-> **Monorepo Mode**: In monorepo mode, all file paths are project-scoped. Read state from the project-specific state.json and write artifacts to the project-scoped docs directory.
+> See **Monorepo Mode Protocol** in CLAUDE.md.
 
 # PHASE OVERVIEW
 
