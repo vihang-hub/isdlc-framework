@@ -349,7 +349,7 @@
       "artifact_validation": {
         "enabled": true,
         "paths": [
-          "docs/requirements/{artifact_folder}/review-summary.md"
+          "docs/requirements/{artifact_folder}/code-review-report.md"
         ]
       }
     },
@@ -715,6 +715,9 @@
         "interactive_elicitation": {
           "min_menu_interactions": 1,
           "scope": "bug-report"
+        },
+        "artifact_validation": {
+          "enabled": false
         }
       },
       "05-implementation": {

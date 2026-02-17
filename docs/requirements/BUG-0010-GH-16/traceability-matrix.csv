@@ -1,0 +1,16 @@
+Requirement,Test Case,Test Type,Priority,Test File,Description
+AC-1,TC-02,Unit (Config),P0,src/claude/hooks/tests/artifact-paths-config-fix.test.cjs,artifact-paths.json Phase 08 references code-review-report.md
+AC-2,TC-04,Unit (Config),P0,src/claude/hooks/tests/artifact-paths-config-fix.test.cjs,iteration-requirements.json Phase 08 artifact_validation references code-review-report.md
+AC-3,TC-08,Integration,P0,src/claude/hooks/tests/artifact-paths-config-fix.test.cjs,Gate-blocker allows Phase 08 when code-review-report.md exists
+AC-3,TC-09,Integration,P1,src/claude/hooks/tests/artifact-paths-config-fix.test.cjs,Gate-blocker blocks Phase 08 when code-review-report.md is missing (negative)
+AC-4,TC-05,Unit (Config),P0,src/claude/hooks/tests/artifact-paths-config-fix.test.cjs,Fix workflow override disables Phase 01 artifact validation
+AC-5,TC-06,Unit (Config),P0,src/claude/hooks/tests/artifact-paths-config-fix.test.cjs,Base config Phase 01 artifact validation remains enabled
+AC-5,TC-07,Unit (Config),P1,src/claude/hooks/tests/artifact-paths-config-fix.test.cjs,Feature workflow does NOT override Phase 01 artifact validation
+AC-5,TC-11,Integration,P1,src/claude/hooks/tests/artifact-paths-config-fix.test.cjs,Gate-blocker validates Phase 01 artifacts in feature workflows
+AC-5,TC-12,Integration,P1,src/claude/hooks/tests/artifact-paths-config-fix.test.cjs,Gate-blocker validates Phase 01 artifacts with no workflow override
+AC-6,TC-10,Integration,P0,src/claude/hooks/tests/artifact-paths-config-fix.test.cjs,Gate-blocker skips artifact check for Phase 01 in fix workflows
+NFR-1,TC-13,NFR Verification,P1,src/claude/hooks/tests/artifact-paths-config-fix.test.cjs,gate-blocker.cjs has zero behavioral changes
+NFR-2,TC-07,Unit (Config),P1,src/claude/hooks/tests/artifact-paths-config-fix.test.cjs,Feature workflow does NOT override Phase 01 artifact validation
+NFR-2,TC-11,Integration,P1,src/claude/hooks/tests/artifact-paths-config-fix.test.cjs,Gate-blocker validates Phase 01 artifacts in feature workflows
+NFR-3,TC-01,Unit (Config),P0,src/claude/hooks/tests/artifact-paths-config-fix.test.cjs,artifact-paths.json is valid JSON
+NFR-3,TC-03,Unit (Config),P0,src/claude/hooks/tests/artifact-paths-config-fix.test.cjs,iteration-requirements.json is valid JSON
