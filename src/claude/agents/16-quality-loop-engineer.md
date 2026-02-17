@@ -413,11 +413,80 @@ After consolidation:
   3. After fixes applied, re-run BOTH Track A and Track B in parallel from scratch (not just the failing track)
   4. Repeat until both tracks pass or circuit breaker trips (max_iterations from iteration-requirements.json, circuit_breaker_threshold for consecutive identical failures)
 
+## Build Integrity Check Protocol
+
+**CRITICAL**: Before any QA sign-off, verify that the project builds cleanly. This is especially important for the `test-generate` workflow where generated test files may introduce compilation errors.
+
+### Language-Aware Build Command Detection
+
+Detect the project's build system by scanning for build files. Use the first match found:
+
+| Build File | Language/Ecosystem | Build Command | Notes |
+|-----------|-------------------|---------------|-------|
+| `pom.xml` | Java (Maven) | `mvn compile -q` | Quiet mode for cleaner output |
+| `build.gradle` / `build.gradle.kts` | Java/Kotlin (Gradle) | `gradle build` | Or `./gradlew build` if wrapper exists |
+| `package.json` (with `build` script) | JS/TS (npm) | `npm run build` | Only if `scripts.build` exists |
+| `package.json` (with `tsc` dependency) | TypeScript | `npx tsc --noEmit` | Type-check without emitting files |
+| `Cargo.toml` | Rust | `cargo check` | Faster than `cargo build` for verification |
+| `go.mod` | Go | `go build ./...` | Build all packages |
+| `pyproject.toml` / `setup.py` | Python | `python -m py_compile` | Or skip -- interpreted language |
+| `*.sln` / `*.csproj` | .NET | `dotnet build` | C#/F# projects |
+| None detected | Any | Skip build check with WARNING | Graceful degradation -- no build file found |
+
+When no build file is detected, skip the build check with a warning message: "WARNING: No build system detected. Build integrity check skipped." The workflow proceeds normally -- this is graceful degradation, not a failure.
+
+### Build Error Classification
+
+When the build check fails, classify each error as MECHANICAL or LOGICAL:
+
+**MECHANICAL errors (auto-fixable):**
+- Missing or incorrect import statements
+- Wrong dependency paths or module references
+- Incorrect package names or namespace declarations
+- Missing test dependencies in build configuration (pom.xml, package.json, etc.)
+- Wrong file locations (test file in wrong directory)
+
+**LOGICAL errors (NOT auto-fixable):**
+- Type mismatches between expected and actual types
+- Missing method signatures or changed API signatures
+- Incorrect API usage or wrong argument patterns
+- Structural code errors requiring business logic understanding
+- Interface implementation mismatches
+
+### Mechanical Issue Auto-Fix Loop
+
+When build errors are classified as MECHANICAL, attempt auto-fix within a bounded loop:
+
+1. **Analyze** build error output and identify mechanical issues
+2. **Apply fix** -- correct imports, paths, dependencies, or package names
+3. **Re-run** build command to verify fix
+4. **Repeat** if still failing (maximum 3 auto-fix iterations)
+5. **After 3 iterations** -- if still failing, classify remaining errors and escalate
+
+The auto-fix loop is bounded at a maximum of 3 iterations. If all errors are resolved, the build passes and the workflow continues normally.
+
+### Honest Failure Reporting for Logical Errors
+
+When the build fails due to LOGICAL errors (after auto-fix attempts for any mechanical issues), the agent MUST:
+
+1. **STOP** -- do NOT proceed with QA sign-off
+2. **Report failure honestly** with:
+   - Specific compilation errors with file paths and line numbers
+   - Classification of each error (mechanical vs logical)
+   - Clear statement that the build is broken
+   - Suggestion to run `/isdlc fix` workflow for remaining issues
+3. **Set workflow status to FAILED** -- do NOT set to COMPLETED
+4. **NEVER declare QA APPROVED** when the build is broken
+
+**NEVER declare QA APPROVED while the build is broken.** This is a hard requirement. The quality gate cannot pass with a broken build.
+
+When the build passes (or build check is skipped due to graceful degradation), the workflow proceeds normally and QA APPROVED can be granted if all other checks pass. A successful build is a prerequisite, not a sufficient condition for QA APPROVED.
+
 ## GATE-16 Checklist
 
-All items must pass:
+All items must pass (build integrity is a prerequisite for all other checks):
 
-- [ ] Clean build succeeds (no errors, no warnings treated as errors)
+- [ ] Build integrity check passes (project compiles cleanly after auto-fix attempts)
 - [ ] All tests pass (unit, integration, E2E as applicable)
 - [ ] Code coverage meets threshold (default: 80%)
 - [ ] Linter passes with zero errors (warnings acceptable)

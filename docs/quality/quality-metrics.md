@@ -1,76 +1,55 @@
-# Quality Metrics -- REQ-0021 T7 Agent Prompt Boilerplate Extraction
+# Quality Metrics Report
 
-**Generated**: 2026-02-17
-**Phase**: 08-code-review
-**Agent**: QA Engineer
+**Project:** iSDLC Framework
+**Workflow:** BUG-0022-GH-1
+**Date:** 2026-02-17
 
 ---
 
-## 1. Test Results
+## Test Results
 
-| Suite | Pass | Fail | Total | Notes |
-|-------|------|------|-------|-------|
-| CJS (hooks) | 1607 | 1 | 1608 | Pre-existing: supervised_review status test |
-| ESM (lib) | 629 | 3 | 632 | Pre-existing: TC-E09, T43, TC-13-01 |
-| **New regressions** | -- | **0** | -- | No failures introduced by REQ-0021 |
+| Suite | Total | Pass | Fail | Pre-existing Failures |
+|-------|-------|------|------|-----------------------|
+| CJS (hooks) | 1647 | 1646 | 1 | 1 (gate-blocker-extended supervised_review) |
+| ESM (lib) | 632 | 629 | 3 | 3 (prompt-format, TC-E09 README) |
+| New tests (build-integrity) | 39 | 39 | 0 | 0 |
+| **Total** | **2318** | **2314** | **4** | **4 (all pre-existing)** |
 
-## 2. Acceptance Criteria Coverage
+### Regression Analysis
+- Zero new test failures introduced
+- Test count increased from 2279 to 2318 (+39 new structural verification tests)
+- Pre-existing failures unchanged and unrelated to this fix
+
+## Code Change Metrics
 
 | Metric | Value |
 |--------|-------|
-| Total Functional Requirements | 12 (FR-001 through FR-012) |
-| Total Non-Functional Requirements | 6 (NFR-001 through NFR-006) |
-| FRs satisfied | 12/12 (100%) |
-| "Must Have" NFRs satisfied | 5/5 (100%) |
-| "Should Have" NFRs | 1/1 (minor deviation: M-01) |
+| Files modified | 6 |
+| Files added | 1 (test file) |
+| Lines added | ~405 |
+| Lines removed | ~278 |
+| Net change | +127 lines |
 
-## 3. Line Metrics
+## Code Quality Indicators
 
-| Category | Insertions | Deletions | Net |
-|----------|-----------|-----------|-----|
-| Agent files (29) | 44 | 210 | -166 |
-| CLAUDE.md | 103 | 0 | +103 |
-| Test file (1) | ~40 | ~40 | ~0 |
-| BACKLOG.md | 42 | 0 | +42 (out of scope) |
-| **Total project** | **120** | **246** | **-126** |
+| Indicator | Status |
+|-----------|--------|
+| JSON validity (workflows.json) | PASS |
+| Module system compliance (CJS for .cjs) | PASS |
+| Cross-file consistency | PASS |
+| Naming clarity | PASS |
+| DRY principle | PASS |
+| Single Responsibility | PASS |
+| Documentation currency | PASS |
 
-## 4. Duplication Metrics
+## Coverage Summary
 
-| Section | Before | After | Reduction |
-|---------|--------|-------|-----------|
-| Monorepo blockquotes in agents | 26 instances | 0 full copies | 100% |
-| Iteration enforcement sections | 7 full sections | 0 full copies | 100% |
-| Git commit warnings | 2 full sections | 0 full copies | 100% |
-| ROOT RESOLUTION blocks | 2 full blocks | 0 full copies | 100% |
-| Single Source of Truth sections in CLAUDE.md | 3 | 8 | +5 new |
-
-## 5. CLAUDE.md Budget
-
-| Metric | Value | Limit | Status |
-|--------|-------|-------|--------|
-| Lines added | 103 | 120 | WITHIN BUDGET |
-| Total lines | 252 | 280 | WITHIN BUDGET |
-
-## 6. Reference Integrity
-
-| Reference Pattern | Count | Expected | Match |
-|-------------------|-------|----------|-------|
-| Monorepo Mode Protocol (full form) | 19 | 19 | YES |
-| Monorepo Mode Protocol (analysis-scoped) | 7 | 7 | YES |
-| Mandatory Iteration Enforcement Protocol | 7 | 7 | YES |
-| Git Commit Prohibition | 2 | 2 | YES |
-| Root Resolution Protocol | 2 | 2 | YES |
-| **Total** | **37** | **37** | **YES** |
-
-## 7. Structural Integrity
-
-| Check | Status |
-|-------|--------|
-| YAML frontmatter valid in all agent files | PASS |
-| Markdown heading hierarchy (no level skips) | PASS |
-| .claude/agents/ sync verified | PASS |
-| CLAUDE.md section order per FR-012 | PASS |
-
-## 8. Summary
-
-All quality metrics meet or exceed thresholds. Zero regressions. 100% duplication elimination. All references correctly map to CLAUDE.md sections. CLAUDE.md budget respected. Pure refactoring with no functional behavior changes.
+| Area | Coverage |
+|------|----------|
+| FR-01 (Build integrity check) | 6 tests (TC-14 through TC-19) |
+| FR-02 (Auto-fix loop) | 3 tests (TC-20, TC-22, TC-23) |
+| FR-03 (Honest failure reporting) | 4 tests (TC-24, TC-25, TC-26, TC-28) |
+| FR-04 (Gate enforcement) | 4 tests (TC-33 through TC-36) |
+| Cross-file consistency | 3 tests (TC-37 through TC-39) |
+| Documentation consistency | 5 tests (TC-09 through TC-13) |
+| Workflow regression | 8 tests (TC-01 through TC-08) |
