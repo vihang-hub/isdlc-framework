@@ -1,52 +1,73 @@
-# Security Scan: BUG-0022-GH-1
+# Security Scan: REQ-0022-custom-skill-management
 
 **Phase**: 16-quality-loop
-**Date**: 2026-02-17
-**Fix**: /isdlc test generate build integrity checks (GitHub #1)
+**Date**: 2026-02-18
+**Feature**: Custom skill management -- add, wire, and inject user-provided skills into workflows (GH-14)
 
 ## SAST Security Scan (QL-008)
 
-**Status**: NOT CONFIGURED
+**Result: PASS** -- No critical or high vulnerabilities found in new code.
 
-No SAST tool (Semgrep, CodeQL, Bandit, etc.) is installed. This check is skipped with a warning.
+### Scan Scope
 
-### Manual Security Review
+Files scanned for security patterns:
+- `src/claude/hooks/lib/common.cjs` (lines 698-1019, new functions)
+- `src/claude/agents/skill-manager.md` (new agent)
+- `src/claude/commands/isdlc.md` (modified sections)
+- `src/claude/hooks/tests/external-skill-management.test.cjs` (new test file)
 
-The modified files are agent prompts (markdown), a skill specification (markdown), workflow configuration (JSON), command documentation (markdown), and structural tests (CJS). No runtime source code was changed. Security risk assessment:
+### Pattern Check Results
 
-| File | Security Risk | Notes |
-|------|--------------|-------|
-| `workflows.json` | None | Phase sequence configuration only |
-| `isdlc.md` | None | Command documentation only |
-| `16-quality-loop-engineer.md` | None | Agent prompt instructions |
-| `SKILL.md` | None | Skill specification |
-| `07-qa-engineer.md` | None | Agent prompt instructions |
-| `test-build-integrity.test.cjs` | None | Read-only structural tests using `fs.readFileSync` |
+| Pattern | Result | Details |
+|---------|--------|---------|
+| `eval()` / `Function()` | CLEAN | No dynamic code execution in new code |
+| `child_process` / `exec` / `spawn` | CLEAN | No process spawning in new code |
+| Path traversal (`../`) | CLEAN | New code uses `path.join()` safely; test file validates path safety |
+| Hardcoded secrets | CLEAN | No passwords, tokens, API keys, or credentials |
+| `process.env` access | CLEAN | No new environment variable access in new functions |
+| SQL injection | N/A | No database operations |
+| XSS / HTML injection | N/A | CLI-only, no web output |
+| Prototype pollution | CLEAN | Object spread used safely in removeSkillFromManifest |
+| Regex DoS (ReDoS) | LOW RISK | `namePattern` regex is simple and bounded: `/^[a-z0-9][a-z0-9-]*[a-z0-9]$/` |
+| File read/write safety | PASS | Uses fs.readFileSync/writeFileSync with explicit utf8 encoding |
+| Input validation | PASS | validateSkillFrontmatter checks extension, frontmatter, name format |
 
-No new attack surface, no credential handling, no user input processing, no network calls introduced.
+### Security Design Patterns Found
+
+| Pattern | Function | Assessment |
+|---------|----------|------------|
+| Fail-open manifest loading | loadExternalManifest() | Returns null on error, never blocks |
+| Fail-open injection | isdlc.md injection block | Steps 1-4 wrapped in error handler, continues with unmodified prompt |
+| Input validation first | validateSkillFrontmatter() | Validates before any processing |
+| Collect-all-errors | validateSkillFrontmatter() | Reports all validation errors, not just first |
+| Read-only agent | skill-manager.md | Explicitly does NOT write files, state, or git |
+| Write verification | writeExternalManifest() | Re-reads and validates JSON after write |
 
 ## Dependency Audit (QL-009)
 
-**Status**: PASS
+**Result: PASS** -- 0 vulnerabilities found.
 
 ```
-npm audit: found 0 vulnerabilities
+$ npm audit
+found 0 vulnerabilities
 ```
 
-| Severity | Count |
-|----------|-------|
-| Critical | 0 |
-| High | 0 |
-| Moderate | 0 |
-| Low | 0 |
+### Dependency Summary
 
-### Dependencies
-
-| Package | Version | Status |
-|---------|---------|--------|
+| Dependency | Version | Status |
+|------------|---------|--------|
 | chalk | ^5.3.0 | Clean |
 | fs-extra | ^11.2.0 | Clean |
 | prompts | ^2.4.2 | Clean |
 | semver | ^7.6.0 | Clean |
 
-No devDependencies are declared.
+No new dependencies were added by this feature.
+
+## Article V (Security by Design) Compliance
+
+- Input is validated before processing (validateSkillFrontmatter)
+- File paths are constructed with path.join(), not string concatenation
+- No dynamic code execution patterns
+- Agent is read-only by design (returns data, caller handles I/O)
+- Manifest write includes post-write verification
+- Fail-open patterns prevent security checks from blocking workflow

@@ -697,6 +697,328 @@ function loadExternalManifest(projectId) {
 }
 
 // =========================================================================
+// External Skill Management (REQ-0022)
+// =========================================================================
+
+/**
+ * Keyword-to-phase mapping for smart binding suggestions.
+ * Maps skill content keywords to relevant workflow phases.
+ * Exported for testability (follows SKILL_KEY_ALIASES, SETUP_COMMAND_KEYWORDS pattern).
+ * @type {Object<string, {keywords: string[], phases: string[]}>}
+ */
+const SKILL_KEYWORD_MAP = {
+    testing: {
+        keywords: ['test', 'testing', 'coverage', 'assertion', 'mock', 'stub', 'jest', 'mocha'],
+        phases: ['05-test-strategy', '06-implementation']
+    },
+    architecture: {
+        keywords: ['architecture', 'design pattern', 'module', 'component', 'system design', 'microservice'],
+        phases: ['03-architecture', '04-design']
+    },
+    devops: {
+        keywords: ['deploy', 'ci/cd', 'pipeline', 'docker', 'kubernetes', 'infrastructure'],
+        phases: ['10-cicd', '11-local-testing']
+    },
+    security: {
+        keywords: ['security', 'auth', 'authentication', 'encryption', 'owasp', 'vulnerability'],
+        phases: ['09-validation']
+    },
+    implementation: {
+        keywords: ['implement', 'code', 'function', 'class', 'api', 'endpoint', 'controller', 'service'],
+        phases: ['06-implementation']
+    },
+    requirements: {
+        keywords: ['requirements', 'user story', 'acceptance criteria', 'specification'],
+        phases: ['01-requirements']
+    },
+    review: {
+        keywords: ['review', 'quality', 'lint', 'code review', 'static analysis'],
+        phases: ['08-code-review']
+    }
+};
+
+/**
+ * Phase-to-agent mapping for resolving agent names from phase keys.
+ * Used by suggestBindings() to recommend agents based on phase matches.
+ * @type {Object<string, string>}
+ */
+const PHASE_TO_AGENT_MAP = {
+    '01-requirements': 'requirements-analyst',
+    '03-architecture': 'solution-architect',
+    '04-design': 'system-designer',
+    '05-test-strategy': 'test-design-engineer',
+    '06-implementation': 'software-developer',
+    '07-testing': 'integration-tester',
+    '08-code-review': 'qa-engineer',
+    '09-validation': 'security-compliance-auditor',
+    '10-cicd': 'cicd-engineer',
+    '11-local-testing': 'environment-builder',
+    '16-quality-loop': 'quality-loop-engineer'
+};
+
+/**
+ * Validate an external skill file's frontmatter.
+ * Checks file existence, extension, YAML frontmatter presence, and required fields.
+ * Collects ALL errors before returning (not fail-fast) for better UX (NFR-006).
+ *
+ * Traces: FR-001, Security 6.1, V-001 through V-006
+ *
+ * @param {string} filePath - Absolute path to the skill .md file
+ * @returns {{valid: boolean, errors: string[], parsed: object|null, body: string|null}}
+ */
+function validateSkillFrontmatter(filePath) {
+    const errors = [];
+
+    // V-001: File exists
+    if (!fs.existsSync(filePath)) {
+        return { valid: false, errors: [`File not found: ${filePath}`], parsed: null, body: null };
+    }
+
+    // V-002: File extension
+    if (!filePath.endsWith('.md')) {
+        const ext = path.extname(filePath) || '(none)';
+        return { valid: false, errors: [`Only .md files are supported. Got: ${ext}`], parsed: null, body: null };
+    }
+
+    const content = fs.readFileSync(filePath, 'utf8');
+
+    // V-003: Frontmatter present
+    const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
+    if (!fmMatch) {
+        return {
+            valid: false,
+            errors: ["No YAML frontmatter found. Expected file to start with '---'"],
+            parsed: null,
+            body: null
+        };
+    }
+
+    // Parse frontmatter (simple key: value parser per ADR-0009)
+    const parsed = {};
+    const fmLines = fmMatch[1].split('\n');
+    for (const line of fmLines) {
+        const sepIdx = line.indexOf(': ');
+        if (sepIdx > 0) {
+            const key = line.substring(0, sepIdx).trim();
+            const value = line.substring(sepIdx + 2).trim();
+            parsed[key] = value;
+        }
+    }
+
+    // V-004: name field required
+    if (!parsed.name || !parsed.name.trim()) {
+        errors.push('Missing required frontmatter field: name');
+    }
+
+    // V-005: description field required
+    if (!parsed.description || !parsed.description.trim()) {
+        errors.push('Missing required frontmatter field: description');
+    }
+
+    // V-006: name format (if name exists and is non-empty)
+    if (parsed.name && parsed.name.trim()) {
+        const namePattern = /^[a-z0-9][a-z0-9-]*[a-z0-9]$/;
+        if (!namePattern.test(parsed.name.trim())) {
+            errors.push(
+                "Skill name must be lowercase alphanumeric with hyphens, "
+                + "2+ chars (e.g., 'nestjs-conventions')"
+            );
+        }
+    }
+
+    if (errors.length > 0) {
+        return { valid: false, errors, parsed: null, body: null };
+    }
+
+    // Extract body (everything after frontmatter)
+    const fmEnd = content.indexOf('---', 4);
+    const body = content.substring(fmEnd + 3).trim();
+
+    return { valid: true, errors: [], parsed, body };
+}
+
+/**
+ * Analyze skill content for phase-indicative keywords.
+ * Returns matched keywords, suggested phases, and a confidence level.
+ *
+ * Traces: FR-002
+ *
+ * @param {string} content - The skill body content to analyze
+ * @returns {{keywords: string[], suggestedPhases: string[], confidence: string}}
+ */
+function analyzeSkillContent(content) {
+    if (!content || typeof content !== 'string') {
+        return { keywords: [], suggestedPhases: ['06-implementation'], confidence: 'low' };
+    }
+
+    const lowerContent = content.toLowerCase();
+    const matchedKeywords = [];
+    const phaseSet = new Set();
+
+    for (const [_category, config] of Object.entries(SKILL_KEYWORD_MAP)) {
+        for (const kw of config.keywords) {
+            if (lowerContent.includes(kw.toLowerCase())) {
+                matchedKeywords.push(kw);
+                config.phases.forEach(p => phaseSet.add(p));
+            }
+        }
+    }
+
+    const suggestedPhases = phaseSet.size > 0
+        ? Array.from(phaseSet)
+        : ['06-implementation'];
+
+    let confidence;
+    if (matchedKeywords.length >= 3) {
+        confidence = 'high';
+    } else if (matchedKeywords.length >= 1) {
+        confidence = 'medium';
+    } else {
+        confidence = 'low';
+    }
+
+    return { keywords: matchedKeywords, suggestedPhases, confidence };
+}
+
+/**
+ * Suggest bindings (agents, phases, delivery type) based on content analysis
+ * and optional frontmatter hints.
+ *
+ * Traces: FR-002
+ *
+ * @param {object|null} analysis - Result from analyzeSkillContent()
+ * @param {object|null} frontmatterHints - Parsed frontmatter with optional owner, when_to_use fields
+ * @returns {{agents: string[], phases: string[], delivery_type: string, confidence: string}}
+ */
+function suggestBindings(analysis, frontmatterHints) {
+    const phases = (analysis && analysis.suggestedPhases) || ['06-implementation'];
+    let confidence = (analysis && analysis.confidence) || 'low';
+
+    // Map phases to agents
+    const agentSet = new Set();
+    for (const phase of phases) {
+        const agent = PHASE_TO_AGENT_MAP[phase];
+        if (agent) agentSet.add(agent);
+    }
+
+    // Enhance with frontmatter hints
+    if (frontmatterHints && frontmatterHints.owner) {
+        agentSet.add(frontmatterHints.owner);
+        if (confidence === 'low') confidence = 'medium';
+    }
+
+    // Determine delivery type
+    let delivery_type = 'context';
+    if (frontmatterHints && frontmatterHints.when_to_use) {
+        const hint = frontmatterHints.when_to_use.toLowerCase();
+        if (hint.includes('must') || hint.includes('standard') || hint.includes('convention')) {
+            delivery_type = 'instruction';
+        }
+    }
+    // Large content hint (caller can pass content length as analysis.contentLength)
+    if (analysis && analysis.contentLength && analysis.contentLength > 5000) {
+        delivery_type = 'reference';
+    }
+
+    return {
+        agents: Array.from(agentSet),
+        phases,
+        delivery_type,
+        confidence
+    };
+}
+
+/**
+ * Write the external skills manifest to disk.
+ * Creates parent directories if they don't exist.
+ * Re-reads and validates JSON after write (integrity check).
+ * Returns structured result (never throws).
+ *
+ * Traces: FR-004
+ *
+ * @param {object} manifest - The manifest object to write
+ * @param {string} [projectId] - Optional project ID for monorepo mode
+ * @returns {{success: boolean, error: string|null, path: string}}
+ */
+function writeExternalManifest(manifest, projectId) {
+    try {
+        const manifestPath = resolveExternalManifestPath(projectId);
+        const dir = path.dirname(manifestPath);
+
+        // Create parent directories
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+
+        // Write with 2-space indentation + trailing newline
+        const jsonStr = JSON.stringify(manifest, null, 2) + '\n';
+        fs.writeFileSync(manifestPath, jsonStr, 'utf8');
+
+        // Validate by re-reading
+        const verify = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        if (!verify || !Array.isArray(verify.skills)) {
+            return { success: false, error: 'Manifest validation failed after write', path: manifestPath };
+        }
+
+        return { success: true, error: null, path: manifestPath };
+    } catch (e) {
+        const manifestPath = resolveExternalManifestPath(projectId);
+        return { success: false, error: e.message, path: manifestPath };
+    }
+}
+
+/**
+ * Format an external skill's content into an injection block for agent Task prompts.
+ * Pure function, no I/O.
+ *
+ * Traces: FR-005
+ *
+ * @param {string} name - The skill name
+ * @param {string} content - The skill body content (or file path for reference type)
+ * @param {string} deliveryType - 'context', 'instruction', or 'reference'
+ * @returns {string} Formatted injection block, or empty string for unknown types
+ */
+function formatSkillInjectionBlock(name, content, deliveryType) {
+    switch (deliveryType) {
+        case 'context':
+            return `EXTERNAL SKILL CONTEXT: ${name}\n---\n${content}\n---`;
+        case 'instruction':
+            return `EXTERNAL SKILL INSTRUCTION (${name}): You MUST follow these guidelines:\n${content}`;
+        case 'reference':
+            // For reference, content is the file path
+            return `EXTERNAL SKILL AVAILABLE: ${name} -- Read from ${content} if relevant to your current task`;
+        default:
+            return '';
+    }
+}
+
+/**
+ * Remove a skill from the manifest by name.
+ * Pure function on the manifest object (does not write to disk).
+ * Returns the updated manifest for the caller to write.
+ * Safe on null/undefined manifest.
+ *
+ * Traces: FR-007
+ *
+ * @param {string} skillName - The skill name to remove
+ * @param {object|null} manifest - The manifest object
+ * @returns {{removed: boolean, manifest: object}}
+ */
+function removeSkillFromManifest(skillName, manifest) {
+    if (!manifest || !Array.isArray(manifest.skills)) {
+        return { removed: false, manifest: manifest || { version: '1.0.0', skills: [] } };
+    }
+
+    const initialLength = manifest.skills.length;
+    const filtered = manifest.skills.filter(s => s.name !== skillName);
+
+    return {
+        removed: filtered.length < initialLength,
+        manifest: { ...manifest, skills: filtered }
+    };
+}
+
+// =========================================================================
 // State Management (monorepo-aware)
 // =========================================================================
 
@@ -3042,6 +3364,15 @@ module.exports = {
     resolveIsdlcDocsPath,
     isMigrationNeeded,
     loadExternalManifest,
+    // External skill management (REQ-0022)
+    SKILL_KEYWORD_MAP,
+    PHASE_TO_AGENT_MAP,
+    validateSkillFrontmatter,
+    analyzeSkillContent,
+    suggestBindings,
+    writeExternalManifest,
+    formatSkillInjectionBlock,
+    removeSkillFromManifest,
     // State management (monorepo-aware)
     readStateValue,
     readState,
