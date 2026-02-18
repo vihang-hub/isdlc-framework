@@ -367,15 +367,7 @@
   - **Files**: `isdlc.md` (new actions + STEP 3d injection), `CLAUDE.md` (intent detection), `external-skills-manifest.json` (schema extension), `common.cjs` (skill loading utilities), new `skill-manager.md` agent
   - **Complexity**: Medium
 
-- 13.2 [ ] BUG-0027: Built-in skills (243 SKILL.md files) never injected into agent Task prompts at runtime *(GitHub #15)* -> [requirements](docs/requirements/BUG-0027-GH-15/)
-  - **Problem**: 243 SKILL.md files exist across 17 categories. Each agent declares `owned_skills:` in frontmatter. But NO code reads these files and delivers them to agents. The skills manifest is consumed by hooks for observability logging only — not for capability delivery. ~50,000+ lines of domain expertise are dead weight.
-  - **Evidence**: Phase-loop controller STEP 3d has zero references to skills/SKILL.md/inject. No `loadSkillContent()` function in common.cjs. Agent files have no instruction to read their owned skills. The entire skills architecture (manifest, ownership, IDs, categories) exists for logging, not delivery.
-  - **Recommended fix (Option B — summaries + on-demand)**: Inject a skill index (name + one-line description + file path) into agent Task prompts. Agents read specific SKILL.md files when relevant. Low token overhead (one line per skill), agents that need a skill can Read it.
-  - **Shares injection point with 13.1**: Both built-in and custom skills inject at STEP 3d. Implement together or sequentially.
-  - **Files**: `isdlc.md` (STEP 3d skill injection), `common.cjs` (`getAgentSkillIndex()` utility), 48 agent files (add "consult your owned skills" instruction — mechanical)
-  - **Severity**: Medium-high — entire skills architecture underutilized
-  - **Complexity**: Medium
-  - **Phase A**: Analyzed 2026-02-17 — quick-scan + requirements ready
+- 13.2 [x] BUG-0027: Built-in skills (243 SKILL.md files) never injected into agent Task prompts at runtime *(GitHub #15)* -> [requirements](docs/requirements/BUG-0027-GH-15/) **Completed: 2026-02-18**
 
 ### 14. Phase A/B Pipeline Bugs
 
@@ -401,6 +393,9 @@
 - 15.1 [x] BUG-0010-GH-16: artifact-paths.json filename mismatches — gate-blocker blocks valid phases [GitHub: #16] **Completed: 2026-02-17**
 
 ## Completed
+
+### 2026-02-18
+- [x] BUG-0027-GH-15: Built-in skills never injected into agent Task prompts — added getAgentSkillIndex() + formatSkillIndexBlock() to common.cjs, STEP 3d skill index injection, 52 agent files updated with ## Skills section. 40 new tests, zero regressions. 5 FRs, 5 NFRs, 7 ACs *(GitHub #15, merged eeaae30)* (backlog 13.2).
 
 ### 2026-02-17
 - [x] BUG-0010-GH-16: artifact-paths.json filename mismatches — Phase 08 `review-summary.md` → `code-review-report.md`, Phase 01 fix workflow artifact validation disabled. 13 new tests, zero regressions. 2 bugs, 6 ACs, 3 NFRs *(GitHub #16, merged b25fbdd)* (backlog 15.1).
