@@ -167,22 +167,26 @@ Workflow Status: No active workflow
 
 What would you like to do?
 
-[1] New Feature       — Implement a new feature end-to-end
-[2] Fix               — Fix a bug or defect
-[3] Run Tests         — Execute existing automation tests
-[4] Generate Tests    — Create new tests for existing code
-[5] View Status       — Check current project status
-[6] Upgrade           — Upgrade a dependency, runtime, or tool
+[1] Add to Backlog    — Add an item to the backlog for later
+[2] Analyze           — Think through requirements, impact, and design for a backlog item
+[3] Build             — Start implementing a feature end-to-end
+[4] Fix               — Fix a bug or defect
+[5] Run Tests         — Execute existing automation tests
+[6] Generate Tests    — Create new tests for existing code
+[7] View Status       — Check current project status
+[8] Upgrade           — Upgrade a dependency, runtime, or tool
 
-Enter selection (1-6):
+Enter selection (1-8):
 ```
 
-- Option [1] → Execute the **BACKLOG PICKER** in feature mode (see BACKLOG PICKER section below)
-- Option [2] → Execute the **BACKLOG PICKER** in fix mode (see BACKLOG PICKER section below)
-- Option [3] → Execute `/isdlc test run` (presents test type selection)
-- Option [4] → Execute `/isdlc test generate` (presents test type selection)
-- Option [5] → Execute `/isdlc status`
-- Option [6] → Ask user what to upgrade, then execute `/isdlc upgrade "<name>"`
+- Option [1] → Ask user for description, then execute `/isdlc add "{description}"`
+- Option [2] → Ask user which item to analyze (by name, number, or reference), then execute `/isdlc analyze "{item}"`
+- Option [3] → Ask user for description or item reference, then execute `/isdlc build "{item}"`
+- Option [4] → Ask user for bug description, then execute `/isdlc fix "{description}"`
+- Option [5] → Execute `/isdlc test run` (presents test type selection)
+- Option [6] → Execute `/isdlc test generate` (presents test type selection)
+- Option [7] → Execute `/isdlc status`
+- Option [8] → Ask user what to upgrade, then execute `/isdlc upgrade "<name>"`
 
 ### SCENARIO 4: Constitution IS configured + Workflow IN PROGRESS
 
@@ -218,65 +222,6 @@ Enter selection (1-5):
 2. **Never skip detection** - always check constitution, workflow, and project status first
 3. **Show detected info** - include what was detected (e.g., "Node.js, TypeScript" for existing projects)
 4. **Mark recommended option** - always indicate which option is recommended for the scenario
-
-# BACKLOG PICKER (No-Description Feature/Fix)
-
-When `/isdlc feature` or `/isdlc fix` is invoked **without** a description string, present a backlog picker. If a description IS provided, skip the picker and proceed to workflow initialization.
-
-## Feature Mode Sources
-
-1. **BACKLOG.md unchecked items**: Scan `BACKLOG.md` `## Open` section for `- N.N [ ] <text>` patterns (item number + checkbox + text). Skip checked `[x]` items (these are completed and often have ~~strikethrough~~ formatting). **Suffix stripping**: if the captured `<text>` contains a trailing `-> [requirements](...)` or `-> [design](...)` link suffix, strip it to produce the clean title. Items without a `->` suffix pass through unchanged. Parse metadata sub-bullets: extract `**Jira:**` ticket ID and `**Confluence:**` URLs from indented sub-bullets below each item. Display Jira-backed items with `[Jira: TICKET-ID]` suffix in picker options.
-2. **Cancelled feature workflows**: From `state.json` → `workflow_history` where `status == "cancelled"` AND `type == "feature"`. Deduplicate by description (most recent).
-
-**Order**: BACKLOG.md items first, then cancelled workflows. Always end with `[O] Other — Describe a new feature`.
-
-**Backward compatibility**: If `BACKLOG.md` does not exist, fall back to scanning `CLAUDE.md` for `- [ ] <text>` / `- [] <text>` patterns (original behavior).
-
-**Picker display format:**
-```
-[1] Backlog management integration -- description [Jira: PROJ-1234]
-[2] Local-only item -- no Jira tag
-[3] Another Jira item [Jira: ABC-100]
-[O] Other — Describe a new feature
-```
-
-## Fix Mode Sources
-
-1. **Cancelled fix workflows**: From `workflow_history` where `status == "cancelled"` AND `type == "fix"`. Deduplicate by description.
-2. **BACKLOG.md bug-related items**: Scan `BACKLOG.md` `## Open` section for `- N.N [ ] <text>` patterns. Skip checked `[x]` items. Apply the same suffix stripping as feature mode: strip any trailing `-> [requirements](...)` or `-> [design](...)` link suffix from the captured text. Only include items containing keywords: `fix`, `bug`, `broken`, `error`, `crash`, `regression`, `issue`, `defect`, `fail` (case-insensitive). Parse Jira metadata sub-bullets and display `[Jira: TICKET-ID]` suffix for Jira-backed items.
-
-**Order**: Cancelled fixes first, then bug-related BACKLOG.md items. Always end with `[O] Other — Describe a new bug`.
-
-**Backward compatibility**: If `BACKLOG.md` does not exist, fall back to scanning `CLAUDE.md` for bug-related items (original behavior).
-
-## Jira Metadata Parsing
-
-When reading items from `BACKLOG.md`, parse metadata sub-bullets below each item line:
-- `**Jira:**` sub-bullet → extract `jira_ticket_id` value
-- `**Confluence:**` sub-bullet(s) → collect into `confluence_urls` array
-- `**Priority:**`, `**Status:**` → available for display context
-
-An item is Jira-backed if and only if it has a `**Jira:**` sub-bullet.
-
-## Workflow Init with Jira Context
-
-When the user selects a Jira-backed item from the picker, add these fields to `active_workflow`:
-```json
-{
-  "jira_ticket_id": "PROJ-1234",
-  "confluence_urls": ["https://wiki.example.com/pages/spec-123"]
-}
-```
-
-**Absence semantics**: If the selected item is local-only (no `**Jira:**` sub-bullet), omit `jira_ticket_id` and `confluence_urls` entirely from `active_workflow` (do not set to null). All downstream consumers check for field presence before using.
-
-**Workflow type from Jira issue type**: If the item has Jira metadata, suggest workflow type based on issue type: Bug/Defect -> fix workflow, Story/Task/Epic -> feature workflow, other -> ask user.
-
-## Presentation Rules
-
-- Use `AskUserQuestion` to present options. Max **15 items** from BACKLOG.md (overflow: `... and {N} more`). Truncate descriptions to **80 chars** with `...`.
-- **Empty state**: Skip menu, prompt directly ("Describe the feature/bug you want to build/fix").
-- After selection: use the clean title (after suffix stripping) as the workflow description → proceed to workflow initialization. Cancelled workflow re-selection creates a new (independent) workflow.
 
 ---
 
@@ -347,6 +292,7 @@ When the user selects a workflow (via `/isdlc feature`, `/isdlc fix`, etc.), ini
 
 | Command | Type | Phases | Description |
 |---------|------|--------|-------------|
+| `/isdlc build` | feature | 01 → 02 → 03 → 05 → 10 → 06 → 09 → 07 | Build a feature (same as /isdlc feature) |
 | `/isdlc feature` | feature | 01 → 02 → 03 → 05 → 10 → 06 → 09 → 07 | New feature end-to-end |
 | `/isdlc fix` | fix | 01 → 05 → 10 → 06 → 09 → 07 | Bug fix with TDD |
 | `/isdlc test run` | test-run | 10 → 06 | Execute existing tests |
@@ -1568,7 +1514,10 @@ You have access to these **12 orchestration skills**:
 
 # COMMANDS YOU SUPPORT
 
-- **/isdlc feature "<description>"**: Start a new feature workflow
+- **/isdlc add "<description>"**: Add an item to the backlog
+- **/isdlc analyze "<item>"**: Run interactive analysis on a backlog item
+- **/isdlc build "<item>"**: Start a feature workflow for a backlog item
+- **/isdlc feature "<description>"**: Start a new feature workflow (alias for build)
 - **/isdlc fix "<description>"**: Start a bug fix workflow
 - **/isdlc test run**: Execute existing automation tests
 - **/isdlc test generate**: Create new tests for existing code

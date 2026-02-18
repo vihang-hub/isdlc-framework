@@ -1,78 +1,71 @@
 # Static Analysis Report
 
 **Project:** iSDLC Framework
-**Workflow:** REQ-0022-custom-skill-management (feature)
+**Workflow:** REQ-0023-three-verb-backlog-model (feature)
 **Phase:** 08 - Code Review & QA
 **Date:** 2026-02-18
 
 ---
 
-## JavaScript Syntax Check
+## 1. Syntax Validation
 
 | File | Status |
 |------|--------|
-| `src/claude/hooks/lib/common.cjs` | VALID (node -c) |
-| `src/claude/hooks/tests/external-skill-management.test.cjs` | VALID (node -c) |
+| src/claude/hooks/lib/three-verb-utils.cjs | PASS (node -c) |
+| src/claude/hooks/tests/test-three-verb-utils.test.cjs | PASS (126/126 tests execute) |
+| src/claude/hooks/skill-delegation-enforcer.cjs | PASS (node -c) |
+| src/claude/hooks/delegation-gate.cjs | PASS (node -c) |
 
-## Module System Compliance (Article XIII)
+## 2. Module System Compliance (Article XIII)
 
-| File | Expected | Actual | Status |
-|------|----------|--------|--------|
-| `common.cjs` | CommonJS (require/module.exports) | CommonJS | PASS |
-| `external-skill-management.test.cjs` | CommonJS (require) | CommonJS | PASS |
+| Check | Result |
+|-------|--------|
+| three-verb-utils.cjs uses require/module.exports | PASS |
+| No ES Module imports in hook files | PASS |
+| Test file uses require (CJS) | PASS |
+| 'use strict' directive present | PASS (three-verb-utils.cjs, test file) |
 
-No ESM `import` statements found in `.cjs` files.
+## 3. Code Style
 
-## Module Exports Verification
+| Check | Result | Notes |
+|-------|--------|-------|
+| Consistent indentation (4 spaces) | PASS | All new files |
+| No trailing whitespace | PASS | |
+| Single quotes for strings | PASS | CJS convention |
+| Semicolons present | PASS | |
+| No console.log in production code | PASS | Only fs operations |
+| No debugger statements | PASS | |
 
-New exports added by REQ-0022:
+## 4. Security Checks
 
-| Export | Type | Status |
-|--------|------|--------|
-| `SKILL_KEYWORD_MAP` | constant (object) | PASS (public) |
-| `PHASE_TO_AGENT_MAP` | constant (object) | PASS (public) |
-| `validateSkillFrontmatter` | function | PASS (public) |
-| `analyzeSkillContent` | function | PASS (public) |
-| `suggestBindings` | function | PASS (public) |
-| `writeExternalManifest` | function | PASS (public) |
-| `formatSkillInjectionBlock` | function | PASS (public) |
-| `removeSkillFromManifest` | function | PASS (public) |
+| Check | Result | Notes |
+|-------|--------|-------|
+| No hardcoded secrets | PASS | No API keys, tokens, or credentials |
+| No eval() usage | PASS | |
+| No Function() constructor | PASS | |
+| Path traversal prevention | PASS | generateSlug strips special chars |
+| JSON.parse error handling | PASS | readMetaJson catches parse errors |
+| No shell injection vectors | PASS | No child_process usage |
+| fs operations use absolute paths | PASS | path.join used consistently |
 
-Total module exports: 86 (78 existing + 8 new).
+## 5. Dependency Analysis
 
-## Security Pattern Scan (New Code Only: Lines 700-1019)
+| Check | Result |
+|-------|--------|
+| New npm dependencies | 0 |
+| Node built-in only (fs, path, os) | PASS |
+| No ESM-only packages in hooks | PASS |
 
-| Pattern | Result | Details |
-|---------|--------|---------|
-| `eval()` / `Function()` | CLEAN | No dynamic code execution |
-| `child_process` / `exec` / `spawn` | CLEAN | No process spawning |
-| Path traversal (`../`) | CLEAN | `path.join()` used safely; traversal check in isdlc.md |
-| Hardcoded secrets | CLEAN | No passwords, tokens, API keys |
-| `process.env` access | CLEAN | No new environment variable access in new functions |
-| Prototype pollution | CLEAN | Object spread in removeSkillFromManifest is safe |
+## 6. Markdown Files
 
-## Regex Safety Analysis
+| File | Check | Result |
+|------|-------|--------|
+| src/claude/commands/isdlc.md | Three-verb handlers present | PASS |
+| src/claude/agents/00-sdlc-orchestrator.md | SCENARIO 3 menu updated | PASS |
+| src/claude/agents/00-sdlc-orchestrator.md | BACKLOG PICKER removed | PASS |
+| src/claude/CLAUDE.md.template | Intent table updated | PASS |
+| CLAUDE.md (root) | Intent table has Add/Analyze/Build | PASS |
 
-| Regex | Location | ReDoS Risk | Notes |
-|-------|----------|-----------|-------|
-| `/^---\n([\s\S]*?)\n---/` | common.cjs:786 | LOW | Non-greedy, applied to file content |
-| `/^[a-z0-9][a-z0-9-]*[a-z0-9]$/` | common.cjs:820 | NONE | Character class only, anchored, no backtracking |
+## 7. Overall Static Analysis Verdict
 
-## Markdown Files
-
-| File | Structure | Status |
-|------|-----------|--------|
-| `src/claude/agents/skill-manager.md` | Well-formed markdown, 4 steps, phase-to-agent mapping table, constraints section | PASS |
-| `CLAUDE.md` (intent detection row) | Valid markdown table row, consistent format | PASS |
-| `src/claude/commands/isdlc.md` (skill section) | Well-formed command documentation, numbered steps, error handling | PASS |
-
-## Findings
-
-| Severity | Count | Details |
-|----------|-------|---------|
-| Errors | 0 | None |
-| Warnings | 0 | None |
-
-## Conclusion
-
-All static analysis checks pass. No errors or warnings detected. New code follows existing CJS patterns, proper exports, and safe coding practices.
+**PASS** -- No errors. All files pass syntax validation, module system compliance, security checks, and style consistency.

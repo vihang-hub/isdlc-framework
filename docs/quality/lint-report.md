@@ -1,46 +1,51 @@
-# Lint Report: REQ-0022-custom-skill-management
+# Lint Report: REQ-0023-three-verb-backlog-model
 
 **Phase**: 16-quality-loop
 **Date**: 2026-02-18
-**Feature**: Custom skill management -- add, wire, and inject user-provided skills into workflows (GH-14)
+**Feature**: Three-verb backlog model (add/analyze/build) (GH #19)
 
-## Lint Status: NOT CONFIGURED
+## Lint Summary
 
-The project does not have a linter configured. The `lint` script in `package.json` is `echo 'No linter configured'`.
+**Status**: NOT CONFIGURED
 
-## Manual Static Analysis
+The project's `package.json` lint script is: `echo 'No linter configured'`
 
-In lieu of automated linting, the following manual checks were performed on new code:
+No ESLint, Prettier, or other linter is installed.
 
-### common.cjs (lines 698-1019)
+## Manual Code Quality Review
 
-| Check | Result | Notes |
-|-------|--------|-------|
-| Unused variables | PASS | No unused variables detected |
-| Missing semicolons | PASS | CJS style, semicolons consistent |
-| Consistent indentation | PASS | 4-space indentation throughout |
-| JSDoc presence | PASS | All 6 functions have JSDoc with @param and @returns |
-| Naming conventions | PASS | camelCase functions, UPPER_SNAKE constants |
-| Error handling | PASS | Try-catch in writeExternalManifest, collect-all-errors in validate |
-| Unused imports | PASS | fs, path used in new code; already imported at file top |
-| Export consistency | PASS | All new functions and constants in module.exports |
+In lieu of automated linting, a manual review was performed on all new/modified files.
 
-### skill-manager.md
+### src/claude/hooks/lib/three-verb-utils.cjs (NEW - 636 lines)
 
-| Check | Result | Notes |
-|-------|--------|-------|
-| Markdown structure | PASS | Proper headings, code blocks, tables |
-| Constraint documentation | PASS | Read-only constraints clearly stated |
+| Category | Finding | Severity |
+|----------|---------|----------|
+| 'use strict' | Present at top | OK |
+| JSDoc | All 14 exported functions documented with @param/@returns | OK |
+| Naming | Functions use camelCase, constants use UPPER_SNAKE_CASE | OK |
+| Error handling | All fs operations wrapped in try/catch or existence checks | OK |
+| Consistency | Follows existing hook utility patterns (common.cjs, provider-utils.cjs) | OK |
+| Module format | CommonJS (.cjs) consistent with hooks directory convention | OK |
 
-### isdlc.md changes
+### src/claude/hooks/skill-delegation-enforcer.cjs (MODIFIED)
 
-| Check | Result | Notes |
-|-------|--------|-------|
-| Instruction clarity | PASS | Step-by-step subcommand handling |
-| Error handling | PASS | Fail-open injection, error abort on validation |
-| Consistent formatting | PASS | Follows existing isdlc.md patterns |
+| Category | Finding | Severity |
+|----------|---------|----------|
+| EXEMPT_ACTIONS | Set(['add', 'analyze']) added correctly | OK |
+| No other changes | Only EXEMPT_ACTIONS constant modified | OK |
 
-## Recommendations
+### src/claude/hooks/delegation-gate.cjs (MODIFIED)
 
-- Consider adding ESLint to the project for automated static analysis
-- No blocking issues found
+| Category | Finding | Severity |
+|----------|---------|----------|
+| EXEMPT_ACTIONS | Set(['add', 'analyze']) added correctly | OK |
+| No other changes | Only EXEMPT_ACTIONS constant modified | OK |
+
+### Markdown files (MODIFIED)
+
+- `src/claude/commands/isdlc.md` -- Well-structured add/analyze/build sections
+- `src/claude/agents/00-sdlc-orchestrator.md` -- SCENARIO 3 updated with three-verb menu
+- `src/claude/CLAUDE.md.template` -- Intent detection table rewritten for 8 intents
+- `CLAUDE.md` -- Already updated intent detection table
+
+**Verdict**: No lint issues found. Zero errors, zero warnings.

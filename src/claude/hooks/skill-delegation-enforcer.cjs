@@ -29,11 +29,12 @@ const DELEGATION_MAP = {
 };
 
 /**
- * BUG-0021: Subcommands that run inline (Phase A) without orchestrator delegation.
- * When the first non-flag word in args matches, skip writing pending_delegation
- * and skip the mandatory delegation context message.
+ * REQ-0023: Three-verb model inline commands that run without orchestrator delegation.
+ * `add` creates backlog items inline. `analyze` runs analysis phases inline.
+ * Both skip pending_delegation and mandatory delegation context.
+ * `build` is NOT exempt -- it goes through standard orchestrator delegation.
  */
-const EXEMPT_ACTIONS = new Set(['analyze']);
+const EXEMPT_ACTIONS = new Set(['add', 'analyze']);
 
 async function main() {
     try {

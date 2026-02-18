@@ -1,73 +1,70 @@
-# Security Scan: REQ-0022-custom-skill-management
+# Security Scan: REQ-0023-three-verb-backlog-model
 
 **Phase**: 16-quality-loop
 **Date**: 2026-02-18
-**Feature**: Custom skill management -- add, wire, and inject user-provided skills into workflows (GH-14)
+**Feature**: Three-verb backlog model (add/analyze/build) (GH #19)
 
 ## SAST Security Scan (QL-008)
 
-**Result: PASS** -- No critical or high vulnerabilities found in new code.
+**Status**: PASS (manual scan -- no SAST tool configured)
 
-### Scan Scope
+### Checks Performed
 
-Files scanned for security patterns:
-- `src/claude/hooks/lib/common.cjs` (lines 698-1019, new functions)
-- `src/claude/agents/skill-manager.md` (new agent)
-- `src/claude/commands/isdlc.md` (modified sections)
-- `src/claude/hooks/tests/external-skill-management.test.cjs` (new test file)
+| Category | Pattern | Files Scanned | Result |
+|----------|---------|---------------|--------|
+| Code injection | `eval()`, `Function()` | three-verb-utils.cjs | CLEAN |
+| Command injection | `child_process`, `exec`, `execSync`, `spawn` | three-verb-utils.cjs | CLEAN |
+| Prototype pollution | `__proto__`, `.constructor` | three-verb-utils.cjs | CLEAN |
+| Path traversal | `../`, path.join with `..` | three-verb-utils.cjs | CLEAN |
+| Sensitive data | hardcoded secrets, API keys | three-verb-utils.cjs | CLEAN |
 
-### Pattern Check Results
+### Input Validation Assessment
 
-| Pattern | Result | Details |
-|---------|--------|---------|
-| `eval()` / `Function()` | CLEAN | No dynamic code execution in new code |
-| `child_process` / `exec` / `spawn` | CLEAN | No process spawning in new code |
-| Path traversal (`../`) | CLEAN | New code uses `path.join()` safely; test file validates path safety |
-| Hardcoded secrets | CLEAN | No passwords, tokens, API keys, or credentials |
-| `process.env` access | CLEAN | No new environment variable access in new functions |
-| SQL injection | N/A | No database operations |
-| XSS / HTML injection | N/A | CLI-only, no web output |
-| Prototype pollution | CLEAN | Object spread used safely in removeSkillFromManifest |
-| Regex DoS (ReDoS) | LOW RISK | `namePattern` regex is simple and bounded: `/^[a-z0-9][a-z0-9-]*[a-z0-9]$/` |
-| File read/write safety | PASS | Uses fs.readFileSync/writeFileSync with explicit utf8 encoding |
-| Input validation | PASS | validateSkillFrontmatter checks extension, frontmatter, name format |
+| Function | Input Sanitization | Risk |
+|----------|-------------------|------|
+| generateSlug | Strips non-alphanumeric, truncates to 50 chars | LOW -- path traversal mitigated |
+| detectSource | Pattern matching only (regex), no execution | LOW |
+| resolveItem | All fs operations use path.join with validated base dir | LOW |
+| readMetaJson | JSON.parse in try/catch, returns null on corrupt | LOW |
+| writeMetaJson | Writes to validated path only | LOW |
+| appendToBacklog | Writes to validated path only | LOW |
+| updateBacklogMarker | Writes to validated path only | LOW |
 
-### Security Design Patterns Found
+### File System Operations
 
-| Pattern | Function | Assessment |
-|---------|----------|------------|
-| Fail-open manifest loading | loadExternalManifest() | Returns null on error, never blocks |
-| Fail-open injection | isdlc.md injection block | Steps 1-4 wrapped in error handler, continues with unmodified prompt |
-| Input validation first | validateSkillFrontmatter() | Validates before any processing |
-| Collect-all-errors | validateSkillFrontmatter() | Reports all validation errors, not just first |
-| Read-only agent | skill-manager.md | Explicitly does NOT write files, state, or git |
-| Write verification | writeExternalManifest() | Re-reads and validates JSON after write |
+The new utility module performs filesystem operations (fs.readFileSync, fs.writeFileSync, fs.existsSync, fs.readdirSync). All operations:
+- Use `path.join()` with a validated base directory
+- Never construct paths from raw user input without sanitization
+- Handle errors gracefully (try/catch, null returns)
+
+**No security vulnerabilities found.**
 
 ## Dependency Audit (QL-009)
 
-**Result: PASS** -- 0 vulnerabilities found.
+**Status**: PASS
 
 ```
-$ npm audit
-found 0 vulnerabilities
+npm audit: found 0 vulnerabilities
 ```
 
-### Dependency Summary
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 0 |
+| Moderate | 0 |
+| Low | 0 |
 
-| Dependency | Version | Status |
-|------------|---------|--------|
+### Dependencies (from package.json)
+
+| Package | Version | Status |
+|---------|---------|--------|
 | chalk | ^5.3.0 | Clean |
 | fs-extra | ^11.2.0 | Clean |
 | prompts | ^2.4.2 | Clean |
 | semver | ^7.6.0 | Clean |
 
-No new dependencies were added by this feature.
+No new dependencies were added by this feature. The three-verb-utils module uses only Node.js built-in modules (fs, path).
 
-## Article V (Security by Design) Compliance
+## Verdict
 
-- Input is validated before processing (validateSkillFrontmatter)
-- File paths are constructed with path.join(), not string concatenation
-- No dynamic code execution patterns
-- Agent is read-only by design (returns data, caller handles I/O)
-- Manifest write includes post-write verification
-- Fail-open patterns prevent security checks from blocking workflow
+**PASS** -- No critical or high vulnerabilities in SAST scan or dependency audit.
