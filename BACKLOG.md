@@ -355,17 +355,7 @@
 
 ### 13. Skills Extensibility (from 2026-02-17 brainstorm)
 
-- 13.1 [ ] Custom skill management — add, wire, and inject user-provided skills into workflows *(GitHub #14)*
-  - **Problem**: Users have no way to add domain-specific skills to the framework. External skills directory and manifest exist but there's no user-facing command, no interactive wiring session, and no runtime injection.
-  - **Design**: Unified interactive session for adding and re-wiring skills:
-    - **Stage 1 — Acquire**: User drops a `.md` file into `.claude/skills/external/` or provides a path/URL. Framework validates frontmatter.
-    - **Stage 2 — Wire**: Interactive session walks user through agent/phase binding. User selects which agents should have access (from grouped list). User selects delivery type (context block / instruction / reference). Injection mode is always-on.
-    - **Stage 3 — Confirm**: Summary with [S] Save / [A] Adjust / [X] Cancel. On save, registers in `external-skills-manifest.json` with new `bindings` schema: `{ agents, phases, injection_mode: "always", delivery_type }`.
-    - **Runtime**: Phase-loop controller STEP 3d reads external manifest, matches skills to current agent/phase, reads `.md` files, appends formatted blocks to agent Task prompt.
-    - **Re-wiring**: "Use X skill during Y phase" triggers same session with current bindings pre-filled.
-  - **Entry points**: Natural language ("add a skill", "wire nestjs to implementation") or explicit `/isdlc skill add <path>`, `/isdlc skill wire <name>`
-  - **Files**: `isdlc.md` (new actions + STEP 3d injection), `CLAUDE.md` (intent detection), `external-skills-manifest.json` (schema extension), `common.cjs` (skill loading utilities), new `skill-manager.md` agent
-  - **Complexity**: Medium
+- 13.1 [x] ~~Custom skill management — add, wire, and inject user-provided skills into workflows~~ *(GitHub #14)* -> [requirements](docs/requirements/REQ-0022-custom-skill-management/) **Completed: 2026-02-18**
 
 - 13.2 [x] BUG-0027: Built-in skills (243 SKILL.md files) never injected into agent Task prompts at runtime *(GitHub #15)* -> [requirements](docs/requirements/BUG-0027-GH-15/) **Completed: 2026-02-18**
 
@@ -395,6 +385,8 @@
 ## Completed
 
 ### 2026-02-18
+- [x] REQ-0022: Custom skill management — add, wire, and inject user-provided skills into workflows *(GitHub #14, merged 06f6925)* (backlog 13.1).
+  - New `skill-manager.md` agent, 6 utility functions in `common.cjs` (loadExternalSkill, validateSkillFrontmatter, registerExternalSkill, wireSkillToAgents, getExternalSkillsForPhase, formatExternalSkillBlock), STEP 3d injection in `isdlc.md`, intent detection in CLAUDE.md. 111 new tests, zero regressions. 9 FRs, 6 NFRs, 27 ACs.
 - [x] BUG-0027-GH-15: Built-in skills never injected into agent Task prompts — added getAgentSkillIndex() + formatSkillIndexBlock() to common.cjs, STEP 3d skill index injection, 52 agent files updated with ## Skills section. 40 new tests, zero regressions. 5 FRs, 5 NFRs, 7 ACs *(GitHub #15, merged eeaae30)* (backlog 13.2).
 
 ### 2026-02-17
