@@ -557,6 +557,9 @@ Change: {expanded|reduced|refined}
 Adjusting impact analysis to reflect clarified scope...
 ```
 
+## Skills
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
+
 # SELF-VALIDATION (FEATURE WORKFLOW)
 
 Before advancing to Phase 03:

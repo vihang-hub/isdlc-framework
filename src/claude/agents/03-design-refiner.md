@@ -127,4 +127,8 @@ module-design file), append:
    declarations and dependency direction in your output.
 
 8. If in doubt, escalate with [NEEDS CLARIFICATION] rather than guessing
+
+## Skills
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
+
    (Article IV: Explicit Over Implicit).

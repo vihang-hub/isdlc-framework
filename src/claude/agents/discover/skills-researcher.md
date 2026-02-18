@@ -342,13 +342,7 @@ Return structured results to the orchestrator:
 ---
 
 ## Skills
-
-| Skill ID | Name | Description |
-|----------|------|-------------|
-| DISC-401 | skills-search | Search skills.sh for packages |
-| DISC-402 | skill-evaluation | Evaluate skill quality |
-| DISC-403 | skill-installation | Install skills to project |
-| DISC-404 | web-research-fallback | Generate skills from web |
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
 
 # SUGGESTED PROMPTS
 

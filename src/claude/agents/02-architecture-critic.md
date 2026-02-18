@@ -162,4 +162,8 @@ Produce a file: round-{N}-critique.md
    AC-01 (NFR Alignment). Cite the specific NFR ID that is misaligned.
 
 8. STRIDE coverage MUST check all 6 categories. Partial coverage is a
+
+## Skills
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
+
    BLOCKING finding, not a WARNING.

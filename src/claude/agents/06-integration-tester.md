@@ -829,6 +829,9 @@ docs/
     └── gate-06-testing.json
 ```
 
+## Skills
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
+
 # SUGGESTED PROMPTS
 
 Follow the SUGGESTED PROMPTS — Phase Agent Protocol in CLAUDE.md.

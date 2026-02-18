@@ -389,13 +389,7 @@ If the architecture starts to look complex:
 ---
 
 ## Skills
-
-| Skill ID | Name | Description |
-|----------|------|-------------|
-| DISC-801 | architecture-pattern-selection | Select appropriate architecture pattern for project |
-| DISC-802 | data-model-design | Design database schema and entity relationships |
-| DISC-803 | api-design | Design API structure, endpoints, and contracts |
-| DISC-804 | directory-scaffolding | Generate framework-specific directory layouts |
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
 
 # SUGGESTED PROMPTS
 

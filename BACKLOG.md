@@ -377,14 +377,33 @@
   - **Complexity**: Medium
   - **Phase A**: Analyzed 2026-02-17 — quick-scan + requirements ready
 
-### 14. Gate-Blocker Artifact Validation (from BUG-0022-GH-1 workflow observation)
+### 14. Phase A/B Pipeline Bugs
 
-- 14.1 [x] BUG-0010-GH-16: artifact-paths.json filename mismatches — gate-blocker blocks valid phases [GitHub: #16] **Completed: 2026-02-17**
+- 14.2 [ ] BUG-0028-GH-17: Phase B (`/isdlc start`) re-runs Phase 00/01 instead of skipping to Phase 02 — `SKIP_PHASES` not implemented in orchestrator *(GitHub #17)*
+  - **Problem**: `isdlc.md` specifies passing `SKIP_PHASES: ["00-quick-scan", "01-requirements"]` to the orchestrator on Phase B start, but `00-sdlc-orchestrator.md` has zero references to `SKIP_PHASES` or `PREPARED_REQUIREMENTS`. The orchestrator always loads the full phase list from `workflows.json` and calls `resetPhasesForWorkflow()` with the unfiltered array.
+  - **Result**: Phase B re-runs Phase 00 (quick scan) and Phase 01 (requirements), duplicating Phase A work.
+  - **Fix**: In `00-sdlc-orchestrator.md` Section 3, after loading `workflow.phases`, check for `SKIP_PHASES` and filter before calling `resetPhasesForWorkflow()`.
+  - **Files**: `src/claude/agents/00-sdlc-orchestrator.md` (primary), `src/claude/commands/isdlc.md` (verify passthrough), `src/isdlc/config/workflows.json`, `src/claude/hooks/lib/common.cjs`
+  - **Related**: REQ-0019 (Phase A pipeline), backlog 12.3 (post-Phase-A picker)
+  - **Severity**: Medium-high — Phase A/B separation is broken without this
+  - **Complexity**: Low-medium — control flow change in orchestrator init logic
+
+- 14.3 [ ] BUG-0029-GH-18: Framework agents generate multiline Bash commands that bypass permission auto-allow rules *(GitHub #18)*
+  - **Problem**: Agents generate multiline inline shell scripts (`for`/`do`/`done`, `node -e "..."` with embedded JS). Claude Code's `*` glob doesn't match newlines, so these always prompt for permission even when individual commands are auto-allowed.
+  - **Fix**: (A) Prefer single-line equivalents (`grep -r` over `for` loops, `&&` chaining). (B) Extract complex scripts to files (`bin/update-phase-state.js`). (C) Add single-line Bash convention to agent shared protocols.
+  - **Files**: Agent `.md` files (discover agents, impact analysis agents), `isdlc.md` (state update scripts), `CLAUDE.md` or shared protocols
+  - **Related**: BUG-0028-GH-17 (also has multiline `node -e` state updates)
+  - **Severity**: Medium — interrupts user during framework processing
+  - **Complexity**: Low-medium — mostly mechanical rewrites across agent files
+
+### 15. Gate-Blocker Artifact Validation (from BUG-0022-GH-1 workflow observation)
+
+- 15.1 [x] BUG-0010-GH-16: artifact-paths.json filename mismatches — gate-blocker blocks valid phases [GitHub: #16] **Completed: 2026-02-17**
 
 ## Completed
 
 ### 2026-02-17
-- [x] BUG-0010-GH-16: artifact-paths.json filename mismatches — Phase 08 `review-summary.md` → `code-review-report.md`, Phase 01 fix workflow artifact validation disabled. 13 new tests, zero regressions. 2 bugs, 6 ACs, 3 NFRs *(GitHub #16, merged b25fbdd)* (backlog 14.1).
+- [x] BUG-0010-GH-16: artifact-paths.json filename mismatches — Phase 08 `review-summary.md` → `code-review-report.md`, Phase 01 fix workflow artifact validation disabled. 13 new tests, zero regressions. 2 bugs, 6 ACs, 3 NFRs *(GitHub #16, merged b25fbdd)* (backlog 15.1).
 - [x] BUG-0022-GH-1: /isdlc test generate declares QA APPROVED while project build is broken *(Gitea #1, GitHub #16, merged 506d4de)*
   - Updated test-generate workflow from legacy pipeline (phases 11+07) to Phase 16 quality-loop. Added Build Integrity Check Protocol to quality-loop-engineer with language-aware build detection, mechanical auto-fix loop (max 3 iterations), honest failure reporting for logical issues. Added GATE-08 build integrity safety net. 39 new tests, zero regressions. 5 files modified + 1 new test file.
 - [x] REQ-0021: T7 Agent prompt boilerplate extraction — extracted ROOT RESOLUTION, MONOREPO, SKILL OBSERVABILITY, SUGGESTED PROMPTS, and CONSTITUTIONAL PRINCIPLES protocols from 29 agent files into shared CLAUDE.md subsections. Agents now use 1-line references. ~3,600 lines removed, 113 lines added to CLAUDE.md. 29 agent files modified, 1 test file updated, zero regressions. 12 FRs, 6 NFRs (backlog 2.3).

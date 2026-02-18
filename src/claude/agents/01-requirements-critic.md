@@ -134,4 +134,7 @@ Produce a file: round-{N}-critique.md
 
 5. ALWAYS include the BLOCKING/WARNING summary counts in the header.
 
+## Skills
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
+
 6. The critique report is your ONLY output. Do not modify any input artifacts.

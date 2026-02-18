@@ -1,0 +1,41 @@
+Requirement_ID,AC_ID,Description,Priority,Test_ID,Test_File,Test_Type,Status
+FR-01,AC-01,getAgentSkillIndex returns correct entries for known agent,P0,TC-01.1,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-01,AC-01,getAgentSkillIndex returns correct entries for second agent,P0,TC-01.2,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-01,AC-01,getAgentSkillIndex returns empty array for unknown agent,P0,TC-01.3,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-01,AC-01,getAgentSkillIndex handles null input,P0,TC-01.4,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-01,AC-01,getAgentSkillIndex handles undefined input,P0,TC-01.5,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-01,AC-01,getAgentSkillIndex handles empty string input,P0,TC-01.6,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-01,AC-01,All descriptions are non-empty strings,P0,TC-01.7,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-01,AC-01,All paths reference SKILL.md files,P0,TC-01.8,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-01,AC-01,Entry structure matches expected schema,P0,TC-01.9,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-01,AC-01,Agent with empty skills array returns empty array,P0,TC-01.10,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-01,AC-01,Entry IDs match manifest skill IDs,P0,TC-01.11,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-02,AC-02,formatSkillIndexBlock empty input returns empty string,P0,TC-02.1,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-02,AC-02,formatSkillIndexBlock single entry formats correctly,P0,TC-02.2,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-02,AC-02,formatSkillIndexBlock multiple entries all present,P0,TC-02.3,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-02,AC-02,formatSkillIndexBlock header includes usage instruction,P0,TC-02.4,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-02,AC-02,formatSkillIndexBlock 14-entry output within 30-line budget,P0,TC-02.5,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-05,AC-05,YAML frontmatter description extraction,P0,TC-03.1,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-05,AC-05,Markdown ## Description format extraction,P0,TC-03.2,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-05,AC-05,Malformed SKILL.md falls back to name,P0,TC-03.3,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-05,AC-05,Empty SKILL.md falls back to name,P0,TC-03.4,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-05,AC-05,YAML description with quotes strips them,P0,TC-03.5,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-01+FR-02,AC-01+AC-02,Full pipeline agent name to formatted block,P0,TC-04.1,src/claude/hooks/tests/skill-injection.test.cjs,Integration,Scaffold
+FR-01+FR-02,AC-01+AC-02,Unknown agent produces empty block,P0,TC-04.2,src/claude/hooks/tests/skill-injection.test.cjs,Integration,Scaffold
+FR-01,AC-07,Second call uses cache,P1,TC-05.1,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-01,AC-07,Cache invalidation on manifest mtime change,P1,TC-05.2,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-01,AC-07,Cache does not leak between project roots,P1,TC-05.3,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-01,AC-06,Missing manifest returns empty array,P0,TC-06.1,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-01,AC-06,Corrupt manifest returns empty array,P0,TC-06.2,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-01,AC-06,Agent not in manifest returns empty array,P0,TC-06.3,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-01,AC-06,Unreadable SKILL.md skips that skill returns others,P0,TC-06.4,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-01,AC-06,All SKILL.md files missing returns empty array,P0,TC-06.5,src/claude/hooks/tests/skill-injection.test.cjs,Unit,Scaffold
+FR-04,AC-04,Agents with owned_skills have ## Skills section,P1,TC-07.1,src/claude/hooks/tests/skill-injection.test.cjs,Content,Scaffold
+FR-04,AC-04,Agents without owned_skills unchanged,P1,TC-07.2,src/claude/hooks/tests/skill-injection.test.cjs,Content,Scaffold
+FR-04,AC-04,## Skills section references AVAILABLE SKILLS and Read tool,P1,TC-07.3,src/claude/hooks/tests/skill-injection.test.cjs,Content,Scaffold
+FR-03,AC-03,STEP 3d template includes SKILL INDEX BLOCK placeholder,P0,TC-09.1,src/claude/hooks/tests/skill-injection.test.cjs,Content,Scaffold
+FR-03,AC-03,Skill block placed after WORKFLOW MODIFIERS in template,P0,TC-09.2,src/claude/hooks/tests/skill-injection.test.cjs,Content,Scaffold
+FR-03,AC-03,Template retains GATE validation after skill block,P0,TC-09.3,src/claude/hooks/tests/skill-injection.test.cjs,Content,Scaffold
+NFR-02,AC-01,getAgentSkillIndex completes under 100ms,P2,TC-08.2,src/claude/hooks/tests/skill-injection.test.cjs,Performance,Scaffold
+NFR-05,AC-04,No new runtime dependencies added,P2,TC-08.3,src/claude/hooks/tests/skill-injection.test.cjs,Compatibility,Pass
+NFR-05,AC-04,No new hook files added,P2,TC-08.4,src/claude/hooks/tests/skill-injection.test.cjs,Compatibility,Pass

@@ -403,13 +403,7 @@ If requirements shift during generation:
 ---
 
 ## Skills
-
-| Skill ID | Name | Description |
-|----------|------|-------------|
-| DISC-701 | vision-elicitation | Guide users through project vision definition |
-| DISC-702 | solution-brainstorming | Explore and compare solution approaches |
-| DISC-703 | prd-generation | Generate structured PRD from brief and research |
-| DISC-704 | mvp-scoping | Define MVP boundaries and prioritize features |
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
 
 # SUGGESTED PROMPTS
 

@@ -397,15 +397,7 @@ Consider using the NEW PROJECT FLOW instead.
 ---
 
 ## Skills
-
-| Skill ID | Name | Description |
-|----------|------|-------------|
-| DISC-101 | directory-scan | Scan and map directory structure |
-| DISC-102 | tech-detection | Detect technologies and frameworks |
-| DISC-103 | dependency-analysis | Analyze project dependencies with versions |
-| DISC-104 | architecture-documentation | Generate architecture docs |
-| DISC-105 | deployment-topology-detection | Detect containerization, CI/CD, and hosting |
-| DISC-106 | integration-point-mapping | Map external services and API integrations |
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
 
 # SUGGESTED PROMPTS
 

@@ -124,4 +124,8 @@ At the bottom of `test-strategy.md`, append:
 7. EVERY test data gap (TC-04) must have explicit boundary values defined.
 
 8. If in doubt, escalate with [NEEDS CLARIFICATION] rather than guessing
+
+## Skills
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
+
    (Article IV: Explicit Over Implicit).

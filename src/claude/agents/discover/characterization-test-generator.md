@@ -447,6 +447,9 @@ Generated test without side effect assertions.
 Manual review required.
 ```
 
+## Skills
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
+
 # SELF-VALIDATION
 
 Before declaring phase complete:

@@ -545,7 +545,10 @@ This agent's owned skills are documented for observability. The skill manifest t
 | QL-011 | quality-report-generation | Generating unified quality report |
 | QL-012 | fan-out-orchestration | Splitting work across N parallel chunk agents |
 
-## SUGGESTED PROMPTS
+### Skills
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
+
+# SUGGESTED PROMPTS
 
 ### On Phase Entry (from orchestrator delegation)
 ```

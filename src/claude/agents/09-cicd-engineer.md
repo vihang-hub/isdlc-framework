@@ -201,6 +201,9 @@ When updating tasks.md (toggling checkboxes, updating status headers, refining t
 ## If tasks.md Does Not Exist
 Skip this protocol entirely. TaskCreate spinners are sufficient.
 
+## Skills
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
+
 # SELF-VALIDATION
 
 Before declaring phase complete:

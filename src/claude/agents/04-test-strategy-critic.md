@@ -270,4 +270,8 @@ Produce a file: round-{N}-critique.md
    When the artifact does not exist, document "Not applicable" and produce no findings.
 
 9. ALWAYS detect whether error-taxonomy.md and nfr-matrix.md exist before applying
+
+## Skills
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
+
    TC-06 and TC-07. Do not produce findings for artifacts that are intentionally absent.

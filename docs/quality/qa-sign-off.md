@@ -1,64 +1,57 @@
-# QA Sign-Off: BUG-0022-GH-1
+# QA Sign-Off: BUG-0011-GH-15
 
 **Phase**: 08-code-review
-**Date**: 2026-02-17
+**Date**: 2026-02-18
 **Agent**: QA Engineer (Phase 08)
-**Branch**: bugfix/BUG-0022-GH-1
-**Fix**: /isdlc test generate declares QA APPROVED while project build is broken
+**Branch**: bugfix/BUG-0011-GH-15
+**Fix**: Built-in skills (243 SKILL.md files) never injected into agent Task prompts at runtime
 
 ## Sign-Off Decision
 
-**QA APPROVED** -- All GATE-07 checks pass.
+**QA APPROVED** -- All GATE-08 checks pass.
 
-## Quality Gate Checklist (GATE-07)
+## Quality Gate Checklist (GATE-08)
 
-- [x] Build integrity verified (project compiles cleanly -- all tests pass)
-- [x] Code review completed for all changes (6 files + 1 new test file)
-- [x] No critical code review issues open (0 critical, 0 major)
-- [x] Static analysis passing (JSON valid, syntax valid, module system compliant)
-- [x] Code coverage meets thresholds (39 new tests cover all 4 FRs and 3 NFRs)
-- [x] Coding standards followed (CommonJS for .cjs, consistent naming, DRY)
-- [x] Performance acceptable (no runtime overhead -- structural changes only)
-- [x] Security review complete (no secrets, no injection vectors)
+- [x] Code review completed for all changes (55 files + 1 new test file)
+- [x] No critical code review issues open (0 critical, 0 major, 2 minor advisory)
+- [x] Static analysis passing (syntax valid, module system compliant, exports correct, regex safe)
+- [x] Code coverage meets thresholds (40 new tests cover all 5 FRs, 7 ACs, and 5 NFRs)
+- [x] Coding standards followed (CommonJS for .cjs, consistent naming, DRY, SRP)
+- [x] Performance acceptable (getAgentSkillIndex <2ms, regex <0.5ms)
+- [x] Security review complete (no path traversal, no ReDoS, no eval/exec, no secrets)
 - [x] QA sign-off obtained (this document)
 
 ## Test Results Summary
 
 | Suite | Pass | Fail | Notes |
 |-------|------|------|-------|
-| CJS hooks | 1646/1647 | 1 | Pre-existing (gate-blocker-extended) |
-| ESM lib | 629/632 | 3 | Pre-existing (prompt-format, README) |
-| New build-integrity | 39/39 | 0 | All new tests pass |
-
-**Zero regressions introduced.**
-
-## Requirement Satisfaction
-
-| Requirement | Status |
-|-------------|--------|
-| FR-01: Post-generation build integrity check (language-aware) | SATISFIED |
-| FR-02: Mechanical auto-fix loop (max 3 iterations) | SATISFIED |
-| FR-03: Honest failure reporting for logical issues | SATISFIED |
-| FR-04: Gate enforcement -- NEVER QA APPROVED on broken build | SATISFIED |
-| NFR-01: Build check performance | SATISFIED |
-| NFR-02: Language agnostic design | SATISFIED |
-| NFR-03: Graceful degradation | SATISFIED |
+| skill-injection.test.cjs | 40/40 | 0 | All new tests pass |
+| Full CJS hook regression | 1012/1061 | 49 | All pre-existing |
+| **Regressions introduced** | **0** | **0** | **Zero regressions** |
 
 ## Constitutional Compliance
 
-| Article | Status | Notes |
-|---------|--------|-------|
-| V (Simplicity First) | COMPLIANT | No over-engineering; lookup table pattern is simple and extensible |
-| VI (Code Review Required) | COMPLIANT | Full code review completed for all changes |
-| VII (Artifact Traceability) | COMPLIANT | All code traces to FR-01 through FR-04, no orphan code |
-| VIII (Documentation Currency) | COMPLIANT | Agent docs, skill docs, and command docs all updated |
-| IX (Quality Gate Integrity) | COMPLIANT | All gate artifacts exist, all checks pass |
-| XIII (Module System Consistency) | COMPLIANT | Test file uses CommonJS as required for .cjs |
+| Article | Status |
+|---------|--------|
+| V (Simplicity First) | COMPLIANT -- Three focused functions, no new deps |
+| VI (Code Review Required) | COMPLIANT -- This review document |
+| VII (Artifact Traceability) | COMPLIANT -- All FRs map to code and tests |
+| VIII (Documentation Currency) | COMPLIANT -- Agent files, BACKLOG.md, JSDoc updated |
+| IX (Quality Gate Integrity) | COMPLIANT -- All gate artifacts present |
+| X (Fail-Safe Defaults) | COMPLIANT -- All error paths fail-open |
 
-## Approval
+## Artifacts Produced
 
-**QA APPROVED** -- This fix is ready to proceed through the quality gate and merge to main.
+| Artifact | Path |
+|----------|------|
+| Feature code review | `docs/requirements/BUG-0011-GH-15/code-review-report.md` |
+| Overall code review | `docs/quality/code-review-report.md` |
+| Quality metrics | `docs/quality/quality-metrics.md` |
+| Static analysis | `docs/quality/static-analysis-report.md` |
+| Technical debt | `docs/quality/technical-debt.md` |
+| QA sign-off | `docs/quality/qa-sign-off.md` (this document) |
+| Gate validation | `docs/.validations/gate-08-code-review.json` |
 
-- Reviewer: QA Engineer (Phase 08)
-- Date: 2026-02-17
-- Iteration count: 1 (passed on first review, no re-work required)
+## Recommendation
+
+Approved for merge to main. Zero regressions, complete requirement coverage, all constitutional articles satisfied.

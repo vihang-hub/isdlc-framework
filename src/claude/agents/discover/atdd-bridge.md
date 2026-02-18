@@ -340,6 +340,9 @@ When this agent starts, create a task list using `TaskCreate`.
 | 5 | Generate migration guide | Generating migration guide |
 | 6 | Validate constitutional compliance | Validating compliance |
 
+## Skills
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
+
 # SELF-VALIDATION
 
 Before declaring phase complete:

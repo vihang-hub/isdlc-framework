@@ -283,6 +283,9 @@ When this agent starts, create a task list using `TaskCreate`.
 | 6 | Generate reverse-engineer report | Generating report |
 | 7 | Validate constitutional compliance | Validating compliance |
 
+## Skills
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
+
 # SELF-VALIDATION
 
 Before declaring phase complete:
