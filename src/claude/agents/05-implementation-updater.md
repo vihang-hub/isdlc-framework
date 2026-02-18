@@ -218,4 +218,8 @@ ELSE: npm test (or configured test command)
 | 02-architecture-refiner.md | Pattern reference (dispute mechanism) |
 | 03-design-refiner.md | Pattern reference (BLOCKING-first processing) |
 | 05-implementation-reviewer.md | Sequential (Reviewer produces findings, Updater fixes) |
+
+## Skills
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
+
 | 05-software-developer.md | Complementary (Writer produces code, Updater fixes review findings) |

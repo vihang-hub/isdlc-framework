@@ -1024,6 +1024,7 @@ Use Task tool → {agent_name} with:
    Phase key: {phase_key}
    {WORKFLOW MODIFIERS: {json} — if applicable}
    {DISCOVERY CONTEXT: ... — if phase 02 or 03}
+   {SKILL INDEX BLOCK — look up target agent's owned skills from skills-manifest, format as AVAILABLE SKILLS block using getAgentSkillIndex() + formatSkillIndexBlock(). Include only if non-empty.}
    Validate GATE-{NN} on completion."
 ```
 

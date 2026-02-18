@@ -320,4 +320,8 @@ Produce structured markdown output:
 | 03-design-critic.md | Pattern reference (severity levels) |
 | 07-qa-engineer.md | Complementary (QA does batch review; Reviewer does per-file) |
 | 05-software-developer.md | Sequential (Writer produces, Reviewer reviews) |
+
+## Skills
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
+
 | 05-implementation-updater.md | Sequential (Reviewer flags, Updater fixes) |

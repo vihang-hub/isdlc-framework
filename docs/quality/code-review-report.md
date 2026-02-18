@@ -1,9 +1,9 @@
 # Code Review Report
 
 **Project:** iSDLC Framework
-**Workflow:** BUG-0022-GH-1 (fix)
+**Workflow:** BUG-0011-GH-15 (fix)
 **Phase:** 08 - Code Review & QA
-**Date:** 2026-02-17
+**Date:** 2026-02-18
 **Reviewer:** QA Engineer
 **Verdict:** APPROVED
 
@@ -11,7 +11,7 @@
 
 ## Summary
 
-Reviewed 6 modified files and 1 new test file (39 tests) for the fix to BUG-0022-GH-1: `/isdlc test generate` declares QA APPROVED while project build is broken.
+Reviewed 55 modified files and 1 new test file (40 tests) for the fix to BUG-0027-GH-15: Built-in skills never injected into agent Task prompts at runtime. Added `getAgentSkillIndex()`, `formatSkillIndexBlock()`, and `_extractSkillDescription()` to `common.cjs`, modified the STEP 3d delegation template in `isdlc.md`, and added `## Skills` instruction to 52 agent `.md` files.
 
 ## Findings
 
@@ -23,23 +23,27 @@ Reviewed 6 modified files and 1 new test file (39 tests) for the fix to BUG-0022
 
 ### Minor Findings
 
-1. **M-01**: Boolean precedence in TC-24 could use explicit parentheses for readability (test file, cosmetic)
-2. **M-02**: Pre-existing Phase 07/08 numbering inconsistency in QA engineer agent header (not introduced by this change)
+1. **M-01**: Heading level inconsistency in `16-quality-loop-engineer.md` -- uses `### Skills` (H3) instead of `## Skills` (H2) used by all other 51 agents. Cosmetic only.
+2. **M-02**: YAML regex edge case with `description: ""` (empty quotes) returns `"` instead of falling back to manifest name. No real SKILL.md files trigger this.
 
 ## Files Reviewed
 
 | File | Verdict |
 |------|---------|
-| `src/isdlc/config/workflows.json` | PASS |
-| `src/claude/commands/isdlc.md` | PASS |
-| `src/claude/agents/16-quality-loop-engineer.md` | PASS |
-| `src/claude/skills/quality-loop/build-verification/SKILL.md` | PASS |
-| `src/claude/agents/07-qa-engineer.md` | PASS |
-| `src/claude/hooks/tests/test-build-integrity.test.cjs` | PASS |
+| `src/claude/hooks/lib/common.cjs` (+145 lines, 3 functions) | PASS |
+| `src/claude/commands/isdlc.md` (+1 line, STEP 3d) | PASS |
+| `src/claude/agents/*.md` (52 files, +3 lines each) | PASS |
+| `BACKLOG.md` (+25/-6 lines) | PASS |
+| `src/claude/hooks/tests/skill-injection.test.cjs` (1025 lines, 40 tests) | PASS |
 
 ## Requirement Coverage
 
-All 4 FRs and 3 NFRs from requirements-spec.md are satisfied. See `docs/requirements/BUG-0022-GH-1/code-review-report.md` for detailed traceability matrix.
+All 5 FRs, 5 NFRs, and 7 ACs from `docs/requirements/BUG-0011-GH-15/requirements.md` are satisfied. See `docs/requirements/BUG-0011-GH-15/code-review-report.md` for detailed traceability and constitutional compliance matrix.
+
+## Test Results
+
+- **Skill-injection tests:** 40/40 pass
+- **Full regression:** 1012/1061 pass (49 pre-existing failures, 0 regressions introduced)
 
 ## Conclusion
 

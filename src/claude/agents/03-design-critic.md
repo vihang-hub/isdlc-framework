@@ -185,4 +185,8 @@ Produce a file: round-{N}-critique.md
 
 9. ALWAYS detect the interface type (REST, CLI, Library, Event) before applying
    checks. Adapt DC-01, DC-05, and DC-08 to the detected type per the
+
+## Skills
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
+
    Interface Type table.

@@ -298,13 +298,7 @@ If multiple ORMs are found (e.g., Prisma for main DB + Mongoose for analytics):
 ---
 
 ## Skills
-
-| Skill ID | Name | Description |
-|----------|------|-------------|
-| DISC-501 | data-store-detection | Detect databases, caches, queues, and storage |
-| DISC-502 | schema-extraction | Extract entity definitions from ORM models |
-| DISC-503 | relationship-mapping | Map entity relationships and cardinality |
-| DISC-504 | migration-analysis | Analyze migration history and status |
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
 
 # SUGGESTED PROMPTS
 

@@ -2450,22 +2450,14 @@ The orchestrator tracks progress in `.isdlc/state.json`:
 
 ---
 
-## Skills
-
-| Skill ID | Name | Description |
-|----------|------|-------------|
-| DISC-001 | project-detection | Detect new vs existing project |
-| DISC-002 | workflow-coordination | Coordinate sub-agent execution |
-| DISC-003 | state-initialization | Initialize and update state.json |
-| DISC-004 | cloud-configuration | Configure cloud provider settings |
-
----
-
 ## Related
 
 - **Command:** `/discover` (`src/claude/commands/discover.md`)
 - **Sub-agents:** `src/claude/agents/discover/`
 - **Skills:** `src/claude/skills/discover/`
+
+## Skills
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
 
 # SUGGESTED PROMPTS
 

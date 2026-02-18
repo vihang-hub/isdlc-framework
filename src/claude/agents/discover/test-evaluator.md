@@ -418,15 +418,7 @@ Return structured results to the orchestrator:
 ---
 
 ## Skills
-
-| Skill ID | Name | Description |
-|----------|------|-------------|
-| DISC-201 | test-framework-detection | Detect test frameworks |
-| DISC-202 | coverage-analysis | Analyze test coverage by type (unit/integration/e2e) |
-| DISC-203 | gap-identification | Identify testing gaps |
-| DISC-204 | test-report-generation | Generate evaluation report |
-| DISC-205 | critical-path-analysis | Identify high-risk untested code paths |
-| DISC-206 | test-quality-assessment | Assess test quality (flaky tests, assertion density, smells) |
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
 
 # SUGGESTED PROMPTS
 

@@ -398,6 +398,9 @@ Proceeding with low-confidence analysis...
 Consider: Manual debugging session to gather more info
 ```
 
+## Skills
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
+
 # SELF-VALIDATION
 
 Before advancing to Phase 04:

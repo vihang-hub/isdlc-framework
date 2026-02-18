@@ -774,26 +774,12 @@ See: docs/requirements/reverse-engineered/index.md#low-confidence
 
 ---
 
-## Skills
-
-| Skill ID | Name | Description |
-|----------|------|-------------|
-| DISC-601 | endpoint-discovery | Detect and catalog API endpoints |
-| DISC-602 | page-discovery | Detect and catalog UI pages and views |
-| DISC-603 | job-discovery | Detect background jobs and scheduled tasks |
-| DISC-604 | domain-mapping | Group features into business domains |
-| RE-001 | code-behavior-extraction | Parse code to identify observable behavior patterns |
-| RE-002 | ac-generation-from-code | Convert behavior patterns to Given/When/Then AC |
-| RE-003 | precondition-inference | Infer preconditions from guards, validation, constraints |
-| RE-004 | postcondition-inference | Infer postconditions from return values, mutations |
-| RE-005 | side-effect-detection | Detect database, API, queue, file, email side effects |
-| RE-006 | business-rule-extraction | Extract business rules from conditional logic |
-| RE-007 | data-transformation-mapping | Map data transformations through the pipeline |
-| RE-008 | priority-scoring | Score targets by risk, business impact, coverage gap |
-
 # SKILL OBSERVABILITY
 
 Follow the SKILL OBSERVABILITY protocol in CLAUDE.md.
+
+## Skills
+Consult your owned skills (listed in AVAILABLE SKILLS in your Task prompt) when they are relevant to the current task. Use the Read tool to access the full SKILL.md file for detailed process steps, validation criteria, and examples.
 
 # SUGGESTED PROMPTS
 

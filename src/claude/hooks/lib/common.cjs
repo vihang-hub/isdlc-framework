@@ -876,6 +876,149 @@ function getSkillOwner(skillId) {
 }
 
 /**
+ * Extract description from a SKILL.md file content.
+ * Supports two formats:
+ *   1. YAML frontmatter: description: "..." or description: ...
+ *   2. Markdown header: ## Description followed by text
+ * Falls back to null if description cannot be extracted.
+ *
+ * @param {string} content - SKILL.md file content
+ * @returns {string|null} Extracted description or null
+ * @private
+ * Traces to: FR-05 (dual-format description extraction)
+ */
+function _extractSkillDescription(content) {
+    if (!content || typeof content !== 'string' || content.trim().length === 0) {
+        return null;
+    }
+
+    // Try YAML frontmatter first (70% of files)
+    const yamlMatch = content.match(/^description:\s*["']?(.+?)["']?\s*$/m);
+    if (yamlMatch && yamlMatch[1].trim().length > 0) {
+        return yamlMatch[1].trim();
+    }
+
+    // Try Markdown ## Description header (30% of files)
+    const descHeaderIdx = content.indexOf('## Description');
+    if (descHeaderIdx !== -1) {
+        const afterHeader = content.substring(descHeaderIdx + '## Description'.length);
+        const lines = afterHeader.split('\n');
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.length > 0 && !trimmed.startsWith('#')) {
+                return trimmed;
+            }
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Get skill index for a given agent name.
+ * Returns array of {id, name, description, path} entries from the manifest,
+ * with descriptions extracted from SKILL.md files.
+ *
+ * Fail-open: returns empty array on any failure (null input, missing manifest,
+ * unknown agent, missing SKILL.md files).
+ *
+ * @param {string} agentName - Agent name (e.g., 'software-developer')
+ * @returns {Array<{id: string, name: string, description: string, path: string}>}
+ * Traces to: FR-01 (getAgentSkillIndex), AC-01, AC-06, NFR-02
+ */
+function getAgentSkillIndex(agentName) {
+    // Fail-open: guard against null/undefined/empty input
+    if (!agentName || typeof agentName !== 'string' || agentName.trim().length === 0) {
+        return [];
+    }
+
+    try {
+        const manifest = loadManifest();
+        if (!manifest || !manifest.ownership) {
+            return [];
+        }
+
+        const agentEntry = manifest.ownership[agentName];
+        if (!agentEntry || !agentEntry.skills || !Array.isArray(agentEntry.skills)) {
+            return [];
+        }
+
+        if (agentEntry.skills.length === 0) {
+            return [];
+        }
+
+        const projectRoot = getProjectRoot();
+        const result = [];
+
+        for (const skill of agentEntry.skills) {
+            try {
+                const skillMdPath = path.join(projectRoot, 'src', 'claude', 'skills', skill.path, 'SKILL.md');
+                const relativePath = path.join('src', 'claude', 'skills', skill.path, 'SKILL.md');
+
+                if (!fs.existsSync(skillMdPath)) {
+                    // Fail-open: skip missing SKILL.md files (AC-06)
+                    continue;
+                }
+
+                const content = fs.readFileSync(skillMdPath, 'utf8');
+                let description = _extractSkillDescription(content);
+
+                // Fallback to manifest name if description can't be extracted
+                if (!description) {
+                    description = skill.name;
+                }
+
+                result.push({
+                    id: skill.id,
+                    name: skill.name,
+                    description: description,
+                    path: relativePath
+                });
+            } catch (_skillErr) {
+                // Fail-open: skip individual skill on any error
+                continue;
+            }
+        }
+
+        return result;
+    } catch (_err) {
+        // Fail-open: return empty array on any unexpected error
+        return [];
+    }
+}
+
+/**
+ * Format a skill index array into a text block for injection into Task prompts.
+ * Returns empty string for empty array.
+ * Output stays within 30 lines for 14 entries (NFR-01).
+ *
+ * Format:
+ *   AVAILABLE SKILLS (consult when relevant using Read tool):
+ *     DEV-001: code-implementation -- Description text
+ *       -> src/claude/skills/development/code-implementation/SKILL.md
+ *     ...
+ *
+ * @param {Array<{id: string, name: string, description: string, path: string}>} skillIndex
+ * @returns {string} Formatted block or empty string
+ * Traces to: FR-02 (formatSkillIndexBlock), AC-02, NFR-01
+ */
+function formatSkillIndexBlock(skillIndex) {
+    if (!Array.isArray(skillIndex) || skillIndex.length === 0) {
+        return '';
+    }
+
+    const lines = [];
+    lines.push('AVAILABLE SKILLS (consult when relevant using Read tool):');
+
+    for (const entry of skillIndex) {
+        lines.push(`  ${entry.id}: ${entry.name} — ${entry.description}`);
+        lines.push(`    → ${entry.path}`);
+    }
+
+    return lines.join('\n');
+}
+
+/**
  * Get the phase for an agent from manifest
  * @param {string} agentName - Agent name
  * @returns {string|null} Phase or null
@@ -2908,6 +3051,8 @@ module.exports = {
     getManifestPath,
     loadManifest,
     getSkillOwner,
+    getAgentSkillIndex,
+    formatSkillIndexBlock,
     getAgentPhase,
     normalizeAgentName,
     isAgentAuthorizedForPhase,
