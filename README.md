@@ -2,15 +2,15 @@
 
 # iSDLC Framework
 
-<h3><em>Structured AI-powered software development, from requirements to production.</em></h3>
+<h3><em>Behind every chat, a structured development lifecycle — managing your backlog, running workflows, enforcing quality, tracking progress, and documenting every change so you pick up where you left off.</em></h3>
 
-<p><strong>An intelligent framework for Claude Code — self-adapting, constitution-governed, document-driven, and deterministically enforced from requirements to production.</strong></p>
+<p><strong>An invisible framework for Claude Code that orchestrates agents, skills, and hooks behind the scenes — managing workflows, enforcing quality gates, preserving context across sessions, and producing a traceable artifact chain from requirements to code review.</strong></p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Agents](https://img.shields.io/badge/Agents-48-purple.svg)](docs/AGENTS.md)
-[![Skills](https://img.shields.io/badge/Skills-240-green.svg)](docs/DETAILED-SKILL-ALLOCATION.md)
+[![Agents](https://img.shields.io/badge/Agents-59-purple.svg)](docs/AGENTS.md)
+[![Skills](https://img.shields.io/badge/Skills-242-green.svg)](docs/DETAILED-SKILL-ALLOCATION.md)
 [![Gates](https://img.shields.io/badge/Quality%20Gates-21-orange.svg)](docs/ARCHITECTURE.md#quality-gates)
-[![Hooks](https://img.shields.io/badge/Hooks-27-red.svg)](docs/HOOKS.md)
+[![Hooks](https://img.shields.io/badge/Hooks-31-red.svg)](docs/HOOKS.md)
 
 </div>
 
@@ -18,52 +18,98 @@
 
 ## What is iSDLC?
 
-The iSDLC (intelligent Software Development Lifecycle) framework works with both existing codebases and greenfield projects, guiding AI-powered development from requirements through production. It exists because LLM-based coding assistants are powerful but unreliable without external constraints — they skip tests, drift from requirements, lose context across sessions, and declare work "done" prematurely. iSDLC adds the structure they lack.
+The iSDLC (intelligent Software Development Lifecycle) framework adds structure to AI-powered development. It works in the background — detecting intent, selecting the right workflow, and managing the full lifecycle from requirements through production. You never have to learn commands, manage phase transitions, or remember what to do next.
 
-### Self-adapting
+It exists because LLM-based coding assistants are powerful but unreliable without external constraints — they skip tests, drift from requirements, lose context across sessions, and declare work "done" prematurely. iSDLC adds the structure they lack, invisibly.
 
-- **Codebase knowledge** — for existing projects, `/discover` runs 22 agents that map your architecture, test coverage, dependencies, and conventions — extracting behavior as acceptance criteria and generating characterization tests so the AI understands what's already there before changing anything
-- **Tech-stack-aware skills** — during discovery, the framework detects your technologies and activates relevant skills automatically — React projects get component and state management skills, Django projects get migration and ORM skills, and so on
-- **Adaptive workflow sizing** — automatically scales workflows to light, standard, or epic based on impact analysis, so small fixes don't carry the overhead of large features
-- **Self-correction with limits** — agents iterate autonomously to fix failing tests; circuit breakers stop infinite loops and escalate to a human instead of burning tokens
+### How it works
 
-### Constitution-governed
+Just talk to Claude naturally. The framework detects your intent and runs the right workflow:
 
-- **Specification primacy** — code serves specifications, not the other way around; requirements trace through architecture, design, tests, and implementation
-- **Per-project constitution** — `/discover` generates governance rules tailored to your codebase — coding standards, dependency constraints, architectural boundaries — that bind all downstream agents
-- **Constitutional validation** — hooks intercept phase completions and block advancement until artifacts comply with constitutional articles
+```
+You:     "The login page crashes when the password field is empty"
+Claude:  Kicks off a bug fix workflow — traces the root cause, writes a failing test,
+         implements the fix, validates through quality gates, and produces a reviewed PR.
 
-### Document-driven
+You:     "Add dark mode support"
+Claude:  Runs a feature workflow — captures requirements interactively, designs the
+         architecture, implements with test coverage, and validates quality.
 
-- **Structured workflows, not free-form chat** — each workflow type has a fixed phase sequence; agents execute in order with clear handoffs and typed artifacts
-- **Session persistence** — workflow state, phase progress, and iteration counters survive session boundaries; resume where you left off, not from scratch
-- **Artifact traceability** — every feature and bug fix is the anchor; each produces a chain of artifacts — requirements, architecture decisions, test cases, and code changes — so you can trace exactly what changed and why, even across sessions
+You:     "Upgrade React to v19"
+Claude:  Starts an upgrade workflow — analyzes breaking changes, plans migration steps,
+         applies changes, and validates everything still works.
+```
 
-### Deterministically enforced
+No commands to remember. No phases to manage. No process to follow. The framework handles it.
 
-- **Quality gates the AI can't skip** — 27 hooks run as separate Node.js processes outside the LLM conversation, enforcing iteration limits, test coverage thresholds, and phase sequencing
-- **Test-first development** — TDD enforcement with 80% coverage minimums; the agent cannot advance past implementation without passing tests
-- **Scope containment** — fix workflows are scoped to 6 phases, feature workflows to 9; the agent cannot invent extra steps or refactor unrelated code
-- **Human escalation** — when circuit breakers trip, iteration limits are exceeded, or gate checks fail repeatedly, the framework pauses and escalates to a human
+### Preparation pipeline
 
-### Available workflows
+For larger work, you can prepare requirements ahead of time and implement later:
+
+```
+You:     "Analyze the payment processing feature from JIRA-1234"
+Claude:  Pulls the ticket, scans the codebase, captures detailed requirements.
+         Stores everything in docs/requirements/payment-processing/.
+
+         ... days later, on a different machine ...
+
+You:     "Start working on the payment processing feature"
+Claude:  Picks up the prepared requirements, checks for staleness,
+         and begins implementation from Phase 02 (skipping requirements).
+```
+
+### Slash commands
+
+For users who prefer explicit control, slash commands are available:
 
 | Command | Description |
 |---------|-------------|
-| `/discover` | Analyze existing project or set up a new one |
-| `/isdlc feature "desc or Jira/Confluence link"` | Describe the feature in plain text or paste a Jira ticket or Confluence page link (requires Atlassian MCP). End-to-end development through 9 phases from requirements to code review. |
-| `/isdlc fix "desc or Jira/Confluence link"` | Describe the bug or paste a Jira ticket link (requires Atlassian MCP). TDD bug fix through 6 phases — root cause tracing, test-first fix, and quality validation. |
-| `/isdlc test generate` | Generate a test suite for your existing codebase. Recommended after `/discover` on existing projects to establish a safety net before making changes — analyzes coverage gaps and produces tests for untested code paths. |
-| `/isdlc test run` | Execute your project's test suite, track results, and report coverage. Use this to validate the current state of the codebase or verify changes after a feature or fix workflow. |
-| `/isdlc upgrade "name"` | Upgrade a dependency, runtime, or framework (e.g., `"React 19"`, `"Node 22"`, `"Prisma 6"`). Performs impact analysis, identifies breaking changes, and applies the upgrade with test validation. |
+| `/discover` | Analyze an existing project or set up a new one |
+| `/isdlc feature "description"` | Feature development through 9 phases |
+| `/isdlc fix "description"` | Bug fix through 6 phases — root cause tracing, test-first fix, quality validation |
+| `/isdlc test generate` | Generate tests for existing code — recommended after `/discover` |
+| `/isdlc test run` | Execute test suite and report coverage |
+| `/isdlc upgrade "name"` | Upgrade a dependency with impact analysis and test validation |
+| `/isdlc analyze "description"` | Prepare requirements ahead of time (Phase A) |
+| `/isdlc start "item"` | Begin implementation using prepared requirements (Phase B) |
+
+---
+
+## Why iSDLC?
+
+### Self-adapting
+
+- **Codebase knowledge** — `/discover` runs 23 agents that map your architecture, test coverage, dependencies, and conventions before changing anything
+- **Tech-stack-aware skills** — detects your technologies and activates relevant skills automatically (React, Django, Go, etc.)
+- **Adaptive workflow sizing** — scales to light, standard, or epic based on impact analysis
+- **Self-correction with limits** — agents iterate to fix failing tests; circuit breakers stop infinite loops and escalate to a human
+
+### Constitution-governed
+
+- **Specification primacy** — code serves specifications, not the other way around
+- **Per-project constitution** — `/discover` generates governance rules tailored to your codebase
+- **Constitutional validation** — hooks block phase advancement until artifacts comply
+
+### Document-driven
+
+- **Structured workflows** — fixed phase sequences with clear handoffs and typed artifacts
+- **Session persistence** — resume where you left off across sessions, not from scratch
+- **Artifact traceability** — every feature produces a chain: requirements, architecture, test cases, code changes
+
+### Deterministically enforced
+
+- **Quality gates the AI can't skip** — 31 hooks run as separate Node.js processes outside the LLM conversation
+- **Test-first development** — TDD enforcement with coverage minimums; the agent cannot advance without passing tests
+- **Scope containment** — fix workflows are scoped to 6 phases, features to 9; the agent cannot invent extra steps
+- **Human escalation** — circuit breakers, iteration limits, and gate failures pause and escalate to a human
 
 <details>
-<summary><strong>Agent breakdown (48 total)</strong></summary>
+<summary><strong>Agent breakdown (59 total)</strong></summary>
 
-- **16 SDLC agents** — 1 orchestrator (`/isdlc`) + 15 phase agents (requirements → operations → upgrades + quality loop)
-- **23 Discover agents** — 1 orchestrator (`/discover`) + 22 sub-agents that analyze existing projects (with behavior extraction & AC generation) or elicit vision for new ones (with inception party debate rounds)
-- **5 Exploration agents** — 1 quick scan (Phase 00) + 1 orchestrator + 3 impact analysis sub-agents (Phase 02 for features)
-- **4 Tracing agents** — 1 orchestrator + 3 sub-agents that trace bug root causes (Phase 02 for bugs)
+- **26 SDLC agents** — 1 orchestrator + 15 phase agents + 10 multi-agent team members (Creator/Critic/Refiner debates for requirements, architecture, design, test strategy; Writer/Reviewer/Updater for implementation)
+- **23 Discover agents** — 1 orchestrator + 22 sub-agents that analyze existing projects or elicit vision for new ones
+- **6 Exploration agents** — 1 quick scan + 1 orchestrator + 3 impact analysis sub-agents + 1 cross-validation verifier
+- **4 Tracing agents** — 1 orchestrator + 3 sub-agents that trace bug root causes
 
 </details>
 
@@ -82,62 +128,62 @@ The iSDLC (intelligent Software Development Lifecycle) framework works with both
 | **Node.js** | 20+ | Required for hooks and CLI |
 | **Claude Code** | Latest | [Install guide](https://docs.anthropic.com/en/docs/claude-code/overview) |
 
-### Step 1: Install the Framework
+### Install
 
-**macOS / Linux:**
+**Via npm (recommended):**
+```bash
+cd /path/to/your-project
+npx isdlc
+```
+
+**From source (macOS / Linux):**
 ```bash
 cd /path/to/your-project
 git clone <repo-url> isdlc-framework
 ./isdlc-framework/install.sh
 ```
 
-**Windows (PowerShell):**
+**From source (Windows PowerShell):**
 ```powershell
 cd C:\path\to\your-project
 git clone <repo-url> isdlc-framework
 .\isdlc-framework\install.ps1
 ```
 
-If blocked by execution policy:
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\isdlc-framework\install.ps1
-```
+The installer sets up 59 agents, 242 skills, 31 hooks, and the `.isdlc/` state directory. See [Installation Flow](docs/ARCHITECTURE.md#installation-flow) for details.
 
-Non-interactive (CI/CD):
-```powershell
-.\isdlc-framework\install.ps1 -Force
-```
-
-The installer copies 48 agents, 240 skills, 27 hooks, and settings into your project, sets up the `.isdlc/` state directory, and generates docs structure. See [Installation Flow](docs/ARCHITECTURE.md#installation-flow) for details.
-
-### Step 2: Start Using the Framework
+### Start using the framework
 
 ```bash
 claude
 ```
 
-- **`/discover`** — for existing projects, maps your architecture, tests, dependencies, and conventions; for new projects, elicits your vision through interactive prompts and multi-agent debate. Both produce a tailored project constitution.
-- **`/isdlc`** — for existing projects, presents feature, fix, test, and upgrade workflows scoped to your codebase; for new projects, guides you through end-to-end development starting from requirements.
+Then just describe what you want:
+
+- **Existing projects** — "fix the login bug", "add user authentication", "upgrade to Node 22"
+- **New projects** — run `/discover` to set up the project constitution, then describe features naturally
+- **Exploration** — `/discover` maps your architecture, tests, dependencies, and conventions
+
+The framework detects your intent and runs the appropriate workflow automatically.
 
 ---
 
 ## How iSDLC Solves AI Development Challenges
 
-AI coding assistants are powerful but have well-known failure modes. The iSDLC framework addresses eleven specific challenges through structural enforcement — 27 hooks, quality gates at every phase boundary, 48 agents, and configuration files that constrain AI behavior deterministically rather than relying on prompt instructions alone.
+AI coding assistants are powerful but have well-known failure modes. The iSDLC framework addresses eleven specific challenges through structural enforcement — 31 hooks, quality gates at every phase boundary, 59 agents, and configuration files that constrain AI behavior deterministically rather than relying on prompt instructions alone.
 
 ### 1. Enforcement Outside the LLM
 
 **The problem**: Prompt-based constraints can be ignored, reinterpreted, or forgotten as context grows. AI behavior is inherently non-deterministic — the same prompt produces different results. No amount of instruction-tuning guarantees the AI will follow rules once the conversation is long enough.
 
 **How iSDLC solves it**:
-- All 27 hooks run as **separate Node.js processes** — they intercept tool calls via Claude Code's `PreToolUse` and `PostToolUse` events and are not part of the LLM conversation
+- All 31 hooks run as **separate Node.js processes** — they intercept tool calls via Claude Code's `PreToolUse` and `PostToolUse` events and are not part of the LLM conversation
 - `iteration-corridor.cjs` enforces TEST and CONST corridors — when tests are failing, the agent can only fix code and re-run tests (no delegation, no gate advancement)
 - `gate-blocker.cjs` performs 4 checks before allowing phase advancement: iteration requirements, workflow validation, phase sequencing, and agent delegation verification
 - State-driven enforcement means behavior depends on `.isdlc/state.json` and config files, not on conversation history
 - **Fail-open safety**: if a hook crashes or times out, it allows the operation to proceed rather than blocking all work
 
-> *Mechanism*: 27 hooks as Node.js processes, `iteration-corridor.cjs` (TEST/CONST corridors), `gate-blocker.cjs` (5 checks), `.claude/settings.json` registration, fail-open design
+> *Mechanism*: 31 hooks as Node.js processes, `iteration-corridor.cjs` (TEST/CONST corridors), `gate-blocker.cjs` (5 checks), `.claude/settings.json` registration, fail-open design
 
 ### 2. Quality That Can't Be Skipped
 
@@ -173,7 +219,7 @@ AI coding assistants are powerful but have well-known failure modes. The iSDLC f
 - `workflows.json` defines the exact phase sequence for each workflow type (feature, fix, test, upgrade) — the agent cannot invent extra steps
 - Discovery context includes "DO NOT REDESIGN" constraints — agents extend existing patterns rather than proposing rewrites
 - `phase-sequence-guard.cjs` blocks out-of-order phase execution — the agent cannot jump ahead or revisit completed phases
-- Fix workflows are scoped to 6 phases (requirements → tracing → test strategy → implementation → quality loop → code review) with no architecture or design phases
+- Fix workflows are scoped to 6 phases (requirements, tracing, test strategy, implementation, quality loop, code review) with no architecture or design phases
 
 > *Mechanism*: `workflows.json` (fixed phase sequences), `phase-sequence-guard.cjs`, "DO NOT REDESIGN" constraint table, workflow-specific phase lists
 
@@ -182,12 +228,12 @@ AI coding assistants are powerful but have well-known failure modes. The iSDLC f
 **The problem**: AI assistants start every session with zero knowledge of your codebase. They guess at architecture, reinvent existing patterns, and propose changes that conflict with established conventions.
 
 **How iSDLC solves it**:
-- `/discover` runs 22 specialized agents that map architecture, test coverage, dependencies, and feature inventory
+- `/discover` runs 23 specialized agents that map architecture, test coverage, dependencies, and feature inventory
 - Discovery results are persisted as structured artifacts (constitution, architecture report, test evaluation, feature map)
 - The orchestrator injects **DISCOVERY CONTEXT** into Phases 01-03 delegation prompts, so downstream agents inherit project knowledge
 - The `--existing` flag triggers behavior extraction and characterization test generation for legacy code
 
-> *Mechanism*: `discover-orchestrator.md` (22 discover agents), orchestrator DISCOVERY CONTEXT injection, `--deep` / `--atdd-ready` flags
+> *Mechanism*: `discover-orchestrator.md` (23 discover agents), orchestrator DISCOVERY CONTEXT injection, `--deep` / `--atdd-ready` flags
 
 ### 6. Self-Correcting, Not Self-Looping
 
@@ -197,7 +243,7 @@ AI coding assistants are powerful but have well-known failure modes. The iSDLC f
 - **Circuit breaker** in `test-watcher.cjs`: 3 identical test failures trigger an automatic stop with human escalation
 - **Iteration limits**: each phase has a configured maximum (typically 5-10 iterations) — exceeding the limit forces escalation rather than infinite retry
 - `iteration-corridor.cjs` confines the agent to a "corridor" — when tests are failing, the agent can only edit code and re-run tests, nothing else
-- Escalation rules are defined in `iteration-requirements.json`: circuit breaker → human review, max iterations exceeded → human review, timeout → human notification
+- Escalation rules are defined in `iteration-requirements.json`: circuit breaker, max iterations exceeded, timeout — all escalate to human review
 
 > *Mechanism*: `test-watcher.cjs` (circuit breaker at 3), `iteration-corridor.cjs` (corridor confinement), `iteration-requirements.json` escalation rules
 
@@ -232,12 +278,12 @@ AI coding assistants are powerful but have well-known failure modes. The iSDLC f
 
 **How iSDLC solves it**:
 - Phase 01 (Requirements Analyst) uses interactive A/R/C elicitation — presenting menus where the user can **A**djust, **R**efine, or **C**ontinue
-- `menu-tracker.cjs` tracks elicitation progress (menu interactions and selections) while `gate-blocker.cjs` enforces the minimum of 3 interactions before allowing phase advancement
+- Multi-agent debate teams (Creator/Critic/Refiner) challenge requirements before they're finalized
+- `menu-tracker.cjs` tracks elicitation progress while `gate-blocker.cjs` enforces minimum interactions before allowing phase advancement
 - Bug reports include a **sufficiency check** — the requirements analyst validates expected behavior, actual behavior, and reproduction steps
 - `plan-surfacer.cjs` blocks delegation to implementation phases when the task plan hasn't been generated
-- For existing projects, `/discover` captures implicit knowledge (dependencies, conventions, test patterns) so agents don't have to guess
 
-> *Mechanism*: `menu-tracker.cjs` (min 3 interactions), `plan-surfacer.cjs`, bug sufficiency check in `01-requirements-analyst.md`, A/R/C menus
+> *Mechanism*: `menu-tracker.cjs` (min 3 interactions), `plan-surfacer.cjs`, bug sufficiency check, A/R/C menus, Creator/Critic/Refiner debates
 
 ### 10. Traceability
 
@@ -245,25 +291,25 @@ AI coding assistants are powerful but have well-known failure modes. The iSDLC f
 
 **How iSDLC solves it**:
 - Article VII (Artifact Traceability) in the constitution mandates that every artifact references its source
-- Each phase produces typed artifacts with explicit input/output relationships (requirements → architecture → design → tests → code)
-- The test design phase produces `ac-traceability.csv` mapping acceptance criteria → test cases → implementation files
+- Each phase produces typed artifacts with explicit input/output relationships (requirements, architecture, design, tests, code)
+- The test design phase produces `ac-traceability.csv` mapping acceptance criteria to test cases to implementation files
 - `gate-blocker.cjs` blocks phase advancement unless required artifacts are present
 
 > *Mechanism*: Article VII, `ac-traceability.csv`, `gate-blocker.cjs` artifact validation, typed phase artifacts
 
 ### 11. Multi-Agent Coordination
 
-**The problem**: Multi-agent systems are fragile — agents talk past each other, duplicate work, make contradictory decisions, and lack clear handoff protocols. Orchestrating 48 agents without chaos is a coordination problem, not just a prompting problem.
+**The problem**: Multi-agent systems are fragile — agents talk past each other, duplicate work, make contradictory decisions, and lack clear handoff protocols. Orchestrating 59 agents without chaos is a coordination problem, not just a prompting problem.
 
 **How iSDLC solves it**:
-- **4 orchestrators** provide entry points and coordination — `/isdlc` (SDLC orchestrator), `/discover` (discover orchestrator), impact-analysis orchestrator, and tracing orchestrator
-- `workflows.json` defines fixed, non-skippable phase sequences for each workflow type — agents execute in a defined order, not in parallel free-for-all
-- `delegation-gate.cjs` validates that the correct agent is delegated for each phase — the orchestrator cannot accidentally assign the wrong agent
-- `skill-delegation-enforcer.cjs` ensures `/isdlc` and `/discover` skill invocations are followed by delegation to the correct orchestrator agent
-- Phase 02 orchestrators (Impact Analysis, Tracing) each coordinate 3 parallel sub-agents with structured consolidation — parallelism is controlled, not ad-hoc
-- `no_halfway_entry` and `no_phase_skipping` rules in `workflows.json` prevent agents from entering workflows mid-stream
+- **4 orchestrators** provide entry points and coordination — SDLC orchestrator, discover orchestrator, impact-analysis orchestrator, and tracing orchestrator
+- `workflows.json` defines fixed, non-skippable phase sequences — agents execute in a defined order, not in parallel free-for-all
+- **Multi-agent debate teams** (Creator/Critic/Refiner) in creative phases ensure quality through structured disagreement
+- `delegation-gate.cjs` validates that the correct agent is delegated for each phase
+- `skill-delegation-enforcer.cjs` ensures skill invocations are followed by delegation to the correct orchestrator
+- Phase 02 orchestrators each coordinate 3-5 parallel sub-agents with structured consolidation
 
-> *Mechanism*: 4 orchestrators, `workflows.json` (fixed sequences), `delegation-gate.cjs`, `skill-delegation-enforcer.cjs`, parallel sub-agent orchestration
+> *Mechanism*: 4 orchestrators, `workflows.json` (fixed sequences), `delegation-gate.cjs`, `skill-delegation-enforcer.cjs`, multi-agent debate teams, parallel sub-agent orchestration
 
 ---
 
@@ -272,28 +318,13 @@ AI coding assistants are powerful but have well-known failure modes. The iSDLC f
 | Document | Description |
 |----------|-------------|
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture, hooks, agents, state management, end-to-end flow |
-| [HOOKS.md](docs/HOOKS.md) | All 26 hooks — what they block, warn, and track |
-| [AGENTS.md](docs/AGENTS.md) | All 48 agents with responsibilities and artifacts |
-| [DETAILED-SKILL-ALLOCATION.md](docs/DETAILED-SKILL-ALLOCATION.md) | 240 skills organized by category |
+| [HOOKS.md](docs/HOOKS.md) | All 31 hooks — what they block, warn, and track |
+| [AGENTS.md](docs/AGENTS.md) | All 59 agents with responsibilities and artifacts |
+| [DETAILED-SKILL-ALLOCATION.md](docs/DETAILED-SKILL-ALLOCATION.md) | 242 skills organized by category |
 | [CONSTITUTION-GUIDE.md](docs/CONSTITUTION-GUIDE.md) | Project governance principles |
 | [MONOREPO-GUIDE.md](docs/MONOREPO-GUIDE.md) | Multi-project setup |
 | [AUTONOMOUS-ITERATION.md](docs/AUTONOMOUS-ITERATION.md) | Self-correcting agent behavior |
 | [SKILL-ENFORCEMENT.md](docs/SKILL-ENFORCEMENT.md) | Runtime skill observability |
-<!-- | [MULTI-PROVIDER-SUPPORT-DESIGN.md](docs/designs/MULTI-PROVIDER-SUPPORT-DESIGN.md) | LLM provider configuration | -->
-
----
-
-## Project Status
-
-**Completed** (9 enhancements):
-- 48 agents, 240 skills, 21 enforced phases, 27 hooks
-- Project Constitution, Adaptive Workflow, Autonomous Iteration
-- Skill Observability, Deterministic Hooks, Monorepo Support
-- Task Planning, Phase 00 Exploration Mode, Multi-Provider LLM Support
-
-**In Progress**: Integration testing, real project validation
-
-**Planned**: Agent metrics, workflow visualization, portfolio dashboard
 
 ---
 
@@ -317,6 +348,6 @@ MIT License
 
 <div align="center">
 
-**iSDLC Framework** v0.1.0-alpha — 48 agents, 240 skills, 21 enforced phases, 27 hooks
+**iSDLC Framework** v0.1.0-alpha — 59 agents, 242 skills, 21 enforced phases, 31 hooks
 
 </div>
