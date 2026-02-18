@@ -363,7 +363,8 @@
 > **Context**: Phase A/B separation is unintuitive. The user experience between managing backlog items, analyzing them, and building them doesn't flow naturally. This redesign unifies the pipeline around three natural verbs (add/analyze/build) with persona-driven interactive analysis and transparent quality enrichment. Inspired by BMAD party mode pattern.
 > **Subsumes**: 8.1, 11.2/BUG-0022, 12.2/BUG-0024, 12.3, 12.4, 14.2/BUG-0028
 
-- 16.1 [ ] Three-verb backlog model (add / analyze / build) *(GitHub #19)*
+- 16.1 [x] ~~Three-verb backlog model (add / analyze / build)~~ *(GitHub #19)* -> [requirements](docs/requirements/REQ-0023-three-verb-backlog-model/)
+  - **Completed:** 2026-02-18
   - **Problem**: Phase A, Phase B, backlog picker, `/isdlc start`, `/isdlc analyze`, and `/isdlc feature` are overlapping entry points with unclear handoffs. Users don't know which command to use when. "Phase A" and "Phase B" are internal naming that leaks into the UX.
   - **Design**: Unify around three natural verbs:
     - **Add** — "add #42 to backlog" / "add this to backlog" → pulls from Jira, GitHub, or manual description → creates raw item in BACKLOG.md with source metadata + `docs/requirements/{slug}/draft.md`
@@ -434,6 +435,8 @@
 ## Completed
 
 ### 2026-02-18
+- [x] REQ-0023: Three-verb backlog model (add/analyze/build) — unified command surface around three natural verbs, eliminated Phase A/B naming, redesigned intent detection and orchestrator backlog picker *(GitHub #19, merged 7673354)* (backlog 16.1).
+  - New `three-verb-utils.cjs` library (8 utility functions, 636 LOC), updated `isdlc.md` (add/analyze/build verb handlers), `00-sdlc-orchestrator.md` (backlog picker removal), `CLAUDE.md.template` (intent detection rewrite), `delegation-gate.cjs` + `skill-delegation-enforcer.cjs` (add/analyze exemptions). 126 new tests, zero regressions. 9 FRs, 6 NFRs, 44 ACs.
 - [x] REQ-0022: Custom skill management — add, wire, and inject user-provided skills into workflows *(GitHub #14, merged 06f6925)* (backlog 13.1).
   - New `skill-manager.md` agent, 6 utility functions in `common.cjs` (loadExternalSkill, validateSkillFrontmatter, registerExternalSkill, wireSkillToAgents, getExternalSkillsForPhase, formatExternalSkillBlock), STEP 3d injection in `isdlc.md`, intent detection in CLAUDE.md. 111 new tests, zero regressions. 9 FRs, 6 NFRs, 27 ACs.
 - [x] BUG-0027-GH-15: Built-in skills never injected into agent Task prompts — added getAgentSkillIndex() + formatSkillIndexBlock() to common.cjs, STEP 3d skill index injection, 52 agent files updated with ## Skills section. 40 new tests, zero regressions. 5 FRs, 5 NFRs, 7 ACs *(GitHub #15, merged eeaae30)* (backlog 13.2).
