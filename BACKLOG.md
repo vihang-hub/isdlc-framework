@@ -358,7 +358,8 @@
   - **Severity**: Medium — interrupts user during framework processing
   - **Complexity**: Low-medium — mostly mechanical rewrites across agent files
 
-- 14.4 [ ] BUG-0030-GH-24: Impact analysis sub-agents anchor on quick scan file list instead of performing independent search *(GitHub #24)*
+- 14.4 [x] ~~BUG-0030-GH-24: Impact analysis sub-agents anchor on quick scan file list instead of performing independent search~~ *(GitHub #24)* -> [requirements](docs/requirements/BUG-0030-GH-24/)
+  - **Completed:** 2026-02-18
   - **Problem**: Phase 02 sub-agents trust the quick scan's file inventory instead of searching independently. When Phase 00 misses files, Phase 02 inherits the gap. Observed during BUG-0029 analysis — 3 agent files with multiline Bash were missed.
   - **Fix**: (A) Add "Do NOT rely on quick scan file lists" instruction to M1/M2/M3 agents. (C) Strengthen M4 cross-validator to independently verify file list completeness.
   - **Files**: `src/claude/agents/impact-analysis/impact-analyzer.md`, `entry-point-finder.md`, `risk-assessor.md`, `cross-validation-verifier.md`
@@ -442,6 +443,8 @@
 ## Completed
 
 ### 2026-02-18
+- [x] BUG-0030-GH-24: Impact analysis sub-agents perform independent search instead of anchoring on quick scan *(GitHub #24, merged d9a5bd6)* (backlog 14.4).
+  - Added independent Glob/Grep search directives to M1 (impact-analyzer), M2 (entry-point-finder), M3 (risk-assessor). Added Step 4c independent completeness verification to M4 (cross-validation-verifier) with `completeness_gap` finding category. 4 agent files modified, 1 new test file (17 tests), zero regressions.
 - [x] REQ-0023: Three-verb backlog model (add/analyze/build) — unified command surface around three natural verbs, eliminated Phase A/B naming, redesigned intent detection and orchestrator backlog picker *(GitHub #19, merged 7673354)* (backlog 16.1).
   - New `three-verb-utils.cjs` library (8 utility functions, 636 LOC), updated `isdlc.md` (add/analyze/build verb handlers), `00-sdlc-orchestrator.md` (backlog picker removal), `CLAUDE.md.template` (intent detection rewrite), `delegation-gate.cjs` + `skill-delegation-enforcer.cjs` (add/analyze exemptions). 126 new tests, zero regressions. 9 FRs, 6 NFRs, 44 ACs.
 - [x] REQ-0022: Custom skill management — add, wire, and inject user-provided skills into workflows *(GitHub #14, merged 06f6925)* (backlog 13.1).
