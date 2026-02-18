@@ -873,6 +873,42 @@ When this command is invoked:
 2. Pass the action and any flags to the agent
 3. The orchestrator handles it and returns
 
+**If action starts with `skill`** (REQ-0022: External Skill Management):
+
+Parse the subcommand: `add`, `wire`, `list`, or `remove`.
+
+**`skill add <path>`** (FR-001, FR-002, FR-003, FR-004):
+1. Extract `<path>` from user input
+2. Read file at `<path>` using Read tool. If not found: display error, abort.
+3. Validate the skill file inline:
+   - Check `.md` extension
+   - Check frontmatter presence (YAML `---` delimiters) and required fields (`name`, `description`)
+   - Check name format (lowercase alphanumeric with hyphens, 2+ chars)
+   - If validation fails: display all errors with correction guidance, abort
+4. Check path traversal: filename must not contain `/`, `\`, or `..`
+5. Load manifest via `loadExternalManifest()`. If null: initialize as `{ "version": "1.0.0", "skills": [] }`
+6. Check for duplicate by name. If found: prompt "Skill '{name}' already exists. Overwrite? [Y/N]"
+7. Copy file to external skills directory (resolve via `resolveExternalSkillsPath()`, create dir if needed)
+8. Analyze content for binding suggestions (scan body for phase keywords, generate suggestions with confidence)
+9. Delegate to `skill-manager` agent for wiring session (pass: skill name, description, suggestions, available phases)
+10. Write manifest with skill entry (name, description, file, added_at, bindings)
+11. Display confirmation: "Skill '{name}' registered and wired to phases: {phases}. Delivery: {delivery_type} | Mode: always"
+
+**`skill wire <name>`** (FR-003, FR-009):
+1. Load manifest. Find skill by name. If not found: display error with suggestion to run `skill list`.
+2. Delegate to `skill-manager` agent with existing bindings pre-loaded.
+3. Update skill entry with new bindings. Write manifest. Display confirmation.
+
+**`skill list`** (FR-006):
+1. Load manifest. If null or empty: display "No external skills registered. Use '/isdlc skill add <path>' to add one."
+2. For each skill: display formatted entry (name, phases, delivery type, mode).
+
+**`skill remove <name>`** (FR-007):
+1. Load manifest. Find skill by name. If not found: display error.
+2. Prompt: "Remove '{name}'? [K] Keep file [D] Delete file [C] Cancel"
+3. On K: Remove from manifest, preserve file. On D: Remove from manifest, delete file. On C: Abort.
+4. Write updated manifest. Display confirmation.
+
 **If action is `analyze`** (Phase A -- runs outside workflow machinery):
 1. Execute Phase A Preparation Pipeline (SCENARIO 5) directly -- no orchestrator needed
 2. Does NOT check for active workflow, does NOT initialize state.json
@@ -1025,6 +1061,26 @@ Use Task tool → {agent_name} with:
    {WORKFLOW MODIFIERS: {json} — if applicable}
    {DISCOVERY CONTEXT: ... — if phase 02 or 03}
    {SKILL INDEX BLOCK — look up target agent's owned skills from skills-manifest, format as AVAILABLE SKILLS block using getAgentSkillIndex() + formatSkillIndexBlock(). Include only if non-empty.}
+   {EXTERNAL SKILL INJECTION (REQ-0022) — After constructing the delegation prompt above, inject any matched external skill content. This block is fail-open — if anything fails, continue with the unmodified prompt.
+    1. Read docs/isdlc/external-skills-manifest.json (or monorepo equivalent) using Read tool.
+       If file does not exist or is empty: SKIP injection entirely (no-op).
+       Parse as JSON. If parse fails: SKIP injection (log warning).
+    2. Filter skills for current phase/agent:
+       For each skill in manifest.skills:
+         - If skill.bindings is missing: SKIP (backward compat)
+         - If skill.bindings.injection_mode !== "always": SKIP
+         - If current phase_key is NOT in skill.bindings.phases AND current agent name is NOT in skill.bindings.agents: SKIP
+         - This skill matches — proceed to injection
+    3. For each matched skill, read and format:
+       - Read the skill .md file from the external skills directory (.claude/skills/external/)
+       - If file not found: log warning, skip this skill
+       - If content > 10,000 chars: truncate and switch to reference delivery
+       - Format based on delivery_type:
+         "context": EXTERNAL SKILL CONTEXT: {name}\n---\n{content}\n---
+         "instruction": EXTERNAL SKILL INSTRUCTION ({name}): You MUST follow these guidelines:\n{content}
+         "reference": EXTERNAL SKILL AVAILABLE: {name} -- Read from {path} if relevant
+    4. Append all formatted blocks to the delegation prompt, joined with double newlines.
+    5. Error handling: If any error occurs in steps 1-4, continue with unmodified prompt. Log warning but never block.}
    Validate GATE-{NN} on completion."
 ```
 

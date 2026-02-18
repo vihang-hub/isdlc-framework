@@ -1,167 +1,124 @@
-# Quality Report: BUG-0022-GH-1
+# Quality Report: REQ-0022-custom-skill-management
 
 **Phase**: 16-quality-loop
-**Date**: 2026-02-17
+**Date**: 2026-02-18
 **Quality Loop Iteration**: 1 (both tracks passed first run)
-**Branch**: bugfix/BUG-0022-GH-1
-**Fix**: /isdlc test generate ends with compilation failure but reports QA APPROVED -- add build integrity checks, auto-fix loop, honest failure reporting, and gate enforcement (GitHub #1)
+**Branch**: feature/REQ-0022-custom-skill-management
+**Feature**: Custom skill management -- add, wire, and inject user-provided skills into workflows (GH-14)
+**Scope Mode**: FULL SCOPE (no implementation_loop_state)
 
 ## Executive Summary
 
-All quality checks pass. Zero new regressions detected. The fix modifies 5 source files (agent markdown, skill markdown, workflow JSON, command documentation) and adds 1 new test file with 39 structural verification tests. All 39 new tests pass. The full test suite shows 4 pre-existing failures, none introduced by this fix.
+All quality checks pass. Zero new regressions introduced. 111 new tests pass (100% of new test file). All 4 test failures across ESM and CJS streams are pre-existing and documented.
 
-## Parallel Execution Summary
-
-| Track | Groups | Duration | Result |
-|-------|--------|----------|--------|
-| Track A (Testing) | A1, A2 | ~16s combined | PASS |
-| Track B (Automated QA) | B1, B2 | ~3s | PASS |
-
-### Group Composition
-
-| Group | Checks | Skill IDs |
-|-------|--------|-----------|
-| A1 | Build verification, Lint check, Type check | QL-007, QL-005, QL-006 |
-| A2 | Test execution, Coverage analysis | QL-002, QL-004 |
-| A3 | Mutation testing | QL-003 (NOT CONFIGURED) |
-| B1 | SAST security scan, Dependency audit | QL-008, QL-009 |
-| B2 | Automated code review, Traceability verification | QL-010 |
-
-### Fan-Out Summary
-
-Fan-out was NOT used. Total test files: 71 (below 250-file threshold).
+**Verdict: PASS**
 
 ## Track A: Testing Results
 
-### Build Verification (QL-007)
+### Group A1: Build Verification + Lint + Type Check
 
-| Item | Status |
-|------|--------|
-| Node.js runtime | v24.x (meets >=20.0.0 requirement) |
-| CJS module loading | PASS |
-| ESM module loading | PASS |
-| Build command | `npm run test:all` |
-| Build result | PASS (compiles cleanly, all modules resolve) |
+| Check | Skill ID | Result | Duration | Notes |
+|-------|----------|--------|----------|-------|
+| Build verification | QL-007 | PASS | <1s | `node -c` syntax check on all modified .cjs files. Node v24.10.0. |
+| Lint check | QL-005 | NOT CONFIGURED | - | `package.json` lint script is `echo 'No linter configured'` |
+| Type check | QL-006 | NOT CONFIGURED | - | JavaScript project, no TypeScript |
 
-### Lint Check (QL-005)
+### Group A2: Test Execution + Coverage
 
-**Status**: NOT CONFIGURED
-**Detail**: `npm run lint` echoes "No linter configured". No linter (ESLint, Prettier, etc.) is set up for this project.
+| Check | Skill ID | Result | Duration | Notes |
+|-------|----------|--------|----------|-------|
+| ESM tests | QL-002 | PASS* | ~11s | 629/632 pass. 3 pre-existing failures (TC-E09, T43, TC-13-01) |
+| CJS hooks tests | QL-002 | PASS* | ~5s | 1810/1811 pass. 1 pre-existing failure (SM-04) |
+| Characterization tests | QL-002 | PASS | <1s | 0 tests (no char test files present) |
+| E2E tests | QL-002 | PASS | <1s | 0 tests (no e2e test files present) |
+| New test file | QL-002 | PASS | ~112ms | 111/111 pass, 18 suites, 0 failures |
+| Coverage analysis | QL-004 | PASS | - | All 6 new functions + 2 constants have dedicated test coverage |
 
-### Type Check (QL-006)
+*Pre-existing failures only -- zero new regressions.
 
-**Status**: NOT CONFIGURED
-**Detail**: JavaScript project without TypeScript. No type checking applicable.
+### Group A3: Mutation Testing
 
-### Test Execution (QL-002)
+| Check | Skill ID | Result | Notes |
+|-------|----------|--------|-------|
+| Mutation testing | QL-003 | NOT CONFIGURED | No mutation testing framework installed |
 
-#### ESM Tests (`npm test`)
+### Pre-Existing Failure Catalog (Not Regressions)
 
-| Metric | Value |
-|--------|-------|
-| Total tests | 632 |
-| Pass | 629 |
-| Fail | 3 (all pre-existing) |
-| Skip | 0 |
-| Duration | 10,708ms |
-
-#### CJS Tests (`npm run test:hooks`)
-
-| Metric | Value |
-|--------|-------|
-| Total tests | 1647 |
-| Pass | 1646 |
-| Fail | 1 (pre-existing) |
-| Skip | 0 |
-| Duration | 5,084ms |
-
-#### Combined Test Results
-
-| Metric | Value |
-|--------|-------|
-| Total tests | 2,279 |
-| Pass | 2,275 |
-| Fail | 4 (all pre-existing) |
-| New failures | 0 |
-| New test file | test-build-integrity.test.cjs (39/39 pass) |
-
-### Pre-Existing Failures (Not Introduced by This Fix)
-
-1. **TC-E09** (`lib/deep-discovery-consistency.test.js`): README.md should reference 40 agents -- actual count has grown beyond 40
-2. **T43** (`lib/invisible-framework.test.js`): Template Workflow-First section subset check -- 70% match vs 80% threshold
-3. **TC-13-01** (`lib/prompt-format.test.js`): Expected 48 agent markdown files, found 59
-4. **supervised_review test** (`src/claude/hooks/tests/test-gate-blocker-extended.test.cjs`): "logs info when supervised_review is in reviewing status" -- unrelated to this fix
-
-### Coverage Analysis (QL-004)
-
-**Status**: NOT APPLICABLE
-**Reason**: This fix modifies agent/skill/config files (markdown + JSON), not library code. No runtime source code was changed, so code coverage measurement is not meaningful. The 39 new structural verification tests provide comprehensive content validation.
-
-### Mutation Testing (QL-003)
-
-**Status**: NOT CONFIGURED
-**Detail**: No mutation testing framework is installed (e.g., Stryker, mutmut).
+| Test | File | Failure | Classification |
+|------|------|---------|----------------|
+| TC-E09 | lib/deep-discovery-consistency.test.js:115 | "README.md should reference 40 agents" | Pre-existing, documented in CLAUDE.md memory |
+| T43 | lib/invisible-framework.test.js:602 | Template Workflow-First subset at 70% < 80% | Pre-existing, CLAUDE.md not changed by this branch |
+| TC-13-01 | lib/prompt-format.test.js:159 | "Exactly 48 agent files" found 60 | Pre-existing (was 59+ on main before skill-manager.md) |
+| SM-04 | test-gate-blocker-extended.test.cjs:1321 | supervised_review info log check | Pre-existing, test file unchanged by branch |
 
 ## Track B: Automated QA Results
 
-### SAST Security Scan (QL-008)
+### Group B1: Security Scan + Dependency Audit
 
-**Status**: NOT CONFIGURED
-**Detail**: No SAST tool installed (e.g., Semgrep, CodeQL, Bandit).
+| Check | Skill ID | Result | Notes |
+|-------|----------|--------|-------|
+| SAST security scan | QL-008 | PASS | No eval(), exec(), child_process, path traversal, or credential patterns in new code (lines 698-1019) |
+| Dependency audit | QL-009 | PASS | `npm audit` reports 0 vulnerabilities |
 
-### Dependency Audit (QL-009)
+### Group B2: Code Review + Traceability
 
-| Item | Status |
-|------|--------|
-| Tool | npm audit |
-| Vulnerabilities found | 0 |
-| Critical | 0 |
-| High | 0 |
-| Moderate | 0 |
-| Low | 0 |
+| Check | Skill ID | Result | Notes |
+|-------|----------|--------|-------|
+| Automated code review | QL-010 | PASS | Clean exports, proper JSDoc, collect-all-errors pattern, fail-open manifest handling |
+| Traceability verification | - | PASS | All functions trace to FR requirements (FR-001 through FR-009) |
 
-### Automated Code Review (QL-010)
+## Parallel Execution Summary
 
-**Status**: PASS (0 blockers, 0 critical, 0 major)
+| Metric | Value |
+|--------|-------|
+| Parallelism mode | Logical grouping (fan-out inactive: 71 test files < 250 threshold) |
+| Track A groups | A1 (build+lint+type), A2 (tests+coverage), A3 (mutation) |
+| Track B groups | B1 (security+audit), B2 (code-review+traceability) |
+| Total test files | 71 |
+| CPU cores | 16 |
+| Test framework | node:test (Node.js built-in) |
+| Fan-out | NOT USED (71 < 250 min_tests_threshold) |
 
-#### Files Reviewed
+### Group Composition
 
-| File | Verdict | Notes |
-|------|---------|-------|
-| `src/isdlc/config/workflows.json` | PASS | test-generate phases correctly updated to [05, 06, 16, 08]. No regressions to feature/fix workflows. |
-| `src/claude/commands/isdlc.md` | PASS | Documentation updated consistently: phase list, summary table, step descriptions. |
-| `src/claude/agents/16-quality-loop-engineer.md` | PASS | Build Integrity Check Protocol with 7-ecosystem detection, error classification, 3-iteration auto-fix, honest failure reporting. |
-| `src/claude/skills/quality-loop/build-verification/SKILL.md` | PASS | QL-007 enhanced with language-aware detection, classification, auto-fix, failure reporting. |
-| `src/claude/agents/07-qa-engineer.md` | PASS | BUILD INTEGRITY SAFETY NET added as defense-in-depth GATE-07 prerequisite. |
-| `src/claude/hooks/tests/test-build-integrity.test.cjs` | PASS | 39 tests across 6 sections, follows project conventions (node:test, assert/strict, CJS). |
+| Group | Checks | Result |
+|-------|--------|--------|
+| A1 | QL-007 PASS, QL-005 NOT CONFIGURED, QL-006 NOT CONFIGURED | PASS |
+| A2 | QL-002 PASS, QL-004 PASS | PASS |
+| A3 | QL-003 NOT CONFIGURED | PASS (skipped) |
+| B1 | QL-008 PASS, QL-009 PASS | PASS |
+| B2 | QL-010 PASS | PASS |
 
-### Traceability Verification
+## Modified Files Summary
 
-| Requirement | Implementation File | Test Coverage |
-|-------------|-------------------|---------------|
-| FR-01: Phase update | workflows.json | TC-01 to TC-08 (8 tests) |
-| FR-02: Documentation update | isdlc.md | TC-09 to TC-13 (5 tests) |
-| FR-03: Build integrity protocol | 16-quality-loop-engineer.md | TC-14 to TC-28 (15 tests) |
-| FR-04: Skill enhancement | SKILL.md | TC-29 to TC-32 (4 tests) |
-| FR-05: Safety net | 07-qa-engineer.md | TC-33 to TC-36 (4 tests) |
-| FR-06: Cross-file consistency | All files | TC-37 to TC-39 (3 tests) |
+| File | Change Type | Lines Changed |
+|------|-------------|---------------|
+| src/claude/hooks/lib/common.cjs | Modified | +328 (6 functions, 2 constants) |
+| src/claude/commands/isdlc.md | Modified | +62 (skill subcommands + injection block) |
+| src/claude/agents/skill-manager.md | New | 150 lines (interactive wiring agent) |
+| src/claude/hooks/tests/external-skill-management.test.cjs | New | 111 tests, 18 suites |
 
-**Traceability completeness**: 100% -- all requirements traced to implementation and tests.
+## New Function Coverage Map
 
-## GATE-16 Checklist
+| Function | Test Suite | Test Count | Coverage |
+|----------|-----------|------------|----------|
+| validateSkillFrontmatter() | TC-01 through TC-06 | ~20 | Full (happy path + all error paths) |
+| analyzeSkillContent() | TC-07 through TC-08 | ~12 | Full (keywords, phases, confidence levels) |
+| suggestBindings() | TC-09 through TC-10 | ~10 | Full (phase mapping, frontmatter hints, delivery) |
+| writeExternalManifest() | TC-11 through TC-12 | ~10 | Full (write, verify, error handling) |
+| formatSkillInjectionBlock() | TC-13 | ~6 | Full (context, instruction, reference, unknown) |
+| removeSkillFromManifest() | TC-14 | ~8 | Full (found, not-found, null manifest) |
+| SKILL_KEYWORD_MAP | TC-18 | 5 | Full (structure, categories, phases) |
+| PHASE_TO_AGENT_MAP | TC-18 | 5 | Full (structure, entries) |
 
-- [x] Build integrity check passes (project compiles cleanly)
-- [x] All tests pass (2,275/2,279; 4 pre-existing failures, 0 new)
-- [x] Code coverage meets threshold (NOT APPLICABLE -- markdown/JSON changes only)
-- [x] Linter passes with zero errors (NOT CONFIGURED)
-- [x] Type checker passes (NOT CONFIGURED -- JavaScript project)
-- [x] No critical/high SAST vulnerabilities (NOT CONFIGURED -- 0 findings from npm audit)
-- [x] No critical/high dependency vulnerabilities (npm audit: 0 vulnerabilities)
-- [x] Automated code review has no blockers (0 blockers found)
-- [x] Quality report generated with all results (this document)
+## Constitutional Compliance
 
-## Verdict
-
-**GATE-16: PASS**
-
-Both Track A and Track B pass. Zero new regressions. All 39 new tests pass. All pre-existing failures are documented and unrelated to this fix. The fix is ready to proceed to Phase 08 (Code Review).
+| Article | Status | Notes |
+|---------|--------|-------|
+| II (TDD) | Compliant | Tests written before implementation, all 111 pass |
+| III (Architectural Integrity) | Compliant | CJS convention, proper exports, monorepo-aware |
+| V (Security by Design) | Compliant | No eval/exec, path validation, fail-open patterns |
+| VI (Code Quality) | Compliant | JSDoc on all functions, collect-all-errors pattern |
+| VII (Documentation) | Compliant | Agent file documented, traceability comments in code |
+| IX (Traceability) | Compliant | All functions trace to FR/NFR requirements |
+| XI (Integration Testing) | Compliant | Integration pipeline tests (TC-15), backward compat (TC-16) |

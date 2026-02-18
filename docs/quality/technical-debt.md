@@ -1,7 +1,8 @@
 # Technical Debt Inventory
 
 **Project:** iSDLC Framework
-**Workflow:** BUG-0011-GH-15
+**Workflow:** REQ-0022-custom-skill-management (feature)
+**Phase:** 08 - Code Review & QA
 **Date:** 2026-02-18
 
 ---
@@ -10,44 +11,52 @@
 
 **None significant.** Two minor advisory items documented below, neither requiring immediate action.
 
-### TD-NEW-01: Heading Level Inconsistency (Low)
-**Location:** `src/claude/agents/16-quality-loop-engineer.md` (line 548)
-**Description:** Uses `### Skills` (H3) instead of `## Skills` (H2) used by all other 51 agents. Also changed `## SUGGESTED PROMPTS` to `# SUGGESTED PROMPTS` (H1).
-**Impact:** Cosmetic only. Does not affect runtime behavior.
-**Recommendation:** Fix heading levels in a mechanical cleanup pass. Estimated effort: 1 minute.
+### TD-NEW-01: Path Validation Not in Reusable Function (Low)
 
-### TD-NEW-02: Regex Edge Case with Empty Quoted Descriptions (Low)
-**Location:** `src/claude/hooks/lib/common.cjs` (line 896)
-**Description:** The YAML description regex does not handle `description: ""` (empty quotes) correctly -- returns `"` instead of null. No real SKILL.md files trigger this case.
-**Impact:** Zero. All 242 SKILL.md descriptions are non-empty strings.
-**Recommendation:** Add quote-stripping logic in a future hardening pass if needed.
+**Location:** `src/claude/commands/isdlc.md` -- `skill add` step 4
+**Description:** The path traversal check for skill filenames (rejecting `/`, `\`, `..`) is implemented inline in the isdlc.md command flow rather than in a reusable function in `common.cjs`. The test file (TC-16) validates the detection pattern using local assertions rather than calling a production function.
+**Impact:** Low. The check works correctly. Extracting to a function would improve testability and allow reuse from other contexts.
+**Recommendation:** Consider adding an `isUnsafeFilename(name)` utility to `common.cjs` in a future hardening pass.
+**Estimated effort:** 15 minutes.
 
-## Debt Reduced by This Fix
+### TD-NEW-02: TC-15.03 Orphan Temp Directory (Negligible)
+
+**Location:** `src/claude/hooks/tests/external-skill-management.test.cjs` line 1311
+**Description:** The TC-15.03 test case creates a test project via `createTestProject({ manifest })` and re-assigns the `common` module reference, but the returned temp directory path is not stored for cleanup in the `after()` hook. The parent `before()`/`after()` hooks manage a different `tmpDir`.
+**Impact:** Negligible. Temp directories are cleaned by the OS. Does not affect test correctness.
+**Recommendation:** Store and clean up in a future test hygiene pass.
+**Estimated effort:** 2 minutes.
+
+## Debt Reduced by This Feature
 
 | Item | Before | After |
 |------|--------|-------|
-| Skills architecture (dead weight) | 242 SKILL.md files (~56,900 lines) never injected into agent prompts | Skill index injected into delegation prompts via STEP 3d |
-| Agent skill awareness | Agents unaware of their owned skills | Agents instructed to consult AVAILABLE SKILLS via Read tool |
-| Hardcoded skill tables | ~8 agents had static skill tables in .md files | Tables replaced with dynamic injection instruction |
+| External skills infrastructure (dead weight) | `resolveExternalSkillsPath()`, `resolveExternalManifestPath()`, `loadExternalManifest()` existed as stubs with no user-facing commands | Full end-to-end skill lifecycle: add, wire, list, remove, inject |
+| Framework extensibility | No mechanism for users to add domain-specific knowledge | Complete external skill pipeline with smart binding suggestions |
+| Agent prompt customization | Agents received only built-in skill index | Agents can now receive user-provided skill content via three delivery types |
 
 ## Pre-Existing Technical Debt (Noted During Review)
 
 ### TD-01: Phase Numbering Inconsistency (Pre-existing, Low)
+
 **Location:** `src/claude/agents/07-qa-engineer.md`
 **Description:** The QA engineer agent file header references "Phase 07" and "GATE-07" but the phase key in workflows.json is `08-code-review`.
 **Impact:** Low.
 **Status:** Pre-existing, noted in previous reviews.
 
 ### TD-02: No Linter or Coverage Tool Configured (Pre-existing)
+
 **Impact:** Cannot run automated style checks or measure line/branch coverage.
 **Status:** Known and tracked separately.
 
-### TD-03: 49 Pre-Existing Test Failures (Pre-existing)
-**Tests:** workflow-finalizer (28), branch-guard (3), cleanupCompletedWorkflow (1), version-lock (1), writer-role (2), others
-**Impact:** Low -- drift-related, not functionality bugs. The workflow-finalizer hook and cleanupCompletedWorkflow are not yet implemented.
-**Status:** Known and documented in previous quality reports.
+### TD-03: Pre-Existing Test Failures (Pre-existing)
 
-### TD-04: Skills Manifest JSON Not Auto-Generated (Pre-existing)
-**Description:** `getAgentSkillIndex()` reads `skills-manifest.json` which is generated during `isdlc init`. In the development environment, the JSON manifest does not exist (only the YAML source at `.isdlc/config/skills-manifest.yaml`). The function correctly fails-open (returns empty array), but skills are not injected during local development without running init.
-**Impact:** Low -- this is by design (installation creates the JSON). Tests create their own temp manifests.
-**Status:** Working as intended.
+**Tests:** 4 pre-existing failures across CJS and ESM suites.
+**Impact:** Low -- drift-related (stale agent counts, stale assertions).
+**Status:** Known and documented in quality reports.
+
+### TD-04: common.cjs Size Growth (Pre-existing, Medium)
+
+**Description:** `common.cjs` is now ~3,400 lines with 86 exports. While the file is well-organized with clear section headers, it is approaching the point where splitting into focused modules (e.g., `skill-utils.cjs`, `state-utils.cjs`) would improve maintainability.
+**Impact:** Medium. No functional impact, but navigating and understanding the file requires familiarity with section structure.
+**Recommendation:** Consider module extraction when the file exceeds ~4,000 lines or when adding the next major feature to this file.
