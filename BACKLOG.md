@@ -350,13 +350,20 @@
 
 - 14.2 [x] ~~BUG-0028-GH-17: Phase B re-runs Phase 00/01 instead of skipping to Phase 02~~ *(GitHub #17)* — subsumed by 16.5 (build auto-detection eliminates Phase A/B handoff entirely; `/isdlc start` removed)
 
-- 14.3 [ ] BUG-0029-GH-18: Framework agents generate multiline Bash commands that bypass permission auto-allow rules *(GitHub #18)*
+- 14.3 [A] BUG-0029-GH-18: Framework agents generate multiline Bash commands that bypass permission auto-allow rules *(GitHub #18)* -> [requirements](docs/requirements/BUG-0029-GH-18-multiline-bash-permission-bypass/)
   - **Problem**: Agents generate multiline inline shell scripts (`for`/`do`/`done`, `node -e "..."` with embedded JS). Claude Code's `*` glob doesn't match newlines, so these always prompt for permission even when individual commands are auto-allowed.
   - **Fix**: (A) Prefer single-line equivalents (`grep -r` over `for` loops, `&&` chaining). (B) Extract complex scripts to files (`bin/update-phase-state.js`). (C) Add single-line Bash convention to agent shared protocols.
   - **Files**: Agent `.md` files (discover agents, impact analysis agents), `isdlc.md` (state update scripts), `CLAUDE.md` or shared protocols
   - **Related**: BUG-0028-GH-17 (also has multiline `node -e` state updates)
   - **Severity**: Medium — interrupts user during framework processing
   - **Complexity**: Low-medium — mostly mechanical rewrites across agent files
+
+- 14.4 [ ] BUG-0030-GH-24: Impact analysis sub-agents anchor on quick scan file list instead of performing independent search *(GitHub #24)*
+  - **Problem**: Phase 02 sub-agents trust the quick scan's file inventory instead of searching independently. When Phase 00 misses files, Phase 02 inherits the gap. Observed during BUG-0029 analysis — 3 agent files with multiline Bash were missed.
+  - **Fix**: (A) Add "Do NOT rely on quick scan file lists" instruction to M1/M2/M3 agents. (C) Strengthen M4 cross-validator to independently verify file list completeness.
+  - **Files**: `src/claude/agents/impact-analysis/impact-analyzer.md`, `entry-point-finder.md`, `risk-assessor.md`, `cross-validation-verifier.md`
+  - **Severity**: Medium — leads to incomplete impact analysis propagating to downstream phases
+  - **Complexity**: Low — prompt-only changes to 4 agent files
 
 ### 16. Backlog & Analysis Redesign (from 2026-02-18 brainstorm)
 
