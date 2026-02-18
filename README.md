@@ -42,21 +42,26 @@ Claude:  Starts an upgrade workflow — analyzes breaking changes, plans migrati
 
 No commands to remember. No phases to manage. No process to follow. The framework handles it.
 
-### Preparation pipeline
+### Three-verb backlog model
 
-For larger work, you can prepare requirements ahead of time and implement later:
+Manage your backlog naturally with three verbs — **add**, **analyze**, and **build**:
 
 ```
-You:     "Analyze the payment processing feature from JIRA-1234"
-Claude:  Pulls the ticket, scans the codebase, captures detailed requirements.
-         Stores everything in docs/requirements/payment-processing/.
+You:     "Add the payment processing feature from JIRA-1234"
+Claude:  Pulls the ticket, creates a draft in the backlog. Quick intake, no analysis.
+
+You:     "Analyze the payment processing feature"
+Claude:  Runs interactive requirements capture, scans the codebase, produces
+         architecture and design — all stored in docs/requirements/.
 
          ... days later, on a different machine ...
 
-You:     "Start working on the payment processing feature"
-Claude:  Picks up the prepared requirements, checks for staleness,
-         and begins implementation from Phase 02 (skipping requirements).
+You:     "Build the payment processing feature"
+Claude:  Detects that analysis is complete, picks up where it left off,
+         and begins implementation from the right phase.
 ```
+
+Each verb is a natural escalation: **add** captures the idea, **analyze** deepens understanding, **build** executes the work.
 
 ### Slash commands
 
@@ -70,8 +75,9 @@ For users who prefer explicit control, slash commands are available:
 | `/isdlc test generate` | Generate tests for existing code — recommended after `/discover` |
 | `/isdlc test run` | Execute test suite and report coverage |
 | `/isdlc upgrade "name"` | Upgrade a dependency with impact analysis and test validation |
-| `/isdlc analyze "description"` | Prepare requirements ahead of time (Phase A) |
-| `/isdlc start "item"` | Begin implementation using prepared requirements (Phase B) |
+| `/isdlc add "description"` | Add an item to the backlog (quick intake, no analysis) |
+| `/isdlc analyze "description"` | Analyze a backlog item — interactive requirements, architecture, design |
+| `/isdlc build "item"` | Build a backlog item — auto-detects analysis level, starts from the right phase |
 
 ---
 
