@@ -85,11 +85,14 @@ AC3: "User can choose language"
 
 ## Step 3: Identify Directly Affected Areas
 
+**IMPORTANT -- Independent Search Requirement**: You MUST perform independent Glob/Grep search of the codebase to discover affected files. Do NOT rely solely on the quick scan file list -- treat quick scan output as supplementary context only. Use Glob patterns to search by file extension and path patterns relevant to the requirements. Use Grep to search for keywords, function names, imports, and patterns mentioned in the requirements.
+
 Based on requirements keywords and acceptance criteria:
 
 ```
 1. Search for files matching domain keywords
-   - grep for "user", "preference", "settings" in file names and content
+   - Use Glob to find files by name/extension patterns
+   - Use Grep for "user", "preference", "settings" in file names and content
 
 2. Search for modules matching technical keywords
    - Look for API routes, services, repositories related to feature

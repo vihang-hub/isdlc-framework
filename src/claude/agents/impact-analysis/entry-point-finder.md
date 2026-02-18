@@ -92,6 +92,8 @@ AC3: "System sends notification when preferences change"
 
 ## Step 3: Search for Existing Entry Points
 
+**IMPORTANT -- Independent Search Requirement**: You MUST perform independent Glob/Grep search of the codebase to discover entry points. Do NOT rely solely on the quick scan file list -- treat quick scan output as supplementary context only. Search for route definitions, API endpoints, CLI command handlers, event listeners, and other entry points using Glob and Grep patterns.
+
 Based on requirements, search each entry point type:
 
 ### API Endpoints

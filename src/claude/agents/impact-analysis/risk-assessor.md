@@ -87,6 +87,8 @@ AC3: "System sends notification when preferences change"
 
 ## Step 3: Detect Coverage Gaps Per Acceptance Criterion
 
+**IMPORTANT -- Independent Search Requirement**: You MUST perform independent Glob/Grep search of the codebase to discover all files relevant to risk assessment. Do NOT rely solely on the quick scan file list -- treat quick scan output as supplementary context only. Search for test files, configuration files, dependency declarations, and coupling points using Glob and Grep patterns.
+
 For each identified area:
 
 ```

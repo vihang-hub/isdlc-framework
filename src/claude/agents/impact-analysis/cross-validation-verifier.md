@@ -252,6 +252,22 @@ For each module:
   If total == 0: completeness_score = 100
 
 
+## Step 4c: Independent Completeness Verification
+
+Before finalizing your verification report, perform an independent Glob/Grep search of the codebase to verify the file lists from M1/M2/M3 are complete. Search for file patterns relevant to the requirements that may have been missed by all three sub-agents. If you discover files not listed by any sub-agent, report them as `completeness_gap` findings.
+
+Do NOT simply cross-reference the outputs of other agents -- you must independently verify against the actual codebase. For each file discovered that was missed by all sub-agents:
+
+  Finding:
+    id: CV-{NNN}
+    severity: WARNING
+    category: completeness_gap
+    description: "File {path} is relevant to the requirements but was not
+                  reported by any sub-agent (M1/M2/M3)"
+    affected_agents: ["M1-missing", "M2-missing", "M3-missing"]
+    recommendation: "Include {path} in the impact analysis"
+
+
 ## Step 5: Classify and Report
 
 **Assign finding IDs:**
