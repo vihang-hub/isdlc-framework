@@ -1098,6 +1098,37 @@ Use Task tool → {agent_name} with:
          "reference": EXTERNAL SKILL AVAILABLE: {name} -- Read from {path} if relevant
     4. Append all formatted blocks to the delegation prompt, joined with double newlines.
     5. Error handling: If any error occurs in steps 1-4, continue with unmodified prompt. Log warning but never block.}
+   {GATE REQUIREMENTS INJECTION (REQ-0024) — Inject gate pass criteria so the agent knows what hooks will check before it starts. This block is fail-open — if anything fails, continue with the unmodified prompt.
+    1. Read `src/claude/hooks/config/iteration-requirements.json` using Read tool.
+       If file does not exist: SKIP injection entirely (no-op).
+       Parse as JSON. If parse fails: SKIP injection.
+    2. Look up `phase_requirements[{phase_key}]` from the parsed config.
+       If the phase key has no entry: SKIP injection (phase has no gate requirements).
+    3. Read `src/claude/hooks/config/artifact-paths.json` using Read tool (optional — skip if missing).
+       Extract `phases[{phase_key}].paths[]` if present. For each path, replace `{artifact_folder}` with the actual artifact folder name.
+    4. If `constitutional_validation` is enabled for this phase, read `docs/isdlc/constitution.md`.
+       Extract article titles using the pattern `### Article {ID}: {Title}` for each article ID listed in the phase config's `constitutional_validation.articles[]` array.
+    5. Format and append the following block to the delegation prompt:
+
+       GATE REQUIREMENTS FOR PHASE {NN} ({Phase Name}):
+
+       Iteration Requirements:
+         - test_iteration: {enabled|disabled} {(max N iterations, coverage >= N%) if enabled}
+         - constitutional_validation: {enabled|disabled} {(Articles: list with titles, max N iterations) if enabled}
+         - interactive_elicitation: {enabled|disabled}
+         - agent_delegation: {enabled|disabled}
+         - artifact_validation: {enabled|disabled}
+
+       Required Artifacts: (only if artifact paths exist for this phase)
+         - {resolved path 1}
+         - {resolved path 2}
+
+       Constitutional Articles to Validate: (only if constitutional_validation is enabled)
+         - Article {ID}: {Title}
+
+       DO NOT attempt to advance the gate until ALL enabled requirements are satisfied.
+
+    6. Error handling: If any error occurs in steps 1-5, continue with unmodified prompt. Log warning but never block.}
    Validate GATE-{NN} on completion."
 ```
 
