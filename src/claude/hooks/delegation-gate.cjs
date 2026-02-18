@@ -24,11 +24,12 @@ const {
 } = require('./lib/common.cjs');
 
 /**
- * BUG-0021: Subcommands that run inline without orchestrator delegation.
- * Defense-in-depth: if a pending_delegation marker exists for an exempt action,
- * auto-clear it without blocking.
+ * REQ-0023: Three-verb model inline commands exempt from delegation enforcement.
+ * Defense-in-depth: if a pending_delegation marker exists for an exempt action
+ * (add, analyze), auto-clear it without blocking.
+ * `build` is NOT exempt -- delegation must occur.
  */
-const EXEMPT_ACTIONS = new Set(['analyze']);
+const EXEMPT_ACTIONS = new Set(['add', 'analyze']);
 
 /**
  * Check if the skill_usage_log contains a delegation to the required agent

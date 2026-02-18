@@ -10,17 +10,17 @@ When the user speaks, classify their intent into one of these categories using t
 
 | Intent | Signal Words / Patterns | Command (internal) |
 |-------------|-----------------------------------------------|-------------------------------|
-| **Feature** | build, implement, create, new feature, refactor, redesign | `/isdlc feature "<description>"` |
+| **Add** | add to backlog, track this, log this, remember this, save this idea, note this down | `/isdlc add "<description>"` |
+| **Analyze** | analyze, think through, plan this, review requirements, assess impact, design this, prepare | `/isdlc analyze "<item>"` |
+| **Build** | build, implement, create, code, develop, ship, make this, let's do this, refactor, redesign | `/isdlc build "<description>"` |
 | **Fix** | broken, fix, bug, crash, error, wrong, failing, not working, 500 | `/isdlc fix "<description>"` |
-| **Intake** | add to backlog, import ticket, intake, add {ticket} to the backlog | `/isdlc analyze "<ticket>"` (Phase A intake only) |
-| **Analyze** | analyze, deep analysis, prepare requirements, prepare {item} | `/isdlc analyze "<description>"` (Phase A intake + deep analysis) |
-| **Start (Phase B)** | start {item}, let's work on {item}, begin {item}, execute {item} | `/isdlc start "<item>"` (Phase B -- consumes prepared requirements, skips Phase 00/01) |
 | **Upgrade** | upgrade, update, bump, version, dependency, migrate | `/isdlc upgrade "<target>"` |
 | **Test run** | run tests, run the tests, check if tests pass, execute test suite | `/isdlc test run` |
 | **Test generate** | write tests, add tests, add unit tests, generate tests, test coverage | `/isdlc test generate` |
 | **Discovery** | set up, configure, initialize, discover, setup the project | `/discover` |
+| **Skill mgmt** | add a skill, register skill, new skill, wire skill, bind skill, list skills, show skills, remove skill, delete skill | `/isdlc skill {subcommand}` |
 
-**Preparation Pipeline**: Requirements can be prepared ahead of time (Phase A) and consumed later (Phase B). Phase A writes to `docs/requirements/{slug}/` without touching state.json, hooks, or branches. Phase B validates the prepared artifacts and starts the workflow from Phase 02 (impact analysis). See the `analyze` and `start` commands above.
+**Disambiguation**: If the user's intent could match both Add and Analyze (e.g., "add and analyze this"), resolve to **Analyze** -- the analyze verb implicitly runs add first if the item does not yet exist. If the intent could match both Analyze and Build (e.g., "let's work on this"), resolve to **Build** -- build encompasses the full workflow. If truly ambiguous, ask a brief clarifying question.
 
 ### Step 2 -- Get Consent
 
@@ -39,7 +39,7 @@ After detecting intent, present a single concise confirmation message in plain l
 - **Ambiguous intent**: If the intent is unclear (could be feature or fix), ask a brief clarifying question rather than guessing
 - **Questions / exploration**: If the user asks questions, explores code, or seeks explanation -- respond normally. Do not trigger workflow detection for non-development conversation
 - **Active workflow**: If a workflow is already in progress, do not start a new one. Inform the user and suggest they continue the current workflow or cancel it first
-- **Refactor requests**: Treat refactoring as a feature intent (refactoring follows the feature workflow)
+- **Refactor requests**: Treat refactoring as a Build intent (refactoring follows the feature workflow)
 - **Non-dev requests**: Requests like "explain this code", "what does this function do", or "help me understand" are not development tasks -- skip intent detection entirely
 
 ### Backward Compatibility

@@ -1,67 +1,55 @@
-# Coverage Report: REQ-0022-custom-skill-management
+# Coverage Report: REQ-0023-three-verb-backlog-model
 
 **Phase**: 16-quality-loop
 **Date**: 2026-02-18
-**Branch**: feature/REQ-0022-custom-skill-management
+**Branch**: feature/REQ-0023-three-verb-backlog-model
 
 ## Coverage Summary
 
 | Stream | Total Tests | Pass | Fail | Pre-Existing Fail | New Fail |
 |--------|-------------|------|------|--------------------|----------|
-| ESM (lib/) | 632 | 629 | 3 | 3 | 0 |
-| CJS (hooks/) | 1811 | 1810 | 1 | 1 | 0 |
-| Characterization | 0 | 0 | 0 | 0 | 0 |
-| E2E | 0 | 0 | 0 | 0 | 0 |
-| **Total** | **2443** | **2439** | **4** | **4** | **0** |
+| CJS (hooks) | 1945 | 1944 | 1 | 1 | 0 |
+| ESM (lib) | 632 | 630 | 2 | 2 | 0 |
+| **Total** | **2577** | **2574** | **3** | **3** | **0** |
 
-## New Code Coverage
+**Quantitative coverage**: NOT CONFIGURED (no c8/nyc/istanbul installed)
 
-### New Functions in common.cjs (6 functions, 2 constants)
+## New Feature Test Coverage
 
-| Function | Lines | Tests | Branches Covered | Assessment |
-|----------|-------|-------|------------------|------------|
-| validateSkillFrontmatter() | 69 | ~20 | All error paths (V-001 through V-006) | Full |
-| analyzeSkillContent() | 32 | ~12 | Empty/null input, 0/1/3+ keywords, all confidence levels | Full |
-| suggestBindings() | 36 | ~10 | Phase mapping, hints, delivery types, contentLength | Full |
-| writeExternalManifest() | 25 | ~10 | Success, validation fail, write error, dir creation | Full |
-| formatSkillInjectionBlock() | 12 | ~6 | context, instruction, reference, unknown type | Full |
-| removeSkillFromManifest() | 12 | ~8 | Found, not-found, null manifest, empty skills array | Full |
-| SKILL_KEYWORD_MAP | const | 5 | 7 categories, phases arrays, keywords arrays | Full |
-| PHASE_TO_AGENT_MAP | const | 5 | 11 entries, all phase-to-agent mappings | Full |
+### src/claude/hooks/lib/three-verb-utils.cjs (636 lines, 14 exported functions)
 
-### Test File: external-skill-management.test.cjs
+| Function | Tests | Positive | Negative | Boundary | Edge |
+|----------|-------|----------|----------|----------|------|
+| generateSlug | 12 | 4 | 4 | 2 | 2 |
+| detectSource | 6 | 3 | 1 | 0 | 2 |
+| deriveAnalysisStatus | 4 | 2 | 1 | 0 | 1 |
+| deriveBacklogMarker | 4 | 3 | 0 | 0 | 1 |
+| readMetaJson | 7 | 2 | 2 | 0 | 3 |
+| writeMetaJson | 4 | 2 | 0 | 0 | 2 |
+| parseBacklogLine | 7 | 4 | 1 | 0 | 2 |
+| updateBacklogMarker | 6 | 2 | 2 | 0 | 2 |
+| appendToBacklog | 6 | 3 | 0 | 1 | 2 |
+| resolveItem | 16 | 5 | 3 | 0 | 8 |
+| findBacklogItemByNumber | 4 | 1 | 1 | 0 | 2 |
+| findByExternalRef | 4 | 2 | 1 | 0 | 1 |
+| searchBacklogTitles | 3 | 1 | 1 | 0 | 1 |
+| findDirForDescription | 3 | 1 | 1 | 0 | 1 |
 
-| Suite | Tests | Pass | Fail |
-|-------|-------|------|------|
-| TC-01: validateSkillFrontmatter - file checks | 4 | 4 | 0 |
-| TC-02: validateSkillFrontmatter - frontmatter | 4 | 4 | 0 |
-| TC-03: validateSkillFrontmatter - required fields | 4 | 4 | 0 |
-| TC-04: validateSkillFrontmatter - name format | 5 | 5 | 0 |
-| TC-05: validateSkillFrontmatter - body extraction | 3 | 3 | 0 |
-| TC-06: validateSkillFrontmatter - collect-all-errors | 2 | 2 | 0 |
-| TC-07: analyzeSkillContent - keyword detection | 6 | 6 | 0 |
-| TC-08: analyzeSkillContent - confidence levels | 4 | 4 | 0 |
-| TC-09: suggestBindings - phase/agent mapping | 6 | 6 | 0 |
-| TC-10: suggestBindings - delivery type | 5 | 5 | 0 |
-| TC-11: writeExternalManifest - write/verify | 5 | 5 | 0 |
-| TC-12: writeExternalManifest - error handling | 4 | 4 | 0 |
-| TC-13: formatSkillInjectionBlock | 5 | 5 | 0 |
-| TC-14: removeSkillFromManifest | 6 | 6 | 0 |
-| TC-15: Integration pipeline | 13 | 13 | 0 |
-| TC-16: Backward compatibility | 9 | 9 | 0 |
-| TC-17: Performance | 3 | 3 | 0 |
-| TC-18: Constants validation | 5 | 5 | 0 |
-| **Total** | **111** | **111** | **0** |
+**Additional test categories:**
+- Constants (MARKER_REGEX, ANALYSIS_PHASES): 5 tests
+- Error codes (ERR-*): 18 tests
+- Performance (NFR-004): 3 tests
+- Cross-platform CRLF (NFR-005): 2 tests
+- Integration scenarios: 17 tests
 
-## Coverage Assessment
+**Total new tests**: 126
 
-All 6 new functions have comprehensive test coverage including:
-- Happy path (valid inputs)
-- Error paths (missing files, invalid frontmatter, parse errors)
-- Edge cases (null inputs, empty strings, boundary values)
-- Integration tests (end-to-end pipeline from validate through inject)
-- Backward compatibility (existing functions unaffected by additions)
-- Performance benchmarks (sub-100ms per-operation)
-- Security tests (path traversal, special characters in names)
+## Pre-Existing Failures (unchanged)
 
-**Coverage threshold: MEETS 80%+ requirement for new code.**
+1. CJS: gate-blocker supervised_review stderr assertion (1 test)
+2. ESM: README agent count expects 40 (1 test)
+3. ESM: Agent file count expects 48, found 60 (1 test)
+
+## Recommendation
+
+Install `c8` for quantitative line/branch coverage measurement.
