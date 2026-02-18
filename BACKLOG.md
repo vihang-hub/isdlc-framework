@@ -250,7 +250,7 @@
 
 ### 8. Workflow Quality
 
-- 8.1 [ ] Requirements debate before workflow start — for new features and bugs, engage in a structured discussion/debate about the requirement or issue before initiating the iSDLC workflow. Clarify scope, challenge assumptions, explore alternatives, and converge on a shared understanding. Only after the debate concludes should the workflow (feature/fix) be kicked off with a well-refined description.
+- 8.1 [x] ~~Requirements debate before workflow start~~ — subsumed by 16.2 (roundtable analysis agent with persona-driven interactive elicitation)
 - 8.2 [ ] Sizing decision must always prompt the user — silent fallback paths bypass user consent
   - **Problem**: The adaptive sizing flow (STEP 3e-sizing in `isdlc.md`) has 3 silent paths that skip the user prompt and auto-default to standard: PATH 1 (sizing disabled), PATH 2 (`-light` flag — this one is intentional), PATH 3 (impact analysis missing or unparseable). PATH 3 is the real issue — when `parseSizingFromImpactAnalysis()` returns null, the system silently defaults to standard and moves on. The user never knows a sizing decision was made for them.
   - **Observed**: Ollama feature (7 files) had a clean impact analysis → PATH 4 → user was prompted. Supervised mode feature (4 files) likely had malformed/missing metadata block → PATH 3 → silently defaulted to standard, no prompt.
@@ -309,12 +309,7 @@
 
 ### 11. Developer Experience
 
-- 11.2 [ ] BUG-0022: Phase A Step 8 skips interactive requirements elicitation — generates requirements inline instead of delegating to requirements-analyst agent *(GitHub #6)*
-  - **Problem**: Phase A Step 8 says "use the persona-based elicitation flow (same as the requirements-analyst Creator role)" but `isdlc.md` doesn't explicitly instruct a Task delegation. The executor writes `requirements.md` directly without questions, A/R/C menus, or persona identification.
-  - **Observed in**: REQ-0021 (T7 boilerplate extraction), REQ-0022 (performance budget guardrails) — both had zero user interaction during requirements capture
-  - **Fix**: Make Step 8 explicit — delegate to `requirements-analyst` via Task tool in Phase A mode (no state.json, no hooks, no branches). Agent runs full interactive 5-step flow, returns `requirements.md`.
-  - **Severity**: Medium — requirements quality degraded without user validation
-  - **Complexity**: Low — control flow change in `isdlc.md` Step 8, no new files
+- 11.2 [x] ~~BUG-0022: Phase A Step 8 skips interactive requirements elicitation~~ *(GitHub #6)* — subsumed by 16.2 (roundtable analysis agent replaces non-interactive Phase A)
 
 - 11.1 [ ] Install script landing page and demo GIF — update the install script landing/README with a polished visual experience including an animated GIF demonstrating the framework in action (invisible framework flow, workflow progression, quality gates)
 
@@ -325,19 +320,11 @@
   - **Impact**: Breaks seamless Jira-link-to-analysis flow
   - **Complexity**: Medium — needs MCP skill file + Phase A delegation code
 
-- 12.2 [ ] BUG-0024: Phase A BACKLOG.md append not implemented and format missing Jira metadata *(GitHub #8)*
-  - **Problem**: Phase A Step 5 specifies appending to BACKLOG.md but (a) no code does the write, and (b) the entry format lacks `**Jira:**` / `**Confluence:**` sub-bullets that the backlog picker expects.
-  - **Impact**: Items analyzed via Phase A are never recorded in BACKLOG.md. Backlog picker can't find them with Jira metadata.
-  - **Complexity**: Low — format spec update + write implementation in Phase A executor
+- 12.2 [x] ~~BUG-0024: Phase A BACKLOG.md append not implemented~~ *(GitHub #8)* — subsumed by 16.1 (add verb handles BACKLOG.md writes with source metadata)
 
-- 12.3 [ ] Post-Phase-A picker — offer to implement analyzed item or analyze another *(GitHub #9)*
-  - **Problem**: After Phase A deep analysis completes, the system ends silently. No menu offering implementation or further analysis. User must manually know about `/isdlc start`.
-  - **Design**: Scan `docs/requirements/*/meta.json` for `phase_a_completed: true` items without matching completed workflows. Present picker with age/staleness. Offer: Implement / Analyze another / Done.
-  - **Complexity**: Medium — new post-Phase-A UI, meta.json scan, workflow_history cross-reference
+- 12.3 [x] ~~Post-Phase-A picker~~ *(GitHub #9)* — subsumed by 16.1/16.5 (analyze naturally flows to "build it now?" prompt; build auto-detects analysis level)
 
-- 12.4 [ ] Parallel analysis vs single implementation UX message *(GitHub #10)*
-  - **Problem**: When a workflow is active, starting implementation hard-blocks without explaining that analyses can still run in parallel. Should inform user about the parallel analysis capability and offer to analyze more.
-  - **Complexity**: Low — UX message change in workflow start check
+- 12.4 [x] ~~Parallel analysis vs single implementation UX message~~ *(GitHub #10)* — subsumed by 16.1 (analyze and build are independent verbs; analyze runs outside workflow machinery)
 
 - 12.5 [ ] BUG-0025: BACKLOG.md completion marking not implemented — items not marked done after finalize *(GitHub #11)*
   - **Problem**: Orchestrator finalize step 2.5d specifies marking items `[x]`, adding `**Completed:** {date}`, and moving to `## Completed` section. None implemented. BACKLOG.md unchanged after workflow completion.
@@ -361,14 +348,7 @@
 
 ### 14. Phase A/B Pipeline Bugs
 
-- 14.2 [ ] BUG-0028-GH-17: Phase B (`/isdlc start`) re-runs Phase 00/01 instead of skipping to Phase 02 — `SKIP_PHASES` not implemented in orchestrator *(GitHub #17)*
-  - **Problem**: `isdlc.md` specifies passing `SKIP_PHASES: ["00-quick-scan", "01-requirements"]` to the orchestrator on Phase B start, but `00-sdlc-orchestrator.md` has zero references to `SKIP_PHASES` or `PREPARED_REQUIREMENTS`. The orchestrator always loads the full phase list from `workflows.json` and calls `resetPhasesForWorkflow()` with the unfiltered array.
-  - **Result**: Phase B re-runs Phase 00 (quick scan) and Phase 01 (requirements), duplicating Phase A work.
-  - **Fix**: In `00-sdlc-orchestrator.md` Section 3, after loading `workflow.phases`, check for `SKIP_PHASES` and filter before calling `resetPhasesForWorkflow()`.
-  - **Files**: `src/claude/agents/00-sdlc-orchestrator.md` (primary), `src/claude/commands/isdlc.md` (verify passthrough), `src/isdlc/config/workflows.json`, `src/claude/hooks/lib/common.cjs`
-  - **Related**: REQ-0019 (Phase A pipeline), backlog 12.3 (post-Phase-A picker)
-  - **Severity**: Medium-high — Phase A/B separation is broken without this
-  - **Complexity**: Low-medium — control flow change in orchestrator init logic
+- 14.2 [x] ~~BUG-0028-GH-17: Phase B re-runs Phase 00/01 instead of skipping to Phase 02~~ *(GitHub #17)* — subsumed by 16.5 (build auto-detection eliminates Phase A/B handoff entirely; `/isdlc start` removed)
 
 - 14.3 [ ] BUG-0029-GH-18: Framework agents generate multiline Bash commands that bypass permission auto-allow rules *(GitHub #18)*
   - **Problem**: Agents generate multiline inline shell scripts (`for`/`do`/`done`, `node -e "..."` with embedded JS). Claude Code's `*` glob doesn't match newlines, so these always prompt for permission even when individual commands are auto-allowed.
@@ -377,6 +357,75 @@
   - **Related**: BUG-0028-GH-17 (also has multiline `node -e` state updates)
   - **Severity**: Medium — interrupts user during framework processing
   - **Complexity**: Low-medium — mostly mechanical rewrites across agent files
+
+### 16. Backlog & Analysis Redesign (from 2026-02-18 brainstorm)
+
+> **Context**: Phase A/B separation is unintuitive. The user experience between managing backlog items, analyzing them, and building them doesn't flow naturally. This redesign unifies the pipeline around three natural verbs (add/analyze/build) with persona-driven interactive analysis and transparent quality enrichment. Inspired by BMAD party mode pattern.
+> **Subsumes**: 8.1, 11.2/BUG-0022, 12.2/BUG-0024, 12.3, 12.4, 14.2/BUG-0028
+
+- 16.1 [ ] Three-verb backlog model (add / analyze / build) *(GitHub #19)*
+  - **Problem**: Phase A, Phase B, backlog picker, `/isdlc start`, `/isdlc analyze`, and `/isdlc feature` are overlapping entry points with unclear handoffs. Users don't know which command to use when. "Phase A" and "Phase B" are internal naming that leaks into the UX.
+  - **Design**: Unify around three natural verbs:
+    - **Add** — "add #42 to backlog" / "add this to backlog" → pulls from Jira, GitHub, or manual description → creates raw item in BACKLOG.md with source metadata + `docs/requirements/{slug}/draft.md`
+    - **Analyze** — "analyze #42" / "let's think through this" → interactive persona-driven analysis (Phases 00-04) → enriched backlog item with requirements, impact analysis, architecture, design artifacts
+    - **Build** — "build #42" / "let's implement this" → auto-detects analysis level → starts execution from the right phase (fully analyzed = Phase 05, raw = Phase 00)
+  - **Eliminates**: `/isdlc start` command, `/isdlc analyze` command, Phase A/B naming, backlog picker as a separate concept
+  - **BACKLOG.md enrichment**: Each item shows its analysis status: `[ ]` raw, `[~]` partially analyzed, `[A]` fully analyzed, `[x]` completed
+  - **Intent detection**: `CLAUDE.md` maps natural language to the three verbs instead of the current command routing
+  - **Files**: `isdlc.md` (command redesign — replace analyze/start/feature-no-args with add/analyze/build), `CLAUDE.md` (intent detection rewrite), `00-sdlc-orchestrator.md` (remove backlog picker, simplify init)
+  - **Complexity**: Medium-large — command surface redesign, intent detection rewrite, meta.json schema update
+
+- 16.2 [ ] Roundtable analysis agent with named personas *(GitHub #20)*
+  - **Problem**: Current Phase A generates artifacts inline without user interaction. Phase 01-04 agents run in isolation with no conversational engagement. The user is passive during the most important decision-making phases.
+  - **Design**: Single roundtable agent that wears three hats during the analyze verb:
+    - **Business Analyst persona** (Phases 00-01) — leads requirements discovery, challenges assumptions, surfaces edge cases. Deep conversational engagement.
+    - **Solutions Architect persona** (Phases 02-03) — leads impact analysis and architecture decisions. Presents tradeoffs, consults user on risk appetite and strategic direction.
+    - **System Designer persona** (Phase 04) — leads design decisions. Presents module designs, interfaces, key decisions for user approval.
+    - Each persona has a name, communication style, identity, and principles (BMAD agent pattern)
+    - Adaptive depth: simple items get brief confirmation ("3 ACs, sound right?"), complex items get full discussion ("I suggest we discuss this in detail")
+  - **Step-file architecture**: Each analysis step is a self-contained `.md` file. Progress tracked in `meta.json`. Resumable — "I did requirements yesterday, let's continue with architecture today."
+  - **Menu at each step**: `[E] Elaboration Mode` / `[C] Continue` / user can also just talk naturally
+  - **Files**: New `src/claude/agents/roundtable-analyst.md`, step files under `src/claude/skills/analysis-steps/`, persona definitions
+  - **Depends on**: 16.1 (analyze verb exists)
+  - **Complexity**: Medium
+
+- 16.3 [ ] Elaboration mode *(GitHub #21)*
+  - **Problem**: Some topics need deeper exploration than a single persona can provide. Architecture tradeoffs, complex requirements, and cross-cutting concerns benefit from multiple perspectives debating in real time.
+  - **Design**: At any step during analyze, user selects `[E] Elaboration Mode` to bring all personas into a roundtable discussion:
+    - All three personas (BA, Architect, Designer) plus the user participate as equals
+    - Personas discuss, debate, and build on each other's points naturally
+    - Cross-talk enabled: "As the Architect mentioned, if subscriptions are coming later, we should design the abstraction now..."
+    - User can address specific personas by name or ask the group
+    - Exit returns to the step workflow with enriched context applied to artifacts
+  - **Not party mode**: Focused on the current analysis topic, not freeform. Personas stay in character and on topic.
+  - **Files**: Elaboration mode workflow steps in roundtable agent, persona interaction protocol
+  - **Depends on**: 16.2 (roundtable agent with personas exists)
+  - **Complexity**: Medium
+
+- 16.4 [ ] Transparent Critic/Refiner at step boundaries *(GitHub #22)*
+  - **Problem**: The existing Creator/Critic/Refiner debate loop runs invisibly. Users don't see improvements and can't validate them. This erodes trust and misses opportunities for user input on refinements.
+  - **Design**: At each step boundary (after BA finishes requirements, after Architect finishes architecture, after Designer finishes design):
+    1. Critic reviews draft artifacts (runs in background)
+    2. Refiner improves based on critique (runs in background)
+    3. Roundtable agent presents improvements transparently: "My team reviewed this and suggested some improvements:"
+    4. Shows what changed, why, and the updated version
+    5. User menu: `[A] Accept improvements` / `[M] Modify` / `[R] Reject — keep original` / `[E] Elaboration Mode` / `[C] Continue`
+  - **Key principle**: Nothing hidden. The team's work is surfaced as "team feedback" within the persona's natural voice.
+  - **Files**: Critic/Refiner integration into roundtable agent step transitions, presentation format
+  - **Depends on**: 16.2 (roundtable agent exists)
+  - **Complexity**: Medium
+
+- 16.5 [ ] Build auto-detection and seamless handoff *(GitHub #23)*
+  - **Problem**: `/isdlc start` requires the user to know the command exists, pass the right slug, and understand that Phase A must be complete. If Phase A is partial, the error messages are cryptic.
+  - **Design**: When user says "build X" or "let's implement X":
+    1. Find matching item in `docs/requirements/` by slug, ID, or title
+    2. Read `meta.json` to determine analysis completion level
+    3. Auto-detect: fully analyzed (all phases 00-04 done) → start at Phase 05. Partially analyzed (e.g., requirements done but no architecture) → offer to resume analysis or start from current point. Raw item → run full workflow (Phases 00-08).
+    4. Staleness check: if codebase changed significantly since analysis, warn and offer refresh
+    5. Present clear summary: "This item has requirements and architecture but no design. Want to complete design first, or skip to implementation?"
+  - **Files**: `isdlc.md` (build verb implementation), `meta.json` schema extension (per-phase completion tracking)
+  - **Depends on**: 16.1 (three-verb model exists)
+  - **Complexity**: Low-medium
 
 ### 15. Gate-Blocker Artifact Validation (from BUG-0022-GH-1 workflow observation)
 
