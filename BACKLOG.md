@@ -337,7 +337,7 @@
 > **Context**: Phase A/B separation is unintuitive. The user experience between managing backlog items, analyzing them, and building them doesn't flow naturally. This redesign unifies the pipeline around three natural verbs (add/analyze/build) with persona-driven interactive analysis and transparent quality enrichment. Inspired by BMAD party mode pattern.
 > **Subsumes**: #50, #6, #8, #9, #10, #17
 
-- #20 [ ] Roundtable analysis agent with named personas
+- #20 [A] Roundtable analysis agent with named personas
   - **Problem**: Current Phase A generates artifacts inline without user interaction. Phase 01-04 agents run in isolation with no conversational engagement. The user is passive during the most important decision-making phases.
   - **Design**: Single roundtable agent that wears three hats during the analyze verb:
     - **Business Analyst persona** (Phases 00-01) — leads requirements discovery, challenges assumptions, surfaces edge cases. Deep conversational engagement.
