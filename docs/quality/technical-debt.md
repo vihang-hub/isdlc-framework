@@ -1,86 +1,75 @@
 # Technical Debt Inventory
 
 **Project:** iSDLC Framework
-**Workflow:** REQ-0022-performance-budget-guardrails (feature)
+**Workflow:** REQ-0026-build-auto-detection-seamless-handoff (feature)
 **Phase:** 08 - Code Review & QA
 **Date:** 2026-02-19
 
 ---
 
-## 1. New Technical Debt (Introduced by REQ-0022)
+## 1. New Technical Debt Introduced
 
-No new technical debt introduced by this feature. The implementation is complete relative to the requirements specification:
+### TD-001: BUILD SUMMARY Banner Not Shown After Quick-Scan Re-run
 
-- All 8 functional requirements fully implemented
-- All 35 acceptance criteria covered
-- All 5 non-functional requirements satisfied
-- No design deviations detected
+- **Severity**: Low
+- **Location**: `src/claude/commands/isdlc.md`, Step 4c (line 669)
+- **Description**: When a user selects `[Q] Re-run quick-scan` from the staleness menu, the `analysisStatus` is set to `'raw'`, which causes the BUILD SUMMARY banner (Step 4e) to be skipped. The user does not see a summary of what phases will execute before the workflow starts.
+- **Impact**: Minor UX gap -- the user explicitly chose an action (re-run from Phase 00) so they understand what will happen. But the summary banner would provide additional confirmation.
+- **Resolution Path**: In a future iteration, after applying the staleness choice, re-compute the analysis status before deciding whether to show the banner. This would allow the banner to be shown with "Build will execute: Phase 00 through Phase 08".
+- **Traces**: CR-004 from code review, FR-005 (AC-005-03)
 
-The two minor code review findings (test comment typo and missing no_fan_out explicit test) do not constitute technical debt -- they are documentation accuracy and test completeness observations that can be addressed opportunistically.
+### TD-002: FR-008 (Meta.json Update After Build) Partially Implemented
 
----
-
-## 2. Pre-Existing Technical Debt (Not affected by REQ-0022)
-
-### TD-PRE-001: Pre-existing test failures
-
-- **Location:** Various (gate-blocker-extended, prompt-format, deep-discovery-consistency)
-- **Description:** 4 pre-existing test failures:
-  - `supervised_review` logging test in gate-blocker-extended (assertion on stderr content)
-  - README agent count test (TC-E09, expects 40 agents)
-  - Agent file count test (TC-13-01, expects 48 files, actual is 60)
-  - Plan tracking test (TC-07, STEP 4 task cleanup instructions)
-- **Priority:** Medium
-- **Unchanged by this feature**
-
-### TD-PRE-002: No automated coverage tooling
-
-- **Location:** Project-wide
-- **Description:** No code coverage tool (c8, istanbul, nyc) is installed. Coverage is estimated manually based on test enumeration.
-- **Priority:** Medium
-- **Unchanged by this feature**
-
-### TD-PRE-003: No linter or formatter configured
-
-- **Location:** Project-wide
-- **Description:** No ESLint, Prettier, or TypeScript. Static analysis is done manually.
-- **Priority:** Low
-- **Unchanged by this feature**
+- **Severity**: Low
+- **Location**: `src/claude/agents/00-sdlc-orchestrator.md`, Step 2b
+- **Description**: The orchestrator documentation references writing `build_started_at` to meta.json when a build workflow starts, but this is described as Could Have in the MoSCoW prioritization. The orchestrator accepts `ARTIFACT_FOLDER` but does not explicitly update meta.json's `build_started_at` field during initialization.
+- **Impact**: Low -- meta.json still contains the correct analysis status and phases_completed. The `build_started_at` timestamp is a nice-to-have for traceability.
+- **Resolution Path**: Add meta.json update during orchestrator initialization in a follow-up feature.
+- **Traces**: FR-008 (AC-008-01, AC-008-02)
 
 ---
 
-## 3. Previously Tracked Debt (from REQ-0024)
+## 2. Pre-Existing Technical Debt (Unchanged)
 
-### TD-0024-001: deepMerge not wired into main pipeline
+### TD-PRE-001: Agent Inventory Count Drift
 
-- **Status:** Still open (not in scope for REQ-0022)
-- **Location:** `src/claude/hooks/lib/gate-requirements-injector.cjs`
-- **Severity:** Medium
+- **Severity**: Medium
+- **Location**: `lib/prompt-format.test.js` (TC-E09, TC-13-01)
+- **Description**: Tests expect 48 agent files but 60 exist. Agent count has grown without updating the test assertions.
+- **Status**: Pre-existing, not introduced by REQ-0026.
 
-### TD-0024-002: atdd_validation not rendered in formatBlock
+### TD-PRE-002: Plan Tracking Task Cleanup Test
 
-- **Status:** Still open (not in scope for REQ-0022)
-- **Location:** `src/claude/hooks/lib/gate-requirements-injector.cjs`
-- **Severity:** Medium
+- **Severity**: Low
+- **Location**: `lib/prompt-format.test.js` (TC-07)
+- **Description**: Test expects specific task cleanup instructions in STEP 4 format that has drifted.
+- **Status**: Pre-existing, not introduced by REQ-0026.
 
-### TD-0024-003: PHASE_NAME_MAP incomplete
+### TD-PRE-003: Supervised Review Timing-Sensitive Test
 
-- **Status:** Still open (not in scope for REQ-0022)
-- **Location:** `src/claude/hooks/lib/gate-requirements-injector.cjs`
-- **Severity:** Low
+- **Severity**: Low
+- **Location**: `src/claude/hooks/tests/workflow-completion-enforcer.test.cjs`
+- **Description**: The `supervised_review` test is timing-sensitive and occasionally fails.
+- **Status**: Pre-existing, not introduced by REQ-0026.
+
+### TD-PRE-004: `no_halfway_entry` Rule Exception Not Annotated in workflows.json
+
+- **Severity**: Low
+- **Location**: `src/isdlc/config/workflows.json`
+- **Description**: The architecture document (Section 3.4) specifies adding a `_comment_build_autodetect_exception` annotation to `workflows.json` under `rules.no_halfway_entry`. This annotation was not added during implementation. The exception is documented in the orchestrator and isdlc.md instead.
+- **Impact**: Low -- the exception is well-documented in the agent files that consume the rules. The workflows.json annotation would improve discoverability.
+- **Resolution Path**: Add the annotation in a follow-up cleanup.
+- **Traces**: Architecture Section 3.4, CON-003
 
 ---
 
-## 4. Debt Summary
+## 3. Debt Summary
 
-| Category | New (REQ-0022) | Pre-Existing | Carried (REQ-0024) | Resolved |
-|----------|---------------|-------------|-------------------|----------|
-| Missing feature | 0 | 0 | 2 (TD-0024-001, TD-0024-002) | 0 |
-| Completeness | 0 | 0 | 1 (TD-0024-003) | 0 |
-| Test maintenance | 0 | 1 (TD-PRE-001) | 0 | 0 |
-| Tooling | 0 | 2 (TD-PRE-002, TD-PRE-003) | 0 | 0 |
-| **Total** | **0** | **3** | **3** | **0** |
+| Category | New | Pre-Existing | Total |
+|----------|-----|-------------|-------|
+| High severity | 0 | 0 | 0 |
+| Medium severity | 0 | 1 | 1 |
+| Low severity | 2 | 3 | 5 |
+| **Total** | **2** | **4** | **6** |
 
-## 5. Assessment
-
-This feature introduces zero new technical debt. The implementation fully satisfies the requirements specification with no design deviations or incomplete functionality. The pre-existing and carried-forward debt items remain unchanged and do not affect this feature's quality assessment. The net debt posture is stable.
+No high-severity debt introduced. All new debt items are low severity with clear resolution paths.
