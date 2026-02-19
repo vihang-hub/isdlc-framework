@@ -389,18 +389,10 @@
   - **Depends on**: #19 (three-verb model exists) — DONE
   - **Complexity**: Low-medium
 
-### Pipeline Bugs
-
-- #18 [A] Framework agents generate multiline Bash commands that bypass permission auto-allow rules -> [requirements](docs/requirements/BUG-0029-GH-18-multiline-bash-permission-bypass/)
-  - **Problem**: Agents generate multiline inline shell scripts (`for`/`do`/`done`, `node -e "..."` with embedded JS). Claude Code's `*` glob doesn't match newlines, so these always prompt for permission even when individual commands are auto-allowed.
-  - **Fix**: (A) Prefer single-line equivalents (`grep -r` over `for` loops, `&&` chaining). (B) Extract complex scripts to files (`bin/update-phase-state.js`). (C) Add single-line Bash convention to agent shared protocols.
-  - **Files**: Agent `.md` files (discover agents, impact analysis agents), `isdlc.md` (state update scripts), `CLAUDE.md` or shared protocols
-  - **Severity**: Medium — interrupts user during framework processing
-  - **Complexity**: Low-medium — mostly mechanical rewrites across agent files
-
 ## Completed
 
 ### 2026-02-19
+- [x] #18: Framework agents generate multiline Bash commands that bypass permission auto-allow rules — rewrite multiline Bash to single-line form across 9 agent files *(merged 2e9e07c)*.
 - [x] REQ-0025 (backlog 2.4): Performance budget and guardrail system — per-workflow timing limits, intensity-tier budgets, graceful degradation of debate rounds and fan-out parallelism, regression tracking, completion dashboard *(merged 3707b11)*.
   - New `performance-budget.cjs` library (581 LOC, 15 functions), timing instrumentation in 5 dispatchers + common.cjs, budget enforcement in isdlc.md phase-loop, regression tracking in workflow-completion-enforcer.cjs, workflows.json budget config. 38 new tests, zero regressions. 8 FRs, 5 NFRs, 35 ACs. 20 files changed, 1470 insertions, 242 deletions.
 
