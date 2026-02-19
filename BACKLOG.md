@@ -244,16 +244,7 @@
 
 ### Workflow Quality
 
-- #51 [ ] Sizing decision must always prompt the user — silent fallback paths bypass user consent
-  - **Problem**: The adaptive sizing flow (STEP 3e-sizing in `isdlc.md`) has 3 silent paths that skip the user prompt and auto-default to standard: PATH 1 (sizing disabled), PATH 2 (`-light` flag — this one is intentional), PATH 3 (impact analysis missing or unparseable). PATH 3 is the real issue — when `parseSizingFromImpactAnalysis()` returns null, the system silently defaults to standard and moves on. The user never knows a sizing decision was made for them.
-  - **Observed**: Ollama feature (7 files) had a clean impact analysis → PATH 4 → user was prompted. Supervised mode feature (4 files) likely had malformed/missing metadata block → PATH 3 → silently defaulted to standard, no prompt.
-  - **Expected**: The user should ALWAYS be asked to confirm the sizing decision, even when impact analysis fails. The only exception is the explicit `-light` flag (PATH 2), which is an intentional user override.
-  - **Fix**:
-    1. **PATH 3 (IA missing/unparseable)**: Instead of silently defaulting, warn the user that impact analysis couldn't be parsed, show what's known, and still present the Accept/Override/Show menu with a "standard" recommendation
-    2. **PATH 1 (sizing disabled)**: Consider whether this should also prompt, or at minimum log visibly that sizing was skipped due to config
-    3. **Add fallback metrics**: If `parseSizingFromImpactAnalysis()` fails, try extracting file count from quick-scan or requirements artifacts as a backup data source
-  - **Files to change**: `src/claude/commands/isdlc.md` (STEP 3e-sizing, PATHs 1 and 3), possibly `src/claude/hooks/lib/common.cjs` (`parseSizingFromImpactAnalysis` fallback robustness)
-  - **Complexity**: Low (control flow changes in 1-2 files, no new agents or infrastructure)
+- #51 [x] ~~Sizing decision must always prompt the user — silent fallback paths bypass user consent~~ *(completed, merged 3de5162)*
 
 ### Code Quality Gaps
 
@@ -298,7 +289,7 @@
 
 ### Investigation
 
-- #55 [~] Phase handshake audit — investigate whether the handshake between phases is working correctly (state transitions, artifact passing, gate validation, pre-delegation state writes, post-phase updates). Verify no data loss or stale state between phase boundaries.
+- #55 [A] Phase handshake audit — investigate whether the handshake between phases is working correctly (state transitions, artifact passing, gate validation, pre-delegation state writes, post-phase updates). Verify no data loss or stale state between phase boundaries.
 
 ### Developer Experience
 
@@ -325,6 +316,13 @@
   - **Problem**: Orchestrator finalize specifies calling `updateStatus(jira_ticket_id, "Done")` via Atlassian MCP and setting `jira_sync_status` in workflow_history. Not implemented. Jira tickets stay in original status.
   - **Related**: #7 (Jira read) + this (Jira write) together complete the Jira lifecycle
   - **Complexity**: Medium — needs MCP skill file + non-blocking finalize integration
+
+- #58 [ ] GitHub issue label sync — auto-label GitHub-sourced issues as they progress through the pipeline
+  - **Problem**: When a GitHub issue is analyzed via `/isdlc analyze "#N"`, BACKLOG.md markers update (`[ ]` → `[~]` → `[A]`) and meta.json tracks status, but the GitHub issue itself gets no update. Jira has a sync point at finalize (`updateStatus` to Done), but GitHub has nothing at any stage.
+  - **Design**: Add `ready-to-build` label to GitHub issues when analysis completes (`[A]`). Close the issue when `/isdlc build` finalize completes. Use `gh` CLI (`gh issue edit #N --add-label ready-to-build`, `gh issue close #N`). Non-blocking — label sync failure logs a warning but never blocks the pipeline.
+  - **Sync points**: `analyze` complete → add `ready-to-build` label | `build` finalize → close issue
+  - **Related**: #49 (GitHub Issues adapter), #13 (Jira write sync)
+  - **Complexity**: Low — 2 `gh` CLI calls at existing transition points (analyze handler step 8, orchestrator finalize)
 
 ### Backlog & Analysis Redesign (from 2026-02-18 brainstorm)
 
@@ -379,6 +377,7 @@
 - [x] BUG-0029-GH-18: Framework agents generate multiline Bash commands that bypass permission auto-allow rules — rewrite multiline Bash commands to single-line form across 9 agent files *(GitHub #18, merged 2e9e07c)*.
 
 ### 2026-02-19
+- [x] #51: Sizing decision always prompts the user — no silent fallback paths bypass user consent. Added `extractFallbackSizingMetrics()` + `normalizeRiskLevel()` to `common.cjs`, updated `isdlc.md` S1/S2/S3 paths to warn and prompt instead of silently defaulting, added audit trail fields to `applySizingDecision()`. 17 new tests, 88% coverage of new code, zero regressions. 6 FRs, 4 NFRs, 11 ACs. 7 files changed *(merged 3de5162)*.
 - [x] #18: Framework agents generate multiline Bash commands that bypass permission auto-allow rules — rewrite multiline Bash to single-line form across 9 agent files *(merged 2e9e07c)*.
 - [x] REQ-0025 (backlog 2.4): Performance budget and guardrail system — per-workflow timing limits, intensity-tier budgets, graceful degradation of debate rounds and fan-out parallelism, regression tracking, completion dashboard *(merged 3707b11)*.
   - New `performance-budget.cjs` library (581 LOC, 15 functions), timing instrumentation in 5 dispatchers + common.cjs, budget enforcement in isdlc.md phase-loop, regression tracking in workflow-completion-enforcer.cjs, workflows.json budget config. 38 new tests, zero regressions. 8 FRs, 5 NFRs, 35 ACs. 20 files changed, 1470 insertions, 242 deletions.
