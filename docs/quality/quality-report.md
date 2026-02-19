@@ -1,143 +1,154 @@
-# Quality Report: REQ-0027-gh-20-roundtable-analysis-agent-with-named-personas
+# Quality Report: BUG-0051-GH-51 Sizing Consent
 
 **Phase**: 16-quality-loop
 **Date**: 2026-02-19
 **Quality Loop Iteration**: 1 (both tracks passed first run)
-**Branch**: feature/REQ-0027-gh-20-roundtable-analysis-agent-with-named-personas
-**Feature**: GH-20 -- Roundtable analysis agent with named personas. Single agent with BA, Architect, and Designer hats during analyze verb, step-file architecture, adaptive depth, resumable sessions.
-**Scope Mode**: FULL SCOPE (no implementation_loop_state)
+**Branch**: bugfix/BUG-0051-sizing-consent
+**Bug**: Sizing decision must always prompt the user -- silent fallback paths bypass user consent (GH #51)
+**Scope Mode**: FULL SCOPE (parallel-quality-check)
 
 ## Executive Summary
 
-All quality checks pass. Zero new regressions introduced. 63 new tests pass (100% of new test files). All 4 test failures across ESM and CJS streams are pre-existing and documented (verified via git diff -- none of the failing test files were modified by this feature).
+All quality checks pass. Zero new regressions introduced. 17 new tests pass (100% of new test file). All 63 hook test failures across the CJS stream are pre-existing and documented (verified by stashing changes: 80 failures on clean tree, 63 with changes = 17 fewer failures = exactly the new passing tests).
 
 **Verdict: PASS**
 
 ## Track A: Testing Results
 
-### Group A1: Build Verification + Lint + Type Check
+### Group A1: Build Verification
 
 | Check | Skill ID | Result | Duration | Notes |
 |-------|----------|--------|----------|-------|
-| Build verification | QL-007 | PASS | <1s | npm test and npm run test:hooks execute. All source files load. |
+| Build verification | QL-007 | PASS | <1s | common.cjs loads cleanly, all exports accessible |
+| Syntax check | QL-007 | PASS | <1s | `node --check` passes for common.cjs and sizing-consent.test.cjs |
 | Lint check | QL-005 | NOT CONFIGURED | - | `package.json` lint script is `echo 'No linter configured'` |
-| Type check | QL-006 | NOT APPLICABLE | - | JavaScript project, no TypeScript |
+| Type check | QL-006 | NOT CONFIGURED | - | JavaScript project, no TypeScript |
 
-### Group A2: Test Execution + Coverage
+### Group A2: Test Execution
 
 | Check | Skill ID | Result | Duration | Notes |
 |-------|----------|--------|----------|-------|
-| ESM tests | QL-002 | PASS* | ~10.8s | 632 tests: 629 pass, 3 pre-existing failures |
-| CJS tests | QL-002 | PASS* | ~5.1s | 2208 tests: 2207 pass, 1 pre-existing failure |
-| New feature tests | QL-002 | PASS | <1s | 63/63 pass (25 in test-three-verb-utils-steps + 38 in test-step-file-validator) |
-| Coverage analysis | QL-004 | NOT CONFIGURED | - | No coverage tooling (c8/nyc not installed) |
+| Sizing-consent tests | QL-002 | PASS | 80ms | 17/17 pass (sizing-consent.test.cjs) |
+| All hook tests | QL-002 | PASS* | ~8.3s | 1303/1366 pass. 63 pre-existing failures |
+| Lib tests | QL-002 | N/A | <1s | 0 tests in lib path |
+| Characterization tests | QL-002 | N/A | <1s | 0 tests present |
+| E2E tests | QL-002 | PASS* | <1s | 0/1 pass. 1 pre-existing failure (cli-lifecycle.test.js) |
 
-*PASS with known pre-existing failures only.
+*PASS with known pre-existing failures only. Zero regressions introduced by this change.
+
+### Pre-existing Failure Verification
+
+To verify that 63 failures are pre-existing:
+1. Stashed working tree changes (`git stash`)
+2. Ran `npm run test:hooks` on clean tree: **80 failures** (sizing-consent tests FAIL because implementation reverted)
+3. Restored changes (`git stash pop`): **63 failures** (sizing-consent 17 tests now PASS)
+4. Difference: 80 - 63 = 17 = exactly the new passing tests
+5. Conclusion: **zero regressions**
+
+Pre-existing failure sources (not related to this change):
+- `workflow-finalizer.test.cjs` -- WF01-WF15 (15 tests)
+- `cleanupCompletedWorkflow` suite -- T01-T28 (28 tests)
+- `backlog-picker` suite -- TC-M2a/M2b, TC-M4 (various Jira/backlog tests)
+- `branch-guard` suite -- BUG-0012 tests (3 tests)
+- `version-lock` suite -- TC-03f (1 test)
+- Various characterization tests -- NFR-002, FR-002, M4/M5
 
 ### Group A3: Mutation Testing
 
 | Check | Skill ID | Result | Duration | Notes |
 |-------|----------|--------|----------|-------|
-| Mutation testing | QL-003 | NOT CONFIGURED | - | No mutation framework (Stryker not installed) |
+| Mutation testing | QL-003 | NOT CONFIGURED | - | No mutation framework installed |
 
-### Pre-Existing Test Failures (not caused by this feature)
+### Group A4: Coverage Analysis
 
-Verification method: `git diff main` shows ZERO changes to any failing test file or its source dependencies.
+| Check | Skill ID | Result | Duration | Notes |
+|-------|----------|--------|----------|-------|
+| Coverage analysis | QL-004 | NOT CONFIGURED | - | No coverage tooling (c8/nyc not installed) |
 
-1. **ESM: lib/deep-discovery-consistency.test.js:115** -- TC-E09: README.md expects "40 agents" (count has drifted). Test file not modified since commit d37f07f.
-2. **ESM: lib/plan-tracking.test.js:220** -- TC-07: STEP 4 task cleanup instructions. Test file not modified since commit d37f07f.
-3. **ESM: lib/prompt-format.test.js:159** -- TC-13-01: Agent count expects 48, found 61 (pre-existing drift; 60 agents existed before this feature added the 61st). Test file not modified since commit d80ec17.
-4. **CJS: src/claude/hooks/tests/test-gate-blocker-extended.test.cjs:1321** -- SM-04: supervised_review logging test. Test file not modified since commit d80ec17.
+### Parallel Execution
+
+| Attribute | Value |
+|-----------|-------|
+| Parallel mode used | Yes |
+| Framework | node:test |
+| Flag | `--test-concurrency=9` |
+| Workers | 9 (of 10 cores) |
+| Fallback triggered | No |
+| Flaky tests | None |
+| Estimated speedup | N/A (single test file, 80ms total) |
 
 ## Track B: Automated QA Results
 
-### Group B1: Security Scan + Dependency Audit
+### Group B1: Lint Check
 
-| Check | Skill ID | Result | Duration | Notes |
-|-------|----------|--------|----------|-------|
-| SAST security scan | QL-008 | NOT CONFIGURED | - | No dedicated SAST tool available. Manual review performed. |
-| Dependency audit | QL-009 | PASS | <1s | `npm audit` reports 0 vulnerabilities |
+| Check | Skill ID | Result | Notes |
+|-------|----------|--------|-------|
+| Lint check | QL-005 | NOT CONFIGURED | `package.json` lint script is `echo 'No linter configured'` |
 
-### Group B2: Code Review + Traceability
+### Group B2: Type Check
 
-| Check | Skill ID | Result | Duration | Notes |
-|-------|----------|--------|----------|-------|
-| Automated code review | QL-010 | PASS | - | See Code Review Analysis below |
-| Traceability verification | - | PASS | - | Trace IDs present in source, tests, and step files |
-| File inventory | - | PASS | - | All 24 step files, 1 agent file, 2 test files verified |
+| Check | Skill ID | Result | Notes |
+|-------|----------|--------|-------|
+| Type check | QL-006 | NOT APPLICABLE | JavaScript project, no TypeScript |
 
-### Code Review Analysis (QL-010)
+### Group B3: SAST Security Scan
 
-**Files reviewed:**
-- `src/claude/hooks/lib/three-verb-utils.cjs` -- MODIFIED (+14 lines: steps_completed/depth_overrides defaults)
-- `src/claude/agents/roundtable-analyst.md` -- NEW (308 lines, multi-persona analysis agent)
-- `src/claude/skills/analysis-steps/**/*.md` -- NEW (24 step files across 5 phase directories)
-- `src/claude/hooks/tests/test-three-verb-utils-steps.test.cjs` -- NEW (25 tests)
-- `src/claude/hooks/tests/test-step-file-validator.test.cjs` -- NEW (38 tests)
+| Check | Skill ID | Result | Notes |
+|-------|----------|--------|-------|
+| SAST scan | QL-008 | PASS | No `eval()`, dynamic `require()`, or injection patterns in new code |
+| Path traversal | QL-008 | PASS | `extractFallbackSizingMetrics` uses `path.join` with internal args only |
+| JSON parsing | QL-008 | PASS | `JSON.parse` operates on framework-managed markdown files, not external input |
+| Error handling | QL-008 | PASS | All file I/O wrapped in try/catch with safe fall-through |
 
-**Findings:**
-- No blockers identified
-- `three-verb-utils.cjs` changes are defensive: type guards on steps_completed (Array.isArray) and depth_overrides (typeof/null/Array check)
-- Agent file has all required sections: frontmatter, persona definitions, step execution engine, adaptive depth, menu system, session management, artifact production
-- All 24 step files have valid YAML frontmatter (verified by test-step-file-validator.test.cjs)
-- Step IDs follow PP-NN format and match parent directory phase numbers
-- No duplicate step_ids across all 24 files
-- Traceability comments link to FR/AC/NFR/ADR/CON identifiers throughout
-- REQ-ROUNDTABLE-ANALYST and GH-20 trace markers present in modified code
+### Group B4: Dependency Audit
 
-## Parallel Execution Summary
+| Check | Skill ID | Result | Notes |
+|-------|----------|--------|-------|
+| npm audit | QL-009 | PASS | 0 vulnerabilities found |
 
-| Metric | Value |
-|--------|-------|
-| Mode | Sequential (80 test files < 250 fan-out threshold) |
-| Fan-out used | No |
-| Track A groups | A1, A2, A3 |
-| Track B groups | B1, B2 |
-| Total test suites | 80 (58 CJS + 22 ESM) |
-| Total test cases | 2840 (2208 CJS + 632 ESM) |
-| Total passing | 2836 (2207 CJS + 629 ESM) |
-| Pre-existing failures | 4 (1 CJS + 3 ESM) |
-| New regressions | 0 |
-| New tests added | 63 (25 + 38) |
-| New tests passing | 63 |
+### Group B5: Automated Code Review
 
-## Traceability Summary
+| Check | Skill ID | Result | Notes |
+|-------|----------|--------|-------|
+| Input validation | QL-010 | PASS | `extractFallbackSizingMetrics` validates empty args |
+| Error boundaries | QL-010 | PASS | try/catch around all fs operations |
+| Null safety | QL-010 | PASS | `user_prompted` and `fallback_attempted` use explicit undefined checks |
+| Backward compat | QL-010 | PASS | New audit fields default to null when not provided (TC-10) |
+| API surface | QL-010 | PASS | New function properly exported in module.exports |
 
-Requirements document: `docs/requirements/REQ-0027-gh-20-roundtable-analysis-agent-with-named-personas/requirements-spec.md`
-Traceability matrix: `docs/requirements/REQ-0027-gh-20-roundtable-analysis-agent-with-named-personas/traceability-matrix.csv`
+### Group B6: SonarQube
 
-| Component | Requirement | Test Coverage |
-|-----------|-------------|---------------|
-| three-verb-utils.cjs (steps_completed) | FR-005, FR-006 | TC-A01..A20 (read/write/migration/round-trip) |
-| Step file validator | VR-STEP-001..008 | TC-B01..B28 (frontmatter parsing/validation) |
-| Step file inventory | FR-001..FR-004 | TC-C01..C10 (file existence/structure) |
-| Meta.json integration | FR-005, NFR-005 | TC-D01..D05 (progression/resume/persistence) |
-| Roundtable agent | REQ-ROUNDTABLE-ANALYST | Structure verified via automated review |
+| Check | Skill ID | Result | Notes |
+|-------|----------|--------|-------|
+| SonarQube | - | NOT CONFIGURED | No SonarQube integration in state.json |
+
+## Changed Files Summary
+
+| File | Type | Lines Changed | Tests |
+|------|------|---------------|-------|
+| `src/claude/hooks/lib/common.cjs` | Implementation | +115 (new function + audit fields) | 17 tests |
+| `src/claude/commands/isdlc.md` | Command spec | +52/-26 (S1/S2/S3 restructured) | Structural (agent instruction) |
+| `src/claude/hooks/tests/sizing-consent.test.cjs` | New test file | +514 (17 tests) | Self |
 
 ## GATE-16 Checklist
 
-- [x] Clean build succeeds (no errors)
-- [x] All tests pass (pre-existing failures documented, zero new regressions)
-- [ ] Code coverage meets threshold (80%) -- NOT CONFIGURED (no coverage tool)
-- [x] Linter passes -- NOT CONFIGURED (acceptable, no linter in project)
-- [x] Type checker passes -- NOT APPLICABLE (JavaScript project)
-- [x] No critical/high SAST vulnerabilities
-- [x] No critical/high dependency vulnerabilities
-- [x] Automated code review has no blockers
-- [x] Quality report generated with all results
+| # | Criterion | Status | Notes |
+|---|-----------|--------|-------|
+| 1 | Clean build succeeds | PASS | Module loads, syntax valid |
+| 2 | All tests pass | PASS | 17/17 new tests pass; 0 regressions |
+| 3 | Coverage meets threshold | N/A | Coverage tooling not configured |
+| 4 | Linter passes with zero errors | N/A | Linter not configured |
+| 5 | Type checker passes | N/A | JavaScript project |
+| 6 | No critical/high SAST vulnerabilities | PASS | Manual SAST scan clean |
+| 7 | No critical/high dependency vulnerabilities | PASS | npm audit: 0 vulnerabilities |
+| 8 | Automated code review has no blockers | PASS | All patterns clean |
+| 9 | Quality report generated | PASS | This document |
 
-**GATE-16 VERDICT: PASS**
+## Phase Timing
 
-Coverage threshold is not applicable (no coverage tooling configured in this project). All other checks pass.
-
-## Constitutional Compliance
-
-| Article | Requirement | Status |
-|---------|-------------|--------|
-| II | Test-Driven Development | PASS -- 63 tests written, all passing |
-| III | Architectural Integrity | PASS -- Step-file architecture follows existing skill patterns |
-| V | Security by Design | PASS -- Input validation, defensive defaults, no injection vectors |
-| VI | Code Quality | PASS -- Consistent style, JSDoc, defensive coding |
-| VII | Documentation | PASS -- Traceability comments on all functions, 5 ADRs |
-| IX | Traceability | PASS -- Full FR/AC/VR/ADR/CON trace linkage |
-| XI | Integration Testing | PASS -- Integration tests for meta.json step tracking |
+```json
+{
+  "debate_rounds_used": 0,
+  "fan_out_chunks": 0
+}
+```

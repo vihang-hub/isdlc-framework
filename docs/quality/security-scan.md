@@ -1,47 +1,38 @@
-# Security Scan: REQ-0027-gh-20-roundtable-analysis-agent-with-named-personas
+# Security Scan: BUG-0051-GH-51 Sizing Consent
 
 **Phase**: 16-quality-loop
 **Date**: 2026-02-19
-**Feature**: GH-20 -- Roundtable analysis agent with named personas
+**Bug**: Sizing decision must always prompt the user (GH #51)
 
-## SAST Security Scan (QL-008)
+## SAST Scan Results
 
-**Status**: PASS (manual scan -- no SAST tool configured)
+No automated SAST tool (Semgrep, CodeQL, Snyk Code) is configured. A manual pattern-based scan was performed on the changed files.
 
-### Checks Performed
+### Changed File: src/claude/hooks/lib/common.cjs (+115 lines)
 
-| Category | Pattern | Files Scanned | Result |
-|----------|---------|---------------|--------|
-| Code injection | `eval()`, `Function()` | three-verb-utils.cjs | CLEAN |
-| Command injection | `child_process`, `exec`, `execSync`, `spawn` | three-verb-utils.cjs | CLEAN |
-| Prototype pollution | `__proto__`, `.constructor` | three-verb-utils.cjs | CLEAN |
-| Path traversal | `../`, path.join with `..` | three-verb-utils.cjs | CLEAN |
-| Sensitive data | hardcoded secrets, API keys | All new files | CLEAN |
+| Pattern | Scanned For | Result | Notes |
+|---------|-------------|--------|-------|
+| Code injection | `eval()`, `Function()`, dynamic `require()` | CLEAR | None found in new code |
+| Command injection | `child_process.exec/spawn` with user input | CLEAR | No new subprocess calls |
+| Path traversal | Unsanitized path construction | CLEAR | `path.join()` with framework-internal args only |
+| JSON injection | `JSON.parse` on untrusted input | LOW RISK | Parses framework-managed markdown files, not external user input |
+| Regex DoS (ReDoS) | Catastrophic backtracking patterns | CLEAR | Regexes are bounded and non-recursive |
+| Information disclosure | Secrets/credentials in code | CLEAR | No hardcoded secrets |
+| Prototype pollution | Direct assignment to `__proto__` or `constructor` | CLEAR | Object literals only |
 
-### Input Validation Assessment
+### Changed File: src/claude/commands/isdlc.md (+52/-26 lines)
 
-| Function/Component | Input Sanitization | Risk |
-|-------------------|-------------------|------|
-| readMetaJson (modified) | Array.isArray guard on steps_completed, typeof/null/Array guard on depth_overrides | LOW |
-| roundtable-analyst.md | Agent file, no executable code | NONE |
-| analysis-steps/*.md | Step files with YAML frontmatter, no executable code | NONE |
+This file is a markdown command specification (agent instructions). It contains no executable code. No security concerns.
 
-### Changes Analysis
+### New File: src/claude/hooks/tests/sizing-consent.test.cjs (+514 lines)
 
-The only source code change is in `three-verb-utils.cjs` -- adding defensive defaults for two new fields:
-- `steps_completed`: Guarded with `Array.isArray()` -- if not an array, defaults to `[]`
-- `depth_overrides`: Guarded with `typeof !== 'object' || === null || Array.isArray()` -- if not a plain object, defaults to `{}`
+Test file only. Uses `os.tmpdir()` for temporary test directories with proper cleanup. No security concerns.
 
-These guards prevent type confusion attacks where malformed meta.json content could cause downstream errors. The defensive approach is consistent with existing guards in the same function (analysis_status, phases_completed, source, created_at).
-
-**No security vulnerabilities found.**
-
-## Dependency Audit (QL-009)
-
-**Status**: PASS
+## Dependency Audit
 
 ```
-npm audit: found 0 vulnerabilities
+$ npm audit
+found 0 vulnerabilities
 ```
 
 | Severity | Count |
@@ -50,18 +41,17 @@ npm audit: found 0 vulnerabilities
 | High | 0 |
 | Moderate | 0 |
 | Low | 0 |
+| **Total** | **0** |
 
-### Dependencies (from package.json)
+## Constitutional Compliance (Article V: Security by Design)
 
-| Package | Version | Status |
-|---------|---------|--------|
-| chalk | ^5.3.0 | Clean |
-| fs-extra | ^11.2.0 | Clean |
-| prompts | ^2.4.2 | Clean |
-| semver | ^7.6.0 | Clean |
-
-No new dependencies were added by this feature. The modified utility module uses only Node.js built-in modules (fs, path). The new agent and step files are markdown only.
+| Check | Status |
+|-------|--------|
+| No new dependencies introduced | PASS |
+| No secrets in source code | PASS |
+| Input validation on public API | PASS (empty arg check in extractFallbackSizingMetrics) |
+| Error handling does not leak internals | PASS (catch blocks suppress details) |
 
 ## Verdict
 
-**PASS** -- No critical or high vulnerabilities in SAST scan or dependency audit.
+**PASS** -- No critical or high vulnerabilities. No dependency vulnerabilities. Manual SAST patterns clear.

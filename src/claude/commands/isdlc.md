@@ -1473,10 +1473,13 @@ state update, check if adaptive workflow sizing should run.
 **S1.** Read configuration:
    - Read `active_workflow.flags.light` from state.json
    - Read `workflows.json` -> `workflows.feature.sizing`
-   - If `sizing.enabled` is falsy or `sizing` block is missing: skip sizing entirely (default to standard, no UX prompt). Write sizing record: `{ intensity: 'standard', effective_intensity: 'standard', recommended_by: 'framework', overridden: false, decided_at: <now>, forced_by_flag: false, epic_deferred: false }`. Write state.json, then skip to 3e-refine.
+   - If `sizing.enabled` is falsy or `sizing` block is missing:
+     a. Emit stderr warning: `[sizing] Adaptive sizing is disabled in workflows.json. Defaulting to standard workflow.\n`
+     b. Write sizing record: `{ intensity: 'standard', effective_intensity: 'standard', recommended_by: 'framework', overridden: false, decided_at: <now>, forced_by_flag: false, epic_deferred: false, reason: 'sizing_disabled', user_prompted: false, fallback_source: null, fallback_attempted: false }`
+     c. Write state.json, then skip to 3e-refine.
 
 **S2.** IF `-light` flag is set (`active_workflow.flags.light === true`):
-   a. Call `applySizingDecision(state, 'light', { forced_by_flag: true, config: sizingConfig })`
+   a. Call `applySizingDecision(state, 'light', { forced_by_flag: true, config: sizingConfig, reason: 'light_flag', user_prompted: false })`
       where `sizingConfig` = `{ light_skip_phases: workflows.feature.sizing.light_skip_phases }`
    b. Write state.json
    c. Display forced-light banner:
@@ -1497,41 +1500,67 @@ state update, check if adaptive workflow sizing should run.
 **S3.** ELSE (standard sizing flow):
    a. Read impact-analysis.md:
       - Path: `docs/requirements/{artifact_folder}/impact-analysis.md`
-      - If file not found: default to standard, log warning, write sizing record, skip to 3e-refine
-   b. Call `parseSizingFromImpactAnalysis(content)`
-      - If returns null: default to standard with rationale "Unable to parse impact analysis", write sizing record, skip to 3e-refine
+      - If file found: call `parseSizingFromImpactAnalysis(content)` -> `metrics_or_null`
+      - If file not found: set `metrics_or_null = null`, set `ia_reason = 'ia_file_missing'`
+   b. IF `metrics_or_null` is non-null (HAPPY PATH -- unchanged behavior):
+      - `metrics = metrics_or_null`
+      - GOTO S3.c (thresholds -> recommendation -> banner -> user menu)
+      - When calling `applySizingDecision`, pass: `reason: 'user_accepted'` (or `'user_overridden'`), `user_prompted: true`, `fallback_attempted: false`
+   b-fallback. ELSE (`metrics_or_null` is null -- FALLBACK PATH):
+      - Set `ia_reason = ia_reason || 'ia_parse_failed'`
+      - Call `extractFallbackSizingMetrics(artifact_folder, projectRoot)` -> `{ metrics, source }`
+      - `metrics` may still be null; `source` is `'quick-scan'`, `'requirements-spec'`, or `null`
    c. Read thresholds: `workflows.json` -> `workflows.feature.sizing.thresholds`
       - If missing: use defaults `{ light_max_files: 5, epic_min_files: 20 }`
    d. Call `computeSizingRecommendation(metrics, thresholds)`
    e. Display sizing recommendation banner:
-      ```
-      +----------------------------------------------------------+
-      |  WORKFLOW SIZING RECOMMENDATION                           |
-      |                                                           |
-      |  Recommended: {INTENSITY}                                 |
-      |  Rationale: {rationale text}                              |
-      |                                                           |
-      |  Impact Analysis Summary:                                 |
-      |    Files affected:  {N}                                   |
-      |    Modules:         {N}                                   |
-      |    Risk level:      {level}                               |
-      |    Coupling:        {level}                               |
-      |    Coverage gaps:   {N}                                   |
-      +----------------------------------------------------------+
-      ```
+      - IF on fallback path:
+        ```
+        +----------------------------------------------------------+
+        |  WARNING: Impact analysis metrics unavailable             |
+        |                                                           |
+        |  Could not extract sizing metrics from impact-analysis.md |
+        |  {if source: "Partial metrics from: {source}.md"}         |
+        |  {if !source: "No metrics available"}                     |
+        |                                                           |
+        |  Recommended: {recommendation.intensity}                  |
+        |  Rationale: {recommendation.rationale}                    |
+        +----------------------------------------------------------+
+        ```
+      - ELSE (happy path):
+        ```
+        +----------------------------------------------------------+
+        |  WORKFLOW SIZING RECOMMENDATION                           |
+        |                                                           |
+        |  Recommended: {INTENSITY}                                 |
+        |  Rationale: {rationale text}                              |
+        |                                                           |
+        |  Impact Analysis Summary:                                 |
+        |    Files affected:  {N}                                   |
+        |    Modules:         {N}                                   |
+        |    Risk level:      {level}                               |
+        |    Coupling:        {level}                               |
+        |    Coverage gaps:   {N}                                   |
+        +----------------------------------------------------------+
+        ```
    f. Present user menu using `AskUserQuestion`:
       - `[A] Accept recommendation`
       - `[O] Override (choose different intensity)`
-      - `[S] Show full impact analysis`
+      - `[S] Show {on fallback path ? "available diagnostic info" : "full impact analysis"}`
    g. Handle user choice:
       - **[A] Accept**:
         - If intensity is 'epic': inform user that epic is deferred, proceeding with standard
-        - Call `applySizingDecision(state, recommendation.intensity, { metrics, config: sizingConfig })`
+        - Call `applySizingDecision(state, recommendation.intensity, { metrics, config: sizingConfig, reason: ia_reason || 'user_accepted', user_prompted: true, fallback_source: source || null, fallback_attempted: !!ia_reason })`
       - **[O] Override**:
-        - Present intensity picker: `[1] Light  [2] Standard  [3] Epic`
-        - Call `applySizingDecision(state, chosen, { metrics, overridden: true, overridden_to: chosen, recommended_intensity: recommendation.intensity, config: sizingConfig })`
+        - IF metrics is null (no metrics available at all):
+          - Present intensity picker: `[1] Light  [2] Standard`
+          - Display note: `(Epic requires impact analysis metrics)`
+        - ELSE:
+          - Present intensity picker: `[1] Light  [2] Standard  [3] Epic`
+        - Call `applySizingDecision(state, chosen, { metrics, overridden: true, overridden_to: chosen, recommended_intensity: recommendation.intensity, config: sizingConfig, reason: 'user_overridden', user_prompted: true, fallback_source: source || null, fallback_attempted: !!ia_reason })`
       - **[S] Show analysis**:
-        - Display full impact-analysis.md content
+        - IF on fallback path: display fallback source file contents (or "No diagnostic info available")
+        - ELSE: display full impact-analysis.md content
         - Return to menu (repeat step f)
    h. Write state.json
    i. If effective_intensity is 'light': update task list (mark skipped phase tasks as completed)

@@ -2818,6 +2818,107 @@ function computeSizingRecommendation(metrics, thresholds) {
 }
 
 /**
+ * Normalize a risk level string to one of: 'low', 'medium', 'high'.
+ * Compound levels like 'low-to-medium' are resolved to the higher value.
+ *
+ * @param {string|null|undefined} raw - Raw risk level string
+ * @returns {string} Normalized risk level ('low', 'medium', or 'high')
+ * @private
+ */
+function normalizeRiskLevel(raw) {
+    if (!raw || typeof raw !== 'string') return 'medium';
+    const normalized = raw.toLowerCase().trim();
+    const VALID = ['low', 'medium', 'high'];
+    if (VALID.includes(normalized)) return normalized;
+    // Compound levels like 'low-to-medium' -> take the higher
+    if (normalized.includes('high')) return 'high';
+    if (normalized.includes('medium')) return 'medium';
+    return 'medium'; // unknown -> conservative default
+}
+
+/**
+ * Attempt to extract sizing metrics from fallback artifacts when
+ * parseSizingFromImpactAnalysis() returns null.
+ *
+ * Fallback chain:
+ *   1. quick-scan.md -- extract JSON metadata block with affected_file_count
+ *   2. requirements-spec.md (then requirements.md) -- extract scope keyword
+ *   3. If both fail, return { metrics: null, source: null }
+ *
+ * BUG-0051-GH-51: FR-003, AC-004, AC-005, AC-006
+ *
+ * @param {string} artifactFolder - e.g. 'bug-0051-sizing-consent'
+ * @param {string} projectRoot    - absolute path to project root
+ * @returns {{ metrics: object | null, source: string | null }}
+ */
+function extractFallbackSizingMetrics(artifactFolder, projectRoot) {
+    // Input validation (FR-003 defensive)
+    if (!artifactFolder || !projectRoot) {
+        return { metrics: null, source: null };
+    }
+
+    const basePath = path.join(projectRoot, 'docs', 'requirements', artifactFolder);
+
+    // --- Fallback 1: quick-scan.md ---
+    try {
+        const content = fs.readFileSync(path.join(basePath, 'quick-scan.md'), 'utf8');
+        const jsonBlockRegex = /```json\s*\n([\s\S]*?)\n```/g;
+        let lastMatch = null;
+        let match;
+        while ((match = jsonBlockRegex.exec(content)) !== null) {
+            lastMatch = match[1];
+        }
+
+        if (lastMatch) {
+            const parsed = JSON.parse(lastMatch);
+            if (typeof parsed.affected_file_count === 'number') {
+                const risk = normalizeRiskLevel(parsed.risk_level);
+                return {
+                    metrics: {
+                        file_count: parsed.affected_file_count,
+                        module_count: 0,
+                        risk_score: risk,
+                        coupling: 'unknown',
+                        coverage_gaps: 0
+                    },
+                    source: 'quick-scan'
+                };
+            }
+        }
+    } catch (_e) {
+        // File not found or parse error -- fall through
+    }
+
+    // --- Fallback 2: requirements-spec.md then requirements.md ---
+    const reqFiles = ['requirements-spec.md', 'requirements.md'];
+    for (const reqFile of reqFiles) {
+        try {
+            const content = fs.readFileSync(path.join(basePath, reqFile), 'utf8');
+            const scopeMatch = content.match(/(^|\n)\*?\*?Scope\*?\*?\s*[:=]\s*(SMALL|MEDIUM|LARGE)/im);
+            if (scopeMatch) {
+                const keyword = scopeMatch[2].toUpperCase();
+                const SCOPE_MAP = { SMALL: 3, MEDIUM: 10, LARGE: 25 };
+                return {
+                    metrics: {
+                        file_count: SCOPE_MAP[keyword],
+                        module_count: 0,
+                        risk_score: 'medium',
+                        coupling: 'unknown',
+                        coverage_gaps: 0
+                    },
+                    source: 'requirements-spec'
+                };
+            }
+        } catch (_e) {
+            // File not found -- try next
+        }
+    }
+
+    // --- No fallback available ---
+    return { metrics: null, source: null };
+}
+
+/**
  * Validate post-mutation state invariants for sizing.
  *
  * @param {object} state - The state object after mutation
@@ -2917,7 +3018,15 @@ function applySizingDecision(state, intensity, sizingData = {}) {
         overridden_to: sizingData.overridden_to || null,
         decided_at: now,
         forced_by_flag: !!sizingData.forced_by_flag,
-        epic_deferred
+        epic_deferred,
+
+        // Audit fields (BUG-0051-GH-51: FR-005, FR-006)
+        reason: sizingData.reason || null,
+        user_prompted: sizingData.user_prompted !== undefined
+            ? !!sizingData.user_prompted : null,
+        fallback_source: sizingData.fallback_source || null,
+        fallback_attempted: sizingData.fallback_attempted !== undefined
+            ? !!sizingData.fallback_attempted : null
     };
 
     // Step 4: For standard/epic, just write record and return
@@ -3439,9 +3548,10 @@ module.exports = {
     loadWorkflowDefinitions,
     // Phase timeout detection
     checkPhaseTimeout,
-    // Sizing utilities (REQ-0011)
+    // Sizing utilities (REQ-0011, BUG-0051)
     parseSizingFromImpactAnalysis,
     computeSizingRecommendation,
+    extractFallbackSizingMetrics,
     applySizingDecision,
     // Supervised mode (REQ-0013)
     readSupervisedModeConfig,

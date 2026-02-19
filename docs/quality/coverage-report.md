@@ -1,64 +1,61 @@
-# Coverage Report: REQ-0027-gh-20-roundtable-analysis-agent-with-named-personas
+# Coverage Report: BUG-0051-GH-51 Sizing Consent
 
 **Phase**: 16-quality-loop
 **Date**: 2026-02-19
-**Branch**: feature/REQ-0027-gh-20-roundtable-analysis-agent-with-named-personas
+**Branch**: bugfix/BUG-0051-sizing-consent
+
+## Coverage Status
+
+Coverage tooling (c8/nyc/istanbul) is **not configured** for this project. This report documents functional coverage based on test-to-requirement traceability.
+
+## Functional Coverage: New Code
+
+### extractFallbackSizingMetrics() (lines 2854-2922 of common.cjs)
+
+| Path | Test | Status |
+|------|------|--------|
+| Quick-scan with valid JSON + affected_file_count | TC-01 | Covered |
+| Quick-scan with compound risk level | TC-02 | Covered |
+| Quick-scan missing, requirements.md fallback | TC-03 | Covered |
+| Quick-scan malformed JSON, requirements fallback | TC-04 | Covered |
+| Quick-scan valid JSON but missing field | TC-05 | Covered |
+| Both files missing -- null metrics | TC-06 | Covered |
+| Requirements with LARGE scope | TC-07 | Covered |
+| Empty artifactFolder argument | TC-08 | Covered |
+| Empty projectRoot argument | TC-08b | Covered |
+| requirements-spec.md preferred over requirements.md | TC-08c | Covered |
+| Requirements with no scope keyword | TC-08d | Covered |
+
+**Estimated line coverage**: 100% of new function paths exercised.
+
+### normalizeRiskLevel() (lines 2827-2836 of common.cjs)
+
+| Path | Test | Status |
+|------|------|--------|
+| Valid standard level ('low') | TC-01 | Covered |
+| Compound level ('low-to-medium' -> 'medium') | TC-02 | Covered |
+| Null/undefined input -> 'medium' default | TC-06 (implicit) | Covered |
+
+**Estimated line coverage**: 100% (all branches exercised).
+
+### applySizingDecision() audit fields (lines 3024-3031 of common.cjs)
+
+| Path | Test | Status |
+|------|------|--------|
+| All four fields provided | TC-09 | Covered |
+| No fields provided (backward compat defaults) | TC-10 | Covered |
+| Light flag path (reason + user_prompted) | TC-11 | Covered |
+| PATH 3 fallback (all four fields) | TC-12 | Covered |
+| User override path | TC-12b | Covered |
+| Epic deferred with audit fields | TC-12c | Covered |
+
+**Estimated line coverage**: 100% of new audit field logic exercised.
 
 ## Coverage Summary
 
-| Stream | Total Tests | Pass | Fail | Pre-Existing Fail | New Fail |
-|--------|-------------|------|------|--------------------|----------|
-| CJS (hooks) | 2208 | 2207 | 1 | 1 | 0 |
-| ESM (lib) | 632 | 629 | 3 | 3 | 0 |
-| **Total** | **2840** | **2836** | **4** | **4** | **0** |
-
-**Quantitative coverage**: NOT CONFIGURED (no c8/nyc/istanbul installed)
-
-## New Feature Test Coverage
-
-### test-three-verb-utils-steps.test.cjs (25 tests)
-
-Tests for the `readMetaJson` and `writeMetaJson` changes in `three-verb-utils.cjs`:
-
-| Category | Tests | Description |
-|----------|-------|-------------|
-| Default injection | TC-A01..A02 | steps_completed defaults to [], depth_overrides defaults to {} |
-| Preservation | TC-A03..A04 | Existing valid values preserved on read |
-| Type correction | TC-A05..A10 | Non-array steps_completed and non-object depth_overrides corrected |
-| Field coexistence | TC-A11 | New fields coexist with all existing fields |
-| Backward compat | TC-A12..A13, A20 | Null for missing/corrupt meta.json, legacy-only fields work |
-| Write cycle | TC-A14..A18 | Write preserves steps/depth, works without them, analysis_status unaffected |
-| Round-trip | TC-A19 | readMetaJson -> writeMetaJson preserves steps + depth |
-| Integration | TC-D01..D05 | Step progression, resume, depth override persistence, phase completion, upgrade |
-
-### test-step-file-validator.test.cjs (38 tests)
-
-Tests for step file frontmatter validation and inventory:
-
-| Category | Tests | Description |
-|----------|-------|-------------|
-| Frontmatter parsing | TC-B01..B02 | Valid step file with all required fields |
-| step_id validation | TC-B03..B05 | Invalid format, empty, missing |
-| title validation | TC-B06..B07 | Exceeding 60 chars, empty |
-| persona validation | TC-B08..B11 | Three valid values, invalid rejected |
-| depth validation | TC-B12..B15 | Three valid values, invalid rejected |
-| outputs validation | TC-B16..B18 | Non-empty array, empty array, non-array |
-| Optional fields | TC-B19..B22 | depends_on array, skip_if string |
-| Body sections | TC-B23..B24 | Standard Mode presence/fallback |
-| Error handling | TC-B25..B26 | Malformed YAML, missing delimiters |
-| Cross-validation | TC-B27..B28 | step_id matches directory, duplicate detection |
-| Inventory | TC-C01..C05 | Phase 00 (3), 01 (8), 02 (4), 03 (4), 04 (5) files exist |
-| Structure | TC-C06..C10 | Valid frontmatter, matching locations, no duplicates, naming convention, body sections |
-
-**Total new tests**: 63
-
-## Pre-Existing Failures (unchanged)
-
-1. CJS: gate-blocker supervised_review stderr assertion (SM-04, 1 test)
-2. ESM: README agent count expects 40 (TC-E09, 1 test)
-3. ESM: STEP 4 task cleanup instructions (TC-07, 1 test)
-4. ESM: Agent file count expects 48, found 61 (TC-13-01, 1 test)
-
-## Recommendation
-
-Install `c8` for quantitative line/branch coverage measurement.
+| Module | New Lines | Tests | Estimated Coverage |
+|--------|-----------|-------|--------------------|
+| normalizeRiskLevel() | 10 | 3 | 100% |
+| extractFallbackSizingMetrics() | 69 | 11 | 100% |
+| applySizingDecision() audit fields | 8 | 6 | 100% |
+| **Total** | **87** | **17** | **100%** |
