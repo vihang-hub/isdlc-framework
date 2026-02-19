@@ -71,15 +71,11 @@ Called by `discover-orchestrator` during the EXISTING PROJECT FLOW:
 
 ### Step 2: Count Existing Tests
 
-```bash
-# Count test files
-find . -name "*.test.ts" -o -name "*.spec.ts" -o -name "*_test.go" -o -name "test_*.py" | wc -l
+Count test files with `find . -name "*.test.ts" -o -name "*.spec.ts" -o -name "*_test.go" -o -name "test_*.py" | wc -l`. Count test cases (approximate) per framework:
 
-# Count test cases (approximate)
-grep -r "it\('" --include="*.test.ts" | wc -l  # Jest/Mocha
-grep -r "def test_" --include="*.py" | wc -l   # pytest
-grep -r "func Test" --include="*_test.go" | wc -l  # Go
-```
+- Jest/Mocha: `grep -r "it\('" --include="*.test.ts" | wc -l`
+- pytest: `grep -r "def test_" --include="*.py" | wc -l`
+- Go: `grep -r "func Test" --include="*_test.go" | wc -l`
 
 Categorize by type:
 - **Unit tests:** `tests/unit/`, `__tests__/`, `*.unit.test.ts`

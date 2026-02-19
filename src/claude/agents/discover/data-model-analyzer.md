@@ -95,48 +95,14 @@ Scan for indicators of data store usage:
 
 Based on detected ORM/data layer, extract model definitions:
 
-**Prisma:**
-```bash
-# Read schema.prisma for model definitions
-# Parse: model names, fields, types, relations, enums
-```
-
-**TypeORM / Sequelize / Drizzle:**
-```bash
-# Find entity/model files
-# Look in: src/entities/, src/models/, src/**/entity.ts, src/**/*.entity.ts
-# Parse: @Entity decorators, column definitions, relations
-```
-
-**Django:**
-```bash
-# Find models.py files in each app
-# Parse: class definitions extending models.Model
-# Extract: fields, ForeignKey, ManyToManyField, OneToOneField
-```
-
-**SQLAlchemy:**
-```bash
-# Find model files
-# Look in: src/models/, app/models/
-# Parse: class definitions extending Base/db.Model
-# Extract: Column definitions, relationship() calls
-```
-
-**Go (GORM/Ent):**
-```bash
-# GORM: Find struct definitions with gorm tags
-# Ent: Read ent/schema/ directory for schema definitions
-```
-
-**Raw SQL / Migrations:**
-```bash
-# Look for migration files in:
-# - migrations/, db/migrations/, alembic/versions/
-# - prisma/migrations/, drizzle/migrations/
-# Parse: CREATE TABLE, ALTER TABLE statements
-# Extract: table names, columns, foreign keys, indexes
-```
+| ORM/Layer | Where to Look | What to Extract |
+|-----------|---------------|-----------------|
+| **Prisma** | `prisma/schema.prisma` | Model names, fields, types, relations, enums |
+| **TypeORM / Sequelize / Drizzle** | `src/entities/`, `src/models/`, `src/**/entity.ts`, `src/**/*.entity.ts` | @Entity decorators, column definitions, relations |
+| **Django** | `models.py` files in each app | Class definitions extending `models.Model`; fields, ForeignKey, ManyToManyField, OneToOneField |
+| **SQLAlchemy** | `src/models/`, `app/models/` | Class definitions extending `Base`/`db.Model`; Column definitions, `relationship()` calls |
+| **Go (GORM/Ent)** | Struct definitions with gorm tags; `ent/schema/` directory | Schema definitions and struct tags |
+| **Raw SQL / Migrations** | `migrations/`, `db/migrations/`, `alembic/versions/`, `prisma/migrations/`, `drizzle/migrations/` | CREATE TABLE, ALTER TABLE statements; table names, columns, foreign keys, indexes |
 
 ### Step 3: Map Entity Relationships
 

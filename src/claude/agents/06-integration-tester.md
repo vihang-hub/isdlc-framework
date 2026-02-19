@@ -125,15 +125,9 @@ The `/discover` command evaluates existing test automation and stores results in
 
 Before running ANY test command:
 
-```bash
-# Step 1: Check state.json for configured commands
-cat .isdlc/state.json | jq '.testing_infrastructure.tools'
-
-# Step 2: Check package.json for test scripts
-cat package.json | jq '.scripts | to_entries | map(select(.key | startswith("test")))'
-
-# Step 3: Use discovered commands in your iteration loop
-```
+1. Check state.json for configured commands: `cat .isdlc/state.json | jq '.testing_infrastructure.tools'`
+2. Check package.json for test scripts: `cat package.json | jq '.scripts | to_entries | map(select(.key | startswith("test")))'`
+3. Use the discovered commands in your iteration loop.
 
 ## Parallel Test Execution
 
@@ -519,16 +513,12 @@ Search all acceptance test files for orphan `skip` statements that should have b
 | RSpec | `xit`, `xdescribe` | `/\bxit\b/`, `/\bxdescribe\b/` |
 
 ### Scan Command
-```bash
-# JavaScript/TypeScript
-grep -rn "it\.skip\|test\.skip\|xit\|xdescribe" tests/acceptance/
 
-# Python
-grep -rn "@pytest.mark.skip" tests/acceptance/
+Scan for orphan skips using the appropriate command for your language:
 
-# Java
-grep -rn "@Disabled\|@Ignore" src/test/java/acceptance/
-```
+- JavaScript/TypeScript: `grep -rn "it\.skip\|test\.skip\|xit\|xdescribe" tests/acceptance/`
+- Python: `grep -rn "@pytest.mark.skip" tests/acceptance/`
+- Java: `grep -rn "@Disabled\|@Ignore" src/test/java/acceptance/`
 
 ### Validation Rule
 
@@ -599,13 +589,7 @@ Compare discovered test files against ATDD checklist:
 2. **All test files are referenced in checklist**
 3. **Status in checklist matches actual test status**
 
-```bash
-# Extract test names from checklist
-jq '.acceptance_criteria[].test_name' docs/isdlc/atdd-checklist.json
-
-# Compare with actual test names in files
-grep -h "it\('" tests/acceptance/*.test.ts | sed "s/.*it('//" | sed "s/',.*//"
-```
+Extract test names from the checklist with `jq '.acceptance_criteria[].test_name' docs/isdlc/atdd-checklist.json` and compare with actual test names using `grep -h "it\('" tests/acceptance/*.test.ts | sed "s/.*it('//" | sed "s/',.*//"` to find mismatches.
 
 ### Validation Rule
 
@@ -616,15 +600,7 @@ grep -h "it\('" tests/acceptance/*.test.ts | sed "s/.*it('//" | sed "s/',.*//"
 
 ## ATDD Validation Step 4: Run Acceptance Test Suite
 
-Execute the full acceptance test suite and verify all pass:
-
-```bash
-# Discover acceptance test command from package.json or state.json
-npm run test:acceptance
-
-# Or run with specific pattern
-npm test -- --testPathPattern="acceptance"
-```
+Execute the full acceptance test suite and verify all pass. Discover the acceptance test command from package.json or state.json, then run `npm run test:acceptance` or `npm test -- --testPathPattern="acceptance"`.
 
 ### Expected Output
 ```
@@ -656,10 +632,7 @@ When running mutation tests on acceptance tests:
 2. **Mutation score threshold applies** (≥80%)
 3. **Focus on P0/P1 tests** for mutation coverage - these are most critical
 
-```bash
-# Run mutation tests on acceptance tests
-npm run test:mutation -- --files="src/**/*.ts" --mutate="tests/acceptance/**/*.test.ts"
-```
+Run mutation tests on acceptance tests with `npm run test:mutation -- --files="src/**/*.ts" --mutate="tests/acceptance/**/*.test.ts"`.
 
 ## ATDD Validation Failure Actions
 

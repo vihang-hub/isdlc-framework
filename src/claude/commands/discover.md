@@ -99,31 +99,17 @@ The following flags have been removed and will produce errors if used:
 - `--classic`: Error: "The --classic flag has been removed. /discover now uses deep discovery by default."
 
 ### Examples
-```bash
-# Run discovery (presents interactive menu)
-/discover
 
-# Force new project setup with deep discovery
-/discover --new
-
-# Analyze existing project (standard depth, default)
-/discover --existing
-
-# Full-depth analysis with all agents + 5 debate rounds
-/discover --deep full
-
-# Standard depth with full transcript output
-/discover --deep standard --verbose
-
-# Analyze existing project, skip test evaluation
-/discover --existing --skip-tests
-
-# Discover a specific project in a monorepo
-/discover --project api-service
-
-# Prepare for ATDD workflow
-/discover --atdd-ready
-```
+| Command | Description |
+|---------|-------------|
+| `/discover` | Run discovery (presents interactive menu) |
+| `/discover --new` | Force new project setup with deep discovery |
+| `/discover --existing` | Analyze existing project (standard depth, default) |
+| `/discover --deep full` | Full-depth analysis with all agents + 5 debate rounds |
+| `/discover --deep standard --verbose` | Standard depth with full transcript output |
+| `/discover --existing --skip-tests` | Analyze existing project, skip test evaluation |
+| `/discover --project api-service` | Discover a specific project in a monorepo |
+| `/discover --atdd-ready` | Prepare for ATDD workflow |
 
 ### What It Does
 
