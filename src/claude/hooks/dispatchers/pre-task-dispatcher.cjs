@@ -1,5 +1,11 @@
 #!/usr/bin/env node
 'use strict';
+
+/** REQ-0022 FR-008: High-resolution timer with Date.now() fallback (ADR-0004) */
+const _now = (typeof performance !== 'undefined' && typeof performance.now === 'function')
+    ? () => performance.now()
+    : () => Date.now();
+
 /**
  * iSDLC Pre-Task Dispatcher - PreToolUse[Task] Hook
  * ===================================================
@@ -83,7 +89,10 @@ const HOOKS = [
     }}
 ];
 
+const DISPATCHER_NAME = 'pre-task-dispatcher';
+
 async function main() {
+    const _dispatcherStart = _now();
     try {
         // 1. Read stdin once
         const inputStr = await readStdin();
@@ -146,11 +155,13 @@ async function main() {
         // 5. Call hooks in order, short-circuit on first block
         let stateModified = false;
         const allStderr = [];
+        let _hooksRan = 0;
 
         for (const hook of HOOKS) {
             if (hook.shouldActivate && !hook.shouldActivate(ctx)) {
                 continue; // skip inactive hook
             }
+            _hooksRan++;
             try {
                 const result = hook.check(ctx);
                 if (result.stateModified) stateModified = true;
@@ -167,6 +178,11 @@ async function main() {
                     }
                     // Output block response
                     outputBlockResponse(result.stopReason);
+                    // REQ-0022 FR-008: Dispatcher timing instrumentation
+                    try {
+                        const _elapsed = _now() - _dispatcherStart;
+                        console.error(`DISPATCHER_TIMING: ${DISPATCHER_NAME} completed in ${_elapsed.toFixed(1)}ms (${_hooksRan} hooks)`);
+                    } catch (_te) { /* fail-open */ }
                     process.exit(0);
                 }
             } catch (e) {
@@ -185,9 +201,19 @@ async function main() {
             console.error(allStderr.join('\n'));
         }
 
+        // REQ-0022 FR-008: Dispatcher timing instrumentation
+        try {
+            const _elapsed = _now() - _dispatcherStart;
+            console.error(`DISPATCHER_TIMING: ${DISPATCHER_NAME} completed in ${_elapsed.toFixed(1)}ms (${_hooksRan} hooks)`);
+        } catch (_te) { /* fail-open */ }
         process.exit(0);
     } catch (e) {
         debugLog('pre-task-dispatcher error:', e.message);
+        // REQ-0022 FR-008: Dispatcher timing instrumentation
+        try {
+            const _elapsed = _now() - _dispatcherStart;
+            console.error(`DISPATCHER_TIMING: ${DISPATCHER_NAME} completed in ${_elapsed.toFixed(1)}ms (0 hooks)`);
+        } catch (_te) { /* fail-open */ }
         process.exit(0);
     }
 }

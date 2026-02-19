@@ -1,5 +1,11 @@
 #!/usr/bin/env node
 'use strict';
+
+/** REQ-0022 FR-008: High-resolution timer with Date.now() fallback (ADR-0004) */
+const _now = (typeof performance !== 'undefined' && typeof performance.now === 'function')
+    ? () => performance.now()
+    : () => Date.now();
+
 /**
  * iSDLC Post-Bash Dispatcher - PostToolUse[Bash] Hook
  * =====================================================
@@ -50,7 +56,10 @@ const HOOKS = [
     { name: 'atdd-completeness-validator', check: atddCompletenessValidatorCheck, shouldActivate: (ctx) => !!ctx.state?.active_workflow?.options?.atdd_mode }
 ];
 
+const DISPATCHER_NAME = 'post-bash-dispatcher';
+
 async function main() {
+    const _dispatcherStart = _now();
     try {
         // 1. Read stdin once
         const inputStr = await readStdin();
@@ -79,11 +88,13 @@ async function main() {
         let stateModified = false;
         const allStderr = [];
         const allStdout = [];
+        let _hooksRan = 0;
 
         for (const hook of HOOKS) {
             if (hook.shouldActivate && !hook.shouldActivate(ctx)) {
                 continue; // skip inactive hook
             }
+            _hooksRan++;
             try {
                 const result = hook.check(ctx);
                 if (result.stateModified) stateModified = true;
@@ -108,9 +119,19 @@ async function main() {
             console.log(allStdout.join('\n'));
         }
 
+        // REQ-0022 FR-008: Dispatcher timing instrumentation
+        try {
+            const _elapsed = _now() - _dispatcherStart;
+            console.error(`DISPATCHER_TIMING: ${DISPATCHER_NAME} completed in ${_elapsed.toFixed(1)}ms (${_hooksRan} hooks)`);
+        } catch (_te) { /* fail-open */ }
         process.exit(0);
     } catch (e) {
         debugLog('post-bash-dispatcher error:', e.message);
+        // REQ-0022 FR-008: Dispatcher timing instrumentation
+        try {
+            const _elapsed = _now() - _dispatcherStart;
+            console.error(`DISPATCHER_TIMING: ${DISPATCHER_NAME} completed in ${_elapsed.toFixed(1)}ms (0 hooks)`);
+        } catch (_te) { /* fail-open */ }
         process.exit(0);
     }
 }

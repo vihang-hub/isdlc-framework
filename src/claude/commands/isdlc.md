@@ -1041,6 +1041,18 @@ Using the `state.json` already read in step 3b, update the following fields:
 
 **IMPORTANT**: Steps 1-2 and step 4 update DIFFERENT locations. `phases[phase_key]` (steps 1-2) is the detailed phase tracking object near the bottom of state.json. `active_workflow.phase_status[phase_key]` (step 4) is the summary map inside the workflow. Both MUST be updated — hooks read from the detailed `phases` object.
 
+**3c-prime-timing.** PER-PHASE TIMING START (REQ-0022) -- After writing phase activation state:
+
+8. **Initialize or preserve timing object**:
+   - If `phases[phase_key].timing` does NOT exist (first run):
+     - Create: `phases[phase_key].timing = { started_at: "<current ISO-8601>", retries: 0 }`
+   - If `phases[phase_key].timing.started_at` already exists (retry case -- supervised redo or blast-radius re-run):
+     - Increment: `phases[phase_key].timing.retries += 1`
+     - Do NOT overwrite `started_at` -- preserve the original start time (AC-001c)
+
+9. **Error handling**: If timing initialization fails, log a warning to stderr and continue.
+   The phase MUST proceed regardless of timing errors (NFR-001).
+
 **3d.** DIRECT PHASE DELEGATION — Bypass the orchestrator and delegate directly to the phase agent.
 
 Look up the agent for this phase from the PHASE→AGENT table:
@@ -1131,6 +1143,29 @@ Use Task tool → {agent_name} with:
        DO NOT attempt to advance the gate until ALL enabled requirements are satisfied.
 
     6. Error handling: If any error occurs in steps 1-5, continue with unmodified prompt. Log warning but never block.}
+   {BUDGET DEGRADATION INJECTION (REQ-0022) -- Inject degradation directive when budget is exceeded or approaching. Fail-open.
+    1. Read `active_workflow.budget_status` from state.json.
+       If `budget_status` is `"on_track"`, missing, or null: SKIP degradation injection.
+       If `budget_status` is `"exceeded"` or `"approaching"`: Continue.
+    2. Read the performance budget for `effective_intensity = active_workflow.sizing.effective_intensity || "standard"`.
+       Look up `performance_budgets[effective_intensity]` from workflows.json.
+       If not found, use defaults: standard = { max_debate_rounds: 2, max_fan_out_chunks: 4 }.
+    3. Read workflow flags: `no_debate = active_workflow.options?.no_debate || false`, `no_fan_out = active_workflow.options?.no_fan_out || false`.
+    4. Compute degradation:
+       - Debate-enabled phases (01-requirements, 03-architecture, 04-design, 05-test-strategy):
+         If --no-debate: skip. If exceeded: max_debate_rounds=1. If approaching: max_debate_rounds=max(1, tier_max-1).
+       - Fan-out phases (16-quality-loop, 08-code-review):
+         If --no-fan-out: skip. If exceeded: max_fan_out_chunks=2. If approaching: max_fan_out_chunks=max(2, floor(tier_max/2)).
+       - Other phases: no degradation.
+    5. If degradation applies, append to delegation prompt:
+       BUDGET_DEGRADATION:
+         budget_status: {status}
+         {max_debate_rounds: N or max_fan_out_chunks: N}
+         reason: "{reason}"
+         phase: {phase_key}
+    6. Record degraded values for STEP 3e.
+    7. Error handling: If any step fails, skip injection and continue.}
+   PHASE_TIMING_REPORT: Include { "debate_rounds_used": 0, "fan_out_chunks": 0 } in your result.
    Do NOT emit SUGGESTED NEXT STEPS or prompt the user to continue — the Phase-Loop Controller manages phase transitions. Simply return your result.
    Validate GATE-{NN} on completion."
 ```
@@ -1151,6 +1186,53 @@ Use Task tool → {agent_name} with:
    - Recalculate the Progress Summary table: update completed task counts per phase, total count, and percentage
    - Write the updated `docs/isdlc/tasks.md`
    - If `docs/isdlc/tasks.md` does not exist, skip this step silently
+
+**3e-timing.** PER-PHASE TIMING END AND BUDGET CHECK (REQ-0022) -- After writing phase status = "completed" and incrementing current_phase_index:
+
+18. **Record timing end**:
+    - `phases[phase_key].timing.completed_at = new Date().toISOString()`
+    - Compute wall-clock duration:
+      `start = new Date(phases[phase_key].timing.started_at).getTime()`
+      `end = new Date(phases[phase_key].timing.completed_at).getTime()`
+      `phases[phase_key].timing.wall_clock_minutes = Math.round((end - start) / 60000)`
+    - If `started_at` is missing or invalid, set `wall_clock_minutes = 0` and log warning.
+
+19. **Extract PHASE_TIMING_REPORT from agent result**:
+    - Scan the agent's response text for a line matching:
+      `PHASE_TIMING_REPORT: { "debate_rounds_used": N, "fan_out_chunks": N }`
+    - Parse the JSON object from that line.
+    - Write:
+      `phases[phase_key].timing.debate_rounds_used = parsed.debate_rounds_used || 0`
+      `phases[phase_key].timing.fan_out_chunks = parsed.fan_out_chunks || 0`
+    - If the line is not found or parsing fails: default both to `0`.
+
+20. **Record degradation values** (if BUDGET_DEGRADATION was injected in STEP 3d for this phase):
+    - `phases[phase_key].timing.debate_rounds_degraded_to = <degraded debate limit or null>`
+    - `phases[phase_key].timing.fan_out_degraded_to = <degraded fan-out limit or null>`
+    - If no degradation was applied: set both to `null`.
+
+21. **Budget check**:
+    a. Determine effective intensity:
+       `effective_intensity = active_workflow.sizing?.effective_intensity || "standard"`
+    b. Read performance budget for this intensity from workflows.json.
+       If missing, use hardcoded defaults.
+    c. Compute elapsed workflow time:
+       `elapsed = Math.round((Date.now() - new Date(active_workflow.started_at).getTime()) / 60000)`
+    d. Compute budget status:
+       - `<= 80%`: `"on_track"`, `> 80%` and `<= 100%`: `"approaching"`, `> 100%`: `"exceeded"`
+    e. Write budget status:
+       `active_workflow.budget_status = <result>`
+    f. If result is `"exceeded"` AND `active_workflow.budget_exceeded_at_phase` is NOT already set:
+       `active_workflow.budget_exceeded_at_phase = phase_key`
+    g. Emit warnings to stderr:
+       - If `"exceeded"`: `BUDGET_WARNING: Workflow has consumed {elapsed}m of {budget}m budget ({percent}%). Phase {phase_key} took {wall_clock_minutes}m. [{intensity} tier]`
+       - If `"approaching"`: `BUDGET_APPROACHING: Workflow at {percent}% of {budget}m budget. {remaining}m remaining. [{intensity} tier]`
+       - If `"on_track"`: No output.
+
+22. **Write state.json**: Persist all timing and budget updates in a single state write.
+
+23. **Error handling**: If any timing or budget computation fails, log warning to stderr, continue to next phase.
+    The workflow MUST proceed regardless. (NFR-001, AC-003f)
 
 **PHASE_AGENT_MAP** (for STEP 3c-prime `active_agent` resolution):
 ```
@@ -1464,6 +1546,30 @@ When the `blocked_by_hook` status comes from `blast-radius-validator` (the block
    ```
 
 **IMPORTANT**: The `impact-analysis.md` file is READ-ONLY after Phase 02. The phase-loop controller and all agents MUST NOT modify it to circumvent blast radius validation. The only valid way to exclude a file from blast radius enforcement is to list it in the `## Deferred Files` section of `requirements-spec.md` with justification.
+
+#### STEP 3-dashboard: COMPLETION DASHBOARD (REQ-0022)
+
+After the phase loop exits (all phases completed or skipped), before STEP 4 (orchestrator finalize):
+
+24. **Collect timing data**: Read `phases[phase_key].timing` for every phase in `active_workflow.phases`.
+    Build an array with `phase_key`, `wall_clock_minutes`, `debate_rounds_used`, `fan_out_chunks`, `debate_rounds_degraded_to`, `fan_out_degraded_to`.
+
+25. **Read budget**: Read the performance budget for the effective intensity tier.
+    Build budget info: `{ max_total_minutes, intensity, exceeded_at_phase }`.
+
+26. **Preliminary regression check**:
+    - Read `workflow_history[]` from state.json.
+    - Compute total minutes from phase timings.
+    - Compute rolling average from last 5 workflows of same intensity.
+    - Detect regression (20% threshold).
+    - If regressed, find slowest phase.
+
+27. **Count degradation**: Count phases with `debate_rounds_degraded_to !== null` or `fan_out_degraded_to !== null`.
+
+28. **Render and display dashboard** using the formatCompletionDashboard() specification:
+    Show the multi-line timing summary with phase table, budget status, regression info, and degradation count.
+
+29. **Error handling**: If dashboard rendering fails, log `DASHBOARD_ERROR: Could not render completion dashboard: <error>` and proceed. Never block finalization. (NFR-001)
 
 #### STEP 4: FINALIZE — Complete the workflow
 
