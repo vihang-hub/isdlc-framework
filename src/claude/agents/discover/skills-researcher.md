@@ -51,12 +51,7 @@ Extract technologies from context:
 
 ### Step 2: Search skills.sh
 
-Query skills.sh for each technology:
-
-```bash
-# Search skills.sh API (or local cache)
-curl -s "https://skills.sh/api/search?q=nestjs" | jq '.skills[]'
-```
+Query skills.sh for each technology. Search the skills.sh API (or local cache) with `curl -s "https://skills.sh/api/search?q=nestjs" | jq '.skills[]'`.
 
 **Expected results format:**
 ```json
@@ -138,15 +133,7 @@ Show user the recommended skills:
 
 For each selected skill:
 
-```bash
-# Download skill definition
-# Single-project: .claude/skills/external/
-# Monorepo: .isdlc/projects/{project-id}/skills/external/
-curl -s "https://skills.sh/api/skills/anthropics/nestjs" > {external_skills_path}/nestjs.md
-
-# Or use skills.sh CLI if available
-skills install anthropics/nestjs --project
-```
+Download the skill definition to the appropriate external skills path (single-project: `.claude/skills/external/`, monorepo: `.isdlc/projects/{project-id}/skills/external/`) with `curl -s "https://skills.sh/api/skills/anthropics/nestjs" > {external_skills_path}/nestjs.md`, or use the skills.sh CLI with `skills install anthropics/nestjs --project`.
 
 **Path resolution (monorepo-aware):**
 - Check if `.isdlc/monorepo.json` exists

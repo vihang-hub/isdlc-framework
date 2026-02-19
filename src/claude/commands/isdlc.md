@@ -763,17 +763,7 @@ The `/discover` command provides:
 
 See `/discover --help` for full documentation.
 
-**Quick Start:**
-```bash
-# For any project (auto-detects new vs existing)
-/discover
-
-# Force new project setup
-/discover --new
-
-# Force existing project analysis
-/discover --existing
-```
+**Quick Start:** `/discover` (auto-detects new vs existing), `/discover --new` (force new project setup), `/discover --existing` (force existing project analysis).
 
 ---
 

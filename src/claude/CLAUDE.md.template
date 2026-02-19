@@ -257,3 +257,22 @@ SUGGESTED NEXT STEPS:
 **CRITICAL**: Before starting any work, read the project constitution at `docs/isdlc/constitution.md`.
 
 Each agent must uphold the constitutional articles listed in its agent file. The applicable articles vary by phase — see the agent's own CONSTITUTIONAL PRINCIPLES section for its specific article list.
+
+### Single-Line Bash Convention
+
+All fenced Bash/sh code blocks in agent and command markdown files MUST contain only a single command line (one non-empty line). Claude Code's permission auto-allow rules use `*` glob patterns (e.g., `Bash(npm *)`) which do not match newlines -- multiline commands bypass these rules and trigger interactive permission prompts.
+
+**Transformation patterns:**
+
+| Multiline Pattern | Single-Line Equivalent |
+|-------------------|----------------------|
+| for-loop (`for f in ...; do ... done`) | `find ... \| xargs ...` on one line |
+| Newline-separated commands | `command1 && command2 && command3` |
+| Comments interleaved with commands | Move comments to markdown prose above the code block |
+| Pipe chains split across lines | Join into a single `cmd1 \| cmd2 \| cmd3` line |
+| Multiline `node -e "..."` | `node -e "compact single-line JS"` or extract to `bin/script.js` |
+
+**Escape hatch:** If a command cannot be reasonably expressed as a single line, extract it to a script file in `bin/` and call it with `node bin/script-name.js` or `bash bin/script-name.sh`. The single-line call matches permission glob patterns.
+
+Agent files reference this convention with:
+> See **Single-Line Bash Convention** in CLAUDE.md.

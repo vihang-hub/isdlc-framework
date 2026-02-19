@@ -85,21 +85,10 @@ Example: `/provider setup-ollama --model qwen2.5-coder:14b`
 
 Best for users without a powerful GPU or Anthropic API key.
 
-```bash
-# 1. Get a FREE API key from one of these providers:
-#    - Groq: https://console.groq.com/ (1,000 req/day)
-#    - Together AI: https://api.together.xyz/ ($1 free credit)
-#    - Google AI Studio: https://aistudio.google.com/ (60 req/min)
-
-# 2. Set environment variable (example for Groq)
-export GROQ_API_KEY=your-free-api-key
-
-# 3. Initialize provider config
-/provider init
-
-# 4. Set free mode
-/provider set free
-```
+1. Get a FREE API key from one of these providers: [Groq](https://console.groq.com/) (1,000 req/day), [Together AI](https://api.together.xyz/) ($1 free credit), or [Google AI Studio](https://aistudio.google.com/) (60 req/min)
+2. Set environment variable (example for Groq): `export GROQ_API_KEY=your-free-api-key`
+3. Initialize provider config: `/provider init`
+4. Set free mode: `/provider set free`
 
 ### Option 2: Using Anthropic Only (Default)
 No configuration needed. Ensure `ANTHROPIC_API_KEY` is set.
@@ -108,10 +97,7 @@ No configuration needed. Ensure `ANTHROPIC_API_KEY` is set.
 
 For users who want free local inference. The setup script handles everything!
 
-```bash
-# Automatic installation and configuration
-/provider setup-ollama
-```
+Run `/provider setup-ollama` for automatic installation and configuration.
 
 The script will:
 - Detect your OS (macOS/Linux) and GPU/VRAM
@@ -122,31 +108,15 @@ The script will:
 
 **Manual setup** (if you prefer):
 
-```bash
-# 1. Install Ollama
-# macOS: brew install ollama
-# Linux: curl -fsSL https://ollama.com/install.sh | sh
-
-# 2. Pull a coding model (choose based on your VRAM)
-ollama pull qwen2.5-coder:14b    # 12GB VRAM
-ollama pull qwen3-coder          # 24GB VRAM
-
-# 3. Start Ollama server
-ollama serve
-
-# 4. Initialize iSDLC provider config
-/provider init
-
-# 5. Set budget mode (uses Ollama, falls back to free cloud)
-/provider set budget
-```
+1. Install Ollama: `brew install ollama` (macOS) or `curl -fsSL https://ollama.com/install.sh | sh` (Linux)
+2. Pull a coding model: `ollama pull qwen2.5-coder:14b` (12GB VRAM) or `ollama pull qwen3-coder` (24GB VRAM)
+3. Start the server: `ollama serve`
+4. Initialize provider config: `/provider init`
+5. Set budget mode: `/provider set budget`
 
 ### Option 4: Air-Gapped / Offline Environment
-```bash
-# Requires Ollama with models pre-installed
-/provider init
-/provider set local
-```
+
+Requires Ollama with models pre-installed. Run `/provider init` then `/provider set local`.
 
 ## Configuration File
 
@@ -204,34 +174,23 @@ In hybrid mode, different phases use different providers based on complexity:
 ## Troubleshooting
 
 ### Ollama not connecting
-```bash
-# Check if Ollama is running
-curl http://localhost:11434/api/tags
 
-# Start Ollama if not running
-ollama serve
-```
+Check if Ollama is running with `curl http://localhost:11434/api/tags` and start it with `ollama serve` if needed.
 
 ### API key issues
-```bash
-# Verify key is set
-echo $ANTHROPIC_API_KEY
 
-# Test directly
-curl -H "x-api-key: $ANTHROPIC_API_KEY" https://api.anthropic.com/v1/messages
-```
+Verify the key is set with `echo $ANTHROPIC_API_KEY` and test directly with `curl -H "x-api-key: $ANTHROPIC_API_KEY" https://api.anthropic.com/v1/messages`.
 
 ### Force specific provider
+
 ```bash
-# Override for current session
-export ISDLC_PROVIDER_OVERRIDE=anthropic
-export ISDLC_MODEL_OVERRIDE=sonnet
+export ISDLC_PROVIDER_OVERRIDE=anthropic && export ISDLC_MODEL_OVERRIDE=sonnet
 ```
 
 ### Debug provider selection
+
 ```bash
 export ISDLC_PROVIDER_DEBUG=true
-# Run your command - you'll see provider routing decisions
 ```
 
 ## Examples
@@ -386,19 +345,9 @@ This command:
 
 ### Manual Installation
 
-**macOS:**
-```bash
-# Via Homebrew (recommended)
-brew install ollama
+**macOS:** Install via Homebrew (recommended) with `brew install ollama`, or direct download with `curl -fsSL https://ollama.com/install.sh | sh`.
 
-# Or direct download
-curl -fsSL https://ollama.com/install.sh | sh
-```
-
-**Linux:**
-```bash
-curl -fsSL https://ollama.com/install.sh | sh
-```
+**Linux:** Install with `curl -fsSL https://ollama.com/install.sh | sh`.
 
 **Windows:**
 Download from https://ollama.com/download/windows
@@ -414,26 +363,12 @@ Download from https://ollama.com/download/windows
 
 ### Pull Models
 
-```bash
-# Start Ollama server
-ollama serve
+Start the Ollama server with `ollama serve`, then in another terminal:
 
-# Pull a model (in another terminal)
-ollama pull qwen2.5-coder:14b
-
-# List installed models
-ollama list
-
-# Test a model
-ollama run qwen2.5-coder:14b "Write a hello world in Python"
-```
+- Pull a model: `ollama pull qwen2.5-coder:14b`
+- List installed models: `ollama list`
+- Test a model: `ollama run qwen2.5-coder:14b "Write a hello world in Python"`
 
 ### Verify Setup
 
-```bash
-# Check Ollama is running
-curl http://localhost:11434/api/tags
-
-# Or use the provider command
-/provider setup-ollama --check-only
-```
+Check Ollama is running with `curl http://localhost:11434/api/tags`, or use `/provider setup-ollama --check-only`.

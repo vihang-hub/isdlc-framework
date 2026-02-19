@@ -166,13 +166,7 @@ Before running tests, discover the correct commands:
 2. **Check state.json** for configured commands
 3. **Use discovered commands** in your iteration loop
 
-```bash
-# Example: Use what's configured, not hardcoded
-npm test                    # If package.json has "test" script
-npm run test:unit           # If separate unit test script exists
-pytest tests/unit/          # If Python with pytest
-go test ./...               # If Go project
-```
+Use the configured test command for your project: `npm test`, `npm run test:unit`, `pytest tests/unit/`, or `go test ./...`.
 
 ## Parallel Test Execution
 
@@ -196,18 +190,7 @@ If the framework is not recognized, fall back to sequential execution with an in
 
 ### CPU Core Detection
 
-Determine CPU core count to set parallelism level:
-
-```bash
-# Linux
-N=$(nproc)
-
-# macOS
-N=$(sysctl -n hw.ncpu)
-
-# Cross-platform Node.js
-N=$(node -e "console.log(require('os').cpus().length)")
-```
+Determine CPU core count to set parallelism level. On Linux use `N=$(nproc)`, on macOS use `N=$(sysctl -n hw.ncpu)`, or cross-platform use `N=$(node -e "console.log(require('os').cpus().length)")`.
 
 Default parallelism: `max(1, cores - 1)` to leave one core for the system.
 
@@ -389,15 +372,7 @@ Follow the SKILL OBSERVABILITY protocol in CLAUDE.md.
    - Execute full unit test suite
    - Capture test output (pass/fail counts, error messages)
 
-   ```bash
-   # Discover and use the correct command:
-   # 1. Check state.json.testing_infrastructure.tools
-   # 2. Check package.json scripts
-   # 3. Use discovered command, e.g.:
-   npm test                    # or
-   npm run test:unit           # or
-   pytest tests/unit/          # etc.
-   ```
+   Discover the correct command from `state.json.testing_infrastructure.tools` and `package.json` scripts, then run it (e.g., `npm test`, `npm run test:unit`, or `pytest tests/unit/`).
 
 4. **Evaluate Results**
    - ✅ **All tests pass** → Proceed to Refactor phase
