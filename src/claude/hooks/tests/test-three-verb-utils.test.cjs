@@ -21,6 +21,7 @@ const os = require('os');
 
 const {
     ANALYSIS_PHASES,
+    IMPLEMENTATION_PHASES,       // REQ-0026: Build auto-detection
     MARKER_REGEX,
     generateSlug,
     detectSource,
@@ -32,6 +33,9 @@ const {
     updateBacklogMarker,
     appendToBacklog,
     resolveItem,
+    validatePhasesCompleted,     // REQ-0026: Build auto-detection
+    computeStartPhase,           // REQ-0026: Build auto-detection
+    checkStaleness,              // REQ-0026: Build auto-detection
     findBacklogItemByNumber,
     findByExternalRef,
     searchBacklogTitles,
@@ -1572,5 +1576,648 @@ describe('Cross-platform CRLF (NFR-005)', () => {
         const raw = fs.readFileSync(path.join(dir, 'meta.json'), 'utf8');
         // JSON.stringify always uses \n, not \r\n
         assert.ok(!raw.includes('\r\n'), 'Should not contain CRLF');
+    });
+});
+
+// ===========================================================================
+// 20. IMPLEMENTATION_PHASES constant tests
+// REQ-0026: Build auto-detection
+// Traces: FR-002, FR-006
+// ===========================================================================
+
+/**
+ * Test fixtures for build auto-detection tests.
+ * Traces: FR-001, FR-002, FR-003, FR-004, FR-006
+ */
+const FEATURE_PHASES = [
+    '00-quick-scan', '01-requirements', '02-impact-analysis',
+    '03-architecture', '04-design', '05-test-strategy',
+    '06-implementation', '16-quality-loop', '08-code-review'
+];
+
+const ALL_ANALYSIS = [
+    '00-quick-scan', '01-requirements', '02-impact-analysis',
+    '03-architecture', '04-design'
+];
+
+const IMPL_PHASES = [
+    '05-test-strategy', '06-implementation',
+    '16-quality-loop', '08-code-review'
+];
+
+describe('IMPLEMENTATION_PHASES', () => {
+    // TC-CONST-01: exports IMPLEMENTATION_PHASES as an array
+    it('exports IMPLEMENTATION_PHASES as an array (TC-CONST-01, FR-002, FR-006)', () => {
+        assert.ok(Array.isArray(IMPLEMENTATION_PHASES),
+            'IMPLEMENTATION_PHASES must be an array');
+    });
+
+    // TC-CONST-02: contains exactly 4 phases in correct order
+    it('contains exactly 4 phases in correct order (TC-CONST-02, AC-002-01)', () => {
+        assert.equal(IMPLEMENTATION_PHASES.length, 4);
+        assert.equal(IMPLEMENTATION_PHASES[0], '05-test-strategy');
+        assert.equal(IMPLEMENTATION_PHASES[1], '06-implementation');
+        assert.equal(IMPLEMENTATION_PHASES[2], '16-quality-loop');
+        assert.equal(IMPLEMENTATION_PHASES[3], '08-code-review');
+    });
+
+    // TC-CONST-03: no overlap with ANALYSIS_PHASES
+    it('does not overlap with ANALYSIS_PHASES (TC-CONST-03, FR-002)', () => {
+        const overlap = IMPLEMENTATION_PHASES.filter(p => ANALYSIS_PHASES.includes(p));
+        assert.equal(overlap.length, 0,
+            `Unexpected overlap: ${overlap.join(', ')}`);
+    });
+});
+
+// ===========================================================================
+// 21. validatePhasesCompleted() tests
+// REQ-0026: Build auto-detection
+// Traces: FR-001, FR-003, NFR-004, NFR-006
+// ===========================================================================
+
+describe('validatePhasesCompleted()', () => {
+    // TC-VPC-01: null input
+    it('returns empty for null input (TC-VPC-01, NFR-004, VR-VALIDATE-001)', () => {
+        const result = validatePhasesCompleted(null);
+        assert.deepEqual(result.valid, []);
+        assert.equal(result.warnings.length, 1);
+        assert.ok(result.warnings[0].includes('not an array'));
+    });
+
+    // TC-VPC-02: undefined input
+    it('returns empty for undefined input (TC-VPC-02, NFR-004, VR-VALIDATE-001)', () => {
+        const result = validatePhasesCompleted(undefined);
+        assert.deepEqual(result.valid, []);
+        assert.equal(result.warnings.length, 1);
+        assert.ok(result.warnings[0].includes('not an array'));
+    });
+
+    // TC-VPC-03: string input
+    it('returns empty for string input (TC-VPC-03, NFR-004, VR-VALIDATE-001)', () => {
+        const result = validatePhasesCompleted('not-array');
+        assert.deepEqual(result.valid, []);
+        assert.equal(result.warnings.length, 1);
+        assert.ok(result.warnings[0].includes('not an array'));
+    });
+
+    // TC-VPC-04: number input
+    it('returns empty for number input (TC-VPC-04, NFR-004, VR-VALIDATE-001)', () => {
+        const result = validatePhasesCompleted(42);
+        assert.deepEqual(result.valid, []);
+        assert.equal(result.warnings.length, 1);
+        assert.ok(result.warnings[0].includes('not an array'));
+    });
+
+    // TC-VPC-05: empty array
+    it('returns empty for empty array (TC-VPC-05, FR-001, AC-001-03)', () => {
+        const result = validatePhasesCompleted([]);
+        assert.deepEqual(result.valid, []);
+        assert.deepEqual(result.warnings, []);
+    });
+
+    // TC-VPC-06: single contiguous phase
+    it('returns single contiguous phase (TC-VPC-06, FR-001)', () => {
+        const result = validatePhasesCompleted(['00-quick-scan']);
+        assert.deepEqual(result.valid, ['00-quick-scan']);
+        assert.deepEqual(result.warnings, []);
+    });
+
+    // TC-VPC-07: two contiguous phases
+    it('returns two contiguous phases (TC-VPC-07, FR-001, AC-001-02)', () => {
+        const result = validatePhasesCompleted(['00-quick-scan', '01-requirements']);
+        assert.deepEqual(result.valid, ['00-quick-scan', '01-requirements']);
+        assert.deepEqual(result.warnings, []);
+    });
+
+    // TC-VPC-08: all 5 analysis phases
+    it('returns all 5 analysis phases (TC-VPC-08, FR-001, AC-001-01)', () => {
+        const result = validatePhasesCompleted([...ALL_ANALYSIS]);
+        assert.deepEqual(result.valid, ALL_ANALYSIS);
+        assert.deepEqual(result.warnings, []);
+    });
+
+    // TC-VPC-09: non-contiguous (gap)
+    it('handles gap - non-contiguous phases (TC-VPC-09, FR-003, AC-003-06, VR-VALIDATE-003)', () => {
+        const result = validatePhasesCompleted(['00-quick-scan', '02-impact-analysis']);
+        assert.deepEqual(result.valid, ['00-quick-scan']);
+        assert.equal(result.warnings.length, 1);
+        assert.ok(result.warnings[0].includes('Non-contiguous'));
+    });
+
+    // TC-VPC-10: missing first phase
+    it('handles missing first phase (TC-VPC-10, FR-003, AC-003-06)', () => {
+        const result = validatePhasesCompleted(['01-requirements', '02-impact-analysis']);
+        assert.deepEqual(result.valid, []);
+        assert.equal(result.warnings.length, 1);
+        assert.ok(result.warnings[0].includes('Non-contiguous'));
+    });
+
+    // TC-VPC-11: unknown keys filtered silently
+    it('filters unknown keys silently (TC-VPC-11, NFR-004, AC-NFR-004-03, VR-VALIDATE-002)', () => {
+        const result = validatePhasesCompleted(['00-quick-scan', 'future-phase']);
+        assert.deepEqual(result.valid, ['00-quick-scan']);
+        assert.deepEqual(result.warnings, []);
+    });
+
+    // TC-VPC-12: all unknown keys
+    it('all unknown keys returns empty with no warnings (TC-VPC-12, NFR-004, AC-NFR-004-03)', () => {
+        const result = validatePhasesCompleted(['unknown-a', 'unknown-b']);
+        assert.deepEqual(result.valid, []);
+        assert.deepEqual(result.warnings, []);
+    });
+
+    // TC-VPC-13: custom fullSequence parameter
+    it('respects custom fullSequence parameter (TC-VPC-13, NFR-006, AC-NFR-006-01)', () => {
+        const result = validatePhasesCompleted(['a', 'b'], ['a', 'b', 'c']);
+        assert.deepEqual(result.valid, ['a', 'b']);
+        assert.deepEqual(result.warnings, []);
+    });
+
+    // TC-VPC-14: object input as non-array
+    it('handles object input as non-array (TC-VPC-14, NFR-004, VR-VALIDATE-001)', () => {
+        const result = validatePhasesCompleted({});
+        assert.deepEqual(result.valid, []);
+        assert.equal(result.warnings.length, 1);
+        assert.ok(result.warnings[0].includes('not an array'));
+    });
+});
+
+// ===========================================================================
+// 22. computeStartPhase() tests
+// REQ-0026: Build auto-detection
+// Traces: FR-001, FR-002, FR-003, FR-006, NFR-006
+// ===========================================================================
+
+describe('computeStartPhase()', () => {
+    // TC-CSP-01: null meta returns raw
+    it('null meta returns raw with all workflow phases (TC-CSP-01, FR-001, AC-001-04)', () => {
+        const result = computeStartPhase(null, FEATURE_PHASES);
+        assert.equal(result.status, 'raw');
+        assert.equal(result.startPhase, null);
+        assert.deepEqual(result.completedPhases, []);
+        assert.deepEqual(result.remainingPhases, FEATURE_PHASES);
+    });
+
+    // TC-CSP-02: empty phases returns raw
+    it('empty phases_completed returns raw (TC-CSP-02, FR-001, AC-001-03)', () => {
+        const result = computeStartPhase({ phases_completed: [] }, FEATURE_PHASES);
+        assert.equal(result.status, 'raw');
+        assert.equal(result.startPhase, null);
+        assert.deepEqual(result.completedPhases, []);
+        assert.deepEqual(result.remainingPhases, FEATURE_PHASES);
+    });
+
+    // TC-CSP-03: all 5 analysis phases returns analyzed with startPhase 05
+    it('all 5 analysis phases returns analyzed starting at 05 (TC-CSP-03, FR-001, FR-002, AC-001-01, AC-002-01)', () => {
+        const result = computeStartPhase(
+            { phases_completed: [...ALL_ANALYSIS] },
+            FEATURE_PHASES
+        );
+        assert.equal(result.status, 'analyzed');
+        assert.equal(result.startPhase, '05-test-strategy');
+        assert.deepEqual(result.completedPhases, ALL_ANALYSIS);
+        assert.deepEqual(result.remainingPhases, IMPL_PHASES);
+    });
+
+    // TC-CSP-04: 2 phases returns partial with startPhase 02
+    it('2 phases returns partial starting at 02 (TC-CSP-04, FR-001, FR-003, AC-001-02, AC-003-03)', () => {
+        const result = computeStartPhase(
+            { phases_completed: ['00-quick-scan', '01-requirements'] },
+            FEATURE_PHASES
+        );
+        assert.equal(result.status, 'partial');
+        assert.equal(result.startPhase, '02-impact-analysis');
+        assert.deepEqual(result.completedPhases, ['00-quick-scan', '01-requirements']);
+        assert.equal(result.remainingPhases.length, 7);
+        assert.equal(result.remainingPhases[0], '02-impact-analysis');
+    });
+
+    // TC-CSP-05: non-contiguous uses contiguous prefix
+    it('non-contiguous uses contiguous prefix only (TC-CSP-05, FR-003, AC-003-06)', () => {
+        const result = computeStartPhase(
+            { phases_completed: ['00-quick-scan', '02-impact-analysis'] },
+            FEATURE_PHASES
+        );
+        assert.equal(result.status, 'partial');
+        assert.equal(result.startPhase, '01-requirements');
+        assert.deepEqual(result.completedPhases, ['00-quick-scan']);
+        assert.equal(result.remainingPhases.length, 8);
+    });
+
+    // TC-CSP-06: non-object meta returns raw
+    it('non-object meta (number) returns raw (TC-CSP-06, NFR-004, VR-VALIDATE-004)', () => {
+        const result = computeStartPhase(42, FEATURE_PHASES);
+        assert.equal(result.status, 'raw');
+        assert.equal(result.startPhase, null);
+    });
+
+    // TC-CSP-07: missing phases_completed field
+    it('missing phases_completed field returns raw (TC-CSP-07, NFR-004)', () => {
+        const result = computeStartPhase({ analysis_status: 'partial' }, FEATURE_PHASES);
+        assert.equal(result.status, 'raw');
+        assert.equal(result.startPhase, null);
+    });
+
+    // TC-CSP-08: completedPhases matches valid set for analyzed
+    it('completedPhases matches all 5 analysis phases for analyzed (TC-CSP-08, FR-002, AC-002-04)', () => {
+        const result = computeStartPhase(
+            { phases_completed: [...ALL_ANALYSIS] },
+            FEATURE_PHASES
+        );
+        assert.deepEqual(result.completedPhases, ALL_ANALYSIS);
+        assert.equal(result.completedPhases.length, 5);
+    });
+
+    // TC-CSP-09: remainingPhases for analyzed has 4 impl phases
+    it('remainingPhases for analyzed has 4 impl phases (TC-CSP-09, FR-002, FR-006, AC-002-01, AC-006-01)', () => {
+        const result = computeStartPhase(
+            { phases_completed: [...ALL_ANALYSIS] },
+            FEATURE_PHASES
+        );
+        assert.deepEqual(result.remainingPhases, [
+            '05-test-strategy', '06-implementation',
+            '16-quality-loop', '08-code-review'
+        ]);
+    });
+
+    // TC-CSP-10: 4 of 5 analysis phases returns partial
+    it('4 of 5 analysis phases returns partial at 04 (TC-CSP-10, FR-003)', () => {
+        const result = computeStartPhase(
+            { phases_completed: ['00-quick-scan', '01-requirements', '02-impact-analysis', '03-architecture'] },
+            FEATURE_PHASES
+        );
+        assert.equal(result.status, 'partial');
+        assert.equal(result.startPhase, '04-design');
+    });
+
+    // TC-CSP-11: single phase returns partial
+    it('single phase returns partial at 01 (TC-CSP-11, FR-003)', () => {
+        const result = computeStartPhase(
+            { phases_completed: ['00-quick-scan'] },
+            FEATURE_PHASES
+        );
+        assert.equal(result.status, 'partial');
+        assert.equal(result.startPhase, '01-requirements');
+    });
+
+    // TC-CSP-12: warnings from validatePhasesCompleted are propagated
+    it('warnings from non-contiguous phases are propagated (TC-CSP-12, FR-003, AC-003-06)', () => {
+        const result = computeStartPhase(
+            { phases_completed: ['00-quick-scan', '02-impact-analysis'] },
+            FEATURE_PHASES
+        );
+        assert.ok(result.warnings, 'Should have warnings property');
+        assert.ok(result.warnings.length > 0, 'Should contain at least one warning');
+        assert.ok(result.warnings[0].includes('Non-contiguous'));
+    });
+
+    // TC-CSP-13: string meta returns raw
+    it('string meta returns raw (TC-CSP-13, NFR-004)', () => {
+        const result = computeStartPhase('string', FEATURE_PHASES);
+        assert.equal(result.status, 'raw');
+        assert.equal(result.startPhase, null);
+    });
+
+    // TC-CSP-14: undefined meta returns raw
+    it('undefined meta returns raw (TC-CSP-14, NFR-004)', () => {
+        const result = computeStartPhase(undefined, FEATURE_PHASES);
+        assert.equal(result.status, 'raw');
+        assert.equal(result.startPhase, null);
+    });
+});
+
+// ===========================================================================
+// 23. checkStaleness() tests
+// REQ-0026: Build auto-detection
+// Traces: FR-004, NFR-002, NFR-004
+// ===========================================================================
+
+describe('checkStaleness()', () => {
+    // TC-CS-01: same hash returns not stale
+    it('same hash returns not stale (TC-CS-01, FR-004, AC-004-01)', () => {
+        const result = checkStaleness({ codebase_hash: 'abc1234' }, 'abc1234');
+        assert.equal(result.stale, false);
+        assert.equal(result.originalHash, 'abc1234');
+        assert.equal(result.currentHash, 'abc1234');
+        assert.equal(result.commitsBehind, null);
+    });
+
+    // TC-CS-02: different hash returns stale
+    it('different hash returns stale (TC-CS-02, FR-004, AC-004-02)', () => {
+        const result = checkStaleness({ codebase_hash: 'abc1234' }, 'def5678');
+        assert.equal(result.stale, true);
+        assert.equal(result.originalHash, 'abc1234');
+        assert.equal(result.currentHash, 'def5678');
+        assert.equal(result.commitsBehind, null);
+    });
+
+    // TC-CS-03: null meta returns not stale
+    it('null meta returns not stale (TC-CS-03, FR-004, AC-004-07, NFR-004)', () => {
+        const result = checkStaleness(null, 'abc1234');
+        assert.equal(result.stale, false);
+        assert.equal(result.originalHash, null);
+        assert.equal(result.currentHash, 'abc1234');
+        assert.equal(result.commitsBehind, null);
+    });
+
+    // TC-CS-04: missing codebase_hash returns not stale
+    it('missing codebase_hash returns not stale (TC-CS-04, FR-004, AC-004-07)', () => {
+        const result = checkStaleness({}, 'abc1234');
+        assert.equal(result.stale, false);
+        assert.equal(result.originalHash, null);
+        assert.equal(result.currentHash, 'abc1234');
+        assert.equal(result.commitsBehind, null);
+    });
+
+    // TC-CS-05: empty codebase_hash returns not stale
+    it('empty codebase_hash returns not stale (TC-CS-05, FR-004, AC-004-07)', () => {
+        const result = checkStaleness({ codebase_hash: '' }, 'abc1234');
+        assert.equal(result.stale, false);
+        assert.equal(result.originalHash, null);
+        assert.equal(result.currentHash, 'abc1234');
+        assert.equal(result.commitsBehind, null);
+    });
+
+    // TC-CS-06: originalHash is null when meta is null
+    it('originalHash is null when meta is null (TC-CS-06, FR-004, AC-004-07)', () => {
+        const result = checkStaleness(null, 'abc1234');
+        assert.equal(result.originalHash, null);
+    });
+
+    // TC-CS-07: commitsBehind is always null
+    it('commitsBehind is always null from this function (TC-CS-07, FR-004, NFR-002)', () => {
+        const result1 = checkStaleness({ codebase_hash: 'abc1234' }, 'abc1234');
+        const result2 = checkStaleness({ codebase_hash: 'abc1234' }, 'def5678');
+        const result3 = checkStaleness(null, 'abc1234');
+        assert.equal(result1.commitsBehind, null);
+        assert.equal(result2.commitsBehind, null);
+        assert.equal(result3.commitsBehind, null);
+    });
+
+    // TC-CS-08: empty currentHash with existing hash returns stale
+    it('empty currentHash with existing hash returns stale (TC-CS-08, FR-004)', () => {
+        const result = checkStaleness({ codebase_hash: 'abc1234' }, '');
+        assert.equal(result.stale, true);
+        assert.equal(result.originalHash, 'abc1234');
+        assert.equal(result.currentHash, '');
+    });
+
+    // TC-CS-09: undefined codebase_hash returns not stale
+    it('undefined codebase_hash returns not stale (TC-CS-09, FR-004, AC-004-07)', () => {
+        const result = checkStaleness({ codebase_hash: undefined }, 'abc1234');
+        assert.equal(result.stale, false);
+        assert.equal(result.originalHash, null);
+    });
+});
+
+// ===========================================================================
+// 24. Build Auto-Detection Integration tests
+// REQ-0026: Build auto-detection
+// Traces: FR-001, FR-002, FR-003, FR-004, FR-006, NFR-003, NFR-005
+// ===========================================================================
+
+describe('Build Auto-Detection Integration', () => {
+    beforeEach(() => { createTestDir(); });
+    afterEach(() => { cleanupTestDir(); });
+
+    // TC-INT-01: computeStartPhase correctly uses validatePhasesCompleted internally
+    it('computeStartPhase handles non-contiguous phases via internal validation (TC-INT-01, FR-001, FR-003)', () => {
+        const result = computeStartPhase(
+            { phases_completed: ['00-quick-scan', '02-impact-analysis'] },
+            FEATURE_PHASES
+        );
+        assert.equal(result.status, 'partial');
+        // Only the contiguous prefix (00-quick-scan) should be in completedPhases
+        assert.deepEqual(result.completedPhases, ['00-quick-scan']);
+        assert.equal(result.startPhase, '01-requirements');
+    });
+
+    // TC-INT-02: fully analyzed meta with real workflow phases produces correct phase slice
+    it('fully analyzed meta with real workflow phases produces correct slice (TC-INT-02, FR-002, FR-006, AC-006-01)', () => {
+        const result = computeStartPhase(
+            { phases_completed: [...ALL_ANALYSIS] },
+            FEATURE_PHASES
+        );
+        assert.equal(result.status, 'analyzed');
+        assert.equal(result.startPhase, '05-test-strategy');
+        assert.equal(result.remainingPhases.length, 4);
+        assert.deepEqual(result.remainingPhases, IMPL_PHASES);
+    });
+
+    // TC-INT-03: partial analysis resume computes correct start phase
+    it('partial analysis resume computes correct start from workflow (TC-INT-03, FR-003, AC-003-03, FR-006, AC-006-02)', () => {
+        const result = computeStartPhase(
+            { phases_completed: ['00-quick-scan', '01-requirements'] },
+            FEATURE_PHASES
+        );
+        assert.equal(result.startPhase, '02-impact-analysis');
+        assert.equal(result.remainingPhases.length, 7);
+        assert.equal(result.remainingPhases[0], '02-impact-analysis');
+    });
+
+    // TC-INT-04: detection chain for fully analyzed item on disk
+    it('detection chain: readMetaJson -> computeStartPhase -> checkStaleness for analyzed item (TC-INT-04, FR-001, FR-004, NFR-005, AC-NFR-005-01)', () => {
+        const reqDir = getRequirementsDir();
+        const slug = 'int-test-analyzed';
+        createSlugDir(slug, {
+            source: 'manual',
+            slug: slug,
+            analysis_status: 'analyzed',
+            phases_completed: [...ALL_ANALYSIS],
+            codebase_hash: 'abc1234',
+            created_at: '2026-02-19T10:00:00Z'
+        });
+
+        // Step 1: Read meta from disk
+        const meta = readMetaJson(path.join(reqDir, slug));
+        assert.ok(meta, 'Meta should be read from disk');
+
+        // Step 2: Compute start phase
+        const startResult = computeStartPhase(meta, FEATURE_PHASES);
+        assert.equal(startResult.status, 'analyzed');
+        assert.equal(startResult.startPhase, '05-test-strategy');
+
+        // Step 3: Check staleness (same hash)
+        const stalenessResult = checkStaleness(meta, 'abc1234');
+        assert.equal(stalenessResult.stale, false);
+    });
+
+    // TC-INT-05: detection chain for partial item on disk
+    it('detection chain: readMetaJson -> computeStartPhase for partial item (TC-INT-05, FR-001, FR-003, NFR-005, AC-NFR-005-02)', () => {
+        const reqDir = getRequirementsDir();
+        const slug = 'int-test-partial';
+        createSlugDir(slug, {
+            source: 'manual',
+            slug: slug,
+            analysis_status: 'partial',
+            phases_completed: ['00-quick-scan', '01-requirements'],
+            codebase_hash: 'abc1234',
+            created_at: '2026-02-19T10:00:00Z'
+        });
+
+        const meta = readMetaJson(path.join(reqDir, slug));
+        const result = computeStartPhase(meta, FEATURE_PHASES);
+        assert.equal(result.status, 'partial');
+        assert.equal(result.startPhase, '02-impact-analysis');
+    });
+
+    // TC-INT-06: detection chain for raw item (no meta.json)
+    it('detection chain for raw item with no meta.json (TC-INT-06, FR-001, NFR-003, AC-001-04, AC-NFR-003-02)', () => {
+        const dir = path.join(testDir, 'no-meta-dir');
+        fs.mkdirSync(dir, { recursive: true });
+
+        const meta = readMetaJson(dir);
+        assert.equal(meta, null);
+
+        const result = computeStartPhase(meta, FEATURE_PHASES);
+        assert.equal(result.status, 'raw');
+        assert.equal(result.startPhase, null);
+        assert.deepEqual(result.remainingPhases, FEATURE_PHASES);
+    });
+
+    // TC-INT-07: detection chain for corrupted meta.json
+    it('detection chain for corrupted meta.json degrades to raw (TC-INT-07, FR-001, NFR-004, AC-001-05, AC-NFR-004-01, ERR-BUILD-002)', () => {
+        const dir = path.join(testDir, 'corrupt-meta-dir');
+        fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(path.join(dir, 'meta.json'), '{invalid json here');
+
+        const meta = readMetaJson(dir);
+        assert.equal(meta, null);
+
+        const result = computeStartPhase(meta, FEATURE_PHASES);
+        assert.equal(result.status, 'raw');
+        assert.equal(result.startPhase, null);
+    });
+
+    // TC-INT-08: computeStartPhase with different workflow phases (fix workflow)
+    // validatePhasesCompleted always validates against ANALYSIS_PHASES (the analysis sequence),
+    // not workflowPhases. Fix workflow phases without 00-quick-scan but with all 5 analysis
+    // phases completed will return 'analyzed'.
+    it('computeStartPhase works with different workflow phase arrays (TC-INT-08, FR-006)', () => {
+        const fixPhases = [
+            '01-requirements', '02-impact-analysis',
+            '03-architecture', '04-design', '05-test-strategy',
+            '06-implementation', '16-quality-loop', '08-code-review'
+        ];
+        // Fully analyzed meta (all 5 ANALYSIS_PHASES complete)
+        const result = computeStartPhase(
+            { phases_completed: [...ALL_ANALYSIS] },
+            fixPhases
+        );
+        assert.equal(result.status, 'analyzed');
+        // First non-analysis phase in fixPhases is '05-test-strategy'
+        assert.equal(result.startPhase, '05-test-strategy');
+        assert.equal(result.remainingPhases.length, 4);
+    });
+
+    // TC-INT-09: IMPLEMENTATION_PHASES elements present in feature phases
+    it('IMPLEMENTATION_PHASES elements are all in feature workflow phases (TC-INT-09, FR-002, FR-006)', () => {
+        for (const phase of IMPLEMENTATION_PHASES) {
+            assert.ok(FEATURE_PHASES.includes(phase),
+                `${phase} should be in feature workflow phases`);
+        }
+    });
+
+    // TC-INT-10: ANALYSIS_PHASES + IMPLEMENTATION_PHASES covers all feature phases
+    it('ANALYSIS_PHASES + IMPLEMENTATION_PHASES covers all feature workflow phases (TC-INT-10, FR-002, FR-006)', () => {
+        const combined = [...ANALYSIS_PHASES, ...IMPLEMENTATION_PHASES];
+        for (const phase of FEATURE_PHASES) {
+            assert.ok(combined.includes(phase),
+                `${phase} should be in combined ANALYSIS + IMPLEMENTATION phases`);
+        }
+        // Also verify count matches
+        assert.equal(combined.length, FEATURE_PHASES.length,
+            'Combined phase count should match feature phases count');
+    });
+});
+
+// ===========================================================================
+// 25. Regression tests for backward compatibility
+// REQ-0026: Build auto-detection
+// Traces: NFR-003
+// ===========================================================================
+
+describe('Build Auto-Detection Regression', () => {
+    // TC-REG-01: build with no meta.json defaults to full workflow
+    it('build with no meta.json defaults to full workflow (TC-REG-01, NFR-003, AC-NFR-003-01, AC-NFR-003-02)', () => {
+        const result = computeStartPhase(null, FEATURE_PHASES);
+        assert.equal(result.status, 'raw');
+        assert.equal(result.startPhase, null);
+        assert.deepEqual(result.remainingPhases, FEATURE_PHASES);
+        assert.equal(result.remainingPhases.length, 9);
+    });
+
+    // TC-REG-02: build with empty phases_completed defaults to full workflow
+    it('build with empty phases_completed defaults to full workflow (TC-REG-02, NFR-003, AC-001-03)', () => {
+        const result = computeStartPhase({ phases_completed: [] }, FEATURE_PHASES);
+        assert.equal(result.status, 'raw');
+        assert.equal(result.startPhase, null);
+        assert.deepEqual(result.remainingPhases, FEATURE_PHASES);
+    });
+
+    // TC-REG-03: corrupted meta.json treated as raw
+    it('corrupted meta.json chain treated as raw (TC-REG-03, NFR-003, NFR-004, AC-001-05)', () => {
+        // Simulate corrupted meta by passing null (readMetaJson returns null for invalid JSON)
+        const result = computeStartPhase(null, FEATURE_PHASES);
+        assert.equal(result.status, 'raw');
+        assert.equal(result.startPhase, null);
+    });
+
+    // TC-REG-04: feature alias produces same detection behavior
+    it('feature alias produces same detection behavior as build (TC-REG-04, NFR-003, AC-NFR-003-03)', () => {
+        // Both build and feature verbs call the same utility functions
+        // Verify the functions are deterministic across calls
+        const meta = { phases_completed: [...ALL_ANALYSIS] };
+        const result1 = computeStartPhase(meta, FEATURE_PHASES);
+        const result2 = computeStartPhase(meta, FEATURE_PHASES);
+        assert.deepEqual(result1, result2, 'Same inputs should produce same outputs');
+    });
+
+    // TC-REG-05: orchestrator without START_PHASE uses full workflow
+    it('without START_PHASE parameter all phases are used (TC-REG-05, FR-006, AC-006-05)', () => {
+        // When startPhase is null, the orchestrator uses full phases
+        const result = computeStartPhase(null, FEATURE_PHASES);
+        assert.equal(result.startPhase, null);
+        assert.equal(result.remainingPhases.length, 9);
+    });
+});
+
+// ===========================================================================
+// 26. Error handling tests
+// REQ-0026: Build auto-detection
+// Traces: NFR-004
+// ===========================================================================
+
+describe('Build Auto-Detection Error Handling', () => {
+    beforeEach(() => { createTestDir(); });
+    afterEach(() => { cleanupTestDir(); });
+
+    // TC-ERR-01: corrupted meta.json degrades to raw
+    it('corrupted meta.json (invalid JSON) degrades to raw (TC-ERR-01, NFR-004, AC-001-05, AC-NFR-004-01, ERR-BUILD-002)', () => {
+        const dir = path.join(testDir, 'err-corrupt');
+        fs.mkdirSync(dir, { recursive: true });
+        fs.writeFileSync(path.join(dir, 'meta.json'), '{invalid json');
+
+        const meta = readMetaJson(dir);
+        assert.equal(meta, null);
+
+        const result = computeStartPhase(meta, FEATURE_PHASES);
+        assert.equal(result.status, 'raw');
+    });
+
+    // TC-ERR-02: non-contiguous phases produce warning with correct content
+    it('non-contiguous phases produce warning with details (TC-ERR-02, FR-003, AC-003-06, ERR-BUILD-003)', () => {
+        const result = validatePhasesCompleted(['00-quick-scan', '02-impact-analysis']);
+        assert.equal(result.warnings.length, 1);
+        assert.ok(result.warnings[0].includes('Non-contiguous'));
+        assert.ok(result.warnings[0].includes('00-quick-scan'));
+        assert.ok(result.warnings[0].includes('02-impact-analysis'));
+    });
+
+    // TC-ERR-03: unknown phase keys are silently filtered
+    it('unknown phase keys are silently filtered without warning (TC-ERR-03, NFR-004, AC-NFR-004-03)', () => {
+        const result = validatePhasesCompleted(['future-phase-x', 'future-phase-y']);
+        assert.deepEqual(result.valid, []);
+        assert.deepEqual(result.warnings, []);
     });
 });

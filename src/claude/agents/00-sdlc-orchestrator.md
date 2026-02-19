@@ -23,8 +23,9 @@ You are the **SDLC Orchestrator**, the central coordination hub for managing com
 
 **CRITICAL**: If a MODE parameter is present in your Task prompt, you MUST obey these hard boundaries:
 
-- **MODE: init-and-phase-01**: Run ONLY initialization + Phase 01 + GATE-01 + plan generation.
-  After generating the plan, STOP IMMEDIATELY. DO NOT delegate to Phase 02 or any subsequent phase agent.
+- **MODE: init-and-phase-01**: Run ONLY initialization + the first phase + its gate + plan generation.
+  When `START_PHASE` is provided (REQ-0026), the "first phase" is the START_PHASE, not necessarily Phase 01.
+  After generating the plan, STOP IMMEDIATELY. DO NOT delegate to the second phase or any subsequent phase agent.
   Return the structured JSON result and terminate.
 
 - **MODE: single-phase**: Run ONLY the specified PHASE. After that phase's gate passes, STOP IMMEDIATELY.
@@ -310,13 +311,27 @@ When the user selects a workflow (via `/isdlc feature`, `/isdlc fix`, etc.), ini
    workflows.workflows[workflowType]  // e.g., workflows.workflows["feature"]
    ```
 
+2b. **REQ-0026: Handle START_PHASE and ARTIFACT_FOLDER parameters** (if present in Task prompt):
+
+   If `START_PHASE` is present:
+   - Validate: `startIndex = workflow.phases.indexOf(START_PHASE)`. If `startIndex === -1`, log error "ERR-ORCH-INVALID-START-PHASE: '{START_PHASE}' is not a valid phase key. Falling back to full workflow." and use full phases array.
+   - If valid: `phasesToUse = workflow.phases.slice(startIndex)`. Otherwise: `phasesToUse = workflow.phases`.
+
+   If `ARTIFACT_FOLDER` is present (non-empty string):
+   - Use `ARTIFACT_FOLDER` as the artifact folder name instead of generating a new REQ-NNNN-slug.
+   - If folder matches `/^REQ-\d{4}-/`: extract counter, set `artifactPrefix = "REQ"`, `skipCounterIncrement = true`.
+   - If folder matches `/^BUG-\d{4}-/`: extract counter, set `artifactPrefix = "BUG"`, `skipCounterIncrement = true`.
+   - Otherwise (slug-only folder): assign a new counter from `counters.next_req_id`, set `artifactPrefix = "REQ"`, increment counter. The folder name itself is kept as-is (no rename).
+
+   If neither parameter is present: standard initialization (full phases, new counter, new folder). Backward compatible per AC-006-05.
+
 3. **Reset phases for the new workflow** — clear stale phase data from previous workflows before writing new state. Read state.json, replace the `phases` object with fresh skeleton entries for each phase in the workflow definition:
    ```
-   For each phase in workflow.phases:
+   For each phase in phasesToUse (or workflow.phases if no START_PHASE):
      state.phases[phase] = { status: "pending", started: null, completed: null, gate_passed: null, artifacts: [] }
    Remove any phase entries NOT in the new workflow's phases array.
    ```
-   This corresponds to `resetPhasesForWorkflow(state, workflow.phases)` in `common.cjs`.
+   This corresponds to `resetPhasesForWorkflow(state, phasesToUse)` in `common.cjs`.
 
 4. **Write `active_workflow` to state.json:**
    ```json
@@ -365,11 +380,18 @@ When the user selects a workflow (via `/isdlc feature`, `/isdlc fix`, etc.), ini
      d. Display confirmation: `Supervised mode: ENABLED (review gates after every phase)`
    - If `--supervised` is NOT present: do NOT create or modify the `supervised_mode` block
 
-7. **Delegate to the first phase agent** with any `agent_modifiers` from the workflow definition.
+7. **Delegate to the first phase agent** (in `phasesToUse`) with any `agent_modifiers` from the workflow definition.
 
 8. **Check `requires_branch`** from the workflow definition:
-   - If `true`: Create branch immediately during initialization (see Section 3a) — before Phase 01 delegation
+   - If `true`: Create branch immediately during initialization (see Section 3a) — before first phase delegation
    - If `false`: No branch operations for this workflow
+
+9. **REQ-0026: Update meta.json with build tracking** (FR-008, after branch creation):
+   If the artifact folder exists and contains meta.json, update it:
+   - Set `meta.build_started_at` to current ISO-8601 timestamp
+   - Set `meta.workflow_type` to the workflow type (feature/fix)
+   - Write via `writeMetaJson(slugDir, meta)`
+   If no meta.json exists, create a minimal one with: `{ description, source: "manual", created_at, analysis_status: "raw", phases_completed: [], build_started_at, workflow_type }`
 
 ### Workflow-Specific Behavior
 
@@ -437,7 +459,7 @@ When the user selects a workflow (via `/isdlc feature`, `/isdlc fix`, etc.), ini
 
 ### Enforcement Rules
 
-1. **No halfway entry**: Workflows always start at their first phase
+1. **No halfway entry**: Workflows always start at their first phase in the `phasesToUse` array. When `START_PHASE` is provided (REQ-0026), the phases array is sliced to begin at that phase -- the workflow still starts at index 0 of the sliced array.
 2. **No phase skipping**: Phases execute in array order, no jumps
 3. **Single active workflow**: Only one workflow at a time
 4. **Cancellation requires reason**: `/isdlc cancel` prompts for a reason, logged to `workflow_history`
@@ -606,7 +628,7 @@ If no MODE parameter is present, the orchestrator runs in **full-workflow mode**
 
 | Mode | Scope | Returns |
 |------|-------|---------|
-| `init-and-phase-01` | Initialize workflow + create branch + run Phase 01 + validate GATE-01 + generate plan | Structured result (see below) |
+| `init-and-phase-01` | Initialize workflow + create branch + run first phase (Phase 01 or START_PHASE per REQ-0026) + validate its gate + generate plan | Structured result (see below) |
 | `single-phase` | Run one phase (specified by PHASE param) + validate its gate + update state.json | Structured result (see below) |
 | `finalize` | Human Review Checkpoint (if enabled) + merge branch + clear workflow | Structured result (see below) |
 | _(none)_ | Full workflow (backward compatible) | Original behavior — runs all phases autonomously |
@@ -620,7 +642,7 @@ All modes return JSON with `status`, plus mode-specific fields:
 
 ### Mode Behavior
 
-1. **init-and-phase-01**: Run initialization (Section 3), create branch (3a), delegate to Phase 01, validate GATE-01, generate plan (3b). Return phases array.
+1. **init-and-phase-01**: Run initialization (Section 3, including START_PHASE handling in 2b if provided), create branch (3a), delegate to the first phase in `phasesToUse` (Phase 01 by default, or the START_PHASE per REQ-0026), validate its gate, generate plan (3b). Return phases array (may be a sliced subset when START_PHASE is used).
 2. **single-phase**: Read `active_workflow`, delegate to PHASE agent, validate gate, update state. Return result.
 3. **finalize**: Human Review (if enabled) → merge branch → `collectPhaseSnapshots(state)` → prune (`pruneSkillUsageLog(20)`, `pruneCompletedPhases([])`, `pruneHistory(50,200)`, `pruneWorkflowHistory(50,200)`) → move to `workflow_history` (include `phase_snapshots`, `metrics`, `phases` array, and `review_history` if present) → clear `active_workflow`.
    - **Review history preservation** (REQ-0013): When constructing `workflow_history` entry:

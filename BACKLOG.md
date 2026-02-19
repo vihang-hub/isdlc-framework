@@ -14,7 +14,7 @@
 ### 2. Performance (remaining from 2026-02-13 investigation)
 
 - 2.3 [x] T7: Agent prompt boilerplate extraction — ROOT RESOLUTION, MONOREPO, ITERATION protocols duplicated across 17 agents (~3,600 lines) -> [requirements](docs/requirements/REQ-0021-t7-agent-prompt-boilerplate-extraction/) **Completed: 2026-02-17**
-- 2.4 [A] Performance budget and guardrail system — enforce per-workflow timing limits and track regression as new features land -> [requirements](docs/requirements/REQ-0022-performance-budget-guardrails/)
+- 2.4 [x] ~~Performance budget and guardrail system — enforce per-workflow timing limits and track regression as new features land~~ -> [requirements](docs/requirements/REQ-0022-performance-budget-guardrails/) **Completed: 2026-02-19**
   - **Problem**: The framework has been optimised from ~4x to ~1.2-1.5x overhead (T1-T3 done). But upcoming backlog items add significant agent calls — Creator/Critic/Refiner debates across 4 creative phases could add 12+ extra agent runs (~20-40 min worst case), Phase 06 Writer/Reviewer/Updater adds 2N calls for N files, and fan-out spawns multiple parallel agents. Without a performance budget, these features will erode the gains incrementally and nobody will notice until the framework feels slow again.
   - **Design**:
     1. **Per-workflow timing instrumentation**: Record wall-clock time per phase, per agent call, and per hook dispatcher invocation in `state.json` under `phases[phase].timing`. Already have `console.time()` in dispatchers — extend to full phase timing.
@@ -424,7 +424,7 @@
   - **Depends on**: 16.2 (roundtable agent exists)
   - **Complexity**: Medium
 
-- 16.5 [ ] Build auto-detection and seamless handoff *(GitHub #23)*
+- 16.5 [x] ~~Build auto-detection and seamless handoff~~ *(GitHub #23)* -> [requirements](docs/requirements/REQ-0026-build-auto-detection-seamless-handoff/) **Completed: 2026-02-19**
   - **Problem**: `/isdlc start` requires the user to know the command exists, pass the right slug, and understand that Phase A must be complete. If Phase A is partial, the error messages are cryptic.
   - **Design**: When user says "build X" or "let's implement X":
     1. Find matching item in `docs/requirements/` by slug, ID, or title
@@ -441,6 +441,10 @@
 - 15.1 [x] BUG-0010-GH-16: artifact-paths.json filename mismatches — gate-blocker blocks valid phases [GitHub: #16] **Completed: 2026-02-17**
 
 ## Completed
+
+### 2026-02-19
+- [x] REQ-0025 (backlog 2.4): Performance budget and guardrail system — per-workflow timing limits, intensity-tier budgets, graceful degradation of debate rounds and fan-out parallelism, regression tracking, completion dashboard *(merged 3707b11)*.
+  - New `performance-budget.cjs` library (581 LOC, 15 functions), timing instrumentation in 5 dispatchers + common.cjs, budget enforcement in isdlc.md phase-loop, regression tracking in workflow-completion-enforcer.cjs, workflows.json budget config. 38 new tests, zero regressions. 8 FRs, 5 NFRs, 35 ACs. 20 files changed, 1470 insertions, 242 deletions.
 
 ### 2026-02-18
 - [x] REQ-0024: Gate requirements pre-injection — inject gate pass criteria into phase agent delegation prompts so agents know what hooks will check before they start, enabling first-pass success without retries *(GitHub #25, merged 8ca3d45)*.

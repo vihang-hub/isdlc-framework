@@ -616,16 +616,118 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
      "No matching item found. Would you like to add it to the backlog and start building?"
      If user confirms: run `add` handler, then proceed to step 4
    - If no match and input looks like a reference: ERROR per error taxonomy ERR-BUILD-001
-4. Read meta.json using `readMetaJson()` -- informational for this release
+4. Read meta.json using `readMetaJson()` -- this is now actionable for build auto-detection.
+
+**--- REQ-0026: Build Auto-Detection Steps 4a-4e ---**
+
+**Step 4a: Compute analysis status** (FR-001, FR-002, FR-003)
+
+Read feature workflow phases from `workflows.json` (`workflows.feature.phases`).
+Call `computeStartPhase(meta, featurePhases)` from `three-verb-utils.cjs`.
+This returns `{ status, startPhase, completedPhases, remainingPhases, warnings }`.
+If `warnings` is non-empty, log each warning to stderr.
+Let `analysisStatus = result.status`, `startPhase = result.startPhase`.
+If `analysisStatus === 'raw'`: skip steps 4b-4e, fall through to step 5 (full workflow).
+
+**Step 4b: Check staleness** (FR-004, NFR-002) -- only if `analysisStatus !== 'raw'`
+
+```
+TRY:
+  currentHash = git rev-parse --short HEAD (trim whitespace)
+CATCH:
+  Log warning: "Could not determine current codebase version. Skipping staleness check."
+  stalenessResult = { stale: false, originalHash: null, currentHash: null, commitsBehind: null }
+
+stalenessResult = checkStaleness(meta, currentHash)
+
+IF stalenessResult.stale:
+  TRY:
+    commitCount = git rev-list --count {stalenessResult.originalHash}..HEAD
+    stalenessResult.commitsBehind = parseInt(commitCount.trim(), 10)
+  CATCH:
+    stalenessResult.commitsBehind = null
+```
+
+**Step 4c: Handle staleness** (FR-004) -- only if `stalenessResult.stale === true`
+
+Display staleness warning and present menu:
+```
+STALENESS WARNING: {item slug}
+
+Analysis was performed at commit {originalHash}{commitsBehindStr}.
+Current HEAD is {currentHash}.
+
+Options:
+  [P] Proceed anyway -- use existing analysis as-is
+  [Q] Re-run quick-scan -- refresh scope check (re-runs analysis from Phase 00)
+  [A] Re-analyze from scratch -- clear all analysis, start fresh
+```
+Where `commitsBehindStr` is " (N commits ago)" if commitsBehind is not null, or "" if null.
+
+Handle each choice:
+- **[P] Proceed**: No changes. Continue with current analysisStatus and startPhase.
+- **[Q] Re-run quick-scan**: Set `startPhase = "00-quick-scan"`, `remainingPhases = featurePhases`, `analysisStatus = 'raw'`.
+- **[A] Re-analyze**: Clear meta: `meta.phases_completed = []`, `meta.analysis_status = "raw"`, `meta.codebase_hash = currentHash`. Write via `writeMetaJson(slugDir, meta)`. Set `startPhase = null`, `analysisStatus = 'raw'`, `completedPhases = []`, `remainingPhases = [...featurePhases]`.
+
+**Step 4d: Handle partial analysis** (FR-003) -- only if `analysisStatus === 'partial'` (after staleness handling)
+
+Display partial analysis menu:
+```
+PARTIAL ANALYSIS: {item slug}
+
+Completed phases:
+  [done] Phase NN: {name}  (for each completed phase)
+
+Remaining analysis phases:
+  Phase NN: {name}  (for each remaining analysis phase)
+
+Options:
+  [R] Resume analysis -- continue from Phase {nextPhase}
+  [S] Skip to implementation -- start at Phase 05 (analysis gaps may reduce quality)
+  [F] Full restart -- re-run all phases from Phase 00
+```
+
+Handle each choice:
+- **[R] Resume**: No changes. `startPhase` already set to next analysis phase.
+- **[S] Skip**: Set `startPhase = "05-test-strategy"`, `remainingPhases = IMPLEMENTATION_PHASES`.
+  Display warning: "Note: Skipping remaining analysis phases. Output quality may be affected."
+- **[F] Full restart**: Clear meta: `meta.phases_completed = []`, `meta.analysis_status = "raw"`. Write via `writeMetaJson(slugDir, meta)`. Set `startPhase = null`, `analysisStatus = 'raw'`, `completedPhases = []`, `remainingPhases = [...featurePhases]`.
+
+**Step 4e: Display BUILD SUMMARY banner** (FR-005) -- only if `analysisStatus !== 'raw'` (after all handling)
+
+Display summary with completed and remaining phases, then confirm:
+```
+BUILD SUMMARY: {item slug}
+
+Analysis Status: {Fully analyzed | Partial (N of 5 phases complete)}
+Completed phases:
+  [done] Phase NN: {name}  (for each completed)
+
+Build will execute:
+  Phase NN: {name}  (for each remaining)
+
+Proceed? [Y/n]
+```
+
+Phase display names: 00=Quick Scan, 01=Requirements, 02=Impact Analysis, 03=Architecture, 04=Design, 05=Test Strategy, 06=Implementation, 16=Quality Loop, 08=Code Review.
+
+If user declines: abort build. If user confirms: proceed to step 5.
+
+**--- End REQ-0026: Build Auto-Detection ---**
+
 5. Parse flags from command arguments:
    - --supervised, --debate, --no-debate, --no-fan-out, -light (same as current feature)
 6. Determine workflow type:
    - If item description contains bug keywords (fix, bug, broken, error, crash, regression):
      suggest fix workflow. Ask user: "This looks like a bug. Use fix workflow? [Y/n]"
    - Otherwise: use feature workflow
-7. Delegate to orchestrator via Task tool (same as current `feature` action):
+7. Delegate to orchestrator via Task tool:
    MODE: init-and-phase-01, ACTION: feature (or fix), DESCRIPTION: "{item description}", FLAGS: {parsed flags}
-8. Orchestrator initializes active_workflow, creates branch, runs Phase 01
+   **REQ-0026 additions** -- include when applicable:
+   - If `startPhase` is not null: include `START_PHASE: "{startPhase}"` in the Task prompt
+   - If item was resolved from an existing directory (analysisStatus is 'analyzed' or 'partial', or raw with existing folder): include `ARTIFACT_FOLDER: "{item.slug}"` in the Task prompt
+   These parameters tell the orchestrator to start from a later phase and reuse the existing artifact folder.
+8. Orchestrator initializes active_workflow, creates branch, runs first phase (may not be Phase 01 if START_PHASE provided)
 9. Phase-Loop Controller drives remaining phases (identical to current feature flow)
 
 ---
@@ -939,13 +1041,13 @@ Parse the subcommand: `add`, `wire`, `list`, or `remove`.
 
 **If action is `analyze`**: Execute analyze handler inline -- no orchestrator, no Phase-Loop Controller.
 
-**If action is `build` or `feature`**: Execute via Phase-Loop Controller (orchestrator delegation).
+**If action is `build` or `feature`**: Execute the build handler (steps 1-9 above, including auto-detection steps 4a-4e from REQ-0026) then use the Phase-Loop Controller for orchestrator delegation.
 
 **If action is a WORKFLOW command** (fix, test-run, test-generate, upgrade) **with description:**
 
 Use the **Phase-Loop Controller** protocol. This runs phases one at a time in the foreground, giving the user visible task progress and immediate hook-blocker escalation.
 
-#### STEP 1: INIT — Launch orchestrator for init + Phase 01
+#### STEP 1: INIT — Launch orchestrator for init + first phase
 
 ```
 Use Task tool → sdlc-orchestrator with:
@@ -953,20 +1055,26 @@ Use Task tool → sdlc-orchestrator with:
   ACTION: {feature|fix|test-run|test-generate|start|upgrade}
   DESCRIPTION: "{user description}"
   (include MONOREPO CONTEXT if applicable)
+
+  // REQ-0026: Build auto-detection parameters (only for build/feature):
+  // Include these ONLY when the build handler (steps 4a-4e) determined them:
+  START_PHASE: "{startPhase}"       // Only if startPhase is not null
+  ARTIFACT_FOLDER: "{item.slug}"    // Only if item was resolved from an existing directory
 ```
 
-The orchestrator initializes the workflow, creates the branch, runs Phase 01 (requirements/bug-report), validates GATE-01, generates the plan, and returns a structured result:
+The orchestrator initializes the workflow, creates the branch, runs Phase 01 (or the START_PHASE if provided), validates the corresponding gate, generates the plan, and returns a structured result:
 ```json
 {
-  "status": "phase_01_complete",
-  "phases": ["01-requirements", "02-architecture", ...],
+  "status": "phase_complete",
+  "phases": ["05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"],
   "artifact_folder": "REQ-0001-feature-name",
   "workflow_type": "feature",
   "next_phase_index": 1
 }
 ```
+Note: When `START_PHASE` is provided, the `phases[]` array may be shorter (only phases from START_PHASE onward). When absent, the orchestrator returns all workflow phases as before (backward compatible per AC-006-05).
 
-If Phase 01 fails or is cancelled, stop here.
+If the first phase fails or is cancelled, stop here.
 
 #### STEP 2: FOREGROUND TASKS — Create visible task list
 
