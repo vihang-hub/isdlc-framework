@@ -33,6 +33,20 @@ const ANALYSIS_PHASES = [
 ];
 
 /**
+ * Implementation phases that follow analysis in the feature workflow.
+ * Used by computeStartPhase to identify the build-start boundary.
+ *
+ * REQ-0026: Build auto-detection
+ * Traces: FR-002, FR-006
+ */
+const IMPLEMENTATION_PHASES = [
+    '05-test-strategy',
+    '06-implementation',
+    '16-quality-loop',
+    '08-code-review'
+];
+
+/**
  * Regex for parsing BACKLOG.md item lines.
  * Capture groups:
  *   1: Prefix (whitespace + dash + whitespace)
@@ -258,6 +272,196 @@ function writeMetaJson(slugDir, meta) {
     else meta.analysis_status = 'analyzed';
 
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+}
+
+// ---------------------------------------------------------------------------
+// validatePhasesCompleted(phasesCompleted, fullSequence)
+// REQ-0026: Build auto-detection
+// ---------------------------------------------------------------------------
+
+/**
+ * Validates and normalizes a phases_completed array.
+ * Returns the contiguous prefix of recognized analysis phases.
+ *
+ * REQ-0026: Build auto-detection
+ * Traces: FR-003 (AC-003-06), NFR-004 (AC-NFR-004-03)
+ *
+ * @param {string[]} phasesCompleted - Raw phases_completed from meta.json
+ * @param {string[]} [fullSequence=ANALYSIS_PHASES] - The ordered phase sequence to validate against
+ * @returns {{ valid: string[], warnings: string[] }}
+ */
+function validatePhasesCompleted(phasesCompleted, fullSequence) {
+    if (fullSequence === undefined) {
+        fullSequence = ANALYSIS_PHASES;
+    }
+
+    // Step 1: Check if input is an array
+    if (!Array.isArray(phasesCompleted)) {
+        return { valid: [], warnings: ['phases_completed is not an array'] };
+    }
+
+    // Step 2: Filter to recognized phase keys only
+    const recognized = phasesCompleted.filter(p => fullSequence.includes(p));
+
+    // Step 3-4: Build contiguous prefix
+    const valid = [];
+    for (const phase of fullSequence) {
+        if (recognized.includes(phase)) {
+            valid.push(phase);
+        } else {
+            break; // Stop at first missing phase (contiguous prefix)
+        }
+    }
+
+    // Step 5-6: Generate warnings for non-contiguous phases
+    const warnings = [];
+    if (recognized.length > valid.length) {
+        warnings.push(
+            'Non-contiguous phases detected: found [' + recognized.join(', ') +
+            '] but only [' + valid.join(', ') + '] form a contiguous prefix'
+        );
+    }
+
+    // Step 7: Unknown keys are silently filtered (no warning per NFR-004 AC-NFR-004-03)
+
+    return { valid, warnings };
+}
+
+// ---------------------------------------------------------------------------
+// computeStartPhase(meta, workflowPhases)
+// REQ-0026: Build auto-detection
+// ---------------------------------------------------------------------------
+
+/**
+ * Computes the start phase for a build workflow based on analysis status.
+ *
+ * REQ-0026: Build auto-detection
+ * Traces: FR-001, FR-002, FR-003, NFR-006 (AC-NFR-006-01)
+ *
+ * @param {object|null} meta - Parsed meta.json (from readMetaJson), or null if missing/corrupt
+ * @param {string[]} workflowPhases - Full feature workflow phases from workflows.json
+ * @returns {{
+ *   status: 'analyzed'|'partial'|'raw',
+ *   startPhase: string|null,
+ *   completedPhases: string[],
+ *   remainingPhases: string[],
+ *   warnings: string[]
+ * }}
+ */
+function computeStartPhase(meta, workflowPhases) {
+    // Step 1: Handle null or non-object meta
+    if (meta === null || meta === undefined || typeof meta !== 'object' || Array.isArray(meta)) {
+        return {
+            status: 'raw',
+            startPhase: null,
+            completedPhases: [],
+            remainingPhases: [...workflowPhases],
+            warnings: []
+        };
+    }
+
+    // Step 2: Validate phases_completed
+    const { valid, warnings } = validatePhasesCompleted(meta.phases_completed);
+
+    // Step 3: No valid phases -> raw
+    if (valid.length === 0) {
+        return {
+            status: 'raw',
+            startPhase: null,
+            completedPhases: [],
+            remainingPhases: [...workflowPhases],
+            warnings
+        };
+    }
+
+    // Step 4: All analysis phases complete -> analyzed
+    if (valid.length === ANALYSIS_PHASES.length) {
+        const firstImplPhase = workflowPhases.find(p => !ANALYSIS_PHASES.includes(p));
+        if (firstImplPhase === undefined) {
+            // Defensive: workflow has no implementation phases
+            return {
+                status: 'analyzed',
+                startPhase: null,
+                completedPhases: valid,
+                remainingPhases: [],
+                warnings
+            };
+        }
+        const remaining = workflowPhases.slice(workflowPhases.indexOf(firstImplPhase));
+        return {
+            status: 'analyzed',
+            startPhase: firstImplPhase,
+            completedPhases: valid,
+            remainingPhases: remaining,
+            warnings
+        };
+    }
+
+    // Step 5: Partial analysis
+    const nextAnalysisPhase = ANALYSIS_PHASES.find(p => !valid.includes(p));
+    const phaseIndex = workflowPhases.indexOf(nextAnalysisPhase);
+    const remaining = phaseIndex >= 0
+        ? workflowPhases.slice(phaseIndex)
+        : [...workflowPhases];
+
+    return {
+        status: 'partial',
+        startPhase: nextAnalysisPhase,
+        completedPhases: valid,
+        remainingPhases: remaining,
+        warnings
+    };
+}
+
+// ---------------------------------------------------------------------------
+// checkStaleness(meta, currentHash)
+// REQ-0026: Build auto-detection
+// ---------------------------------------------------------------------------
+
+/**
+ * Checks whether the codebase has changed since analysis was performed.
+ * Pure comparison function -- does not execute git commands.
+ *
+ * REQ-0026: Build auto-detection
+ * Traces: FR-004, NFR-002, NFR-004 (AC-NFR-004-02)
+ *
+ * @param {object|null} meta - Parsed meta.json (from readMetaJson)
+ * @param {string} currentHash - Current git short hash (from `git rev-parse --short HEAD`)
+ * @returns {{
+ *   stale: boolean,
+ *   originalHash: string|null,
+ *   currentHash: string,
+ *   commitsBehind: number|null
+ * }}
+ */
+function checkStaleness(meta, currentHash) {
+    // Step 1: No hash to compare (null meta or missing/falsy codebase_hash)
+    if (meta === null || meta === undefined || !meta.codebase_hash) {
+        return {
+            stale: false,
+            originalHash: null,
+            currentHash: currentHash,
+            commitsBehind: null
+        };
+    }
+
+    // Step 2: Same hash -> not stale
+    if (meta.codebase_hash === currentHash) {
+        return {
+            stale: false,
+            originalHash: meta.codebase_hash,
+            currentHash: currentHash,
+            commitsBehind: null
+        };
+    }
+
+    // Step 3: Different hash -> stale
+    return {
+        stale: true,
+        originalHash: meta.codebase_hash,
+        currentHash: currentHash,
+        commitsBehind: null
+    };
 }
 
 // ---------------------------------------------------------------------------
@@ -614,6 +818,7 @@ function findDirForDescription(requirementsDir, description) {
 module.exports = {
     // Constants
     ANALYSIS_PHASES,
+    IMPLEMENTATION_PHASES,      // REQ-0026: Build auto-detection
     MARKER_REGEX,
 
     // Core utilities
@@ -627,6 +832,11 @@ module.exports = {
     updateBacklogMarker,
     appendToBacklog,
     resolveItem,
+
+    // Build auto-detection utilities (REQ-0026)
+    validatePhasesCompleted,
+    computeStartPhase,
+    checkStaleness,
 
     // Internal helpers (exported for testing)
     findBacklogItemByNumber,
