@@ -1,71 +1,80 @@
 # Static Analysis Report
 
 **Project:** iSDLC Framework
-**Workflow:** REQ-0023-three-verb-backlog-model (feature)
+**Workflow:** REQ-0024-gate-requirements-pre-injection (feature)
 **Phase:** 08 - Code Review & QA
 **Date:** 2026-02-18
 
 ---
 
-## 1. Syntax Validation
+## 1. CJS Syntax Validation
 
-| File | Status |
-|------|--------|
-| src/claude/hooks/lib/three-verb-utils.cjs | PASS (node -c) |
-| src/claude/hooks/tests/test-three-verb-utils.test.cjs | PASS (126/126 tests execute) |
-| src/claude/hooks/skill-delegation-enforcer.cjs | PASS (node -c) |
-| src/claude/hooks/delegation-gate.cjs | PASS (node -c) |
+| File | Check | Status |
+|------|-------|--------|
+| `src/claude/hooks/lib/gate-requirements-injector.cjs` | `node --check` | PASS |
+| `src/claude/hooks/tests/gate-requirements-injector.test.cjs` | `node --check` | PASS |
 
 ## 2. Module System Compliance (Article XIII)
 
-| Check | Result |
-|-------|--------|
-| three-verb-utils.cjs uses require/module.exports | PASS |
-| No ES Module imports in hook files | PASS |
-| Test file uses require (CJS) | PASS |
-| 'use strict' directive present | PASS (three-verb-utils.cjs, test file) |
+| Check | Result | Details |
+|-------|--------|---------|
+| 'use strict' directive | PASS | Present at top of production file |
+| module.exports convention | PASS | CJS export pattern, no ESM syntax |
+| No `import`/`export` statements | PASS | Only `require()`/`module.exports` |
+| No ESM-only packages | PASS | Only `fs` and `path` (Node.js built-ins) |
+| `.cjs` file extension | PASS | Both production and test files |
+| Synchronous I/O only | PASS | `readFileSync`, `existsSync` |
+| Test uses `node:test` + `node:assert/strict` | PASS | Matches CJS test pattern |
+| Cross-platform path construction | PASS | All 4 paths use `path.join()` |
 
-## 3. Code Style
+## 3. Code Quality Checks
 
-| Check | Result | Notes |
-|-------|--------|-------|
-| Consistent indentation (4 spaces) | PASS | All new files |
-| No trailing whitespace | PASS | |
-| Single quotes for strings | PASS | CJS convention |
-| Semicolons present | PASS | |
-| No console.log in production code | PASS | Only fs operations |
-| No debugger statements | PASS | |
+| Check | Result | Details |
+|-------|--------|---------|
+| No `console.log` in production | PASS | Zero occurrences |
+| No `process.exit` | PASS | Functions return, never exit |
+| No `eval()` or `new Function()` | PASS | No dynamic code execution |
+| No `throw` statements | PASS | All errors caught internally |
+| No unused imports | PASS | `fs` and `path` both used |
+| No dead code | PASS | All functions called or exported |
+| Error catch variables prefixed `_` | PASS | All 10 catch blocks use `_e` |
+| JSDoc on all functions | PASS | 9/9 functions documented |
+| try/catch on all error paths | PASS | 10 try/catch blocks |
 
-## 4. Security Checks
+## 4. Security Static Checks
 
-| Check | Result | Notes |
-|-------|--------|-------|
+| Check | Result | Details |
+|-------|--------|---------|
 | No hardcoded secrets | PASS | No API keys, tokens, or credentials |
-| No eval() usage | PASS | |
-| No Function() constructor | PASS | |
-| Path traversal prevention | PASS | generateSlug strips special chars |
-| JSON.parse error handling | PASS | readMetaJson catches parse errors |
-| No shell injection vectors | PASS | No child_process usage |
-| fs operations use absolute paths | PASS | path.join used consistently |
+| No network access (http/https) | PASS | Purely filesystem-based |
+| No child_process usage | PASS | No exec/spawn calls |
+| Path traversal prevention | PASS | Paths via path.join() from trusted roots |
+| RegExp safety | PASS | `new RegExp()` uses escaped template keys from controlled input |
+| JSON parse safety | PASS | All `JSON.parse()` in try/catch |
+| npm audit | PASS | 0 vulnerabilities |
 
-## 5. Dependency Analysis
+## 5. Module Export Analysis
 
-| Check | Result |
-|-------|--------|
-| New npm dependencies | 0 |
-| Node built-in only (fs, path, os) | PASS |
-| No ESM-only packages in hooks | PASS |
+| Export | Type | Purpose | Used Internally |
+|--------|------|---------|----------------|
+| `buildGateRequirementsBlock` | function | Primary API | Yes (entry point) |
+| `loadIterationRequirements` | function | Config loader | Yes (via buildGateRequirementsBlock) |
+| `loadArtifactPaths` | function | Config loader | Yes (via buildGateRequirementsBlock) |
+| `parseConstitutionArticles` | function | Constitution parser | Yes (via buildGateRequirementsBlock) |
+| `loadWorkflowModifiers` | function | Workflow loader | Yes (via buildGateRequirementsBlock) |
+| `resolveTemplateVars` | function | Template helper | Yes (via buildGateRequirementsBlock) |
+| `deepMerge` | function | Object merger | No (exported for future use; tested but not wired) |
+| `formatBlock` | function | Output formatter | Yes (via buildGateRequirementsBlock) |
 
-## 6. Markdown Files
+**Note:** `deepMerge` is exported and fully tested but not called from the main pipeline. See code-review-report.md finding M-001.
 
-| File | Check | Result |
-|------|-------|--------|
-| src/claude/commands/isdlc.md | Three-verb handlers present | PASS |
-| src/claude/agents/00-sdlc-orchestrator.md | SCENARIO 3 menu updated | PASS |
-| src/claude/agents/00-sdlc-orchestrator.md | BACKLOG PICKER removed | PASS |
-| src/claude/CLAUDE.md.template | Intent table updated | PASS |
-| CLAUDE.md (root) | Intent table has Add/Analyze/Build | PASS |
+## 6. Hardcoded Path Separator Check
+
+| Pattern | Occurrences | Details |
+|---------|-------------|---------|
+| Hardcoded `/` in file paths | 0 | All paths via `path.join()` |
+| `'\n'` for line joining | 1 (line 287) | Correct -- output format newlines, not file paths |
 
 ## 7. Overall Static Analysis Verdict
 
-**PASS** -- No errors. All files pass syntax validation, module system compliance, security checks, and style consistency.
+**PASS** -- No errors, no warnings. All files pass syntax validation, module system compliance, code quality checks, and security static analysis.

@@ -14,7 +14,7 @@
 ### 2. Performance (remaining from 2026-02-13 investigation)
 
 - 2.3 [x] T7: Agent prompt boilerplate extraction — ROOT RESOLUTION, MONOREPO, ITERATION protocols duplicated across 17 agents (~3,600 lines) -> [requirements](docs/requirements/REQ-0021-t7-agent-prompt-boilerplate-extraction/) **Completed: 2026-02-17**
-- 2.4 [ ] Performance budget and guardrail system — enforce per-workflow timing limits and track regression as new features land -> [requirements](docs/requirements/REQ-0022-performance-budget-guardrails/)
+- 2.4 [A] Performance budget and guardrail system — enforce per-workflow timing limits and track regression as new features land -> [requirements](docs/requirements/REQ-0022-performance-budget-guardrails/)
   - **Problem**: The framework has been optimised from ~4x to ~1.2-1.5x overhead (T1-T3 done). But upcoming backlog items add significant agent calls — Creator/Critic/Refiner debates across 4 creative phases could add 12+ extra agent runs (~20-40 min worst case), Phase 06 Writer/Reviewer/Updater adds 2N calls for N files, and fan-out spawns multiple parallel agents. Without a performance budget, these features will erode the gains incrementally and nobody will notice until the framework feels slow again.
   - **Design**:
     1. **Per-workflow timing instrumentation**: Record wall-clock time per phase, per agent call, and per hook dispatcher invocation in `state.json` under `phases[phase].timing`. Already have `console.time()` in dispatchers — extend to full phase timing.
@@ -443,6 +443,8 @@
 ## Completed
 
 ### 2026-02-18
+- [x] REQ-0024: Gate requirements pre-injection — inject gate pass criteria into phase agent delegation prompts so agents know what hooks will check before they start, enabling first-pass success without retries *(GitHub #25, merged 8ca3d45)*.
+  - New `gate-requirements-injector.cjs` utility (369 LOC, 7 internal helpers), STEP 3d GATE REQUIREMENTS INJECTION block in `isdlc.md`. Reads iteration-requirements.json, artifact-paths.json, constitution.md, workflows.json at delegation time. Fail-open on all error paths. 55 new tests, zero regressions. 6 FRs, 5 NFRs, 26 ACs.
 - [x] BUG-0030-GH-24: Impact analysis sub-agents perform independent search instead of anchoring on quick scan *(GitHub #24, merged d9a5bd6)* (backlog 14.4).
   - Added independent Glob/Grep search directives to M1 (impact-analyzer), M2 (entry-point-finder), M3 (risk-assessor). Added Step 4c independent completeness verification to M4 (cross-validation-verifier) with `completeness_gap` finding category. 4 agent files modified, 1 new test file (17 tests), zero regressions.
 - [x] REQ-0023: Three-verb backlog model (add/analyze/build) — unified command surface around three natural verbs, eliminated Phase A/B naming, redesigned intent detection and orchestrator backlog picker *(GitHub #19, merged 7673354)* (backlog 16.1).

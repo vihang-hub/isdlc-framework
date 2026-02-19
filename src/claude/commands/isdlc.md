@@ -1031,13 +1031,15 @@ Clear `pending_escalations` after handling.
 
 Using the `state.json` already read in step 3b, update the following fields:
 
-1. Set `phases[phase_key].status` = `"in_progress"`
-2. Set `phases[phase_key].started` = current ISO-8601 timestamp (only if not already set — preserve existing start time on retries)
+1. Set **top-level** `phases` object → `phases[phase_key].status` = `"in_progress"` (this is the detailed phases object near the bottom of state.json, NOT `active_workflow.phase_status`)
+2. Set **top-level** `phases` object → `phases[phase_key].started` = current ISO-8601 timestamp (only if not already set — preserve existing start time on retries)
 3. Set `active_workflow.current_phase` = `phase_key`
 4. Set `active_workflow.phase_status[phase_key]` = `"in_progress"`
 5. Set top-level `current_phase` = `phase_key`
 6. Set top-level `active_agent` = agent name (resolved from PHASE_AGENT_MAP below)
 7. Write `.isdlc/state.json`
+
+**IMPORTANT**: Steps 1-2 and step 4 update DIFFERENT locations. `phases[phase_key]` (steps 1-2) is the detailed phase tracking object near the bottom of state.json. `active_workflow.phase_status[phase_key]` (step 4) is the summary map inside the workflow. Both MUST be updated — hooks read from the detailed `phases` object.
 
 **3d.** DIRECT PHASE DELEGATION — Bypass the orchestrator and delegate directly to the phase agent.
 
@@ -1129,13 +1131,14 @@ Use Task tool → {agent_name} with:
        DO NOT attempt to advance the gate until ALL enabled requirements are satisfied.
 
     6. Error handling: If any error occurs in steps 1-5, continue with unmodified prompt. Log warning but never block.}
+   Do NOT emit SUGGESTED NEXT STEPS or prompt the user to continue — the Phase-Loop Controller manages phase transitions. Simply return your result.
    Validate GATE-{NN} on completion."
 ```
 
 **3e.** POST-PHASE STATE UPDATE — After the phase agent returns successfully:
 1. Read `.isdlc/state.json`
-2. Set `phases[phase_key].status` = `"completed"`
-3. Set `phases[phase_key].summary` = (extract from agent result, max 150 chars)
+2. Set **top-level** `phases` object → `phases[phase_key].status` = `"completed"` (the detailed phases object near the bottom of state.json, NOT `active_workflow.phase_status`)
+3. Set **top-level** `phases` object → `phases[phase_key].summary` = (extract from agent result, max 150 chars)
 4. Set `active_workflow.current_phase_index` += 1
 5. Set `active_workflow.phase_status[phase_key]` = `"completed"` (BUG-0005: sync phase_status map)
 6. If more phases remain: (BUG-0006: next-phase activation moved to STEP 3c-prime at start of next iteration)
@@ -1414,7 +1417,7 @@ state update, check if adaptive workflow sizing should run.
 **Fallback**: If no design artifacts are found, skip refinement silently. Phase 06 tasks remain high-level. The software-developer agent will self-decompose work as it does today.
 
 **3f.** On return, check the result status:
-- `"passed"` or successful completion → Mark task as `completed` **with strikethrough**: update both `status` to `completed` AND `subject` to `~~[N] {base subject}~~` (wrap the original `[N] subject` in `~~`). Continue to next phase.
+- `"passed"` or successful completion → Mark task as `completed` **with strikethrough**: update both `status` to `completed` AND `subject` to `~~[N] {base subject}~~` (wrap the original `[N] subject` in `~~`). Then **clean up sub-agent tasks**: call `TaskList`, and for every task whose `subject` does NOT start with `[` or `~~[` (i.e., it is NOT a main workflow phase task), call `TaskUpdate` with `status: "deleted"` to remove it from the display. Continue to next phase.
 - `"blocked_by_hook"` → Check which hook caused the block (see **3f-blast-radius** below for blast-radius-validator blocks, otherwise use the generic path):
   - **Generic hook block (non-blast-radius)**: Display blocker banner (same format as 3c), use `AskUserQuestion` for Retry/Skip/Cancel
   - **Blast-radius-validator block**: Follow the specialized handling in **3f-blast-radius** below
@@ -1486,10 +1489,8 @@ After the orchestrator returns from finalize, execute this cleanup loop immediat
 
 1. Call `TaskList` to retrieve ALL tasks in the session
 2. For EACH task returned by TaskList:
-   a. If task `status` is `pending` or `in_progress`:
-      - Call `TaskUpdate` with `status: "completed"`
-      - If the task `subject` does NOT already start with `~~`, update `subject` to `~~{current_subject}~~`
-3. This loop processes ALL tasks (workflow phase tasks AND sub-agent tasks) — do not attempt to filter or identify which tasks "belong" to the workflow. After finalize, every remaining non-completed task is stale by definition.
+   a. Call `TaskUpdate` with `status: "deleted"` to permanently remove it from the display
+3. This loop processes ALL tasks (workflow phase tasks AND sub-agent tasks) — do not attempt to filter or identify which tasks "belong" to the workflow. After finalize, every remaining task is stale by definition. Delete them all so the screen is clean for the next workflow.
 4. Do NOT exit the Phase-Loop Controller until this cleanup loop has completed.
 
 #### Flow Summary
