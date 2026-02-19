@@ -1,5 +1,11 @@
 #!/usr/bin/env node
 'use strict';
+
+/** REQ-0022 FR-008: High-resolution timer with Date.now() fallback (ADR-0004) */
+const _now = (typeof performance !== 'undefined' && typeof performance.now === 'function')
+    ? () => performance.now()
+    : () => Date.now();
+
 /**
  * iSDLC Post-Write/Edit Dispatcher - PostToolUse[Write] AND PostToolUse[Edit] Hook
  * ==================================================================================
@@ -43,7 +49,10 @@ const { check: stateWriteValidatorCheck } = require('../state-write-validator.cj
 const { check: outputFormatValidatorCheck } = require('../output-format-validator.cjs');
 const { check: workflowCompletionEnforcerCheck } = require('../workflow-completion-enforcer.cjs');
 
+const DISPATCHER_NAME = 'post-write-edit-dispatcher';
+
 async function main() {
+    const _dispatcherStart = _now();
     try {
         // 1. Read stdin once
         const inputStr = await readStdin();
@@ -75,8 +84,10 @@ async function main() {
 
         // 6. Call hooks in order (all run, no short-circuit)
         const allStderr = [];
+        let _hooksRan = 0;
 
         // Hook 1: state-write-validator (always runs for both Write and Edit)
+        _hooksRan++;
         try {
             const result = stateWriteValidatorCheck(ctx);
             if (result.stderr) allStderr.push(result.stderr);
@@ -86,6 +97,7 @@ async function main() {
 
         // Hook 2: output-format-validator (Write only, skipped for Edit; requires active workflow)
         if (toolName === 'Write' && hasActiveWorkflow) {
+            _hooksRan++;
             try {
                 const result = outputFormatValidatorCheck(ctx);
                 if (result.stderr) allStderr.push(result.stderr);
@@ -96,6 +108,7 @@ async function main() {
 
         // Hook 3: workflow-completion-enforcer (only when workflow just completed: active_workflow is null)
         if (!hasActiveWorkflow) {
+            _hooksRan++;
             try {
                 const result = workflowCompletionEnforcerCheck(ctx);
                 // This hook outputs its own stderr via outputSelfHealNotification()
@@ -112,9 +125,19 @@ async function main() {
         }
 
         // No stdout output from this dispatcher (none of the hooks produce stdout)
+        // REQ-0022 FR-008: Dispatcher timing instrumentation
+        try {
+            const _elapsed = _now() - _dispatcherStart;
+            console.error(`DISPATCHER_TIMING: ${DISPATCHER_NAME} completed in ${_elapsed.toFixed(1)}ms (${_hooksRan} hooks)`);
+        } catch (_te) { /* fail-open */ }
         process.exit(0);
     } catch (e) {
         debugLog('post-write-edit-dispatcher error:', e.message);
+        // REQ-0022 FR-008: Dispatcher timing instrumentation
+        try {
+            const _elapsed = _now() - _dispatcherStart;
+            console.error(`DISPATCHER_TIMING: ${DISPATCHER_NAME} completed in ${_elapsed.toFixed(1)}ms (0 hooks)`);
+        } catch (_te) { /* fail-open */ }
         process.exit(0);
     }
 }

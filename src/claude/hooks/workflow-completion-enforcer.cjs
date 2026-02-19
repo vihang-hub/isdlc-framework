@@ -168,6 +168,53 @@ function check(ctx) {
         lastEntry.phase_snapshots = phase_snapshots;
         lastEntry.metrics = metrics;
 
+        // REQ-0022 FR-006: Regression tracking
+        try {
+            const { computeRollingAverage, detectRegression } = require('./lib/performance-budget.cjs');
+
+            if (metrics && typeof metrics.total_duration_minutes === 'number' && metrics.total_duration_minutes > 0) {
+                // Determine intensity for this workflow
+                const intensity = lastEntry.sizing?.effective_intensity || 'standard';
+
+                // Compute rolling average from PRIOR entries (exclude current)
+                const priorHistory = (state.workflow_history || []).slice(0, -1);
+                const rollingAvg = computeRollingAverage(priorHistory, intensity, 5);
+
+                // Detect regression
+                const regression = detectRegression(metrics.total_duration_minutes, rollingAvg, 0.20);
+
+                if (regression) {
+                    // Find slowest phase from snapshots
+                    let slowestPhase = 'unknown';
+                    let slowestDuration = 0;
+                    for (const snap of phase_snapshots) {
+                        const wcm = snap.timing?.wall_clock_minutes;
+                        if (typeof wcm === 'number' && wcm > slowestDuration) {
+                            slowestDuration = wcm;
+                            slowestPhase = snap.key;
+                        }
+                    }
+
+                    lastEntry.regression_check = {
+                        ...regression,
+                        slowest_phase: slowestPhase
+                    };
+
+                    // Emit regression warning to stderr (NFR-005)
+                    if (regression.regressed) {
+                        console.error(
+                            `PERFORMANCE_REGRESSION: Current workflow took ${regression.current_minutes}m ` +
+                            `(${intensity} average: ${regression.baseline_avg_minutes}m, ` +
+                            `${regression.percent_over}% over). Slowest phase: ${slowestPhase} (${slowestDuration}m)`
+                        );
+                    }
+                }
+            }
+        } catch (regressionErr) {
+            // Fail-open: regression errors must never block workflow completion (NFR-001)
+            debugLog('workflow-completion-enforcer: regression check error:', regressionErr.message);
+        }
+
         // Apply pruning (BUG-0004)
         pruneSkillUsageLog(state, 20);
         pruneCompletedPhases(state, []);

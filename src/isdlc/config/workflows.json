@@ -51,6 +51,26 @@
           "high_risk_forces_standard_minimum": true
         }
       },
+      "performance_budgets": {
+        "light": {
+          "max_total_minutes": 30,
+          "max_phase_minutes": 10,
+          "max_debate_rounds": 0,
+          "max_fan_out_chunks": 1
+        },
+        "standard": {
+          "max_total_minutes": 90,
+          "max_phase_minutes": 25,
+          "max_debate_rounds": 2,
+          "max_fan_out_chunks": 4
+        },
+        "epic": {
+          "max_total_minutes": 180,
+          "max_phase_minutes": 40,
+          "max_debate_rounds": 3,
+          "max_fan_out_chunks": 8
+        }
+      },
       "agent_modifiers": {
         "00-quick-scan": {
           "scope": "lightweight-scan",
@@ -126,6 +146,14 @@
           "description": "Enable supervised mode with review gates between phases",
           "default": false,
           "flag": "--supervised"
+        }
+      },
+      "performance_budgets": {
+        "standard": {
+          "max_total_minutes": 90,
+          "max_phase_minutes": 25,
+          "max_debate_rounds": 2,
+          "max_fan_out_chunks": 4
         }
       },
       "agent_modifiers": {

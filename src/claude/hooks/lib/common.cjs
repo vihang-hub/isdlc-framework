@@ -2338,6 +2338,11 @@ function collectPhaseSnapshots(state) {
             snapshot.test_iterations = testIter;
         }
 
+        // Conditional: timing (omit if no data -- REQ-0022)
+        if (phaseData.timing && typeof phaseData.timing === 'object') {
+            snapshot.timing = phaseData.timing;
+        }
+
         snapshots.push(snapshot);
     }
 
