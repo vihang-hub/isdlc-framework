@@ -342,18 +342,7 @@
 
 - #20 [x] ~~Roundtable analysis agent with named personas~~ *(GitHub #20)* -> [requirements](docs/requirements/REQ-0027-gh-20-roundtable-analysis-agent-with-named-personas/) **Completed: 2026-02-20**
 
-- #21 [A] Elaboration mode — multi-persona roundtable discussions -> [requirements](docs/requirements/gh-21-elaboration-mode-multi-persona-roundtable-discussions/)
-  - **Problem**: Some topics need deeper exploration than a single persona can provide. Architecture tradeoffs, complex requirements, and cross-cutting concerns benefit from multiple perspectives debating in real time.
-  - **Design**: At any step during analyze, user selects `[E] Elaboration Mode` to bring all personas into a roundtable discussion:
-    - All three personas (BA, Architect, Designer) plus the user participate as equals
-    - Personas discuss, debate, and build on each other's points naturally
-    - Cross-talk enabled: "As the Architect mentioned, if subscriptions are coming later, we should design the abstraction now..."
-    - User can address specific personas by name or ask the group
-    - Exit returns to the step workflow with enriched context applied to artifacts
-  - **Not party mode**: Focused on the current analysis topic, not freeform. Personas stay in character and on topic.
-  - **Files**: Elaboration mode workflow steps in roundtable agent, persona interaction protocol
-  - **Depends on**: #20 (roundtable agent with personas exists)
-  - **Complexity**: Medium
+- #21 [x] ~~Elaboration mode — multi-persona roundtable discussions~~ *(GitHub #21)* -> [requirements](docs/requirements/gh-21-elaboration-mode-multi-persona-roundtable-discussions/) **Completed: 2026-02-20**
 
 - #22 [ ] Transparent Critic/Refiner at step boundaries
   - **Problem**: The existing Creator/Critic/Refiner debate loop runs invisibly. Users don't see improvements and can't validate them. This erodes trust and misses opportunities for user input on refinements.
@@ -383,6 +372,8 @@
 ## Completed
 
 ### 2026-02-20
+- [x] REQ-0028 (#21): Elaboration mode — multi-persona roundtable discussions — add `[E] Elaboration Mode` to roundtable analyst enabling focused multi-persona debate at any analysis step *(GitHub #21, merged a766cdc)*.
+  - Updated `roundtable-analyst.md` (+198 LOC elaboration mode protocol), updated `three-verb-utils.cjs` (elaboration routing). 21 new tests, 2857/2861 full suite, zero regressions. 12 files changed, 752 insertions, 173 deletions.
 - [x] REQ-0027 (#20): Roundtable analysis agent with named personas — single-agent roundtable analyst with BA/Architect/Designer persona hats during analyze verb, step-file architecture, adaptive depth, resumable sessions *(GitHub #20, merged c02145b)*.
   - New `roundtable-analyst.md` agent (307 LOC, persona router + step orchestration), 24 step files under `src/claude/skills/analysis-steps/` (5 phases: quick-scan, requirements, impact-analysis, architecture, design), updated `three-verb-utils.cjs` for roundtable integration. 63 new tests, 2836/2840 full suite, zero regressions. 8 FRs, 5 NFRs, ~40 ACs. 35 files changed, 2146 insertions, 385 deletions.
 - [x] BUG-0029-GH-18: Framework agents generate multiline Bash commands that bypass permission auto-allow rules — rewrite multiline Bash commands to single-line form across 9 agent files *(GitHub #18, merged 2e9e07c)*.
