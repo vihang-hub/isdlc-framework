@@ -14,6 +14,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -539,6 +540,185 @@ function checkStaleness(meta, currentHash) {
 }
 
 // ---------------------------------------------------------------------------
+// extractFilesFromImpactAnalysis(mdContent)
+// GH-61: Blast-Radius-Aware Smart Staleness
+// ---------------------------------------------------------------------------
+
+/**
+ * Parses the "Directly Affected Files" markdown table from impact-analysis.md
+ * and returns a deduplicated, normalized array of file paths.
+ * Pure function -- string in, array out. No I/O dependencies.
+ *
+ * GH-61: Blast-Radius-Aware Smart Staleness
+ * Traces: FR-005 (AC-005-01 through AC-005-04), NFR-004 (AC-NFR-004-01), CON-005
+ *
+ * @param {string|null|undefined} mdContent - Raw impact-analysis.md content
+ * @returns {string[]} Deduplicated, normalized file paths
+ */
+function extractFilesFromImpactAnalysis(mdContent) {
+    // STEP 1: Guard -- null/undefined/empty/non-string input
+    if (mdContent === null || mdContent === undefined || typeof mdContent !== 'string' || mdContent === '') {
+        return [];
+    }
+
+    const lines = mdContent.split('\n');
+
+    // STEP 2: Find the "Directly Affected Files" section heading
+    // Use word boundary (\b) to avoid matching "Indirectly Affected Files"
+    const headingRegex = /^#{2,3}\s+.*\bDirectly Affected Files/i;
+    let startIndex = -1;
+    for (let i = 0; i < lines.length; i++) {
+        if (headingRegex.test(lines[i])) {
+            startIndex = i + 1;
+            break;
+        }
+    }
+    if (startIndex === -1) {
+        return [];
+    }
+
+    // STEP 3: Find section boundary (next heading)
+    const nextHeadingRegex = /^#{2,3}\s/;
+    let endIndex = lines.length;
+    for (let i = startIndex; i < lines.length; i++) {
+        if (nextHeadingRegex.test(lines[i])) {
+            endIndex = i;
+            break;
+        }
+    }
+
+    // STEP 4: Extract file paths from table rows
+    const fileSet = new Set();
+    const tableRowRegex = /^\|\s*`([^`]+)`\s*\|/;
+    for (let i = startIndex; i < endIndex; i++) {
+        const match = lines[i].match(tableRowRegex);
+        if (match) {
+            let rawPath = match[1];
+            // Normalize: strip leading "./" or "/"
+            rawPath = rawPath.replace(/^\.\//, '').replace(/^\//, '');
+            fileSet.add(rawPath);
+        }
+    }
+
+    // STEP 5: Return
+    return Array.from(fileSet);
+}
+
+// ---------------------------------------------------------------------------
+// checkBlastRadiusStaleness(meta, currentHash, impactAnalysisContent, changedFiles)
+// GH-61: Blast-Radius-Aware Smart Staleness
+// ---------------------------------------------------------------------------
+
+/**
+ * Enhanced staleness check that intersects git-changed files with the blast
+ * radius from impact-analysis.md to produce a tiered severity response.
+ *
+ * GH-61: Blast-Radius-Aware Smart Staleness
+ * Traces: FR-004, FR-006, NFR-002, NFR-003, NFR-004 (AC-NFR-004-02)
+ *
+ * @param {object|null} meta - Parsed meta.json (from readMetaJson)
+ * @param {string} currentHash - Current git HEAD short hash
+ * @param {string|null} impactAnalysisContent - Raw impact-analysis.md content
+ * @param {string[]|null} changedFiles - Pre-computed changed files (null = compute via git)
+ * @returns {{
+ *   stale: boolean,
+ *   severity: 'none'|'info'|'warning'|'fallback',
+ *   overlappingFiles: string[],
+ *   changedFileCount: number,
+ *   blastRadiusFileCount: number,
+ *   originalHash: string|null,
+ *   currentHash: string,
+ *   fallbackReason: string|null
+ * }}
+ */
+function checkBlastRadiusStaleness(meta, currentHash, impactAnalysisContent, changedFiles) {
+    // STEP 1: Early exit -- no meta or no hash to compare
+    if (meta === null || meta === undefined || typeof meta !== 'object') {
+        return {
+            stale: false, severity: 'none', overlappingFiles: [],
+            changedFileCount: 0, blastRadiusFileCount: 0,
+            originalHash: null, currentHash: currentHash, fallbackReason: null
+        };
+    }
+    if (!meta.codebase_hash) {
+        return {
+            stale: false, severity: 'none', overlappingFiles: [],
+            changedFileCount: 0, blastRadiusFileCount: 0,
+            originalHash: null, currentHash: currentHash, fallbackReason: null
+        };
+    }
+
+    // STEP 2: Early exit -- same hash (not stale)
+    if (meta.codebase_hash === currentHash) {
+        return {
+            stale: false, severity: 'none', overlappingFiles: [],
+            changedFileCount: 0, blastRadiusFileCount: 0,
+            originalHash: meta.codebase_hash, currentHash: currentHash, fallbackReason: null
+        };
+    }
+
+    // STEP 3: Extract blast radius files
+    const blastRadiusFiles = extractFilesFromImpactAnalysis(impactAnalysisContent);
+
+    if (!impactAnalysisContent || impactAnalysisContent === '' || blastRadiusFiles.length === 0) {
+        const fallbackReason = (impactAnalysisContent && impactAnalysisContent !== '') ? 'no-parseable-table' : 'no-impact-analysis';
+        return {
+            stale: true, severity: 'fallback',
+            overlappingFiles: [], changedFileCount: 0,
+            blastRadiusFileCount: 0,
+            originalHash: meta.codebase_hash, currentHash: currentHash,
+            fallbackReason: fallbackReason
+        };
+    }
+
+    // STEP 4: Get changed files
+    if (changedFiles === null || changedFiles === undefined) {
+        try {
+            const result = execSync('git diff --name-only ' + meta.codebase_hash + '..HEAD', { encoding: 'utf8', timeout: 5000 });
+            changedFiles = result.trim().split('\n').filter(function(line) { return line.trim() !== ''; });
+        } catch (e) {
+            return {
+                stale: true, severity: 'fallback',
+                overlappingFiles: [], changedFileCount: 0,
+                blastRadiusFileCount: blastRadiusFiles.length,
+                originalHash: meta.codebase_hash, currentHash: currentHash,
+                fallbackReason: 'git-diff-failed'
+            };
+        }
+    }
+
+    // STEP 5: Compute intersection
+    const blastRadiusSet = new Set(blastRadiusFiles);
+    const overlapping = changedFiles.filter(function(f) { return blastRadiusSet.has(f); });
+
+    // STEP 6: Determine severity tier
+    let stale;
+    let severity;
+    if (overlapping.length === 0) {
+        stale = false;
+        severity = 'none';
+    } else if (overlapping.length <= 3) {
+        stale = true;
+        severity = 'info';
+    } else {
+        stale = true;
+        severity = 'warning';
+    }
+
+    // STEP 7: Return
+    return {
+        stale: stale,
+        severity: severity,
+        overlappingFiles: overlapping,
+        changedFileCount: changedFiles.length,
+        blastRadiusFileCount: blastRadiusFiles.length,
+        originalHash: meta.codebase_hash,
+        currentHash: currentHash,
+        fallbackReason: null
+    };
+}
+
+// ---------------------------------------------------------------------------
 // TIER_ORDER constant
 // GH-59: Complexity-Based Routing
 // ---------------------------------------------------------------------------
@@ -1059,6 +1239,10 @@ module.exports = {
     validatePhasesCompleted,
     computeStartPhase,
     checkStaleness,
+
+    // Blast-radius staleness utilities (GH-61)
+    extractFilesFromImpactAnalysis,
+    checkBlastRadiusStaleness,
 
     // Tier recommendation utilities (GH-59)
     computeRecommendedTier,

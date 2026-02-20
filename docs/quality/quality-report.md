@@ -1,120 +1,126 @@
-# Quality Report: BUG-0051-GH-51 Sizing Consent
+# Quality Report: REQ-0031-GH-60-61 Build Consumption Init Split + Smart Staleness
 
 **Phase**: 16-quality-loop
-**Date**: 2026-02-19
-**Quality Loop Iteration**: 1 (both tracks passed first run)
-**Branch**: bugfix/BUG-0051-sizing-consent
-**Bug**: Sizing decision must always prompt the user -- silent fallback paths bypass user consent (GH #51)
+**Date**: 2026-02-20
+**Quality Loop Iteration**: 1 (TC-04 regression fixed in iteration 1, then both tracks passed)
+**Branch**: feature/REQ-0031-gh-60-61-build-consumption
+**Feature**: GH-60 (init-only orchestrator mode) + GH-61 (blast-radius-aware staleness check)
 **Scope Mode**: FULL SCOPE (parallel-quality-check)
 
 ## Executive Summary
 
-All quality checks pass. Zero new regressions introduced. 17 new tests pass (100% of new test file). All 63 hook test failures across the CJS stream are pre-existing and documented (verified by stashing changes: 80 failures on clean tree, 63 with changes = 17 fewer failures = exactly the new passing tests).
+All quality checks pass. One regression (TC-04 in plan-tracking.test.js) was identified and fixed -- it was caused by the intentional GH-60 design change removing strikethrough from STEP 2 (init-only mode no longer pre-completes Phase 01). After the fix, all feature-specific tests pass (327/327). Pre-existing failures in CJS hook tests (1/2350) and ESM tests (4/302) are documented and unrelated to this feature.
 
 **Verdict: PASS**
 
 ## Track A: Testing Results
 
-### Group A1: Build Verification
+### Group A1: Build Verification (QL-007)
 
 | Check | Skill ID | Result | Duration | Notes |
 |-------|----------|--------|----------|-------|
-| Build verification | QL-007 | PASS | <1s | common.cjs loads cleanly, all exports accessible |
-| Syntax check | QL-007 | PASS | <1s | `node --check` passes for common.cjs and sizing-consent.test.cjs |
+| Build verification | QL-007 | PASS | <1s | three-verb-utils.cjs loads cleanly, all exports accessible |
+| Syntax check | QL-007 | PASS | <1s | `node --check` passes for all changed .cjs files |
 | Lint check | QL-005 | NOT CONFIGURED | - | `package.json` lint script is `echo 'No linter configured'` |
 | Type check | QL-006 | NOT CONFIGURED | - | JavaScript project, no TypeScript |
 
-### Group A2: Test Execution
+### Group A2: Test Execution (QL-002)
 
 | Check | Skill ID | Result | Duration | Notes |
 |-------|----------|--------|----------|-------|
-| Sizing-consent tests | QL-002 | PASS | 80ms | 17/17 pass (sizing-consent.test.cjs) |
-| All hook tests | QL-002 | PASS* | ~8.3s | 1303/1366 pass. 63 pre-existing failures |
-| Lib tests | QL-002 | N/A | <1s | 0 tests in lib path |
-| Characterization tests | QL-002 | N/A | <1s | 0 tests present |
-| E2E tests | QL-002 | PASS* | <1s | 0/1 pass. 1 pre-existing failure (cli-lifecycle.test.js) |
+| Feature unit tests | QL-002 | PASS | 111ms | 293/293 pass (test-three-verb-utils.test.cjs) |
+| Feature integration tests | QL-002 | PASS | 46ms | 34/34 pass (test-three-verb-utils-steps.test.cjs) |
+| All CJS hook tests | QL-002 | PASS* | ~5.2s | 2349/2350 pass. 1 pre-existing failure |
+| ESM lib tests | QL-002 | PASS* | ~19s | 298/302 pass. 4 pre-existing failures |
+| Plan-tracking tests | QL-002 | PASS* | 37ms | 11/12 pass. 1 pre-existing failure (TC-07) |
 
-*PASS with known pre-existing failures only. Zero regressions introduced by this change.
+*PASS with known pre-existing failures only. Zero regressions introduced by this change (after TC-04 fix).
 
-### Pre-existing Failure Verification
+### Feature-Specific Test Summary
 
-To verify that 63 failures are pre-existing:
-1. Stashed working tree changes (`git stash`)
-2. Ran `npm run test:hooks` on clean tree: **80 failures** (sizing-consent tests FAIL because implementation reverted)
-3. Restored changes (`git stash pop`): **63 failures** (sizing-consent 17 tests now PASS)
-4. Difference: 80 - 63 = 17 = exactly the new passing tests
-5. Conclusion: **zero regressions**
+| Test File | Total | Pass | Fail | Duration |
+|-----------|-------|------|------|----------|
+| `test-three-verb-utils.test.cjs` (unit) | 293 | 293 | 0 | 111ms |
+| `test-three-verb-utils-steps.test.cjs` (integration) | 34 | 34 | 0 | 46ms |
+| **Total feature tests** | **327** | **327** | **0** | **157ms** |
 
-Pre-existing failure sources (not related to this change):
-- `workflow-finalizer.test.cjs` -- WF01-WF15 (15 tests)
-- `cleanupCompletedWorkflow` suite -- T01-T28 (28 tests)
-- `backlog-picker` suite -- TC-M2a/M2b, TC-M4 (various Jira/backlog tests)
-- `branch-guard` suite -- BUG-0012 tests (3 tests)
-- `version-lock` suite -- TC-03f (1 test)
-- Various characterization tests -- NFR-002, FR-002, M4/M5
+New tests added by this feature:
+- `extractFilesFromImpactAnalysis()`: 15 unit tests (TC-EF-01 through TC-EF-15)
+- `checkBlastRadiusStaleness()`: 16 unit tests (TC-BR-01 through TC-BR-16)
+- Blast-radius integration: 9 integration tests (TC-INT-01 through TC-INT-09)
 
-### Group A3: Mutation Testing
+### Regression Fixed During Quality Loop
+
+| Test | Issue | Fix | Iteration |
+|------|-------|-----|-----------|
+| TC-04 (plan-tracking.test.js) | Expected strikethrough in STEP 2, but GH-60 removed it (init-only mode) | Updated test to validate new behavior: all tasks start as `pending`, no pre-completion of Phase 01 | 1 |
+
+### Pre-existing Failures (Verified Not Caused by This Feature)
+
+All pre-existing failures verified by stashing changes and testing the parent commit.
+
+| Test | File | Verified Pre-existing |
+|------|------|-----------------------|
+| SM-04: supervised_review logging | `test-gate-blocker-extended.test.cjs:1321` | Yes (fails on parent commit) |
+| TC-07: STEP 4 strikethrough | `plan-tracking.test.js:220` | Yes (fails on parent commit) |
+| TC-13-01: 48 agents expected | `prompt-format.test.js:159` | Yes (61 agents exist) |
+| TC-E09: README "40 agents" | `prompt-format.test.js` | Yes (documented in MEMORY.md) |
+
+### Group A3: Mutation Testing (QL-003)
 
 | Check | Skill ID | Result | Duration | Notes |
 |-------|----------|--------|----------|-------|
 | Mutation testing | QL-003 | NOT CONFIGURED | - | No mutation framework installed |
 
-### Group A4: Coverage Analysis
+### Group A4: Coverage Analysis (QL-004)
 
 | Check | Skill ID | Result | Duration | Notes |
 |-------|----------|--------|----------|-------|
 | Coverage analysis | QL-004 | NOT CONFIGURED | - | No coverage tooling (c8/nyc not installed) |
 
-### Parallel Execution
-
-| Attribute | Value |
-|-----------|-------|
-| Parallel mode used | Yes |
-| Framework | node:test |
-| Flag | `--test-concurrency=9` |
-| Workers | 9 (of 10 cores) |
-| Fallback triggered | No |
-| Flaky tests | None |
-| Estimated speedup | N/A (single test file, 80ms total) |
-
 ## Track B: Automated QA Results
 
-### Group B1: Lint Check
+### Group B1: Lint Check (QL-005)
 
 | Check | Skill ID | Result | Notes |
 |-------|----------|--------|-------|
 | Lint check | QL-005 | NOT CONFIGURED | `package.json` lint script is `echo 'No linter configured'` |
 
-### Group B2: Type Check
+### Group B2: Type Check (QL-006)
 
 | Check | Skill ID | Result | Notes |
 |-------|----------|--------|-------|
 | Type check | QL-006 | NOT APPLICABLE | JavaScript project, no TypeScript |
 
-### Group B3: SAST Security Scan
+### Group B3: SAST Security Scan (QL-008)
 
 | Check | Skill ID | Result | Notes |
 |-------|----------|--------|-------|
-| SAST scan | QL-008 | PASS | No `eval()`, dynamic `require()`, or injection patterns in new code |
-| Path traversal | QL-008 | PASS | `extractFallbackSizingMetrics` uses `path.join` with internal args only |
-| JSON parsing | QL-008 | PASS | `JSON.parse` operates on framework-managed markdown files, not external input |
-| Error handling | QL-008 | PASS | All file I/O wrapped in try/catch with safe fall-through |
+| eval() usage | QL-008 | PASS | No `eval()` in new code |
+| Dynamic require | QL-008 | PASS | Only `require('fs')`, `require('path')`, `require('child_process')` -- all core modules |
+| Injection risk | QL-008 | PASS | `execSync` in `checkBlastRadiusStaleness` uses `meta.codebase_hash` which is framework-managed (short git hash), not user input. Timeout: 5000ms. |
+| Path traversal | QL-008 | PASS | `extractFilesFromImpactAnalysis` only parses strings, no fs operations |
+| ReDoS risk | QL-008 | PASS | Regex patterns are bounded (no nested quantifiers): `/^\|\\s*\`([^\`]+)\`\\s*\|/`, `/^#{2,3}\\s+.*\\bDirectly/i` |
+| Error handling | QL-008 | PASS | All I/O wrapped in try/catch with safe fallback returns |
 
-### Group B4: Dependency Audit
+### Group B4: Dependency Audit (QL-009)
 
 | Check | Skill ID | Result | Notes |
 |-------|----------|--------|-------|
 | npm audit | QL-009 | PASS | 0 vulnerabilities found |
 
-### Group B5: Automated Code Review
+### Group B5: Automated Code Review (QL-010)
 
 | Check | Skill ID | Result | Notes |
 |-------|----------|--------|-------|
-| Input validation | QL-010 | PASS | `extractFallbackSizingMetrics` validates empty args |
-| Error boundaries | QL-010 | PASS | try/catch around all fs operations |
-| Null safety | QL-010 | PASS | `user_prompted` and `fallback_attempted` use explicit undefined checks |
-| Backward compat | QL-010 | PASS | New audit fields default to null when not provided (TC-10) |
-| API surface | QL-010 | PASS | New function properly exported in module.exports |
+| Input validation | QL-010 | PASS | Both new functions guard against null/undefined/empty/non-string input |
+| Error boundaries | QL-010 | PASS | `execSync` wrapped in try/catch, returns `fallback` severity on failure |
+| Null safety | QL-010 | PASS | Explicit null/undefined checks before property access in both functions |
+| Pure function design | QL-010 | PASS | `extractFilesFromImpactAnalysis` is pure -- string in, array out, zero side effects |
+| Backward compat | QL-010 | PASS | `checkBlastRadiusStaleness` handles null `changedFiles` (computes via git) and null `impactAnalysisContent` (falls back to naive hash check) |
+| API surface | QL-010 | PASS | Both functions properly exported in `module.exports` |
+| Deduplication | QL-010 | PASS | `extractFilesFromImpactAnalysis` uses `Set` to deduplicate paths |
+| Path normalization | QL-010 | PASS | Strips `./` and `/` prefixes for consistent comparison with git output |
 
 ### Group B6: SonarQube
 
@@ -126,16 +132,19 @@ Pre-existing failure sources (not related to this change):
 
 | File | Type | Lines Changed | Tests |
 |------|------|---------------|-------|
-| `src/claude/hooks/lib/common.cjs` | Implementation | +115 (new function + audit fields) | 17 tests |
-| `src/claude/commands/isdlc.md` | Command spec | +52/-26 (S1/S2/S3 restructured) | Structural (agent instruction) |
-| `src/claude/hooks/tests/sizing-consent.test.cjs` | New test file | +514 (17 tests) | Self |
+| `src/claude/hooks/lib/three-verb-utils.cjs` | Implementation | +170 (2 new functions) | 31 unit + 9 integration |
+| `src/claude/hooks/tests/test-three-verb-utils.test.cjs` | Unit tests | +~200 (31 new tests) | Self |
+| `src/claude/hooks/tests/test-three-verb-utils-steps.test.cjs` | Integration tests | +~80 (9 new tests) | Self |
+| `src/claude/commands/isdlc.md` | Command spec | +~80/-30 (Steps 1,4b,4c,5 updated) | Structural (agent instruction) |
+| `src/claude/agents/00-sdlc-orchestrator.md` | Agent spec | +~40/-20 (init-only mode) | Structural (agent instruction) |
+| `lib/plan-tracking.test.js` | Test fix | +10/-8 (TC-04 updated for GH-60) | Self |
 
 ## GATE-16 Checklist
 
 | # | Criterion | Status | Notes |
 |---|-----------|--------|-------|
 | 1 | Clean build succeeds | PASS | Module loads, syntax valid |
-| 2 | All tests pass | PASS | 17/17 new tests pass; 0 regressions |
+| 2 | All tests pass | PASS | 327/327 feature tests; 0 regressions |
 | 3 | Coverage meets threshold | N/A | Coverage tooling not configured |
 | 4 | Linter passes with zero errors | N/A | Linter not configured |
 | 5 | Type checker passes | N/A | JavaScript project |
