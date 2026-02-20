@@ -259,15 +259,9 @@
   - **Related**: #51 (sizing consent — completed), ADR-0001 (sizing insertion point)
   - **Complexity**: Medium — analyze handler changes, tier scoring logic, meta.json schema extension, trivial-tier execution path
 
-- **Feature B: Build Consumption** (#60 + #61) [A] — Clean build-side consumption of pre-analyzed items -> [requirements](docs/requirements/gh-60-61-build-consumption-init-split-smart-staleness/)
-  - Depends on Feature A (consumes tier + sizing from meta.json), but independently valuable.
-  - **#60**: Split build init from phase execution
-    - New orchestrator mode `MODE: init-only` (create workflow, branch, state.json — no phase execution). Phase-Loop Controller handles ALL phase execution uniformly from `START_PHASE` onward. `MODE: init-and-phase-01` deprecated.
-  - **#61**: Smart staleness check — blast-radius-aware
-    - Replace naive hash comparison with `git diff --name-only {hash}..HEAD` intersected with impact-analysis.md file list. 0 overlap = silent proceed, 1-3 = informational note, 4+ = warning menu.
-    - Eliminates false-positive staleness warnings in parallel workflows.
-  - **Build order**: After Feature A
-  - **Complexity**: Low-medium
+- **Feature B: Build Consumption** (#60 + #61) [x] ~~Clean build-side consumption of pre-analyzed items~~ -> [requirements](docs/requirements/gh-60-61-build-consumption-init-split-smart-staleness/) **Completed: 2026-02-20** (REQ-0031, merge 5480c98)
+  - **#60**: Split build init from phase execution — `MODE: init-only` implemented, `MODE: init-and-phase-01` deprecated
+  - **#61**: Smart staleness check — blast-radius-aware git diff intersection, 3-tier response (silent/info/warning)
 
 ### Code Quality Gaps
 
