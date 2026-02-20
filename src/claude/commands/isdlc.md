@@ -626,13 +626,31 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
    - B.12: If `effective_intensity === 'light'`: update BACKLOG.md marker, display "Analysis complete (light). {slug} is ready to build.", BREAK loop -> step 9.
    - B.13: If `effective_intensity === 'standard'`: CONTINUE loop (phases 03, 04 execute normally).
 
+   **7.6 TIER COMPUTATION AFTER PHASE 02** (GH-59, FR-001, FR-002, FR-003, AD-02):
+   IF phase_key === '02-impact-analysis':
+   - Read `docs/requirements/{slug}/impact-analysis.md`. If missing, skip tier computation (tier stays null -- downstream handles gracefully per AC-004b).
+   - Call `parseSizingFromImpactAnalysis(iaContent)` from `common.cjs`. If parse returns null, skip tier computation.
+   - Read `tier_thresholds` from `workflows.json -> workflows.feature.tier_thresholds` (fallback: `DEFAULT_TIER_THRESHOLDS` from `three-verb-utils.cjs`).
+   - Call `computeRecommendedTier(metrics.file_count, metrics.risk_score, thresholds)` from `three-verb-utils.cjs`.
+   - Set `meta.recommended_tier = tier` (AC-003a: top level of meta.json, NOT inside quick_scan).
+   - Call `writeMetaJson(slugDir, meta)`.
+   - Display: `"  Recommended tier: {tier} -- {description} ({metrics.file_count} files, {metrics.risk_score} risk)"` using `getTierDescription(tier)`.
+
    d. Update meta.analysis_status using `deriveAnalysisStatus(meta.phases_completed, meta.sizing_decision)`
    e. Update meta.codebase_hash to current git HEAD short SHA
    f. Write meta.json using writeMetaJson()
    g. Update BACKLOG.md marker using updateBacklogMarker() with deriveBacklogMarker()
    h. Offer exit point: "Phase {NN} complete. Continue to Phase {NN+1} ({name})? [Y/n]"
       If user declines: stop. Analysis is resumable from the next phase.
-8. After final phase: "Analysis complete. {slug} is ready to build."
+8. After final phase:
+   a. Display: "Analysis complete. {slug} is ready to build."
+   b. Read recommended_tier from meta.json (GH-59, FR-004, AC-004a, AC-004b):
+      - LET tier = meta.recommended_tier || null
+      - IF tier is not null:
+          LET desc = getTierDescription(tier)  // from three-verb-utils.cjs
+          Display: "Recommended tier: {tier} -- {desc.description}"
+      - ELSE:
+          (omit tier line entirely -- no error, no placeholder)
 9. **GitHub label sync** (non-blocking): If `meta.source === "github"` and `meta.source_id` matches `GH-N`, extract the issue number and run `gh issue edit N --add-label ready-to-build`. If the command fails, log a warning and continue — never block the pipeline.
 
 > **Constraints**: No state.json writes (NFR-002). No workflow creation. No branch creation. Resumable at any phase boundary (NFR-003). Phase transition overhead under 2 seconds (NFR-004).
@@ -656,6 +674,83 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
      If user confirms: run `add` handler, then proceed to step 4
    - If no match and input looks like a reference: ERROR per error taxonomy ERR-BUILD-001
 4. Read meta.json using `readMetaJson()` -- this is now actionable for build auto-detection.
+
+**--- GH-59: Tier Selection (Step 4a-tier) ---**
+
+Step 4a-tier: Tier Selection (GH-59, FR-005, FR-006, FR-008, NFR-001, AD-07)
+
+1. Read recommended tier from meta (already loaded in step 4):
+   LET recommended = meta.recommended_tier OR null
+
+2. Determine default selection:
+   IF recommended IS null:
+       LET default = "standard"
+       Display warning: "No tier recommendation available. Defaulting to standard."
+   ELSE:
+       LET default = recommended
+
+3. Check for --trivial flag:
+   IF --trivial flag is set:
+       Display: "Trivial tier selected via flag. Proceed with direct edit? [Y/n]"
+       IF user confirms (Y or Enter):
+           GOTO step T1 (TRIVIAL TIER EXECUTION)
+       ELSE:
+           (fall through to tier menu below)
+
+4. Present tier menu:
+   LET descriptions = {
+       trivial:  getTierDescription("trivial"),
+       light:    getTierDescription("light"),
+       standard: getTierDescription("standard"),
+       epic:     getTierDescription("epic")
+   }
+
+   Display:
+   ```
+   Recommended workflow tier: {default} ({descriptions[default].fileRange}, {descriptions[default].description})
+
+   [1] Trivial -- {descriptions.trivial.description} ({descriptions.trivial.fileRange})
+   [2] Light -- {descriptions.light.description} ({descriptions.light.fileRange})
+   [3] Standard -- {descriptions.standard.description} ({descriptions.standard.fileRange})
+   [4] Epic -- {descriptions.epic.description} ({descriptions.epic.fileRange})
+   ```
+
+   Append " <-- RECOMMENDED" to the menu line matching default.
+   Display: "Select tier [{defaultNumber}]:"
+
+5. Handle user input:
+   LET TIER_MAP = { "1": "trivial", "2": "light", "3": "standard", "4": "epic" }
+   LET input = user selection (or empty for default)
+
+   IF input is empty or Enter:
+       LET selected = default
+   ELSE IF input in TIER_MAP:
+       LET selected = TIER_MAP[input]
+   ELSE:
+       Display: "Invalid selection. Using default: {default}"
+       LET selected = default
+
+6. Record tier override if applicable (AC-005e):
+   IF selected != recommended AND recommended IS NOT null:
+       meta.tier_override = {
+           recommended: recommended,
+           selected: selected,
+           overridden_at: new Date().toISOString()
+       }
+       writeMetaJson(slugDir, meta)
+
+7. Route based on selection:
+   IF selected === "trivial":
+       GOTO --> TRIVIAL TIER EXECUTION (step T1)
+   ELSE IF selected === "epic":
+       Display: "Epic decomposition is not yet available. Running standard workflow."
+       // CON-003: epic placeholder routes to standard
+       // Fall through to step 4a (computeStartPhase) unchanged
+   ELSE:
+       // light or standard: fall through to step 4a unchanged
+       // existing sizing at 3e-sizing handles light/standard intensity
+
+**--- End GH-59: Tier Selection ---**
 
 **--- REQ-0026: Build Auto-Detection Steps 4a-4e ---**
 
@@ -755,7 +850,7 @@ If user declines: abort build. If user confirms: proceed to step 5.
 **--- End REQ-0026: Build Auto-Detection ---**
 
 5. Parse flags from command arguments:
-   - --supervised, --debate, --no-debate, --no-fan-out, -light (same as current feature)
+   - --supervised, --debate, --no-debate, --no-fan-out, -light, --trivial (same as current feature + GH-59 trivial flag)
 6. Determine workflow type:
    - If item description contains bug keywords (fix, bug, broken, error, crash, regression):
      suggest fix workflow. Ask user: "This looks like a bug. Use fix workflow? [Y/n]"
@@ -768,6 +863,170 @@ If user declines: abort build. If user confirms: proceed to step 5.
    These parameters tell the orchestrator to start from a later phase and reuse the existing artifact folder.
 8. Orchestrator initializes active_workflow, creates branch, runs first phase (may not be Phase 01 if START_PHASE provided)
 9. Phase-Loop Controller drives remaining phases (identical to current feature flow)
+
+**--- TRIVIAL TIER EXECUTION ---** (GH-59, FR-006, FR-007, NFR-003, NFR-004, NFR-005, AD-03, AD-04, AD-06)
+
+IMPORTANT: This section runs INSTEAD OF steps 4a through 9.
+No workflow is created. No branch is created. No state.json is touched.
+No hooks fire. No gates are checked. (NFR-005, AC-006a)
+
+T1. Read requirements context:
+    LET slugDir = docs/requirements/{slug}/
+    LET context = null
+
+    // Priority order per architecture Section 14
+    FOR source IN ["requirements-spec.md", "impact-analysis.md", "quick-scan.md", "draft.md"]:
+        LET filePath = path.join(slugDir, source)
+        IF file exists at filePath:
+            context = Read(filePath)
+            LET contextSource = source
+            BREAK
+
+    IF context IS null:
+        Display ERROR: "No requirements context found in {slugDir}."
+        Display: "Cannot proceed with trivial tier without context."
+        Display: "Add context first: /isdlc add or /isdlc analyze"
+        EXIT build handler
+
+T2. Display change context:
+    Display:
+    ```
+    TRIVIAL CHANGE: {slug}
+
+    Based on: {contextSource}
+    Source: {meta.source} {meta.source_id || ""}
+    ```
+    Display relevant excerpts from context (problem statement, what to change)
+
+T3. Assist with edit:
+    // Framework uses standard Claude Code editing (Read/Edit tools)
+    // to make the change on the current branch.
+    // Read the context, identify target files, make edits.
+    //
+    // CONSTRAINTS:
+    // - No branch creation (ASM-002: commit to current branch)
+    // - No state.json writes (NFR-005)
+    // - No workflow initialization
+    // - No orchestrator delegation
+    // - No hook invocation
+
+    (Framework makes the edit interactively)
+
+T4. User confirms:
+    Display: "Changes made. Review and confirm? [Y/n/retry]"
+
+    IF user selects "n" (abort):
+        Display: "Trivial change aborted. No changes committed."
+        EXIT build handler (no change record written)
+
+    IF user selects "retry":
+        GOTO T3
+
+    // user selects "Y" or Enter: proceed to commit
+
+T5. Commit to current branch:
+    LET modifiedFiles = (list of files modified in T3)
+
+    TRY:
+        git add {modifiedFiles}
+        git commit -m "{commitType}: {commitDescription} ({slug})"
+        // commitType derived from context: "fix", "feat", "refactor", etc.
+        // commitDescription: brief summary of the change
+    CATCH error:
+        Display ERROR: "Commit failed: {error.message}"
+        Display:
+        ```
+        Options:
+          [R] Retry the edit
+          [E] Escalate to light tier (creates workflow)
+          [A] Abort (no changes committed)
+        ```
+        IF [R]: GOTO T3
+        IF [E]: Return to step 4a-tier with "light" pre-selected
+        IF [A]: EXIT build handler
+        // AC-006e: no change record on commit failure
+
+    LET commitSHA = git rev-parse HEAD
+
+T6. Write change-record.md (AC-007a, AC-007b):
+    LET recordPath = path.join(slugDir, "change-record.md")
+    LET timestamp = new Date().toISOString()
+    LET diffOutput = {}
+
+    // Gather diffs (first 20 lines per file, AC-007a)
+    FOR EACH file IN modifiedFiles:
+        LET diff = git diff HEAD~1 -- {file}
+        LET diffLines = diff.split("\n")
+        IF diffLines.length > 20:
+            diffOutput[file] = diffLines.slice(0, 20).join("\n")
+            diffOutput[file] += "\n... (diff truncated, " + (diffLines.length - 20) + " more lines)"
+        ELSE:
+            diffOutput[file] = diff
+
+    // Build entry content
+    LET entry = """
+    ## Entry: {timestamp}
+
+    **Tier**: trivial
+    **Summary**: {what changed and why -- from context + edit description}
+    **Files Modified**:
+    {for each file: "- {relativePath}"}
+
+    **Commit**: {commitSHA}
+
+    ### Diff Summary
+
+    {for each file:
+    #### {fileName}
+    ```diff
+    {diffOutput[file]}
+    ```
+    }
+    """
+
+    // Append or create
+    IF file exists at recordPath:
+        LET existing = Read(recordPath)
+        Write(recordPath, existing + "\n---\n\n" + entry)
+    ELSE:
+        LET header = """
+        # Change Record: {slug}
+
+        Audit trail for trivial-tier changes. Each entry below represents
+        a direct edit made without a full workflow.
+
+        ---
+
+        """
+        Write(recordPath, header + entry)
+
+T7. Update meta.json (AC-007c):
+    meta.tier_used = "trivial"
+    meta.last_trivial_change = {
+        completed_at: timestamp,
+        commit_sha: commitSHA,
+        files_modified: modifiedFiles  // relative paths
+    }
+    // Preserve analysis_status (AC-007c: "or preserved if already set")
+    writeMetaJson(slugDir, meta)
+
+T8. Update BACKLOG.md marker (AC-007d):
+    LET backlogPath = path.join(projectRoot, "BACKLOG.md")
+    updateBacklogMarker(backlogPath, slug, "x")
+    // "x" = completed marker per existing convention
+
+T9. Display completion summary (AC-006d):
+    Display:
+    ```
+    Trivial change completed:
+      Files modified: {modifiedFiles, comma-separated}
+      Commit: {commitSHA.substring(0, 7)}
+      Change record: docs/requirements/{slug}/change-record.md
+    ```
+
+EXIT build handler
+
+**--- END TRIVIAL TIER EXECUTION ---**
 
 ---
 
