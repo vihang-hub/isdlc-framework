@@ -539,6 +539,151 @@ function checkStaleness(meta, currentHash) {
 }
 
 // ---------------------------------------------------------------------------
+// TIER_ORDER constant
+// GH-59: Complexity-Based Routing
+// ---------------------------------------------------------------------------
+
+/**
+ * Ordered tier sequence for promotion logic.
+ * Traces: FR-002 (AC-002b), AD-01
+ */
+const TIER_ORDER = ['trivial', 'light', 'standard', 'epic'];
+
+// ---------------------------------------------------------------------------
+// DEFAULT_TIER_THRESHOLDS constant
+// GH-59: Complexity-Based Routing
+// ---------------------------------------------------------------------------
+
+/**
+ * Default file-count thresholds for tier scoring.
+ * Used when workflows.json tier_thresholds is unavailable.
+ * Traces: CON-002
+ */
+const DEFAULT_TIER_THRESHOLDS = {
+    trivial_max_files: 2,
+    light_max_files: 8,
+    standard_max_files: 20
+};
+
+// ---------------------------------------------------------------------------
+// TIER_DESCRIPTIONS constant
+// GH-59: Complexity-Based Routing
+// ---------------------------------------------------------------------------
+
+/**
+ * Lookup table for tier display information.
+ * Traces: FR-009 (AC-009a)
+ */
+const TIER_DESCRIPTIONS = {
+    trivial:  { label: 'Trivial',  description: 'direct edit, no workflow',            fileRange: '1-2 files'  },
+    light:    { label: 'Light',    description: 'skip architecture and design',        fileRange: '3-8 files'  },
+    standard: { label: 'Standard', description: 'full workflow',                       fileRange: '9-20 files' },
+    epic:     { label: 'Epic',     description: 'full workflow with decomposition',    fileRange: '20+ files'  }
+};
+
+const UNKNOWN_TIER_DESCRIPTION = {
+    label: 'Unknown', description: 'unrecognized tier', fileRange: 'unknown'
+};
+
+// ---------------------------------------------------------------------------
+// computeRecommendedTier(estimatedFiles, riskLevel, thresholds)
+// GH-59: Complexity-Based Routing
+// ---------------------------------------------------------------------------
+
+/**
+ * Computes a recommended workflow tier based on file count and risk level
+ * from impact analysis metrics. Pure function -- no I/O, no side effects.
+ *
+ * GH-59: Complexity-Based Routing
+ * Traces: FR-002 (AC-002a, AC-002b, AC-002c, AC-002d), CON-002
+ *
+ * @param {number|null|undefined} estimatedFiles - Actual file count from impact analysis (or estimate)
+ * @param {string|null|undefined} riskLevel - Risk score from impact analysis
+ * @param {{ trivial_max_files: number, light_max_files: number, standard_max_files: number }} [thresholds]
+ * @returns {string} One of "trivial", "light", "standard", "epic"
+ */
+function computeRecommendedTier(estimatedFiles, riskLevel, thresholds) {
+    // Step 1: Apply default thresholds if not provided (CON-002)
+    const t = thresholds && typeof thresholds === 'object'
+        ? {
+            trivial_max_files:  thresholds.trivial_max_files  ?? DEFAULT_TIER_THRESHOLDS.trivial_max_files,
+            light_max_files:    thresholds.light_max_files    ?? DEFAULT_TIER_THRESHOLDS.light_max_files,
+            standard_max_files: thresholds.standard_max_files ?? DEFAULT_TIER_THRESHOLDS.standard_max_files
+        }
+        : { ...DEFAULT_TIER_THRESHOLDS };
+
+    // Step 2: Validate estimatedFiles (AC-002c)
+    if (estimatedFiles === null || estimatedFiles === undefined ||
+        typeof estimatedFiles !== 'number' || !Number.isFinite(estimatedFiles) ||
+        estimatedFiles < 0) {
+        process.stderr.write(
+            `[tier] computeRecommendedTier: invalid estimatedFiles (${estimatedFiles}), defaulting to standard\n`
+        );
+        return 'standard';
+    }
+
+    // Step 3: Compute base tier from file count (AC-002a)
+    let baseTier;
+    if (estimatedFiles <= t.trivial_max_files) {
+        baseTier = 'trivial';
+    } else if (estimatedFiles <= t.light_max_files) {
+        baseTier = 'light';
+    } else if (estimatedFiles <= t.standard_max_files) {
+        baseTier = 'standard';
+    } else {
+        baseTier = 'epic';
+    }
+
+    // Step 4: Validate riskLevel (AC-002d)
+    const VALID_RISK_LEVELS = ['low', 'medium', 'high'];
+    let effectiveRisk = riskLevel;
+
+    if (riskLevel !== null && riskLevel !== undefined) {
+        if (typeof riskLevel !== 'string' || !VALID_RISK_LEVELS.includes(riskLevel)) {
+            process.stderr.write(
+                `[tier] computeRecommendedTier: unrecognized riskLevel (${riskLevel}), treating as low\n`
+            );
+            effectiveRisk = 'low';
+        }
+    }
+
+    // Step 5: Apply risk-based promotion (AC-002b)
+    // "medium" or "high" promotes tier by exactly one level, capped at "epic"
+    if (effectiveRisk === 'medium' || effectiveRisk === 'high') {
+        const currentIndex = TIER_ORDER.indexOf(baseTier);
+        if (currentIndex < TIER_ORDER.length - 1) {
+            baseTier = TIER_ORDER[currentIndex + 1];
+        }
+        // else: already at "epic", ceiling reached -- no change
+    }
+
+    return baseTier;
+}
+
+// ---------------------------------------------------------------------------
+// getTierDescription(tier)
+// GH-59: Complexity-Based Routing
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns a human-readable description object for a workflow tier.
+ * Pure function -- lookup only.
+ *
+ * GH-59: Complexity-Based Routing
+ * Traces: FR-009 (AC-009a, AC-009b)
+ *
+ * @param {string} tier
+ * @returns {{ label: string, description: string, fileRange: string }}
+ */
+function getTierDescription(tier) {
+    if (typeof tier === 'string' && tier in TIER_DESCRIPTIONS) {
+        // Return a copy to prevent mutation of the lookup table
+        return { ...TIER_DESCRIPTIONS[tier] };
+    }
+    return { ...UNKNOWN_TIER_DESCRIPTION };
+}
+
+// ---------------------------------------------------------------------------
 // parseBacklogLine(line)
 // ---------------------------------------------------------------------------
 
@@ -894,6 +1039,9 @@ module.exports = {
     ANALYSIS_PHASES,
     IMPLEMENTATION_PHASES,      // REQ-0026: Build auto-detection
     MARKER_REGEX,
+    TIER_ORDER,                 // GH-59: Complexity-Based Routing
+    DEFAULT_TIER_THRESHOLDS,    // GH-59: Complexity-Based Routing
+    TIER_DESCRIPTIONS,          // GH-59: Complexity-Based Routing (for testing)
 
     // Core utilities
     generateSlug,
@@ -911,6 +1059,10 @@ module.exports = {
     validatePhasesCompleted,
     computeStartPhase,
     checkStaleness,
+
+    // Tier recommendation utilities (GH-59)
+    computeRecommendedTier,
+    getTierDescription,
 
     // Internal helpers (exported for testing)
     findBacklogItemByNumber,

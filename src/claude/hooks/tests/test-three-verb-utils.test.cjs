@@ -23,6 +23,9 @@ const {
     ANALYSIS_PHASES,
     IMPLEMENTATION_PHASES,       // REQ-0026: Build auto-detection
     MARKER_REGEX,
+    TIER_ORDER,                  // GH-59: Complexity-Based Routing
+    DEFAULT_TIER_THRESHOLDS,     // GH-59: Complexity-Based Routing
+    TIER_DESCRIPTIONS,           // GH-59: Complexity-Based Routing
     generateSlug,
     detectSource,
     deriveAnalysisStatus,
@@ -36,6 +39,8 @@ const {
     validatePhasesCompleted,     // REQ-0026: Build auto-detection
     computeStartPhase,           // REQ-0026: Build auto-detection
     checkStaleness,              // REQ-0026: Build auto-detection
+    computeRecommendedTier,      // GH-59: Complexity-Based Routing
+    getTierDescription,          // GH-59: Complexity-Based Routing
     findBacklogItemByNumber,
     findByExternalRef,
     searchBacklogTitles,
@@ -2571,5 +2576,417 @@ describe('computeStartPhase() -- sizing-aware (GH-57)', () => {
     it('TC-CSP-S09: null meta returns raw (existing behavior)', () => {
         const result = computeStartPhase(null, FEATURE_PHASES);
         assert.equal(result.status, 'raw');
+    });
+});
+
+// ===========================================================================
+// 30. computeRecommendedTier() tests
+// GH-59: Complexity-Based Routing
+// Traces: FR-002 (AC-002a..AC-002d), CON-002
+// ===========================================================================
+
+describe('computeRecommendedTier()', () => {
+
+    // -----------------------------------------------------------------------
+    // 30.1 Base thresholds (AC-002a)
+    // -----------------------------------------------------------------------
+
+    describe('base thresholds (AC-002a)', () => {
+        // TC-CRT-01: 0 files -> trivial (below lower bound)
+        it('returns trivial for 0 files (TC-CRT-01, AC-002a)', () => {
+            assert.equal(computeRecommendedTier(0, null), 'trivial');
+        });
+
+        // TC-CRT-02: 1 file with low risk -> trivial
+        it('returns trivial for 1 file with low risk (TC-CRT-02, AC-002a)', () => {
+            assert.equal(computeRecommendedTier(1, 'low'), 'trivial');
+        });
+
+        // TC-CRT-03: 2 files -> trivial (boundary inclusive)
+        it('returns trivial for 2 files at boundary (TC-CRT-03, AC-002a)', () => {
+            assert.equal(computeRecommendedTier(2, 'low'), 'trivial');
+        });
+
+        // TC-CRT-04: 3 files -> light (just above trivial)
+        it('returns light for 3 files just above trivial (TC-CRT-04, AC-002a)', () => {
+            assert.equal(computeRecommendedTier(3, 'low'), 'light');
+        });
+
+        // TC-CRT-05: 5 files -> light (mid range)
+        it('returns light for 5 files mid range (TC-CRT-05, AC-002a)', () => {
+            assert.equal(computeRecommendedTier(5, 'low'), 'light');
+        });
+
+        // TC-CRT-06: 8 files -> light (boundary inclusive)
+        it('returns light for 8 files at boundary (TC-CRT-06, AC-002a)', () => {
+            assert.equal(computeRecommendedTier(8, 'low'), 'light');
+        });
+
+        // TC-CRT-07: 9 files -> standard (just above light)
+        it('returns standard for 9 files just above light (TC-CRT-07, AC-002a)', () => {
+            assert.equal(computeRecommendedTier(9, 'low'), 'standard');
+        });
+
+        // TC-CRT-08: 15 files -> standard (mid range)
+        it('returns standard for 15 files mid range (TC-CRT-08, AC-002a)', () => {
+            assert.equal(computeRecommendedTier(15, 'low'), 'standard');
+        });
+
+        // TC-CRT-09: 20 files -> standard (boundary inclusive)
+        it('returns standard for 20 files at boundary (TC-CRT-09, AC-002a)', () => {
+            assert.equal(computeRecommendedTier(20, 'low'), 'standard');
+        });
+
+        // TC-CRT-10: 21 files -> epic (just above standard)
+        it('returns epic for 21 files just above standard (TC-CRT-10, AC-002a)', () => {
+            assert.equal(computeRecommendedTier(21, 'low'), 'epic');
+        });
+
+        // TC-CRT-11: 100 files -> epic (far above)
+        it('returns epic for 100 files (TC-CRT-11, AC-002a)', () => {
+            assert.equal(computeRecommendedTier(100, 'low'), 'epic');
+        });
+    });
+
+    // -----------------------------------------------------------------------
+    // 30.2 Risk-based promotion (AC-002b)
+    // -----------------------------------------------------------------------
+
+    describe('risk-based promotion (AC-002b)', () => {
+        // TC-CRT-12: trivial + medium -> light
+        it('promotes trivial to light for medium risk (TC-CRT-12, AC-002b)', () => {
+            assert.equal(computeRecommendedTier(2, 'medium'), 'light');
+        });
+
+        // TC-CRT-13: trivial + high -> light
+        it('promotes trivial to light for high risk (TC-CRT-13, AC-002b)', () => {
+            assert.equal(computeRecommendedTier(2, 'high'), 'light');
+        });
+
+        // TC-CRT-14: light + medium -> standard
+        it('promotes light to standard for medium risk (TC-CRT-14, AC-002b)', () => {
+            assert.equal(computeRecommendedTier(5, 'medium'), 'standard');
+        });
+
+        // TC-CRT-15: light boundary + high -> standard
+        it('promotes light to standard for high risk at boundary (TC-CRT-15, AC-002b)', () => {
+            assert.equal(computeRecommendedTier(8, 'high'), 'standard');
+        });
+
+        // TC-CRT-16: standard + medium -> epic
+        it('promotes standard to epic for medium risk (TC-CRT-16, AC-002b)', () => {
+            assert.equal(computeRecommendedTier(15, 'medium'), 'epic');
+        });
+
+        // TC-CRT-17: standard boundary + high -> epic
+        it('promotes standard to epic for high risk at boundary (TC-CRT-17, AC-002b)', () => {
+            assert.equal(computeRecommendedTier(20, 'high'), 'epic');
+        });
+
+        // TC-CRT-18: epic + high -> epic (ceiling)
+        it('does not promote epic for high risk -- ceiling (TC-CRT-18, AC-002b)', () => {
+            assert.equal(computeRecommendedTier(21, 'high'), 'epic');
+        });
+
+        // TC-CRT-19: epic + medium -> epic (ceiling)
+        it('does not promote epic for medium risk -- ceiling (TC-CRT-19, AC-002b)', () => {
+            assert.equal(computeRecommendedTier(100, 'medium'), 'epic');
+        });
+
+        // TC-CRT-20: trivial + low -> no promotion
+        it('does not promote for low risk (TC-CRT-20, AC-002b)', () => {
+            assert.equal(computeRecommendedTier(2, 'low'), 'trivial');
+        });
+
+        // TC-CRT-21: light + null -> no promotion
+        it('does not promote for null risk (TC-CRT-21, AC-002b)', () => {
+            assert.equal(computeRecommendedTier(5, null), 'light');
+        });
+
+        // TC-CRT-22: light + undefined -> no promotion
+        it('does not promote for undefined risk (TC-CRT-22, AC-002b)', () => {
+            assert.equal(computeRecommendedTier(5, undefined), 'light');
+        });
+    });
+
+    // -----------------------------------------------------------------------
+    // 30.3 Invalid estimatedFiles (AC-002c)
+    // -----------------------------------------------------------------------
+
+    describe('invalid estimatedFiles (AC-002c)', () => {
+        // TC-CRT-23: null -> standard + stderr warning
+        it('returns standard for null estimatedFiles (TC-CRT-23, AC-002c)', () => {
+            const originalStderrWrite = process.stderr.write;
+            let stderrOutput = '';
+            process.stderr.write = (chunk) => { stderrOutput += chunk; };
+            const result = computeRecommendedTier(null, 'low');
+            process.stderr.write = originalStderrWrite;
+            assert.equal(result, 'standard');
+            assert.ok(stderrOutput.includes('invalid estimatedFiles'));
+        });
+
+        // TC-CRT-24: undefined -> standard + stderr warning
+        it('returns standard for undefined estimatedFiles (TC-CRT-24, AC-002c)', () => {
+            const originalStderrWrite = process.stderr.write;
+            let stderrOutput = '';
+            process.stderr.write = (chunk) => { stderrOutput += chunk; };
+            const result = computeRecommendedTier(undefined, 'low');
+            process.stderr.write = originalStderrWrite;
+            assert.equal(result, 'standard');
+            assert.ok(stderrOutput.includes('invalid estimatedFiles'));
+        });
+
+        // TC-CRT-25: NaN -> standard
+        it('returns standard for NaN estimatedFiles (TC-CRT-25, AC-002c)', () => {
+            const originalStderrWrite = process.stderr.write;
+            let stderrOutput = '';
+            process.stderr.write = (chunk) => { stderrOutput += chunk; };
+            const result = computeRecommendedTier(NaN, 'low');
+            process.stderr.write = originalStderrWrite;
+            assert.equal(result, 'standard');
+            assert.ok(stderrOutput.includes('invalid estimatedFiles'));
+        });
+
+        // TC-CRT-26: -1 -> standard
+        it('returns standard for negative number (TC-CRT-26, AC-002c)', () => {
+            const originalStderrWrite = process.stderr.write;
+            let stderrOutput = '';
+            process.stderr.write = (chunk) => { stderrOutput += chunk; };
+            const result = computeRecommendedTier(-1, 'low');
+            process.stderr.write = originalStderrWrite;
+            assert.equal(result, 'standard');
+            assert.ok(stderrOutput.includes('invalid estimatedFiles'));
+        });
+
+        // TC-CRT-27: -5 -> standard
+        it('returns standard for -5 (TC-CRT-27, AC-002c)', () => {
+            assert.equal(computeRecommendedTier(-5, 'low'), 'standard');
+        });
+
+        // TC-CRT-28: "three" -> standard
+        it('returns standard for string input (TC-CRT-28, AC-002c)', () => {
+            assert.equal(computeRecommendedTier('three', 'low'), 'standard');
+        });
+
+        // TC-CRT-29: Infinity -> standard
+        it('returns standard for Infinity (TC-CRT-29, AC-002c)', () => {
+            assert.equal(computeRecommendedTier(Infinity, 'low'), 'standard');
+        });
+    });
+
+    // -----------------------------------------------------------------------
+    // 30.4 Unrecognized riskLevel (AC-002d)
+    // -----------------------------------------------------------------------
+
+    describe('unrecognized riskLevel (AC-002d)', () => {
+        // TC-CRT-30: "critical" -> treated as low, no promotion
+        it('treats "critical" as low -- no promotion (TC-CRT-30, AC-002d)', () => {
+            const originalStderrWrite = process.stderr.write;
+            let stderrOutput = '';
+            process.stderr.write = (chunk) => { stderrOutput += chunk; };
+            const result = computeRecommendedTier(2, 'critical');
+            process.stderr.write = originalStderrWrite;
+            assert.equal(result, 'trivial');
+            assert.ok(stderrOutput.includes('unrecognized riskLevel'));
+        });
+
+        // TC-CRT-31: "MEDIUM" (case-sensitive) -> treated as low
+        it('treats "MEDIUM" wrong case as low (TC-CRT-31, AC-002d)', () => {
+            const originalStderrWrite = process.stderr.write;
+            let stderrOutput = '';
+            process.stderr.write = (chunk) => { stderrOutput += chunk; };
+            const result = computeRecommendedTier(5, 'MEDIUM');
+            process.stderr.write = originalStderrWrite;
+            assert.equal(result, 'light');
+            assert.ok(stderrOutput.includes('unrecognized riskLevel'));
+        });
+
+        // TC-CRT-32: "" empty string -> treated as low
+        it('treats empty string as low (TC-CRT-32, AC-002d)', () => {
+            const originalStderrWrite = process.stderr.write;
+            let stderrOutput = '';
+            process.stderr.write = (chunk) => { stderrOutput += chunk; };
+            const result = computeRecommendedTier(5, '');
+            process.stderr.write = originalStderrWrite;
+            assert.equal(result, 'light');
+            assert.ok(stderrOutput.includes('unrecognized riskLevel'));
+        });
+
+        // TC-CRT-33: "extreme" -> treated as low
+        it('treats "extreme" as low (TC-CRT-33, AC-002d)', () => {
+            const originalStderrWrite = process.stderr.write;
+            let stderrOutput = '';
+            process.stderr.write = (chunk) => { stderrOutput += chunk; };
+            const result = computeRecommendedTier(5, 'extreme');
+            process.stderr.write = originalStderrWrite;
+            assert.equal(result, 'light');
+            assert.ok(stderrOutput.includes('unrecognized riskLevel'));
+        });
+    });
+
+    // -----------------------------------------------------------------------
+    // 30.5 Custom thresholds (CON-002)
+    // -----------------------------------------------------------------------
+
+    describe('custom thresholds (CON-002)', () => {
+        const custom = { trivial_max_files: 3, light_max_files: 10, standard_max_files: 25 };
+
+        // TC-CRT-34: custom thresholds used
+        it('uses custom thresholds when provided (TC-CRT-34, CON-002)', () => {
+            assert.equal(computeRecommendedTier(5, 'low', custom), 'light');
+        });
+
+        // TC-CRT-35: custom boundary trivial
+        it('returns trivial at custom boundary (TC-CRT-35, CON-002)', () => {
+            assert.equal(computeRecommendedTier(3, 'low', custom), 'trivial');
+        });
+
+        // TC-CRT-36: custom just above trivial
+        it('returns light just above custom trivial boundary (TC-CRT-36, CON-002)', () => {
+            assert.equal(computeRecommendedTier(4, 'low', custom), 'light');
+        });
+
+        // TC-CRT-37: custom within standard
+        it('returns standard within custom standard range (TC-CRT-37, CON-002)', () => {
+            assert.equal(computeRecommendedTier(22, 'low', custom), 'standard');
+        });
+
+        // TC-CRT-38: custom above standard -> epic
+        it('returns epic above custom standard boundary (TC-CRT-38, CON-002)', () => {
+            assert.equal(computeRecommendedTier(26, 'low', custom), 'epic');
+        });
+
+        // TC-CRT-39: null thresholds -> defaults
+        it('uses defaults for null thresholds (TC-CRT-39, CON-002)', () => {
+            assert.equal(computeRecommendedTier(5, 'low', null), 'light');
+        });
+
+        // TC-CRT-40: undefined thresholds -> defaults
+        it('uses defaults for undefined thresholds (TC-CRT-40, CON-002)', () => {
+            assert.equal(computeRecommendedTier(5, 'low', undefined), 'light');
+        });
+
+        // TC-CRT-41: partial thresholds -> defaults fill missing
+        it('fills missing fields with defaults for partial thresholds (TC-CRT-41, CON-002)', () => {
+            // trivial_max_files=1, light_max_files=8 (default), 5 <= 8 -> light
+            assert.equal(computeRecommendedTier(5, 'low', { trivial_max_files: 1 }), 'light');
+        });
+    });
+});
+
+// ===========================================================================
+// 31. getTierDescription() tests
+// GH-59: Complexity-Based Routing
+// Traces: FR-009 (AC-009a, AC-009b)
+// ===========================================================================
+
+describe('getTierDescription()', () => {
+    // TC-GTD-01: trivial tier
+    it('returns correct object for trivial (TC-GTD-01, AC-009a)', () => {
+        assert.deepEqual(getTierDescription('trivial'), {
+            label: 'Trivial', description: 'direct edit, no workflow', fileRange: '1-2 files'
+        });
+    });
+
+    // TC-GTD-02: light tier
+    it('returns correct object for light (TC-GTD-02, AC-009a)', () => {
+        assert.deepEqual(getTierDescription('light'), {
+            label: 'Light', description: 'skip architecture and design', fileRange: '3-8 files'
+        });
+    });
+
+    // TC-GTD-03: standard tier
+    it('returns correct object for standard (TC-GTD-03, AC-009a)', () => {
+        assert.deepEqual(getTierDescription('standard'), {
+            label: 'Standard', description: 'full workflow', fileRange: '9-20 files'
+        });
+    });
+
+    // TC-GTD-04: epic tier
+    it('returns correct object for epic (TC-GTD-04, AC-009a)', () => {
+        assert.deepEqual(getTierDescription('epic'), {
+            label: 'Epic', description: 'full workflow with decomposition', fileRange: '20+ files'
+        });
+    });
+
+    // TC-GTD-05: unrecognized tier string
+    it('returns Unknown for unrecognized tier string (TC-GTD-05, AC-009b)', () => {
+        assert.deepEqual(getTierDescription('unknown-tier'), {
+            label: 'Unknown', description: 'unrecognized tier', fileRange: 'unknown'
+        });
+    });
+
+    // TC-GTD-06: null
+    it('returns Unknown for null (TC-GTD-06, AC-009b)', () => {
+        assert.deepEqual(getTierDescription(null), {
+            label: 'Unknown', description: 'unrecognized tier', fileRange: 'unknown'
+        });
+    });
+
+    // TC-GTD-07: undefined
+    it('returns Unknown for undefined (TC-GTD-07, AC-009b)', () => {
+        assert.deepEqual(getTierDescription(undefined), {
+            label: 'Unknown', description: 'unrecognized tier', fileRange: 'unknown'
+        });
+    });
+
+    // TC-GTD-08: empty string
+    it('returns Unknown for empty string (TC-GTD-08, AC-009b)', () => {
+        assert.deepEqual(getTierDescription(''), {
+            label: 'Unknown', description: 'unrecognized tier', fileRange: 'unknown'
+        });
+    });
+
+    // TC-GTD-09: non-string input (number)
+    it('returns Unknown for non-string input (TC-GTD-09, AC-009b)', () => {
+        assert.deepEqual(getTierDescription(42), {
+            label: 'Unknown', description: 'unrecognized tier', fileRange: 'unknown'
+        });
+    });
+
+    // TC-GTD-10: mutation safety
+    it('returned objects are independent -- mutation safety (TC-GTD-10)', () => {
+        const first = getTierDescription('trivial');
+        first.label = 'MUTATED';
+        first.description = 'MUTATED';
+        first.fileRange = 'MUTATED';
+        const second = getTierDescription('trivial');
+        assert.equal(second.label, 'Trivial');
+        assert.equal(second.description, 'direct edit, no workflow');
+        assert.equal(second.fileRange, '1-2 files');
+    });
+});
+
+// ===========================================================================
+// 32. TIER_ORDER constant tests
+// GH-59: Complexity-Based Routing
+// Traces: FR-002 (AC-002b), AD-01
+// ===========================================================================
+
+describe('TIER_ORDER (GH-59)', () => {
+    // TC-TO-01: exactly 4 tiers in order
+    it('contains exactly 4 tiers in correct order (TC-TO-01, AC-002b)', () => {
+        assert.deepEqual(TIER_ORDER, ['trivial', 'light', 'standard', 'epic']);
+    });
+});
+
+// ===========================================================================
+// 33. TIER_DESCRIPTIONS / DEFAULT_TIER_THRESHOLDS constant tests
+// GH-59: Complexity-Based Routing
+// ===========================================================================
+
+describe('Tier constants (GH-59)', () => {
+    // TC-TC-01: TIER_DESCRIPTIONS has keys matching TIER_ORDER
+    it('TIER_DESCRIPTIONS has keys matching TIER_ORDER (TC-TC-01)', () => {
+        for (const tier of TIER_ORDER) {
+            assert.ok(tier in TIER_DESCRIPTIONS, `TIER_DESCRIPTIONS missing key: ${tier}`);
+        }
+    });
+
+    // TC-TC-02: DEFAULT_TIER_THRESHOLDS has required fields
+    it('DEFAULT_TIER_THRESHOLDS has required fields (TC-TC-02, CON-002)', () => {
+        assert.equal(DEFAULT_TIER_THRESHOLDS.trivial_max_files, 2);
+        assert.equal(DEFAULT_TIER_THRESHOLDS.light_max_files, 8);
+        assert.equal(DEFAULT_TIER_THRESHOLDS.standard_max_files, 20);
     });
 });

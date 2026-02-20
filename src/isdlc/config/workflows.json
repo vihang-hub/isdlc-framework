@@ -51,6 +51,11 @@
           "high_risk_forces_standard_minimum": true
         }
       },
+      "tier_thresholds": {
+        "trivial_max_files": 2,
+        "light_max_files": 8,
+        "standard_max_files": 20
+      },
       "performance_budgets": {
         "light": {
           "max_total_minutes": 30,
