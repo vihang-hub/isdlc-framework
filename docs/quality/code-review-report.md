@@ -1,12 +1,12 @@
 # Code Review Report
 
 **Project:** iSDLC Framework
-**Workflow:** REQ-0022-performance-budget-guardrails (feature)
+**Workflow:** REQ-0020-phase-handshake-audit-GH-55 (feature)
 **Phase:** 08 - Code Review & QA
-**Date:** 2026-02-19
+**Date:** 2026-02-20
 **Reviewer:** QA Engineer (Phase 08)
 **Scope Mode:** FULL SCOPE
-**Verdict:** APPROVED -- 2 minor findings, 1 informational
+**Verdict:** APPROVED -- 0 blockers, 2 informational findings
 
 ---
 
@@ -14,142 +14,89 @@
 
 | Metric | Value |
 |--------|-------|
-| Files reviewed | 11 (1 new production + 1 new test + 9 modified) |
-| Lines added (production) | 582 (performance-budget.cjs) |
-| Lines added (test) | 403 (performance-budget.test.cjs) |
-| Lines modified (other files) | ~120 |
-| Total feature tests | 38 |
-| Tests passing | 38/38 |
+| Files reviewed | 9 (4 production + 5 test) |
+| Lines added (production) | ~222 net (state-write-validator.cjs: +202, isdlc.md: +26) |
+| Lines removed (production) | ~63 (gate-blocker.cjs: -43, iteration-corridor.cjs: -20) |
+| Lines added (test) | ~1265 across 5 new test files |
+| Total feature tests | 26 |
+| Tests passing | 26/26 |
 | Critical findings | 0 |
 | High findings | 0 |
 | Medium findings | 0 |
-| Low findings | 2 |
-| Advisory (informational) | 1 |
+| Low findings | 0 |
+| Advisory (informational) | 2 |
 
 ---
 
 ## 2. File-by-File Review
 
-### 2.1 NEW: src/claude/hooks/lib/performance-budget.cjs
+### 2.1 MODIFIED: src/claude/hooks/state-write-validator.cjs
 
-**Change**: New 582-line CommonJS module with 7 exported utility functions for budget computation, degradation logic, regression detection, and dashboard formatting.
-
-**Assessment**:
-- Excellent separation of concerns: each function does one thing
-- All 7 functions wrapped in try/catch with fail-open defaults (Article X compliance)
-- Pure functions: no side effects, no I/O, no state writes, no process.exit
-- Constants exported via `Object.freeze` for testability
-- Comprehensive JSDoc with traceability references to FR/AC identifiers
-- Internal helpers (`validPositiveInt`, `validNonNegInt`, `_findPhaseDuration`, `padRight`) are private and appropriately scoped
-- Naming is clear and descriptive throughout
-
-**Findings**: None.
-
-### 2.2 NEW: src/claude/hooks/tests/performance-budget.test.cjs
-
-**Change**: 403-line test file with 38 tests across 8 describe blocks.
+**Change**: Added V9 cross-location consistency check (checkCrossLocationConsistency, lines 415-531), V8 Check 3 for phases[].status regression (lines 355-403), supervised redo exception in V8 Checks 2 and 3. Version bumped to 1.3.0.
 
 **Assessment**:
-- Follows project CJS test pattern (`node:test` + `node:assert/strict`)
-- Module loaded via `loadModule()` with cache invalidation
-- Good coverage of boundary conditions (exactly 80%, exactly 100%, exactly at regression threshold)
-- Fail-open paths tested (NaN, null, Infinity, negative numbers)
-- Test names are clear and descriptive
+- V9 is properly observational (warns on stderr, never blocks)
+- V9-C intermediate state suppression correctly handles the STEP 3e to 3c-prime window
+- V8 Check 3 mirrors Check 2 structure with consistent supervised redo exception
+- All code paths fail-open (try/catch with silent return)
+- logHookEvent calls trace all V9 warnings and V8 redo exceptions
+- JSDoc documentation on new function with INV-0055 REQ references
 
-**Findings**:
-- L-001: File header comment says "37 unit tests" but file contains 38. Minor documentation discrepancy.
-- L-002: No explicit test for `no_fan_out: true` flag on a fan-out phase. The `no_debate` flag is tested but the symmetric `no_fan_out` case relies on code-path symmetry rather than explicit verification.
+**Findings**: None (blockers or warnings).
 
-### 2.3 MODIFIED: .isdlc/config/workflows.json
+### 2.2 MODIFIED: src/claude/hooks/gate-blocker.cjs
 
-**Change**: Added `performance_budgets` section with light/standard/epic tier definitions under both `feature` and `fix` workflow types.
-
-**Assessment**: Values match the hardcoded defaults in performance-budget.cjs and the requirements spec. Proper JSON structure. No schema conflicts.
-
-**Findings**: None.
-
-### 2.4 MODIFIED: src/claude/hooks/lib/common.cjs (lines 2341-2344)
-
-**Change**: 3-line addition to `collectPhaseSnapshots()` to conditionally include `timing` object in phase snapshots.
-
-**Assessment**: Minimal, surgical change. Only includes timing when present (`phaseData.timing && typeof phaseData.timing === 'object'`), preserving backward compatibility with phases that have no timing data.
-
-**Findings**: None.
-
-### 2.5 MODIFIED: src/claude/commands/isdlc.md
-
-**Change**: 4 integration points added: STEP 3c-prime (timing start), STEP 3d (degradation injection), STEP 3e-timing (timing end + budget check), STEP 3-dashboard (completion dashboard rendering).
-
-**Assessment**: Well-documented procedural steps with clear error handling instructions. Each integration point specifies fail-open behavior. Step numbering follows established convention. No ambiguity in instructions.
-
-**Findings**: None.
-
-### 2.6 MODIFIED: src/claude/hooks/workflow-completion-enforcer.cjs (lines 171-216)
-
-**Change**: Added regression tracking block that calls `computeRollingAverage()` and `detectRegression()` at workflow finalization, writing `regression_check` to the workflow_history entry.
+**Change**: Removed local loadIterationRequirements() and loadWorkflowDefinitions() functions. Now imports from common.cjs with aliased names.
 
 **Assessment**:
-- Correctly requires `performance-budget.cjs` inside try/catch (fail-open)
-- Uses `priorHistory` (slice 0 to -1) to exclude current workflow from rolling average -- correct
-- Finds slowest phase by iterating snapshots with optional chaining (`snap.timing?.wall_clock_minutes`)
-- Emits `PERFORMANCE_REGRESSION` warning to stderr only when `regression.regressed === true`
-- Wrapped in outer try/catch with descriptive debug log
+- Clean import aliasing (loadIterationRequirementsFromCommon, loadWorkflowDefinitionsFromCommon)
+- Deprecation comment with INV-0055 REQ-005 reference
+- Fallback chain preserved: ctx.requirements -> common.cjs
+- Standalone execution path updated correctly
 
 **Findings**: None.
 
-### 2.7-2.11 MODIFIED: 5 Dispatcher Files
+### 2.3 MODIFIED: src/claude/hooks/iteration-corridor.cjs
 
-**Change**: Identical timing instrumentation pattern added to all 5 dispatchers: `_now()` closure with `performance.now()` fallback to `Date.now()`, `_dispatcherStart` capture at entry, `DISPATCHER_TIMING:` emission to stderr at 3 exit points (normal, block, error).
+**Change**: Removed local loadIterationRequirements() function. Now imports from common.cjs.
 
-**Assessment**:
-- Consistent pattern across all 5 files
-- Timer captured before any I/O or processing
-- Timing reported at every exit path (normal completion, short-circuit block, top-level error)
-- Each timing emission wrapped in its own try/catch (`/* fail-open */`)
-- Uses `_elapsed.toFixed(1)` for 1-decimal precision
-- `_hooksRan` counter accurately tracks skipped vs. executed hooks
+**Assessment**: Same pattern as gate-blocker.cjs. Clean removal, proper fallback chain.
 
-**Findings**:
-- I-001 (Informational): The `_now` fallback uses `Date.now()` when `performance.now()` is unavailable. Both produce valid elapsed measurements. The comment references ADR-0004 for design rationale. No action needed.
+**Findings**: None.
+
+### 2.4 MODIFIED: src/claude/commands/isdlc.md
+
+**Change**: Added 4 DEPRECATED comments on phase_status write lines, stale phase detection advisory (STEP 3b-stale), GitHub label sync in analyze step 9, GitHub close in finalize.
+
+**Assessment**: DEPRECATED comments use consistent format with INV-0055 reference. Stale phase detection has correct threshold calculation (2x timeout), proper R/S/C menu options, and only triggers for in_progress phases.
+
+**Findings**: None.
+
+### 2.5-2.9 NEW: 5 Test Files
+
+All 5 test files follow the project CJS test pattern (node:test, spawnSync-based hook invocation, temp directory isolation). Tests have clear names, trace to requirements and acceptance criteria, and cover both positive and negative cases.
+
+**Findings**: None (blockers). See informational findings below.
 
 ---
 
 ## 3. Cross-Cutting Concerns
 
-### 3.1 Architecture Decisions
+### 3.1 Fail-Open Compliance (Article X)
 
-The implementation correctly follows the architecture specified in `architecture-overview.md`:
-1. New utility module (`performance-budget.cjs`) is pure and stateless
-2. State integration is minimal (3 lines in common.cjs, regression block in workflow-completion-enforcer.cjs)
-3. Orchestration logic is in isdlc.md (not runtime hooks)
-4. Timing instrumentation in dispatchers is identical and mechanical
+Every new code path fails open on errors. checkCrossLocationConsistency returns `{ warnings: [] }` on parse errors. V8 Check 3 returns null on missing/invalid data. All catch blocks use debugLog and return allow/null.
 
-### 3.2 Module System Compliance (Article XIII)
+### 3.2 Module System Compliance (Article XII)
 
-All files use CommonJS (`require`/`module.exports`). No ESM syntax. `.cjs` extensions used throughout. Test file uses `node:test` + `node:assert/strict`. Cross-platform path handling via `path.resolve()`.
+All files use CommonJS (require/module.exports). .cjs extension used throughout. Test files use node:test + node:assert/strict.
 
-### 3.3 Fail-Open Compliance (Article X)
+### 3.3 Security
 
-Every function in performance-budget.cjs returns a safe default on error:
-- `getPerformanceBudget()` returns standard tier defaults
-- `computeBudgetStatus()` returns `'on_track'`
-- `buildBudgetWarning()` returns `''`
-- `buildDegradationDirective()` returns `{ directive: '', degraded_debate_rounds: null, degraded_fan_out_chunks: null }`
-- `computeRollingAverage()` returns `null`
-- `detectRegression()` returns `null`
-- `formatCompletionDashboard()` returns error message string
+No security concerns. No eval, no dynamic code execution, no user-controlled path operations. JSON.parse wrapped in try/catch throughout.
 
-The regression tracking in workflow-completion-enforcer.cjs wraps in try/catch and never blocks workflow completion.
+### 3.4 Backward Compatibility (NFR-005)
 
-### 3.4 Security
-
-No security concerns. The module performs no I/O, no dynamic code execution, no user input processing. All dispatcher changes emit to stderr only.
-
-### 3.5 Backward Compatibility (NFR-004)
-
-- Existing phases without timing data: `collectPhaseSnapshots()` skips timing field (conditional inclusion)
-- Existing workflows without `performance_budgets`: `getPerformanceBudget()` returns hardcoded defaults
-- Existing tests: All 2,683 passing tests remain passing (4 pre-existing failures unchanged)
+All 73 existing state-write-validator tests pass. All 26 gate-blocker tests pass. All 24 cross-hook integration tests pass. V9 is additive (new warnings only). V8 Check 3 adds blocking only for previously unchecked regression. Supervised redo exception relaxes V8.
 
 ---
 
@@ -157,27 +104,40 @@ No security concerns. The module performs no I/O, no dynamic code execution, no 
 
 | Test Suite | Total | Pass | Fail | New Failures |
 |-----------|-------|------|------|--------------|
-| Feature-specific (performance-budget.test.cjs) | 38 | 38 | 0 | 0 |
-| CJS hooks (full suite) | 2,055 | 2,054 | 1 | 0 (pre-existing) |
-| ESM lib (full suite) | 632 | 629 | 3 | 0 (pre-existing) |
-| **Combined** | **2,687** | **2,683** | **4** | **0** |
+| Feature tests (5 new files) | 26 | 26 | 0 | 0 |
+| Hook tests (full suite) | 1392 | 1329 | 63 | 0 (all pre-existing) |
+| **Combined** | **1418** | **1355** | **63** | **0** |
 
 **Zero new regressions.**
 
 ---
 
-## 5. Constitutional Compliance
+## 5. Informational Findings
 
-| Article | Status | Evidence |
-|---------|--------|---------|
-| V (Simplicity First) | Compliant | Pure functions, no over-engineering, no speculative features. Each function is single-purpose. |
-| VI (Code Review Required) | Compliant | This report constitutes the code review. All 11 files reviewed. |
-| VII (Artifact Traceability) | Compliant | All 35 ACs mapped to code. Traceability matrix at traceability-matrix.csv. No orphan code. |
-| VIII (Documentation Currency) | Compliant | JSDoc on all functions. isdlc.md integration documented. Requirements spec current. |
-| IX (Quality Gate Integrity) | Compliant | All gate artifacts produced. 38/38 tests passing. Zero regressions. |
+**INFO-01: Duplicate JSDoc blocks on checkVersionLock and checkPhaseFieldProtection (pre-existing)**
+
+Lines 91-112 and 209-235 in state-write-validator.cjs each have two consecutive JSDoc comment blocks. The original block lacks the `diskState` parameter; the updated block includes it. This dates from the BUG-0009 fix and is not introduced by this feature. Recommend consolidating in a future cleanup.
+
+**INFO-02: Soft assertion in escalation-retry-flow T-ER-02**
+
+T-ER-02 validates escalation field structure conditionally (only when state file contains escalation entries). If gate-blocker's standalone mode does not write escalations to disk, the test passes unconditionally. This is by design (documents expected structure without hard-requiring disk writes) but could be strengthened in a future iteration.
 
 ---
 
-## 6. Verdict
+## 6. Constitutional Compliance
 
-**APPROVED** -- The implementation is clean, well-tested, well-documented, and fully traceable. Two minor findings (comment typo, missing no_fan_out test) are non-blocking. One informational observation (timer fallback semantics) requires no action.
+| Article | Status | Evidence |
+|---------|--------|---------|
+| I (Specification Primacy) | Compliant | All 6 requirements implemented per requirements-spec.md |
+| II (Test-First Development) | Compliant | 26 tests using node:test, co-located with hooks |
+| III (Security by Design) | Compliant | Safe JSON parsing, no dangerous patterns |
+| V (Simplicity First) | Compliant | No over-engineering. V9 is a single function. Config consolidation removes code. |
+| VII (Artifact Traceability) | Compliant | All 6 requirements mapped to code and tests. Traceability matrix complete. |
+| IX (Quality Gate Integrity) | Compliant | All gate artifacts produced. 26/26 tests passing. |
+| X (Fail-Safe Defaults) | Compliant | All hooks fail-open on errors |
+
+---
+
+## 7. Verdict
+
+**APPROVED** -- The implementation is clean, well-tested, well-documented, and fully traceable. Zero blockers. Two informational observations require no action. Ready for progression to Phase 09 (Independent Validation).

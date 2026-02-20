@@ -77,28 +77,8 @@ function getIterationConfig(state) {
     return config;
 }
 
-/**
- * Load iteration requirements config (local fallback)
- */
-function loadIterationRequirements() {
-    const { getProjectRoot } = require('./lib/common.cjs');
-    const projectRoot = getProjectRoot();
-    const configPaths = [
-        path.join(projectRoot, '.claude', 'hooks', 'config', 'iteration-requirements.json'),
-        path.join(projectRoot, '.isdlc', 'config', 'iteration-requirements.json')
-    ];
-
-    for (const configPath of configPaths) {
-        if (fs.existsSync(configPath)) {
-            try {
-                return JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            } catch (e) {
-                return null;
-            }
-        }
-    }
-    return null;
-}
+// INV-0055 REQ-005: Local loadIterationRequirements() removed.
+// Use loadIterationRequirementsFromCommon() from common.cjs instead (imported above).
 
 /**
  * Determine the current corridor state from state.json
@@ -273,7 +253,7 @@ function check(ctx) {
         }
 
         // Load requirements (prefer ctx.requirements, fallback to local loader)
-        const requirements = ctx.requirements || loadIterationRequirementsFromCommon() || loadIterationRequirements();
+        const requirements = ctx.requirements || loadIterationRequirementsFromCommon();
         let phaseReq = requirements?.phase_requirements?.[currentPhase];
         if (!phaseReq) {
             // Self-heal: missing requirements is infrastructure issue

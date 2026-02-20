@@ -29,51 +29,9 @@ const {
 const fs = require('fs');
 const path = require('path');
 
-/**
- * Load iteration requirements config (local fallback)
- */
-function loadIterationRequirements() {
-    const { getProjectRoot } = require('./lib/common.cjs');
-    const projectRoot = getProjectRoot();
-    const configPaths = [
-        path.join(projectRoot, '.claude', 'hooks', 'config', 'iteration-requirements.json'),
-        path.join(projectRoot, '.isdlc', 'config', 'iteration-requirements.json')
-    ];
-
-    for (const configPath of configPaths) {
-        if (fs.existsSync(configPath)) {
-            try {
-                return JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            } catch (e) {
-                debugLog('Error loading iteration requirements:', e.message);
-            }
-        }
-    }
-    return null;
-}
-
-/**
- * Load workflow definitions config (local fallback)
- */
-function loadWorkflowDefinitions() {
-    const { getProjectRoot } = require('./lib/common.cjs');
-    const projectRoot = getProjectRoot();
-    const configPaths = [
-        path.join(projectRoot, '.isdlc', 'config', 'workflows.json'),
-        path.join(projectRoot, '.claude', 'hooks', 'config', 'workflows.json')
-    ];
-
-    for (const configPath of configPaths) {
-        if (fs.existsSync(configPath)) {
-            try {
-                return JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            } catch (e) {
-                debugLog('Error loading workflow definitions:', e.message);
-            }
-        }
-    }
-    return null;
-}
+// INV-0055 REQ-005: Local loadIterationRequirements() and loadWorkflowDefinitions()
+// removed. Use loadIterationRequirementsFromCommon() and loadWorkflowDefinitionsFromCommon()
+// from common.cjs instead (imported above).
 
 /**
  * Deep merge two objects. Overrides replace base values.
@@ -626,7 +584,7 @@ function check(ctx) {
         }
 
         // Load requirements config (prefer ctx.requirements, fallback to local loader)
-        const requirements = ctx.requirements || loadIterationRequirementsFromCommon() || loadIterationRequirements();
+        const requirements = ctx.requirements || loadIterationRequirementsFromCommon();
         if (!requirements) {
             debugLog('No iteration requirements config, allowing');
             return { decision: 'allow' };
@@ -646,8 +604,7 @@ function check(ctx) {
             // BUG-0008 fix (0.5): Check for .workflows sub-property, not just truthiness.
             // An empty {} is truthy but has no .workflows, preventing fallback loading.
             const workflows = (ctx.workflows && ctx.workflows.workflows ? ctx.workflows : null)
-                || loadWorkflowDefinitionsFromCommon()
-                || loadWorkflowDefinitions();
+                || loadWorkflowDefinitionsFromCommon();
             if (workflows && workflows.workflows) {
                 workflowDef = workflows.workflows[activeWorkflow.type];
             }

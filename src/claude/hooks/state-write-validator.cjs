@@ -13,7 +13,8 @@
  *
  * Traces to: FR-05, AC-05, AC-05a, AC-05b, AC-05c, AC-05d, AC-05e
  * V8 traces to: BUG-0011 FR-01 thru FR-05 (phase orchestration field protection)
- * Version: 1.2.0
+ * V9 traces to: INV-0055, REQ-001 (cross-location consistency check)
+ * Version: 1.3.0
  */
 
 const {
@@ -321,10 +322,78 @@ function checkPhaseFieldProtection(filePath, toolInput, toolName, diskState) {
 
                 // AC-02a, AC-02b, AC-02c: Block if regression
                 if (incomingOrd < diskOrd) {
+                    // INV-0055 REQ-003: Allow supervised redo regression
+                    // (completed -> in_progress is legitimate during supervised redo)
+                    const supervisedReview = incomingState?.active_workflow?.supervised_review;
+                    const isRedo = supervisedReview && (
+                        supervisedReview.status === 'redo_pending' ||
+                        (typeof supervisedReview.redo_count === 'number' &&
+                         supervisedReview.redo_count > 0)
+                    );
+                    if (isRedo && incomingStatus === 'in_progress' &&
+                        diskStatus === 'completed') {
+                        debugLog(`V8: Allowing supervised redo regression for phase_status '${phase}'`);
+                        logHookEvent('state-write-validator', 'allow', {
+                            reason: `V8: supervised redo phase_status '${phase}' completed -> in_progress`
+                        });
+                        continue; // Skip this regression -- supervised redo is legitimate
+                    }
+
                     const reason = `Phase status regression: phase '${phase}' changed from '${diskStatus}' to '${incomingStatus}'. Subagents must not regress phase_status. Re-read state.json.`;
                     console.error(`[state-write-validator] V8 BLOCK: ${reason}`);
                     logHookEvent('state-write-validator', 'block', {
                         reason: `V8: phase_status '${phase}' ${diskStatus} -> ${incomingStatus}`
+                    });
+                    return {
+                        decision: 'block',
+                        stopReason: reason
+                    };
+                }
+            }
+        }
+
+        // --- Check 3: phases[].status regression (INV-0055 REQ-002) ---
+        // Mirrors Check 2 but reads from the detailed phases object.
+        // Same supervised redo exception applies.
+        const incomingPhases = incomingState?.phases;
+        const diskPhases = diskState?.phases;
+
+        if (incomingPhases && typeof incomingPhases === 'object' &&
+            diskPhases && typeof diskPhases === 'object') {
+            for (const [phase, incomingData] of Object.entries(incomingPhases)) {
+                if (!incomingData || typeof incomingData !== 'object') continue;
+                const diskData = diskPhases[phase];
+                if (!diskData || typeof diskData !== 'object') continue;
+
+                const incomingStatus = incomingData.status;
+                const diskStatus = diskData.status;
+                if (!incomingStatus || !diskStatus) continue;
+
+                const incomingOrd = PHASE_STATUS_ORDINAL[incomingStatus];
+                const diskOrd = PHASE_STATUS_ORDINAL[diskStatus];
+                if (incomingOrd === undefined || diskOrd === undefined) continue;
+
+                if (incomingOrd < diskOrd) {
+                    // INV-0055 REQ-003: Allow supervised redo regression
+                    const supervisedReview = incomingState?.active_workflow?.supervised_review;
+                    const isRedo = supervisedReview && (
+                        supervisedReview.status === 'redo_pending' ||
+                        (typeof supervisedReview.redo_count === 'number' &&
+                         supervisedReview.redo_count > 0)
+                    );
+                    if (isRedo && incomingStatus === 'in_progress' &&
+                        diskStatus === 'completed') {
+                        debugLog(`V8: Allowing supervised redo regression for phases['${phase}'].status`);
+                        logHookEvent('state-write-validator', 'allow', {
+                            reason: `V8: supervised redo phases['${phase}'].status completed -> in_progress`
+                        });
+                        continue;
+                    }
+
+                    const reason = `Phase status regression: phases['${phase}'].status changed from '${diskStatus}' to '${incomingStatus}'. Subagents must not regress phase status. Re-read state.json.`;
+                    console.error(`[state-write-validator] V8 BLOCK: ${reason}`);
+                    logHookEvent('state-write-validator', 'block', {
+                        reason: `V8: phases['${phase}'].status ${diskStatus} -> ${incomingStatus}`
                     });
                     return {
                         decision: 'block',
@@ -341,6 +410,124 @@ function checkPhaseFieldProtection(filePath, toolInput, toolName, diskState) {
         debugLog('V8 phase field protection error:', e.message);
         return null;
     }
+}
+
+/**
+ * Rule V9: Cross-location consistency check (INV-0055 REQ-001).
+ *
+ * Validates that mirrored state fields are in sync after a state write.
+ * Observational only: warns on stderr, never blocks.
+ *
+ * Checks:
+ *   V9-A: phases[N].status == active_workflow.phase_status[N]
+ *   V9-B: current_phase (top-level) == active_workflow.current_phase
+ *   V9-C: active_workflow.phases[index] == active_workflow.current_phase
+ *          (with intermediate state suppression)
+ *
+ * @param {string} filePath - Path to the state.json file
+ * @param {object} toolInput - The tool_input from the hook event
+ * @param {string} toolName - 'Write' or 'Edit'
+ * @returns {{ warnings: string[] }}
+ */
+function checkCrossLocationConsistency(filePath, toolInput, toolName) {
+    const warnings = [];
+
+    try {
+        // Parse the state that was just written
+        let stateData;
+        if (toolName === 'Write' && toolInput.content &&
+            typeof toolInput.content === 'string') {
+            try {
+                stateData = JSON.parse(toolInput.content);
+            } catch (e) {
+                return { warnings }; // Fail-open: malformed JSON
+            }
+        } else {
+            // Edit events: read from disk (Edit modifies in-place)
+            try {
+                stateData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            } catch (e) {
+                return { warnings }; // Fail-open: read error
+            }
+        }
+
+        if (!stateData || typeof stateData !== 'object') {
+            return { warnings };
+        }
+
+        const phases = stateData.phases;
+        const aw = stateData.active_workflow;
+
+        // V9-A: Phase status mirroring
+        // Compare phases[N].status vs active_workflow.phase_status[N]
+        if (phases && typeof phases === 'object' &&
+            aw && aw.phase_status && typeof aw.phase_status === 'object') {
+            for (const [phaseKey, phaseData] of Object.entries(phases)) {
+                if (!phaseData || typeof phaseData !== 'object') continue;
+                const detailedStatus = phaseData.status;
+                const summaryStatus = aw.phase_status[phaseKey];
+                if (detailedStatus && summaryStatus &&
+                    detailedStatus !== summaryStatus) {
+                    warnings.push(
+                        `[state-write-validator] V9-A WARNING: ` +
+                        `Phase status divergence for '${phaseKey}': ` +
+                        `phases[].status='${detailedStatus}' vs ` +
+                        `active_workflow.phase_status[]='${summaryStatus}'. ` +
+                        `Path: ${filePath}`
+                    );
+                }
+            }
+        }
+
+        // V9-B: Current phase mirroring
+        // Compare top-level current_phase vs active_workflow.current_phase
+        const topLevelPhase = stateData.current_phase;
+        const awCurrentPhase = aw?.current_phase;
+        if (topLevelPhase && awCurrentPhase &&
+            topLevelPhase !== awCurrentPhase) {
+            warnings.push(
+                `[state-write-validator] V9-B WARNING: ` +
+                `Current phase divergence: ` +
+                `current_phase='${topLevelPhase}' vs ` +
+                `active_workflow.current_phase='${awCurrentPhase}'. ` +
+                `Path: ${filePath}`
+            );
+        }
+
+        // V9-C: Phase index consistency
+        // Compare active_workflow.phases[index] vs active_workflow.current_phase
+        // With intermediate state suppression: between STEP 3e and STEP 3c-prime,
+        // the index is one ahead of current_phase. This is expected.
+        const awIndex = aw?.current_phase_index;
+        const awPhases = aw?.phases;
+        if (typeof awIndex === 'number' && Array.isArray(awPhases) &&
+            awIndex >= 0 && awIndex < awPhases.length && awCurrentPhase) {
+            const expectedPhase = awPhases[awIndex];
+            if (expectedPhase && expectedPhase !== awCurrentPhase) {
+                // Check for intermediate state: index just incremented,
+                // current_phase not yet updated (normal between 3e and 3c-prime)
+                const prevExpectedPhase = awIndex > 0
+                    ? awPhases[awIndex - 1]
+                    : null;
+                if (prevExpectedPhase !== awCurrentPhase) {
+                    // Not an intermediate state -- genuine mismatch
+                    warnings.push(
+                        `[state-write-validator] V9-C WARNING: ` +
+                        `Phase index mismatch: ` +
+                        `phases[${awIndex}]='${expectedPhase}' vs ` +
+                        `current_phase='${awCurrentPhase}'. ` +
+                        `Path: ${filePath}`
+                    );
+                }
+            }
+        }
+
+    } catch (e) {
+        // Fail-open: any unexpected error
+        debugLog('V9 cross-location check error:', e.message);
+    }
+
+    return { warnings };
 }
 
 /**
@@ -400,6 +587,23 @@ function check(ctx) {
             return v8Result;
         }
 
+        // Accumulate warnings from V9 and V1-V3 (moved up from V1-V3 section)
+        const allWarnings = [];
+
+        // Rule V9: Cross-location consistency (INV-0055 REQ-001)
+        const v9Result = checkCrossLocationConsistency(
+            filePath, toolInput, input.tool_name
+        );
+        if (v9Result.warnings.length > 0) {
+            for (const w of v9Result.warnings) {
+                logHookEvent('state-write-validator', 'warn', {
+                    reason: w.replace(/^\[state-write-validator\]\s*V9-[A-C]\s*WARNING:\s*/, '')
+                });
+            }
+            // Accumulate V9 warnings for the final response (never block)
+            allWarnings.push(...v9Result.warnings);
+        }
+
         // V1-V3: Validate state content for suspicious patterns
         let stateData;
         if (input.tool_name === 'Write' && toolInput.content && typeof toolInput.content === 'string') {
@@ -427,7 +631,6 @@ function check(ctx) {
             return { decision: 'allow' };
         }
 
-        const allWarnings = [];
         for (const [phaseName, phaseData] of Object.entries(phases)) {
             if (!phaseData || typeof phaseData !== 'object') continue;
 

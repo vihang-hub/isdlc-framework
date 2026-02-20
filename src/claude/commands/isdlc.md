@@ -1106,7 +1106,31 @@ For each phase from `next_phase_index` through the end of `phases[]`:
 
 **3a.** Mark the phase task as `in_progress` using `TaskUpdate` (user sees spinner).
 
-**3b.** Read `.isdlc/state.json` and check for `pending_escalations[]`.
+**3b.** Read `.isdlc/state.json`. Before checking escalations, perform stale phase detection:
+
+**3b-stale.** STALE PHASE DETECTION (INV-0055 REQ-006):
+1. Read `phases[current_phase_key].status` and `phases[current_phase_key].timing.started_at`
+2. If `status === "in_progress"` AND `started_at` exists:
+   a. Compute `elapsed_minutes = Math.round((Date.now() - new Date(started_at).getTime()) / 60000)`
+   b. Read phase timeout from `iteration-requirements.json`: `phase_requirements[current_phase_key].timeout_minutes` (default: 120)
+   c. If `elapsed_minutes > timeout * 2`:
+      Display stale phase warning banner:
+      ```
+      ========================================
+      WARNING: Stale Phase Detected
+      Phase: {current_phase_key}
+      Started: {started_at}
+      Elapsed: {elapsed_minutes} minutes (timeout: {timeout} minutes)
+      This phase may have been interrupted by a crash or timeout.
+      ========================================
+      ```
+      Use `AskUserQuestion` with options:
+      - **[R] Retry phase** -- Clear timing, re-run the phase from STEP 3c-prime
+      - **[S] Skip phase** -- Mark phase completed with summary "Skipped (stale)", continue
+      - **[C] Cancel workflow** -- Launch orchestrator with cancel action, stop loop
+3. If status is not `in_progress`, or `started_at` is missing, or elapsed is within threshold: skip silently.
+
+Then check for `pending_escalations[]` (existing behavior, unchanged).
 
 **3c.** If escalations exist, display the blocker banner and ask the user:
 
@@ -1133,7 +1157,7 @@ Using the `state.json` already read in step 3b, update the following fields:
 1. Set **top-level** `phases` object → `phases[phase_key].status` = `"in_progress"` (this is the detailed phases object near the bottom of state.json, NOT `active_workflow.phase_status`)
 2. Set **top-level** `phases` object → `phases[phase_key].started` = current ISO-8601 timestamp (only if not already set — preserve existing start time on retries)
 3. Set `active_workflow.current_phase` = `phase_key`
-4. Set `active_workflow.phase_status[phase_key]` = `"in_progress"`
+4. Set `active_workflow.phase_status[phase_key]` = `"in_progress"` <!-- DEPRECATED (INV-0055): active_workflow.phase_status will be removed in Phase B. phases[phase_key].status (step 1) is authoritative. V9 cross-check validates consistency. -->
 5. Set top-level `current_phase` = `phase_key`
 6. Set top-level `active_agent` = agent name (resolved from PHASE_AGENT_MAP below)
 7. Write `.isdlc/state.json`
@@ -1274,7 +1298,7 @@ Use Task tool → {agent_name} with:
 2. Set **top-level** `phases` object → `phases[phase_key].status` = `"completed"` (the detailed phases object near the bottom of state.json, NOT `active_workflow.phase_status`)
 3. Set **top-level** `phases` object → `phases[phase_key].summary` = (extract from agent result, max 150 chars)
 4. Set `active_workflow.current_phase_index` += 1
-5. Set `active_workflow.phase_status[phase_key]` = `"completed"` (BUG-0005: sync phase_status map)
+5. Set `active_workflow.phase_status[phase_key]` = `"completed"` (BUG-0005: sync phase_status map) <!-- DEPRECATED (INV-0055): active_workflow.phase_status will be removed in Phase B. phases[phase_key].status (step 2) is authoritative. -->
 6. If more phases remain: (BUG-0006: next-phase activation moved to STEP 3c-prime at start of next iteration)
    - No action needed here — the next iteration's STEP 3c-prime handles phase activation
 7. Write `.isdlc/state.json`
@@ -1440,7 +1464,7 @@ state update, check if a supervised review gate should fire.
    g. Write state.json
    h. Reset phase state for re-delegation:
       i.  Set `phases[phase_key].status` = `"in_progress"`
-      ii. Set `active_workflow.phase_status[phase_key]` = `"in_progress"`
+      ii. Set `active_workflow.phase_status[phase_key]` = `"in_progress"` <!-- DEPRECATED (INV-0055): will be removed in Phase B. phases[phase_key].status (step h.i) is authoritative. -->
       iii. Write state.json
    i. Re-delegate to the same phase agent (same pattern as STEP 3d):
       - Use the PHASE-AGENT table from STEP 3d
@@ -1449,7 +1473,7 @@ state update, check if a supervised review gate should fire.
    j. On return, re-execute STEP 3e logic:
       - Set `phases[phase_key].status` = `"completed"`
       - Set `phases[phase_key].summary` = (extract from agent result)
-      - Set `active_workflow.phase_status[phase_key]` = `"completed"`
+      - Set `active_workflow.phase_status[phase_key]` = `"completed"` <!-- DEPRECATED (INV-0055): will be removed in Phase B. phases[phase_key].status is authoritative. -->
       - Write state.json
    k. Call `recordReviewAction(state, phase_key, 'redo',
         { redo_count: supervised_review.redo_count, guidance: guidance_text, timestamp: now })`

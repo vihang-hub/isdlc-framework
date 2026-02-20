@@ -246,21 +246,28 @@
 
 - #51 [x] ~~Sizing decision must always prompt the user — silent fallback paths bypass user consent~~ *(completed, merged 3de5162)*
 
-- #57 [A] Add sizing decision to analyze verb — skip architecture/design for trivial changes
-  - **Problem**: Sizing decision only exists in `build` (STEP 3e-sizing). Users who run `/isdlc analyze` always run all 5 phases (00-04) even for trivial changes. The `-light` flag only works on `build`.
-  - **Design**: After Phase 02 in analyze, offer the same sizing menu. If light accepted: skip 03/04, record in meta.json, mark `analysis_status: "analyzed"`. Support `-light` flag on analyze.
-  - **Considerations**: Analyze is stateless (no state.json), so sizing stored in meta.json only. `computeStartPhase()` and `deriveAnalysisStatus()` must distinguish intentionally-skipped from incomplete.
-  - **Related**: #51 (sizing consent), #59 (complexity routing), ADR-0001 (sizing insertion point)
-  - **Complexity**: Medium — analyze handler changes, meta.json schema extension, deriveAnalysisStatus update
+- **Feature A: Analyze Decisions** (#57 + #59) [A] — Post-Phase-02 tier + sizing in analyze verb
+  - After Phase 02 (Impact Analysis), compute both **tier** and **sizing** from IA metrics via `parseSizingFromImpactAnalysis()`. Single decision point, single data source, both written to meta.json.
+  - **#57**: Sizing decision (light vs standard — how intense is the workflow?)
+    - If light accepted: skip phases 03/04, record in meta.json. Support `-light` flag on analyze.
+    - Analyze is stateless (no state.json), so sizing stored in meta.json only. `computeStartPhase()` and `deriveAnalysisStatus()` must distinguish intentionally-skipped from incomplete.
+  - **#59**: Tier recommendation (trivial/light/standard/epic — what kind of workflow?)
+    - `computeRecommendedTier(fileCount, riskLevel, thresholds)` uses actual IA metrics. Displayed at analyze completion. Build handler presents tier options at step 4a.
+    - **Trivial tier**: No workflow, no branches, no gates. Direct edit with lightweight change record in `docs/requirements/{slug}/` for audit trail.
+    - **Key principle**: Framework recommends, user decides.
+  - **Build order**: Feature A first, then Feature B
+  - **Related**: #51 (sizing consent — completed), ADR-0001 (sizing insertion point)
+  - **Complexity**: Medium — analyze handler changes, tier scoring logic, meta.json schema extension, trivial-tier execution path
 
-- #59 [A] Complexity-based routing — Phase 00 recommends workflow tier including a "trivial" direct-edit path
-  - **Problem**: The framework's lightest path (`-light`) still runs 6 phases with gates, branches, and constitutional validation. For trivial changes (1-2 files, single concern, no architectural impact), this is overkill and users will bypass the framework entirely. Sizing tiers only kick in after Phase 02 during `build` — too late.
-  - **Design**: Phase 00 (quick scan) produces a `recommended_tier` in its output and meta.json. Tiers: `trivial` (1-2 files, direct edit), `light` (3-8 files, skip arch+design), `standard` (9-20 files, full workflow), `epic` (20+ files, decomposition). The `analyze` handler displays the recommendation at completion. The `build` handler presents tier options at step 4a, with the recommended tier as default.
-  - **Trivial tier behavior**: No workflow, no branches, no gates. The framework makes the edit directly. BUT still records the change in the requirements folder — creates/updates `docs/requirements/{slug}/` with a lightweight change record (what changed, why, files modified, commit SHA) so the audit trail is preserved even without a full workflow.
-  - **Key principle**: Framework recommends, user decides. Trivial is a first-class framework option, not a bypass.
-  - **Sync points**: `analyze` step 8 (display recommendation), `build` step 4a (present tier menu)
-  - **Related**: #51 (sizing prompts user), adaptive workflow sizing (Phase 02)
-  - **Complexity**: Medium — quick scan scoring logic, meta.json schema extension, build auto-detection update, trivial-tier execution path with requirements folder recording
+- **Feature B: Build Consumption** (#60 + #61) [ ] — Clean build-side consumption of pre-analyzed items
+  - Depends on Feature A (consumes tier + sizing from meta.json), but independently valuable.
+  - **#60**: Split build init from phase execution
+    - New orchestrator mode `MODE: init-only` (create workflow, branch, state.json — no phase execution). Phase-Loop Controller handles ALL phase execution uniformly from `START_PHASE` onward. `MODE: init-and-phase-01` deprecated.
+  - **#61**: Smart staleness check — blast-radius-aware
+    - Replace naive hash comparison with `git diff --name-only {hash}..HEAD` intersected with impact-analysis.md file list. 0 overlap = silent proceed, 1-3 = informational note, 4+ = warning menu.
+    - Eliminates false-positive staleness warnings in parallel workflows.
+  - **Build order**: After Feature A
+  - **Complexity**: Low-medium
 
 ### Code Quality Gaps
 
