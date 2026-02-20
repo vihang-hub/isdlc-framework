@@ -23,7 +23,11 @@ You are the **SDLC Orchestrator**, the central coordination hub for managing com
 
 **CRITICAL**: If a MODE parameter is present in your Task prompt, you MUST obey these hard boundaries:
 
-- **MODE: init-and-phase-01**: Run ONLY initialization + the first phase + its gate + plan generation.
+- **MODE: init-only**: Run ONLY initialization (state.json setup, branch creation, counter increment,
+  meta.json update, supervised mode flag). Do NOT delegate to any phase agent. Do NOT validate any gate.
+  Do NOT generate a plan. Return the structured JSON result and terminate.
+
+- **MODE: init-and-phase-01** *(deprecated -- use init-only)*: Run ONLY initialization + the first phase + its gate + plan generation.
   When `START_PHASE` is provided (REQ-0026), the "first phase" is the START_PHASE, not necessarily Phase 01.
   After generating the plan, STOP IMMEDIATELY. DO NOT delegate to the second phase or any subsequent phase agent.
   Return the structured JSON result and terminate.
@@ -617,7 +621,8 @@ The orchestrator supports multiple execution modes controlled by a `MODE` parame
 The calling agent passes MODE as a structured parameter in the Task prompt:
 
 ```
-MODE: init-and-phase-01
+MODE: init-only
+MODE: init-and-phase-01  (deprecated)
 MODE: single-phase PHASE: 05-implementation
 MODE: finalize
 ```
@@ -628,21 +633,24 @@ If no MODE parameter is present, the orchestrator runs in **full-workflow mode**
 
 | Mode | Scope | Returns |
 |------|-------|---------|
-| `init-and-phase-01` | Initialize workflow + create branch + run first phase (Phase 01 or START_PHASE per REQ-0026) + validate its gate + generate plan | Structured result (see below) |
-| `single-phase` | Run one phase (specified by PHASE param) + validate its gate + update state.json | Structured result (see below) |
-| `finalize` | Human Review Checkpoint (if enabled) + merge branch + clear workflow | Structured result (see below) |
+| `init-only` | Initialize workflow + create branch. No phase execution. | `{ status: "init_complete", phases[], artifact_folder, workflow_type, next_phase_index: 0 }` |
+| `init-and-phase-01` **(deprecated)** | Initialize workflow + create branch + run first phase (Phase 01 or START_PHASE per REQ-0026) + validate its gate + generate plan | Structured result (existing) |
+| `single-phase` | Run one phase (specified by PHASE param) + validate its gate + update state.json | Structured result (existing) |
+| `finalize` | Human Review Checkpoint (if enabled) + merge branch + clear workflow | Structured result (existing) |
 | _(none)_ | Full workflow (backward compatible) | Original behavior — runs all phases autonomously |
 
 ### Return Format
 
 All modes return JSON with `status`, plus mode-specific fields:
-- `init-and-phase-01`: `{ status, phases[], artifact_folder, workflow_type, next_phase_index }`
+- `init-only`: `{ status: "init_complete", phases[], artifact_folder, workflow_type, next_phase_index: 0 }`
+- `init-and-phase-01` (deprecated): `{ status, phases[], artifact_folder, workflow_type, next_phase_index }`
 - `single-phase`: `{ status: "passed"|"blocked_by_hook", phase_completed, gate_result, blockers[] }`
 - `finalize`: `{ status: "completed", merged, pr_url, workflow_id, metrics }`
 
 ### Mode Behavior
 
-1. **init-and-phase-01**: Run initialization (Section 3, including START_PHASE handling in 2b if provided), create branch (3a), delegate to the first phase in `phasesToUse` (Phase 01 by default, or the START_PHASE per REQ-0026), validate its gate, generate plan (3b). Return phases array (may be a sliced subset when START_PHASE is used).
+0. **init-only**: Run initialization (Section 3, including START_PHASE handling in 2b if provided), create branch (3a if requires_branch: true), parse --supervised flag. Return JSON immediately. OMIT: phase agent delegation, gate validation, plan generation (ORCH-012). All phase statuses set to "pending" (the first phase is NOT set to "in_progress" -- the Phase-Loop Controller sets that).
+1. **init-and-phase-01** *(deprecated -- use init-only)*: Run initialization (Section 3, including START_PHASE handling in 2b if provided), create branch (3a), delegate to the first phase in `phasesToUse` (Phase 01 by default, or the START_PHASE per REQ-0026), validate its gate, generate plan (3b). Return phases array (may be a sliced subset when START_PHASE is used). Deprecation notice: emit to stderr `"DEPRECATED: MODE init-and-phase-01 will be removed in v0.3.0. Use MODE init-only with Phase-Loop Controller."`.
 2. **single-phase**: Read `active_workflow`, delegate to PHASE agent, validate gate, update state. Return result.
 3. **finalize**: Human Review (if enabled) → merge branch → `collectPhaseSnapshots(state)` → prune (`pruneSkillUsageLog(20)`, `pruneCompletedPhases([])`, `pruneHistory(50,200)`, `pruneWorkflowHistory(50,200)`) → move to `workflow_history` (include `phase_snapshots`, `metrics`, `phases` array, and `review_history` if present) → clear `active_workflow`.
    - **Review history preservation** (REQ-0013): When constructing `workflow_history` entry:
@@ -674,7 +682,7 @@ When advancing:
 5. Set new `current_phase` to `phases[current_phase_index]`
 6. Mark new phase as `"in_progress"` in `phase_status`
 7. Update top-level `current_phase` in state.json for backward compatibility
-7.5. **CHECK MODE BOUNDARY**: If a MODE parameter is present and the mode's scope has been fulfilled (e.g., `init-and-phase-01` and Phase 01 is complete), STOP and return the structured result. DO NOT execute step 8.
+7.5. **CHECK MODE BOUNDARY**: If a MODE parameter is present and the mode's scope has been fulfilled (e.g., `init-only` after initialization, `init-and-phase-01` and Phase 01 is complete), STOP and return the structured result. DO NOT execute step 8.
 8. Delegate to the next phase's agent
 
 ### Workflow Completion
@@ -691,6 +699,7 @@ When the last phase completes:
 #### Mode-Aware Guard (CHECK BEFORE EVERY TRANSITION)
 
 Before ANY automatic phase transition, check the MODE parameter from the Task prompt:
+- If MODE is `init-only`: **STOP immediately after initialization. Return JSON. DO NOT delegate to any phase agent.**
 - If MODE is `init-and-phase-01` AND Phase 01 + GATE-01 + plan generation are complete: **STOP. Return JSON. DO NOT advance.**
 - If MODE is `single-phase` AND the specified phase's gate passed: **STOP. Return JSON. DO NOT advance.**
 - If MODE is `finalize`: No phase transitions occur (merge logic only).
@@ -1581,7 +1590,7 @@ After each lifecycle action, emit a `SUGGESTED NEXT STEPS` block (format: `---` 
 
 # PROGRESS TRACKING (TASK LIST)
 
-Create a visible task list on workflow init using `TaskCreate` — one task per phase from `active_workflow.phases`. **Exception**: Skip in controlled execution modes (`init-and-phase-01`, `single-phase`, `finalize`) where `sdlc.md` creates tasks in the foreground.
+Create a visible task list on workflow init using `TaskCreate` — one task per phase from `active_workflow.phases`. **Exception**: Skip in controlled execution modes (`init-only`, `init-and-phase-01`, `single-phase`, `finalize`) where `sdlc.md` creates tasks in the foreground.
 
 ## Task Definitions
 

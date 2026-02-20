@@ -39,6 +39,8 @@ const {
     validatePhasesCompleted,     // REQ-0026: Build auto-detection
     computeStartPhase,           // REQ-0026: Build auto-detection
     checkStaleness,              // REQ-0026: Build auto-detection
+    extractFilesFromImpactAnalysis,  // GH-61: Blast-radius staleness
+    checkBlastRadiusStaleness,       // GH-61: Blast-radius staleness
     computeRecommendedTier,      // GH-59: Complexity-Based Routing
     getTierDescription,          // GH-59: Complexity-Based Routing
     findBacklogItemByNumber,
@@ -2988,5 +2990,409 @@ describe('Tier constants (GH-59)', () => {
         assert.equal(DEFAULT_TIER_THRESHOLDS.trivial_max_files, 2);
         assert.equal(DEFAULT_TIER_THRESHOLDS.light_max_files, 8);
         assert.equal(DEFAULT_TIER_THRESHOLDS.standard_max_files, 20);
+    });
+});
+
+// ===========================================================================
+// extractFilesFromImpactAnalysis() tests
+// GH-61: Blast-Radius-Aware Smart Staleness
+// Traces: FR-005 (AC-005-01 through AC-005-04), NFR-004 (AC-NFR-004-01)
+// ===========================================================================
+
+describe('extractFilesFromImpactAnalysis()', () => {
+
+    // TC-EF-01: Parses standard "Directly Affected Files" table
+    it('TC-EF-01: parses standard table with backtick-wrapped paths (AC-005-01)', () => {
+        const md = [
+            '### Directly Affected Files',
+            '',
+            '| File | Change Type | FR Trace | Impact |',
+            '|------|------------|----------|--------|',
+            '| `src/claude/commands/isdlc.md` | MODIFY | FR-002 | STEP 1 changes |',
+            '| `src/claude/agents/00-sdlc-orchestrator.md` | MODIFY | FR-001 | New mode |',
+            '| `src/claude/hooks/lib/three-verb-utils.cjs` | MODIFY | FR-004 | New functions |'
+        ].join('\n');
+        const result = extractFilesFromImpactAnalysis(md);
+        assert.deepStrictEqual(result, [
+            'src/claude/commands/isdlc.md',
+            'src/claude/agents/00-sdlc-orchestrator.md',
+            'src/claude/hooks/lib/three-verb-utils.cjs'
+        ]);
+    });
+
+    // TC-EF-02: Parses with ## heading level
+    it('TC-EF-02: parses with ## heading level (AC-005-01)', () => {
+        const md = [
+            '## Directly Affected Files',
+            '',
+            '| File | Change Type |',
+            '|------|------------|',
+            '| `src/foo.js` | MODIFY |'
+        ].join('\n');
+        const result = extractFilesFromImpactAnalysis(md);
+        assert.deepStrictEqual(result, ['src/foo.js']);
+    });
+
+    // TC-EF-03: Parses with numbered heading prefix
+    it('TC-EF-03: parses with numbered heading prefix (AC-005-01)', () => {
+        const md = [
+            '### 3.1 Directly Affected Files',
+            '',
+            '| File | Change Type |',
+            '|------|------------|',
+            '| `src/bar.cjs` | CREATE |'
+        ].join('\n');
+        const result = extractFilesFromImpactAnalysis(md);
+        assert.deepStrictEqual(result, ['src/bar.cjs']);
+    });
+
+    // TC-EF-04: Extracts only from Directly table, ignoring Indirectly
+    it('TC-EF-04: extracts only from Directly table, ignoring Indirectly (AC-005-02)', () => {
+        const md = [
+            '### Directly Affected Files',
+            '',
+            '| File | Change Type |',
+            '|------|------------|',
+            '| `src/direct.js` | MODIFY |',
+            '| `src/direct2.js` | CREATE |',
+            '',
+            '### Indirectly Affected Files',
+            '',
+            '| File | Change Type |',
+            '|------|------------|',
+            '| `src/indirect.js` | MODIFY |',
+            '| `src/indirect2.js` | MODIFY |'
+        ].join('\n');
+        const result = extractFilesFromImpactAnalysis(md);
+        assert.deepStrictEqual(result, ['src/direct.js', 'src/direct2.js']);
+    });
+
+    // TC-EF-05: Stops at next section heading boundary
+    it('TC-EF-05: stops at next section heading boundary (AC-005-02)', () => {
+        const md = [
+            '### Directly Affected Files',
+            '',
+            '| File | Change Type |',
+            '|------|------------|',
+            '| `src/file1.js` | MODIFY |',
+            '',
+            '### New Functions/Exports',
+            '',
+            '| File | Function |',
+            '|------|----------|',
+            '| `src/file2.js` | newFunc() |'
+        ].join('\n');
+        const result = extractFilesFromImpactAnalysis(md);
+        assert.deepStrictEqual(result, ['src/file1.js']);
+    });
+
+    // TC-EF-06: Returns empty array for null input
+    it('TC-EF-06: returns [] for null input (AC-005-03)', () => {
+        assert.deepStrictEqual(extractFilesFromImpactAnalysis(null), []);
+    });
+
+    // TC-EF-07: Returns empty array for undefined input
+    it('TC-EF-07: returns [] for undefined input (AC-005-03)', () => {
+        assert.deepStrictEqual(extractFilesFromImpactAnalysis(undefined), []);
+    });
+
+    // TC-EF-08: Returns empty array for empty string input
+    it('TC-EF-08: returns [] for empty string (AC-005-03)', () => {
+        assert.deepStrictEqual(extractFilesFromImpactAnalysis(''), []);
+    });
+
+    // TC-EF-09: Normalizes paths with ./ prefix
+    it('TC-EF-09: normalizes paths with ./ prefix (AC-005-04)', () => {
+        const md = [
+            '### Directly Affected Files',
+            '',
+            '| File | Change Type |',
+            '|------|------------|',
+            '| `./src/foo.js` | MODIFY |'
+        ].join('\n');
+        const result = extractFilesFromImpactAnalysis(md);
+        assert.deepStrictEqual(result, ['src/foo.js']);
+    });
+
+    // TC-EF-10: Normalizes paths with / prefix
+    it('TC-EF-10: normalizes paths with / prefix (AC-005-04)', () => {
+        const md = [
+            '### Directly Affected Files',
+            '',
+            '| File | Change Type |',
+            '|------|------------|',
+            '| `/src/foo.js` | MODIFY |'
+        ].join('\n');
+        const result = extractFilesFromImpactAnalysis(md);
+        assert.deepStrictEqual(result, ['src/foo.js']);
+    });
+
+    // TC-EF-11: Deduplicates file paths
+    it('TC-EF-11: deduplicates file paths (AC-005-04)', () => {
+        const md = [
+            '### Directly Affected Files',
+            '',
+            '| File | Change Type |',
+            '|------|------------|',
+            '| `src/dup.js` | MODIFY |',
+            '| `src/dup.js` | CREATE |'
+        ].join('\n');
+        const result = extractFilesFromImpactAnalysis(md);
+        assert.deepStrictEqual(result, ['src/dup.js']);
+    });
+
+    // TC-EF-12: Non-string input (number) returns []
+    it('TC-EF-12: returns [] for non-string input (AC-005-03)', () => {
+        assert.deepStrictEqual(extractFilesFromImpactAnalysis(42), []);
+    });
+
+    // TC-EF-13: Table header row skipped
+    it('TC-EF-13: table header row is skipped (no backticks)', () => {
+        const md = [
+            '### Directly Affected Files',
+            '',
+            '| File | Change Type |',
+            '|------|------------|',
+            '| `src/only.js` | MODIFY |'
+        ].join('\n');
+        const result = extractFilesFromImpactAnalysis(md);
+        assert.equal(result.length, 1);
+        assert.equal(result[0], 'src/only.js');
+    });
+
+    // TC-EF-14: Content with no table at all
+    it('TC-EF-14: returns [] for content with no table (AC-005-03)', () => {
+        const md = '# Some markdown\n\nNo tables here.\n';
+        assert.deepStrictEqual(extractFilesFromImpactAnalysis(md), []);
+    });
+
+    // TC-EF-15: Content with only "Indirectly Affected" table
+    it('TC-EF-15: returns [] when only Indirectly Affected table exists (AC-005-02)', () => {
+        const md = [
+            '### Indirectly Affected Files',
+            '',
+            '| File | Change Type |',
+            '|------|------------|',
+            '| `src/indirect.js` | MODIFY |'
+        ].join('\n');
+        assert.deepStrictEqual(extractFilesFromImpactAnalysis(md), []);
+    });
+});
+
+// ===========================================================================
+// checkBlastRadiusStaleness() tests
+// GH-61: Blast-Radius-Aware Smart Staleness
+// Traces: FR-004, FR-006, NFR-002, NFR-003, NFR-004
+// ===========================================================================
+
+describe('checkBlastRadiusStaleness()', () => {
+
+    // Shared test fixture: impact-analysis.md content with 5 blast radius files
+    const BLAST_RADIUS_MD = [
+        '### Directly Affected Files',
+        '',
+        '| File | Change Type | FR Trace | Impact |',
+        '|------|------------|----------|--------|',
+        '| `src/commands/isdlc.md` | MODIFY | FR-002 | STEP 1 |',
+        '| `src/agents/orchestrator.md` | MODIFY | FR-001 | init-only |',
+        '| `src/hooks/lib/utils.cjs` | MODIFY | FR-004 | New funcs |',
+        '| `src/hooks/tests/test-utils.test.cjs` | MODIFY | FR-005 | Tests |',
+        '| `docs/design/module-design.md` | CREATE | FR-006 | Docs |'
+    ].join('\n');
+
+    // TC-BR-01: 0 overlapping files -> severity 'none'
+    it('TC-BR-01: 0 overlapping files returns severity none (AC-004-02)', () => {
+        const meta = { codebase_hash: 'abc1234' };
+        const changedFiles = ['unrelated/file1.js', 'unrelated/file2.js', 'unrelated/file3.js'];
+        const result = checkBlastRadiusStaleness(meta, 'def5678', BLAST_RADIUS_MD, changedFiles);
+        assert.equal(result.stale, false);
+        assert.equal(result.severity, 'none');
+        assert.deepStrictEqual(result.overlappingFiles, []);
+        assert.equal(result.changedFileCount, 3);
+        assert.equal(result.blastRadiusFileCount, 5);
+    });
+
+    // TC-BR-02: 2 overlapping files -> severity 'info'
+    it('TC-BR-02: 2 overlapping files returns severity info (AC-004-03)', () => {
+        const meta = { codebase_hash: 'abc1234' };
+        const changedFiles = [
+            'src/commands/isdlc.md',
+            'src/hooks/lib/utils.cjs',
+            'unrelated/other.js',
+            'unrelated/another.js',
+            'unrelated/third.js'
+        ];
+        const result = checkBlastRadiusStaleness(meta, 'def5678', BLAST_RADIUS_MD, changedFiles);
+        assert.equal(result.stale, true);
+        assert.equal(result.severity, 'info');
+        assert.equal(result.overlappingFiles.length, 2);
+        assert.ok(result.overlappingFiles.includes('src/commands/isdlc.md'));
+        assert.ok(result.overlappingFiles.includes('src/hooks/lib/utils.cjs'));
+    });
+
+    // TC-BR-03: 5 overlapping files -> severity 'warning'
+    it('TC-BR-03: 5 overlapping files returns severity warning (AC-004-04)', () => {
+        const meta = { codebase_hash: 'abc1234' };
+        const changedFiles = [
+            'src/commands/isdlc.md',
+            'src/agents/orchestrator.md',
+            'src/hooks/lib/utils.cjs',
+            'src/hooks/tests/test-utils.test.cjs',
+            'docs/design/module-design.md',
+            'unrelated/other1.js',
+            'unrelated/other2.js',
+            'unrelated/other3.js'
+        ];
+        const result = checkBlastRadiusStaleness(meta, 'def5678', BLAST_RADIUS_MD, changedFiles);
+        assert.equal(result.stale, true);
+        assert.equal(result.severity, 'warning');
+        assert.equal(result.overlappingFiles.length, 5);
+    });
+
+    // TC-BR-04: Exactly 3 overlapping (boundary) -> severity 'info'
+    it('TC-BR-04: exactly 3 overlapping returns severity info (boundary, AC-004-03)', () => {
+        const meta = { codebase_hash: 'abc1234' };
+        const changedFiles = [
+            'src/commands/isdlc.md',
+            'src/agents/orchestrator.md',
+            'src/hooks/lib/utils.cjs'
+        ];
+        const result = checkBlastRadiusStaleness(meta, 'def5678', BLAST_RADIUS_MD, changedFiles);
+        assert.equal(result.stale, true);
+        assert.equal(result.severity, 'info');
+        assert.equal(result.overlappingFiles.length, 3);
+    });
+
+    // TC-BR-05: Exactly 4 overlapping (boundary) -> severity 'warning'
+    it('TC-BR-05: exactly 4 overlapping returns severity warning (boundary, AC-004-04)', () => {
+        const meta = { codebase_hash: 'abc1234' };
+        const changedFiles = [
+            'src/commands/isdlc.md',
+            'src/agents/orchestrator.md',
+            'src/hooks/lib/utils.cjs',
+            'src/hooks/tests/test-utils.test.cjs'
+        ];
+        const result = checkBlastRadiusStaleness(meta, 'def5678', BLAST_RADIUS_MD, changedFiles);
+        assert.equal(result.stale, true);
+        assert.equal(result.severity, 'warning');
+        assert.equal(result.overlappingFiles.length, 4);
+    });
+
+    // TC-BR-06: null impactAnalysisContent -> severity 'fallback'
+    it('TC-BR-06: null impactAnalysisContent returns fallback (AC-004-05)', () => {
+        const meta = { codebase_hash: 'abc1234' };
+        const result = checkBlastRadiusStaleness(meta, 'def5678', null, ['some/file.js']);
+        assert.equal(result.stale, true);
+        assert.equal(result.severity, 'fallback');
+        assert.equal(result.fallbackReason, 'no-impact-analysis');
+    });
+
+    // TC-BR-07: Empty impact analysis (no table) -> severity 'fallback'
+    it('TC-BR-07: content with no parseable table returns fallback (AC-004-05)', () => {
+        const meta = { codebase_hash: 'abc1234' };
+        const noTable = '# Impact Analysis\n\nSome text but no table.\n';
+        const result = checkBlastRadiusStaleness(meta, 'def5678', noTable, ['some/file.js']);
+        assert.equal(result.stale, true);
+        assert.equal(result.severity, 'fallback');
+        assert.equal(result.fallbackReason, 'no-parseable-table');
+    });
+
+    // TC-BR-08: Same hash (not stale)
+    it('TC-BR-08: same hash returns not stale (AC implicit)', () => {
+        const meta = { codebase_hash: 'abc1234' };
+        const result = checkBlastRadiusStaleness(meta, 'abc1234', BLAST_RADIUS_MD, ['src/commands/isdlc.md']);
+        assert.equal(result.stale, false);
+        assert.equal(result.severity, 'none');
+        assert.deepStrictEqual(result.overlappingFiles, []);
+        assert.equal(result.originalHash, 'abc1234');
+        assert.equal(result.currentHash, 'abc1234');
+    });
+
+    // TC-BR-09: null meta
+    it('TC-BR-09: null meta returns not stale', () => {
+        const result = checkBlastRadiusStaleness(null, 'def5678', BLAST_RADIUS_MD, []);
+        assert.equal(result.stale, false);
+        assert.equal(result.severity, 'none');
+        assert.equal(result.originalHash, null);
+    });
+
+    // TC-BR-10: Missing codebase_hash
+    it('TC-BR-10: missing codebase_hash returns not stale', () => {
+        const meta = {};
+        const result = checkBlastRadiusStaleness(meta, 'def5678', BLAST_RADIUS_MD, []);
+        assert.equal(result.stale, false);
+        assert.equal(result.severity, 'none');
+        assert.equal(result.originalHash, null);
+    });
+
+    // TC-BR-11: changedFiles provided as array (testability, NFR-004)
+    it('TC-BR-11: uses provided changedFiles array (NFR-004)', () => {
+        const meta = { codebase_hash: 'abc1234' };
+        const changedFiles = ['src/commands/isdlc.md'];
+        const result = checkBlastRadiusStaleness(meta, 'def5678', BLAST_RADIUS_MD, changedFiles);
+        assert.equal(result.stale, true);
+        assert.equal(result.severity, 'info');
+        assert.deepStrictEqual(result.overlappingFiles, ['src/commands/isdlc.md']);
+    });
+
+    // TC-BR-12: All blast radius files changed
+    it('TC-BR-12: all blast radius files changed returns warning (AC-004-04)', () => {
+        const meta = { codebase_hash: 'abc1234' };
+        const changedFiles = [
+            'src/commands/isdlc.md',
+            'src/agents/orchestrator.md',
+            'src/hooks/lib/utils.cjs',
+            'src/hooks/tests/test-utils.test.cjs',
+            'docs/design/module-design.md'
+        ];
+        const result = checkBlastRadiusStaleness(meta, 'def5678', BLAST_RADIUS_MD, changedFiles);
+        assert.equal(result.stale, true);
+        assert.equal(result.severity, 'warning');
+        assert.equal(result.overlappingFiles.length, 5);
+    });
+
+    // TC-BR-13: changedFiles empty array -> severity 'none'
+    it('TC-BR-13: empty changedFiles returns severity none (AC-004-02)', () => {
+        const meta = { codebase_hash: 'abc1234' };
+        const result = checkBlastRadiusStaleness(meta, 'def5678', BLAST_RADIUS_MD, []);
+        assert.equal(result.stale, false);
+        assert.equal(result.severity, 'none');
+        assert.deepStrictEqual(result.overlappingFiles, []);
+    });
+
+    // TC-BR-14: Return includes all metadata fields
+    it('TC-BR-14: return includes all required metadata fields (AC-004-01)', () => {
+        const meta = { codebase_hash: 'abc1234' };
+        const changedFiles = ['src/commands/isdlc.md'];
+        const result = checkBlastRadiusStaleness(meta, 'def5678', BLAST_RADIUS_MD, changedFiles);
+        assert.ok('stale' in result);
+        assert.ok('severity' in result);
+        assert.ok('overlappingFiles' in result);
+        assert.ok('changedFileCount' in result);
+        assert.ok('blastRadiusFileCount' in result);
+        assert.ok('originalHash' in result);
+        assert.ok('currentHash' in result);
+        assert.ok('fallbackReason' in result);
+        assert.equal(result.originalHash, 'abc1234');
+        assert.equal(result.currentHash, 'def5678');
+        assert.equal(result.changedFileCount, 1);
+        assert.equal(result.blastRadiusFileCount, 5);
+        assert.equal(result.fallbackReason, null);
+    });
+
+    // TC-BR-15: undefined meta returns not stale
+    it('TC-BR-15: undefined meta returns not stale', () => {
+        const result = checkBlastRadiusStaleness(undefined, 'def5678', BLAST_RADIUS_MD, []);
+        assert.equal(result.stale, false);
+        assert.equal(result.severity, 'none');
+    });
+
+    // TC-BR-16: empty string impactAnalysisContent -> fallback
+    it('TC-BR-16: empty string impactAnalysisContent returns fallback', () => {
+        const meta = { codebase_hash: 'abc1234' };
+        const result = checkBlastRadiusStaleness(meta, 'def5678', '', ['some/file.js']);
+        assert.equal(result.stale, true);
+        assert.equal(result.severity, 'fallback');
+        assert.equal(result.fallbackReason, 'no-impact-analysis');
     });
 });

@@ -763,18 +763,31 @@ If `warnings` is non-empty, log each warning to stderr.
 Let `analysisStatus = result.status`, `startPhase = result.startPhase`.
 If `analysisStatus === 'raw'`: skip steps 4b-4e, fall through to step 5 (full workflow).
 
-**Step 4b: Check staleness** (FR-004, NFR-002) -- only if `analysisStatus !== 'raw'`
+**Step 4b: Check staleness** (FR-004, FR-006, NFR-002) -- only if `analysisStatus !== 'raw'`
 
 ```
 TRY:
   currentHash = git rev-parse --short HEAD (trim whitespace)
 CATCH:
   Log warning: "Could not determine current codebase version. Skipping staleness check."
-  stalenessResult = { stale: false, originalHash: null, currentHash: null, commitsBehind: null }
+  stalenessResult = { stale: false, severity: 'none', overlappingFiles: [],
+                      changedFileCount: 0, blastRadiusFileCount: 0,
+                      originalHash: null, currentHash: null, fallbackReason: null }
+  SKIP to step 4d.
 
-stalenessResult = checkStaleness(meta, currentHash)
+// Read impact-analysis.md for blast-radius-aware check (GH-61)
+LET impactAnalysisContent = null
+TRY:
+  impactAnalysisPath = path.join(slugDir, 'impact-analysis.md')
+  IF file exists at impactAnalysisPath:
+    impactAnalysisContent = fs.readFileSync(impactAnalysisPath, 'utf8')
+CATCH:
+  impactAnalysisContent = null  // fallback to naive
 
-IF stalenessResult.stale:
+stalenessResult = checkBlastRadiusStaleness(meta, currentHash, impactAnalysisContent, null)
+
+// For fallback and warning modes, enrich with commit count
+IF stalenessResult.stale AND (stalenessResult.severity === 'fallback' OR stalenessResult.severity === 'warning'):
   TRY:
     commitCount = git rev-list --count {stalenessResult.originalHash}..HEAD
     stalenessResult.commitsBehind = parseInt(commitCount.trim(), 10)
@@ -782,23 +795,60 @@ IF stalenessResult.stale:
     stalenessResult.commitsBehind = null
 ```
 
-**Step 4c: Handle staleness** (FR-004) -- only if `stalenessResult.stale === true`
+**Step 4c: Handle staleness** (FR-004, FR-006) -- tiered response based on severity
 
-Display staleness warning and present menu:
 ```
-STALENESS WARNING: {item slug}
+IF stalenessResult.severity === 'none':
+  // Silent proceed -- no output, no user interaction
+  (continue to step 4d)
 
-Analysis was performed at commit {originalHash}{commitsBehindStr}.
-Current HEAD is {currentHash}.
+ELSE IF stalenessResult.severity === 'info':
+  // Informational note -- display but do not block
+  Display:
+    INFO: {overlappingFiles.length} file(s) in this item's blast radius
+    changed since analysis (commit {originalHash} -> {currentHash}):
+      - {overlappingFiles[0]}
+      - {overlappingFiles[1]}
+      - ...
+    Proceeding with existing analysis.
+  (continue to step 4d -- no menu, automatic proceed)
 
-Options:
-  [P] Proceed anyway -- use existing analysis as-is
-  [Q] Re-run quick-scan -- refresh scope check (re-runs analysis from Phase 00)
-  [A] Re-analyze from scratch -- clear all analysis, start fresh
+ELSE IF stalenessResult.severity === 'warning':
+  // Full warning menu -- 4+ overlapping files
+  LET commitsBehindStr = stalenessResult.commitsBehind != null ? " (" + stalenessResult.commitsBehind + " commits ago)" : ""
+  Display:
+    STALENESS WARNING: {item slug}
+    {overlappingFiles.length} file(s) in this item's blast radius changed
+    since analysis (commit {originalHash}{commitsBehindStr} -> {currentHash}):
+      - {overlappingFiles[0]}
+      - {overlappingFiles[1]}
+      - {overlappingFiles[2]}
+      - {overlappingFiles[3]}
+      - ... ({remaining} more)
+    Options:
+      [P] Proceed anyway -- use existing analysis as-is
+      [Q] Re-run quick-scan -- refresh scope check
+      [A] Re-analyze from scratch -- clear all analysis, start fresh
+
+  Handle each choice (same as below).
+
+ELSE IF stalenessResult.severity === 'fallback':
+  // Naive hash-based warning -- identical to legacy behavior
+  LET commitsBehindStr = stalenessResult.commitsBehind != null ? " (" + stalenessResult.commitsBehind + " commits ago)" : ""
+  Display:
+    STALENESS WARNING: {item slug}
+    Analysis was performed at commit {originalHash}{commitsBehindStr}.
+    Current HEAD is {currentHash}.
+    (Blast-radius check unavailable: {fallbackReason})
+    Options:
+      [P] Proceed anyway -- use existing analysis as-is
+      [Q] Re-run quick-scan -- refresh scope check (re-runs analysis from Phase 00)
+      [A] Re-analyze from scratch -- clear all analysis, start fresh
+
+  Handle each choice (same as below).
 ```
-Where `commitsBehindStr` is " (N commits ago)" if commitsBehind is not null, or "" if null.
 
-Handle each choice:
+Staleness menu handlers (for 'warning' and 'fallback' severities):
 - **[P] Proceed**: No changes. Continue with current analysisStatus and startPhase.
 - **[Q] Re-run quick-scan**: Set `startPhase = "00-quick-scan"`, `remainingPhases = featurePhases`, `analysisStatus = 'raw'`.
 - **[A] Re-analyze**: Clear meta: `meta.phases_completed = []`, `meta.analysis_status = "raw"`, `meta.codebase_hash = currentHash`. Write via `writeMetaJson(slugDir, meta)`. Set `startPhase = null`, `analysisStatus = 'raw'`, `completedPhases = []`, `remainingPhases = [...featurePhases]`.
@@ -856,13 +906,13 @@ If user declines: abort build. If user confirms: proceed to step 5.
      suggest fix workflow. Ask user: "This looks like a bug. Use fix workflow? [Y/n]"
    - Otherwise: use feature workflow
 7. Delegate to orchestrator via Task tool:
-   MODE: init-and-phase-01, ACTION: feature (or fix), DESCRIPTION: "{item description}", FLAGS: {parsed flags}
+   MODE: init-only, ACTION: feature (or fix), DESCRIPTION: "{item description}", FLAGS: {parsed flags}
    **REQ-0026 additions** -- include when applicable:
    - If `startPhase` is not null: include `START_PHASE: "{startPhase}"` in the Task prompt
    - If item was resolved from an existing directory (analysisStatus is 'analyzed' or 'partial', or raw with existing folder): include `ARTIFACT_FOLDER: "{item.slug}"` in the Task prompt
    These parameters tell the orchestrator to start from a later phase and reuse the existing artifact folder.
-8. Orchestrator initializes active_workflow, creates branch, runs first phase (may not be Phase 01 if START_PHASE provided)
-9. Phase-Loop Controller drives remaining phases (identical to current feature flow)
+8. Orchestrator initializes active_workflow, creates branch (does NOT run any phase -- init-only mode)
+9. Phase-Loop Controller drives all phases starting from index 0 (or START_PHASE if provided)
 
 **--- TRIVIAL TIER EXECUTION ---** (GH-59, FR-006, FR-007, NFR-003, NFR-004, NFR-005, AD-03, AD-04, AD-06)
 
@@ -1335,11 +1385,11 @@ Parse the subcommand: `add`, `wire`, `list`, or `remove`.
 
 Use the **Phase-Loop Controller** protocol. This runs phases one at a time in the foreground, giving the user visible task progress and immediate hook-blocker escalation.
 
-#### STEP 1: INIT — Launch orchestrator for init + first phase
+#### STEP 1: INIT — Launch orchestrator for workflow initialization
 
 ```
 Use Task tool → sdlc-orchestrator with:
-  MODE: init-and-phase-01
+  MODE: init-only
   ACTION: {feature|fix|test-run|test-generate|start|upgrade}
   DESCRIPTION: "{user description}"
   (include MONOREPO CONTEXT if applicable)
@@ -1350,19 +1400,19 @@ Use Task tool → sdlc-orchestrator with:
   ARTIFACT_FOLDER: "{item.slug}"    // Only if item was resolved from an existing directory
 ```
 
-The orchestrator initializes the workflow, creates the branch, runs Phase 01 (or the START_PHASE if provided), validates the corresponding gate, generates the plan, and returns a structured result:
+The orchestrator initializes the workflow and creates the branch but does NOT execute any phase. It returns:
 ```json
 {
-  "status": "phase_complete",
-  "phases": ["05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"],
+  "status": "init_complete",
+  "phases": ["01-requirements", "02-impact-analysis", "03-architecture", "04-design", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"],
   "artifact_folder": "REQ-0001-feature-name",
   "workflow_type": "feature",
-  "next_phase_index": 1
+  "next_phase_index": 0
 }
 ```
-Note: When `START_PHASE` is provided, the `phases[]` array may be shorter (only phases from START_PHASE onward). When absent, the orchestrator returns all workflow phases as before (backward compatible per AC-006-05).
+Note: When `START_PHASE` is provided, the `phases[]` array may be shorter (only phases from START_PHASE onward). When absent, the orchestrator returns all workflow phases. `next_phase_index` is always 0 (no phases have been executed).
 
-If the first phase fails or is cancelled, stop here.
+If initialization fails, stop here.
 
 #### STEP 2: FOREGROUND TASKS — Create visible task list
 
@@ -1393,13 +1443,13 @@ Look up the base subject and activeForm from this table:
 
 For `description`, use: `"Phase {NN} of {workflow_type} workflow"`
 
-**Mark Phase 01's task as completed with strikethrough** immediately (it already passed in Step 1). Update both `status` to `completed` AND `subject` to `~~[1] {base subject}~~` (markdown strikethrough).
+All tasks start as `pending`. No task is pre-marked as completed -- the Phase-Loop Controller will mark each task as `in_progress` and then `completed` as it executes each phase.
 
 The user now sees the full task list in their terminal with sequential numbering.
 
-#### STEP 3: PHASE LOOP — Execute remaining phases one at a time
+#### STEP 3: PHASE LOOP — Execute all phases one at a time
 
-For each phase from `next_phase_index` through the end of `phases[]`:
+For each phase from `next_phase_index` (0) through the end of `phases[]`:
 
 **3a.** Mark the phase task as `in_progress` using `TaskUpdate` (user sees spinner).
 
@@ -1672,6 +1722,11 @@ Use Task tool → {agent_name} with:
 12-test-deploy → release-engineer
 13-production → release-engineer
 ```
+
+**3e-plan.** PLAN GENERATION (after Phase 01 only) -- GH-60, FR-002:
+If the phase just completed is `01-requirements` AND `docs/isdlc/tasks.md` does NOT exist (or exists but is a stale template):
+  - Delegate to orchestrator: `MODE: single-phase PHASE: plan-generation` OR invoke ORCH-012 (generate-plan) skill inline.
+  - The plan is informational and non-blocking. If plan generation fails, log a warning and continue to the next phase.
 
 **3e-review.** SUPERVISED REVIEW GATE (conditional) -- After the post-phase
 state update, check if a supervised review gate should fire.
