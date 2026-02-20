@@ -312,7 +312,7 @@
 
 ### Investigation
 
-- #55 [A] Phase handshake audit — investigate whether the handshake between phases is working correctly (state transitions, artifact passing, gate validation, pre-delegation state writes, post-phase updates). Verify no data loss or stale state between phase boundaries.
+- #55 [X] Phase handshake audit — investigate whether the handshake between phases is working correctly (state transitions, artifact passing, gate validation, pre-delegation state writes, post-phase updates). Verify no data loss or stale state between phase boundaries. (REQ-0020, b9c5cb2)
 
 ### Developer Experience
 
