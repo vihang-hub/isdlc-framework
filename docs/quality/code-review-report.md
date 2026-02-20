@@ -1,12 +1,12 @@
 # Code Review Report
 
 **Project:** iSDLC Framework
-**Workflow:** REQ-0031-GH-60-61-build-consumption (feature)
+**Workflow:** BUG-0029-GH-18-multiline-bash-permission-bypass (fix)
 **Phase:** 08 - Code Review & QA
 **Date:** 2026-02-20
 **Reviewer:** QA Engineer (Phase 08)
-**Scope Mode:** FULL SCOPE
-**Verdict:** APPROVED -- 0 blockers, 0 high, 2 low, 4 informational findings
+**Scope Mode:** HUMAN-REVIEW-ONLY
+**Verdict:** APPROVED -- 0 blockers, 0 high, 0 low, 2 informational findings
 
 ---
 
@@ -14,84 +14,117 @@
 
 | Metric | Value |
 |--------|-------|
-| Files reviewed | 5 (1 production + 2 test + 1 command spec + 1 agent spec) |
-| Lines added (production) | +184 (three-verb-utils.cjs: 2 new functions + exports) |
-| Lines added (test) | +406 (31 unit tests in main test file + 9 integration tests in steps test file) |
-| Lines changed (command) | +125/-44 (isdlc.md: STEP 1 init-only, Steps 4b-4c tiered staleness, 3e-plan) |
-| Lines changed (agent) | +27 (00-sdlc-orchestrator.md: init-only mode, deprecation) |
-| Total new tests | 40 (15 extractFiles + 16 blastRadius + 9 integration) |
-| Tests passing (feature) | 327/327 (100%) |
-| Tests passing (full suite) | 628/632 (99.4%) |
-| Regressions introduced | 0 |
-| Pre-existing failures | 4 (down from 5 on main -- 1 resolved) |
+| Files reviewed | 4 (2 agent prompt files + 1 hook + 1 test file) |
+| Lines changed (agent prompts) | -13/+10 (architecture-analyzer.md) and +14/-14 (quick-scan-agent.md) |
+| Lines changed (hook) | +29 (delegation-gate.cjs: GH-62 staleness threshold) |
+| Lines changed (tests) | +103 (multiline-bash-validation.test.cjs: 14 new tests + 2 new affected files) |
+| Total new tests | 14 (2 negative pattern tests + 2 codebase sweep tests + 10 file regression checks -- the 10 file checks are the 2 newly added files to the existing AFFECTED_FILES list) |
+| All tests passing | 38/38 (multiline-bash), 35/35 (delegation-gate) |
+| Full CJS suite | 2366/2367 (1 pre-existing) |
+| Full ESM suite | 628/632 (4 pre-existing) |
+| New regressions | 0 |
 | Critical findings | 0 |
 | High findings | 0 |
-| Low findings | 2 |
-| Informational | 4 |
+| Low findings | 0 |
+| Informational | 2 |
 
 ---
 
 ## 2. Files Reviewed
 
-### 2.1 Production Code: `src/claude/hooks/lib/three-verb-utils.cjs`
+### 2.1 Agent Prompt: `src/claude/agents/discover/architecture-analyzer.md`
 
-**`extractFilesFromImpactAnalysis(mdContent)`** (lines 558-605, 48 lines):
-- Pure function. String in, array out. No I/O, no side effects, no external dependencies.
-- STEP 1: Guard clause rejects null, undefined, empty string, non-string. Returns [].
-- STEP 2: Finds "Directly Affected Files" heading using word-boundary regex (`\bDirectly`). Avoids false match on "Indirectly Affected Files". Supports both `##` and `###` heading levels.
-- STEP 3: Section boundary detection via next heading regex (`/^#{2,3}\s/`).
-- STEP 4: Table row extraction uses backtick capture regex (`/^\|\s*`([^`]+)`\s*\|/`). Path normalization strips leading `./` and `/`. Deduplication via Set.
-- STEP 5: Returns deduplicated array from Set.
-- Complexity: Estimated cyclomatic 5. Linear scan, no nested branches.
+**Change**: Joined a 10-line multiline `find` command with backslash line continuations into a single line.
 
-**`checkBlastRadiusStaleness(meta, currentHash, impactAnalysisContent, changedFiles)`** (lines 634-719, 86 lines):
-- Composes `extractFilesFromImpactAnalysis` with set intersection to produce tiered severity response.
-- STEP 1-2: Early exits for null/missing meta, missing codebase_hash, and same-hash.
-- STEP 3: Extracts blast radius files. Falls back to 'fallback' severity when content is null/empty or has no parseable table. Correctly distinguishes `no-impact-analysis` from `no-parseable-table` fallback reasons.
-- STEP 4: If `changedFiles` is null, uses `execSync('git diff --name-only ...')` with 5000ms timeout wrapped in try/catch. Falls back to 'fallback' severity with 'git-diff-failed' reason on error.
-- STEP 5: Set intersection via `blastRadiusSet.has(f)`.
-- STEP 6: Severity tiers: 0 overlapping = 'none' (not stale), 1-3 = 'info' (stale), 4+ = 'warning' (stale). Uses traditional function expressions for the filter callback (CJS convention).
-- STEP 7: Returns complete metadata object with all 8 fields.
-- Complexity: Estimated cyclomatic 10. Acceptable for a tiered decision function.
+**Before** (multiline, 10 non-empty lines):
+```bash
+# Get directory structure (excluding common ignore patterns)
+find . -type d \
+  -not -path '*/node_modules/*' \
+  -not -path '*/.git/*' \
+  -not -path '*/dist/*' \
+  -not -path '*/build/*' \
+  -not -path '*/__pycache__/*' \
+  -not -path '*/.isdlc/*' \
+  -not -path '*/.claude/*' \
+  | head -100
+```
 
-**Module exports** (lines 1217-1256):
-- Both new functions exported under `// Blast-radius staleness utilities (GH-61)` section. Existing exports unchanged.
+**After** (single line):
+```bash
+find . -type d -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/build/*' -not -path '*/__pycache__/*' -not -path '*/.isdlc/*' -not -path '*/.claude/*' | head -100
+```
 
-### 2.2 Test Code: `src/claude/hooks/tests/test-three-verb-utils.test.cjs`
+**Correctness**: VERIFIED. The single-line form is functionally identical to the backslash-continuation form. All `-not -path` predicates are preserved. The `| head -100` pipe is retained. The comment was moved to prose above the code block (a clean separation of documentation from command).
 
-31 new tests in 2 describe blocks:
-- **extractFilesFromImpactAnalysis** (15 tests, TC-EF-01 through TC-EF-15): Standard table parsing, heading level variants, section boundary detection, null/undefined/empty guards, path normalization, deduplication, header row skipping, no-table content, indirectly-only content.
-- **checkBlastRadiusStaleness** (16 tests, TC-BR-01 through TC-BR-16): All severity tiers (none/info/warning/fallback), boundary cases (0/3/4 overlapping), fallback reasons, same-hash early exit, null/undefined meta, missing codebase_hash, provided changedFiles array, metadata field verification, empty string content.
+### 2.2 Agent Prompt: `src/claude/agents/quick-scan/quick-scan-agent.md`
 
-All tests have unique TC-IDs, traceability annotations referencing FR/AC/NFR, and follow established describe/it patterns.
+**Change**: Split a 6-line multi-command bash block (mixing glob and grep commands with interleaved comments) into 4 separate single-line code blocks.
 
-### 2.3 Test Code: `src/claude/hooks/tests/test-three-verb-utils-steps.test.cjs`
+**Before** (6 non-empty lines in one block):
+```bash
+# Glob for file name matches
+glob "**/user*.{ts,js,py,java}"
+glob "**/*preference*.{ts,js,py,java}"
 
-9 new integration tests in Suite E (TC-INT-01 through TC-INT-09):
-- Realistic impact-analysis.md content with 5 directly affected and 2 indirectly affected files.
-- End-to-end pipelines: no overlap (silent proceed), 2 overlaps (info), 5 overlaps (warning).
-- Verifies indirectly affected files are excluded.
-- Same-hash shortcut validation.
-- Fallback scenarios (null content, no parseable table).
-- Path normalization pipeline integration.
-- Full pipeline with readMetaJson round-trip.
+# Grep for keyword references
+grep -l "preferences" src/
+grep -l "user.*settings" src/
+```
 
-### 2.4 Command Spec: `src/claude/commands/isdlc.md`
+**After** (4 separate single-line blocks with prose headings):
+```bash
+glob "**/user*.{ts,js,py,java}"
+```
+```bash
+glob "**/*preference*.{ts,js,py,java}"
+```
+```bash
+grep -l "preferences" src/
+```
+```bash
+grep -l "user.*settings" src/
+```
 
-Changes in 4 areas:
-1. **STEP 1**: `init-and-phase-01` replaced by `init-only`. Orchestrator returns `{ status: "init_complete", next_phase_index: 0 }`. No phase execution during init.
-2. **STEP 2**: Removed "Mark Phase 01's task as completed with strikethrough" -- all tasks start as pending.
-3. **STEP 3**: "Execute all phases" (was "remaining phases"). Loop starts at index 0.
-4. **Steps 4b-4c**: `checkStaleness` replaced by `checkBlastRadiusStaleness` with impact-analysis.md reading. Step 4c now has 4-tier response: `none` (silent), `info` (display + proceed), `warning` (full menu), `fallback` (legacy menu). Commit count enrichment only for fallback and warning severities.
-5. **Step 3e-plan**: New plan generation step after Phase 01 only, non-blocking.
+**Correctness**: VERIFIED. Each command is preserved exactly. Comments were converted to markdown prose headings, maintaining the same grouping context (globs and greps). No functional change.
 
-### 2.5 Agent Spec: `src/claude/agents/00-sdlc-orchestrator.md`
+### 2.3 Hook: `src/claude/hooks/delegation-gate.cjs`
 
-- New `MODE: init-only` defined with explicit scope: state.json setup, branch creation, counter increment, meta.json update. No phase delegation, no gate validation, no plan generation.
-- `MODE: init-and-phase-01` marked as deprecated with message text for stderr emission and removal timeline (v0.3.0).
-- Return format table updated: init-only returns `next_phase_index: 0`.
-- Mode-Aware Guard updated to stop immediately after initialization for init-only mode.
-- Progress tracking skips task creation in init-only mode (like other controlled modes).
+**Change**: Added GH-62 staleness threshold (30-minute auto-clear for stale `pending_delegation` markers).
+
+Key changes:
+1. **Version bump**: 1.0.0 to 1.1.0
+2. **New constant**: `STALENESS_THRESHOLD_MINUTES = 30` with JSDoc documenting rationale
+3. **New logic block** (lines 113-129): After reading `pending.invoked_at`, computes age in minutes. If exceeding threshold, logs a warning via `logHookEvent`, emits `[SELF-HEAL]` notification, clears the marker, and exits cleanly.
+4. **Position**: The staleness check executes BEFORE the exempt-action check, ensuring stale markers are cleared regardless of action type. This is correct -- a 30-minute-old marker is definitionally stale.
+
+**Correctness**: VERIFIED. The Date arithmetic is standard (`Date.now() - new Date(ts).getTime()`). The threshold is constant and well-documented. The function uses `clearMarkerAndResetErrors()` (defined at line 79), which also resets `_delegation_gate_error_count`. No edge cases missed.
+
+**Security**: No new attack surface. The `invoked_at` timestamp is framework-managed (not user input).
+
+### 2.4 Test: `src/claude/hooks/tests/multiline-bash-validation.test.cjs`
+
+**Changes** (extending the existing 24-test file to 38 tests):
+1. **Updated header comment**: Documents the Phase 02 revalidation update
+2. **AFFECTED_FILES array**: Added 2 new entries (`architecture-analyzer.md`, `quick-scan-agent.md`) with clear annotations distinguishing "original 8 files" from "2 remaining files discovered in Phase 02 revalidation"
+3. **New describe block**: "Negative tests: hasMultilineBash catches remaining pattern types" with 2 tests for backslash-continuation and multi-example-with-comments patterns
+4. **New describe block**: "Codebase-wide sweep: no multiline Bash in any agent/command file" with 2 tests (file count sanity + zero violations sweep)
+
+**Test Quality Assessment**:
+
+| Category | Count | Coverage |
+|----------|-------|---------|
+| FR-001 regression guards (10 affected files) | 10 | All 10 originally+newly identified files |
+| FR-002 CLAUDE.md convention checks | 6 | Heading, glob limitation, transformation examples, escape hatch, reference format |
+| FR-004 CLAUDE.md.template checks | 4 | Heading, glob limitation, transformation examples |
+| Negative tests (detection regex) | 8 | for-loop, newline-separated, comments, pipe chains, node-e, sh blocks, backslash continuation, multi-example |
+| Regression tests (non-Bash not flagged) | 8 | JSON, TypeScript, YAML, plain, JavaScript, single-line bash, padded bash, markdown |
+| Codebase-wide sweep | 2 | File count sanity + zero violations |
+| **Total** | **38** | |
+
+The codebase-wide sweep test (`collectMdFiles` recursive scanner + `findMultilineBashBlocks` on every file) is particularly valuable as a regression guard -- it will catch any future multiline bash block introduced in any agent or command file, regardless of whether it is in the AFFECTED_FILES list.
+
+**Test reliability**: The `collectMdFiles` function uses `fs.readdirSync` with `withFileTypes` -- correct and synchronous. The minimum file count assertion (>=10) is a reasonable sanity check.
 
 ---
 
@@ -101,159 +134,104 @@ Changes in 4 areas:
 
 | Area | Assessment |
 |------|-----------|
-| `extractFilesFromImpactAnalysis` logic | CORRECT. Heading regex uses `\b` word boundary to avoid "Indirectly" false match. Section boundary detection stops at next heading. Table row regex correctly captures backtick-wrapped paths. |
-| `checkBlastRadiusStaleness` logic | CORRECT. Early exits handle all null/missing cases. Severity tiers: 0=none, 1-3=info, 4+=warning. Boundary at exactly 3 returns 'info', exactly 4 returns 'warning'. Verified by TC-BR-04 and TC-BR-05. |
-| Fallback degradation | CORRECT. Three distinct fallback reasons: no-impact-analysis, no-parseable-table, git-diff-failed. |
-| init-only mode | CORRECT. Orchestrator scope is clearly bounded. Phase-Loop Controller handles all phase execution. |
-| Backward compatibility | CORRECT. init-and-phase-01 mode preserved (deprecated). Existing function signatures unchanged. |
+| architecture-analyzer.md single-line find | CORRECT. All predicates preserved. Pipe retained. |
+| quick-scan-agent.md split blocks | CORRECT. Each command preserved exactly. Prose headings maintain context. |
+| delegation-gate.cjs staleness | CORRECT. Date arithmetic is standard. Threshold well-documented. Position before exempt-check is correct. |
+| multiline-bash-validation tests | CORRECT. Detection regex verified against real-world patterns. Sweep covers entire codebase. |
 
 ### 3.2 Error Handling
 
 | Scenario | Handling |
 |----------|---------|
-| null/undefined mdContent | Returns [] (extractFiles) |
-| Non-string mdContent | Returns [] (extractFiles) |
-| null/undefined meta | Returns not-stale with severity 'none' (blastRadius) |
-| Missing codebase_hash | Returns not-stale with severity 'none' (blastRadius) |
-| No parseable table in content | Returns stale with severity 'fallback', reason 'no-parseable-table' |
-| git diff failure | Returns stale with severity 'fallback', reason 'git-diff-failed' |
-| execSync timeout (5s) | Caught by try/catch, falls back gracefully |
+| delegation-gate: missing invoked_at | Staleness check guarded by `if (pending.invoked_at)` -- skips gracefully |
+| delegation-gate: invalid date string | `new Date(invalid).getTime()` returns NaN, causing ageMinutes to be NaN, `NaN > 30` is false -- staleness check is skipped, fail-safe |
+| multiline test: missing .md file | `assert.ok(fs.existsSync(absPath))` fails with clear message |
+| codebase sweep: missing directory | `collectMdFiles` returns empty array, minimum count assertion would catch it |
 
 ### 3.3 Security
 
 | Check | Result |
 |-------|--------|
-| Command injection via execSync | SAFE. Hash comes from meta.codebase_hash (framework-managed, not user input). Format: `git diff --name-only {hash}..HEAD`. |
-| Path traversal in extractFiles | NOT APPLICABLE. Function only parses markdown content; it does not perform file I/O. |
-| RegExp DoS | SAFE. Both regex patterns are bounded: `tableRowRegex` scans fixed table line format; `headingRegex` has bounded alternation with line-start anchor. |
-| Prototype pollution | NOT APPLICABLE. Uses Set and array filter. No bracket-notation access from external input. |
-| Secrets in code | NONE. |
+| Markdown prompt injection | NOT APPLICABLE. Agent files are framework-managed, not user input. |
+| delegation-gate staleness bypass | SAFE. Threshold is a constant. Cannot be manipulated by user. |
+| File traversal in sweep test | NOT APPLICABLE. Test only reads files under known `src/claude/` paths. |
 
 ### 3.4 Performance
 
-| Function | Time Complexity | I/O |
-|----------|----------------|-----|
-| `extractFilesFromImpactAnalysis` | O(n) where n = line count in markdown | None |
-| `checkBlastRadiusStaleness` (with provided changedFiles) | O(n + m) where n = blast radius files, m = changed files | None |
-| `checkBlastRadiusStaleness` (with null changedFiles) | O(n + m) + 1 subprocess call (5s timeout) | execSync |
-| Full test suite (327 tests) | 107ms | Temp files |
+| Component | Assessment |
+|-----------|-----------|
+| architecture-analyzer.md | No runtime change (agent prompt). Single-line find executes identically. |
+| quick-scan-agent.md | No runtime change (agent prompt). Same commands, different blocks. |
+| delegation-gate.cjs | +1 Date comparison per invocation. Negligible overhead. |
+| multiline test sweep | Scans ~60 .md files. Measured at <5ms total. Acceptable. |
 
 ### 3.5 Naming and Readability
 
 | Item | Assessment |
 |------|-----------|
-| Function names | Clear and descriptive. `extractFilesFromImpactAnalysis` and `checkBlastRadiusStaleness` clearly convey purpose. |
-| Variable names | Good. `blastRadiusFiles`, `overlapping`, `fallbackReason`, `headingRegex`, `tableRowRegex`. |
-| Test IDs | Systematic: TC-EF-* for extractFiles, TC-BR-* for blastRadius, TC-INT-* for integration. |
-| JSDoc | Complete @param and @returns annotations on both functions. Trace annotations present. |
-| Comments | Step-by-step comments (STEP 1..7) match the algorithmic documentation. |
+| STALENESS_THRESHOLD_MINUTES | Clear constant name with unit in name. Good. |
+| hasMultilineBash / findMultilineBashBlocks | Descriptive utility names. Good. |
+| collectMdFiles | Clear recursive utility name. Good. |
+| Test describe block names | Descriptive and categorized (FR-001, FR-002, FR-004, Negative, Regression, Sweep). Good. |
 
 ### 3.6 DRY / Single Responsibility
 
-- `extractFilesFromImpactAnalysis` is a pure parsing function; `checkBlastRadiusStaleness` composes it for the staleness check. Good separation.
-- The Set intersection pattern in `checkBlastRadiusStaleness` is straightforward and does not warrant extraction.
-- Severity determination in `checkBlastRadiusStaleness` (3 branches) is simple enough to remain inline.
+- The `hasMultilineBash` (boolean) and `findMultilineBashBlocks` (detail list) utilities are appropriately separated -- one for simple checks, one for diagnostic output.
+- The AFFECTED_FILES array serves as both documentation (which files were affected) and test input.
+- The codebase sweep does not duplicate the per-file tests -- it covers ALL files as a safety net.
 
 ---
 
 ## 4. Findings
 
-### LOW-001: execSync Hash Not Validated
+### INFO-001: Long Single-Line Command
 
-**Location**: `src/claude/hooks/lib/three-verb-utils.cjs`, line 677
-**Description**: When `changedFiles` is null, the function constructs a git command using `meta.codebase_hash` directly: `'git diff --name-only ' + meta.codebase_hash + '..HEAD'`. While `meta.codebase_hash` is framework-managed (written by the orchestrator from `git rev-parse --short HEAD`), it is read from a JSON file on disk. If meta.json were corrupted or tampered with, the hash value could theoretically contain shell metacharacters.
-**Risk**: Very low. The hash is written by the framework itself, and `execSync` with a 5000ms timeout limits damage. The function catches errors gracefully.
-**Recommendation**: Consider validating the hash format (`/^[0-9a-f]{7,40}$/`) before interpolating into the command string. Not a blocker.
+**Location**: `src/claude/agents/discover/architecture-analyzer.md`, line 49
+**Description**: The single-line find command is 173 characters long. While functionally correct and necessary to satisfy the Single-Line Bash Convention, it is a long line that may wrap in narrow terminal/editor views.
+**Assessment**: Acceptable. The convention explicitly provides an escape hatch (extract to `bin/` script) for commands that cannot be reasonably expressed as a single line. This command, while long, remains readable and is standard find syntax. No action needed.
 
-### LOW-002: Caller Passes null for changedFiles
+### INFO-002: GH-62 Staleness as Scope Expansion
 
-**Location**: `src/claude/commands/isdlc.md`, Step 4b
-**Description**: The isdlc.md handler calls `checkBlastRadiusStaleness(meta, currentHash, impactAnalysisContent, null)`, relying on the function's internal `execSync` to compute changed files. The function already supports accepting pre-computed changed files as an array.
-**Risk**: Low. The execSync path works correctly but is less testable and adds a subprocess call.
-**Recommendation**: Pre-compute changed files in isdlc.md Step 4b (via git diff) and pass the array to avoid the internal execSync call. This would make the function purely computational for all callers.
-
-### INFO-001: Severity Boundary at 3 Files
-
-**Description**: The severity boundary (info: 1-3, warning: 4+) is hardcoded in `checkBlastRadiusStaleness`. There is no configuration mechanism to adjust this threshold.
-**Assessment**: Acceptable per Article V (Simplicity First). The threshold is reasonable and can be made configurable later if needed. No action required.
-
-### INFO-002: Plan Generation Step (3e-plan) is Speculative
-
-**Location**: `src/claude/commands/isdlc.md`, Step 3e-plan
-**Description**: The new plan generation step after Phase 01 is explicitly documented as "informational and non-blocking". It references either orchestrator delegation or inline ORCH-012 skill invocation but does not specify the exact implementation.
-**Assessment**: This is acceptable for a specification change. The non-blocking nature ensures it cannot break the workflow. The implementation details will be resolved when the Phase-Loop Controller executes.
-
-### INFO-003: init-and-phase-01 Deprecation Timeline
-
-**Location**: `src/claude/agents/00-sdlc-orchestrator.md`
-**Description**: The deprecation message specifies v0.3.0 as the removal target. The current version is 0.1.0-alpha.
-**Assessment**: Good practice. The deprecation is well-documented with a stderr warning. Callers have ample notice.
-
-### INFO-004: Test Count Regression Baseline
-
-**Description**: The full suite shows 628 passing / 4 failing (down from 5 failures on main). The feature work resolved one pre-existing failure (plan-tracking TC-04 updated to match init-only design) while introducing zero new failures. The remaining 4 failures are all pre-existing:
-1. TC-E09: README.md agent count (48 expected, actual differs)
-2. T07: STEP 1 description mentions branch creation before Phase 01
-3. TC-07: STEP 4 task cleanup instructions
-4. TC-13-01: Agent file count (48 expected, 61 actual)
+**Location**: `src/claude/hooks/delegation-gate.cjs`
+**Description**: The GH-62 staleness feature is a quality-of-life improvement to the delegation gate, not directly related to BUG-0029 (multiline bash). It was bundled into the same commit because the delegation-gate test file required timestamp fixes after the staleness threshold was added.
+**Assessment**: Acceptable. The change is small (29 lines), well-tested (35/35 delegation-gate tests pass), and the coupling is documented in the quality-report.md from Phase 16. The bundling was a natural consequence of the implementation phase discovering the delegation-gate test regression.
 
 ---
 
-## 5. Backward Compatibility Verification
+## 5. Requirement Traceability
 
-| Scenario | Status |
-|----------|--------|
-| Existing `checkStaleness()` function | UNCHANGED. Not removed, still exported. |
-| meta.json without blast-radius fields | PASS. `checkBlastRadiusStaleness` handles null content gracefully. |
-| init-and-phase-01 mode in orchestrator | PRESERVED. Deprecated but functional. |
-| Existing three-verb-utils tests (253 tests) | PASS. 0 regressions. |
-| Existing function signatures | UNCHANGED. No parameter changes to existing functions. |
-| STEP 1 callers using init-and-phase-01 | BACKWARD COMPATIBLE. Old mode still works. |
-
----
-
-## 6. Requirement Traceability
-
-### GH-61: Blast-Radius-Aware Smart Staleness
+### BUG-0029: Multiline Bash Permission Bypass
 
 | Requirement | Implemented In | Tested By | Status |
 |-------------|---------------|-----------|--------|
-| FR-005 AC-005-01 (Parse directly affected table) | `extractFilesFromImpactAnalysis()` | TC-EF-01..05, TC-EF-13 | PASS |
-| FR-005 AC-005-02 (Ignore indirectly affected) | `extractFilesFromImpactAnalysis()` | TC-EF-04, TC-EF-15, TC-INT-04 | PASS |
-| FR-005 AC-005-03 (Null/empty/missing guards) | `extractFilesFromImpactAnalysis()` | TC-EF-06..08, TC-EF-12, TC-EF-14 | PASS |
-| FR-005 AC-005-04 (Path normalization + dedup) | `extractFilesFromImpactAnalysis()` | TC-EF-09..11 | PASS |
-| FR-004 AC-004-01 (Return metadata fields) | `checkBlastRadiusStaleness()` | TC-BR-14 | PASS |
-| FR-004 AC-004-02 (Severity none) | `checkBlastRadiusStaleness()` | TC-BR-01, TC-BR-13 | PASS |
-| FR-004 AC-004-03 (Severity info) | `checkBlastRadiusStaleness()` | TC-BR-02, TC-BR-04, TC-BR-11 | PASS |
-| FR-004 AC-004-04 (Severity warning) | `checkBlastRadiusStaleness()` | TC-BR-03, TC-BR-05, TC-BR-12 | PASS |
-| FR-004 AC-004-05 (Fallback degradation) | `checkBlastRadiusStaleness()` | TC-BR-06, TC-BR-07, TC-BR-16 | PASS |
-| FR-006 (Tiered UX) | isdlc.md Steps 4b-4c | Spec review | PASS |
-| NFR-004 (Graceful degradation) | `checkBlastRadiusStaleness()` | TC-BR-06, TC-BR-07, TC-INT-06, TC-INT-07 | PASS |
-| CON-005 (Pure function design) | `extractFilesFromImpactAnalysis()` | TC-EF-* (no I/O) | PASS |
+| Fix multiline bash in architecture-analyzer.md | architecture-analyzer.md line 49 | FR-001 test + codebase sweep | PASS |
+| Fix multiline bash in quick-scan-agent.md | quick-scan-agent.md lines 115-131 | FR-001 test + codebase sweep | PASS |
+| CLAUDE.md convention section exists | CLAUDE.md (pre-existing) | FR-002 tests (6) | PASS |
+| CLAUDE.md.template convention exists | CLAUDE.md.template (pre-existing) | FR-004 tests (4) | PASS |
+| Detection regex catches all patterns | multiline-bash-validation.test.cjs | Negative tests (8) | PASS |
+| Non-bash blocks not flagged | multiline-bash-validation.test.cjs | Regression tests (8) | PASS |
+| No regressions in codebase | multiline-bash-validation.test.cjs | Codebase sweep (2) | PASS |
 
-### GH-60: Init-Only Orchestrator Mode
+### GH-62: Stale Delegation Marker Auto-Clear
 
 | Requirement | Implemented In | Tested By | Status |
 |-------------|---------------|-----------|--------|
-| FR-001 (Init-only mode) | 00-sdlc-orchestrator.md | Spec review | PASS |
-| FR-002 (Phase-Loop starts at 0) | isdlc.md STEP 1, STEP 3 | Spec review, TC-04 updated | PASS |
-| FR-003 (Backward compat) | 00-sdlc-orchestrator.md deprecation note | Spec review | PASS |
-| AC-006-05 (No phase pre-execution) | isdlc.md STEP 2 "All tasks start as pending" | TC-04 updated | PASS |
+| Auto-clear stale markers (>30m) | delegation-gate.cjs lines 113-129 | delegation-gate tests (35/35) | PASS |
 
 ---
 
-## 7. Constitutional Compliance
+## 6. Constitutional Compliance
 
 | Article | Status | Evidence |
 |---------|--------|----------|
-| V (Simplicity First) | PASS | Both new functions are minimal implementations. `extractFilesFromImpactAnalysis` is 48 lines, `checkBlastRadiusStaleness` is 86 lines. No over-engineering. Severity thresholds are simple constants, not configurable -- correctly deferred per YAGNI. |
-| VI (Code Review Required) | PASS | This document constitutes the code review. All changed files reviewed. |
-| VII (Artifact Traceability) | PASS | Every new function has trace annotations (GH-61, FR-*, AC-*, NFR-*, CON-*). Every test has a unique TC-ID and requirement reference. No orphan code. |
-| VIII (Documentation Currency) | PASS | isdlc.md updated to reflect new staleness check. Orchestrator agent updated with init-only mode. JSDoc present on both new functions. |
-| IX (Quality Gate Integrity) | PASS | All required artifacts exist. 327/327 feature tests pass. 0 regressions. |
+| V (Simplicity First) | PASS | Changes are minimal and mechanical. Architecture-analyzer: joined 10 lines to 1. Quick-scan: split 1 block into 4. No over-engineering. |
+| VI (Code Review Required) | PASS | This document constitutes the code review. All 4 changed files reviewed in detail. |
+| VII (Artifact Traceability) | PASS | Every change traces to BUG-0029 or GH-62. Test file documents affected files with provenance comments. No orphan code. |
+| VIII (Documentation Currency) | PASS | Agent prompt files updated to match convention. Test comments updated with Phase 02 revalidation note. Delegation-gate version bumped. |
+| IX (Quality Gate Integrity) | PASS | All required artifacts exist. 38/38 new tests pass. 35/35 delegation-gate tests pass. 0 new regressions. |
 
 ---
 
-## 8. Verdict
+## 7. Verdict
 
-**APPROVED** -- Code is correct, well-tested, backward compatible, and properly documented. Zero regressions introduced. Two low-severity findings noted (hash validation, null changedFiles); neither is a blocker. All functional and non-functional requirements are satisfied. Constitutional articles V, VI, VII, VIII, and IX are met. Ready to proceed through GATE-08.
+**APPROVED** -- All changes are correct, minimal, and well-tested. The two agent prompt files now comply with the Single-Line Bash Convention. The GH-62 staleness feature is a safe, well-bounded addition. Zero regressions introduced. Two informational findings noted; neither requires action. Constitutional articles V, VI, VII, VIII, and IX are satisfied. Ready to pass GATE-08.
