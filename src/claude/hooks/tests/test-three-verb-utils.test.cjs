@@ -2221,3 +2221,355 @@ describe('Build Auto-Detection Error Handling', () => {
         assert.deepEqual(result.warnings, []);
     });
 });
+
+// ===========================================================================
+// 27. deriveAnalysisStatus() -- Sizing-aware tests (GH-57)
+// Traces: FR-007 (AC-007a through AC-007d)
+// ===========================================================================
+
+describe('deriveAnalysisStatus() -- sizing-aware (GH-57)', () => {
+
+    // TC-DAS-S01: 3 phases + light sizing with skip list -> analyzed
+    it('TC-DAS-S01: 3 phases + light sizing = analyzed (FR-007, AC-007b)', () => {
+        const result = deriveAnalysisStatus(
+            ['00-quick-scan', '01-requirements', '02-impact-analysis'],
+            { effective_intensity: 'light', light_skip_phases: ['03-architecture', '04-design'] }
+        );
+        assert.equal(result, 'analyzed');
+    });
+
+    // TC-DAS-S02: 3 phases + null sizingDecision -> partial
+    it('TC-DAS-S02: 3 phases + null sizingDecision = partial (FR-007, AC-007c)', () => {
+        const result = deriveAnalysisStatus(
+            ['00-quick-scan', '01-requirements', '02-impact-analysis'],
+            null
+        );
+        assert.equal(result, 'partial');
+    });
+
+    // TC-DAS-S03: 3 phases + undefined sizingDecision -> partial
+    it('TC-DAS-S03: 3 phases + undefined sizingDecision = partial (FR-007, AC-007c)', () => {
+        const result = deriveAnalysisStatus(
+            ['00-quick-scan', '01-requirements', '02-impact-analysis'],
+            undefined
+        );
+        assert.equal(result, 'partial');
+    });
+
+    // TC-DAS-S04: 3 phases + standard sizing -> partial
+    it('TC-DAS-S04: 3 phases + standard sizing = partial (FR-007)', () => {
+        const result = deriveAnalysisStatus(
+            ['00-quick-scan', '01-requirements', '02-impact-analysis'],
+            { effective_intensity: 'standard', light_skip_phases: [] }
+        );
+        assert.equal(result, 'partial');
+    });
+
+    // TC-DAS-S05: all 5 phases + light sizing -> analyzed
+    it('TC-DAS-S05: all 5 phases + light sizing = analyzed (edge)', () => {
+        const result = deriveAnalysisStatus(
+            [...ANALYSIS_PHASES],
+            { effective_intensity: 'light', light_skip_phases: ['03-architecture', '04-design'] }
+        );
+        assert.equal(result, 'analyzed');
+    });
+
+    // TC-DAS-S06: only 2 of 3 required phases + light sizing -> partial
+    it('TC-DAS-S06: missing required phase 02 + light sizing = partial (edge)', () => {
+        const result = deriveAnalysisStatus(
+            ['00-quick-scan', '01-requirements'],
+            { effective_intensity: 'light', light_skip_phases: ['03-architecture', '04-design'] }
+        );
+        assert.equal(result, 'partial');
+    });
+
+    // TC-DAS-S07: light sizing but missing light_skip_phases field -> partial
+    it('TC-DAS-S07: light sizing without light_skip_phases = partial (guard)', () => {
+        const result = deriveAnalysisStatus(
+            ['00-quick-scan', '01-requirements', '02-impact-analysis'],
+            { effective_intensity: 'light' }
+        );
+        assert.equal(result, 'partial');
+    });
+
+    // TC-DAS-S08: light sizing with non-array light_skip_phases -> partial
+    it('TC-DAS-S08: light sizing with non-array skip list = partial (guard)', () => {
+        const result = deriveAnalysisStatus(
+            ['00-quick-scan', '01-requirements', '02-impact-analysis'],
+            { effective_intensity: 'light', light_skip_phases: 'not-an-array' }
+        );
+        assert.equal(result, 'partial');
+    });
+
+    // TC-DAS-S09: empty phases + light sizing -> raw
+    it('TC-DAS-S09: empty phases + light sizing = raw (guard)', () => {
+        const result = deriveAnalysisStatus(
+            [],
+            { effective_intensity: 'light', light_skip_phases: ['03-architecture', '04-design'] }
+        );
+        assert.equal(result, 'raw');
+    });
+
+    // TC-DAS-S10: null phases + light sizing -> raw
+    it('TC-DAS-S10: null phases + light sizing = raw (guard)', () => {
+        const result = deriveAnalysisStatus(
+            null,
+            { effective_intensity: 'light', light_skip_phases: ['03-architecture', '04-design'] }
+        );
+        assert.equal(result, 'raw');
+    });
+});
+
+// ===========================================================================
+// 28. writeMetaJson() -- Sizing-aware tests (GH-57)
+// Traces: FR-008 (AC-008a, AC-008b, AC-008c)
+// ===========================================================================
+
+describe('writeMetaJson() -- sizing-aware (GH-57)', () => {
+    beforeEach(() => { createTestDir(); });
+    afterEach(() => { cleanupTestDir(); });
+
+    // TC-WMJ-S01: light sizing -> analysis_status = analyzed, sizing_decision preserved
+    it('TC-WMJ-S01: light sizing writes analyzed status and preserves sizing_decision (FR-008, AC-008a, AC-008b)', () => {
+        const dir = path.join(testDir, 'wmj-s01');
+        fs.mkdirSync(dir, { recursive: true });
+
+        const meta = {
+            source: 'manual',
+            slug: 'wmj-s01',
+            phases_completed: ['00-quick-scan', '01-requirements', '02-impact-analysis'],
+            sizing_decision: {
+                effective_intensity: 'light',
+                light_skip_phases: ['03-architecture', '04-design'],
+                context: 'analyze'
+            }
+        };
+
+        writeMetaJson(dir, meta);
+        const written = JSON.parse(fs.readFileSync(path.join(dir, 'meta.json'), 'utf8'));
+        assert.equal(written.analysis_status, 'analyzed');
+        assert.ok(written.sizing_decision, 'sizing_decision should be preserved');
+        assert.equal(written.sizing_decision.effective_intensity, 'light');
+        assert.equal(written.sizing_decision.context, 'analyze');
+    });
+
+    // TC-WMJ-S02: standard sizing -> analysis_status = partial, sizing_decision preserved
+    it('TC-WMJ-S02: standard sizing writes partial status and preserves sizing_decision (FR-008)', () => {
+        const dir = path.join(testDir, 'wmj-s02');
+        fs.mkdirSync(dir, { recursive: true });
+
+        const meta = {
+            source: 'manual',
+            slug: 'wmj-s02',
+            phases_completed: ['00-quick-scan', '01-requirements', '02-impact-analysis'],
+            sizing_decision: {
+                effective_intensity: 'standard',
+                light_skip_phases: [],
+                context: 'analyze'
+            }
+        };
+
+        writeMetaJson(dir, meta);
+        const written = JSON.parse(fs.readFileSync(path.join(dir, 'meta.json'), 'utf8'));
+        assert.equal(written.analysis_status, 'partial');
+        assert.ok(written.sizing_decision, 'sizing_decision should be preserved');
+        assert.equal(written.sizing_decision.effective_intensity, 'standard');
+    });
+
+    // TC-WMJ-S03: no sizing_decision -> analysis_status = partial (backward compat)
+    it('TC-WMJ-S03: no sizing_decision with 3 phases = partial (NFR-002, AC-NFR-002b)', () => {
+        const dir = path.join(testDir, 'wmj-s03');
+        fs.mkdirSync(dir, { recursive: true });
+
+        const meta = {
+            source: 'manual',
+            slug: 'wmj-s03',
+            phases_completed: ['00-quick-scan', '01-requirements', '02-impact-analysis']
+        };
+
+        writeMetaJson(dir, meta);
+        const written = JSON.parse(fs.readFileSync(path.join(dir, 'meta.json'), 'utf8'));
+        assert.equal(written.analysis_status, 'partial');
+    });
+
+    // TC-WMJ-S04: no sizing_decision, all 5 phases -> analysis_status = analyzed
+    it('TC-WMJ-S04: no sizing_decision with all 5 phases = analyzed (NFR-002)', () => {
+        const dir = path.join(testDir, 'wmj-s04');
+        fs.mkdirSync(dir, { recursive: true });
+
+        const meta = {
+            source: 'manual',
+            slug: 'wmj-s04',
+            phases_completed: [...ANALYSIS_PHASES]
+        };
+
+        writeMetaJson(dir, meta);
+        const written = JSON.parse(fs.readFileSync(path.join(dir, 'meta.json'), 'utf8'));
+        assert.equal(written.analysis_status, 'analyzed');
+    });
+
+    // TC-WMJ-S05: round-trip: write then read preserves sizing_decision
+    it('TC-WMJ-S05: round-trip write/read preserves sizing_decision (FR-005, AC-005a)', () => {
+        const dir = path.join(testDir, 'wmj-s05');
+        fs.mkdirSync(dir, { recursive: true });
+
+        const sizingDecision = {
+            intensity: 'light',
+            effective_intensity: 'light',
+            recommended_intensity: 'light',
+            decided_at: '2026-02-19T22:35:00Z',
+            reason: 'user_accepted',
+            user_prompted: true,
+            forced_by_flag: false,
+            overridden: false,
+            overridden_to: null,
+            file_count: 3,
+            module_count: 1,
+            risk_score: 'low',
+            coupling: 'low',
+            coverage_gaps: 0,
+            fallback_source: null,
+            fallback_attempted: false,
+            light_skip_phases: ['03-architecture', '04-design'],
+            epic_deferred: false,
+            context: 'analyze'
+        };
+
+        const meta = {
+            source: 'manual',
+            slug: 'wmj-s05',
+            created_at: '2026-02-19T22:10:00Z',
+            phases_completed: ['00-quick-scan', '01-requirements', '02-impact-analysis'],
+            sizing_decision: sizingDecision
+        };
+
+        writeMetaJson(dir, meta);
+
+        // Read back
+        const readBack = readMetaJson(dir);
+        assert.ok(readBack.sizing_decision, 'sizing_decision should survive round-trip');
+        assert.deepEqual(readBack.sizing_decision, sizingDecision);
+    });
+});
+
+// ===========================================================================
+// 29. computeStartPhase() -- Sizing-aware tests (GH-57)
+// Traces: FR-009 (AC-009a through AC-009e)
+// ===========================================================================
+
+describe('computeStartPhase() -- sizing-aware (GH-57)', () => {
+
+    // TC-CSP-S01: light sizing + 3 phases -> analyzed, startPhase = 05-test-strategy
+    it('TC-CSP-S01: light sizing + 3 phases = analyzed at 05-test-strategy (FR-009, AC-009a, AC-009b)', () => {
+        const meta = {
+            phases_completed: ['00-quick-scan', '01-requirements', '02-impact-analysis'],
+            sizing_decision: {
+                effective_intensity: 'light',
+                light_skip_phases: ['03-architecture', '04-design']
+            }
+        };
+        const result = computeStartPhase(meta, FEATURE_PHASES);
+        assert.equal(result.status, 'analyzed');
+        assert.equal(result.startPhase, '05-test-strategy');
+    });
+
+    // TC-CSP-S02: completedPhases only has actually-completed phases (not skipped)
+    it('TC-CSP-S02: completedPhases = only actually-completed phases (FR-009, AC-009c)', () => {
+        const meta = {
+            phases_completed: ['00-quick-scan', '01-requirements', '02-impact-analysis'],
+            sizing_decision: {
+                effective_intensity: 'light',
+                light_skip_phases: ['03-architecture', '04-design']
+            }
+        };
+        const result = computeStartPhase(meta, FEATURE_PHASES);
+        assert.deepEqual(result.completedPhases, ['00-quick-scan', '01-requirements', '02-impact-analysis']);
+    });
+
+    // TC-CSP-S03: remainingPhases excludes skipped phases
+    it('TC-CSP-S03: remainingPhases excludes skipped phases (FR-009, AC-009d)', () => {
+        const meta = {
+            phases_completed: ['00-quick-scan', '01-requirements', '02-impact-analysis'],
+            sizing_decision: {
+                effective_intensity: 'light',
+                light_skip_phases: ['03-architecture', '04-design']
+            }
+        };
+        const result = computeStartPhase(meta, FEATURE_PHASES);
+        assert.deepEqual(result.remainingPhases, [
+            '05-test-strategy', '06-implementation', '16-quality-loop', '08-code-review'
+        ]);
+    });
+
+    // TC-CSP-S04: no sizing_decision + 3 phases -> partial at 03-architecture
+    it('TC-CSP-S04: no sizing_decision + 3 phases = partial at 03 (NFR-002, AC-NFR-002d)', () => {
+        const meta = {
+            phases_completed: ['00-quick-scan', '01-requirements', '02-impact-analysis']
+        };
+        const result = computeStartPhase(meta, FEATURE_PHASES);
+        assert.equal(result.status, 'partial');
+        assert.equal(result.startPhase, '03-architecture');
+    });
+
+    // TC-CSP-S05: standard sizing + 3 phases -> partial at 03-architecture
+    it('TC-CSP-S05: standard sizing + 3 phases = partial at 03 (guard: standard != light)', () => {
+        const meta = {
+            phases_completed: ['00-quick-scan', '01-requirements', '02-impact-analysis'],
+            sizing_decision: {
+                effective_intensity: 'standard',
+                light_skip_phases: []
+            }
+        };
+        const result = computeStartPhase(meta, FEATURE_PHASES);
+        assert.equal(result.status, 'partial');
+        assert.equal(result.startPhase, '03-architecture');
+    });
+
+    // TC-CSP-S06: light sizing but missing phase 02 -> partial at 02
+    it('TC-CSP-S06: light sizing but missing 02 = partial at 02 (edge)', () => {
+        const meta = {
+            phases_completed: ['00-quick-scan', '01-requirements'],
+            sizing_decision: {
+                effective_intensity: 'light',
+                light_skip_phases: ['03-architecture', '04-design']
+            }
+        };
+        const result = computeStartPhase(meta, FEATURE_PHASES);
+        assert.equal(result.status, 'partial');
+        assert.equal(result.startPhase, '02-impact-analysis');
+    });
+
+    // TC-CSP-S07: light sizing but no skip array -> partial at 03
+    it('TC-CSP-S07: light sizing but no skip array = partial at 03 (guard)', () => {
+        const meta = {
+            phases_completed: ['00-quick-scan', '01-requirements', '02-impact-analysis'],
+            sizing_decision: {
+                effective_intensity: 'light'
+            }
+        };
+        const result = computeStartPhase(meta, FEATURE_PHASES);
+        assert.equal(result.status, 'partial');
+        assert.equal(result.startPhase, '03-architecture');
+    });
+
+    // TC-CSP-S08: all 5 phases + light sizing -> analyzed, completedPhases = all 5
+    it('TC-CSP-S08: all 5 phases + light sizing = analyzed with all 5 completed (edge)', () => {
+        const meta = {
+            phases_completed: [...ANALYSIS_PHASES],
+            sizing_decision: {
+                effective_intensity: 'light',
+                light_skip_phases: ['03-architecture', '04-design']
+            }
+        };
+        const result = computeStartPhase(meta, FEATURE_PHASES);
+        assert.equal(result.status, 'analyzed');
+        assert.equal(result.startPhase, '05-test-strategy');
+        assert.deepEqual(result.completedPhases, [...ANALYSIS_PHASES]);
+    });
+
+    // TC-CSP-S09: null meta -> raw (existing behavior preserved)
+    it('TC-CSP-S09: null meta returns raw (existing behavior)', () => {
+        const result = computeStartPhase(null, FEATURE_PHASES);
+        assert.equal(result.status, 'raw');
+    });
+});

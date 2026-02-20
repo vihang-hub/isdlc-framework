@@ -142,13 +142,16 @@ function detectSource(input) {
 
 /**
  * Derives the analysis status string from the list of completed phases.
+ * Supports sizing-aware detection: when a light sizing decision is present,
+ * fewer than all 5 phases may qualify as 'analyzed'.
  *
- * Traces: FR-009 (AC-009-01), VR-PHASE-003
+ * Traces: FR-009 (AC-009-01), VR-PHASE-003, FR-007 (AC-007a..d, GH-57)
  *
  * @param {string[]} phasesCompleted - Array of completed phase keys
+ * @param {object} [sizingDecision] - Optional sizing_decision from meta.json (GH-57)
  * @returns {'raw'|'partial'|'analyzed'}
  */
-function deriveAnalysisStatus(phasesCompleted) {
+function deriveAnalysisStatus(phasesCompleted, sizingDecision) {
     if (!Array.isArray(phasesCompleted)) {
         return 'raw';
     }
@@ -158,7 +161,19 @@ function deriveAnalysisStatus(phasesCompleted) {
     ).length;
 
     if (completedCount === 0) return 'raw';
-    if (completedCount < 5) return 'partial';
+
+    // Sizing-aware: light intensity with skip list means fewer phases required (GH-57)
+    if (sizingDecision
+        && sizingDecision.effective_intensity === 'light'
+        && Array.isArray(sizingDecision.light_skip_phases)) {
+        const skipSet = new Set(sizingDecision.light_skip_phases);
+        const required = ANALYSIS_PHASES.filter(p => !skipSet.has(p));
+        if (required.every(p => phasesCompleted.includes(p))) {
+            return 'analyzed';
+        }
+    }
+
+    if (completedCount < ANALYSIS_PHASES.length) return 'partial';
     return 'analyzed';
 }
 
@@ -279,8 +294,9 @@ function readMetaJson(slugDir) {
 /**
  * Writes meta.json to a slug directory, deriving analysis_status from
  * phases_completed for consistency. Removes legacy fields.
+ * Delegates to deriveAnalysisStatus() for sizing-aware status derivation (GH-57, ADR-004).
  *
- * Traces: FR-009 (AC-009-01, AC-009-02)
+ * Traces: FR-009 (AC-009-01, AC-009-02), FR-008 (AC-008a, AC-008b, AC-008c)
  *
  * @param {string} slugDir - Absolute path to the slug directory
  * @param {object} meta - The meta object to write
@@ -291,14 +307,11 @@ function writeMetaJson(slugDir, meta) {
     // Never write legacy field
     delete meta.phase_a_completed;
 
-    // Derive analysis_status from phases_completed for consistency
-    const completedCount = (meta.phases_completed || []).filter(
-        p => ANALYSIS_PHASES.includes(p)
-    ).length;
-
-    if (completedCount === 0) meta.analysis_status = 'raw';
-    else if (completedCount < 5) meta.analysis_status = 'partial';
-    else meta.analysis_status = 'analyzed';
+    // Derive analysis_status from phases_completed (sizing-aware, GH-57)
+    meta.analysis_status = deriveAnalysisStatus(
+        meta.phases_completed,
+        meta.sizing_decision
+    );
 
     fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
 }
@@ -401,6 +414,38 @@ function computeStartPhase(meta, workflowPhases) {
             remainingPhases: [...workflowPhases],
             warnings
         };
+    }
+
+    // Step 3.5: Light-sized analysis detection (GH-57, FR-009)
+    if (meta.sizing_decision
+        && meta.sizing_decision.effective_intensity === 'light'
+        && Array.isArray(meta.sizing_decision.light_skip_phases)) {
+        const skipSet = new Set(meta.sizing_decision.light_skip_phases);
+        const requiredAnalysis = ANALYSIS_PHASES.filter(p => !skipSet.has(p));
+        const allRequiredPresent = requiredAnalysis.every(p => valid.includes(p));
+
+        if (allRequiredPresent) {
+            const filteredWorkflow = workflowPhases.filter(p => !skipSet.has(p));
+            const firstImplPhase = filteredWorkflow.find(p => !ANALYSIS_PHASES.includes(p));
+            if (firstImplPhase === undefined) {
+                return {
+                    status: 'analyzed',
+                    startPhase: null,
+                    completedPhases: valid,
+                    remainingPhases: [],
+                    warnings
+                };
+            }
+            const idx = filteredWorkflow.indexOf(firstImplPhase);
+            const remaining = filteredWorkflow.slice(idx);
+            return {
+                status: 'analyzed',
+                startPhase: firstImplPhase,
+                completedPhases: valid,
+                remainingPhases: remaining,
+                warnings
+            };
+        }
     }
 
     // Step 4: All analysis phases complete -> analyzed
