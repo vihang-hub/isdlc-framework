@@ -1,7 +1,7 @@
 # Static Analysis Report
 
 **Project:** iSDLC Framework
-**Workflow:** REQ-0027-gh-20-roundtable-analysis-agent-with-named-personas (feature)
+**Workflow:** REQ-0028-gh-21-elaboration-mode-multi-persona-roundtable-discussions (feature)
 **Phase:** 08 - Code Review & QA
 **Date:** 2026-02-20
 
@@ -9,7 +9,7 @@
 
 ## 1. Production Code Analysis
 
-### 1.1 three-verb-utils.cjs (+14 lines)
+### 1.1 three-verb-utils.cjs (+8 lines)
 
 | Check | Result |
 |-------|--------|
@@ -21,6 +21,8 @@
 | Unused variables | None |
 | Dead code | None |
 | Hardcoded values | None (uses existing constants) |
+| Module system | PASS (CommonJS require/module.exports, .cjs extension) |
+| Pattern consistency | PASS (follows GH-20 defensive default pattern exactly) |
 
 ### 1.2 Findings
 
@@ -30,83 +32,52 @@ No static analysis issues found in production code.
 
 ## 2. Test Code Analysis
 
-### 2.1 test-three-verb-utils-steps.test.cjs (25 tests)
+### 2.1 test-elaboration-defaults.test.cjs (21 tests, 283 lines)
 
 | Check | Result |
 |-------|--------|
 | Test isolation | PASS (beforeEach/afterEach with temp dirs, no shared state) |
 | Cleanup | PASS (rmSync with recursive+force in afterEach) |
 | Assertion quality | PASS (deepStrictEqual for arrays/objects, strict equality for scalars) |
-| Edge cases | PASS (null, string, number, array, missing file, corrupt JSON) |
-| Test naming | PASS (TC-{suite}-{NN} convention with descriptive titles) |
-
-### 2.2 test-step-file-validator.test.cjs (38 tests)
-
-| Check | Result |
-|-------|--------|
-| Test isolation | PASS (beforeEach/afterEach with temp dirs) |
-| Assertion quality | PASS (strict equality, deep strict for objects) |
-| Edge cases | PASS (invalid formats, unclosed quotes, empty arrays, cross-phase validation) |
-| Inventory validation | PASS (verifies all 24 files against expected list) |
-| YAML parser robustness | PASS (handles inline arrays, block arrays, quoted/unquoted strings, booleans, numbers, null) |
+| Edge cases | PASS (null, string, number, object, missing file, corrupt JSON) |
+| Test naming | PASS (TC-E{NN} convention with FR/NFR trace annotations) |
+| Import hygiene | PASS (imports only readMetaJson and writeMetaJson) |
+| Temp dir leak | None (cleanupTestDir in afterEach handles all paths) |
+| Module system | PASS (CommonJS require, .test.cjs extension) |
 
 ---
 
 ## 3. Agent File Analysis
 
-### 3.1 roundtable-analyst.md
+### 3.1 roundtable-analyst.md (Section 4.4 replacement, Section 5.1 extension)
 
 | Check | Result |
 |-------|--------|
-| Frontmatter valid | PASS (name, description, model, owned_skills) |
-| model: opus | PASS (per CON-006) |
-| Persona definitions complete | PASS (3 personas, each with name, identity, style, 4 principles) |
-| Phase mapping complete | PASS (all 5 analysis phases mapped) |
-| Single persona per phase | PASS (no phase has multiple personas) |
-| Fallback rule defined | PASS (section 1.5: unknown phase -> business-analyst) |
-| Constraints section | PASS (CON-003, CON-004 explicitly stated) |
+| Section numbering | PASS (4.4.1 through 4.4.9, sequential, no gaps) |
+| Section cross-references | PASS (4.4.3 references 4.4.4, 4.4.6 references 4.4.7, etc.) |
+| Persona name consistency | PASS (Maya Chen, Alex Rivera, Jordan Park throughout) |
+| Role label consistency | PASS (BA, Solutions Architect, System Designer) |
+| Turn counting rules | PASS (consistent definition: persona=1, user=1, framing=1) |
+| Max turns default | PASS (10, matches FR-007 AC-007-01) |
+| Warning at max-2 | PASS (matches FR-007 AC-007-02) |
+| Exit triggers | PASS ("done", "exit", "wrap up", "back" -- case-insensitive) |
+| Synthesis format | PASS (structured: Key Insights, Decisions Made, Open Questions) |
+| Attribution format | PASS ([Maya], [Alex], [Jordan], [Maya/Alex], [User], [All]) |
+| State tracker record | PASS (step_id, turn_count, personas_active, timestamp, synthesis_summary) |
+| Voice integrity rules | PASS (DO/DO NOT per persona + anti-blending rule) |
+| Session recovery | PASS (steps 7-9 in Section 5.1: filter, limit 3, include in greeting) |
+| Constraint compliance | PASS (CON-001 through CON-006 all satisfied) |
+| Trace annotations | PASS (FR-001 through FR-010 referenced in Section 4.4 header) |
 
 ---
 
-## 4. Step File Analysis
-
-### 4.1 Structural Validation (all 24 files)
-
-| Check | Files Tested | Pass | Fail |
-|-------|-------------|------|------|
-| YAML frontmatter present | 24 | 24 | 0 |
-| step_id format (PP-NN) | 24 | 24 | 0 |
-| step_id matches file location | 24 | 24 | 0 |
-| title present and <= 60 chars | 24 | 24 | 0 |
-| persona is valid value | 24 | 24 | 0 |
-| depth is valid value | 24 | 24 | 0 |
-| outputs is non-empty array | 24 | 24 | 0 |
-| No duplicate step_ids | 24 unique | PASS | -- |
-| ## Standard Mode present | 24 | 24 | 0 |
-| NN-name.md naming convention | 24 | 24 | 0 |
-
-### 4.2 Content Quality (spot-check of 5 files)
-
-| File | Brief Mode | Standard Mode | Deep Mode | Validation | Artifacts |
-|------|-----------|---------------|-----------|------------|-----------|
-| 00-quick-scan/01-scope-estimation.md | Present | Present (3 questions) | Present (6 questions) | Present | Present |
-| 01-requirements/06-feature-definition.md | Present | Present (3 questions) | Present (6 questions) | Present | Present |
-| 02-impact-analysis/03-risk-zones.md | Present | Present (3 questions) | Present (6 questions) | Present | Present |
-| 03-architecture/02-technology-decisions.md | Present | Present (3 questions) | Present (6 questions) | Present | Present |
-| 04-design/05-design-review.md | Present | Present (3 questions) | Present (6 questions) | Present | Present |
-
-All spot-checked files follow the authoring guidelines (VR-STEP-011 through VR-STEP-015).
-
----
-
-## 5. Summary
+## 4. Summary
 
 | Category | Issues Found | Severity |
 |----------|-------------|----------|
 | Production code | 0 | -- |
 | Test code | 0 | -- |
 | Agent file | 0 | -- |
-| Step files | 0 | -- |
 | **Total** | **0** | -- |
 
 Static analysis: **PASS** -- no issues found.

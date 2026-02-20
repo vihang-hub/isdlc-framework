@@ -5,11 +5,14 @@
 
 ## Open
 
-### Spec-Kit Learnings (from framework comparison 2026-02-11)
+### Spec-Kit Learnings (updated 2026-02-20 from deep competitive analysis)
 
 - #26 [ ] Spike/explore workflow — parallel implementation branches from a single spec for tech stack comparison or architecture exploration (Spec-Kit's "Creative Exploration")
-- #27 [ ] `/isdlc validate` command — on-demand artifact quality check (constitutional + completeness) without running a full workflow (Spec-Kit's `/speckit.checklist` + `/speckit.analyze`)
-- #28 [ ] Progressive disclosure / lite mode — expose only constitution → requirements → implement → quality loop for simple projects, full lifecycle opt-in
+- #27 [ ] `/isdlc validate` command — on-demand artifact quality check (constitutional + completeness) without running a full workflow (Spec-Kit's `/speckit.checklist` + `/speckit.analyze`). Should include "unit tests for English" — binary pass/fail validation criteria for specification documents, not just code.
+- #28 [ ] Progressive disclosure / lite mode — expose only constitution → requirements → implement → quality loop for simple projects, full lifecycle opt-in. Spec-Kit's zero-runtime simplicity shows demand for a lightweight path.
+- #56 [ ] Agent-agnostic artifact generation — generate agent-specific context files from iSDLC specs (Gemini, Copilot, Cursor, Windsurf). Spec-Kit supports 16+ agents from shared templates; iSDLC is Claude-only. Low priority but expands addressable market.
+- #57 [ ] Enforce "What vs How" separation in Phase 01 — requirements phase should prohibit technical decisions (framework choices, DB selection, API design). Defer all "How" to Phase 03 (Architecture). Spec-Kit enforces this split structurally; iSDLC's Phase 01 can bleed into architecture.
+- #58 [ ] Community skill catalog — `isdlc skill search` command with a catalog.json registry for discovering and installing community-contributed skills. Spec-Kit has a formal extension RFC with catalog, semantic versioning, and lifecycle hooks.
 
 ### Performance (remaining from 2026-02-13 investigation)
 
@@ -337,21 +340,9 @@
 > **Context**: Phase A/B separation is unintuitive. The user experience between managing backlog items, analyzing them, and building them doesn't flow naturally. This redesign unifies the pipeline around three natural verbs (add/analyze/build) with persona-driven interactive analysis and transparent quality enrichment. Inspired by BMAD party mode pattern.
 > **Subsumes**: #50, #6, #8, #9, #10, #17
 
-- #20 [A] Roundtable analysis agent with named personas
-  - **Problem**: Current Phase A generates artifacts inline without user interaction. Phase 01-04 agents run in isolation with no conversational engagement. The user is passive during the most important decision-making phases.
-  - **Design**: Single roundtable agent that wears three hats during the analyze verb:
-    - **Business Analyst persona** (Phases 00-01) — leads requirements discovery, challenges assumptions, surfaces edge cases. Deep conversational engagement.
-    - **Solutions Architect persona** (Phases 02-03) — leads impact analysis and architecture decisions. Presents tradeoffs, consults user on risk appetite and strategic direction.
-    - **System Designer persona** (Phase 04) — leads design decisions. Presents module designs, interfaces, key decisions for user approval.
-    - Each persona has a name, communication style, identity, and principles (BMAD agent pattern)
-    - Adaptive depth: simple items get brief confirmation ("3 ACs, sound right?"), complex items get full discussion ("I suggest we discuss this in detail")
-  - **Step-file architecture**: Each analysis step is a self-contained `.md` file. Progress tracked in `meta.json`. Resumable — "I did requirements yesterday, let's continue with architecture today."
-  - **Menu at each step**: `[E] Elaboration Mode` / `[C] Continue` / user can also just talk naturally
-  - **Files**: New `src/claude/agents/roundtable-analyst.md`, step files under `src/claude/skills/analysis-steps/`, persona definitions
-  - **Depends on**: #19 (analyze verb exists) — DONE
-  - **Complexity**: Medium
+- #20 [x] ~~Roundtable analysis agent with named personas~~ *(GitHub #20)* -> [requirements](docs/requirements/REQ-0027-gh-20-roundtable-analysis-agent-with-named-personas/) **Completed: 2026-02-20**
 
-- #21 [ ] Elaboration mode — multi-persona roundtable discussions
+- #21 [A] Elaboration mode — multi-persona roundtable discussions -> [requirements](docs/requirements/gh-21-elaboration-mode-multi-persona-roundtable-discussions/)
   - **Problem**: Some topics need deeper exploration than a single persona can provide. Architecture tradeoffs, complex requirements, and cross-cutting concerns benefit from multiple perspectives debating in real time.
   - **Design**: At any step during analyze, user selects `[E] Elaboration Mode` to bring all personas into a roundtable discussion:
     - All three personas (BA, Architect, Designer) plus the user participate as equals
@@ -399,6 +390,11 @@
   - **Complexity**: Low-medium — mostly mechanical rewrites across agent files
 
 ## Completed
+
+### 2026-02-20
+- [x] REQ-0027 (#20): Roundtable analysis agent with named personas — single-agent roundtable analyst with BA/Architect/Designer persona hats during analyze verb, step-file architecture, adaptive depth, resumable sessions *(GitHub #20, merged c02145b)*.
+  - New `roundtable-analyst.md` agent (307 LOC, persona router + step orchestration), 24 step files under `src/claude/skills/analysis-steps/` (5 phases: quick-scan, requirements, impact-analysis, architecture, design), updated `three-verb-utils.cjs` for roundtable integration. 63 new tests, 2836/2840 full suite, zero regressions. 8 FRs, 5 NFRs, ~40 ACs. 35 files changed, 2146 insertions, 385 deletions.
+- [x] BUG-0029-GH-18: Framework agents generate multiline Bash commands that bypass permission auto-allow rules — rewrite multiline Bash commands to single-line form across 9 agent files *(GitHub #18, merged 2e9e07c)*.
 
 ### 2026-02-19
 - [x] REQ-0025 (backlog 2.4): Performance budget and guardrail system — per-workflow timing limits, intensity-tier budgets, graceful degradation of debate rounds and fan-out parallelism, regression tracking, completion dashboard *(merged 3707b11)*.

@@ -1,51 +1,61 @@
 # Technical Debt Inventory
 
 **Project:** iSDLC Framework
-**Workflow:** REQ-0027-gh-20-roundtable-analysis-agent-with-named-personas (feature)
+**Workflow:** REQ-0028-gh-21-elaboration-mode-multi-persona-roundtable-discussions (feature)
 **Phase:** 08 - Code Review & QA
 **Date:** 2026-02-20
 
 ---
 
-## 1. New Technical Debt Introduced
+## 1. Technical Debt Resolved by This Feature
 
-### TD-001: Elaboration Mode Stub (Intentional)
+### TD-001 (RESOLVED): Elaboration Mode Stub
 
-- **Category:** Incomplete feature
-- **Severity:** Low
-- **Description:** The [E] Elaboration Mode menu option is wired but delegates to a stub that says "Elaboration mode is coming in a future update (#21)." The stub switches to deep mode as a workaround.
-- **Rationale:** This is explicitly out of scope per requirements (Section 7: "Elaboration mode (#21): The [E] menu option is wired but stubs to a message."). The feature is tracked as GH-21.
-- **Remediation:** Implement GH-21 (Elaboration mode with multi-persona roundtable discussions).
-- **Tracking:** GitHub Issue #21
+- **Previously:** The [E] Elaboration Mode menu option was a stub that fell back to single-persona deep mode. Tracked as GH-21.
+- **Resolution:** Full elaboration handler implemented in Section 4.4 of roundtable-analyst.md with 9 sub-sections covering entry, discussion, exit, synthesis, and state tracking.
+- **Status:** RESOLVED
 
-### TD-002: Step File Validator Not Shared (Acceptable)
+---
+
+## 2. New Technical Debt Introduced
+
+### TD-003: Step File Validator Not Shared (Unchanged from REQ-0027)
 
 - **Category:** Code organization
 - **Severity:** Very Low (Informational)
-- **Description:** The step file frontmatter parser logic (~270 lines) is defined inside `test-step-file-validator.test.cjs` rather than extracted to a shared utility module.
-- **Rationale:** The roundtable agent is an LLM agent that parses YAML natively -- it does not execute JavaScript parsing code. The test parser exists solely to validate step file content against the schema. There is no runtime consumer that would share this code. If a future hook needs programmatic step file validation, the parser can be extracted at that point.
+- **Description:** The step file frontmatter parser logic remains inside `test-step-file-validator.test.cjs` rather than in a shared module. No change from REQ-0027 assessment.
 - **Remediation:** Extract to shared module only if a second consumer emerges.
 - **Tracking:** None (no action needed currently)
 
+### TD-004: Elaboration Config Schema Not Formally Documented
+
+- **Category:** Documentation
+- **Severity:** Very Low (Informational)
+- **Description:** The `elaboration_config` object in meta.json currently supports only `max_turns`. The schema is not formally documented beyond the requirements spec (FR-007 AC-007-03) and the agent file (Section 4.4.1). If additional config keys are added in the future, a formal schema document would be beneficial.
+- **Remediation:** Document the full config schema when a second config key is added.
+- **Tracking:** None (single-key schema does not warrant formal documentation)
+
 ---
 
-## 2. Pre-Existing Technical Debt (Unchanged)
+## 3. Pre-Existing Technical Debt (Unchanged)
 
 | ID | Description | Status |
 |----|-------------|--------|
-| Pre-TD-001 | TC-E09 expects 48 agents in README, actual count is 60 | Open (agent inventory drift) |
+| Pre-TD-001 | TC-E09 expects 48 agents in README, actual count differs | Open (agent inventory drift) |
 | Pre-TD-002 | TC-07 STEP 4 task cleanup instructions mismatch | Open (plan format drift) |
 | Pre-TD-003 | gate-blocker-extended supervised_review timing-sensitive test | Open |
+| Pre-TD-004 | TC-13-01 expects exactly 48 agent markdown files, actual count differs | Open (agent count drift) |
 
 ---
 
-## 3. Technical Debt Summary
+## 4. Technical Debt Summary
 
-| Category | New | Pre-Existing | Total |
-|----------|-----|-------------|-------|
-| Intentional (deferred feature) | 1 (TD-001) | 0 | 1 |
-| Code organization | 1 (TD-002, informational) | 0 | 1 |
-| Test maintenance | 0 | 3 | 3 |
-| **Total** | **2** | **3** | **5** |
+| Category | Resolved | New | Pre-Existing | Net Change |
+|----------|----------|-----|-------------|------------|
+| Intentional (deferred feature) | 1 (TD-001) | 0 | 0 | -1 |
+| Code organization | 0 | 0 (TD-003 unchanged) | 0 | 0 |
+| Documentation | 0 | 1 (TD-004, informational) | 0 | +1 |
+| Test maintenance | 0 | 0 | 4 | 0 |
+| **Total** | **1** | **1** | **4** | **0 net** |
 
-No actionable technical debt was introduced by this feature. TD-001 is an intentional deferral tracked by GH-21. TD-002 is informational and requires no action.
+This feature resolved more technical debt than it introduced. TD-001 (the elaboration stub) was an intentional deferral from REQ-0027, now fully resolved. The one new item (TD-004) is informational and requires no immediate action.
