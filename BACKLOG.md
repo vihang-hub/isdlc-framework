@@ -5,15 +5,6 @@
 
 ## Open
 
-### Spec-Kit Learnings (updated 2026-02-20 from deep competitive analysis)
-
-- #26 [ ] Spike/explore workflow — parallel implementation branches from a single spec for tech stack comparison or architecture exploration (Spec-Kit's "Creative Exploration")
-- #27 [ ] `/isdlc validate` command — on-demand artifact quality check (constitutional + completeness) without running a full workflow (Spec-Kit's `/speckit.checklist` + `/speckit.analyze`). Should include "unit tests for English" — binary pass/fail validation criteria for specification documents, not just code.
-- #28 [ ] Progressive disclosure / lite mode — expose only constitution → requirements → implement → quality loop for simple projects, full lifecycle opt-in. Spec-Kit's zero-runtime simplicity shows demand for a lightweight path.
-- #56 [ ] Agent-agnostic artifact generation — generate agent-specific context files from iSDLC specs (Gemini, Copilot, Cursor, Windsurf). Spec-Kit supports 16+ agents from shared templates; iSDLC is Claude-only. Low priority but expands addressable market.
-- #57 [ ] Enforce "What vs How" separation in Phase 01 — requirements phase should prohibit technical decisions (framework choices, DB selection, API design). Defer all "How" to Phase 03 (Architecture). Spec-Kit enforces this split structurally; iSDLC's Phase 01 can bleed into architecture.
-- #58 [ ] Community skill catalog — `isdlc skill search` command with a catalog.json registry for discovering and installing community-contributed skills. Spec-Kit has a formal extension RFC with catalog, semantic versioning, and lifecycle hooks.
-
 ### Performance (remaining from 2026-02-13 investigation)
 
 - 2.3 [x] T7: Agent prompt boilerplate extraction — ROOT RESOLUTION, MONOREPO, ITERATION protocols duplicated across 17 agents (~3,600 lines) -> [requirements](docs/requirements/REQ-0021-t7-agent-prompt-boilerplate-extraction/) **Completed: 2026-02-17**
@@ -342,7 +333,18 @@
 
 - #20 [x] ~~Roundtable analysis agent with named personas~~ *(GitHub #20)* -> [requirements](docs/requirements/REQ-0027-gh-20-roundtable-analysis-agent-with-named-personas/) **Completed: 2026-02-20**
 
-- #21 [x] ~~Elaboration mode — multi-persona roundtable discussions~~ *(GitHub #21)* -> [requirements](docs/requirements/gh-21-elaboration-mode-multi-persona-roundtable-discussions/) **Completed: 2026-02-20**
+- #21 [A] Elaboration mode — multi-persona roundtable discussions -> [requirements](docs/requirements/gh-21-elaboration-mode-multi-persona-roundtable-discussions/)
+  - **Problem**: Some topics need deeper exploration than a single persona can provide. Architecture tradeoffs, complex requirements, and cross-cutting concerns benefit from multiple perspectives debating in real time.
+  - **Design**: At any step during analyze, user selects `[E] Elaboration Mode` to bring all personas into a roundtable discussion:
+    - All three personas (BA, Architect, Designer) plus the user participate as equals
+    - Personas discuss, debate, and build on each other's points naturally
+    - Cross-talk enabled: "As the Architect mentioned, if subscriptions are coming later, we should design the abstraction now..."
+    - User can address specific personas by name or ask the group
+    - Exit returns to the step workflow with enriched context applied to artifacts
+  - **Not party mode**: Focused on the current analysis topic, not freeform. Personas stay in character and on topic.
+  - **Files**: Elaboration mode workflow steps in roundtable agent, persona interaction protocol
+  - **Depends on**: #20 (roundtable agent with personas exists)
+  - **Complexity**: Medium
 
 - #22 [ ] Transparent Critic/Refiner at step boundaries
   - **Problem**: The existing Creator/Critic/Refiner debate loop runs invisibly. Users don't see improvements and can't validate them. This erodes trust and misses opportunities for user input on refinements.
@@ -372,8 +374,6 @@
 ## Completed
 
 ### 2026-02-20
-- [x] REQ-0028 (#21): Elaboration mode — multi-persona roundtable discussions — add `[E] Elaboration Mode` to roundtable analyst enabling focused multi-persona debate at any analysis step *(GitHub #21, merged a766cdc)*.
-  - Updated `roundtable-analyst.md` (+198 LOC elaboration mode protocol), updated `three-verb-utils.cjs` (elaboration routing). 21 new tests, 2857/2861 full suite, zero regressions. 12 files changed, 752 insertions, 173 deletions.
 - [x] REQ-0027 (#20): Roundtable analysis agent with named personas — single-agent roundtable analyst with BA/Architect/Designer persona hats during analyze verb, step-file architecture, adaptive depth, resumable sessions *(GitHub #20, merged c02145b)*.
   - New `roundtable-analyst.md` agent (307 LOC, persona router + step orchestration), 24 step files under `src/claude/skills/analysis-steps/` (5 phases: quick-scan, requirements, impact-analysis, architecture, design), updated `three-verb-utils.cjs` for roundtable integration. 63 new tests, 2836/2840 full suite, zero regressions. 8 FRs, 5 NFRs, ~40 ACs. 35 files changed, 2146 insertions, 385 deletions.
 - [x] BUG-0029-GH-18: Framework agents generate multiline Bash commands that bypass permission auto-allow rules — rewrite multiline Bash commands to single-line form across 9 agent files *(GitHub #18, merged 2e9e07c)*.
