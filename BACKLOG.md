@@ -259,7 +259,7 @@
   - **Related**: #51 (sizing consent — completed), ADR-0001 (sizing insertion point)
   - **Complexity**: Medium — analyze handler changes, tier scoring logic, meta.json schema extension, trivial-tier execution path
 
-- **Feature B: Build Consumption** (#60 + #61) [ ] — Clean build-side consumption of pre-analyzed items
+- **Feature B: Build Consumption** (#60 + #61) [A] — Clean build-side consumption of pre-analyzed items -> [requirements](docs/requirements/gh-60-61-build-consumption-init-split-smart-staleness/)
   - Depends on Feature A (consumes tier + sizing from meta.json), but independently valuable.
   - **#60**: Split build init from phase execution
     - New orchestrator mode `MODE: init-only` (create workflow, branch, state.json — no phase execution). Phase-Loop Controller handles ALL phase execution uniformly from `START_PHASE` onward. `MODE: init-and-phase-01` deprecated.
