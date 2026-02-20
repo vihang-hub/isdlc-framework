@@ -1,125 +1,112 @@
 # Static Analysis Report
 
 **Project:** iSDLC Framework
-**Workflow:** BUG-0029-GH-18-multiline-bash-permission-bypass (fix)
+**Workflow:** REQ-0027-gh-20-roundtable-analysis-agent-with-named-personas (feature)
 **Phase:** 08 - Code Review & QA
-**Date:** 2026-02-19
+**Date:** 2026-02-20
 
 ---
 
-## 1. Multiline Bash Block Scan
+## 1. Production Code Analysis
 
-All 8 affected files scanned for remaining multiline Bash/sh code blocks using the `MULTILINE_BASH_REGEX` pattern: `` ```(?:bash|sh)\n([\s\S]*?)``` ``
+### 1.1 three-verb-utils.cjs (+14 lines)
 
-| File | Multiline Bash Blocks | Status |
-|------|-----------------------|--------|
-| `src/claude/agents/05-software-developer.md` | 0 | PASS |
-| `src/claude/agents/06-integration-tester.md` | 0 | PASS |
-| `src/claude/agents/discover/data-model-analyzer.md` | 0 | PASS |
-| `src/claude/agents/discover/skills-researcher.md` | 0 | PASS |
-| `src/claude/agents/discover/test-evaluator.md` | 0 | PASS |
-| `src/claude/commands/discover.md` | 0 | PASS |
-| `src/claude/commands/provider.md` | 0 | PASS |
-| `src/claude/commands/isdlc.md` | 0 | PASS |
+| Check | Result |
+|-------|--------|
+| Syntax valid | PASS (node --check) |
+| Type safety | PASS (typeof, Array.isArray, null checks) |
+| Error handling | PASS (defensive defaults, no throw) |
+| Cyclomatic complexity | 3 (within threshold of 10) |
+| Nesting depth | 2 (within threshold of 4) |
+| Unused variables | None |
+| Dead code | None |
+| Hardcoded values | None (uses existing constants) |
 
----
+### 1.2 Findings
 
-## 2. CJS Syntax Validation
-
-| File | Status | Notes |
-|------|--------|-------|
-| `src/claude/hooks/tests/multiline-bash-validation.test.cjs` | PASS | `node --test` parsed and executed successfully |
+No static analysis issues found in production code.
 
 ---
 
-## 3. Module Structure Analysis
+## 2. Test Code Analysis
 
-### 3.1 multiline-bash-validation.test.cjs
+### 2.1 test-three-verb-utils-steps.test.cjs (25 tests)
 
-| Check | Status | Detail |
-|-------|--------|--------|
-| `'use strict'` directive | PASS | Present at line 1 |
-| CommonJS module pattern | PASS | Uses `require()` (node:test, node:assert/strict, fs, path) |
-| No mixed ESM/CJS | PASS | No `import`/`export` statements |
-| File extension | PASS | `.cjs` -- explicit CommonJS for `"type": "module"` package |
-| Test framework | PASS | Uses `node:test` (describe, it) |
-| Assert module | PASS | Uses `node:assert/strict` |
+| Check | Result |
+|-------|--------|
+| Test isolation | PASS (beforeEach/afterEach with temp dirs, no shared state) |
+| Cleanup | PASS (rmSync with recursive+force in afterEach) |
+| Assertion quality | PASS (deepStrictEqual for arrays/objects, strict equality for scalars) |
+| Edge cases | PASS (null, string, number, array, missing file, corrupt JSON) |
+| Test naming | PASS (TC-{suite}-{NN} convention with descriptive titles) |
 
----
+### 2.2 test-step-file-validator.test.cjs (38 tests)
 
-## 4. Non-Bash Code Block Integrity Check
-
-Verified that non-Bash fenced code blocks were not modified in any affected file:
-
-| Block Type | Regex Pattern | Files Checked | Modified | Status |
-|------------|---------------|---------------|----------|--------|
-| JSON | `` ```json `` | All 8 | No | PASS |
-| TypeScript | `` ```typescript `` | 05-software-developer.md | No | PASS |
-| JavaScript | `` ```javascript `` | 05-software-developer.md | No | PASS |
-| YAML | `` ```yaml `` | provider.md | No | PASS |
-| Markdown | `` ```markdown `` | data-model-analyzer.md, test-evaluator.md | No | PASS |
-| Plain (no language) | `` ``` `` | 05-software-developer.md, 06-integration-tester.md | No | PASS |
+| Check | Result |
+|-------|--------|
+| Test isolation | PASS (beforeEach/afterEach with temp dirs) |
+| Assertion quality | PASS (strict equality, deep strict for objects) |
+| Edge cases | PASS (invalid formats, unclosed quotes, empty arrays, cross-phase validation) |
+| Inventory validation | PASS (verifies all 24 files against expected list) |
+| YAML parser robustness | PASS (handles inline arrays, block arrays, quoted/unquoted strings, booleans, numbers, null) |
 
 ---
 
-## 5. Frontmatter Integrity Check
+## 3. Agent File Analysis
 
-| File | Frontmatter Present | Modified | Status |
-|------|--------------------:|:--------:|--------|
-| 05-software-developer.md | Yes | No | PASS |
-| 06-integration-tester.md | Yes | No | PASS |
-| data-model-analyzer.md | Yes | No | PASS |
-| skills-researcher.md | Yes | No | PASS |
-| test-evaluator.md | Yes | No | PASS |
-| discover.md | No (command file) | N/A | PASS |
-| provider.md | Yes | No | PASS |
-| isdlc.md | No (command file) | N/A | PASS |
+### 3.1 roundtable-analyst.md
 
----
-
-## 6. Convention Section Consistency Check
-
-| Property | CLAUDE.md | CLAUDE.md.template | Match |
-|----------|-----------|-------------------|:-----:|
-| Section heading | `### Single-Line Bash Convention` | `### Single-Line Bash Convention` | Yes |
-| Glob explanation | Present | Present | Yes |
-| Transformation table | 5 rows | 5 rows | Yes |
-| Escape hatch | bin/ scripts | bin/ scripts | Yes |
-| Reference format | Present | Present | Yes |
-| Content identical | -- | -- | Yes |
+| Check | Result |
+|-------|--------|
+| Frontmatter valid | PASS (name, description, model, owned_skills) |
+| model: opus | PASS (per CON-006) |
+| Persona definitions complete | PASS (3 personas, each with name, identity, style, 4 principles) |
+| Phase mapping complete | PASS (all 5 analysis phases mapped) |
+| Single persona per phase | PASS (no phase has multiple personas) |
+| Fallback rule defined | PASS (section 1.5: unknown phase -> business-analyst) |
+| Constraints section | PASS (CON-003, CON-004 explicitly stated) |
 
 ---
 
-## 7. Dependency Analysis
+## 4. Step File Analysis
 
-### 7.1 New Dependencies
+### 4.1 Structural Validation (all 24 files)
 
-None. The test file uses only Node.js built-in modules:
-- `node:test` (describe, it)
-- `node:assert/strict`
-- `fs` (readFileSync, existsSync)
-- `path` (resolve, join)
+| Check | Files Tested | Pass | Fail |
+|-------|-------------|------|------|
+| YAML frontmatter present | 24 | 24 | 0 |
+| step_id format (PP-NN) | 24 | 24 | 0 |
+| step_id matches file location | 24 | 24 | 0 |
+| title present and <= 60 chars | 24 | 24 | 0 |
+| persona is valid value | 24 | 24 | 0 |
+| depth is valid value | 24 | 24 | 0 |
+| outputs is non-empty array | 24 | 24 | 0 |
+| No duplicate step_ids | 24 unique | PASS | -- |
+| ## Standard Mode present | 24 | 24 | 0 |
+| NN-name.md naming convention | 24 | 24 | 0 |
 
-### 7.2 npm Audit
+### 4.2 Content Quality (spot-check of 5 files)
 
-```
-found 0 vulnerabilities
-```
+| File | Brief Mode | Standard Mode | Deep Mode | Validation | Artifacts |
+|------|-----------|---------------|-----------|------------|-----------|
+| 00-quick-scan/01-scope-estimation.md | Present | Present (3 questions) | Present (6 questions) | Present | Present |
+| 01-requirements/06-feature-definition.md | Present | Present (3 questions) | Present (6 questions) | Present | Present |
+| 02-impact-analysis/03-risk-zones.md | Present | Present (3 questions) | Present (6 questions) | Present | Present |
+| 03-architecture/02-technology-decisions.md | Present | Present (3 questions) | Present (6 questions) | Present | Present |
+| 04-design/05-design-review.md | Present | Present (3 questions) | Present (6 questions) | Present | Present |
+
+All spot-checked files follow the authoring guidelines (VR-STEP-011 through VR-STEP-015).
 
 ---
 
-## 8. Summary
+## 5. Summary
 
 | Category | Issues Found | Severity |
 |----------|-------------|----------|
-| Remaining multiline Bash blocks | 0 | -- |
-| Syntax errors | 0 | -- |
-| Security vulnerabilities | 0 | -- |
-| Anti-patterns | 0 | -- |
-| Non-Bash block modifications | 0 | -- |
-| Frontmatter modifications | 0 | -- |
-| Convention inconsistencies | 0 | -- |
-| Dependency issues | 0 | -- |
+| Production code | 0 | -- |
+| Test code | 0 | -- |
+| Agent file | 0 | -- |
+| Step files | 0 | -- |
 | **Total** | **0** | -- |
 
-Static analysis: **PASS**
+Static analysis: **PASS** -- no issues found.

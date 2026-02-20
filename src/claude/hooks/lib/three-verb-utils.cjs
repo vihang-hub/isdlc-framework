@@ -188,10 +188,18 @@ function deriveBacklogMarker(analysisStatus) {
 // ---------------------------------------------------------------------------
 
 /**
- * Reads and parses meta.json from a slug directory, applying legacy migration
- * if needed.
+ * Reads and normalizes meta.json from a slug directory.
+ * Returns null if file doesn't exist or is corrupted.
  *
- * Traces: FR-009 (AC-009-01..05), ADR-0013
+ * Defensive defaults applied:
+ * - analysis_status: 'raw'
+ * - phases_completed: []
+ * - source: 'manual'
+ * - created_at: current timestamp
+ * - steps_completed: []           (REQ-ROUNDTABLE-ANALYST, GH-20)
+ * - depth_overrides: {}           (REQ-ROUNDTABLE-ANALYST, GH-20)
+ *
+ * Traces: FR-009 (AC-009-01..05), ADR-0013, FR-005, FR-006
  *
  * @param {string} slugDir - Absolute path to the slug directory
  * @returns {object|null} Parsed and migrated meta object, or null if missing/corrupt
@@ -238,6 +246,15 @@ function readMetaJson(slugDir) {
     }
     if (!raw.created_at) {
         raw.created_at = new Date().toISOString();
+    }
+
+    // Roundtable step-tracking defaults (REQ-ROUNDTABLE-ANALYST, GH-20)
+    // Traces: FR-005 AC-005-04, FR-006 AC-006-06, NFR-005 AC-NFR-005-03
+    if (!Array.isArray(raw.steps_completed)) {
+        raw.steps_completed = [];
+    }
+    if (typeof raw.depth_overrides !== 'object' || raw.depth_overrides === null || Array.isArray(raw.depth_overrides)) {
+        raw.depth_overrides = {};
     }
 
     return raw;

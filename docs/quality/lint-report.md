@@ -1,8 +1,8 @@
-# Lint Report: REQ-0023-three-verb-backlog-model
+# Lint Report: REQ-0027-gh-20-roundtable-analysis-agent-with-named-personas
 
 **Phase**: 16-quality-loop
-**Date**: 2026-02-18
-**Feature**: Three-verb backlog model (add/analyze/build) (GH #19)
+**Date**: 2026-02-19
+**Feature**: GH-20 -- Roundtable analysis agent with named personas
 
 ## Lint Summary
 
@@ -16,36 +16,42 @@ No ESLint, Prettier, or other linter is installed.
 
 In lieu of automated linting, a manual review was performed on all new/modified files.
 
-### src/claude/hooks/lib/three-verb-utils.cjs (NEW - 636 lines)
+### src/claude/hooks/lib/three-verb-utils.cjs (MODIFIED - +14 lines)
 
 | Category | Finding | Severity |
 |----------|---------|----------|
-| 'use strict' | Present at top | OK |
-| JSDoc | All 14 exported functions documented with @param/@returns | OK |
-| Naming | Functions use camelCase, constants use UPPER_SNAKE_CASE | OK |
-| Error handling | All fs operations wrapped in try/catch or existence checks | OK |
-| Consistency | Follows existing hook utility patterns (common.cjs, provider-utils.cjs) | OK |
-| Module format | CommonJS (.cjs) consistent with hooks directory convention | OK |
+| Defensive defaults | steps_completed: Array.isArray guard, depth_overrides: typeof/null/Array guard | OK |
+| JSDoc | readMetaJson docstring updated with new default fields | OK |
+| Trace IDs | REQ-ROUNDTABLE-ANALYST, GH-20, FR-005, FR-006, NFR-005 references present | OK |
+| Consistency | Follows existing defensive default pattern (analysis_status, source, created_at) | OK |
 
-### src/claude/hooks/skill-delegation-enforcer.cjs (MODIFIED)
+### src/claude/agents/roundtable-analyst.md (NEW - 308 lines)
 
 | Category | Finding | Severity |
 |----------|---------|----------|
-| EXEMPT_ACTIONS | Set(['add', 'analyze']) added correctly | OK |
-| No other changes | Only EXEMPT_ACTIONS constant modified | OK |
+| Frontmatter | name, description, model, owned_skills all present | OK |
+| Section structure | 6 major sections with subsections numbered hierarchically | OK |
+| Constraint references | CON-002, CON-003, CON-004 properly cited | OK |
+| Table formatting | Phase-persona mapping table is well-formatted | OK |
+| Code blocks | Menu examples use proper fenced code blocks | OK |
 
-### src/claude/hooks/delegation-gate.cjs (MODIFIED)
+### src/claude/skills/analysis-steps/**/*.md (NEW - 24 step files)
 
 | Category | Finding | Severity |
 |----------|---------|----------|
-| EXEMPT_ACTIONS | Set(['add', 'analyze']) added correctly | OK |
-| No other changes | Only EXEMPT_ACTIONS constant modified | OK |
+| YAML frontmatter | All 24 files have valid frontmatter between --- delimiters | OK |
+| Required fields | step_id, title, persona, depth, outputs present in all files | OK |
+| Naming convention | All files follow NN-name.md pattern | OK |
+| Body structure | All files contain ## Brief Mode, ## Standard Mode, ## Deep Mode sections | OK |
+| Persona consistency | Persona values match phase-to-persona mapping in agent file | OK |
 
-### Markdown files (MODIFIED)
+### Test files (NEW)
 
-- `src/claude/commands/isdlc.md` -- Well-structured add/analyze/build sections
-- `src/claude/agents/00-sdlc-orchestrator.md` -- SCENARIO 3 updated with three-verb menu
-- `src/claude/CLAUDE.md.template` -- Intent detection table rewritten for 8 intents
-- `CLAUDE.md` -- Already updated intent detection table
+| File | Lines | Tests | Style |
+|------|-------|-------|-------|
+| test-three-verb-utils-steps.test.cjs | ~400 | 25 | 'use strict', describe/it structure, assert/strict |
+| test-step-file-validator.test.cjs | ~850 | 38 | 'use strict', describe/it structure, assert/strict |
+
+Both test files follow existing CJS test patterns in the hooks/tests directory.
 
 **Verdict**: No lint issues found. Zero errors, zero warnings.
