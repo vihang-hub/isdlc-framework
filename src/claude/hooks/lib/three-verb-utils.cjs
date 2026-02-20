@@ -198,6 +198,8 @@ function deriveBacklogMarker(analysisStatus) {
  * - created_at: current timestamp
  * - steps_completed: []           (REQ-ROUNDTABLE-ANALYST, GH-20)
  * - depth_overrides: {}           (REQ-ROUNDTABLE-ANALYST, GH-20)
+ * - elaborations: []              (GH-21, elaboration tracking)
+ * - elaboration_config: {}        (GH-21, elaboration config)
  *
  * Traces: FR-009 (AC-009-01..05), ADR-0013, FR-005, FR-006
  *
@@ -255,6 +257,16 @@ function readMetaJson(slugDir) {
     }
     if (typeof raw.depth_overrides !== 'object' || raw.depth_overrides === null || Array.isArray(raw.depth_overrides)) {
         raw.depth_overrides = {};
+    }
+
+    // Elaboration tracking defaults (GH-21)
+    // Traces: FR-009 AC-009-02, NFR-005 AC-NFR-005-01
+    if (!Array.isArray(raw.elaborations)) {
+        raw.elaborations = [];
+    }
+    // Traces: FR-007 AC-007-03
+    if (typeof raw.elaboration_config !== 'object' || raw.elaboration_config === null || Array.isArray(raw.elaboration_config)) {
+        raw.elaboration_config = {};
     }
 
     return raw;
