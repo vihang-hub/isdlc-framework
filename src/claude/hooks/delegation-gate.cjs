@@ -9,7 +9,7 @@
  * If delegation is missing, blocks the response so Claude must retry
  * and delegate properly.
  *
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 const {
@@ -30,6 +30,14 @@ const {
  * `build` is NOT exempt -- delegation must occur.
  */
 const EXEMPT_ACTIONS = new Set(['add', 'analyze']);
+
+/**
+ * Maximum age (in minutes) for a pending_delegation marker before it is
+ * considered stale and auto-cleared. Cross-session markers are definitionally
+ * stale — Claude Code sessions don't persist conversation state.
+ * GH-62: Stale pending_delegation marker blocks all responses across sessions.
+ */
+const STALENESS_THRESHOLD_MINUTES = 30;
 
 /**
  * Check if the skill_usage_log contains a delegation to the required agent
@@ -100,6 +108,25 @@ async function main() {
         }
 
         debugLog('Delegation gate: pending delegation found:', pending);
+
+        // GH-62: Staleness check — auto-clear markers older than threshold.
+        // Cross-session markers are definitionally stale since Claude Code
+        // sessions don't persist conversation state.
+        if (pending.invoked_at) {
+            const ageMs = Date.now() - new Date(pending.invoked_at).getTime();
+            const ageMinutes = ageMs / 60000;
+            if (ageMinutes > STALENESS_THRESHOLD_MINUTES) {
+                logHookEvent('delegation-gate', 'warn', {
+                    reason: `Stale pending_delegation marker auto-cleared (${Math.round(ageMinutes)}m old, threshold: ${STALENESS_THRESHOLD_MINUTES}m)`,
+                    skill: pending.skill,
+                    invoked_at: pending.invoked_at
+                });
+                outputSelfHealNotification('delegation-gate',
+                    `Cleared stale delegation marker from ${pending.invoked_at} (${Math.round(ageMinutes)}m ago).`);
+                clearMarkerAndResetErrors();
+                process.exit(0);
+            }
+        }
 
         // BUG-0021: Defense-in-depth — auto-clear exempt action markers.
         // If the pending marker's args contain an exempt action (e.g., 'analyze'),

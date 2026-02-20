@@ -110,13 +110,23 @@ Store as `scan_context`:
 
 Perform lightweight searches (NOT full dependency analysis):
 
-```bash
-# Glob for file name matches
-glob "**/user*.{ts,js,py,java}"
-glob "**/*preference*.{ts,js,py,java}"
+Glob for file name matches:
 
-# Grep for keyword references
+```bash
+glob "**/user*.{ts,js,py,java}"
+```
+
+```bash
+glob "**/*preference*.{ts,js,py,java}"
+```
+
+Grep for keyword references:
+
+```bash
 grep -l "preferences" src/
+```
+
+```bash
 grep -l "user.*settings" src/
 ```
 

@@ -8,6 +8,10 @@
  * Bash Convention documentation exists in CLAUDE.md and CLAUDE.md.template.
  *
  * Uses Node.js built-in test runner (node:test) + node:assert/strict.
+ *
+ * Updated 2026-02-20: Added 2 remaining affected files (architecture-analyzer.md,
+ * quick-scan-agent.md) discovered during Phase 02 revalidation, plus a
+ * codebase-wide sweep test to prevent regressions in any agent/command file.
  */
 
 const { describe, it } = require('node:test');
@@ -21,8 +25,10 @@ const path = require('path');
 
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
 
-// BUG-0029: Files that were identified as containing multiline Bash blocks
+// BUG-0029: Files originally identified as containing multiline Bash blocks
+// (Phase 01 quick-scan: 8 files, Phase 02 revalidation: +2 files = 10 total)
 const AFFECTED_FILES = [
+  // Original 8 files from Phase 01 (already fixed, these are regression guards)
   'src/claude/agents/05-software-developer.md',
   'src/claude/agents/06-integration-tester.md',
   'src/claude/commands/discover.md',
@@ -31,6 +37,9 @@ const AFFECTED_FILES = [
   'src/claude/agents/discover/data-model-analyzer.md',
   'src/claude/agents/discover/skills-researcher.md',
   'src/claude/agents/discover/test-evaluator.md',
+  // 2 remaining files discovered in Phase 02 revalidation (TDD: these FAIL before fix)
+  'src/claude/agents/discover/architecture-analyzer.md',
+  'src/claude/agents/quick-scan/quick-scan-agent.md',
 ];
 
 // ---------------------------------------------------------------------------
@@ -281,5 +290,97 @@ describe('Regression tests: non-Bash code blocks not flagged', () => {
   it('should NOT flag markdown code blocks', () => {
     const content = '```markdown\n# Heading\nSome text\n## Another heading\n```';
     assert.ok(!hasMultilineBash(content), 'Markdown blocks should not be flagged');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Additional negative tests: line-continuation and multi-example patterns
+// ---------------------------------------------------------------------------
+
+describe('Negative tests: hasMultilineBash catches remaining pattern types', () => {
+  it('should detect backslash line-continuation patterns', () => {
+    const content = [
+      '```bash',
+      'find . -type d \\',
+      '  -not -path "*/node_modules/*" \\',
+      '  -not -path "*/.git/*" \\',
+      '  | head -100',
+      '```',
+    ].join('\n');
+    assert.ok(hasMultilineBash(content), 'Should detect backslash line-continuation pattern');
+  });
+
+  it('should detect multi-example blocks with interleaved comments', () => {
+    const content = [
+      '```bash',
+      '# Glob for file name matches',
+      'glob "**/user*.{ts,js}"',
+      '',
+      '# Grep for keyword references',
+      'grep -l "preferences" src/',
+      '```',
+    ].join('\n');
+    assert.ok(hasMultilineBash(content), 'Should detect multi-example block with comments');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Codebase-wide sweep: ALL agent and command .md files must comply
+// ---------------------------------------------------------------------------
+
+describe('Codebase-wide sweep: no multiline Bash in any agent/command file', () => {
+  /**
+   * Recursively collect all .md files under a directory.
+   * @param {string} dir - Directory to scan
+   * @returns {string[]} Array of absolute file paths
+   */
+  function collectMdFiles(dir) {
+    const results = [];
+    if (!fs.existsSync(dir)) return results;
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        results.push(...collectMdFiles(fullPath));
+      } else if (entry.isFile() && entry.name.endsWith('.md')) {
+        results.push(fullPath);
+      }
+    }
+    return results;
+  }
+
+  const agentDir = path.join(PROJECT_ROOT, 'src', 'claude', 'agents');
+  const commandDir = path.join(PROJECT_ROOT, 'src', 'claude', 'commands');
+
+  const allMdFiles = [
+    ...collectMdFiles(agentDir),
+    ...collectMdFiles(commandDir),
+  ];
+
+  it('should find at least 10 agent/command .md files to scan', () => {
+    assert.ok(
+      allMdFiles.length >= 10,
+      `Expected at least 10 .md files, found ${allMdFiles.length}`
+    );
+  });
+
+  it('should have zero multiline Bash blocks across ALL agent/command files', () => {
+    const allViolations = [];
+    for (const absPath of allMdFiles) {
+      const content = fs.readFileSync(absPath, 'utf8');
+      const violations = findMultilineBashBlocks(content);
+      if (violations.length > 0) {
+        const relPath = path.relative(PROJECT_ROOT, absPath);
+        for (const v of violations) {
+          allViolations.push(`  ${relPath}:${v.lineNumber} -- ${v.preview}`);
+        }
+      }
+    }
+    assert.strictEqual(
+      allViolations.length,
+      0,
+      `Found ${allViolations.length} multiline Bash block(s) across codebase:\n` +
+        allViolations.join('\n')
+    );
   });
 });
