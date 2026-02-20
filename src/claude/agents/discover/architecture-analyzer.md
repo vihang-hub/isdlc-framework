@@ -43,17 +43,10 @@ Called by `discover-orchestrator` during the EXISTING PROJECT FLOW:
 
 ### Step 1: Scan Project Structure
 
+Get the directory structure, excluding common ignore patterns (node_modules, .git, dist, build, __pycache__, .isdlc, .claude):
+
 ```bash
-# Get directory structure (excluding common ignore patterns)
-find . -type d \
-  -not -path '*/node_modules/*' \
-  -not -path '*/.git/*' \
-  -not -path '*/dist/*' \
-  -not -path '*/build/*' \
-  -not -path '*/__pycache__/*' \
-  -not -path '*/.isdlc/*' \
-  -not -path '*/.claude/*' \
-  | head -100
+find . -type d -not -path '*/node_modules/*' -not -path '*/.git/*' -not -path '*/dist/*' -not -path '*/build/*' -not -path '*/__pycache__/*' -not -path '*/.isdlc/*' -not -path '*/.claude/*' | head -100
 ```
 
 Record:

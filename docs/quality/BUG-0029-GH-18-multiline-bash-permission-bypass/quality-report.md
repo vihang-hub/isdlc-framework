@@ -1,16 +1,16 @@
-# Quality Report: BUG-0029-GH-18
+# Quality Report: BUG-0029 (GH-18) Multiline Bash Permission Bypass
 
 **Bug**: Framework agents generate multiline Bash commands that bypass Claude Code's permission auto-allow rules
 **Phase**: 16-quality-loop
-**Date**: 2026-02-19
-**Mode**: FULL SCOPE (no implementation loop state)
-**Iterations**: 1 (both tracks passed on first run)
+**Date**: 2026-02-20
+**Iteration**: 2 (iteration 1 found delegation-gate regression; iteration 2 passes clean)
+**Status**: PASS
 
 ---
 
 ## Executive Summary
 
-All quality checks PASS. 32 new tests pass, zero new regressions introduced. Both Track A (Testing) and Track B (Automated QA) completed successfully on the first iteration.
+BUG-0029 fixed 2 multiline Bash code blocks in agent prompt files and added a staleness feature (GH-62) to delegation-gate.cjs. The quality loop identified a regression where the GH-62 staleness threshold (30 minutes) caused 12 delegation-gate tests to fail due to hardcoded past timestamps. The regression was fixed by replacing hardcoded timestamps with dynamic constants. After the fix, both Track A and Track B pass with zero new regressions.
 
 ---
 
@@ -28,9 +28,9 @@ All quality checks PASS. 32 new tests pass, zero new regressions introduced. Bot
 
 | Check | Skill ID | Result | Notes |
 |-------|----------|--------|-------|
-| New tests (multiline-bash-validation) | QL-002 | **PASS** (32/32) | 5 suites, 32 tests, 0 failures |
-| CJS hook test suite | QL-002 | **PASS** (2144/2145) | 1 pre-existing failure (SM-04 in gate-blocker-extended) |
-| ESM test suite | QL-002 | **PASS** (629/632) | 3 pre-existing failures (TC-E09, TC-07, TC-13-01) |
+| New: multiline-bash-validation tests | QL-002 | **PASS** (38/38) | 7 suites, 38 tests, 0 failures |
+| CJS hook test suite | QL-002 | **PASS** (2366/2367) | 1 pre-existing failure (SM-04 in gate-blocker-extended) |
+| ESM test suite | QL-002 | **PASS** (628/632) | 4 pre-existing failures |
 | Characterization tests | QL-002 | **SKIPPED** | No test files in tests/characterization/ |
 | E2E tests | QL-002 | **SKIPPED** | No test files in tests/e2e/ |
 | Coverage analysis | QL-004 | **NOT CONFIGURED** | No c8/istanbul coverage tool |
@@ -43,10 +43,10 @@ All quality checks PASS. 32 new tests pass, zero new regressions introduced. Bot
 
 ### Track A Summary: **PASS**
 
-- Total tests executed: 2,805 (32 new + 2,145 CJS + 632 ESM - 4 skipped suites)
-- Total pass: 2,805
+- Total tests executed: 3,037 (38 new + 2,367 CJS + 632 ESM)
+- Total pass: 3,032
 - New test failures: 0
-- Pre-existing failures: 4 (documented, not related to BUG-0029)
+- Pre-existing failures: 5 (documented, not related to BUG-0029)
 
 ---
 
@@ -63,49 +63,64 @@ All quality checks PASS. 32 new tests pass, zero new regressions introduced. Bot
 
 | Check | Skill ID | Result | Notes |
 |-------|----------|--------|-------|
-| Automated code review | QL-010 | **PASS** | All 8 modified .md files verified: zero multiline bash blocks remain. Convention section present in CLAUDE.md and CLAUDE.md.template. |
-| Traceability verification | - | **PASS** | 32 tests trace to FR-001, FR-002, FR-004, negative tests, and regression tests. All requirements covered. |
+| Automated code review | QL-010 | **PASS** | All modified files verified: zero multiline bash blocks remain. Convention section present in CLAUDE.md and CLAUDE.md.template. |
+| Traceability verification | - | **PASS** | 38 tests trace to FR-001, FR-002, FR-004, negative tests, regression tests, and codebase sweep. All requirements covered. |
 
 ### Track B Summary: **PASS**
 
 ---
 
-## Pre-existing Failures (Not Related to BUG-0029)
+## Pre-existing Failures (5 total, all confirmed pre-BUG-0029)
+
+Verified by running full test suite at pre-BUG-0029 commit (git stash to 92edfc5). Identical 5 failures present.
 
 | # | Test | File | Reason |
 |---|------|------|--------|
-| 1 | SM-04: supervised_review info log | test-gate-blocker-extended.test.cjs:1321 | Expects supervised review stderr output; file not modified |
-| 2 | TC-E09: README agent count | deep-discovery-consistency.test.js:115 | Expects "40 agents" in README; documented pre-existing |
-| 3 | TC-07: STEP 4 task cleanup | plan-tracking.test.js:220 | Expects task cleanup instructions; file not modified |
-| 4 | TC-13-01: Agent file count | prompt-format.test.js:159 | Expects 48 agents, finds 60; agent count grew over time |
+| 1 | TC-E09: README agent count | prompt-format.test.js | Expects "40 agents" in README (known per MEMORY.md) |
+| 2 | T07: STEP 1 branch creation | early-branch-creation.test.js | Expects branch creation mention before Phase 01 |
+| 3 | TC-07: STEP 4 task cleanup | plan-tracking.test.js | Expects task cleanup instructions |
+| 4 | TC-13-01: Agent file count | prompt-format.test.js | Expects 48 agents, finds 61 (agent count grew) |
+| 5 | SM-04: supervised_review log | test-gate-blocker-extended.test.cjs | Expects supervised review stderr output |
 
-None of these files were modified by BUG-0029.
+---
+
+## Regression Found and Fixed (Iteration 1 -> 2)
+
+**Issue**: The GH-62 staleness feature in `delegation-gate.cjs` added a 30-minute threshold for auto-clearing stale `pending_delegation` markers. All 31 delegation-gate test cases used hardcoded past timestamps (Feb 8, 17, 18), causing the staleness check to auto-clear markers before the tests' expected blocking logic could execute. This produced 12 test failures (SyntaxError from empty stdout).
+
+**Root cause**: Test data incompatible with new production code behavior.
+
+**Fix applied to**: `src/claude/hooks/tests/test-delegation-gate.test.cjs`
+- Added `RECENT_TS = new Date().toISOString()` for `invoked_at` fields (always within 30m threshold)
+- Added `AFTER_TS = new Date(Date.now() + 5000).toISOString()` for log entries expected AFTER invocation
+- Added `BEFORE_TS = new Date(Date.now() - 3600000).toISOString()` for log entries expected BEFORE invocation
+- Replaced all 31 hardcoded `invoked_at` timestamps and 6 `skill_usage_log` timestamps
+
+**Result after fix**: 35/35 delegation-gate tests pass, 0 failures.
+
+---
+
+## Files Modified by BUG-0029 (including quality loop fixes)
+
+| File | Change | Phase |
+|------|--------|-------|
+| `src/claude/agents/discover/architecture-analyzer.md` | Joined 10-line find command to single line | 06-implementation |
+| `src/claude/agents/quick-scan/quick-scan-agent.md` | Split 6-line multi-command block into 4 single-line blocks | 06-implementation |
+| `src/claude/hooks/delegation-gate.cjs` | Added GH-62 staleness threshold (30m) for stale markers | 06-implementation |
+| `src/claude/hooks/tests/multiline-bash-validation.test.cjs` | Added 38 tests for BUG-0029 | 06-implementation |
+| `src/claude/hooks/tests/test-delegation-gate.test.cjs` | Fixed GH-62 regression: dynamic timestamps | 16-quality-loop |
 
 ---
 
 ## Parallel Execution Summary
 
-| Track | Groups | Elapsed | Result |
-|-------|--------|---------|--------|
-| Track A | A1 (build/lint/type), A2 (tests/coverage), A3 (mutation) | ~17s | PASS |
-| Track B | B1 (security), B2 (code review/traceability) | ~5s | PASS |
-
-### Group Composition
-
-| Group | Checks (Skill IDs) |
-|-------|-------------------|
-| A1 | QL-007, QL-005, QL-006 |
-| A2 | QL-002, QL-004 |
-| A3 | QL-003 |
-| B1 | QL-008, QL-009 |
-| B2 | QL-010 |
-
-### Fan-out
-
-Fan-out was NOT used. Test file count (77) is below the 250-file threshold.
+| Track | Groups | Result |
+|-------|--------|--------|
+| Track A | A1 (build/lint/type), A2 (tests/coverage), A3 (mutation) | PASS |
+| Track B | B1 (security), B2 (code review/traceability) | PASS |
 
 ---
 
 ## Overall Verdict: **PASS**
 
-Both Track A and Track B pass. Zero new regressions. All 32 new tests pass.
+Both Track A and Track B pass. Zero new regressions. All 38 new tests pass. Delegation-gate regression identified and fixed within the quality loop.

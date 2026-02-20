@@ -596,7 +596,17 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
       If re-analyze: clear phases_completed, set analysis_status to "raw", continue from Phase 00
 7. For each remaining phase starting from nextPhase:
    a. Display: "Running Phase {NN} ({phase name})..."
-   b. Delegate to the standard phase agent via Task tool (in ANALYSIS MODE -- no state.json, no branches)
+   b. **Roundtable routing check** (REQ-0027): Check if the file `src/claude/agents/roundtable-analyst.md` exists using the Glob tool.
+      - **If roundtable-analyst.md exists**: Delegate to the `roundtable-analyst` agent via Task tool with:
+        ```
+        "Execute Phase {NN} - {Phase Name} for analysis of '{slug}'.
+         Phase key: {phase_key}
+         Artifact folder: docs/requirements/{slug}/
+         META CONTEXT: {JSON.stringify(meta)}
+         ANALYSIS MODE: No state.json writes, no branch creation."
+        ```
+        The roundtable agent selects the appropriate persona (Maya/Alex/Jordan) based on phase_key, runs step files from `src/claude/skills/analysis-steps/{phase_key}/`, and produces artifacts compatible with the standard phase agents.
+      - **If roundtable-analyst.md does NOT exist** (fallback): Delegate to the standard phase agent via Task tool (in ANALYSIS MODE -- no state.json, no branches). This preserves backward compatibility for installations without the roundtable agent.
    c. Append phase key to meta.phases_completed
 
    **7.5 SIZING TRIGGER CHECK** (GH-57, FR-001, FR-002, FR-003, FR-006):
@@ -640,8 +650,10 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
    e. Update meta.codebase_hash to current git HEAD short SHA
    f. Write meta.json using writeMetaJson()
    g. Update BACKLOG.md marker using updateBacklogMarker() with deriveBacklogMarker()
-   h. Offer exit point: "Phase {NN} complete. Continue to Phase {NN+1} ({name})? [Y/n]"
+   h. Offer exit point (roundtable mode only): If the roundtable-analyst was used in step 7b (interactive mode),
+      display: "Phase {NN} complete. Continue to Phase {NN+1} ({name})? [Y/n]"
       If user declines: stop. Analysis is resumable from the next phase.
+      If the standard phase agent was used (autonomous mode), skip this prompt and continue automatically.
 8. After final phase:
    a. Display: "Analysis complete. {slug} is ready to build."
    b. Read recommended_tier from meta.json (GH-59, FR-004, AC-004a, AC-004b):

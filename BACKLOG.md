@@ -187,6 +187,7 @@
   - **Not blocked by Anthropic**: In Jan 2026, Anthropic blocked third-party tools (OpenCode, xAI) from using Claude Pro/Max subscriptions to access proprietary Claude models (anti-arbitrage). Ollama + Claude Code is unaffected — it uses Anthropic's own CLI pointed at local open-source models, no Anthropic subscription or API key needed. Still working as of Feb 2026, though streaming and tool-calling edge cases are still being patched in Ollama.
   - Docs: [docs.ollama.com/integrations/claude-code](https://docs.ollama.com/integrations/claude-code)
 - #42 [ ] SonarQube integration
+- #63 [ ] Spec reconciliation phase and selective code regeneration — close the spec-code knowledge gap so code becomes regenerable from complete specifications -> [requirements](docs/requirements/spec-reconciliation-and-code-regeneration/)
 
 ### Product/Vision
 
@@ -246,18 +247,8 @@
 
 - #51 [x] ~~Sizing decision must always prompt the user — silent fallback paths bypass user consent~~ *(completed, merged 3de5162)*
 
-- **Feature A: Analyze Decisions** (#57 + #59) [A] — Post-Phase-02 tier + sizing in analyze verb
-  - After Phase 02 (Impact Analysis), compute both **tier** and **sizing** from IA metrics via `parseSizingFromImpactAnalysis()`. Single decision point, single data source, both written to meta.json.
-  - **#57**: Sizing decision (light vs standard — how intense is the workflow?)
-    - If light accepted: skip phases 03/04, record in meta.json. Support `-light` flag on analyze.
-    - Analyze is stateless (no state.json), so sizing stored in meta.json only. `computeStartPhase()` and `deriveAnalysisStatus()` must distinguish intentionally-skipped from incomplete.
-  - **#59**: Tier recommendation (trivial/light/standard/epic — what kind of workflow?)
-    - `computeRecommendedTier(fileCount, riskLevel, thresholds)` uses actual IA metrics. Displayed at analyze completion. Build handler presents tier options at step 4a.
-    - **Trivial tier**: No workflow, no branches, no gates. Direct edit with lightweight change record in `docs/requirements/{slug}/` for audit trail.
-    - **Key principle**: Framework recommends, user decides.
-  - **Build order**: Feature A first, then Feature B
-  - **Related**: #51 (sizing consent — completed), ADR-0001 (sizing insertion point)
-  - **Complexity**: Medium — analyze handler changes, tier scoring logic, meta.json schema extension, trivial-tier execution path
+- **Feature A: Analyze Decisions** (#57 + #59) [x] ~~Post-Phase-02 tier + sizing in analyze verb~~ **Completed: 2026-02-20**
+  - `computeRecommendedTier()` in three-verb-utils.cjs/common.cjs, `parseSizingFromImpactAnalysis()`, `computeStartPhase()`/`deriveAnalysisStatus()` with light-skip awareness, trivial tier execution path in isdlc.md, `-light` flag support, sizing_decision records in meta.json.
 
 - **Feature B: Build Consumption** (#60 + #61) [x] ~~Clean build-side consumption of pre-analyzed items~~ -> [requirements](docs/requirements/gh-60-61-build-consumption-init-split-smart-staleness/) **Completed: 2026-02-20** (REQ-0031, merge 5480c98)
   - **#60**: Split build init from phase execution — `MODE: init-only` implemented, `MODE: init-and-phase-01` deprecated
@@ -308,8 +299,38 @@
 
 - #55 [X] Phase handshake audit — investigate whether the handshake between phases is working correctly (state transitions, artifact passing, gate validation, pre-delegation state writes, post-phase updates). Verify no data loss or stale state between phase boundaries. (REQ-0020, b9c5cb2)
 
+### Agent Compliance
+
+- #64 [ ] Agents ignore injected gate requirements — wasted iterations on hook-blocked actions
+  - **Problem**: Gate requirements pre-injection (REQ-0024, `gate-requirements-injector.cjs`) tells agents what hooks will enforce (e.g., "do not commit during intermediate phases"). But agents sometimes ignore these constraints and attempt the blocked action anyway. The hook safety net catches it, but the iteration is wasted and the agent has to recover.
+  - **Observed**: During BUG-0029 Phase 06, the software-developer agent ran `git commit` despite the injected constraint about Git Commit Prohibition. The `branch-guard` hook blocked it correctly, but the commit still partially executed (the commit message appeared in output).
+  - **Root causes to investigate**:
+    1. Injected gate requirements text gets buried in long agent prompts (context dilution)
+    2. Agent's own instructions contain competing patterns (e.g., "save your work" or training-data habits)
+    3. Agents don't treat injected constraints as hard rules vs. suggestions
+    4. The injection format may not be salient enough (wall of text vs. prominent warning)
+  - **Potential solutions**:
+    - Strengthen injection format (e.g., `CRITICAL CONSTRAINT:` prefix, shorter text, repeated at end of prompt)
+    - Audit agent files for competing instructions that contradict gate requirements
+    - Add a "constraint acknowledgment" step where agent echoes back constraints before starting work
+    - Post-hook feedback loop: when a hook blocks, inject the block reason into the agent's next turn as a high-priority correction
+  - **Impact**: Wasted iterations degrade performance budgets (REQ-0025). Each blocked-then-retried action costs ~1-2 min.
+  - **Related**: REQ-0024 (gate requirements pre-injection), REQ-0025 (performance budget), Git Commit Prohibition in CLAUDE.md
+  - **Complexity**: Medium — investigation + prompt engineering + possibly agent file updates
+
+### Hook Bugs
+
+- #65 [ ] gate-blocker blocks `/isdlc analyze` and `/isdlc add` during active workflows — inline commands incorrectly blocked by phase gate checks
+  - **Problem**: `gate-blocker.cjs` fires on all `/isdlc` Skill invocations during an active workflow. It only exempts `advance` and `gate-check` actions plus setup commands. The `analyze` and `add` verbs — which are explicitly designed to run outside workflow machinery (no state.json writes, no branches) — get blocked if the current phase has unsatisfied gate requirements.
+  - **Observed**: `/isdlc analyze "#64 ..."` blocked with `GATE BLOCKED: Iteration requirements not satisfied for phase '16-quality-loop'` while BUG-0029 workflow was active in another session.
+  - **Root cause**: `skill-delegation-enforcer.cjs` correctly exempts `analyze`/`add` (line 37: `EXEMPT_ACTIONS`), but `gate-blocker.cjs` in the `pre-skill-dispatcher` runs first and blocks before the delegation enforcer gets a chance to exempt.
+  - **Fix**: Add `analyze` and `add` to gate-blocker's Skill exemption check (around line 118-130). When the Skill is `isdlc` and the action is `analyze` or `add`, skip the gate check.
+  - **Files**: `src/claude/hooks/gate-blocker.cjs`
+  - **Complexity**: Low — 5-10 line change + tests
+
 ### Developer Experience
 
+- #62 [x] ~~Stale pending_delegation marker blocks all responses across sessions~~ — delegation-gate.cjs now has `STALENESS_THRESHOLD_MINUTES` expiry check with auto-clearing of stale markers **Completed: 2026-02-20**
 - #3 [ ] Framework file operations should not require user permission — when the iSDLC framework updates its own internal files (e.g., `.isdlc/state.json`, `.isdlc/hook-activity.log`), Claude Code prompts the user for permission. These are framework-managed files and should be auto-allowed.
 - #56 [ ] Install script landing page and demo GIF — update the install script landing/README with a polished visual experience including an animated GIF demonstrating the framework in action (invisible framework flow, workflow progression, quality gates)
 
@@ -344,18 +365,8 @@
 
 - #20 [x] ~~Roundtable analysis agent with named personas~~ *(GitHub #20)* -> [requirements](docs/requirements/REQ-0027-gh-20-roundtable-analysis-agent-with-named-personas/) **Completed: 2026-02-20**
 
-- #21 [A] Elaboration mode — multi-persona roundtable discussions -> [requirements](docs/requirements/gh-21-elaboration-mode-multi-persona-roundtable-discussions/)
-  - **Problem**: Some topics need deeper exploration than a single persona can provide. Architecture tradeoffs, complex requirements, and cross-cutting concerns benefit from multiple perspectives debating in real time.
-  - **Design**: At any step during analyze, user selects `[E] Elaboration Mode` to bring all personas into a roundtable discussion:
-    - All three personas (BA, Architect, Designer) plus the user participate as equals
-    - Personas discuss, debate, and build on each other's points naturally
-    - Cross-talk enabled: "As the Architect mentioned, if subscriptions are coming later, we should design the abstraction now..."
-    - User can address specific personas by name or ask the group
-    - Exit returns to the step workflow with enriched context applied to artifacts
-  - **Not party mode**: Focused on the current analysis topic, not freeform. Personas stay in character and on topic.
-  - **Files**: Elaboration mode workflow steps in roundtable agent, persona interaction protocol
-  - **Depends on**: #20 (roundtable agent with personas exists)
-  - **Complexity**: Medium
+- #21 [x] ~~Elaboration mode — multi-persona roundtable discussions~~ -> [requirements](docs/requirements/gh-21-elaboration-mode-multi-persona-roundtable-discussions/) **Completed: 2026-02-20**
+  - Multi-persona roundtable discussions in `roundtable-analyst.md`, elaboration records in meta.json, `elaborations[]` + `elaboration_config` in three-verb-utils.cjs. Built as part of #20 roundtable agent.
 
 - #22 [ ] Transparent Critic/Refiner at step boundaries
   - **Problem**: The existing Creator/Critic/Refiner debate loop runs invisibly. Users don't see improvements and can't validate them. This erodes trust and misses opportunities for user input on refinements.
@@ -385,6 +396,9 @@
 ## Completed
 
 ### 2026-02-20
+- [x] #62: Stale pending_delegation marker expiry — added `STALENESS_THRESHOLD_MINUTES` to delegation-gate.cjs with auto-clearing of cross-session stale markers.
+- [x] #21: Elaboration mode — multi-persona roundtable discussions in roundtable-analyst.md, elaboration records in meta.json, `elaborations[]` + `elaboration_config` in three-verb-utils.cjs. Built as part of #20 roundtable agent.
+- [x] Feature A (#57 + #59): Analyze decisions — post-Phase-02 tier + sizing in analyze verb. `computeRecommendedTier()`, `parseSizingFromImpactAnalysis()`, `computeStartPhase()`/`deriveAnalysisStatus()` with light-skip awareness, trivial tier execution path, `-light` flag, sizing_decision in meta.json.
 - [x] REQ-0027 (#20): Roundtable analysis agent with named personas — single-agent roundtable analyst with BA/Architect/Designer persona hats during analyze verb, step-file architecture, adaptive depth, resumable sessions *(GitHub #20, merged c02145b)*.
   - New `roundtable-analyst.md` agent (307 LOC, persona router + step orchestration), 24 step files under `src/claude/skills/analysis-steps/` (5 phases: quick-scan, requirements, impact-analysis, architecture, design), updated `three-verb-utils.cjs` for roundtable integration. 63 new tests, 2836/2840 full suite, zero regressions. 8 FRs, 5 NFRs, ~40 ACs. 35 files changed, 2146 insertions, 385 deletions.
 - [x] BUG-0029-GH-18: Framework agents generate multiline Bash commands that bypass permission auto-allow rules — rewrite multiline Bash commands to single-line form across 9 agent files *(GitHub #18, merged 2e9e07c)*.

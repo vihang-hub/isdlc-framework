@@ -1,6 +1,6 @@
-# Lint Report: BUG-0029-GH-18
+# Lint Report: BUG-0029 (GH-18)
 
-**Date**: 2026-02-19
+**Date**: 2026-02-20
 **Phase**: 16-quality-loop
 
 ---
@@ -19,36 +19,30 @@ No ESLint, Prettier, or other linting tools are configured.
 
 ## Manual Code Quality Review
 
-In lieu of automated linting, a manual quality review was performed on the modified files:
+In lieu of automated linting, a manual quality review was performed on all modified files:
 
-### Modified Markdown Files (8 agent/command files)
-
-| File | Review | Finding |
-|------|--------|---------|
-| `src/claude/agents/05-software-developer.md` | Bash blocks checked | PASS -- remaining bash blocks are single-line |
-| `src/claude/agents/06-integration-tester.md` | Bash blocks checked | PASS -- no bash blocks remain |
-| `src/claude/commands/discover.md` | Bash blocks checked | PASS -- no bash blocks remain |
-| `src/claude/commands/provider.md` | Bash blocks checked | PASS -- remaining bash blocks are single-line |
-| `src/claude/commands/isdlc.md` | Bash blocks checked | PASS -- no bash blocks remain |
-| `src/claude/agents/discover/data-model-analyzer.md` | Bash blocks checked | PASS -- no bash blocks remain |
-| `src/claude/agents/discover/skills-researcher.md` | Bash blocks checked | PASS -- no bash blocks remain |
-| `src/claude/agents/discover/test-evaluator.md` | Bash blocks checked | PASS -- no bash blocks remain |
-
-### Convention Documentation (2 files)
+### Modified Agent Files
 
 | File | Review | Finding |
 |------|--------|---------|
-| `CLAUDE.md` | Convention section present | PASS -- includes heading, explanation, examples, escape hatch |
-| `src/claude/CLAUDE.md.template` | Convention section present | PASS -- includes heading, explanation, examples |
+| `src/claude/agents/discover/architecture-analyzer.md` | Bash blocks checked | PASS -- 10-line find joined to single line |
+| `src/claude/agents/quick-scan/quick-scan-agent.md` | Bash blocks checked | PASS -- 6-line block split into 4 single-line blocks |
 
-### New Test File
+### Modified Hook Code
 
 | File | Review | Finding |
 |------|--------|---------|
-| `src/claude/hooks/tests/multiline-bash-validation.test.cjs` | Follows CJS conventions | PASS -- uses 'use strict', proper require(), standard test patterns |
+| `src/claude/hooks/delegation-gate.cjs` | GH-62 staleness feature | PASS -- proper const, clear comments, standard patterns |
+
+### New/Modified Test Files
+
+| File | Review | Finding |
+|------|--------|---------|
+| `src/claude/hooks/tests/multiline-bash-validation.test.cjs` | Follows CJS conventions | PASS -- 'use strict', proper require(), standard test patterns |
+| `src/claude/hooks/tests/test-delegation-gate.test.cjs` | Dynamic timestamp fix | PASS -- RECENT_TS/AFTER_TS/BEFORE_TS pattern is clean and well-documented |
 
 ---
 
 ## Summary
 
-No lint errors or warnings. All files follow project conventions.
+No lint errors or warnings. All files follow project conventions (CJS for hooks, `'use strict'` mode, standard Node.js test patterns).
