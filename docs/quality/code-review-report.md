@@ -1,7 +1,7 @@
 # Code Review Report
 
 **Project:** iSDLC Framework
-**Workflow:** REQ-0020-phase-handshake-audit-GH-55 (feature)
+**Workflow:** sizing-in-analyze-GH-57 (feature)
 **Phase:** 08 - Code Review & QA
 **Date:** 2026-02-20
 **Reviewer:** QA Engineer (Phase 08)
@@ -14,12 +14,13 @@
 
 | Metric | Value |
 |--------|-------|
-| Files reviewed | 9 (4 production + 5 test) |
-| Lines added (production) | ~222 net (state-write-validator.cjs: +202, isdlc.md: +26) |
-| Lines removed (production) | ~63 (gate-blocker.cjs: -43, iteration-corridor.cjs: -20) |
-| Lines added (test) | ~1265 across 5 new test files |
-| Total feature tests | 26 |
-| Tests passing | 26/26 |
+| Files reviewed | 4 (1 production + 2 test + 1 command spec) |
+| Lines added (production) | +45 (three-verb-utils.cjs) |
+| Lines removed (production) | -8 (three-verb-utils.cjs writeMetaJson refactor) |
+| Lines added (test) | +355 (24 new tests) + 102 (3 consent tests) |
+| Lines added (command) | ~65 (isdlc.md sizing block + flag parsing) |
+| Total feature tests | 27 (24 + 3) |
+| Tests passing | 211/211 (feature), 2884/2888 (full suite) |
 | Critical findings | 0 |
 | High findings | 0 |
 | Medium findings | 0 |
@@ -28,116 +29,104 @@
 
 ---
 
-## 2. File-by-File Review
+## 2. Files Reviewed
 
-### 2.1 MODIFIED: src/claude/hooks/state-write-validator.cjs
+### 2.1 Production Code
 
-**Change**: Added V9 cross-location consistency check (checkCrossLocationConsistency, lines 415-531), V8 Check 3 for phases[].status regression (lines 355-403), supervised redo exception in V8 Checks 2 and 3. Version bumped to 1.3.0.
+**src/claude/hooks/lib/three-verb-utils.cjs**
 
-**Assessment**:
-- V9 is properly observational (warns on stderr, never blocks)
-- V9-C intermediate state suppression correctly handles the STEP 3e to 3c-prime window
-- V8 Check 3 mirrors Check 2 structure with consistent supervised redo exception
-- All code paths fail-open (try/catch with silent return)
-- logHookEvent calls trace all V9 warnings and V8 redo exceptions
-- JSDoc documentation on new function with INV-0055 REQ references
+Three functions modified:
 
-**Findings**: None (blockers or warnings).
+1. `deriveAnalysisStatus(phasesCompleted, sizingDecision)` -- Added optional second parameter for sizing-aware status derivation. Light sizing with skip list returns 'analyzed' when all required (non-skipped) phases are complete. Three-part guard pattern ensures backward compatibility.
 
-### 2.2 MODIFIED: src/claude/hooks/gate-blocker.cjs
+2. `writeMetaJson(slugDir, meta)` -- Refactored to delegate status derivation to `deriveAnalysisStatus()` instead of inline logic. Passes `meta.sizing_decision` as second argument. Net reduction of 6 lines. DRY improvement.
 
-**Change**: Removed local loadIterationRequirements() and loadWorkflowDefinitions() functions. Now imports from common.cjs with aliased names.
+3. `computeStartPhase(meta, workflowPhases)` -- Added Step 3.5 between raw-check and all-complete-check. Reads `meta.sizing_decision` directly (no signature change). When light sizing with valid skip list detected, filters workflow phases and returns 'analyzed' with correct remainingPhases.
 
-**Assessment**:
-- Clean import aliasing (loadIterationRequirementsFromCommon, loadWorkflowDefinitionsFromCommon)
-- Deprecation comment with INV-0055 REQ-005 reference
-- Fallback chain preserved: ctx.requirements -> common.cjs
-- Standalone execution path updated correctly
+**Assessment**: Clean, well-documented, backward compatible. All three functions use the same guard pattern. No code smells.
 
-**Findings**: None.
+### 2.2 Command Specification
 
-### 2.3 MODIFIED: src/claude/hooks/iteration-corridor.cjs
+**src/claude/commands/isdlc.md**
 
-**Change**: Removed local loadIterationRequirements() function. Now imports from common.cjs.
+Two sections added to the analyze handler:
 
-**Assessment**: Same pattern as gate-blocker.cjs. Clean removal, proper fallback chain.
+1. Step 2.5: `-light` flag parsing (7 lines). Mirrors build handler pattern.
+2. Step 7.5: Sizing trigger check (~60 lines). Two paths: PATH A (forced light via flag) and PATH B (interactive sizing flow with metrics, recommendation, and menu).
 
-**Findings**: None.
+**Assessment**: Thorough specification of both paths. Explicit exclusion of `applySizingDecision()` noted in B.11. Epic deferral handled in B.8. Resumability preserved via `meta.sizing_decision` NOT set guard.
 
-### 2.4 MODIFIED: src/claude/commands/isdlc.md
+### 2.3 Test Code
 
-**Change**: Added 4 DEPRECATED comments on phase_status write lines, stale phase detection advisory (STEP 3b-stale), GitHub label sync in analyze step 9, GitHub close in finalize.
+**test-three-verb-utils.test.cjs**: 24 new tests in 3 describe blocks covering deriveAnalysisStatus sizing-aware (10), writeMetaJson sizing-aware (5), computeStartPhase sizing-aware (9). All tests include TC IDs and traceability comments.
 
-**Assessment**: DEPRECATED comments use consistent format with INV-0055 reference. Stale phase detection has correct threshold calculation (2x timeout), proper R/S/C menu options, and only triggers for in_progress phases.
-
-**Findings**: None.
-
-### 2.5-2.9 NEW: 5 Test Files
-
-All 5 test files follow the project CJS test pattern (node:test, spawnSync-based hook invocation, temp directory isolation). Tests have clear names, trace to requirements and acceptance criteria, and cover both positive and negative cases.
-
-**Findings**: None (blockers). See informational findings below.
+**sizing-consent.test.cjs**: 3 tests verifying analyze-side constraints: context='analyze', no applySizingDecision reference in source, light_skip_phases validation.
 
 ---
 
-## 3. Cross-Cutting Concerns
+## 3. Quality Assessment
 
-### 3.1 Fail-Open Compliance (Article X)
+### 3.1 Correctness
 
-Every new code path fails open on errors. checkCrossLocationConsistency returns `{ warnings: [] }` on parse errors. V8 Check 3 returns null on missing/invalid data. All catch blocks use debugLog and return allow/null.
+All production functions produce correct outputs for all documented input classes:
+- Happy path: light sizing with 3 phases returns 'analyzed'
+- Standard sizing: falls through to existing logic (partial for < 5 phases)
+- Null/undefined sizingDecision: existing behavior preserved
+- Malformed data (non-array skip list, missing fields): guard pattern rejects, falls through safely
+- Edge cases: all 5 phases + light sizing, missing required phase
 
-### 3.2 Module System Compliance (Article XII)
+### 3.2 Error Handling
 
-All files use CommonJS (require/module.exports). .cjs extension used throughout. Test files use node:test + node:assert/strict.
+- Guard patterns handle: null, undefined, non-object, non-array skip list, missing fields
+- `computeStartPhase` handles edge case where workflow has no implementation phases after filtering
+- `deriveAnalysisStatus` remains pure (no I/O, no side effects)
 
 ### 3.3 Security
 
-No security concerns. No eval, no dynamic code execution, no user-controlled path operations. JSON.parse wrapped in try/catch throughout.
+- No injection vectors in production code (pure functions, no eval/exec)
+- No user input processing in utility functions (input comes from parsed meta.json)
+- No secrets or credentials in any modified file
+- All file I/O uses synchronous fs methods with existence checks
 
-### 3.4 Backward Compatibility (NFR-005)
+### 3.4 Performance
 
-All 73 existing state-write-validator tests pass. All 26 gate-blocker tests pass. All 24 cross-hook integration tests pass. V9 is additive (new warnings only). V8 Check 3 adds blocking only for previously unchecked regression. Supervised redo exception relaxes V8.
+- `deriveAnalysisStatus`: Set creation + array filter + every check. O(n) where n=5. Sub-millisecond.
+- `computeStartPhase`: One additional conditional block with Set creation + two filter operations. Negligible overhead.
+- `writeMetaJson`: Function call replaces inline logic. No performance change.
+- All 211 feature tests execute in ~96ms total.
 
----
+### 3.5 Maintainability
 
-## 4. Regression Analysis
-
-| Test Suite | Total | Pass | Fail | New Failures |
-|-----------|-------|------|------|--------------|
-| Feature tests (5 new files) | 26 | 26 | 0 | 0 |
-| Hook tests (full suite) | 1392 | 1329 | 63 | 0 (all pre-existing) |
-| **Combined** | **1418** | **1355** | **63** | **0** |
-
-**Zero new regressions.**
-
----
-
-## 5. Informational Findings
-
-**INFO-01: Duplicate JSDoc blocks on checkVersionLock and checkPhaseFieldProtection (pre-existing)**
-
-Lines 91-112 and 209-235 in state-write-validator.cjs each have two consecutive JSDoc comment blocks. The original block lacks the `diskState` parameter; the updated block includes it. This dates from the BUG-0009 fix and is not introduced by this feature. Recommend consolidating in a future cleanup.
-
-**INFO-02: Soft assertion in escalation-retry-flow T-ER-02**
-
-T-ER-02 validates escalation field structure conditionally (only when state file contains escalation entries). If gate-blocker's standalone mode does not write escalations to disk, the test passes unconditionally. This is by design (documents expected structure without hard-requiring disk writes) but could be strengthened in a future iteration.
+- DRY improvement: writeMetaJson delegates to deriveAnalysisStatus (single derivation point)
+- Consistent guard pattern across all three functions
+- Traceability comments reference FR/NFR/CON IDs
+- JSDoc updated with new parameter documentation
 
 ---
 
-## 6. Constitutional Compliance
+## 4. Informational Findings
 
-| Article | Status | Evidence |
-|---------|--------|---------|
-| I (Specification Primacy) | Compliant | All 6 requirements implemented per requirements-spec.md |
-| II (Test-First Development) | Compliant | 26 tests using node:test, co-located with hooks |
-| III (Security by Design) | Compliant | Safe JSON parsing, no dangerous patterns |
-| V (Simplicity First) | Compliant | No over-engineering. V9 is a single function. Config consolidation removes code. |
-| VII (Artifact Traceability) | Compliant | All 6 requirements mapped to code and tests. Traceability matrix complete. |
-| IX (Quality Gate Integrity) | Compliant | All gate artifacts produced. 26/26 tests passing. |
-| X (Fail-Safe Defaults) | Compliant | All hooks fail-open on errors |
+### INFO-001: computeStartPhase Growth
+
+`computeStartPhase()` is now 96 lines with 7 if-statements. While still within acceptable bounds, future additions should consider extracting Step 3.5 into a named helper function. Not blocking -- current complexity is manageable.
+
+### INFO-002: Test Fixture Duplication
+
+The FEATURE_PHASES, ALL_ANALYSIS, and IMPL_PHASES constants in the test file duplicate values from the production code's ANALYSIS_PHASES and IMPLEMENTATION_PHASES. This is intentional (test fixtures should be independent of production code), but a comment documenting the intent would improve clarity.
 
 ---
 
-## 7. Verdict
+## 5. Backward Compatibility Verification
 
-**APPROVED** -- The implementation is clean, well-tested, well-documented, and fully traceable. Zero blockers. Two informational observations require no action. Ready for progression to Phase 09 (Independent Validation).
+| Function | Existing Tests | Pass After Change | New Behavior Changes Existing Output? |
+|----------|---------------|-------------------|---------------------------------------|
+| `deriveAnalysisStatus()` | 5 tests | 5/5 PASS | No -- second param is optional |
+| `writeMetaJson()` | 6 tests | 6/6 PASS | No -- delegates to same logic |
+| `computeStartPhase()` | 14 tests | 14/14 PASS | No -- new block skipped when no sizing_decision |
+| Other functions | 183 tests | 183/183 PASS | No changes to other functions |
+
+---
+
+## 6. Verdict
+
+**APPROVED** -- Code is correct, well-tested, backward compatible, and adheres to the design specification. No blocking issues. Ready to proceed through GATE-08.

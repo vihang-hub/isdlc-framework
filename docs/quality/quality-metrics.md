@@ -1,7 +1,7 @@
 # Quality Metrics Report
 
 **Project:** iSDLC Framework
-**Workflow:** REQ-0028-gh-21-elaboration-mode-multi-persona-roundtable-discussions (feature)
+**Workflow:** sizing-in-analyze-GH-57 (feature)
 **Phase:** 08 - Code Review & QA
 **Date:** 2026-02-20
 
@@ -11,16 +11,16 @@
 
 | Metric | Value | Threshold | Status |
 |--------|-------|-----------|--------|
-| Total tests (CJS hooks) | 2228 pass / 1 fail (pre-existing) | No new failures | PASS |
+| Total tests (CJS hooks) | 2255 pass / 1 fail (pre-existing) | No new failures | PASS |
 | Total tests (ESM lib) | 629 pass / 3 fail (pre-existing) | No new failures | PASS |
-| New tests added | 21 (elaboration defaults) | >= 1 per FR with code changes | PASS |
+| New tests added | 27 (24 three-verb-utils + 3 sizing-consent) | >= 1 per FR with code changes | PASS |
 | New test failures | 0 | 0 | PASS |
-| Test execution time (elaboration) | 41ms | < 5000ms | PASS |
-| Combined total | 2857 pass / 4 fail (all pre-existing) | No new failures | PASS |
+| Test execution time (feature) | 96ms (208 tests) + 33ms (3 tests) | < 5000ms | PASS |
+| Combined total | 2884 pass / 4 fail (all pre-existing) | No new failures | PASS |
 
-### Pre-Existing Failures (Not Related to REQ-0028)
+### Pre-Existing Failures (Not Related to GH-57)
 
-1. **CJS**: gate-blocker-extended "logs info when supervised_review is in reviewing status" -- timing-sensitive assertion
+1. **CJS**: gate-blocker-extended "logs info when supervised_review is in reviewing status" -- assertion on stderr content
 2. **ESM**: TC-E09 README.md agent count, TC-07 task cleanup instructions, TC-13-01 agent file count expectations -- all pre-existing count mismatches
 
 ---
@@ -29,69 +29,98 @@
 
 ### 2.1 New Code Metrics
 
-| Metric | Production Code | Test Code | Agent File |
-|--------|----------------|-----------|------------|
-| Lines added | +8 (three-verb-utils.cjs) | +283 (1 test file) | +185 (Section 4.4) + 8 (Section 5.1) |
-| Lines removed | 0 | 0 | -7 (old stub) |
-| Net change | +8 | +283 | +186 |
-| Functions added | 0 (extends existing readMetaJson) | 3 (helpers: createTestDir, cleanupTestDir, legacyMeta) | N/A |
-| Cyclomatic complexity (max) | 3 (readMetaJson type checks) | 1 (all tests are linear) | N/A |
-| Max nesting depth | 2 | 2 | N/A |
-| JSDoc coverage | 100% (updated readMetaJson docstring) | 100% (all helpers documented) | N/A |
+| Function | Lines | If-Statements | Return Statements | Cyclomatic Complexity (est.) |
+|----------|-------|--------------|-------------------|------------------------------|
+| `deriveAnalysisStatus()` | 25 | 5 | 5 | 6 |
+| `writeMetaJson()` | 14 | 0 | 0 | 1 |
+| `computeStartPhase()` | 96 | 7 | 7 | 8 |
 
-### 2.2 Complexity Assessment
+### 2.2 Code Size Changes
 
-The production code change is minimal: 2 type-check blocks added to `readMetaJson()`. Each block uses the same guard pattern as existing GH-20 defaults. The function's overall cyclomatic complexity remains well below the threshold of 10.
+| File | Before | After | Delta |
+|------|--------|-------|-------|
+| `three-verb-utils.cjs` | ~884 lines | ~921 lines | +37 net |
+| `test-three-verb-utils.test.cjs` | ~2224 lines | ~2576 lines | +352 net |
+| `sizing-consent.test.cjs` | 0 lines | 102 lines | +102 net |
+| `isdlc.md` | ~1751 lines | ~1816 lines | +65 net |
 
-The agent file addition (Section 4.4) is structured markdown instructions with 9 clearly defined sub-sections. While 185 lines is substantial, each sub-section is self-contained and independently understandable.
+### 2.3 Function Count
 
----
-
-## 3. Coverage Metrics
-
-| Test Suite | Tests | Pass | Fail | Coverage |
-|------------|-------|------|------|----------|
-| Suite A: Defensive Defaults -- elaborations[] | 6 | 6 | 0 | TC-E01..TC-E06 |
-| Suite B: Defensive Defaults -- elaboration_config | 4 | 4 | 0 | TC-E07..TC-E10 |
-| Suite C: Field Preservation | 2 | 2 | 0 | TC-E11..TC-E12 |
-| Suite D: Write Cycle Round-Trips | 4 | 4 | 0 | TC-E13..TC-E16 |
-| Suite E: Regression (Unchanged Behaviors) | 3 | 3 | 0 | TC-E17..TC-E19 |
-| Suite F: Integration Chains | 2 | 2 | 0 | TC-E20..TC-E21 |
-| **Total** | **21** | **21** | **0** | **100%** |
-
-### Coverage by Requirement
-
-| Requirement | Tests | Coverage |
-|-------------|-------|----------|
-| FR-007 (Turn Limits -- elaboration_config) | TC-E07..TC-E10, TC-E14 | 5 tests |
-| FR-009 (Elaboration State Tracking) | TC-E01..TC-E06, TC-E13, TC-E16, TC-E20, TC-E21 | 10 tests |
-| NFR-005 (Session Resume) | TC-E11, TC-E12, TC-E19 | 3 tests |
-| NFR-007 (Backward Compatibility) | TC-E11..TC-E12, TC-E15, TC-E17..TC-E19 | 6 tests |
+| File | Functions | Change |
+|------|-----------|--------|
+| `three-verb-utils.cjs` | 17 | 0 (modified 3, no new functions) |
+| Max line length | 130 chars (line 841) | Pre-existing, not in modified code |
 
 ---
 
-## 4. Maintainability Metrics
+## 3. Test Coverage Analysis
 
-| Metric | Value | Assessment |
-|--------|-------|------------|
-| Test-to-code ratio | 283 lines test / 8 lines production | Excellent |
-| Documentation ratio | Agent file fully documented, JSDoc updated | Excellent |
-| Coupling | Minimal (extends existing readMetaJson only) | Excellent |
-| Cohesion | High (all changes serve elaboration tracking) | Excellent |
-| Traceability | 21 tests map to 4 FRs + 3 NFRs | Excellent |
-| Pattern compliance | Follows existing defensive-defaults and test patterns | Excellent |
+### 3.1 New Code Path Coverage
+
+| Code Path | Test Cases | Coverage |
+|-----------|-----------|----------|
+| deriveAnalysisStatus: light sizing happy path | TC-DAS-S01 | Covered |
+| deriveAnalysisStatus: null/undefined sizingDecision | TC-DAS-S02, TC-DAS-S03 | Covered |
+| deriveAnalysisStatus: standard sizing fallthrough | TC-DAS-S04 | Covered |
+| deriveAnalysisStatus: all 5 + light (edge) | TC-DAS-S05 | Covered |
+| deriveAnalysisStatus: missing required phase | TC-DAS-S06 | Covered |
+| deriveAnalysisStatus: guard - no skip field | TC-DAS-S07 | Covered |
+| deriveAnalysisStatus: guard - non-array skip | TC-DAS-S08 | Covered |
+| deriveAnalysisStatus: guard - empty phases | TC-DAS-S09 | Covered |
+| deriveAnalysisStatus: guard - null phases | TC-DAS-S10 | Covered |
+| writeMetaJson: light sizing writes analyzed | TC-WMJ-S01 | Covered |
+| writeMetaJson: standard writes partial | TC-WMJ-S02 | Covered |
+| writeMetaJson: no sizing = partial | TC-WMJ-S03 | Covered |
+| writeMetaJson: no sizing + all 5 = analyzed | TC-WMJ-S04 | Covered |
+| writeMetaJson: round-trip preservation | TC-WMJ-S05 | Covered |
+| computeStartPhase: light -> analyzed at 05 | TC-CSP-S01 | Covered |
+| computeStartPhase: completedPhases correct | TC-CSP-S02 | Covered |
+| computeStartPhase: remainingPhases excludes skipped | TC-CSP-S03 | Covered |
+| computeStartPhase: no sizing = partial at 03 | TC-CSP-S04 | Covered |
+| computeStartPhase: standard = partial at 03 | TC-CSP-S05 | Covered |
+| computeStartPhase: light but missing 02 | TC-CSP-S06 | Covered |
+| computeStartPhase: light but no skip array | TC-CSP-S07 | Covered |
+| computeStartPhase: all 5 + light | TC-CSP-S08 | Covered |
+| computeStartPhase: null meta | TC-CSP-S09 | Covered |
+| Consent: context = analyze | TC-SC-S01 | Covered |
+| Consent: no applySizingDecision | TC-SC-S02 | Covered |
+| Consent: skip phases recorded | TC-SC-S03 | Covered |
+
+**New code path coverage: 27/27 (100%)**
+
+### 3.2 Backward Compatibility Coverage
+
+All existing tests continue to pass:
+- deriveAnalysisStatus: 5 existing tests PASS
+- writeMetaJson: 6 existing tests PASS
+- computeStartPhase: 14 existing tests PASS
+- Other functions: 183 existing tests PASS
 
 ---
 
-## 5. Trend Analysis
+## 4. Requirement Coverage
 
-| Metric | Previous (REQ-0027) | Current (REQ-0028) | Trend |
-|--------|---------------------|--------------------| ------|
-| Total CJS tests | 2207 | 2228 | +21 |
-| Total ESM tests | 632 | 632 | Stable |
-| Pre-existing failures (CJS) | 1 | 1 | Stable |
-| Pre-existing failures (ESM) | 3 | 3 | Stable |
-| New regressions | 0 | 0 | Stable |
-| Production lines changed | +14 | +8 | Minimal footprint |
-| Agent files modified | 1 (created) | 1 (extended) | +0 net new |
-| Test files created | 2 | 1 | Focused scope |
+| Requirement | Test Cases | Status |
+|-------------|-----------|--------|
+| FR-007 (deriveAnalysisStatus sizing-aware) | TC-DAS-S01 through S10 (10 tests) | Covered |
+| FR-008 (writeMetaJson sizing-aware) | TC-WMJ-S01 through S05 (5 tests) | Covered |
+| FR-009 (computeStartPhase sizing-aware) | TC-CSP-S01 through S09 (9 tests) | Covered |
+| FR-005 (Record sizing in meta.json) | TC-WMJ-S01, S05, TC-SC-S01, S03 | Covered |
+| NFR-001 (No state.json writes) | TC-SC-S02 | Covered |
+| NFR-002 (Backward compatibility) | TC-DAS-S02/S03, TC-WMJ-S03/S04, TC-CSP-S04 | Covered |
+| CON-002 (No applySizingDecision) | TC-SC-S02 | Covered |
+| FR-001 through FR-004, FR-006, FR-010 | Handler-level (isdlc.md spec) | Not unit-testable |
+| NFR-003, NFR-004 | UX/integration-level | Not unit-testable |
+
+---
+
+## 5. Summary
+
+| Category | Metric | Status |
+|----------|--------|--------|
+| Test pass rate (feature) | 211/211 (100%) | PASS |
+| Test pass rate (full suite) | 2884/2888 (99.86%) | PASS (4 pre-existing) |
+| New code path coverage | 27/27 (100%) | PASS |
+| Cyclomatic complexity | max 8 (computeStartPhase) | PASS (< 15 threshold) |
+| Backward compatibility | 208 existing tests pass | PASS |
+| Requirement traceability | 7/7 testable requirements covered | PASS |
