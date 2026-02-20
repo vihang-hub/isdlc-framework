@@ -246,6 +246,22 @@
 
 - #51 [x] ~~Sizing decision must always prompt the user — silent fallback paths bypass user consent~~ *(completed, merged 3de5162)*
 
+- #57 [A] Add sizing decision to analyze verb — skip architecture/design for trivial changes
+  - **Problem**: Sizing decision only exists in `build` (STEP 3e-sizing). Users who run `/isdlc analyze` always run all 5 phases (00-04) even for trivial changes. The `-light` flag only works on `build`.
+  - **Design**: After Phase 02 in analyze, offer the same sizing menu. If light accepted: skip 03/04, record in meta.json, mark `analysis_status: "analyzed"`. Support `-light` flag on analyze.
+  - **Considerations**: Analyze is stateless (no state.json), so sizing stored in meta.json only. `computeStartPhase()` and `deriveAnalysisStatus()` must distinguish intentionally-skipped from incomplete.
+  - **Related**: #51 (sizing consent), #59 (complexity routing), ADR-0001 (sizing insertion point)
+  - **Complexity**: Medium — analyze handler changes, meta.json schema extension, deriveAnalysisStatus update
+
+- #59 [A] Complexity-based routing — Phase 00 recommends workflow tier including a "trivial" direct-edit path
+  - **Problem**: The framework's lightest path (`-light`) still runs 6 phases with gates, branches, and constitutional validation. For trivial changes (1-2 files, single concern, no architectural impact), this is overkill and users will bypass the framework entirely. Sizing tiers only kick in after Phase 02 during `build` — too late.
+  - **Design**: Phase 00 (quick scan) produces a `recommended_tier` in its output and meta.json. Tiers: `trivial` (1-2 files, direct edit), `light` (3-8 files, skip arch+design), `standard` (9-20 files, full workflow), `epic` (20+ files, decomposition). The `analyze` handler displays the recommendation at completion. The `build` handler presents tier options at step 4a, with the recommended tier as default.
+  - **Trivial tier behavior**: No workflow, no branches, no gates. The framework makes the edit directly. BUT still records the change in the requirements folder — creates/updates `docs/requirements/{slug}/` with a lightweight change record (what changed, why, files modified, commit SHA) so the audit trail is preserved even without a full workflow.
+  - **Key principle**: Framework recommends, user decides. Trivial is a first-class framework option, not a bypass.
+  - **Sync points**: `analyze` step 8 (display recommendation), `build` step 4a (present tier menu)
+  - **Related**: #51 (sizing prompts user), adaptive workflow sizing (Phase 02)
+  - **Complexity**: Medium — quick scan scoring logic, meta.json schema extension, build auto-detection update, trivial-tier execution path with requirements folder recording
+
 ### Code Quality Gaps
 
 - #52 [ ] Coverage threshold discrepancy — Constitution mandates 95% unit coverage but Phase 16 only enforces 80%
@@ -317,12 +333,8 @@
   - **Related**: #7 (Jira read) + this (Jira write) together complete the Jira lifecycle
   - **Complexity**: Medium — needs MCP skill file + non-blocking finalize integration
 
-- #58 [ ] GitHub issue label sync — auto-label GitHub-sourced issues as they progress through the pipeline
-  - **Problem**: When a GitHub issue is analyzed via `/isdlc analyze "#N"`, BACKLOG.md markers update (`[ ]` → `[~]` → `[A]`) and meta.json tracks status, but the GitHub issue itself gets no update. Jira has a sync point at finalize (`updateStatus` to Done), but GitHub has nothing at any stage.
-  - **Design**: Add `ready-to-build` label to GitHub issues when analysis completes (`[A]`). Close the issue when `/isdlc build` finalize completes. Use `gh` CLI (`gh issue edit #N --add-label ready-to-build`, `gh issue close #N`). Non-blocking — label sync failure logs a warning but never blocks the pipeline.
-  - **Sync points**: `analyze` complete → add `ready-to-build` label | `build` finalize → close issue
-  - **Related**: #49 (GitHub Issues adapter), #13 (Jira write sync)
-  - **Complexity**: Low — 2 `gh` CLI calls at existing transition points (analyze handler step 8, orchestrator finalize)
+- #58 [x] ~~GitHub issue label sync — auto-label GitHub-sourced issues as they progress through the pipeline~~ **Completed: 2026-02-19**
+  - Added analyze handler step 9 (`gh issue edit N --add-label ready-to-build` on analysis complete) and GitHub sync block in finalize (`gh issue close N` on build complete). Both non-blocking. 2 edits to `isdlc.md`.
 
 ### Backlog & Analysis Redesign (from 2026-02-18 brainstorm)
 

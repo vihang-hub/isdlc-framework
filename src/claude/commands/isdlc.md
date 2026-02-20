@@ -595,6 +595,7 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
    h. Offer exit point: "Phase {NN} complete. Continue to Phase {NN+1} ({name})? [Y/n]"
       If user declines: stop. Analysis is resumable from the next phase.
 8. After final phase: "Analysis complete. {slug} is ready to build."
+9. **GitHub label sync** (non-blocking): If `meta.source === "github"` and `meta.source_id` matches `GH-N`, extract the issue number and run `gh issue edit N --add-label ready-to-build`. If the command fails, log a warning and continue — never block the pipeline.
 
 > **Constraints**: No state.json writes (NFR-002). No workflow creation. No branch creation. Resumable at any phase boundary (NFR-003). Phase transition overhead under 2 seconds (NFR-004).
 
@@ -1708,11 +1709,18 @@ Use Task tool → sdlc-orchestrator with:
   (include MONOREPO CONTEXT if applicable)
 ```
 
-The orchestrator runs the Human Review Checkpoint (if code_review.enabled), merges the branch, and then performs a **non-blocking Jira status sync** if `active_workflow.jira_ticket_id` exists:
+The orchestrator runs the Human Review Checkpoint (if code_review.enabled), merges the branch, and then performs **non-blocking external status sync**:
+
+**Jira sync** (if `active_workflow.jira_ticket_id` exists):
 - Calls `updateStatus(jira_ticket_id, "Done")` via Atlassian MCP to transition the Jira ticket
 - Updates `BACKLOG.md`: marks item `[x]`, moves to `## Completed` section
 - Sets `jira_sync_status` in `workflow_history` (`"synced"`, `"failed"`, or absent for local-only)
 - Any Jira sync failure logs a warning but does **not** block workflow completion (non-blocking)
+
+**GitHub sync** (if `active_workflow.source === "github"` and `active_workflow.source_id` matches `GH-N`):
+- Extract the issue number from `source_id` (e.g., `GH-55` → `55`)
+- Run `gh issue close N` to close the GitHub issue
+- If the command fails, log a warning and continue — never block workflow completion (non-blocking)
 
 After Jira sync, the orchestrator collects workflow progress snapshots (`collectPhaseSnapshots()`), applies state pruning, moves the workflow to `workflow_history` (with `phases`, `phase_snapshots`, and `metrics`), and clears `active_workflow`.
 
