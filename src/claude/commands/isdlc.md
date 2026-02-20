@@ -238,7 +238,7 @@ in `src/claude/hooks/lib/three-verb-utils.cjs` for testability.
 - **detectSource(input)**: Detects source type from input (#N -> github/GH-N, PROJECT-N -> jira, else manual).
 - **readMetaJson(slugDir)**: Reads and parses meta.json with legacy migration (phase_a_completed -> analysis_status + phases_completed).
 - **writeMetaJson(slugDir, meta)**: Writes meta.json, deriving analysis_status from phases_completed, removing legacy fields.
-- **deriveAnalysisStatus(phasesCompleted)**: 0 phases = "raw", 1-4 = "partial", 5 = "analyzed".
+- **deriveAnalysisStatus(phasesCompleted, sizingDecision?)**: 0 phases = "raw", 1-4 = "partial", 5 = "analyzed". When sizingDecision has effective_intensity "light" and light_skip_phases array, fewer phases qualify as "analyzed" (GH-57).
 - **deriveBacklogMarker(analysisStatus)**: raw -> " ", partial -> "~", analyzed -> "A".
 - **updateBacklogMarker(backlogPath, slug, newMarker)**: Updates the marker character for a slug in BACKLOG.md.
 - **appendToBacklog(backlogPath, itemNumber, description, marker)**: Appends a new item to the Open section.
@@ -566,9 +566,19 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 /isdlc analyze "3.2"
 /isdlc analyze "#42"
 /isdlc analyze "JIRA-1250"
+/isdlc analyze -light "config-update"
 ```
 1. Does NOT require an active workflow -- runs inline (no orchestrator)
 2. Does NOT write to state.json, does NOT create branches
+2.5. **Parse flags** (GH-57): Extract `-light` flag from command arguments before resolving the item.
+   ```
+   args = user input (text after "/isdlc analyze")
+   lightFlag = false
+   IF args contains "-light":
+       lightFlag = true
+       args = args with "-light" removed (preserve remaining text as item identifier)
+   item_input = args.trim()
+   ```
 3. Resolve target item using `resolveItem(input)`:
    - If no match: "No matching item found. Would you like to add it to the backlog first?"
      If user confirms: run `add` handler with the input, then continue with analysis
@@ -588,7 +598,35 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
    a. Display: "Running Phase {NN} ({phase name})..."
    b. Delegate to the standard phase agent via Task tool (in ANALYSIS MODE -- no state.json, no branches)
    c. Append phase key to meta.phases_completed
-   d. Update meta.analysis_status using deriveAnalysisStatus()
+
+   **7.5 SIZING TRIGGER CHECK** (GH-57, FR-001, FR-002, FR-003, FR-006):
+   IF phase_key === '02-impact-analysis' AND meta.sizing_decision is NOT already set:
+
+   **PATH A -- Forced light** (lightFlag === true):
+   - Read `light_skip_phases` from `workflows.json -> workflows.feature.sizing.light_skip_phases` (fallback: `["03-architecture", "04-design"]`)
+   - Build sizing_decision record: `{ intensity: "light", effective_intensity: "light", recommended_intensity: null, decided_at: ISO timestamp, reason: "light_flag", user_prompted: false, forced_by_flag: true, overridden: false, overridden_to: null, file_count: 0, module_count: 0, risk_score: "unknown", coupling: "unknown", coverage_gaps: 0, fallback_source: null, fallback_attempted: false, light_skip_phases: light_skip_phases, epic_deferred: false, context: "analyze" }`
+   - Set `meta.sizing_decision = sizing_decision`, call `writeMetaJson(slugDir, meta)`
+   - Display forced-light banner: "ANALYSIS SIZING: Light (forced via -light flag). Skipping phases 03-04."
+   - Update BACKLOG.md marker via `updateBacklogMarker()` with `deriveBacklogMarker(meta.analysis_status)`
+   - Display: "Analysis complete (light). {slug} is ready to build. Phases 03-04 skipped by sizing decision."
+   - BREAK out of phase loop, proceed to step 9 (GitHub label sync)
+
+   **PATH B -- Interactive sizing** (lightFlag === false):
+   - B.1: Read `docs/requirements/{slug}/impact-analysis.md`. If missing, set `ia_reason = 'ia_file_missing'`.
+   - B.2: Call `parseSizingFromImpactAnalysis(iaContent)` from `common.cjs`. If parse returns null, set `ia_reason = 'ia_parse_failed'`.
+   - B.3: If metrics is null (primary failed), call `extractFallbackSizingMetrics(slug, projectRoot)` from `common.cjs`.
+   - B.4: Read thresholds from `workflows.json -> workflows.feature.sizing.thresholds` (fallback: `{ light_max_files: 5, epic_min_files: 20 }`).
+   - B.5: Call `computeSizingRecommendation(metrics, thresholds)` from `common.cjs`.
+   - B.6: Display recommendation banner (with fallback warning if ia_reason is set, or happy-path banner with metrics).
+   - B.7: Present menu: `[A] Accept recommendation | [O] Override (choose different) | [S] Show impact analysis`. Override picker: `[1] Light  [2] Standard` (epic requires build workflow -- CON-004, ADR-005).
+   - B.8: Epic deferral: if `chosen_intensity === 'epic'`, set `effective_intensity = 'standard'`, `epic_deferred = true`.
+   - B.9: If `effective_intensity === 'light'`, read `light_skip_phases` from `workflows.json` (fallback: `["03-architecture", "04-design"]`).
+   - B.10: Build sizing_decision record: `{ intensity, effective_intensity, recommended_intensity, decided_at, reason, user_prompted: true, forced_by_flag: false, overridden, overridden_to, file_count, module_count, risk_score, coupling, coverage_gaps, fallback_source, fallback_attempted, light_skip_phases, epic_deferred, context: "analyze" }`
+   - B.11: Set `meta.sizing_decision = sizing_decision`, call `writeMetaJson(slugDir, meta)`. Do NOT call `applySizingDecision()` (CON-002, NFR-001).
+   - B.12: If `effective_intensity === 'light'`: update BACKLOG.md marker, display "Analysis complete (light). {slug} is ready to build.", BREAK loop -> step 9.
+   - B.13: If `effective_intensity === 'standard'`: CONTINUE loop (phases 03, 04 execute normally).
+
+   d. Update meta.analysis_status using `deriveAnalysisStatus(meta.phases_completed, meta.sizing_decision)`
    e. Update meta.codebase_hash to current git HEAD short SHA
    f. Write meta.json using writeMetaJson()
    g. Update BACKLOG.md marker using updateBacklogMarker() with deriveBacklogMarker()
