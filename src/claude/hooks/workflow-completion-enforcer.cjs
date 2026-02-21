@@ -36,7 +36,9 @@ const {
     pruneSkillUsageLog,
     pruneCompletedPhases,
     pruneHistory,
-    pruneWorkflowHistory
+    pruneWorkflowHistory,
+    clearTransientFields,
+    appendToArchive
 } = require('./lib/common.cjs');
 
 /**
@@ -215,11 +217,49 @@ function check(ctx) {
             debugLog('workflow-completion-enforcer: regression check error:', regressionErr.message);
         }
 
-        // Apply pruning (BUG-0004)
-        pruneSkillUsageLog(state, 20);
+        // Build archive record BEFORE prune (prune compacts git_branch, losing status)
+        // Archive-first ordering: capture pre-prune data, write to archive, then prune state
+        let archiveRecord = null;
+        try {
+            const lastEntryForArchive = state.workflow_history[state.workflow_history.length - 1];
+            if (lastEntryForArchive) {
+                archiveRecord = {
+                    source_id: lastEntryForArchive.id || null,
+                    slug: lastEntryForArchive.artifact_folder || null,
+                    workflow_type: lastEntryForArchive.type || null,
+                    completed_at: lastEntryForArchive.completed_at || lastEntryForArchive.cancelled_at || new Date().toISOString(),
+                    branch: lastEntryForArchive.git_branch?.name || null,
+                    outcome: lastEntryForArchive.status === 'cancelled' ? 'cancelled'
+                           : lastEntryForArchive.git_branch?.status === 'merged' ? 'merged'
+                           : 'completed',
+                    reason: lastEntryForArchive.cancellation_reason || null,
+                    phase_summary: (lastEntryForArchive.phase_snapshots || []).map(s => ({
+                        phase: s.key || s.phase,
+                        status: s.status,
+                        summary: s.summary || null
+                    })),
+                    metrics: lastEntryForArchive.metrics || {}
+                };
+            }
+        } catch (recordErr) {
+            debugLog('workflow-completion-enforcer: archive record build error:', recordErr.message);
+        }
+
+        // Write archive record to disk FIRST (FR-010, GH-39)
+        try {
+            if (archiveRecord) {
+                appendToArchive(archiveRecord);
+            }
+        } catch (archiveErr) {
+            debugLog('workflow-completion-enforcer: archive error:', archiveErr.message);
+        }
+
+        // Apply pruning (BUG-0004, GH-39)
+        pruneSkillUsageLog(state, 50);
         pruneCompletedPhases(state, []);
-        pruneHistory(state, 50, 200);
+        pruneHistory(state, 100, 200);
         pruneWorkflowHistory(state, 50, 200);
+        clearTransientFields(state);
 
         // Write back to disk (this hook manages its own I/O)
         writeState(state);
