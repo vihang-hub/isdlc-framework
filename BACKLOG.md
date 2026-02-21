@@ -157,6 +157,8 @@
   - **Not a full JSON replacement** — complement for token-heavy tabular data only
 - #34 [ ] Improve search capabilities to help Claude be more effective
 - #35 [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
+- #27 [ ] /isdlc validate command — on-demand artifact quality check (constitutional + completeness) without running a full workflow
+- #28 [ ] Progressive disclosure / lite mode — expose only constitution → requirements → implement → quality loop for simple projects, full lifecycle opt-in
 - #38 [ ] /isdlc refactor command and workflow — pre-requisite: 100% automated E2E testing
 - #37 [ ] Separate commands to manage deployments and operations
 - #39 [x] ~~State.json pruning at workflow completion~~ -> [requirements](docs/requirements/state-json-pruning-GH-39/) **Completed: 2026-02-21** *(merged f60f1cc)*
@@ -183,8 +185,8 @@
   - **Not blocked by Anthropic**: In Jan 2026, Anthropic blocked third-party tools (OpenCode, xAI) from using Claude Pro/Max subscriptions to access proprietary Claude models (anti-arbitrage). Ollama + Claude Code is unaffected — it uses Anthropic's own CLI pointed at local open-source models, no Anthropic subscription or API key needed. Still working as of Feb 2026, though streaming and tool-calling edge cases are still being patched in Ollama.
   - Docs: [docs.ollama.com/integrations/claude-code](https://docs.ollama.com/integrations/claude-code)
 - #42 [ ] SonarQube integration
-- [ ] Spec reconciliation phase and selective code regeneration — close the spec-code knowledge gap so code becomes regenerable from complete specifications -> [requirements](docs/requirements/spec-reconciliation-and-code-regeneration/)
-- #63 [ ] Concurrent phase execution in roundtable analyze flow — Maya leads Phase 01 while Alex/Jordan write Phase 02-04 artifacts in parallel, progressively refining as requirements emerge -> [requirements](docs/requirements/REQ-0032-concurrent-phase-execution-in-roundtable-analyze/)
+- #66 [ ] Spec reconciliation phase and selective code regeneration — close the spec-code knowledge gap so code becomes regenerable from complete specifications -> [requirements](docs/requirements/spec-reconciliation-and-code-regeneration/)
+- #63 [A] Concurrent phase execution in roundtable analyze flow — Maya leads Phase 01 while Alex/Jordan write Phase 02-04 artifacts in parallel, progressively refining as requirements emerge -> [requirements](docs/requirements/REQ-0032-concurrent-phase-execution-in-roundtable-analyze/)
 
 ### Product/Vision
 
@@ -328,7 +330,7 @@
 ### Developer Experience
 
 - #62 [x] ~~Stale pending_delegation marker blocks all responses across sessions~~ — delegation-gate.cjs now has `STALENESS_THRESHOLD_MINUTES` expiry check with auto-clearing of stale markers **Completed: 2026-02-20**
-- #3 [ ] Framework file operations should not require user permission — when the iSDLC framework updates its own internal files (e.g., `.isdlc/state.json`, `.isdlc/hook-activity.log`), Claude Code prompts the user for permission. These are framework-managed files and should be auto-allowed.
+- #3 [x] ~~Framework file operations should not require user permission~~ — added `Write(*/.isdlc/*)` and `Edit(*/.isdlc/*)` allow rules to `src/claude/settings.json` **Completed: 2026-02-21** *(trivial, commit 37a1501)*
 - #56 [ ] Install script landing page and demo GIF — update the install script landing/README with a polished visual experience including an animated GIF demonstrating the framework in action (invisible framework flow, workflow progression, quality gates)
 
 ### Backlog Management UX (from 2026-02-17 gap analysis)
@@ -394,6 +396,7 @@
 
 ### 2026-02-21
 - [x] #39: State.json pruning at workflow completion — 4 new pruning functions in `common.cjs` (`pruneSkillUsageLog`, `pruneCompletedPhases`, `pruneHistory`, `pruneWorkflowHistory`) + enforcer integration in `workflow-completion-enforcer.cjs`. Prunes stale/transient fields at workflow end, prevents unbounded state growth. 77 new tests, zero regressions. 2 files changed, 276 insertions *(merged f60f1cc)*.
+- [x] #3: Framework file operations should not require user permission — added `Write(*/.isdlc/*)` and `Edit(*/.isdlc/*)` allow rules to `src/claude/settings.json`. Trivial tier, 1 tracked file changed *(commit 37a1501)*.
 
 ### 2026-02-20
 - [x] #62: Stale pending_delegation marker expiry — added `STALENESS_THRESHOLD_MINUTES` to delegation-gate.cjs with auto-clearing of cross-session stale markers.
