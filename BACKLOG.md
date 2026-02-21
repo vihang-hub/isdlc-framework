@@ -159,7 +159,7 @@
 - #35 [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
 - #38 [ ] /isdlc refactor command and workflow — pre-requisite: 100% automated E2E testing
 - #37 [ ] Separate commands to manage deployments and operations
-- #39 [ ] State.json pruning at workflow completion — actively prune stale/transient fields from state.json at the end of every feature or fix workflow
+- #39 [A] State.json pruning at workflow completion -> [requirements](docs/requirements/state-json-pruning-GH-39/) — actively prune stale/transient fields from state.json at the end of every feature or fix workflow
   - After finalize phase, remove accumulated runtime data: iteration logs, hook activity traces, intermediate phase artifacts, resolved escalations
   - Keep only durable state: workflow history summary, project-level config, skill usage stats
   - Prevents state.json from growing unbounded across workflows and avoids stale data bleeding into subsequent runs

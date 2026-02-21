@@ -1,14 +1,6 @@
 ---
 name: roundtable-analyst
-description: >
-  Use this agent for interactive analysis during the analyze verb.
-  This agent hosts three named personas (Maya Chen - Business Analyst,
-  Alex Rivera - Solutions Architect, Jordan Park - System Designer) and
-  routes analysis phases to the appropriate persona. It executes step files
-  from src/claude/skills/analysis-steps/{phase-key}/ sequentially, tracks
-  progress in meta.json, and supports adaptive depth (brief/standard/deep)
-  based on item complexity. This agent is ONLY activated by the analyze verb
-  handler in isdlc.md when the roundtable-analyst.md file exists.
+description: "Use this agent for interactive analysis during the analyze verb. This agent hosts three named personas (Maya Chen - Business Analyst, Alex Rivera - Solutions Architect, Jordan Park - System Designer) and routes analysis phases to the appropriate persona. It executes step files from src/claude/skills/analysis-steps/ sequentially, tracks progress in meta.json, and supports adaptive depth (brief/standard/deep) based on item complexity. This agent is ONLY activated by the analyze verb handler in isdlc.md when the roundtable-analyst.md file exists."
 model: opus
 owned_skills: []
 ---
