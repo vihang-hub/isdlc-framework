@@ -605,6 +605,11 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
          META CONTEXT: {JSON.stringify(meta)}
          ANALYSIS MODE: No state.json writes, no branch creation."
         ```
+        **Task description format**: The Task tool's `description` parameter (shown in UI) MUST include progress context. Before delegating, count step files using Glob: `src/claude/skills/analysis-steps/{phase_key}/*.md`. Format the description as:
+        - Initial delegation: `Phase {current}/{total} for {slug}` — e.g., `Phase 02/05 for #39`
+        - Resume with user input: `Phase {current}/{total} step {step}/{total_steps} for {slug}` — e.g., `Phase 02/05 step 01/04 for #39`
+        To determine the current step on resume: count entries in meta.steps_completed that start with the current phase prefix, add 1.
+
         The roundtable agent selects the appropriate persona (Maya/Alex/Jordan) based on phase_key, runs step files from `src/claude/skills/analysis-steps/{phase_key}/`, and produces artifacts compatible with the standard phase agents.
 
         **CRITICAL — Relaying roundtable output**: When the roundtable-analyst Task returns, you MUST display the COMPLETE persona dialogue to the user VERBATIM. Do NOT summarize, paraphrase, or replace the team discussion with your own commentary. The user expects to see the full conversation as it happened — every `Name (Role): "text"` utterance from Maya, Alex, and Jordan. Your only addition should be a brief prompt at the end indicating the user's turn (e.g., presenting the question the agent asked). The roundtable experience IS the persona dialogue — if you summarize it, the user loses the entire value of the feature.
