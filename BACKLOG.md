@@ -187,7 +187,8 @@
   - **Not blocked by Anthropic**: In Jan 2026, Anthropic blocked third-party tools (OpenCode, xAI) from using Claude Pro/Max subscriptions to access proprietary Claude models (anti-arbitrage). Ollama + Claude Code is unaffected — it uses Anthropic's own CLI pointed at local open-source models, no Anthropic subscription or API key needed. Still working as of Feb 2026, though streaming and tool-calling edge cases are still being patched in Ollama.
   - Docs: [docs.ollama.com/integrations/claude-code](https://docs.ollama.com/integrations/claude-code)
 - #42 [ ] SonarQube integration
-- #63 [ ] Spec reconciliation phase and selective code regeneration — close the spec-code knowledge gap so code becomes regenerable from complete specifications -> [requirements](docs/requirements/spec-reconciliation-and-code-regeneration/)
+- [ ] Spec reconciliation phase and selective code regeneration — close the spec-code knowledge gap so code becomes regenerable from complete specifications -> [requirements](docs/requirements/spec-reconciliation-and-code-regeneration/)
+- #63 [ ] Concurrent phase execution in roundtable analyze flow — Maya leads Phase 01 while Alex/Jordan write Phase 02-04 artifacts in parallel, progressively refining as requirements emerge -> [requirements](docs/requirements/REQ-0032-concurrent-phase-execution-in-roundtable-analyze/)
 
 ### Product/Vision
 
