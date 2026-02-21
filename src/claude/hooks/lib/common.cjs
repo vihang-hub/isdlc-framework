@@ -2361,7 +2361,7 @@ function collectPhaseSnapshots(state) {
  * @param {number} maxEntries - Maximum entries to keep (default 20)
  * @returns {Object} The mutated state object
  */
-function pruneSkillUsageLog(state, maxEntries = 20) {
+function pruneSkillUsageLog(state, maxEntries = 50) {
     if (!state.skill_usage_log || !Array.isArray(state.skill_usage_log)) return state;
     if (state.skill_usage_log.length > maxEntries) {
         state.skill_usage_log = state.skill_usage_log.slice(-maxEntries);
@@ -2415,7 +2415,7 @@ function pruneCompletedPhases(state, protectedPhases = []) {
  * @param {number} maxCharLen - Maximum action string length before truncation (default 200)
  * @returns {Object} The mutated state object
  */
-function pruneHistory(state, maxEntries = 50, maxCharLen = 200) {
+function pruneHistory(state, maxEntries = 100, maxCharLen = 200) {
     if (!state.history || !Array.isArray(state.history)) return state;
 
     // FIFO: keep last N
@@ -2459,6 +2459,231 @@ function pruneWorkflowHistory(state, maxEntries = 50, maxCharLen = 200) {
         }
     }
     return state;
+}
+
+/**
+ * Reset all transient runtime fields to their null/empty defaults.
+ * Called at workflow finalize to prevent stale data bleeding into
+ * subsequent workflows.
+ *
+ * Pure function: takes state, mutates it, returns it.
+ * Does NOT perform any disk I/O. Caller manages readState/writeState.
+ *
+ * Transient field list (explicit allowlist -- ADR-002):
+ *   current_phase, active_agent, phases, blockers,
+ *   pending_escalations, pending_delegation
+ *
+ * Traces to: FR-003 (AC-003-01 through AC-003-08), GH-39
+ *
+ * @param {Object} state - The state object to mutate
+ * @returns {Object} The mutated state object (or input unchanged if null/undefined)
+ */
+function clearTransientFields(state) {
+    if (!state) return state;
+
+    state.current_phase = null;
+    state.active_agent = null;
+    state.phases = {};
+    state.blockers = [];
+    state.pending_escalations = [];
+    state.pending_delegation = null;
+
+    return state;
+}
+
+/**
+ * Resolve the path to state-archive.json, accounting for monorepo mode.
+ * Mirrors resolveStatePath() exactly -- same directory, different filename.
+ *
+ * - Single project: .isdlc/state-archive.json
+ * - Monorepo: .isdlc/projects/{project-id}/state-archive.json
+ *
+ * Traces to: FR-015 (AC-015-01 through AC-015-06), GH-39
+ *
+ * @param {string} [projectId] - Optional project ID override
+ * @returns {string} Absolute path to state-archive.json
+ */
+function resolveArchivePath(projectId) {
+    const projectRoot = getProjectRoot();
+
+    if (isMonorepoMode()) {
+        const id = projectId || getActiveProject();
+        if (id) {
+            return path.join(projectRoot, '.isdlc', 'projects', id, 'state-archive.json');
+        }
+    }
+
+    // Default: single-project mode
+    return path.join(projectRoot, '.isdlc', 'state-archive.json');
+}
+
+/**
+ * Append a workflow record to state-archive.json and update the multi-key index.
+ *
+ * Best-effort: never throws. On any error, logs a warning to stderr and returns.
+ * On corrupt or missing archive file, creates a fresh archive.
+ *
+ * Dedup (ADR-009): If the last record in the archive has the same `slug` AND
+ * `completed_at` as the incoming record, the append is skipped. O(1) check.
+ *
+ * Index maintenance (ADR-010): source_id and slug are added as index keys
+ * pointing to the new record's array position. Existing keys are appended
+ * (supports re-work: same issue, multiple workflows).
+ *
+ * Traces to: FR-011 (AC-011-01 through AC-011-05), GH-39
+ *
+ * @param {Object} record - Archive record conforming to the schema
+ * @param {string} [projectId] - Optional project ID for monorepo mode
+ * @returns {void}
+ */
+function appendToArchive(record, projectId) {
+    try {
+        const archivePath = resolveArchivePath(projectId);
+
+        // Ensure directory exists (monorepo first-use)
+        const dir = path.dirname(archivePath);
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+
+        // Read existing archive or create fresh
+        let archive;
+        if (fs.existsSync(archivePath)) {
+            try {
+                const content = fs.readFileSync(archivePath, 'utf8');
+                archive = JSON.parse(content);
+            } catch (parseErr) {
+                // Corrupt file: log warning, start fresh
+                debugLog('appendToArchive: corrupt archive file, creating fresh:', parseErr.message);
+                archive = null;
+            }
+        }
+
+        if (!archive || !Array.isArray(archive.records)) {
+            archive = { version: 1, records: [], index: {} };
+        }
+
+        // Dedup check (ADR-009): skip if last record matches slug + completed_at
+        if (archive.records.length > 0) {
+            const lastRecord = archive.records[archive.records.length - 1];
+            if (lastRecord.slug === record.slug && lastRecord.completed_at === record.completed_at) {
+                debugLog('appendToArchive: duplicate detected, skipping');
+                return;
+            }
+        }
+
+        // Append record
+        const position = archive.records.length;
+        archive.records.push(record);
+
+        // Update index (ADR-010): add source_id and slug keys
+        if (!archive.index || typeof archive.index !== 'object') {
+            archive.index = {};
+        }
+
+        if (record.source_id) {
+            if (!Array.isArray(archive.index[record.source_id])) {
+                archive.index[record.source_id] = [];
+            }
+            archive.index[record.source_id].push(position);
+        }
+
+        if (record.slug) {
+            if (!Array.isArray(archive.index[record.slug])) {
+                archive.index[record.slug] = [];
+            }
+            archive.index[record.slug].push(position);
+        }
+
+        // Write archive
+        fs.writeFileSync(archivePath, JSON.stringify(archive, null, 2));
+
+    } catch (err) {
+        // Fail-open: log warning, never throw (NFR-007)
+        debugLog('appendToArchive: error:', err.message);
+    }
+}
+
+/**
+ * Derive archive outcome from a legacy workflow_history entry.
+ * @param {Object} entry - Legacy workflow_history entry
+ * @returns {string} One of: "merged", "completed", "cancelled", "abandoned"
+ */
+function _deriveOutcome(entry) {
+    if (entry.status === 'cancelled') return 'cancelled';
+    if (entry.git_branch?.status === 'merged') return 'merged';
+    if (entry.status === 'completed') return 'completed';
+    return 'completed'; // Default fallback for legacy entries without explicit status
+}
+
+/**
+ * Compact full phase_snapshots to phase_summary format.
+ * @param {Array} snapshots - Full phase_snapshots array (or undefined)
+ * @returns {Array} Compact array of { phase, status, summary }
+ */
+function _compactPhaseSnapshots(snapshots) {
+    if (!Array.isArray(snapshots)) return [];
+    return snapshots.map(s => ({
+        phase: s.key || s.phase || null,
+        status: s.status || null,
+        summary: s.summary || null
+    }));
+}
+
+/**
+ * Transform legacy workflow_history entries to archive record format
+ * and append each to the archive via appendToArchive().
+ *
+ * Used by FR-009 (one-time migration) during orchestrator init.
+ * Skip-on-error per entry: if one entry fails to transform, continue with the next.
+ * Never throws.
+ *
+ * Traces to: FR-014 (AC-014-01 through AC-014-05), GH-39
+ *
+ * @param {Array} workflowHistory - Array of legacy workflow_history entries
+ * @param {string} [projectId] - Optional project ID for monorepo mode
+ * @returns {void}
+ */
+function seedArchiveFromHistory(workflowHistory, projectId) {
+    if (!Array.isArray(workflowHistory) || workflowHistory.length === 0) {
+        return;
+    }
+
+    let seeded = 0;
+    let skipped = 0;
+
+    for (const entry of workflowHistory) {
+        try {
+            const record = {
+                source_id: entry.id || null,
+                slug: entry.artifact_folder || null,
+                workflow_type: entry.type || null,
+                completed_at: entry.completed_at || entry.cancelled_at || null,
+                branch: entry.git_branch?.name || null,
+                outcome: _deriveOutcome(entry),
+                reason: entry.cancellation_reason || null,
+                phase_summary: _compactPhaseSnapshots(entry.phase_snapshots),
+                metrics: entry.metrics || {}
+            };
+
+            // Skip entries with no timestamp (cannot be meaningfully archived)
+            if (!record.completed_at) {
+                skipped++;
+                continue;
+            }
+
+            appendToArchive(record, projectId);
+            seeded++;
+        } catch (entryErr) {
+            // Skip-on-error per entry (AC-014-05)
+            debugLog('seedArchiveFromHistory: skipping entry:', entryErr.message);
+            skipped++;
+        }
+    }
+
+    if (skipped > 0) {
+        debugLog(`seedArchiveFromHistory: seeded ${seeded}, skipped ${skipped}`);
+    }
 }
 
 /**
@@ -3467,6 +3692,7 @@ module.exports = {
     resolveProjectFromCwd,
     getActiveProject,
     resolveStatePath,
+    resolveArchivePath,
     resolveConstitutionPath,
     resolveDocsPath,
     resolveExternalSkillsPath,
@@ -3540,7 +3766,11 @@ module.exports = {
     pruneCompletedPhases,
     pruneHistory,
     pruneWorkflowHistory,
+    clearTransientFields,
     resetPhasesForWorkflow,
+    // Archive operations (GH-39)
+    appendToArchive,
+    seedArchiveFromHistory,
     // Dispatcher helpers (REQ-0010)
     addPendingEscalation,
     addSkillLogEntry,
