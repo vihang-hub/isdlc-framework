@@ -234,7 +234,7 @@ Enter selection (1-5):
 The following utility functions support the add, analyze, and build verbs. They are implemented
 in `src/claude/hooks/lib/three-verb-utils.cjs` for testability.
 
-- **generateSlug(description)**: Sanitizes a description to a URL-safe slug (lowercase, hyphens, max 50 chars). Returns "untitled-item" for empty input.
+- **generateSlug(description)**: Sanitizes a description to a URL-safe slug (lowercase, hyphens, max 50 chars). Returns "untitled-item" for empty input. This produces the description portion only — the full directory name is `{TYPE}-{NNNN}-{slug}` (composed by the add command).
 - **detectSource(input)**: Detects source type from input (#N -> github/GH-N, PROJECT-N -> jira, else manual).
 - **readMetaJson(slugDir)**: Reads and parses meta.json with legacy migration (phase_a_completed -> analysis_status + phases_completed).
 - **writeMetaJson(slugDir, meta)**: Writes meta.json, deriving analysis_status from phases_completed, removing legacy fields.
@@ -539,14 +539,24 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 1. Does NOT require an active workflow -- runs inline
 2. Does NOT write to state.json, does NOT create branches, does NOT invoke hooks
 3. Parse input to identify source type:
-   a. GitHub issue (`#N` pattern): source = "github", source_id = "GH-N"
-   b. Jira ticket (`PROJECT-N` pattern): source = "jira", source_id = input
-   c. All other input: source = "manual", source_id = null
-4. Generate slug from description using `generateSlug()`
-5. Peek at `.isdlc/state.json` -> `counters.next_req_id` (READ-ONLY, do NOT increment)
-   - If state.json unreadable: scan `docs/requirements/` for highest REQ-NNNN, use NNNN+1
-6. Compose directory name: use description-based slug only (no REQ-NNNN prefix at add time;
-   prefix is assigned when build creates the workflow)
+   a. GitHub issue (`#N` pattern): source = "github", source_id = "GH-N".
+      Fetch the issue title using `gh issue view N --json title,labels -q '.title'`.
+      Check labels: if "bug" label present, item_type = "BUG", else item_type = "REQ".
+   b. Jira ticket (`PROJECT-N` pattern): source = "jira", source_id = input.
+      Fetch the issue summary and type. If type is "Bug", item_type = "BUG", else item_type = "REQ".
+   c. All other input: source = "manual", source_id = null.
+      Ask the user: "Is this a feature/requirement or a bug fix?" → item_type = "REQ" or "BUG".
+4. Generate description slug:
+   - For external sources (github/jira): use `generateSlug()` on the fetched ticket title (NOT the reference number)
+   - For manual input: use `generateSlug()` on the user's description text
+5. Determine next sequence number:
+   - Scan `docs/requirements/` for existing folders matching `{item_type}-NNNN-*`
+   - Extract the highest NNNN, use NNNN+1 (zero-padded to 4 digits)
+   - If none found, start at 0001
+6. Compose directory name: `{item_type}-{NNNN}-{description_slug}`
+   - Example (github): `#39` with title "State JSON pruning" → `REQ-0020-state-json-pruning`
+   - Example (manual): "Add payment processing" → `REQ-0001-add-payment-processing`
+   - Example (bug): `#16` with title "Hook validation failure", bug label → `BUG-0012-hook-validation-failure`
 7. Check for slug collision in `docs/requirements/`:
    - If exists: warn "This item already has a folder. Update it or choose a different name?"
    - Options: [U] Update draft | [R] Rename | [C] Cancel
