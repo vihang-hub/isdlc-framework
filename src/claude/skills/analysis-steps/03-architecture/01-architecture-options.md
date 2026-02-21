@@ -7,6 +7,7 @@ outputs:
   - "architecture-overview.md"
 depends_on: []
 skip_if: ""
+brainstorm: true
 ---
 
 ## Brief Mode

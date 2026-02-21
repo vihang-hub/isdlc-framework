@@ -7,6 +7,7 @@ outputs:
   - "module-design.md"
 depends_on: []
 skip_if: ""
+brainstorm: true
 ---
 
 ## Brief Mode

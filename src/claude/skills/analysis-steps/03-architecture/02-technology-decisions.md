@@ -7,6 +7,7 @@ outputs:
   - "architecture-overview.md"
 depends_on: ["03-01"]
 skip_if: ""
+research: true
 ---
 
 ## Brief Mode

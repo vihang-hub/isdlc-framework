@@ -7,6 +7,7 @@ outputs:
   - "requirements-spec.md"
 depends_on: []
 skip_if: ""
+research: true
 ---
 
 ## Brief Mode
