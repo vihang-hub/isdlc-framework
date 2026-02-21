@@ -166,7 +166,9 @@
       "Bash(SKILL_VALIDATOR_DEBUG=*)",
       "Bash(CI=*)",
       "Bash(NODE_ENV=*)",
-      "Bash(PATH=*)"
+      "Bash(PATH=*)",
+      "Write(*/.isdlc/*)",
+      "Edit(*/.isdlc/*)"
     ]
   },
   "hooks": {
