@@ -606,6 +606,8 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
          ANALYSIS MODE: No state.json writes, no branch creation."
         ```
         The roundtable agent selects the appropriate persona (Maya/Alex/Jordan) based on phase_key, runs step files from `src/claude/skills/analysis-steps/{phase_key}/`, and produces artifacts compatible with the standard phase agents.
+
+        **CRITICAL — Relaying roundtable output**: When the roundtable-analyst Task returns, you MUST display the COMPLETE persona dialogue to the user VERBATIM. Do NOT summarize, paraphrase, or replace the team discussion with your own commentary. The user expects to see the full conversation as it happened — every `Name (Role): "text"` utterance from Maya, Alex, and Jordan. Your only addition should be a brief prompt at the end indicating the user's turn (e.g., presenting the question the agent asked). The roundtable experience IS the persona dialogue — if you summarize it, the user loses the entire value of the feature.
       - **If roundtable-analyst.md does NOT exist** (fallback): Delegate to the standard phase agent via Task tool (in ANALYSIS MODE -- no state.json, no branches). This preserves backward compatibility for installations without the roundtable agent.
    c. Append phase key to meta.phases_completed
 
