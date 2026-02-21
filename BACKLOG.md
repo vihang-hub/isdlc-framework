@@ -159,11 +159,7 @@
 - #35 [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
 - #38 [ ] /isdlc refactor command and workflow — pre-requisite: 100% automated E2E testing
 - #37 [ ] Separate commands to manage deployments and operations
-- #39 [A] State.json pruning at workflow completion -> [requirements](docs/requirements/state-json-pruning-GH-39/) — actively prune stale/transient fields from state.json at the end of every feature or fix workflow
-  - After finalize phase, remove accumulated runtime data: iteration logs, hook activity traces, intermediate phase artifacts, resolved escalations
-  - Keep only durable state: workflow history summary, project-level config, skill usage stats
-  - Prevents state.json from growing unbounded across workflows and avoids stale data bleeding into subsequent runs
-  - Audit and restructure state.json schema for human readability — ensure the structure is well-organized, logically grouped, and understandable when inspected manually (not just machine-consumed)
+- #39 [x] ~~State.json pruning at workflow completion~~ -> [requirements](docs/requirements/state-json-pruning-GH-39/) **Completed: 2026-02-21** *(merged f60f1cc)*
 - #40 [ ] Epic decomposition for large features (depends on adaptive workflow sizing / REQ-0011)
   - **Trigger**: Impact Analysis estimates `large` scope (20+ files) or `high` risk
   - **Process**: After sizing decision, Requirements Analyst re-enters to break the feature into sub-features with clear boundaries
@@ -395,6 +391,9 @@
   - **Complexity**: Low-medium
 
 ## Completed
+
+### 2026-02-21
+- [x] #39: State.json pruning at workflow completion — 4 new pruning functions in `common.cjs` (`pruneSkillUsageLog`, `pruneCompletedPhases`, `pruneHistory`, `pruneWorkflowHistory`) + enforcer integration in `workflow-completion-enforcer.cjs`. Prunes stale/transient fields at workflow end, prevents unbounded state growth. 77 new tests, zero regressions. 2 files changed, 276 insertions *(merged f60f1cc)*.
 
 ### 2026-02-20
 - [x] #62: Stale pending_delegation marker expiry — added `STALENESS_THRESHOLD_MINUTES` to delegation-gate.cjs with auto-clearing of cross-session stale markers.
