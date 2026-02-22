@@ -202,11 +202,13 @@ async function main() {
         });
         outputBlockResponse(
             `COMMIT BLOCKED (Phase: ${currentPhase}): Commits are not allowed ` +
-            `on the workflow branch during intermediate phases.\n\n` +
+            `during intermediate phases. This was stated in the CRITICAL CONSTRAINTS ` +
+            `block injected into your delegation prompt.\n\n` +
             `The current phase '${currentPhase}' has not yet passed quality-loop ` +
             `and code-review validation. Committing now would create unvalidated ` +
             `snapshots in version control.\n\n` +
             `What to do instead:\n` +
+            `- Do NOT retry the commit -- it will be blocked again.\n` +
             `- Leave changes on the working tree (they will be committed by the orchestrator at workflow finalize)\n` +
             `- If you need to save work temporarily, use: git stash\n` +
             `- The orchestrator handles git add, commit, and merge at the appropriate time\n\n` +

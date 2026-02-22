@@ -301,32 +301,11 @@
 
 ### Agent Compliance
 
-- #64 [~] Agents ignore injected gate requirements — wasted iterations on hook-blocked actions -> [requirements](docs/requirements/BUG-0028-agents-ignore-injected-gate-requirements/)
-  - **Problem**: Gate requirements pre-injection (REQ-0024, `gate-requirements-injector.cjs`) tells agents what hooks will enforce (e.g., "do not commit during intermediate phases"). But agents sometimes ignore these constraints and attempt the blocked action anyway. The hook safety net catches it, but the iteration is wasted and the agent has to recover.
-  - **Observed**: During BUG-0029 Phase 06, the software-developer agent ran `git commit` despite the injected constraint about Git Commit Prohibition. The `branch-guard` hook blocked it correctly, but the commit still partially executed (the commit message appeared in output).
-  - **Root causes to investigate**:
-    1. Injected gate requirements text gets buried in long agent prompts (context dilution)
-    2. Agent's own instructions contain competing patterns (e.g., "save your work" or training-data habits)
-    3. Agents don't treat injected constraints as hard rules vs. suggestions
-    4. The injection format may not be salient enough (wall of text vs. prominent warning)
-  - **Potential solutions**:
-    - Strengthen injection format (e.g., `CRITICAL CONSTRAINT:` prefix, shorter text, repeated at end of prompt)
-    - Audit agent files for competing instructions that contradict gate requirements
-    - Add a "constraint acknowledgment" step where agent echoes back constraints before starting work
-    - Post-hook feedback loop: when a hook blocks, inject the block reason into the agent's next turn as a high-priority correction
-  - **Impact**: Wasted iterations degrade performance budgets (REQ-0025). Each blocked-then-retried action costs ~1-2 min.
-  - **Related**: REQ-0024 (gate requirements pre-injection), REQ-0025 (performance budget), Git Commit Prohibition in CLAUDE.md
-  - **Complexity**: Medium — investigation + prompt engineering + possibly agent file updates
+- #64 [x] ~~Agents ignore injected gate requirements — wasted iterations on hook-blocked actions~~ -> [requirements](docs/requirements/BUG-0028-agents-ignore-injected-gate-requirements/) **Completed: 2026-02-22**
 
 ### Hook Bugs
 
-- #65 [x] ~~gate-blocker blocks `/isdlc analyze` and `/isdlc add` during active workflows~~ — added EXEMPT_ACTIONS to gate-blocker.cjs and iteration-corridor.cjs **Completed: 2026-02-22** *(BUG-0031, commit 7f4ad03)*
-  - **Problem**: `gate-blocker.cjs` fires on all `/isdlc` Skill invocations during an active workflow. It only exempts `advance` and `gate-check` actions plus setup commands. The `analyze` and `add` verbs — which are explicitly designed to run outside workflow machinery (no state.json writes, no branches) — get blocked if the current phase has unsatisfied gate requirements.
-  - **Observed**: `/isdlc analyze "#64 ..."` blocked with `GATE BLOCKED: Iteration requirements not satisfied for phase '16-quality-loop'` while BUG-0029 workflow was active in another session.
-  - **Root cause**: `skill-delegation-enforcer.cjs` correctly exempts `analyze`/`add` (line 37: `EXEMPT_ACTIONS`), but `gate-blocker.cjs` in the `pre-skill-dispatcher` runs first and blocks before the delegation enforcer gets a chance to exempt.
-  - **Fix**: Add `analyze` and `add` to gate-blocker's Skill exemption check (around line 118-130). When the Skill is `isdlc` and the action is `analyze` or `add`, skip the gate check.
-  - **Files**: `src/claude/hooks/gate-blocker.cjs`
-  - **Complexity**: Low — 5-10 line change + tests
+- #65 [x] ~~gate-blocker blocks `/isdlc analyze` and `/isdlc add` during active workflows~~ — added `analyze` and `add` to gate-blocker Skill exemption check **Completed: 2026-02-22** *(BUG-0031, commit 7f4ad03)*
 
 ### Developer Experience
 
@@ -368,17 +347,14 @@
 - #21 [x] ~~Elaboration mode — multi-persona roundtable discussions~~ -> [requirements](docs/requirements/gh-21-elaboration-mode-multi-persona-roundtable-discussions/) **Completed: 2026-02-20**
   - Multi-persona roundtable discussions in `roundtable-analyst.md`, elaboration records in meta.json, `elaborations[]` + `elaboration_config` in three-verb-utils.cjs. Built as part of #20 roundtable agent.
 
-- #22 [ ] Transparent Critic/Refiner at step boundaries
-  - **Problem**: The existing Creator/Critic/Refiner debate loop runs invisibly. Users don't see improvements and can't validate them. This erodes trust and misses opportunities for user input on refinements.
-  - **Design**: At each step boundary (after BA finishes requirements, after Architect finishes architecture, after Designer finishes design):
-    1. Critic reviews draft artifacts (runs in background)
-    2. Refiner improves based on critique (runs in background)
-    3. Roundtable agent presents improvements transparently: "My team reviewed this and suggested some improvements:"
-    4. Shows what changed, why, and the updated version
-    5. User menu: `[A] Accept improvements` / `[M] Modify` / `[R] Reject — keep original` / `[E] Elaboration Mode` / `[C] Continue`
-  - **Key principle**: Nothing hidden. The team's work is surfaced as "team feedback" within the persona's natural voice.
-  - **Files**: Critic/Refiner integration into roundtable agent step transitions, presentation format
-  - **Depends on**: #20 (roundtable agent exists)
+- #22 [x] ~~Transparent Critic/Refiner at step boundaries~~ *(GitHub #22)* -> [requirements](docs/requirements/REQ-0035-transparent-critic-refiner-at-step-bounds/) **Completed: 2026-02-22**
+  - Confirmation sequence state machine in roundtable-analyst.md Section 2.5. Sequential confirm-critic-refiner-accept flow at each analysis step boundary. 45 tests, 100% coverage on new code. Merged d42237e.
+
+- #79 [ ] Introduce Critic/Refiner pass in analyze flow before confirmation summaries -> [requirements](docs/requirements/REQ-0036-introduce-critic-refiner-in-analyze-flow/)
+
+- #80 [x] ~~Optimize analyze flow: parallelize and defer to cut first-message latency~~ -> [requirements](docs/requirements/REQ-0037-optimize-analyze-flow-parallelize-defer/) **Completed: 2026-02-22**
+  - **Problem**: The roundtable analysis flow produces artifacts through conversation, but does not apply the same rigorous quality checks that the build flow's debate loop does. The Critic agents check for mechanical quality issues (e.g., ACs not in Given/When/Then format, orphan requirements, unquantified NFRs, incomplete STRIDE coverage) that the conversational flow naturally skips.
+  - **Depends on**: #22 (Transparent Confirmation at Analysis Boundaries)
   - **Complexity**: Medium
 
 - 16.5 [x] ~~Build auto-detection and seamless handoff~~ *(GitHub #23)* -> [requirements](docs/requirements/REQ-0026-build-auto-detection-seamless-handoff/) **Completed: 2026-02-19**
@@ -396,6 +372,9 @@
 ## Completed
 
 ### 2026-02-22
+- [x] REQ-0034: Free-text intake reverse-lookup GitHub issues — added `checkGhAvailability()`, `searchGitHubIssues()`, `reverseMatchIssue()` to `three-verb-utils.cjs` + Step 3c-prime UX flow in `isdlc.md` for `/isdlc add` to auto-detect matching GitHub issues and offer linking or creation. 13 new tests, 306/306 passing, 96.83% coverage. 4 files changed, 367 insertions.
+- [x] #65: gate-blocker blocks `/isdlc analyze` and `/isdlc add` during active workflows — added `analyze` and `add` to gate-blocker Skill exemption check in `gate-blocker.cjs`.
+- [x] BUG-0028 (#64): Agents ignore injected gate requirements — refactored `gate-requirements-injector.cjs` to emit structured CRITICAL CONSTRAINTS block with `buildCriticalConstraints()` and `buildConstraintReminder()` APIs. Updated 4 agents (software-developer, integration-tester, quality-loop-engineer, roundtable-analyst) to parse and obey injected constraints. Fixed 3 pre-existing branch-guard test failures. 108/108 tests, 18 files changed, 1110 insertions, 247 deletions *(merged d7b42b9)*.
 - [x] REQ-0032 (#63): Concurrent phase execution in roundtable analyze flow — replaced monolithic `roundtable-analyst.md` with multi-agent architecture: `roundtable-analyst.md` (lead orchestrator) + 3 persona agents (`persona-business-analyst.md`, `persona-solutions-architect.md`, `persona-system-designer.md`) running Phase 02-04 concurrently. 6 topic files under `analysis-topics/` replace 24 step files. Updated `isdlc.md` dispatch for new agent routing. 50 new tests (33 structural + 17 meta compat), zero regressions. 17 files changed, 1985 insertions, 614 deletions *(merged 1d741d3)*.
 
 ### 2026-02-21

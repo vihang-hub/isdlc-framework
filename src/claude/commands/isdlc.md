@@ -243,6 +243,9 @@ in `src/claude/hooks/lib/three-verb-utils.cjs` for testability.
 - **updateBacklogMarker(backlogPath, slug, newMarker)**: Updates the marker character for a slug in BACKLOG.md.
 - **appendToBacklog(backlogPath, itemNumber, description, marker)**: Appends a new item to the Open section.
 - **resolveItem(input, requirementsDir, backlogPath)**: Resolves user input to a backlog item using priority chain: exact slug, partial slug, item number, external ref, fuzzy match.
+- **checkGhAvailability()**: Checks if `gh` CLI is installed and authenticated. Returns `{ available: true }` or `{ available: false, reason: "not_installed"|"not_authenticated" }`. Never throws. (REQ-0034)
+- **searchGitHubIssues(query, options?)**: Searches GitHub issues via `gh issue list --search`. Returns `{ matches: [{number, title, state}], error?: string }`. Options: `{ limit, timeout }`. Never throws. (REQ-0034)
+- **createGitHubIssue(title, body?)**: Creates a GitHub issue via `gh issue create`. Returns `{ number, url }` or null. Default body: "Created via iSDLC framework". Never throws. (REQ-0034)
 
 ---
 
@@ -542,12 +545,47 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
    - **Read issue tracker preference**: Check the `## Issue Tracker Configuration` section in CLAUDE.md for `**Tracker**:`, `**Jira Project Key**:`, and `**GitHub Repository**:` values. Pass these as `options = { issueTracker, jiraProjectKey }` to `detectSource()`.
    - Bare numbers (e.g., `"1234"`) are routed based on the configured tracker preference. Explicit patterns (#N, PROJECT-N) always win.
    a. GitHub issue (`#N` pattern or bare number with github preference): source = "github", source_id = "GH-N".
+      If pre-fetched issue data is provided (title, labels, body) from the analyze handler fast path,
+      use the pre-fetched data instead of fetching. Otherwise:
       Fetch the issue title using `gh issue view N --json title,labels -q '.title'`.
       Check labels: if "bug" label present, item_type = "BUG", else item_type = "REQ".
    b. Jira ticket (`PROJECT-N` pattern or bare number with jira preference): source = "jira", source_id = input.
+      If pre-fetched issue data is provided, use it instead of fetching. Otherwise:
       Fetch the issue summary and type. If type is "Bug", item_type = "BUG", else item_type = "REQ".
    c. All other input: source = "manual", source_id = null.
       Ask the user: "Is this a feature/requirement or a bug fix?" → item_type = "REQ" or "BUG".
+   c'. **GitHub issue reverse-lookup** (REQ-0034): When `detectSource()` returns "manual", attempt to find a matching GitHub issue:
+      1. Call `checkGhAvailability()`. If `{ available: false }`:
+         - Display info: "GitHub CLI not available ({reason}). Proceeding with manual entry."
+         - Skip to step 4 (continue as manual).
+      2. Call `searchGitHubIssues(description)`. If error:
+         - Display warning: "GitHub search failed ({error}). Proceeding with manual entry."
+         - Skip to step 4 (continue as manual).
+      3. If matches found (matches.length > 0):
+         - Present numbered list:
+           ```
+           Found matching GitHub issues:
+             1. #{number} {title} ({state})
+             2. #{number} {title} ({state})
+             ...
+             C. Create new GitHub issue
+             S. Skip (keep as manual entry)
+           ```
+         - If user selects a match (1-N): override source = "github", source_id = "GH-{number}".
+           Re-fetch the issue title for slug generation.
+         - If user selects "C" (Create new): call `createGitHubIssue(description)`.
+           If successful: override source = "github", source_id = "GH-{number}".
+           If failed: display warning "Could not create issue. Proceeding as manual." and continue.
+         - If user selects "S" (Skip): proceed unchanged (manual).
+      4. If no matches found (matches.length === 0):
+         - Present:
+           ```
+           No matching GitHub issues found.
+             C. Create new GitHub issue
+             S. Skip (keep as manual entry)
+           ```
+         - If "C": call `createGitHubIssue(description)`, override as above.
+         - If "S": proceed unchanged.
 4. Generate description slug:
    - For external sources (github/jira): use `generateSlug()` on the fetched ticket title (NOT the reference number)
    - For manual input: use `generateSlug()` on the user's description text
@@ -591,10 +629,47 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
        args = args with "-light" removed (preserve remaining text as item identifier)
    item_input = args.trim()
    ```
-3. Resolve target item using `resolveItem(input)`:
+3. **Detect input type** (REQ-0037): Classify item_input as one of:
+   - **External ref** (`#N` for GitHub, `PROJECT-N` for Jira): proceed to optimized dependency group path (step 3a)
+   - **Non-external ref** (slug, item number, description): proceed to standard resolution (step 3b)
+
+   3a. **Optimized path for external references** (`#N` or `PROJECT-N`):
+
+   The following operations are structured as dependency groups. Fire all operations within a group as parallel tool calls in a single response. Groups execute sequentially (Group 2 needs Group 1 results).
+
+   **Group 1** (fire all 5 in parallel at T=0):
+   - `gh issue view N --json title,labels,body` --> issueData (title, labels, body). If this fails, fail fast: "Could not fetch issue #N: {error}" and STOP.
+   - `Grep "GH-N"` (or source_id) across `docs/requirements/*/meta.json` --> existingMatch (slug and directory if found, null if not)
+   - `Glob docs/requirements/{TYPE}-*` --> folderList (for sequence number calculation)
+   - Read 3 persona files in parallel --> personaContent:
+     - `src/claude/agents/persona-business-analyst.md`
+     - `src/claude/agents/persona-solutions-architect.md`
+     - `src/claude/agents/persona-system-designer.md`
+   - `Glob src/claude/skills/analysis-topics/**/*.md` --> topicPaths
+
+   **Group 2** (needs Group 1 results, fire all in parallel):
+   - **If no existingMatch found**: Auto-add without confirmation prompt -- invoke the `add` handler with the input and pre-fetched issueData (title, labels, body). The add handler creates the folder, draft.md, meta.json, and updates BACKLOG.md. Reuse the in-memory meta and draft objects it produces (do NOT re-read from disk).
+   - **If existingMatch found**: Read meta.json from the existing folder; read draft.md from disk.
+   - Read all topic files from topicPaths in parallel --> topicContent
+
+   **Auto-add rationale** (FR-002): For `#N` and `PROJECT-N` inputs, intent to analyze is unambiguous -- the user explicitly referenced an external ticket. Skip the "Add to backlog?" confirmation and invoke the add handler automatically when no existing folder is found. For non-external-ref inputs (slugs, descriptions), preserve the existing confirmation prompt behavior (step 3b).
+
+   **In-memory reuse** (FR-004): After the add handler writes meta.json and draft.md, compose the dispatch prompt from the in-memory meta and draft objects. Do NOT issue Read tool calls for files just written.
+
+   After Group 2, proceed to step 4 (completed analysis check) with the resolved slug, meta, and draft.
+
+   3b. **Standard resolution for non-external refs** (existing behavior preserved):
+   Resolve target item using `resolveItem(input)`:
    - If no match: "No matching item found. Would you like to add it to the backlog first?"
-     If user confirms: run `add` handler with the input, then continue with analysis
-4. Read meta.json using `readMetaJson()`:
+     If user confirms: run `add` handler with the input, then continue with analysis.
+
+   For non-external refs, also pre-read persona and topic files for dispatch optimization:
+   - Read 3 persona files in parallel --> personaContent
+   - Glob + read topic files --> topicContent
+
+   After resolution, proceed to step 4.
+
+4. Read meta.json using `readMetaJson()` (skip if already in-memory from step 3a):
    - If meta.json missing (folder exists but no meta): create default meta.json with
      analysis_status: "raw", phases_completed: [], then continue
 5. Check for completed analysis:
@@ -612,10 +687,10 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
    - Display forced-light banner: "ANALYSIS SIZING: Light (forced via -light flag)."
    - Note: The lead orchestrator will adapt its artifact production accordingly.
 
-7. **Single dispatch to roundtable-analyst** (REQ-0032, FR-014):
-   Read the draft content: `docs/requirements/{slug}/draft.md`. If missing, set draftContent = "(No draft available)".
+7. **Roundtable conversation loop** (REQ-0032, FR-014, REQ-0037):
+   Read the draft content: `docs/requirements/{slug}/draft.md`. If missing and not already in-memory from step 3a, set draftContent = "(No draft available)".
 
-   Delegate to the `roundtable-analyst` agent via Task tool with:
+   7a. **Initial dispatch**: Delegate to the `roundtable-analyst` agent via Task tool with the following prompt. The prompt now includes PERSONA_CONTEXT and TOPIC_CONTEXT fields (REQ-0037, FR-005) so the roundtable can skip file reads at startup:
    ```
    "Analyze '{slug}' using concurrent roundtable analysis.
 
@@ -634,16 +709,52 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
       light_flag: {lightFlag}
       sizing_decision: {JSON.stringify(meta.sizing_decision) || "null"}
 
+    PERSONA_CONTEXT:
+    --- persona-business-analyst ---
+    {personaBA content}
+    --- persona-solutions-architect ---
+    {personaSA content}
+    --- persona-system-designer ---
+    {personaSD content}
+
+    TOPIC_CONTEXT:
+    --- topic: problem-discovery ---
+    {topic content}
+    --- topic: requirements-definition ---
+    {topic content}
+    --- topic: technical-analysis ---
+    {topic content}
+    --- topic: architecture ---
+    {topic content}
+    --- topic: specification ---
+    {topic content}
+    --- topic: security ---
+    {topic content}
+
     ANALYSIS_MODE: No state.json writes, no branch creation."
    ```
 
+   The PERSONA_CONTEXT and TOPIC_CONTEXT fields use `--- persona-{name} ---` and `--- topic: {topic_id} ---` delimiters. The roundtable-analyst parses these to skip file reads. If either field is absent (e.g., pre-reading failed), the roundtable falls back to reading files from disk.
+
    **Task description format**: `Concurrent analysis for {slug}`
 
-   **CRITICAL -- Relaying roundtable output**: When the roundtable-analyst Task returns or needs user input, you MUST display the COMPLETE persona dialogue to the user VERBATIM. Do NOT summarize, paraphrase, or replace the team discussion with your own commentary. The user expects to see the full conversation as it happened. Your only addition should be a brief prompt indicating the user's turn.
+   7b. **Relay-and-resume loop**: The roundtable-analyst returns after each exchange when it needs user input. Loop as follows:
 
-   **CRITICAL -- Resuming with user input**: When the roundtable-analyst Task returns because it needs user input, collect the user's response and resume the agent by passing ONLY the user's exact response. Do NOT add your own instructions, commentary, or analysis.
+   WHILE the roundtable-analyst has NOT signaled completion:
+     i.   **Output the agent's text VERBATIM as your response.** Copy-paste it. Do NOT summarize it into tables. Do NOT paraphrase it. Do NOT add headings like "Maya (Step 01-03):" above it. Do NOT re-present the agent's tables in your own formatting. The agent's output IS the user-facing content — just emit it directly.
+     ii.  **Let the user respond naturally.** Do NOT use AskUserQuestion. Do NOT present multiple-choice options. Do NOT create menus like "Looks good, continue / Needs adjustment". The roundtable is a conversation — the user types freeform text in response to the persona's question.
+     iii. Resume the roundtable-analyst agent (using the `resume` parameter with the agent's ID), passing ONLY the user's exact response as the prompt. Do NOT add your own instructions, commentary, or analysis.
+     iv.  On return, check if the agent signaled completion (output ends with "ROUNDTABLE_COMPLETE"). If yes, exit loop.
 
-   **CRITICAL -- Orchestrator boundary**: During an active analyze session, you (the orchestrator) MUST NOT read step/topic files, interpret content, summarize in your own voice, or present your own menus. The roundtable lead owns the entire analysis lifecycle -- codebase scan, conversation, artifact production, cross-check, finalization.
+   **Completion signal**: The roundtable-analyst signals completion by including "ROUNDTABLE_COMPLETE" as the last line of its final output.
+
+   **Orchestrator boundary**: During the loop, you are INVISIBLE. You are a relay. You do not:
+   - Summarize the agent's output ("Maya's asking whether...")
+   - Add your own tables or formatting
+   - Present AskUserQuestion menus
+   - Add commentary between the agent's output and the user's response
+   - Interpret what the agent said
+   The roundtable owns the entire user-facing experience. Your only job is: emit agent output → wait for user text → resume agent.
 
 7.5. **Post-dispatch: Re-read meta.json**: After the roundtable-analyst returns:
    - Re-read meta.json using `readMetaJson(slugDir)` to get the lead's updates
@@ -678,6 +789,7 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 7.8. **Finalize meta.json**:
    - Update meta.analysis_status using `deriveAnalysisStatus(meta.phases_completed, meta.sizing_decision)`
    - Update meta.codebase_hash to current git HEAD short SHA
+   - Preserve the `acceptance` field written by the roundtable-analyst during the confirmation sequence (accepted_at, domains, amendment_cycles). Do not overwrite or remove it.
    - Write meta.json using writeMetaJson()
    - Update BACKLOG.md marker using updateBacklogMarker() with deriveBacklogMarker()
 
@@ -1631,27 +1743,20 @@ Use Task tool → {agent_name} with:
        Extract `phases[{phase_key}].paths[]` if present. For each path, replace `{artifact_folder}` with the actual artifact folder name.
     4. If `constitutional_validation` is enabled for this phase, read `docs/isdlc/constitution.md`.
        Extract article titles using the pattern `### Article {ID}: {Title}` for each article ID listed in the phase config's `constitutional_validation.articles[]` array.
-    5. Format and append the following block to the delegation prompt:
-
-       GATE REQUIREMENTS FOR PHASE {NN} ({Phase Name}):
-
-       Iteration Requirements:
-         - test_iteration: {enabled|disabled} {(max N iterations, coverage >= N%) if enabled}
-         - constitutional_validation: {enabled|disabled} {(Articles: list with titles, max N iterations) if enabled}
-         - interactive_elicitation: {enabled|disabled}
-         - agent_delegation: {enabled|disabled}
-         - artifact_validation: {enabled|disabled}
-
-       Required Artifacts: (only if artifact paths exist for this phase)
-         - {resolved path 1}
-         - {resolved path 2}
-
-       Constitutional Articles to Validate: (only if constitutional_validation is enabled)
-         - Article {ID}: {Title}
-
-       DO NOT attempt to advance the gate until ALL enabled requirements are satisfied.
-
-    6. Error handling: If any error occurs in steps 1-5, continue with unmodified prompt. Log warning but never block.}
+    5. Read `active_workflow.phases` array from state.json (the ordered list of phase keys in the current workflow).
+       If missing or not an array: use `null` (the injector will use fail-safe defaults).
+    6. Format and append the gate requirements block to the delegation prompt.
+       The block now includes a CRITICAL CONSTRAINTS section at the top (with imperative prohibitions)
+       and a REMINDER footer at the bottom. The format is produced by the gate-requirements-injector
+       using the phase key, artifact folder, workflow type, project root, and phases array.
+       The injector derives constraints automatically from the phase configuration:
+       - Intermediate phases get "Do NOT run git commit" prohibition
+       - Phases with test_iteration get coverage gate constraint
+       - Phases with constitutional_validation get constitutional reminder
+       - Workflow modifiers (e.g., require_failing_test_first) surface as imperative statements
+    7. After the gate requirements block, append this acknowledgment instruction on a new line:
+       "Read the CRITICAL CONSTRAINTS block above and confirm you will comply before starting work."
+    8. Error handling: If any error occurs in steps 1-7, continue with unmodified prompt. Log warning but never block.}
    {BUDGET DEGRADATION INJECTION (REQ-0022) -- Inject degradation directive when budget is exceeded or approaching. Fail-open.
     1. Read `active_workflow.budget_status` from state.json.
        If `budget_status` is `"on_track"`, missing, or null: SKIP degradation injection.

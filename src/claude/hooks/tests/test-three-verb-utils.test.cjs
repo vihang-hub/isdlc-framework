@@ -43,11 +43,15 @@ const {
     checkBlastRadiusStaleness,       // GH-61: Blast-radius staleness
     computeRecommendedTier,      // GH-59: Complexity-Based Routing
     getTierDescription,          // GH-59: Complexity-Based Routing
+    checkGhAvailability,         // REQ-0034: GitHub reverse-lookup
+    searchGitHubIssues,          // REQ-0034: GitHub reverse-lookup
+    createGitHubIssue,           // REQ-0034: GitHub reverse-lookup
     findBacklogItemByNumber,
     findByExternalRef,
     searchBacklogTitles,
     findDirForDescription
 } = require('../lib/three-verb-utils.cjs');
+const childProcess = require('child_process');
 
 // ---------------------------------------------------------------------------
 // Test environment helpers
@@ -3394,5 +3398,188 @@ describe('checkBlastRadiusStaleness()', () => {
         assert.equal(result.stale, true);
         assert.equal(result.severity, 'fallback');
         assert.equal(result.fallbackReason, 'no-impact-analysis');
+    });
+});
+
+// ===========================================================================
+// checkGhAvailability() tests
+// REQ-0034: Free-text intake reverse-lookup GitHub issues
+// Traces: FR-006 (AC-006-01, AC-006-02, AC-006-03)
+// ===========================================================================
+
+describe('checkGhAvailability()', () => {
+    // TC-GH-AVAIL-01: Returns available when gh is installed and authenticated
+    it('returns available when gh is installed and authenticated (AC-006-01)', (t) => {
+        t.mock.method(childProcess, 'execSync', (cmd) => {
+            if (cmd.includes('gh --version')) return 'gh version 2.40.0\n';
+            if (cmd.includes('gh auth status')) return '';
+            throw new Error('unexpected command: ' + cmd);
+        });
+        const result = checkGhAvailability();
+        assert.deepStrictEqual(result, { available: true });
+    });
+
+    // TC-GH-AVAIL-02: Returns not_installed when gh binary is not found
+    it('returns not_installed when gh binary is not found (AC-006-02)', (t) => {
+        t.mock.method(childProcess, 'execSync', () => {
+            throw new Error('command not found: gh');
+        });
+        const result = checkGhAvailability();
+        assert.equal(result.available, false);
+        assert.equal(result.reason, 'not_installed');
+    });
+
+    // TC-GH-AVAIL-03: Returns not_authenticated when gh auth fails
+    it('returns not_authenticated when gh auth fails (AC-006-03)', (t) => {
+        t.mock.method(childProcess, 'execSync', (cmd) => {
+            if (cmd.includes('gh --version')) return 'gh version 2.40.0\n';
+            if (cmd.includes('gh auth status')) throw new Error('not authenticated');
+            throw new Error('unexpected command: ' + cmd);
+        });
+        const result = checkGhAvailability();
+        assert.equal(result.available, false);
+        assert.equal(result.reason, 'not_authenticated');
+    });
+});
+
+// ===========================================================================
+// searchGitHubIssues() tests
+// REQ-0034: Free-text intake reverse-lookup GitHub issues
+// Traces: FR-001 (AC-001-01..05)
+// ===========================================================================
+
+describe('searchGitHubIssues()', () => {
+    // TC-SEARCH-01: Returns matches when gh returns valid JSON array
+    it('returns matches when gh returns valid JSON array (AC-001-01)', (t) => {
+        const jsonResponse = JSON.stringify([
+            { number: 42, title: 'Add payment processing', state: 'open' },
+            { number: 38, title: 'Payment integration', state: 'closed' }
+        ]);
+        t.mock.method(childProcess, 'execSync', (cmd) => {
+            assert.ok(cmd.includes('--search "Add payment processing"'),
+                'Command should include search query');
+            assert.ok(cmd.includes('--limit 5'),
+                'Command should include default limit');
+            return jsonResponse;
+        });
+        const result = searchGitHubIssues('Add payment processing');
+        assert.equal(result.matches.length, 2);
+        assert.equal(result.matches[0].number, 42);
+        assert.equal(result.matches[0].title, 'Add payment processing');
+        assert.equal(result.matches[0].state, 'open');
+        assert.equal(result.matches[1].state, 'closed');
+        assert.equal(result.error, undefined);
+    });
+
+    // TC-SEARCH-02: Returns empty matches when gh returns empty array
+    it('returns empty matches when gh returns empty array (AC-001-01)', (t) => {
+        t.mock.method(childProcess, 'execSync', () => '[]');
+        const result = searchGitHubIssues('nonexistent feature xyz');
+        assert.equal(result.matches.length, 0);
+        assert.equal(result.error, undefined);
+    });
+
+    // TC-SEARCH-03: Returns timeout error when execSync times out
+    it('returns timeout error on ETIMEDOUT (ERR-GH-003)', (t) => {
+        t.mock.method(childProcess, 'execSync', () => {
+            throw Object.assign(new Error('timed out'), { killed: true });
+        });
+        const result = searchGitHubIssues('some query');
+        assert.equal(result.matches.length, 0);
+        assert.equal(result.error, 'timeout');
+    });
+
+    // TC-SEARCH-04: Returns parse_error when gh returns invalid JSON
+    it('returns parse_error when gh returns invalid JSON (ERR-GH-004)', (t) => {
+        t.mock.method(childProcess, 'execSync', () => 'not valid json {');
+        const result = searchGitHubIssues('some query');
+        assert.equal(result.matches.length, 0);
+        assert.equal(result.error, 'parse_error');
+    });
+
+    // TC-SEARCH-05: Escapes shell-unsafe characters in query
+    it('escapes shell-unsafe characters in query (AC-001-02)', (t) => {
+        let capturedCmd = '';
+        t.mock.method(childProcess, 'execSync', (cmd) => {
+            capturedCmd = cmd;
+            return '[]';
+        });
+        searchGitHubIssues('test "query" with $vars and `backticks`');
+        // Verify the query portion does not contain unescaped shell-unsafe chars
+        // The search portion between --search "..." should have escaped chars
+        assert.ok(!capturedCmd.includes('--search "test "query"'),
+            'Double quotes in query must be escaped');
+        assert.ok(capturedCmd.includes('\\"'),
+            'Escaped double quotes should be present');
+        assert.ok(capturedCmd.includes('\\$'),
+            'Dollar signs should be escaped');
+        assert.ok(capturedCmd.includes('\\`'),
+            'Backticks should be escaped');
+    });
+
+    // TC-SEARCH-06: Uses default options when none provided
+    it('uses default options when none provided (AC-001-03)', (t) => {
+        let capturedCmd = '';
+        let capturedOpts = {};
+        t.mock.method(childProcess, 'execSync', (cmd, opts) => {
+            capturedCmd = cmd;
+            capturedOpts = opts;
+            return '[]';
+        });
+        searchGitHubIssues('test query');
+        assert.ok(capturedCmd.includes('--limit 5'),
+            'Default limit should be 5');
+        assert.equal(capturedOpts.timeout, 3000,
+            'Default timeout should be 3000ms');
+    });
+});
+
+// ===========================================================================
+// createGitHubIssue() tests
+// REQ-0034: Free-text intake reverse-lookup GitHub issues
+// Traces: FR-004 (AC-004-02..05)
+// ===========================================================================
+
+describe('createGitHubIssue()', () => {
+    // TC-CREATE-01: Returns number and URL on successful creation
+    it('returns number and URL on successful creation (AC-004-02)', (t) => {
+        t.mock.method(childProcess, 'execSync', () => {
+            return 'https://github.com/owner/repo/issues/73\n';
+        });
+        const result = createGitHubIssue('Implement rate limiting');
+        assert.equal(result.number, 73);
+        assert.equal(result.url, 'https://github.com/owner/repo/issues/73');
+    });
+
+    // TC-CREATE-02: Returns null when gh command fails
+    it('returns null when gh command fails (ERR-GH-006)', (t) => {
+        t.mock.method(childProcess, 'execSync', () => {
+            throw new Error('network failure');
+        });
+        const result = createGitHubIssue('Some title');
+        assert.equal(result, null);
+    });
+
+    // TC-CREATE-03: Returns null when URL cannot be parsed from output
+    it('returns null when URL cannot be parsed from output (ERR-GH-007)', (t) => {
+        t.mock.method(childProcess, 'execSync', () => {
+            return 'unexpected output without URL\n';
+        });
+        const result = createGitHubIssue('Some title');
+        assert.equal(result, null);
+    });
+
+    // TC-CREATE-04: Uses default body when none provided
+    it('uses default body when none provided (AC-004-05)', (t) => {
+        let capturedCmd = '';
+        t.mock.method(childProcess, 'execSync', (cmd) => {
+            capturedCmd = cmd;
+            return 'https://github.com/owner/repo/issues/99\n';
+        });
+        const result = createGitHubIssue('New feature');
+        assert.ok(capturedCmd.includes('--body "Created via iSDLC framework"'),
+            'Default body should be "Created via iSDLC framework"');
+        assert.equal(result.number, 99);
+        assert.ok(result.url.includes('/issues/99'));
     });
 });

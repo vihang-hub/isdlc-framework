@@ -1,9 +1,9 @@
 # Static Analysis Report
 
 **Project:** iSDLC Framework
-**Workflow:** BUG-0029-GH-18-multiline-bash-permission-bypass (fix)
+**Workflow:** BUG-0028-agents-ignore-injected-gate-requirements (fix)
 **Phase:** 08 - Code Review & QA
-**Date:** 2026-02-20
+**Date:** 2026-02-22
 **Updated by:** QA Engineer (Phase 08)
 
 ---
@@ -12,9 +12,8 @@
 
 | Tool | Status | Notes |
 |------|--------|-------|
-| Node --check (syntax) | PASS | All 2 modified source files validated |
-| npm audit | PASS | 0 vulnerabilities |
-| Manual code review | PASS | All 4 changed files reviewed |
+| Node --check (syntax) | PASS | All 2 modified JavaScript files validated |
+| Manual code review | PASS | All 8 changed files reviewed |
 | ESLint | NOT CONFIGURED | No `.eslintrc*` file in project |
 | TypeScript | NOT CONFIGURED | Project uses plain JavaScript |
 
@@ -24,80 +23,106 @@
 
 | File | Command | Result |
 |------|---------|--------|
-| `src/claude/hooks/delegation-gate.cjs` | `node -c` | PASS |
-| `src/claude/hooks/tests/multiline-bash-validation.test.cjs` | `node -c` | PASS |
-| `src/claude/agents/discover/architecture-analyzer.md` | Markdown structure review | PASS |
-| `src/claude/agents/quick-scan/quick-scan-agent.md` | Markdown structure review | PASS |
+| `src/claude/hooks/lib/gate-requirements-injector.cjs` | `node -c` | PASS |
+| `src/claude/hooks/branch-guard.cjs` | `node -c` | PASS |
+| `src/claude/hooks/tests/gate-requirements-injector.test.cjs` | Validated via `node --test` | PASS |
+| `src/claude/hooks/tests/branch-guard.test.cjs` | Validated via `node --test` | PASS |
+| `src/claude/agents/05-software-developer.md` | Markdown structure review | PASS |
+| `src/claude/agents/16-quality-loop-engineer.md` | Markdown structure review | PASS |
+| `src/claude/agents/06-integration-tester.md` | Markdown structure review | PASS |
+| `src/claude/commands/isdlc.md` | Markdown structure review | PASS |
 
 ---
 
 ## 3. Manual Static Analysis: Production Code
 
-### 3.1 `delegation-gate.cjs` -- GH-62 Staleness (lines 113-129)
+### 3.1 `gate-requirements-injector.cjs` -- BUG-0028 Changes
 
 | Check | Result | Details |
 |-------|--------|---------|
-| Unused variables | PASS | `ageMs`, `ageMinutes` both consumed |
+| Unused variables | PASS | All variables consumed within their scope |
 | Unreachable code | PASS | All paths reachable |
-| Type coercion | PASS | Uses `>` comparison on numbers |
+| Type coercion risks | PASS | Explicit boolean checks, no implicit coercion |
 | eval() / Function() | PASS | Not present |
-| Date arithmetic | PASS | Standard `Date.now() - new Date().getTime()` pattern |
-| NaN safety | PASS | If `invoked_at` is invalid, `ageMinutes` becomes NaN, `NaN > 30` is false (staleness check skipped -- fail-safe) |
-| Error handling | PASS | Guarded by `if (pending.invoked_at)` for missing field |
-| Hook fail-open | PASS | All paths exit via `process.exit(0)` |
+| Shell execution | PASS | Not present |
+| throw statements | PASS | Zero `throw` statements (NFR-002) |
+| External dependencies | PASS | Only `fs` and `path` (CON-001) |
+| Error handling | PASS | All new functions wrapped in try/catch |
+| Fail-open design | PASS | `buildCriticalConstraints` returns `[]`, `buildConstraintReminder` returns `''` on error |
 
-### 3.2 Complexity
+### 3.2 `branch-guard.cjs` -- BUG-0028 Changes
+
+| Check | Result | Details |
+|-------|--------|---------|
+| String template safety | PASS | Variables in template literals are validated upstream |
+| Control flow change | PASS | No control flow change, only string content changed |
+| Process exit behavior | PASS | Unchanged (exit 0 after outputBlockResponse) |
+
+### 3.3 Complexity
 
 | Component | Est. Cyclomatic Complexity | Change | Threshold | Status |
 |-----------|---------------------------|--------|-----------|--------|
-| delegation-gate.cjs (full) | ~12 | +1 if-branch | < 15 | OK |
-| STALENESS_THRESHOLD_MINUTES | constant | New | N/A | OK |
+| buildCriticalConstraints() | 5 | New | < 15 | OK |
+| buildConstraintReminder() | 2 | New | < 15 | OK |
+| formatBlock() | ~8 | +1 branch | < 15 | OK |
+| buildGateRequirementsBlock() | ~7 | +1 branch | < 15 | OK |
+| branch-guard.cjs (block message) | 0 | String only | N/A | OK |
 
 ---
 
 ## 4. Manual Static Analysis: Agent Prompt Files
 
-### 4.1 architecture-analyzer.md
+### 4.1 `05-software-developer.md` (line 29-31)
 
 | Check | Result |
 |-------|--------|
-| Fenced code blocks valid | PASS -- single-line bash block at line 49 |
-| No multiline bash blocks | PASS -- verified by test FR-001 + codebase sweep |
-| Markdown heading structure | PASS -- unchanged |
-| Prose description above code block | PASS -- explanation moved from in-block comment to prose |
+| Markdown blockquote structure | PASS -- 3-line blockquote with bold heading |
+| No competing "save work" / "commit" language | PASS |
+| Dead cross-reference removed | PASS -- `See **Git Commit Prohibition** in CLAUDE.md` replaced with inline content |
 
-### 4.2 quick-scan-agent.md
+### 4.2 `16-quality-loop-engineer.md` (line 33-35)
 
 | Check | Result |
 |-------|--------|
-| Fenced code blocks valid | PASS -- 4 separate single-line bash blocks (lines 116, 119, 126, 130) |
-| No multiline bash blocks | PASS -- verified by test FR-001 + codebase sweep |
-| Markdown heading structure | PASS -- unchanged |
-| Prose headings for command groups | PASS -- "Glob for file name matches:" and "Grep for keyword references:" |
+| Markdown blockquote structure | PASS -- identical pattern to 05-software-developer |
+| No competing language | PASS |
+| Dead cross-reference removed | PASS |
+
+### 4.3 `06-integration-tester.md` (line 23-25)
+
+| Check | Result |
+|-------|--------|
+| Markdown blockquote structure | PASS -- new 3-line blockquote |
+| Placement after iteration enforcement | PASS -- follows existing blockquote pattern |
+| No competing language | PASS |
 
 ---
 
 ## 5. Manual Static Analysis: Test Code
 
-### 5.1 multiline-bash-validation.test.cjs
+### 5.1 `gate-requirements-injector.test.cjs` (BUG-0028 additions)
 
 | Check | Result | Details |
 |-------|--------|---------|
-| Test isolation | PASS | Pure function tests, no shared state |
-| File I/O safety | PASS | Read-only operations on source files |
+| Test isolation | PASS | Each test uses `loadModule()` with cache clearing |
+| Filesystem cleanup | PASS | `afterEach(() => destroyTestDir())` in all describe blocks |
 | Assertion library | PASS | `node:assert/strict` exclusively |
 | Test framework | PASS | `node:test` (built-in) |
-| No hardcoded paths | PASS | All paths resolved via `path.resolve(__dirname, ...)` |
+| No hardcoded paths | PASS | All paths resolved via `__dirname` |
 | No flaky patterns | PASS | No timers, no network, no randomness |
-| Recursive file scan | PASS | `collectMdFiles` handles missing directories gracefully |
+| Assertion messages | PASS | All assertions include descriptive messages |
+
+### 5.2 `branch-guard.test.cjs` (BUG-0028 fixes)
+
+| Check | Result | Details |
+|-------|--------|---------|
+| T24 assertion update | PASS | Updated regex to match new block message format |
+| T27-T31 assertion updates | PASS | Updated to verify inline prohibition instead of CLAUDE.md cross-ref |
+| No test weakening | PASS | Assertions updated, not removed |
 
 ---
 
 ## 6. Dependency Analysis
-
-```
-npm audit: 0 vulnerabilities
-```
 
 No new dependencies introduced. All code uses Node.js built-in modules only (`fs`, `path`, `node:test`, `node:assert/strict`).
 
@@ -110,21 +135,21 @@ No new dependencies introduced. All code uses Node.js built-in modules only (`fs
 | Consistent indentation (4 spaces) | PASS |
 | Consistent semicolons (required) | PASS |
 | Consistent quote style (single quotes) | PASS |
-| JSDoc on new constants | PASS (STALENESS_THRESHOLD_MINUTES) |
-| CommonJS module pattern | PASS (delegation-gate.cjs, test file) |
-| `'use strict'` at test file top | PASS |
+| JSDoc on new functions | PASS (buildCriticalConstraints, buildConstraintReminder) |
+| CommonJS module pattern | PASS |
+| `'use strict'` at file top | PASS |
 | Max line length (< 200 chars) | PASS |
 
 ---
 
-## 8. Code Pattern Checks (BUG-0029 Specific)
+## 8. NFR-002 Compliance Check (Fail-Open)
 
-| Pattern | Status | Details |
-|---------|--------|---------|
-| Multiline Bash in agent/command .md files | **0 violations** | Codebase-wide sweep across all agent/command .md files |
-| Single-Line Bash Convention reference | PRESENT | Both affected files reference the convention |
-| CLAUDE.md convention section | PRESENT | Section heading, glob limitation, transformation examples, escape hatch |
-| CLAUDE.md.template convention section | PRESENT | Mirror of CLAUDE.md section |
+| Function | try/catch present | Return on error | throw statements | Status |
+|----------|-------------------|-----------------|-------------------|--------|
+| buildCriticalConstraints() | Yes | `[]` | 0 | PASS |
+| buildConstraintReminder() | Yes | `''` | 0 | PASS |
+| formatBlock() | Yes (pre-existing) | `''` | 0 | PASS |
+| buildGateRequirementsBlock() | Yes (pre-existing) | `''` | 0 | PASS |
 
 ---
 
@@ -133,10 +158,11 @@ No new dependencies introduced. All code uses Node.js built-in modules only (`fs
 | Category | Status |
 |----------|--------|
 | Syntax validation (node --check) | PASS (2/2 JS files) |
-| Markdown structure validation | PASS (2/2 .md files) |
+| Markdown structure validation | PASS (4/4 .md files) |
 | No security issues | PASS |
-| No dependency vulnerabilities | PASS (npm audit: 0) |
+| No `throw` statements in injector | PASS |
+| No external dependencies (CON-001) | PASS |
 | Code style consistent | PASS |
-| Complexity within bounds | PASS (max cyclomatic: ~12, threshold: 15) |
-| BUG-0029 pattern compliance | PASS (0 multiline bash violations codebase-wide) |
+| Complexity within bounds | PASS (max: ~8, threshold: 15) |
+| Fail-open design preserved (NFR-002) | PASS |
 | Test code quality | PASS (proper isolation, no flaky patterns) |

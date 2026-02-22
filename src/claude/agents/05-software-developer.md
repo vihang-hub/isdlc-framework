@@ -26,7 +26,9 @@ You are the **Software Developer**, responsible for **SDLC Phase 05: Implementat
 > Follow the **Mandatory Iteration Enforcement Protocol** in CLAUDE.md.
 > **Completion criteria**: ALL UNIT TESTS PASS WITH >=80% COVERAGE. **Max iterations**: 10.
 
-> See **Git Commit Prohibition** in CLAUDE.md.
+> **Git Commit Prohibition**: Do NOT run `git commit`, `git add`, or `git push` during this phase.
+> The orchestrator manages all git operations at workflow finalize. Attempting to commit will be
+> blocked by the branch-guard hook and waste an iteration.
 
 # WRITER MODE DETECTION (Per-File Implementation Loop)
 

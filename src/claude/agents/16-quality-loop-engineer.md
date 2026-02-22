@@ -30,7 +30,9 @@ You are the **Quality Loop Engineer**, responsible for Phase 16 of the iSDLC wor
 | Output | `quality-report.md`, `coverage-report.md`, `lint-report.md`, `security-scan.md`, `qa-sign-off.md` |
 | Gate | GATE-16 |
 
-> See **Git Commit Prohibition** in CLAUDE.md.
+> **Git Commit Prohibition**: Do NOT run `git commit`, `git add`, or `git push` during this phase.
+> The orchestrator manages all git operations at workflow finalize. Attempting to commit will be
+> blocked by the branch-guard hook and waste an iteration.
 
 ## IMPLEMENTATION TEAM SCOPE ADJUSTMENT
 

@@ -14,6 +14,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const childProcess = require('child_process');
 const { execSync } = require('child_process');
 
 // ---------------------------------------------------------------------------
@@ -164,6 +165,134 @@ function detectSource(input, options) {
         source_id: null,
         description: trimmed
     };
+}
+
+// ---------------------------------------------------------------------------
+// checkGhAvailability()
+// REQ-0034: Free-text intake reverse-lookup GitHub issues
+// ---------------------------------------------------------------------------
+
+/**
+ * Checks whether the GitHub CLI (gh) is installed and authenticated.
+ * Returns a sentinel object -- never throws.
+ *
+ * REQ-0034: Free-text intake reverse-lookup GitHub issues
+ * Traces: FR-006 (AC-006-01, AC-006-02, AC-006-03)
+ *
+ * @returns {{ available: boolean, reason?: string }}
+ */
+function checkGhAvailability() {
+    try {
+        childProcess.execSync('gh --version', { timeout: 2000, stdio: 'pipe' });
+    } catch (e) {
+        return { available: false, reason: 'not_installed' };
+    }
+
+    try {
+        childProcess.execSync('gh auth status', { timeout: 2000, stdio: 'pipe' });
+    } catch (e) {
+        return { available: false, reason: 'not_authenticated' };
+    }
+
+    return { available: true };
+}
+
+// ---------------------------------------------------------------------------
+// searchGitHubIssues(query, options?)
+// REQ-0034: Free-text intake reverse-lookup GitHub issues
+// ---------------------------------------------------------------------------
+
+/**
+ * Searches GitHub issues using the gh CLI. Returns structured results
+ * or error sentinels -- never throws.
+ *
+ * REQ-0034: Free-text intake reverse-lookup GitHub issues
+ * Traces: FR-001 (AC-001-01..05)
+ *
+ * @param {string} query - Search query text
+ * @param {{ limit?: number, timeout?: number }} [options]
+ * @returns {{ matches: Array<{number: number, title: string, state: string}>, error?: string }}
+ */
+function searchGitHubIssues(query, options) {
+    const limit = (options && options.limit) || 5;
+    const timeout = (options && options.timeout) || 3000;
+
+    // Sanitize query: escape shell-unsafe characters (double quotes, dollar signs, backticks)
+    const sanitized = query
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/\$/g, '\\$')
+        .replace(/`/g, '\\`');
+
+    const cmd = `gh issue list --search "${sanitized}" --json number,title,state --limit ${limit}`;
+
+    let output;
+    try {
+        output = childProcess.execSync(cmd, { timeout: timeout, encoding: 'utf8', stdio: 'pipe' });
+    } catch (e) {
+        if (e.killed) {
+            return { matches: [], error: 'timeout' };
+        }
+        return { matches: [], error: 'command_error' };
+    }
+
+    try {
+        const parsed = JSON.parse(output);
+        return { matches: parsed };
+    } catch (e) {
+        return { matches: [], error: 'parse_error' };
+    }
+}
+
+// ---------------------------------------------------------------------------
+// createGitHubIssue(title, body?)
+// REQ-0034: Free-text intake reverse-lookup GitHub issues
+// ---------------------------------------------------------------------------
+
+/**
+ * Creates a new GitHub issue using the gh CLI. Returns the issue number
+ * and URL, or null on failure -- never throws.
+ *
+ * REQ-0034: Free-text intake reverse-lookup GitHub issues
+ * Traces: FR-004 (AC-004-02..05)
+ *
+ * @param {string} title - Issue title
+ * @param {string} [body] - Issue body (default: "Created via iSDLC framework")
+ * @returns {{ number: number, url: string }|null}
+ */
+function createGitHubIssue(title, body) {
+    const effectiveBody = body || 'Created via iSDLC framework';
+
+    // Sanitize title and body for shell safety
+    const sanitizedTitle = title
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/\$/g, '\\$')
+        .replace(/`/g, '\\`');
+    const sanitizedBody = effectiveBody
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/\$/g, '\\$')
+        .replace(/`/g, '\\`');
+
+    const cmd = `gh issue create --title "${sanitizedTitle}" --body "${sanitizedBody}"`;
+
+    let output;
+    try {
+        output = childProcess.execSync(cmd, { timeout: 5000, encoding: 'utf8', stdio: 'pipe' });
+    } catch (e) {
+        return null;
+    }
+
+    const urlMatch = output.match(/\/issues\/(\d+)/);
+    if (!urlMatch) {
+        return null;
+    }
+
+    const number = parseInt(urlMatch[1], 10);
+    const url = output.trim();
+
+    return { number, url };
 }
 
 // ---------------------------------------------------------------------------
@@ -1255,6 +1384,9 @@ module.exports = {
     // Core utilities
     generateSlug,
     detectSource,
+    checkGhAvailability,         // REQ-0034: GitHub reverse-lookup
+    searchGitHubIssues,          // REQ-0034: GitHub reverse-lookup
+    createGitHubIssue,           // REQ-0034: GitHub reverse-lookup
     deriveAnalysisStatus,
     deriveBacklogMarker,
     readMetaJson,

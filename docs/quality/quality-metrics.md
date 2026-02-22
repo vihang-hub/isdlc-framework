@@ -1,9 +1,9 @@
 # Quality Metrics Report
 
 **Project:** iSDLC Framework
-**Workflow:** BUG-0029-GH-18-multiline-bash-permission-bypass (fix)
+**Workflow:** BUG-0028-agents-ignore-injected-gate-requirements (fix)
 **Phase:** 08 - Code Review & QA
-**Date:** 2026-02-20
+**Date:** 2026-02-22
 **Updated by:** QA Engineer (Phase 08)
 
 ---
@@ -12,21 +12,21 @@
 
 | Metric | Value | Threshold | Status |
 |--------|-------|-----------|--------|
-| New tests (multiline-bash-validation) | 38/38 (100%) | 100% | PASS |
-| Delegation-gate tests | 35/35 (100%) | 100% | PASS |
-| Full CJS suite | 2366/2367 (99.96%) | No new failures | PASS |
-| Full ESM suite | 628/632 (99.4%) | No new failures | PASS |
-| Pre-existing failures | 5 (1 CJS + 4 ESM) | Documented | OK |
+| New tests (BUG-0028) | 18/18 (100%) | 100% | PASS |
+| gate-requirements-injector.test.cjs | 73/73 (100%) | 100% | PASS |
+| branch-guard.test.cjs | 35/35 (100%) | 100% | PASS |
+| Combined BUG-0028 tests | 108/108 (100%) | No new failures | PASS |
+| Full CJS hook suite | 1618/1686 (95.97%) | No new failures | PASS |
+| Pre-existing failures | 68 (Jira sync, workflow-finalizer, state-json-pruning) | Documented | OK |
 | New regressions | 0 | 0 | PASS |
-| npm audit vulnerabilities | 0 | 0 | PASS |
 
-### Pre-Existing Failures (5 total, all documented)
+### Pre-Existing Failures (68 total, all unrelated)
 
-1. **SM-04**: supervised_review log (gate-blocker-extended) -- CJS
-2. **TC-E09**: README.md agent count mismatch -- ESM
-3. **T07**: STEP 1 branch creation mention -- ESM
-4. **TC-07**: STEP 4 task cleanup instructions -- ESM
-5. **TC-13-01**: Agent file count (48 vs 61) -- ESM
+Pre-existing failures are in the following test suites, none of which were modified by BUG-0028:
+- **Jira sync tests** (M4: Command Spec): TC-M4-02 through TC-M4-04
+- **Backlog picker tests** (M2a/M2b): TC-M2a-01 through TC-M2a-06, TC-M2b-02
+- **Workflow finalizer tests**: WF14, WF15
+- **State-json-pruning tests**: T01 through T14 and others
 
 ---
 
@@ -34,68 +34,91 @@
 
 ### 2.1 Changed Files
 
-| File | Change Type | Lines Added | Lines Removed | Net |
-|------|------------|-------------|---------------|-----|
-| architecture-analyzer.md | Refactor (prompt) | 2 | 10 | -8 |
-| quick-scan-agent.md | Refactor (prompt) | 14 | 8 | +6 |
-| delegation-gate.cjs | Feature (GH-62) | 29 | 1 | +28 |
-| multiline-bash-validation.test.cjs | Tests added | 103 | 3 | +100 |
-| **Total** | | **148** | **22** | **+126** |
+| File | Change Type | Est. Lines Changed | Risk |
+|------|------------|-------------------|------|
+| gate-requirements-injector.cjs | Feature (2 new functions, 2 modified) | ~55 new/modified | MEDIUM |
+| gate-requirements-injector.test.cjs | Tests added (3 new describe blocks) | ~235 new | LOW |
+| isdlc.md (STEP 3d) | Prompt template update | ~20 modified | LOW |
+| 05-software-developer.md | Inline prohibition (replace dead cross-ref) | 3 lines replaced | LOW |
+| 16-quality-loop-engineer.md | Inline prohibition (replace dead cross-ref) | 3 lines replaced | LOW |
+| 06-integration-tester.md | Inline prohibition (new) | 3 lines added | LOW |
+| branch-guard.cjs | Block message improvement | ~5 lines modified | LOW |
+| branch-guard.test.cjs | Fix pre-existing test failures | ~10 lines modified | LOW |
 
 ### 2.2 Code Complexity
 
 | Component | Est. Cyclomatic Complexity | Trend |
 |-----------|---------------------------|-------|
-| delegation-gate.cjs (full file) | ~12 | +1 (one new if-branch for staleness) |
-| hasMultilineBash() utility | 3 | Unchanged |
-| findMultilineBashBlocks() utility | 4 | Unchanged |
+| buildCriticalConstraints() | 5 | New function |
+| buildConstraintReminder() | 2 | New function |
+| formatBlock() | ~8 | +1 (one new if-branch for constraints) |
+| buildGateRequirementsBlock() | ~7 | +1 (one new if-branch for phases) |
 
-All functions remain below the 15-point complexity threshold.
+All functions remain well below the 15-point complexity threshold.
 
 ### 2.3 Code-to-Test Ratio
 
 | Metric | Value |
 |--------|-------|
-| New production lines | ~30 (28 delegation-gate + 2 architecture-analyzer) |
-| New test lines | ~100 (multiline-bash-validation) |
-| Ratio | 1:3.3 (excellent) |
+| New production code lines | ~65 (55 injector + 5 branch-guard + 5 agent files) |
+| New test lines | ~235 (18 test cases) |
+| Ratio | 1:3.6 (excellent) |
 
 ---
 
 ## 3. Test Coverage Analysis
 
-### 3.1 BUG-0029 Coverage
+### 3.1 BUG-0028 Coverage
 
 | Code Path | Test Cases | Coverage |
 |-----------|-----------|----------|
-| architecture-analyzer.md single-line find | FR-001 test + codebase sweep | Covered |
-| quick-scan-agent.md split blocks | FR-001 test + codebase sweep | Covered |
-| CLAUDE.md convention section | FR-002 (6 tests) | Covered |
-| CLAUDE.md.template convention section | FR-004 (4 tests) | Covered |
-| Detection: backslash continuation | Negative test | Covered |
-| Detection: multi-example blocks | Negative test | Covered |
-| Detection: all prior patterns (6 types) | Negative tests (6) | Covered |
-| Non-bash blocks excluded (8 types) | Regression tests (8) | Covered |
-| Codebase-wide regression guard | Sweep test (all agent/command .md) | Covered |
+| buildCriticalConstraints: git commit prohibition | 2 tests (true/false) | Covered |
+| buildCriticalConstraints: test_iteration constraint | 1 test | Covered |
+| buildCriticalConstraints: constitutional_validation constraint | 1 test | Covered |
+| buildCriticalConstraints: artifact_validation constraint | 1 test | Covered |
+| buildCriticalConstraints: workflow modifier constraint | 1 test | Covered |
+| buildCriticalConstraints: empty result (no constraints) | 1 test | Covered |
+| buildCriticalConstraints: null phaseReq (fail-open) | 1 test | Covered |
+| buildConstraintReminder: join with prefix | 1 test | Covered |
+| buildConstraintReminder: empty/null/undefined input | 3 tests | Covered |
+| formatBlock: CRITICAL CONSTRAINTS before Iteration Requirements | 1 test | Covered |
+| formatBlock: REMINDER after all sections | 1 test | Covered |
+| formatBlock: constitutional reminder in constraints | 1 test | Covered |
+| formatBlock: git prohibition for intermediate phase | 1 test | Covered |
+| formatBlock: no git prohibition for final phase | 1 test | Covered |
+| formatBlock: character count within 40% growth | 1 test | Covered |
 
-### 3.2 GH-62 Coverage
+### 3.2 Non-Functional Requirement Coverage
 
-| Code Path | Test Cases | Coverage |
-|-----------|-----------|----------|
-| Stale marker auto-cleared (>30m) | Dynamic timestamp in delegation-gate tests | Covered |
-| Recent marker not auto-cleared (<30m) | RECENT_TS constant in all 31 tests | Covered |
-| Missing invoked_at field | Guarded by if-check (fail-safe) | Covered |
+| NFR | Metric | Test | Status |
+|-----|--------|------|--------|
+| NFR-001 (Performance budget) | <= 40% growth | Test 6 (character count) | PASS |
+| NFR-002 (Fail-open design) | No throw statements | Static analysis + fail-open test | PASS |
+| NFR-003 (Size budget) | < 2000 chars | Verified via test output | PASS |
 
 ---
 
-## 4. Summary
+## 4. Static Analysis
+
+| Check | Tool | Result |
+|-------|------|--------|
+| JavaScript syntax | `node -c` | PASS (both .cjs files) |
+| No `throw` statements in injector | `grep` scan | PASS (0 matches) |
+| No external dependencies (CON-001) | `grep require(` | PASS (only `fs`, `path`) |
+| No markdown/HTML in output (CON-002) | Code review | PASS |
+| No `eval()` or shell execution | Code review | PASS |
+
+---
+
+## 5. Summary
 
 | Category | Metric | Status |
 |----------|--------|--------|
-| Test pass rate (new tests) | 38/38 (100%) | PASS |
-| Test pass rate (full suite) | 3032/3037 (99.8%) | PASS (5 pre-existing) |
+| Test pass rate (new tests) | 18/18 (100%) | PASS |
+| Test pass rate (affected suites) | 108/108 (100%) | PASS |
 | New regressions | 0 | PASS |
-| Max cyclomatic complexity increase | +1 branch | PASS (< 15 threshold) |
-| Code-to-test ratio | 1:3.3 | PASS (> 1:1) |
-| Requirement traceability | All changes traced | PASS |
-| npm audit | 0 vulnerabilities | PASS |
+| Max cyclomatic complexity | 8 (formatBlock) | PASS (< 15) |
+| Code-to-test ratio | 1:3.6 | PASS (> 1:1) |
+| Requirement traceability | 17/17 ACs verified | PASS |
+| NFR compliance | 3/3 NFRs met | PASS |
+| Constraint compliance | 4/4 CONs met | PASS |
