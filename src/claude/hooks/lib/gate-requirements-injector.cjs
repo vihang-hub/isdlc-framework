@@ -200,6 +200,79 @@ function deepMerge(base, overrides) {
 }
 
 /**
+ * Derives imperative constraint statements from phase configuration.
+ * Returns an array of short prohibition strings for the CRITICAL CONSTRAINTS section.
+ *
+ * Traces to: BUG-0028 / GH-64 (FR-001, FR-002)
+ *
+ * @param {string} phaseKey - e.g. '06-implementation'
+ * @param {object} phaseReq - Phase requirements from iteration-requirements.json
+ * @param {object|null} workflowModifiers - Workflow-specific agent modifiers
+ * @param {boolean} isIntermediatePhase - true if not the final phase in the workflow
+ * @returns {string[]} Array of constraint strings (empty array if no constraints apply)
+ */
+function buildCriticalConstraints(phaseKey, phaseReq, workflowModifiers, isIntermediatePhase) {
+    try {
+        const constraints = [];
+
+        // 1. Git commit prohibition for intermediate phases
+        if (isIntermediatePhase) {
+            constraints.push('Do NOT run git commit -- the orchestrator manages all commits.');
+        }
+
+        // 2. Test iteration gate constraint
+        const testIter = phaseReq.test_iteration || {};
+        if (testIter.enabled) {
+            const coverage = (testIter.success_criteria && testIter.success_criteria.min_coverage_percent) || 80;
+            constraints.push(`Do NOT advance the gate until all tests pass with >= ${coverage}% coverage.`);
+        }
+
+        // 3. Constitutional validation constraint
+        const constVal = phaseReq.constitutional_validation || {};
+        if (constVal.enabled) {
+            constraints.push('Constitutional validation MUST complete before gate advancement.');
+        }
+
+        // 4. Artifact validation constraint
+        const artVal = phaseReq.artifact_validation || {};
+        if (artVal.enabled && artVal.paths && artVal.paths.length > 0) {
+            constraints.push('Required artifacts MUST exist before gate advancement.');
+        }
+
+        // 5. Workflow modifier constraints
+        if (workflowModifiers && typeof workflowModifiers === 'object') {
+            if (workflowModifiers.require_failing_test_first) {
+                constraints.push('You MUST write a failing test before implementing the fix.');
+            }
+        }
+
+        return constraints;
+    } catch (_e) {
+        return [];
+    }
+}
+
+/**
+ * Builds a reminder footer from constraint strings.
+ * Returns 'REMINDER: {constraint1} {constraint2} ...' or '' if no constraints.
+ *
+ * Traces to: BUG-0028 / GH-64 (FR-001)
+ *
+ * @param {string[]} constraints - Array of constraint strings from buildCriticalConstraints
+ * @returns {string} Reminder line or empty string
+ */
+function buildConstraintReminder(constraints) {
+    try {
+        if (!Array.isArray(constraints) || constraints.length === 0) {
+            return '';
+        }
+        return 'REMINDER: ' + constraints.join(' ');
+    } catch (_e) {
+        return '';
+    }
+}
+
+/**
  * Builds the formatted text block for gate requirements.
  *
  * @param {string} phaseKey - e.g. '06-implementation'
@@ -207,15 +280,33 @@ function deepMerge(base, overrides) {
  * @param {string[]} resolvedPaths - Resolved artifact paths
  * @param {object} articleMap - Map of article ID to title
  * @param {object|null} workflowModifiers - Workflow-specific agent modifiers
+ * @param {boolean} [isIntermediatePhase] - true if not the final phase (defaults to true, fail-safe)
  * @returns {string} Formatted text block
  */
-function formatBlock(phaseKey, phaseReq, resolvedPaths, articleMap, workflowModifiers) {
+function formatBlock(phaseKey, phaseReq, resolvedPaths, articleMap, workflowModifiers, isIntermediatePhase) {
     try {
         const phaseNum = phaseKey.split('-')[0];
         const phaseName = PHASE_NAME_MAP[phaseKey] || 'Unknown';
         const lines = [];
 
-        // Header
+        // Default isIntermediatePhase to true (fail-safe: assume intermediate)
+        const isIntermediate = (isIntermediatePhase !== undefined) ? isIntermediatePhase : true;
+
+        // Build critical constraints
+        const constraints = buildCriticalConstraints(phaseKey, phaseReq, workflowModifiers, isIntermediate);
+
+        // CRITICAL CONSTRAINTS section (only if constraints exist)
+        if (constraints.length > 0) {
+            lines.push('========================================');
+            lines.push(`CRITICAL CONSTRAINTS FOR PHASE ${phaseNum} (${phaseName}):`);
+            for (const c of constraints) {
+                lines.push(`- ${c}`);
+            }
+            lines.push('========================================');
+            lines.push('');
+        }
+
+        // Header (retained for backward compatibility with includes() checks)
         lines.push(`GATE REQUIREMENTS FOR PHASE ${phaseNum} (${phaseName}):`);
         lines.push('');
 
@@ -280,8 +371,12 @@ function formatBlock(phaseKey, phaseReq, resolvedPaths, articleMap, workflowModi
             lines.push(`  ${JSON.stringify(workflowModifiers)}`);
         }
 
-        // Warning footer
+        // Constraint reminder footer (replaces generic footer when constraints exist)
         lines.push('');
+        if (constraints.length > 0) {
+            lines.push(buildConstraintReminder(constraints));
+        }
+        // Always include the generic footer (backward compatibility)
         lines.push('DO NOT attempt to advance the gate until ALL enabled requirements are satisfied.');
 
         return lines.join('\n');
@@ -301,9 +396,10 @@ function formatBlock(phaseKey, phaseReq, resolvedPaths, articleMap, workflowModi
  * @param {string} artifactFolder - e.g. 'REQ-0024-gate-requirements-pre-injection'
  * @param {string} [workflowType] - e.g. 'feature', 'fix'
  * @param {string} [projectRoot] - Absolute path (defaults to process.cwd())
+ * @param {string[]} [phases] - Workflow phases array from state.json (optional, defaults to null -> fail-safe)
  * @returns {string} Formatted text block or '' on error (fail-open)
  */
-function buildGateRequirementsBlock(phaseKey, artifactFolder, workflowType, projectRoot) {
+function buildGateRequirementsBlock(phaseKey, artifactFolder, workflowType, projectRoot, phases) {
     try {
         const root = projectRoot || process.cwd();
 
@@ -345,8 +441,15 @@ function buildGateRequirementsBlock(phaseKey, artifactFolder, workflowType, proj
         // Load workflow modifiers
         const workflowMods = loadWorkflowModifiers(root, workflowType, phaseKey);
 
+        // Determine if this is an intermediate phase
+        let isIntermediatePhase = true; // fail-safe default
+        if (Array.isArray(phases) && phases.length > 0) {
+            const lastPhase = phases[phases.length - 1];
+            isIntermediatePhase = (phaseKey !== lastPhase);
+        }
+
         // Build and return the formatted block
-        return formatBlock(phaseKey, phaseReq, resolvedPaths, articleMap, workflowMods);
+        return formatBlock(phaseKey, phaseReq, resolvedPaths, articleMap, workflowMods, isIntermediatePhase);
     } catch (_e) {
         return '';
     }
@@ -365,5 +468,7 @@ module.exports = {
     loadWorkflowModifiers,
     resolveTemplateVars,
     deepMerge,
-    formatBlock
+    formatBlock,
+    buildCriticalConstraints,
+    buildConstraintReminder
 };

@@ -20,6 +20,10 @@ You are the **Integration Tester**, responsible for **SDLC Phase 06: Integration
 > Follow the **Mandatory Iteration Enforcement Protocol** in CLAUDE.md.
 > **Completion criteria**: ALL TESTS PASS. **Max iterations**: 10.
 
+> **Git Commit Prohibition**: Do NOT run `git commit`, `git add`, or `git push` during this phase.
+> The orchestrator manages all git operations at workflow finalize. Attempting to commit will be
+> blocked by the branch-guard hook and waste an iteration.
+
 # PHASE OVERVIEW
 
 **Phase**: 06 - Integration & Testing

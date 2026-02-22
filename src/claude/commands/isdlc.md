@@ -610,10 +610,10 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
    - Display forced-light banner: "ANALYSIS SIZING: Light (forced via -light flag)."
    - Note: The lead orchestrator will adapt its artifact production accordingly.
 
-7. **Single dispatch to roundtable-analyst** (REQ-0032, FR-014):
+7. **Roundtable conversation loop** (REQ-0032, FR-014):
    Read the draft content: `docs/requirements/{slug}/draft.md`. If missing, set draftContent = "(No draft available)".
 
-   Delegate to the `roundtable-analyst` agent via Task tool with:
+   7a. **Initial dispatch**: Delegate to the `roundtable-analyst` agent via Task tool with:
    ```
    "Analyze '{slug}' using concurrent roundtable analysis.
 
@@ -637,11 +637,20 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 
    **Task description format**: `Concurrent analysis for {slug}`
 
-   **CRITICAL -- Relaying roundtable output**: When the roundtable-analyst Task returns or needs user input, you MUST display the COMPLETE persona dialogue to the user VERBATIM. Do NOT summarize, paraphrase, or replace the team discussion with your own commentary. The user expects to see the full conversation as it happened. Your only addition should be a brief prompt indicating the user's turn.
+   7b. **Relay-and-resume loop**: The roundtable-analyst returns after each exchange when it needs user input. Loop as follows:
 
-   **CRITICAL -- Resuming with user input**: When the roundtable-analyst Task returns because it needs user input, collect the user's response and resume the agent by passing ONLY the user's exact response. Do NOT add your own instructions, commentary, or analysis.
+   WHILE the roundtable-analyst has NOT signaled completion:
+     i.   Display the agent's COMPLETE output to the user VERBATIM. Do NOT summarize, paraphrase, or replace the persona dialogue with your own commentary.
+     ii.  Collect the user's response using AskUserQuestion (freeform text prompt).
+     iii. Resume the roundtable-analyst agent (using the `resume` parameter with the agent's ID), passing ONLY the user's exact response as the prompt. Do NOT add your own instructions, commentary, or analysis.
+     iv.  On return, check if the agent signaled completion (meta.json has analysis_status != "raw" and all expected artifacts written). If yes, exit loop.
 
-   **CRITICAL -- Orchestrator boundary**: During an active analyze session, you (the orchestrator) MUST NOT read step/topic files, interpret content, summarize in your own voice, or present your own menus. The roundtable lead owns the entire analysis lifecycle -- codebase scan, conversation, artifact production, cross-check, finalization.
+   **Completion signal**: The roundtable-analyst signals completion by:
+   - Including "ROUNDTABLE_COMPLETE" as the last line of its final output
+   - Having written all required artifacts to the artifact folder
+   - Having updated meta.json with phases_completed
+
+   **Orchestrator boundary**: During the loop, you (the orchestrator) MUST NOT read topic files, interpret content, summarize in your own voice, or present your own menus. The roundtable owns the analysis lifecycle.
 
 7.5. **Post-dispatch: Re-read meta.json**: After the roundtable-analyst returns:
    - Re-read meta.json using `readMetaJson(slugDir)` to get the lead's updates
@@ -1629,27 +1638,20 @@ Use Task tool → {agent_name} with:
        Extract `phases[{phase_key}].paths[]` if present. For each path, replace `{artifact_folder}` with the actual artifact folder name.
     4. If `constitutional_validation` is enabled for this phase, read `docs/isdlc/constitution.md`.
        Extract article titles using the pattern `### Article {ID}: {Title}` for each article ID listed in the phase config's `constitutional_validation.articles[]` array.
-    5. Format and append the following block to the delegation prompt:
-
-       GATE REQUIREMENTS FOR PHASE {NN} ({Phase Name}):
-
-       Iteration Requirements:
-         - test_iteration: {enabled|disabled} {(max N iterations, coverage >= N%) if enabled}
-         - constitutional_validation: {enabled|disabled} {(Articles: list with titles, max N iterations) if enabled}
-         - interactive_elicitation: {enabled|disabled}
-         - agent_delegation: {enabled|disabled}
-         - artifact_validation: {enabled|disabled}
-
-       Required Artifacts: (only if artifact paths exist for this phase)
-         - {resolved path 1}
-         - {resolved path 2}
-
-       Constitutional Articles to Validate: (only if constitutional_validation is enabled)
-         - Article {ID}: {Title}
-
-       DO NOT attempt to advance the gate until ALL enabled requirements are satisfied.
-
-    6. Error handling: If any error occurs in steps 1-5, continue with unmodified prompt. Log warning but never block.}
+    5. Read `active_workflow.phases` array from state.json (the ordered list of phase keys in the current workflow).
+       If missing or not an array: use `null` (the injector will use fail-safe defaults).
+    6. Format and append the gate requirements block to the delegation prompt.
+       The block now includes a CRITICAL CONSTRAINTS section at the top (with imperative prohibitions)
+       and a REMINDER footer at the bottom. The format is produced by the gate-requirements-injector
+       using the phase key, artifact folder, workflow type, project root, and phases array.
+       The injector derives constraints automatically from the phase configuration:
+       - Intermediate phases get "Do NOT run git commit" prohibition
+       - Phases with test_iteration get coverage gate constraint
+       - Phases with constitutional_validation get constitutional reminder
+       - Workflow modifiers (e.g., require_failing_test_first) surface as imperative statements
+    7. After the gate requirements block, append this acknowledgment instruction on a new line:
+       "Read the CRITICAL CONSTRAINTS block above and confirm you will comply before starting work."
+    8. Error handling: If any error occurs in steps 1-7, continue with unmodified prompt. Log warning but never block.}
    {BUDGET DEGRADATION INJECTION (REQ-0022) -- Inject degradation directive when budget is exceeded or approaching. Fail-open.
     1. Read `active_workflow.budget_status` from state.json.
        If `budget_status` is `"on_track"`, missing, or null: SKIP degradation injection.

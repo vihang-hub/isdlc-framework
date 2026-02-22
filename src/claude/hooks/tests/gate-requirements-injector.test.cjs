@@ -864,8 +864,13 @@ describe('REQ-0024: Integration - full pipeline', () => {
         assert.ok(result.length > 0, 'Should produce non-empty output');
 
         // Check structure: has header, iteration reqs, articles, footer
+        // BUG-0028: first line may now be CRITICAL CONSTRAINTS separator when isIntermediatePhase defaults to true
         const lines = result.split('\n');
-        assert.ok(lines[0].includes('GATE REQUIREMENTS'), 'First line should be header');
+        assert.ok(
+            lines[0].includes('GATE REQUIREMENTS') || lines[0].includes('========'),
+            'First line should be header or CRITICAL CONSTRAINTS separator'
+        );
+        assert.ok(result.includes('GATE REQUIREMENTS'), 'Should contain GATE REQUIREMENTS header');
         assert.ok(lines[lines.length - 1].includes('DO NOT attempt') || lines[lines.length - 2].includes('DO NOT attempt'),
             'Last meaningful line should be the warning');
     });
@@ -954,5 +959,244 @@ describe('REQ-0024: Phase name mapping', () => {
                 `Phase ${phaseKey} should map to "${expectedName}"`
             );
         }
+    });
+});
+
+// -------------------------------------------------------------------------
+// 12. Injection salience (BUG-0028)
+// -------------------------------------------------------------------------
+
+describe('BUG-0028: Injection salience', () => {
+    afterEach(() => {
+        destroyTestDir();
+    });
+
+    // Test case 1: CRITICAL CONSTRAINTS appears before Iteration Requirements (AC-006-01)
+    it('formatBlock() includes CRITICAL CONSTRAINTS before Iteration Requirements for intermediate phase', () => {
+        const mod = loadModule();
+        const phaseReq = FIXTURE_ITERATION_REQ.phase_requirements['06-implementation'];
+        const resolvedPaths = ['docs/requirements/test/coverage-report.html'];
+        const articleMap = { 'I': 'Specification Primacy' };
+
+        const result = mod.formatBlock('06-implementation', phaseReq, resolvedPaths, articleMap, null, true);
+
+        const ccIndex = result.indexOf('CRITICAL CONSTRAINTS');
+        const irIndex = result.indexOf('Iteration Requirements:');
+
+        assert.ok(ccIndex >= 0, 'Should contain CRITICAL CONSTRAINTS section');
+        assert.ok(irIndex >= 0, 'Should contain Iteration Requirements section');
+        assert.ok(ccIndex < irIndex, 'CRITICAL CONSTRAINTS must appear before Iteration Requirements');
+    });
+
+    // Test case 2: Output ends with constraint reminder (AC-006-02)
+    it('formatBlock() output includes REMINDER line after all sections', () => {
+        const mod = loadModule();
+        const phaseReq = FIXTURE_ITERATION_REQ.phase_requirements['06-implementation'];
+
+        const result = mod.formatBlock('06-implementation', phaseReq, [], {}, null, true);
+
+        assert.ok(result.includes('REMINDER:'), 'Should include REMINDER line');
+
+        // REMINDER should appear after the last content section
+        const reminderIndex = result.indexOf('REMINDER:');
+        const iterReqIndex = result.indexOf('Iteration Requirements:');
+        assert.ok(reminderIndex > iterReqIndex, 'REMINDER should appear after Iteration Requirements');
+    });
+
+    // Test case 3: Constitutional validation reminder in CRITICAL CONSTRAINTS (AC-006-03)
+    it('CRITICAL CONSTRAINTS includes constitutional validation reminder when enabled', () => {
+        const mod = loadModule();
+        const phaseReq = FIXTURE_ITERATION_REQ.phase_requirements['06-implementation'];
+        // 06-implementation has constitutional_validation.enabled = true
+
+        const result = mod.formatBlock('06-implementation', phaseReq, [], {}, null, true);
+
+        // Extract the CRITICAL CONSTRAINTS section
+        const ccStart = result.indexOf('CRITICAL CONSTRAINTS');
+        const ccEnd = result.indexOf('========', ccStart + 1);
+        const ccSection = result.substring(ccStart, ccEnd);
+
+        assert.ok(
+            ccSection.includes('Constitutional validation'),
+            'CRITICAL CONSTRAINTS section should include constitutional validation reminder'
+        );
+    });
+
+    // Test case 4: Git commit prohibition for intermediate phases
+    it('includes git commit prohibition for intermediate phases', () => {
+        const mod = loadModule();
+        const phaseReq = FIXTURE_ITERATION_REQ.phase_requirements['06-implementation'];
+
+        const result = mod.formatBlock('06-implementation', phaseReq, [], {}, null, true);
+
+        assert.ok(
+            result.includes('Do NOT run git commit'),
+            'Should include git commit prohibition for intermediate phase'
+        );
+    });
+
+    // Test case 5: No git commit prohibition for final phase (CON-003)
+    it('omits git commit prohibition for the final phase', () => {
+        const mod = loadModule();
+        const phaseReq = FIXTURE_ITERATION_REQ.phase_requirements['06-implementation'];
+
+        const result = mod.formatBlock('06-implementation', phaseReq, [], {}, null, false);
+
+        assert.ok(
+            !result.includes('Do NOT run git commit'),
+            'Should NOT include git commit prohibition for final phase'
+        );
+    });
+
+    // Test case 6: Character count within 40% growth budget (NFR-001)
+    it('injection block size stays within 40% growth budget', () => {
+        const mod = loadModule();
+        const phaseReq = FIXTURE_ITERATION_REQ.phase_requirements['06-implementation'];
+        const resolvedPaths = ['docs/requirements/test/coverage-report.html'];
+        const articleMap = {
+            'I': 'Specification Primacy',
+            'II': 'Test-First Development',
+            'III': 'Security by Design',
+            'V': 'Simplicity First',
+            'VI': 'Code Review Required',
+            'VII': 'Artifact Traceability',
+            'VIII': 'Documentation Currency',
+            'IX': 'Quality Gate Integrity',
+            'X': 'Fail-Safe Defaults'
+        };
+
+        // Baseline: current format (no constraints section, no isIntermediatePhase)
+        const baseline = mod.formatBlock('06-implementation', phaseReq, resolvedPaths, articleMap, null);
+        // New format: with constraints section
+        const enhanced = mod.formatBlock('06-implementation', phaseReq, resolvedPaths, articleMap, null, true);
+
+        const baselineLen = baseline.length;
+        const enhancedLen = enhanced.length;
+        const growthPercent = ((enhancedLen - baselineLen) / baselineLen) * 100;
+
+        assert.ok(
+            enhancedLen <= baselineLen * 1.4,
+            `Injection block grew ${growthPercent.toFixed(1)}% (${baselineLen} -> ${enhancedLen} chars). ` +
+            `Must be <= 40% growth.`
+        );
+    });
+});
+
+// -------------------------------------------------------------------------
+// 13. buildCriticalConstraints (BUG-0028)
+// -------------------------------------------------------------------------
+
+describe('BUG-0028: buildCriticalConstraints', () => {
+    it('includes git commit prohibition when isIntermediatePhase is true', () => {
+        const mod = loadModule();
+        const phaseReq = { test_iteration: { enabled: false }, constitutional_validation: { enabled: false } };
+        const result = mod.buildCriticalConstraints('06-implementation', phaseReq, null, true);
+
+        assert.ok(result.some(c => c.includes('Do NOT run git commit')));
+    });
+
+    it('omits git commit prohibition when isIntermediatePhase is false', () => {
+        const mod = loadModule();
+        const phaseReq = { test_iteration: { enabled: false }, constitutional_validation: { enabled: false } };
+        const result = mod.buildCriticalConstraints('06-implementation', phaseReq, null, false);
+
+        assert.ok(!result.some(c => c.includes('Do NOT run git commit')));
+    });
+
+    it('includes test coverage constraint when test_iteration is enabled', () => {
+        const mod = loadModule();
+        const phaseReq = {
+            test_iteration: { enabled: true, success_criteria: { min_coverage_percent: 80 } },
+            constitutional_validation: { enabled: false }
+        };
+        const result = mod.buildCriticalConstraints('06-implementation', phaseReq, null, false);
+
+        assert.ok(result.some(c => c.includes('80% coverage')));
+    });
+
+    it('includes constitutional constraint when constitutional_validation is enabled', () => {
+        const mod = loadModule();
+        const phaseReq = {
+            test_iteration: { enabled: false },
+            constitutional_validation: { enabled: true, articles: ['I'] }
+        };
+        const result = mod.buildCriticalConstraints('06-implementation', phaseReq, null, false);
+
+        assert.ok(result.some(c => c.includes('Constitutional validation')));
+    });
+
+    it('includes artifact constraint when artifact_validation is enabled with paths', () => {
+        const mod = loadModule();
+        const phaseReq = {
+            test_iteration: { enabled: false },
+            constitutional_validation: { enabled: false },
+            artifact_validation: { enabled: true, paths: ['some/path.md'] }
+        };
+        const result = mod.buildCriticalConstraints('06-implementation', phaseReq, null, false);
+
+        assert.ok(result.some(c => c.includes('Required artifacts')));
+    });
+
+    it('includes failing test constraint from workflow modifiers', () => {
+        const mod = loadModule();
+        const phaseReq = { test_iteration: { enabled: false }, constitutional_validation: { enabled: false } };
+        const modifiers = { require_failing_test_first: true };
+        const result = mod.buildCriticalConstraints('06-implementation', phaseReq, modifiers, false);
+
+        assert.ok(result.some(c => c.includes('failing test')));
+    });
+
+    it('returns empty array when no constraints apply', () => {
+        const mod = loadModule();
+        const phaseReq = {
+            test_iteration: { enabled: false },
+            constitutional_validation: { enabled: false },
+            artifact_validation: { enabled: false }
+        };
+        const result = mod.buildCriticalConstraints('06-implementation', phaseReq, null, false);
+
+        assert.deepEqual(result, []);
+    });
+
+    it('returns empty array on error (fail-open)', () => {
+        const mod = loadModule();
+        // Pass null as phaseReq to trigger internal error
+        const result = mod.buildCriticalConstraints('06-implementation', null, null, true);
+
+        assert.ok(Array.isArray(result), 'Should return an array');
+        assert.deepEqual(result, []);
+    });
+});
+
+// -------------------------------------------------------------------------
+// 14. buildConstraintReminder (BUG-0028)
+// -------------------------------------------------------------------------
+
+describe('BUG-0028: buildConstraintReminder', () => {
+    it('joins constraints with REMINDER prefix', () => {
+        const mod = loadModule();
+        const result = mod.buildConstraintReminder([
+            'Do NOT run git commit -- the orchestrator manages all commits.',
+            'Constitutional validation MUST complete before gate advancement.'
+        ]);
+
+        assert.ok(result.startsWith('REMINDER:'));
+        assert.ok(result.includes('Do NOT run git commit'));
+        assert.ok(result.includes('Constitutional validation'));
+    });
+
+    it('returns empty string for empty array', () => {
+        const mod = loadModule();
+        assert.equal(mod.buildConstraintReminder([]), '');
+    });
+
+    it('returns empty string for null input', () => {
+        const mod = loadModule();
+        assert.equal(mod.buildConstraintReminder(null), '');
+    });
+
+    it('returns empty string for undefined input', () => {
+        const mod = loadModule();
+        assert.equal(mod.buildConstraintReminder(undefined), '');
     });
 });

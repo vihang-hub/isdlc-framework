@@ -557,31 +557,28 @@ describe('branch-guard agent no-commit instructions (BUG-0012)', () => {
         );
     });
 
-    // T28: Git Commit Prohibition in CLAUDE.md explains WHY commits are prohibited
-    // Traces to: AC-03 (REQ-0021: content now in CLAUDE.md)
+    // T28: Agent inline prohibition explains WHY commits are prohibited
+    // Traces to: AC-03 (REQ-0021), BUG-0028 (FR-004: inline prohibition replaces dead CLAUDE.md cross-ref)
     it('T28: software-developer agent explains why commits are prohibited', () => {
-        const claudeContent = fs.readFileSync(CLAUDE_MD, 'utf8');
+        const agentPath = path.join(AGENTS_DIR, '05-software-developer.md');
+        const agentContent = fs.readFileSync(agentPath, 'utf8');
 
-        // Must reference quality gates or validation in CLAUDE.md
+        // Must reference workflow finalize or orchestrator managing git (inline in agent file per BUG-0028)
         assert.ok(
-            /quality.*gate|validated.*work|quality.*loop|phase\s*16/i.test(claudeContent),
-            'CLAUDE.md Git Commit Prohibition must reference quality gates as reason'
-        );
-        // Must reference code review
-        assert.ok(
-            /code.review|code-review/i.test(claudeContent),
-            'CLAUDE.md Git Commit Prohibition must reference code review as reason'
+            /workflow\s+finalize|orchestrator.*manages|branch-guard.*hook/i.test(agentContent),
+            'Agent inline prohibition must explain why commits are prohibited'
         );
     });
 
-    // T29: Git Commit Prohibition in CLAUDE.md mentions orchestrator manages git
-    // Traces to: AC-04 (REQ-0021: content now in CLAUDE.md)
+    // T29: Agent inline prohibition mentions orchestrator manages git
+    // Traces to: AC-04 (REQ-0021), BUG-0028 (FR-004: inline prohibition replaces dead CLAUDE.md cross-ref)
     it('T29: software-developer agent mentions orchestrator manages git', () => {
-        const claudeContent = fs.readFileSync(CLAUDE_MD, 'utf8');
+        const agentPath = path.join(AGENTS_DIR, '05-software-developer.md');
+        const agentContent = fs.readFileSync(agentPath, 'utf8');
 
         assert.ok(
-            /orchestrator.*git|orchestrator.*commit|orchestrator.*merge/i.test(claudeContent),
-            'CLAUDE.md must mention orchestrator manages git operations'
+            /orchestrator.*git|orchestrator.*commit|orchestrator.*merge/i.test(agentContent),
+            'Agent must mention orchestrator manages git operations'
         );
     });
 
@@ -597,14 +594,15 @@ describe('branch-guard agent no-commit instructions (BUG-0012)', () => {
         );
     });
 
-    // T31: Git Commit Prohibition in CLAUDE.md explains code review validation
-    // Traces to: AC-06 (REQ-0021: content now in CLAUDE.md)
-    it('T31: quality-loop-engineer agent explains code review not yet run', () => {
-        const claudeContent = fs.readFileSync(CLAUDE_MD, 'utf8');
+    // T31: Agent inline prohibition explains branch-guard enforcement
+    // Traces to: AC-06 (REQ-0021), BUG-0028 (FR-004: inline prohibition replaces dead CLAUDE.md cross-ref)
+    it('T31: quality-loop-engineer agent explains branch-guard enforcement', () => {
+        const agentPath = path.join(AGENTS_DIR, '16-quality-loop-engineer.md');
+        const agentContent = fs.readFileSync(agentPath, 'utf8');
 
         assert.ok(
-            /code.review|08-code-review|quality.*gate/i.test(claudeContent),
-            'CLAUDE.md Git Commit Prohibition must explain that code review validation is required'
+            /branch-guard.*hook|workflow\s+finalize|orchestrator.*manages/i.test(agentContent),
+            'Agent inline prohibition must explain branch-guard enforcement'
         );
     });
 });
