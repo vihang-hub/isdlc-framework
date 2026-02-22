@@ -186,6 +186,7 @@
   - Docs: [docs.ollama.com/integrations/claude-code](https://docs.ollama.com/integrations/claude-code)
 - #42 [ ] SonarQube integration
 - #66 [ ] Spec reconciliation phase and selective code regeneration — close the spec-code knowledge gap so code becomes regenerable from complete specifications -> [requirements](docs/requirements/spec-reconciliation-and-code-regeneration/)
+- [ ] Free-text intake: reverse-lookup GitHub issues and auto-create if no match found -> [requirements](docs/requirements/REQ-0034-free-text-intake-reverse-lookup-github-issues/)
 
 
 ### Product/Vision
@@ -300,7 +301,7 @@
 
 ### Agent Compliance
 
-- #64 [~] Agents ignore injected gate requirements — wasted iterations on hook-blocked actions -> [requirements](docs/requirements/BUG-0028-agents-ignore-injected-gate-requirements/)
+- #64 [A] Agents ignore injected gate requirements — wasted iterations on hook-blocked actions -> [requirements](docs/requirements/BUG-0028-agents-ignore-injected-gate-requirements/)
   - **Problem**: Gate requirements pre-injection (REQ-0024, `gate-requirements-injector.cjs`) tells agents what hooks will enforce (e.g., "do not commit during intermediate phases"). But agents sometimes ignore these constraints and attempt the blocked action anyway. The hook safety net catches it, but the iteration is wasted and the agent has to recover.
   - **Observed**: During BUG-0029 Phase 06, the software-developer agent ran `git commit` despite the injected constraint about Git Commit Prohibition. The `branch-guard` hook blocked it correctly, but the commit still partially executed (the commit message appeared in output).
   - **Root causes to investigate**:
