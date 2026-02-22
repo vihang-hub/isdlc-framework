@@ -351,7 +351,7 @@
 
 - #79 [ ] Introduce Critic/Refiner pass in analyze flow before confirmation summaries -> [requirements](docs/requirements/REQ-0036-introduce-critic-refiner-in-analyze-flow/)
 
-- #80 [A] Optimize analyze flow: parallelize and defer to cut first-message latency -> [requirements](docs/requirements/REQ-0037-optimize-analyze-flow-parallelize-defer/)
+- #80 [x] ~~Optimize analyze flow: parallelize and defer to cut first-message latency~~ -> [requirements](docs/requirements/REQ-0037-optimize-analyze-flow-parallelize-defer/) **Completed: 2026-02-22**
   - **Problem**: The roundtable analysis flow produces artifacts through conversation, but does not apply the same rigorous quality checks that the build flow's debate loop does. The Critic agents check for mechanical quality issues (e.g., ACs not in Given/When/Then format, orphan requirements, unquantified NFRs, incomplete STRIDE coverage) that the conversational flow naturally skips.
   - **Depends on**: #22 (Transparent Confirmation at Analysis Boundaries)
   - **Complexity**: Medium
