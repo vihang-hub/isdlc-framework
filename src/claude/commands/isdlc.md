@@ -543,9 +543,12 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 2. Does NOT write to state.json, does NOT create branches, does NOT invoke hooks
 3. Parse input to identify source type:
    a. GitHub issue (`#N` pattern): source = "github", source_id = "GH-N".
+      If pre-fetched issue data is provided (title, labels, body) from the analyze handler fast path,
+      use the pre-fetched data instead of fetching. Otherwise:
       Fetch the issue title using `gh issue view N --json title,labels -q '.title'`.
       Check labels: if "bug" label present, item_type = "BUG", else item_type = "REQ".
    b. Jira ticket (`PROJECT-N` pattern): source = "jira", source_id = input.
+      If pre-fetched issue data is provided, use it instead of fetching. Otherwise:
       Fetch the issue summary and type. If type is "Bug", item_type = "BUG", else item_type = "REQ".
    c. All other input: source = "manual", source_id = null.
       Ask the user: "Is this a feature/requirement or a bug fix?" → item_type = "REQ" or "BUG".
@@ -624,10 +627,47 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
        args = args with "-light" removed (preserve remaining text as item identifier)
    item_input = args.trim()
    ```
-3. Resolve target item using `resolveItem(input)`:
+3. **Detect input type** (REQ-0037): Classify item_input as one of:
+   - **External ref** (`#N` for GitHub, `PROJECT-N` for Jira): proceed to optimized dependency group path (step 3a)
+   - **Non-external ref** (slug, item number, description): proceed to standard resolution (step 3b)
+
+   3a. **Optimized path for external references** (`#N` or `PROJECT-N`):
+
+   The following operations are structured as dependency groups. Fire all operations within a group as parallel tool calls in a single response. Groups execute sequentially (Group 2 needs Group 1 results).
+
+   **Group 1** (fire all 5 in parallel at T=0):
+   - `gh issue view N --json title,labels,body` --> issueData (title, labels, body). If this fails, fail fast: "Could not fetch issue #N: {error}" and STOP.
+   - `Grep "GH-N"` (or source_id) across `docs/requirements/*/meta.json` --> existingMatch (slug and directory if found, null if not)
+   - `Glob docs/requirements/{TYPE}-*` --> folderList (for sequence number calculation)
+   - Read 3 persona files in parallel --> personaContent:
+     - `src/claude/agents/persona-business-analyst.md`
+     - `src/claude/agents/persona-solutions-architect.md`
+     - `src/claude/agents/persona-system-designer.md`
+   - `Glob src/claude/skills/analysis-topics/**/*.md` --> topicPaths
+
+   **Group 2** (needs Group 1 results, fire all in parallel):
+   - **If no existingMatch found**: Auto-add without confirmation prompt -- invoke the `add` handler with the input and pre-fetched issueData (title, labels, body). The add handler creates the folder, draft.md, meta.json, and updates BACKLOG.md. Reuse the in-memory meta and draft objects it produces (do NOT re-read from disk).
+   - **If existingMatch found**: Read meta.json from the existing folder; read draft.md from disk.
+   - Read all topic files from topicPaths in parallel --> topicContent
+
+   **Auto-add rationale** (FR-002): For `#N` and `PROJECT-N` inputs, intent to analyze is unambiguous -- the user explicitly referenced an external ticket. Skip the "Add to backlog?" confirmation and invoke the add handler automatically when no existing folder is found. For non-external-ref inputs (slugs, descriptions), preserve the existing confirmation prompt behavior (step 3b).
+
+   **In-memory reuse** (FR-004): After the add handler writes meta.json and draft.md, compose the dispatch prompt from the in-memory meta and draft objects. Do NOT issue Read tool calls for files just written.
+
+   After Group 2, proceed to step 4 (completed analysis check) with the resolved slug, meta, and draft.
+
+   3b. **Standard resolution for non-external refs** (existing behavior preserved):
+   Resolve target item using `resolveItem(input)`:
    - If no match: "No matching item found. Would you like to add it to the backlog first?"
-     If user confirms: run `add` handler with the input, then continue with analysis
-4. Read meta.json using `readMetaJson()`:
+     If user confirms: run `add` handler with the input, then continue with analysis.
+
+   For non-external refs, also pre-read persona and topic files for dispatch optimization:
+   - Read 3 persona files in parallel --> personaContent
+   - Glob + read topic files --> topicContent
+
+   After resolution, proceed to step 4.
+
+4. Read meta.json using `readMetaJson()` (skip if already in-memory from step 3a):
    - If meta.json missing (folder exists but no meta): create default meta.json with
      analysis_status: "raw", phases_completed: [], then continue
 5. Check for completed analysis:
@@ -645,10 +685,10 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
    - Display forced-light banner: "ANALYSIS SIZING: Light (forced via -light flag)."
    - Note: The lead orchestrator will adapt its artifact production accordingly.
 
-7. **Roundtable conversation loop** (REQ-0032, FR-014):
-   Read the draft content: `docs/requirements/{slug}/draft.md`. If missing, set draftContent = "(No draft available)".
+7. **Roundtable conversation loop** (REQ-0032, FR-014, REQ-0037):
+   Read the draft content: `docs/requirements/{slug}/draft.md`. If missing and not already in-memory from step 3a, set draftContent = "(No draft available)".
 
-   7a. **Initial dispatch**: Delegate to the `roundtable-analyst` agent via Task tool with:
+   7a. **Initial dispatch**: Delegate to the `roundtable-analyst` agent via Task tool with the following prompt. The prompt now includes PERSONA_CONTEXT and TOPIC_CONTEXT fields (REQ-0037, FR-005) so the roundtable can skip file reads at startup:
    ```
    "Analyze '{slug}' using concurrent roundtable analysis.
 
@@ -667,8 +707,32 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
       light_flag: {lightFlag}
       sizing_decision: {JSON.stringify(meta.sizing_decision) || "null"}
 
+    PERSONA_CONTEXT:
+    --- persona-business-analyst ---
+    {personaBA content}
+    --- persona-solutions-architect ---
+    {personaSA content}
+    --- persona-system-designer ---
+    {personaSD content}
+
+    TOPIC_CONTEXT:
+    --- topic: problem-discovery ---
+    {topic content}
+    --- topic: requirements-definition ---
+    {topic content}
+    --- topic: technical-analysis ---
+    {topic content}
+    --- topic: architecture ---
+    {topic content}
+    --- topic: specification ---
+    {topic content}
+    --- topic: security ---
+    {topic content}
+
     ANALYSIS_MODE: No state.json writes, no branch creation."
    ```
+
+   The PERSONA_CONTEXT and TOPIC_CONTEXT fields use `--- persona-{name} ---` and `--- topic: {topic_id} ---` delimiters. The roundtable-analyst parses these to skip file reads. If either field is absent (e.g., pre-reading failed), the roundtable falls back to reading files from disk.
 
    **Task description format**: `Concurrent analysis for {slug}`
 
