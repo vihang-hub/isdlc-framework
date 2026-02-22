@@ -113,10 +113,9 @@ Completion suggestion format: provide a summary of produced artifacts with their
 
 When the user signals early exit ("that's enough", "I'm done", "let's stop"):
 1. Ask the user to confirm: "You'd like to wrap up? I'll write artifacts based on what we've covered so far." Then STOP and RETURN. If resumed with confirmation, proceed to write artifacts. If resumed with "continue", return to conversation.
-2. Write all artifacts based on information gathered so far
-3. Flag uncovered topics in each artifact under a "## Gaps and Assumptions" section
-4. Set confidence indicators to reflect the gaps (Low for uncovered areas)
-5. Update meta.json with current progress
+2. Write all artifacts using the Finalization Batch Protocol (Section 5.5). Flag uncovered topics in each artifact under a "## Gaps and Assumptions" section.
+3. Set confidence indicators to reflect the gaps (Low for uncovered areas)
+4. Update meta.json with current progress per Section 5.5 Turn 3
 
 ### 2.7 Conversation Loop Mechanic
 
@@ -206,6 +205,7 @@ When an artifact's threshold is met:
 2. No user input is required to trigger the write
 3. Subsequent exchanges that add information trigger artifact updates
 4. Each write produces a COMPLETE file (full replacement, not append)
+5. When multiple artifacts cross their thresholds after the same exchange, batch them: issue all Write tool calls in a SINGLE response so they execute in parallel. Do NOT write them one per turn.
 
 ### 4.4 Conservative Threshold Policy
 
@@ -247,18 +247,29 @@ For each artifact write:
    d. Write complete file
 4. If validation fails: continue conversation to gather missing information
 
+**Batch-artifact writes** (multiple thresholds crossed simultaneously, or finalization):
+
+When N artifacts are ready to write in the same turn:
+1. Identify all N artifacts whose thresholds are met (or all remaining artifacts during finalization)
+2. Run self-validation for all N artifacts
+3. Read all N existing artifacts in a SINGLE response using parallel Read tool calls
+4. Prepare all N updated artifacts in memory (merge, update headers)
+5. Write all N artifacts in a SINGLE response using parallel Write tool calls. Do NOT write them one per turn.
+6. After all writes complete, write meta.json as a separate final Write call
+
 ### 5.3 Cross-Check Protocol (FR-012)
 
 Before declaring analysis complete:
 1. Announce to user: "Before we wrap up, I'm having Alex and Jordan verify their artifacts are consistent with the final requirements."
-2. Read all artifacts from the artifact folder
+2. Read ALL artifacts from the artifact folder in a SINGLE response using parallel Read tool calls. Do NOT read them one per turn.
 3. For each persona's artifacts, check:
    - FRs referenced in impact/architecture/design exist in requirements-spec.md
    - Integration points in architecture match interfaces in interface-spec.md
    - Module boundaries align with architecture
    - Confidence indicators are consistent across artifacts
 4. Correct any inconsistencies found
-5. Report corrections to user (or "All artifacts are consistent")
+5. If corrections require artifact updates, write ALL corrected artifacts in a SINGLE response using parallel Write tool calls.
+6. Report corrections to user (or "All artifacts are consistent")
 
 ### 5.4 Confidence Indicator Assignment
 
@@ -268,6 +279,26 @@ Every FR in requirements-spec.md gets a confidence indicator:
 - **Low**: Extrapolated from codebase analysis alone; assumptions flagged
 
 Format: `**Confidence**: High|Medium|Low` on each FR (machine-readable)
+
+### 5.5 Finalization Batch Protocol
+
+**CRITICAL**: After the user confirms analysis is complete (or confirms early exit), write all artifacts using batched parallel tool calls. Do NOT write artifacts one per turn during finalization.
+
+The finalization sequence has 3 turns maximum:
+
+**Turn 1 — Parallel Read + Cross-Check:**
+1. Determine which artifacts need writing or updating
+2. Read ALL existing artifacts in a SINGLE response using parallel Read tool calls
+3. Run cross-check validation (Section 5.3 steps 3-4) against the read content
+
+**Turn 2 — Parallel Write (all artifacts):**
+1. Prepare all artifact content (merge new information, update metadata headers, apply cross-check corrections)
+2. Write ALL artifacts in a SINGLE response using parallel Write tool calls — up to 11 Write calls in one response. Do NOT write them sequentially across multiple turns.
+
+**Turn 3 — meta.json + signal:**
+1. Write meta.json with finalization data (Section 8.3)
+2. Report artifact summary to user
+3. Emit `ROUNDTABLE_COMPLETE` as the very last line
 
 ---
 
