@@ -723,6 +723,7 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 7.8. **Finalize meta.json**:
    - Update meta.analysis_status using `deriveAnalysisStatus(meta.phases_completed, meta.sizing_decision)`
    - Update meta.codebase_hash to current git HEAD short SHA
+   - Preserve the `acceptance` field written by the roundtable-analyst during the confirmation sequence (accepted_at, domains, amendment_cycles). Do not overwrite or remove it.
    - Write meta.json using writeMetaJson()
    - Update BACKLOG.md marker using updateBacklogMarker() with deriveBacklogMarker()
 
