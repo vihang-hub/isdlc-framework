@@ -595,54 +595,62 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 4. Read meta.json using `readMetaJson()`:
    - If meta.json missing (folder exists but no meta): create default meta.json with
      analysis_status: "raw", phases_completed: [], then continue
-5. Determine next analysis phase:
-   ANALYSIS_PHASE_SEQUENCE = ["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design"]
-   nextPhase = first phase in sequence not in meta.phases_completed
-6. If all phases complete (nextPhase is null):
-   a. Check codebase staleness: compare meta.codebase_hash with current git HEAD short SHA
-   b. If hashes match: "Analysis is already complete and current. Nothing to do."
-   c. If hashes differ: warn "Codebase has changed since analysis ({N} commits). Re-run analysis?"
-      Options: [R] Re-analyze from Phase 00 | [C] Cancel
-      If re-analyze: clear phases_completed, set analysis_status to "raw", continue from Phase 00
-7. For each remaining phase starting from nextPhase:
-   a. Display: "Running Phase {NN} ({phase name})..."
-   b. **Roundtable routing check** (REQ-0027): Check if the file `src/claude/agents/roundtable-analyst.md` exists using the Glob tool.
-      - **If roundtable-analyst.md exists**: Delegate to the `roundtable-analyst` agent via Task tool with:
-        ```
-        "Execute Phase {NN} - {Phase Name} for analysis of '{slug}'.
-         Phase key: {phase_key}
-         Artifact folder: docs/requirements/{slug}/
-         META CONTEXT: {JSON.stringify(meta)}
-         ANALYSIS MODE: No state.json writes, no branch creation."
-        ```
-        **Task description format**: The Task tool's `description` parameter (shown in UI) MUST include progress context. Before delegating, count step files using Glob: `src/claude/skills/analysis-steps/{phase_key}/*.md`. Format the description as:
-        - Initial delegation: `Phase {current}/{total} for {slug}` — e.g., `Phase 02/05 for #39`
-        - Resume with user input: `Phase {current}/{total} step {step}/{total_steps} for {slug}` — e.g., `Phase 02/05 step 01/04 for #39`
-        To determine the current step on resume: count entries in meta.steps_completed that start with the current phase prefix, add 1.
+5. Check for completed analysis:
+   a. If all 5 phases are in meta.phases_completed:
+      - Check codebase staleness: compare meta.codebase_hash with current git HEAD short SHA
+      - If hashes match: "Analysis is already complete and current. Nothing to do." STOP.
+      - If hashes differ: warn "Codebase has changed since analysis ({N} commits). Re-run analysis?"
+        Options: [R] Re-analyze | [C] Cancel
+        If re-analyze: clear phases_completed, topics_covered, steps_completed, set analysis_status to "raw", continue
 
-        The roundtable agent selects the appropriate persona (Maya/Alex/Jordan) based on phase_key, runs step files from `src/claude/skills/analysis-steps/{phase_key}/`, and produces artifacts compatible with the standard phase agents.
-
-        **CRITICAL — Relaying roundtable output**: When the roundtable-analyst Task returns, you MUST display the COMPLETE persona dialogue to the user VERBATIM. Do NOT summarize, paraphrase, or replace the team discussion with your own commentary. The user expects to see the full conversation as it happened — every `Name (Role): "text"` utterance from Maya, Alex, and Jordan. Your only addition should be a brief prompt at the end indicating the user's turn (e.g., presenting the question the agent asked). The roundtable experience IS the persona dialogue — if you summarize it, the user loses the entire value of the feature.
-
-        **CRITICAL — Resuming with user input**: When the roundtable-analyst Task returns because it needs user input (e.g., via AskUserQuestion), collect the user's response and resume the agent by passing ONLY the user's exact response. Do NOT add your own instructions, commentary, analysis, or stage directions (e.g., "The team should...", "Continue step...", "Now add..."). The roundtable agent has its own conversation protocol — it knows what to do next based on its step execution loop. Your job is to be a transparent relay: user's words in, persona dialogue out. Any orchestrator-injected instructions override the agent's own persona logic and break the conversational experience.
-
-        **CRITICAL — Orchestrator boundary**: During an active analyze session, you (the orchestrator) MUST NOT read step files, interpret step content, summarize steps in your own voice, or present your own menus for steps. Step files belong to the roundtable agent — it reads them, selects the persona, runs the conversation protocol, and presents menus. If the user asks about a step or wants to proceed, delegate to or resume the roundtable agent. Do NOT act as a middleman that previews, editorializes, or creates custom menus for step content. The orchestrator manages phase transitions and meta.json — the roundtable agent owns everything inside a phase.
-      - **If roundtable-analyst.md does NOT exist** (fallback): Delegate to the standard phase agent via Task tool (in ANALYSIS MODE -- no state.json, no branches). This preserves backward compatibility for installations without the roundtable agent.
-   c. Append phase key to meta.phases_completed
-
-   **7.5 SIZING TRIGGER CHECK** (GH-57, FR-001, FR-002, FR-003, FR-006):
-   IF phase_key === '02-impact-analysis' AND meta.sizing_decision is NOT already set:
-
-   **PATH A -- Forced light** (lightFlag === true):
+6. **SIZING PRE-CHECK** (GH-57): If lightFlag === true AND meta.sizing_decision is NOT already set:
    - Read `light_skip_phases` from `workflows.json -> workflows.feature.sizing.light_skip_phases` (fallback: `["03-architecture", "04-design"]`)
    - Build sizing_decision record: `{ intensity: "light", effective_intensity: "light", recommended_intensity: null, decided_at: ISO timestamp, reason: "light_flag", user_prompted: false, forced_by_flag: true, overridden: false, overridden_to: null, file_count: 0, module_count: 0, risk_score: "unknown", coupling: "unknown", coverage_gaps: 0, fallback_source: null, fallback_attempted: false, light_skip_phases: light_skip_phases, epic_deferred: false, context: "analyze" }`
    - Set `meta.sizing_decision = sizing_decision`, call `writeMetaJson(slugDir, meta)`
-   - Display forced-light banner: "ANALYSIS SIZING: Light (forced via -light flag). Skipping phases 03-04."
-   - Update BACKLOG.md marker via `updateBacklogMarker()` with `deriveBacklogMarker(meta.analysis_status)`
-   - Display: "Analysis complete (light). {slug} is ready to build. Phases 03-04 skipped by sizing decision."
-   - BREAK out of phase loop, proceed to step 9 (GitHub label sync)
+   - Display forced-light banner: "ANALYSIS SIZING: Light (forced via -light flag)."
+   - Note: The lead orchestrator will adapt its artifact production accordingly.
 
-   **PATH B -- Interactive sizing** (lightFlag === false):
+7. **Single dispatch to roundtable-lead** (REQ-0032, FR-014):
+   Read the draft content: `docs/requirements/{slug}/draft.md`. If missing, set draftContent = "(No draft available)".
+
+   Delegate to the `roundtable-lead` agent via Task tool with:
+   ```
+   "Analyze '{slug}' using concurrent roundtable analysis.
+
+    ARTIFACT_FOLDER: docs/requirements/{slug}/
+    SLUG: {slug}
+    SOURCE: {meta.source}
+    SOURCE_ID: {meta.source_id}
+
+    META_CONTEXT:
+    {JSON.stringify(meta, null, 2)}
+
+    DRAFT_CONTENT:
+    {draftContent}
+
+    SIZING_INFO:
+      light_flag: {lightFlag}
+      sizing_decision: {JSON.stringify(meta.sizing_decision) || "null"}
+
+    ANALYSIS_MODE: No state.json writes, no branch creation."
+   ```
+
+   **Task description format**: `Concurrent analysis for {slug}`
+
+   **CRITICAL -- Relaying roundtable output**: When the roundtable-lead Task returns or needs user input, you MUST display the COMPLETE persona dialogue to the user VERBATIM. Do NOT summarize, paraphrase, or replace the team discussion with your own commentary. The user expects to see the full conversation as it happened. Your only addition should be a brief prompt indicating the user's turn.
+
+   **CRITICAL -- Resuming with user input**: When the roundtable-lead Task returns because it needs user input, collect the user's response and resume the agent by passing ONLY the user's exact response. Do NOT add your own instructions, commentary, or analysis.
+
+   **CRITICAL -- Orchestrator boundary**: During an active analyze session, you (the orchestrator) MUST NOT read step/topic files, interpret content, summarize in your own voice, or present your own menus. The roundtable lead owns the entire analysis lifecycle -- codebase scan, conversation, artifact production, cross-check, finalization.
+
+7.5. **Post-dispatch: Re-read meta.json**: After the roundtable-lead returns:
+   - Re-read meta.json using `readMetaJson(slugDir)` to get the lead's updates
+   - The lead will have populated phases_completed, topics_covered, and written artifacts
+
+7.6. **SIZING TRIGGER** (GH-57, fires after dispatch returns):
+   IF meta.sizing_decision is NOT already set AND meta.phases_completed includes '02-impact-analysis':
+
+   **Interactive sizing** (lightFlag === false):
    - B.1: Read `docs/requirements/{slug}/impact-analysis.md`. If missing, set `ia_reason = 'ia_file_missing'`.
    - B.2: Call `parseSizingFromImpactAnalysis(iaContent)` from `common.cjs`. If parse returns null, set `ia_reason = 'ia_parse_failed'`.
    - B.3: If metrics is null (primary failed), call `extractFallbackSizingMetrics(slug, projectRoot)` from `common.cjs`.
@@ -654,12 +662,10 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
    - B.9: If `effective_intensity === 'light'`, read `light_skip_phases` from `workflows.json` (fallback: `["03-architecture", "04-design"]`).
    - B.10: Build sizing_decision record: `{ intensity, effective_intensity, recommended_intensity, decided_at, reason, user_prompted: true, forced_by_flag: false, overridden, overridden_to, file_count, module_count, risk_score, coupling, coverage_gaps, fallback_source, fallback_attempted, light_skip_phases, epic_deferred, context: "analyze" }`
    - B.11: Set `meta.sizing_decision = sizing_decision`, call `writeMetaJson(slugDir, meta)`. Do NOT call `applySizingDecision()` (CON-002, NFR-001).
-   - B.12: If `effective_intensity === 'light'`: update BACKLOG.md marker, display "Analysis complete (light). {slug} is ready to build.", BREAK loop -> step 9.
-   - B.13: If `effective_intensity === 'standard'`: CONTINUE loop (phases 03, 04 execute normally).
 
-   **7.6 TIER COMPUTATION AFTER PHASE 02** (GH-59, FR-001, FR-002, FR-003, AD-02):
-   IF phase_key === '02-impact-analysis':
-   - Read `docs/requirements/{slug}/impact-analysis.md`. If missing, skip tier computation (tier stays null -- downstream handles gracefully per AC-004b).
+7.7. **TIER COMPUTATION** (GH-59, fires after dispatch returns):
+   IF meta.phases_completed includes '02-impact-analysis':
+   - Read `docs/requirements/{slug}/impact-analysis.md`. If missing, skip tier computation (tier stays null).
    - Call `parseSizingFromImpactAnalysis(iaContent)` from `common.cjs`. If parse returns null, skip tier computation.
    - Read `tier_thresholds` from `workflows.json -> workflows.feature.tier_thresholds` (fallback: `DEFAULT_TIER_THRESHOLDS` from `three-verb-utils.cjs`).
    - Call `computeRecommendedTier(metrics.file_count, metrics.risk_score, thresholds)` from `three-verb-utils.cjs`.
@@ -667,15 +673,13 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
    - Call `writeMetaJson(slugDir, meta)`.
    - Display: `"  Recommended tier: {tier} -- {description} ({metrics.file_count} files, {metrics.risk_score} risk)"` using `getTierDescription(tier)`.
 
-   d. Update meta.analysis_status using `deriveAnalysisStatus(meta.phases_completed, meta.sizing_decision)`
-   e. Update meta.codebase_hash to current git HEAD short SHA
-   f. Write meta.json using writeMetaJson()
-   g. Update BACKLOG.md marker using updateBacklogMarker() with deriveBacklogMarker()
-   h. Offer exit point (roundtable mode only): If the roundtable-analyst was used in step 7b (interactive mode),
-      display: "Phase {NN} complete. Continue to Phase {NN+1} ({name})? [Y/n]"
-      If user declines: stop. Analysis is resumable from the next phase.
-      If the standard phase agent was used (autonomous mode), skip this prompt and continue automatically.
-8. After final phase:
+7.8. **Finalize meta.json**:
+   - Update meta.analysis_status using `deriveAnalysisStatus(meta.phases_completed, meta.sizing_decision)`
+   - Update meta.codebase_hash to current git HEAD short SHA
+   - Write meta.json using writeMetaJson()
+   - Update BACKLOG.md marker using updateBacklogMarker() with deriveBacklogMarker()
+
+8. After analysis complete:
    a. Display: "Analysis complete. {slug} is ready to build."
    b. Read recommended_tier from meta.json (GH-59, FR-004, AC-004a, AC-004b):
       - LET tier = meta.recommended_tier || null
