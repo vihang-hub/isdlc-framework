@@ -155,6 +155,16 @@ async function main() {
             process.exit(0);
         }
 
+        // Parallel session safety: if an active_workflow exists, the pending marker
+        // belongs to that workflow's session. Exempt inline commands (analyze, add)
+        // never write markers and never create workflows — so if we see both a marker
+        // and an active workflow, this session is not the one that wrote the marker.
+        // Pass through without clearing (the marker belongs to the other session).
+        if (state.active_workflow && state.active_workflow.type) {
+            debugLog('Delegation gate: active_workflow exists — marker belongs to workflow session, passing');
+            process.exit(0);
+        }
+
         const usageLog = state.skill_usage_log || [];
         const requiredAgent = pending.required_agent;
         const invokedAt = pending.invoked_at;
