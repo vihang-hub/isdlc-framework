@@ -300,7 +300,7 @@
 
 ### Agent Compliance
 
-- #64 [A] Agents ignore injected gate requirements — wasted iterations on hook-blocked actions -> [requirements](docs/requirements/gh-64-agents-ignore-injected-gate-requirements/)
+- #64 [~] Agents ignore injected gate requirements — wasted iterations on hook-blocked actions -> [requirements](docs/requirements/BUG-0028-agents-ignore-injected-gate-requirements/)
   - **Problem**: Gate requirements pre-injection (REQ-0024, `gate-requirements-injector.cjs`) tells agents what hooks will enforce (e.g., "do not commit during intermediate phases"). But agents sometimes ignore these constraints and attempt the blocked action anyway. The hook safety net catches it, but the iteration is wasted and the agent has to recover.
   - **Observed**: During BUG-0029 Phase 06, the software-developer agent ran `git commit` despite the injected constraint about Git Commit Prohibition. The `branch-guard` hook blocked it correctly, but the commit still partially executed (the commit message appeared in output).
   - **Root causes to investigate**:
@@ -395,7 +395,7 @@
 ## Completed
 
 ### 2026-02-22
-- [x] REQ-0032 (#63): Concurrent phase execution in roundtable analyze flow — replaced monolithic `roundtable-analyst.md` with multi-agent architecture: `roundtable-lead.md` orchestrator + 3 persona agents (`persona-business-analyst.md`, `persona-solutions-architect.md`, `persona-system-designer.md`) running Phase 02-04 concurrently. 6 topic files under `analysis-topics/` replace 24 step files. Updated `isdlc.md` dispatch for new agent routing. 50 new tests (33 structural + 17 meta compat), zero regressions. 17 files changed, 1985 insertions, 614 deletions *(merged 1d741d3)*.
+- [x] REQ-0032 (#63): Concurrent phase execution in roundtable analyze flow — replaced monolithic `roundtable-analyst.md` with multi-agent architecture: `roundtable-analyst.md` (lead orchestrator) + 3 persona agents (`persona-business-analyst.md`, `persona-solutions-architect.md`, `persona-system-designer.md`) running Phase 02-04 concurrently. 6 topic files under `analysis-topics/` replace 24 step files. Updated `isdlc.md` dispatch for new agent routing. 50 new tests (33 structural + 17 meta compat), zero regressions. 17 files changed, 1985 insertions, 614 deletions *(merged 1d741d3)*.
 
 ### 2026-02-21
 - [x] #39: State.json pruning at workflow completion — 4 new pruning functions in `common.cjs` (`pruneSkillUsageLog`, `pruneCompletedPhases`, `pruneHistory`, `pruneWorkflowHistory`) + enforcer integration in `workflow-completion-enforcer.cjs`. Prunes stale/transient fields at workflow end, prevents unbounded state growth. 77 new tests, zero regressions. 2 files changed, 276 insertions *(merged f60f1cc)*.
