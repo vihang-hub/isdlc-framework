@@ -14,7 +14,7 @@
  * - CONST_CORRIDOR: Tests passed, agent must validate constitution
  * - NO_CORRIDOR: No active iteration, all actions allowed
  *
- * Version: 1.1.0
+ * Version: 1.2.0
  */
 
 const {
@@ -47,6 +47,15 @@ const SETUP_COMMAND_KEYWORDS = [
     'install',
     'status'
 ];
+
+/**
+ * REQ-0023: Three-verb model actions that run outside workflow machinery.
+ * These verbs do not write state.json or create branches; they must never
+ * be blocked by gate or iteration corridor checks.
+ * Matches skill-delegation-enforcer.cjs EXEMPT_ACTIONS.
+ * BUG-0031: Added to prevent false positives when description text contains "gate".
+ */
+const EXEMPT_ACTIONS = new Set(['analyze', 'add']);
 
 /**
  * Patterns that indicate an agent is trying to advance, delegate, or escape iteration.
@@ -195,6 +204,13 @@ function skillIsAdvanceAttempt(toolInput) {
         if (args.includes(setupKeyword)) {
             return false;
         }
+    }
+
+    // BUG-0031: Exempt analyze/add verbs — workflow-independent actions
+    const action = (args.match(/^(?:--?\w+\s+)*(\w+)/) || [])[1] || '';
+    if (EXEMPT_ACTIONS.has(action)) {
+        debugLog(`Exempt action '${action}' detected via Skill, skipping corridor check`);
+        return false;
     }
 
     if (skill === 'isdlc' && (args.includes('advance') || args.includes('gate'))) {

@@ -8,7 +8,7 @@
  * - Task tool calls to orchestrator with "advance", "gate-check", "gate" in prompt
  * - Skill tool calls with /isdlc advance
  *
- * Version: 3.2.0
+ * Version: 3.3.0
  */
 
 const {
@@ -71,6 +71,15 @@ const SETUP_COMMAND_KEYWORDS = [
 ];
 
 /**
+ * REQ-0023: Three-verb model actions that run outside workflow machinery.
+ * These verbs do not write state.json or create branches; they must never
+ * be blocked by gate or iteration corridor checks.
+ * Matches skill-delegation-enforcer.cjs EXEMPT_ACTIONS.
+ * BUG-0031: Added to prevent false positives when description text contains "gate".
+ */
+const EXEMPT_ACTIONS = new Set(['analyze', 'add']);
+
+/**
  * Detect if this is a gate advancement attempt
  * BUG-0008: Added detectPhaseDelegation() guard to prevent false positives
  * on delegation prompts containing gate-related keywords like "GATE-NN".
@@ -125,6 +134,13 @@ function isGateAdvancementAttempt(input) {
                 debugLog(`Setup command detected via Skill (${setupKeyword}), skipping gate check`);
                 return false;
             }
+        }
+
+        // BUG-0031: Exempt analyze/add verbs — workflow-independent actions
+        const action = (args.match(/^(?:--?\w+\s+)*(\w+)/) || [])[1] || '';
+        if (EXEMPT_ACTIONS.has(action)) {
+            debugLog(`Exempt action '${action}' detected via Skill, skipping gate check`);
+            return false;
         }
 
         if (skill === 'isdlc' && (args.includes('advance') || args.includes('gate'))) {
