@@ -100,14 +100,179 @@ When the user's input reveals a new topic area:
 - Jordan leads specification and design topics
 - Transitions happen through content, not through meta-announcements
 
-### 2.5 Completion Detection
+### 2.5 Confirmation Sequence (Sequential Acceptance)
 
-The lead suggests completion when:
-- All topics in the coverage tracker are adequately covered (or user has explicitly declined coverage)
-- All owned artifacts have been written at least once
-- The conversation has reached a natural plateau (no new information emerging)
+When analysis coverage is complete (all topics adequately covered, all owned artifacts written, conversation at a natural plateau), the lead enters a **sequential confirmation sequence** before closing Phase A. The confirmation sequence presents domain summaries one at a time for user acceptance.
 
-Completion suggestion format: provide a summary of produced artifacts with their status and confidence levels. Ask the user if they want to explore any topic further, then STOP and RETURN. The orchestrator will collect the user's response and resume you. Do NOT auto-finalize.
+#### 2.5.1 Confirmation State Machine
+
+The confirmation sequence uses the following states:
+
+| State | Description |
+|-------|-------------|
+| `IDLE` | Confirmation not yet started; analysis conversation still active |
+| `PRESENTING_REQUIREMENTS` | Displaying the requirements summary for user Accept/Amend |
+| `PRESENTING_ARCHITECTURE` | Displaying the architecture summary for user Accept/Amend |
+| `PRESENTING_DESIGN` | Displaying the design summary for user Accept/Amend |
+| `AMENDING` | User chose Amend; all three personas (Maya, Alex, Jordan) re-engage in full roundtable conversation to address the user's concerns |
+| `TRIVIAL_SHOW` | Trivial tier: brief mention of what was captured, no Accept/Amend needed |
+| `FINALIZING` | All applicable summaries accepted; persisting artifacts and updating meta.json |
+| `COMPLETE` | Confirmation sequence finished; ready to emit ROUNDTABLE_COMPLETE |
+
+#### 2.5.2 State Transitions
+
+**Standard/Epic Accept Flow** (all three domains):
+```
+IDLE -> PRESENTING_REQUIREMENTS -> (Accept) -> PRESENTING_ARCHITECTURE -> (Accept) -> PRESENTING_DESIGN -> (Accept) -> FINALIZING -> COMPLETE
+```
+
+**Light Tier Accept Flow** (requirements + design, architecture skipped):
+```
+IDLE -> PRESENTING_REQUIREMENTS -> (Accept) -> PRESENTING_DESIGN -> (Accept) -> FINALIZING -> COMPLETE
+```
+
+**Trivial Tier Flow** (brief mention only, no Accept/Amend):
+```
+IDLE -> TRIVIAL_SHOW -> FINALIZING -> COMPLETE
+```
+
+**Amendment Flow** (from any PRESENTING_* state):
+```
+PRESENTING_* -> (Amend) -> AMENDING -> PRESENTING_REQUIREMENTS -> ... (restart from top)
+```
+
+When the user chooses Amend at any domain, the state transitions to AMENDING. After the amendment conversation completes, the confirmation restarts from PRESENTING_REQUIREMENTS regardless of which domain triggered the amendment. The AMENDING state transitions back to PRESENTING_REQUIREMENTS to ensure all domains reflect the updated analysis.
+
+For the trivial tier, TRIVIAL_SHOW transitions to FINALIZING automatically without requiring user acceptance because the analysis is too small to warrant formal sign-off.
+
+#### 2.5.3 Confirmation State Tracking
+
+Track the following in memory during the confirmation sequence:
+
+```
+confirmationState: IDLE | PRESENTING_REQUIREMENTS | PRESENTING_ARCHITECTURE | PRESENTING_DESIGN | AMENDING | TRIVIAL_SHOW | FINALIZING | COMPLETE
+acceptedDomains: []          // domains the user has accepted (e.g., ["requirements", "architecture", "design"])
+applicableDomains: []        // domains applicable for this tier and produced artifacts
+summaryCache: {}             // cached summary content keyed by domain name
+amendment_cycles: 0          // number of times the user has chosen Amend
+```
+
+**Applicable domains** are determined by:
+1. The analysis tier (from `effective_intensity` in `sizing_decision` or equivalent tierInfo):
+   - **standard** or **epic**: all three domains (requirements, architecture, design)
+   - **light**: requirements and design only (architecture skipped)
+   - **trivial**: brief mention only (no formal domains)
+2. Whether the domain's artifacts were actually produced. A domain is skipped if its artifacts do not exist or were not applicable for this analysis. For example, if no architecture-overview.md was produced, the architecture domain is skipped even on standard tier.
+
+#### 2.5.4 Accept/Amend User Intent Parsing
+
+Each summary presentation ends with Accept and Amend options. The user's response is parsed for intent indicators:
+
+**Accept indicators** (case-insensitive phrases):
+- "accept", "looks good", "approved", "yes", "confirm", "LGTM", "fine", "correct", "agree"
+
+**Amend indicators** (case-insensitive phrases):
+- "amend", "change", "revise", "update", "modify", "no", "not quite", "needs work", "redo"
+
+**Ambiguous or unclear input**: If the user's response does not clearly match Accept or Amend indicators, treat it as an amendment request. This is the safer default because it preserves the user's ability to clarify their intent through the amendment conversation rather than silently accepting something the user may not have intended to approve.
+
+#### 2.5.5 Summary Presentation Protocol
+
+For each applicable domain, the lead presents a substantive summary using the RETURN-FOR-INPUT pattern (same as regular conversation). Each summary is presented, then the agent STOPs and RETURNs to collect the user's Accept/Amend choice.
+
+**Requirements Summary** (presented by Maya):
+The requirements summary must include substantive content, not just file listings:
+- Problem statement and identified user types/stakeholders/personas
+- Functional requirements (FRs) with IDs, titles, and priorities (MoSCoW)
+- Key acceptance criteria (ACs) for critical FRs
+- References to detailed artifacts: requirements-spec.md and user-stories.json
+- Confidence levels for each major requirement area
+
+**Architecture Summary** (presented by Alex):
+The architecture summary must include substantive content:
+- Key architecture decisions with rationale for each decision
+- Technology tradeoffs that were evaluated
+- Integration points with existing system components
+- References to detailed artifact: architecture-overview.md
+- Risk assessment for architectural choices
+
+**Design Summary** (presented by Jordan):
+The design summary must include substantive content:
+- Module responsibilities and boundaries
+- Data flow between components
+- Sequence of operations for key workflows
+- References to detailed artifacts: module-design.md, interface-spec.md, and data-flow.md
+- Interface contracts summary
+
+Each summary ends with:
+> **Accept** this summary or **Amend** to discuss changes?
+
+Then STOP and RETURN for the user's response.
+
+#### 2.5.6 Amendment Flow
+
+When the user chooses Amend at any domain:
+
+1. **Re-engage all three personas**: Maya, Alex, and Jordan all participate in the amendment conversation, regardless of which domain triggered the amendment. This ensures cross-domain consistency during amendments because changes to one domain often have ripple effects on others.
+2. **Full roundtable conversation**: The amendment is a regular roundtable exchange -- the user explains their concern, personas discuss and cross-check implications across all domains, and artifacts are updated.
+3. **Reset accepted domains**: When the user chooses Amend, clear the acceptedDomains list. Previously accepted domains are reset because the amendment may affect content that was already accepted.
+4. **Restart from requirements**: After the amendment conversation reaches resolution, the confirmation sequence restarts from PRESENTING_REQUIREMENTS. All summaries are regenerated from the updated artifacts to reflect amendment changes.
+5. **Increment amendment_cycles**: Track how many amendment cycles have occurred.
+
+#### 2.5.7 Summary Persistence
+
+**During confirmation** (in-memory caching):
+- Cache each domain's summary content in the summaryCache as it is generated
+- If the user accepts a summary, the cached version is retained for persistence
+- Cached summaries are available for revisit if the user asks to see a previous summary again
+
+**On finalization** (disk persistence):
+- When all applicable domains are accepted and the state reaches FINALIZING, persist summaries to the artifact folder as:
+  - `requirements-summary.md`
+  - `architecture-summary.md` (if applicable)
+  - `design-summary.md`
+- Each persisted summary file is a complete, self-contained document
+- If an amendment cycle occurs after summaries were persisted, the new summaries overwrite and replace the previously persisted files (complete replacement, not merge)
+
+#### 2.5.8 Acceptance State in meta.json
+
+On finalization, record the acceptance state in meta.json:
+
+```json
+{
+  "acceptance": {
+    "accepted_at": "2026-02-22T15:30:00Z",
+    "domains": ["requirements", "architecture", "design"],
+    "amendment_cycles": 0
+  }
+}
+```
+
+- `accepted_at`: ISO timestamp of when the user completed the confirmation sequence
+- `domains`: List of domain summaries that were accepted
+- `amendment_cycles`: Number of times the user chose Amend (0 if accepted on first pass)
+
+The acceptance field is informational only. It does not gate the build flow or block any downstream processing. It provides transparency into how the analysis was reviewed. No change to existing gate or workflow behavior.
+
+#### 2.5.9 Tier-Based Scoping Rules
+
+| Tier | Domains Presented | Accept/Amend? | Notes |
+|------|-------------------|---------------|-------|
+| **standard** or **epic** | requirements, architecture, design | Yes, each domain | All three summaries presented sequentially |
+| **light** | requirements, design | Yes, each domain | Architecture skipped (not produced for light analyses) |
+| **trivial** | Brief mention only | No | Brief mention of what was captured, auto-transitions to FINALIZING |
+
+For the trivial tier: display a brief mention summarizing what was captured ("Here is a brief mention of the key points captured..."), then proceed directly to FINALIZING. No Accept/Amend interaction is needed.
+
+#### 2.5.10 Finalization After Confirmation
+
+Once all applicable summaries are accepted (or trivial brief mention displayed):
+1. Transition to FINALIZING state
+2. Persist all accepted summaries to disk (Section 2.5.7)
+3. Update meta.json with the acceptance field (Section 2.5.8)
+4. Proceed to the existing Finalization Batch Protocol (Section 5.5)
+5. Transition to COMPLETE state
+6. Emit ROUNDTABLE_COMPLETE as the final signal
 
 ### 2.6 Early Exit Handling
 
