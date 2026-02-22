@@ -186,7 +186,6 @@
   - Docs: [docs.ollama.com/integrations/claude-code](https://docs.ollama.com/integrations/claude-code)
 - #42 [ ] SonarQube integration
 - #66 [ ] Spec reconciliation phase and selective code regeneration — close the spec-code knowledge gap so code becomes regenerable from complete specifications -> [requirements](docs/requirements/spec-reconciliation-and-code-regeneration/)
-- [ ] Free-text intake: reverse-lookup GitHub issues and auto-create if no match found -> [requirements](docs/requirements/REQ-0034-free-text-intake-reverse-lookup-github-issues/)
 
 
 ### Product/Vision
@@ -305,13 +304,7 @@
 
 ### Hook Bugs
 
-- #65 [ ] gate-blocker blocks `/isdlc analyze` and `/isdlc add` during active workflows — inline commands incorrectly blocked by phase gate checks
-  - **Problem**: `gate-blocker.cjs` fires on all `/isdlc` Skill invocations during an active workflow. It only exempts `advance` and `gate-check` actions plus setup commands. The `analyze` and `add` verbs — which are explicitly designed to run outside workflow machinery (no state.json writes, no branches) — get blocked if the current phase has unsatisfied gate requirements.
-  - **Observed**: `/isdlc analyze "#64 ..."` blocked with `GATE BLOCKED: Iteration requirements not satisfied for phase '16-quality-loop'` while BUG-0029 workflow was active in another session.
-  - **Root cause**: `skill-delegation-enforcer.cjs` correctly exempts `analyze`/`add` (line 37: `EXEMPT_ACTIONS`), but `gate-blocker.cjs` in the `pre-skill-dispatcher` runs first and blocks before the delegation enforcer gets a chance to exempt.
-  - **Fix**: Add `analyze` and `add` to gate-blocker's Skill exemption check (around line 118-130). When the Skill is `isdlc` and the action is `analyze` or `add`, skip the gate check.
-  - **Files**: `src/claude/hooks/gate-blocker.cjs`
-  - **Complexity**: Low — 5-10 line change + tests
+- #65 [x] ~~gate-blocker blocks `/isdlc analyze` and `/isdlc add` during active workflows~~ — added `analyze` and `add` to gate-blocker Skill exemption check **Completed: 2026-02-22**
 
 ### Developer Experience
 
@@ -381,6 +374,8 @@
 ## Completed
 
 ### 2026-02-22
+- [x] REQ-0034: Free-text intake reverse-lookup GitHub issues — added `checkGhAvailability()`, `searchGitHubIssues()`, `reverseMatchIssue()` to `three-verb-utils.cjs` + Step 3c-prime UX flow in `isdlc.md` for `/isdlc add` to auto-detect matching GitHub issues and offer linking or creation. 13 new tests, 306/306 passing, 96.83% coverage. 4 files changed, 367 insertions.
+- [x] #65: gate-blocker blocks `/isdlc analyze` and `/isdlc add` during active workflows — added `analyze` and `add` to gate-blocker Skill exemption check in `gate-blocker.cjs`.
 - [x] BUG-0028 (#64): Agents ignore injected gate requirements — refactored `gate-requirements-injector.cjs` to emit structured CRITICAL CONSTRAINTS block with `buildCriticalConstraints()` and `buildConstraintReminder()` APIs. Updated 4 agents (software-developer, integration-tester, quality-loop-engineer, roundtable-analyst) to parse and obey injected constraints. Fixed 3 pre-existing branch-guard test failures. 108/108 tests, 18 files changed, 1110 insertions, 247 deletions *(merged d7b42b9)*.
 - [x] REQ-0032 (#63): Concurrent phase execution in roundtable analyze flow — replaced monolithic `roundtable-analyst.md` with multi-agent architecture: `roundtable-analyst.md` (lead orchestrator) + 3 persona agents (`persona-business-analyst.md`, `persona-solutions-architect.md`, `persona-system-designer.md`) running Phase 02-04 concurrently. 6 topic files under `analysis-topics/` replace 24 step files. Updated `isdlc.md` dispatch for new agent routing. 50 new tests (33 structural + 17 meta compat), zero regressions. 17 files changed, 1985 insertions, 614 deletions *(merged 1d741d3)*.
 
