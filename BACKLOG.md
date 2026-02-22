@@ -359,6 +359,11 @@
   - **Depends on**: #20 (roundtable agent exists)
   - **Complexity**: Medium
 
+- #79 [ ] Introduce Critic/Refiner pass in analyze flow before confirmation summaries -> [requirements](docs/requirements/REQ-0036-introduce-critic-refiner-in-analyze-flow/)
+  - **Problem**: The roundtable analysis flow produces artifacts through conversation, but does not apply the same rigorous quality checks that the build flow's debate loop does. The Critic agents check for mechanical quality issues (e.g., ACs not in Given/When/Then format, orphan requirements, unquantified NFRs, incomplete STRIDE coverage) that the conversational flow naturally skips.
+  - **Depends on**: #22 (Transparent Confirmation at Analysis Boundaries)
+  - **Complexity**: Medium
+
 - 16.5 [x] ~~Build auto-detection and seamless handoff~~ *(GitHub #23)* -> [requirements](docs/requirements/REQ-0026-build-auto-detection-seamless-handoff/) **Completed: 2026-02-19**
   - **Problem**: `/isdlc start` requires the user to know the command exists, pass the right slug, and understand that Phase A must be complete. If Phase A is partial, the error messages are cryptic.
   - **Design**: When user says "build X" or "let's implement X":
