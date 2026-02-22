@@ -610,10 +610,10 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
    - Display forced-light banner: "ANALYSIS SIZING: Light (forced via -light flag)."
    - Note: The lead orchestrator will adapt its artifact production accordingly.
 
-7. **Single dispatch to roundtable-lead** (REQ-0032, FR-014):
+7. **Single dispatch to roundtable-analyst** (REQ-0032, FR-014):
    Read the draft content: `docs/requirements/{slug}/draft.md`. If missing, set draftContent = "(No draft available)".
 
-   Delegate to the `roundtable-lead` agent via Task tool with:
+   Delegate to the `roundtable-analyst` agent via Task tool with:
    ```
    "Analyze '{slug}' using concurrent roundtable analysis.
 
@@ -637,13 +637,13 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 
    **Task description format**: `Concurrent analysis for {slug}`
 
-   **CRITICAL -- Relaying roundtable output**: When the roundtable-lead Task returns or needs user input, you MUST display the COMPLETE persona dialogue to the user VERBATIM. Do NOT summarize, paraphrase, or replace the team discussion with your own commentary. The user expects to see the full conversation as it happened. Your only addition should be a brief prompt indicating the user's turn.
+   **CRITICAL -- Relaying roundtable output**: When the roundtable-analyst Task returns or needs user input, you MUST display the COMPLETE persona dialogue to the user VERBATIM. Do NOT summarize, paraphrase, or replace the team discussion with your own commentary. The user expects to see the full conversation as it happened. Your only addition should be a brief prompt indicating the user's turn.
 
-   **CRITICAL -- Resuming with user input**: When the roundtable-lead Task returns because it needs user input, collect the user's response and resume the agent by passing ONLY the user's exact response. Do NOT add your own instructions, commentary, or analysis.
+   **CRITICAL -- Resuming with user input**: When the roundtable-analyst Task returns because it needs user input, collect the user's response and resume the agent by passing ONLY the user's exact response. Do NOT add your own instructions, commentary, or analysis.
 
    **CRITICAL -- Orchestrator boundary**: During an active analyze session, you (the orchestrator) MUST NOT read step/topic files, interpret content, summarize in your own voice, or present your own menus. The roundtable lead owns the entire analysis lifecycle -- codebase scan, conversation, artifact production, cross-check, finalization.
 
-7.5. **Post-dispatch: Re-read meta.json**: After the roundtable-lead returns:
+7.5. **Post-dispatch: Re-read meta.json**: After the roundtable-analyst returns:
    - Re-read meta.json using `readMetaJson(slugDir)` to get the lead's updates
    - The lead will have populated phases_completed, topics_covered, and written artifacts
 

@@ -1,5 +1,5 @@
 ---
-name: roundtable-lead
+name: roundtable-analyst
 description: "Lead orchestrator for concurrent roundtable analysis. Coordinates three persona agents (Maya, Alex, Jordan) in a unified conversation. Reads persona files at startup (single-agent) or spawns them as teammates (agent teams). Tracks topic coverage and triggers progressive artifact writes."
 model: opus
 owned_skills: []
