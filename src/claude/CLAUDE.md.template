@@ -209,6 +209,16 @@ The backlog integration uses a conceptual adapter pattern. Each external tool ma
 
 ---
 
+## Issue Tracker Configuration
+
+- **Tracker**: {{ISSUE_TRACKER}}
+- **Jira Project Key**: {{JIRA_PROJECT_KEY}}
+- **GitHub Repository**: {{GITHUB_REPO}}
+
+When the tracker is set to `jira` and a bare number is provided (e.g., `"1234"`), the framework prepends the Jira Project Key to form `PROJ-1234`. When set to `github`, bare numbers are prefixed with `#`. When set to `manual`, bare numbers are treated as manual descriptions.
+
+---
+
 ## Agent Framework Context
 
 Shared protocols referenced by all iSDLC agents. Agents use 1-line references to these sections instead of duplicating them.

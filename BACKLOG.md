@@ -186,6 +186,7 @@
   - Docs: [docs.ollama.com/integrations/claude-code](https://docs.ollama.com/integrations/claude-code)
 - #42 [ ] SonarQube integration
 - #66 [ ] Spec reconciliation phase and selective code regeneration — close the spec-code knowledge gap so code becomes regenerable from complete specifications -> [requirements](docs/requirements/spec-reconciliation-and-code-regeneration/)
+- 3.7 [A] Issue tracker integration during installation — prompt user to connect GitHub Issues or Jira for issue management, store preference in CLAUDE.md, and route analyze flow intake accordingly -> [requirements](docs/requirements/REQ-0032-issue-tracker-integration-during-installation/)
 
 
 ### Product/Vision
@@ -319,7 +320,7 @@
 
 ### Hook Bugs
 
-- #65 [ ] gate-blocker blocks `/isdlc analyze` and `/isdlc add` during active workflows — inline commands incorrectly blocked by phase gate checks
+- #65 [x] ~~gate-blocker blocks `/isdlc analyze` and `/isdlc add` during active workflows~~ — added EXEMPT_ACTIONS to gate-blocker.cjs and iteration-corridor.cjs **Completed: 2026-02-22** *(BUG-0031, commit 7f4ad03)*
   - **Problem**: `gate-blocker.cjs` fires on all `/isdlc` Skill invocations during an active workflow. It only exempts `advance` and `gate-check` actions plus setup commands. The `analyze` and `add` verbs — which are explicitly designed to run outside workflow machinery (no state.json writes, no branches) — get blocked if the current phase has unsatisfied gate requirements.
   - **Observed**: `/isdlc analyze "#64 ..."` blocked with `GATE BLOCKED: Iteration requirements not satisfied for phase '16-quality-loop'` while BUG-0029 workflow was active in another session.
   - **Root cause**: `skill-delegation-enforcer.cjs` correctly exempts `analyze`/`add` (line 37: `EXEMPT_ACTIONS`), but `gate-blocker.cjs` in the `pre-skill-dispatcher` runs first and blocks before the delegation enforcer gets a chance to exempt.

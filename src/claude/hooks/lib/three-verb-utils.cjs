@@ -91,25 +91,29 @@ function generateSlug(description) {
 }
 
 // ---------------------------------------------------------------------------
-// detectSource(input)
+// detectSource(input, options?)
 // ---------------------------------------------------------------------------
 
 /**
  * Detects the source type from add verb input.
+ * Enhanced with optional issue tracker preference for bare number routing.
  *
- * Traces: FR-001 (AC-001-03), VR-SOURCE-001..003
+ * Traces: FR-001 (AC-001-03), VR-SOURCE-001..003, REQ-0032 FR-005 (AC-005-01..06)
  *
  * @param {string} input - Raw user input
+ * @param {object} [options] - Optional issue tracker preference
+ * @param {string} [options.issueTracker] - 'github' | 'jira' | 'manual' | undefined
+ * @param {string} [options.jiraProjectKey] - Default Jira project key (e.g., 'PROJ')
  * @returns {{ source: string, source_id: string|null, description: string }}
  */
-function detectSource(input) {
+function detectSource(input, options) {
     if (!input || typeof input !== 'string') {
         return { source: 'manual', source_id: null, description: '' };
     }
 
     const trimmed = input.trim();
 
-    // GitHub issue: #N pattern
+    // GitHub issue: #N pattern (explicit pattern always wins)
     const ghMatch = trimmed.match(/^#(\d+)$/);
     if (ghMatch) {
         return {
@@ -119,7 +123,7 @@ function detectSource(input) {
         };
     }
 
-    // Jira ticket: PROJECT-N pattern (uppercase letters + dash + digits)
+    // Jira ticket: PROJECT-N pattern (explicit pattern always wins)
     const jiraMatch = trimmed.match(/^([A-Z]+-\d+)$/);
     if (jiraMatch) {
         return {
@@ -127,6 +131,31 @@ function detectSource(input) {
             source_id: jiraMatch[1],
             description: trimmed
         };
+    }
+
+    // REQ-0032 FR-005: Bare number routing based on issue tracker preference
+    // Only applies when input is purely numeric (digits only)
+    if (options && typeof options === 'object' && /^\d+$/.test(trimmed)) {
+        const tracker = options.issueTracker;
+
+        if (tracker === 'jira' && options.jiraProjectKey) {
+            const composedId = `${options.jiraProjectKey}-${trimmed}`;
+            return {
+                source: 'jira',
+                source_id: composedId,
+                description: composedId
+            };
+        }
+
+        if (tracker === 'github') {
+            return {
+                source: 'github',
+                source_id: `GH-${trimmed}`,
+                description: `#${trimmed}`
+            };
+        }
+
+        // tracker === 'manual' or unknown tracker: fall through to manual
     }
 
     // Manual description (everything else)

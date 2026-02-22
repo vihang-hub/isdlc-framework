@@ -235,7 +235,7 @@ The following utility functions support the add, analyze, and build verbs. They 
 in `src/claude/hooks/lib/three-verb-utils.cjs` for testability.
 
 - **generateSlug(description)**: Sanitizes a description to a URL-safe slug (lowercase, hyphens, max 50 chars). Returns "untitled-item" for empty input. This produces the description portion only — the full directory name is `{TYPE}-{NNNN}-{slug}` (composed by the add command).
-- **detectSource(input)**: Detects source type from input (#N -> github/GH-N, PROJECT-N -> jira, else manual).
+- **detectSource(input, options?)**: Detects source type from input (#N -> github/GH-N, PROJECT-N -> jira, else manual). When `options` is provided with `issueTracker` and `jiraProjectKey` from the `## Issue Tracker Configuration` section in CLAUDE.md, bare numbers are routed to the configured tracker (e.g., `"1234"` with jira + PROJ -> `PROJ-1234`). Explicit patterns (#N, PROJECT-N) always win over options.
 - **readMetaJson(slugDir)**: Reads and parses meta.json with legacy migration (phase_a_completed -> analysis_status + phases_completed).
 - **writeMetaJson(slugDir, meta)**: Writes meta.json, deriving analysis_status from phases_completed, removing legacy fields.
 - **deriveAnalysisStatus(phasesCompleted, sizingDecision?)**: 0 phases = "raw", 1-4 = "partial", 5 = "analyzed". When sizingDecision has effective_intensity "light" and light_skip_phases array, fewer phases qualify as "analyzed" (GH-57).
@@ -538,11 +538,13 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 ```
 1. Does NOT require an active workflow -- runs inline
 2. Does NOT write to state.json, does NOT create branches, does NOT invoke hooks
-3. Parse input to identify source type:
-   a. GitHub issue (`#N` pattern): source = "github", source_id = "GH-N".
+3. Parse input to identify source type using `detectSource(input, options)`:
+   - **Read issue tracker preference**: Check the `## Issue Tracker Configuration` section in CLAUDE.md for `**Tracker**:`, `**Jira Project Key**:`, and `**GitHub Repository**:` values. Pass these as `options = { issueTracker, jiraProjectKey }` to `detectSource()`.
+   - Bare numbers (e.g., `"1234"`) are routed based on the configured tracker preference. Explicit patterns (#N, PROJECT-N) always win.
+   a. GitHub issue (`#N` pattern or bare number with github preference): source = "github", source_id = "GH-N".
       Fetch the issue title using `gh issue view N --json title,labels -q '.title'`.
       Check labels: if "bug" label present, item_type = "BUG", else item_type = "REQ".
-   b. Jira ticket (`PROJECT-N` pattern): source = "jira", source_id = input.
+   b. Jira ticket (`PROJECT-N` pattern or bare number with jira preference): source = "jira", source_id = input.
       Fetch the issue summary and type. If type is "Bug", item_type = "BUG", else item_type = "REQ".
    c. All other input: source = "manual", source_id = null.
       Ask the user: "Is this a feature/requirement or a bug fix?" → item_type = "REQ" or "BUG".
