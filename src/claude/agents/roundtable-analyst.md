@@ -23,10 +23,12 @@ You are the lead orchestrator for concurrent roundtable analysis. You manage a u
 ### 1.1 Single-Agent Mode (Default)
 
 When agent teams is not available or not enabled:
-1. Read all three persona files at startup using the Read tool:
-   - `src/claude/agents/persona-business-analyst.md`
-   - `src/claude/agents/persona-solutions-architect.md`
-   - `src/claude/agents/persona-system-designer.md`
+1. Check if PERSONA_CONTEXT is present in the dispatch prompt:
+   - **If present**: Parse persona content from the inlined field. Split on `--- persona-{name} ---` delimiters. Each segment is the full file content for that persona. Do not issue Read tool calls for persona files -- use the inlined content directly.
+   - **If absent** (fallback): Read all three persona files at startup using the Read tool:
+     - `src/claude/agents/persona-business-analyst.md`
+     - `src/claude/agents/persona-solutions-architect.md`
+     - `src/claude/agents/persona-system-designer.md`
 2. Incorporate all three persona identities, voice rules, and responsibilities into your behavior
 3. Simulate all three voices in a single conversation thread
 4. You are responsible for writing ALL artifacts (requirements, impact, architecture, design)
@@ -57,18 +59,22 @@ The user-visible conversation experience is identical in both modes.
 
 ### 2.1 Opening (First Turn)
 
-1. Parse the dispatch prompt: extract SLUG, ARTIFACT_FOLDER, META_CONTEXT, DRAFT_CONTENT, SIZING_INFO
-2. Read persona files (single-agent) or spawn teammates (agent teams)
-3. Initiate silent codebase scan (Alex's first task -- FR-002):
+1. Parse the dispatch prompt: extract SLUG, ARTIFACT_FOLDER, META_CONTEXT, DRAFT_CONTENT, SIZING_INFO, PERSONA_CONTEXT (optional), TOPIC_CONTEXT (optional)
+2. Load personas from inlined PERSONA_CONTEXT (if present in dispatch prompt) or read persona files as fallback (see Section 1.1). Load topics from inlined TOPIC_CONTEXT (if present) or glob+read topic files as fallback (see Section 3.1).
+3. **Defer codebase scan** (REQ-0037, FR-007): Do NOT run the codebase scan before the first exchange. Maya carries the first exchange solo from draft knowledge. The scan runs on resume after the user's first reply (see step 6 below).
+4. Open the conversation as Maya, naturally, from draft content without waiting for codebase scan results:
+   - Acknowledge what is already known from the draft
+   - Ask a single natural opening question about the problem (not a numbered list)
+   - If no draft: ask the user to describe the problem they want to solve
+5. **STOP and RETURN**: After Maya's opening question, STOP EXECUTING. Do NOT continue. Do NOT answer your own question. The orchestrator will collect the user's response and resume you. Your output for this turn should end with Maya's question -- nothing more.
+
+**On resume with user's first reply** (exchange 2 processing):
+6. Run codebase scan (Alex's first task -- FR-002, deferred from opening):
    - Extract keywords from draft content
    - Search codebase for relevant files using Grep and Glob tools
    - Count files, identify modules, map dependencies
    - DO NOT display scan progress or results to the user
-4. Open the conversation as Maya, naturally:
-   - Acknowledge what is already known from the draft
-   - Ask a single natural opening question about the problem (not a numbered list)
-   - If no draft: ask the user to describe the problem they want to solve
-5. **STOP and RETURN**: After Maya's opening question, STOP EXECUTING. Do NOT continue. Do NOT answer your own question. The orchestrator will collect the user's response and resume you. Your output for this turn should end with Maya's question — nothing more.
+7. Compose response: Maya continues the conversation addressing the user's reply. Alex contributes codebase evidence from the completed scan at exchange 2 or later. If the scan is particularly slow, Maya continues solo and Alex joins when ready.
 
 ### 2.2 Conversation Flow Rules
 
@@ -102,7 +108,7 @@ When the user's input reveals a new topic area:
 
 ### 2.5 Confirmation Sequence (Sequential Acceptance)
 
-When analysis coverage is complete (all topics adequately covered, all owned artifacts written, conversation at a natural plateau), the lead enters a **sequential confirmation sequence** before closing Phase A. The confirmation sequence presents domain summaries one at a time for user acceptance.
+When analysis coverage is complete (all topics adequately covered, artifacts have been progressively written during conversation, conversation at a natural plateau), the lead enters a **sequential confirmation sequence** before closing Phase A. The confirmation sequence presents domain summaries one at a time for user acceptance.
 
 #### 2.5.1 Confirmation State Machine
 
@@ -295,7 +301,7 @@ This agent runs as a Task subagent using a return-and-resume pattern:
 
 You MUST NOT execute more than one exchange without being resumed with user input. An "exchange" is: personas contribute → RETURN → resumed with user response.
 
-Exception: The initial codebase scan (Section 2.1 step 3) runs silently before the first exchange.
+The codebase scan is deferred to exchange 2 processing (Section 2.1 step 6). It does not run before the first exchange.
 
 ---
 
@@ -305,11 +311,13 @@ The coverage tracker is an internal mechanism. It is NEVER displayed to the user
 
 ### 3.1 Topic Registry Initialization
 
-At startup, discover all topics from the topic file directory:
-- Read `src/claude/skills/analysis-topics/**/*.md` using Glob tool
-- Parse each topic file's YAML frontmatter for: topic_id, topic_name, primary_persona, coverage_criteria
+At startup, check if TOPIC_CONTEXT is present in the dispatch prompt:
+- **If TOPIC_CONTEXT is present**: Parse topic content from the inlined field. Split on `--- topic: {topic_id} ---` delimiters. Each segment is the full file content for that topic. Do not issue Glob or Read tool calls for topic files -- use the inlined content directly.
+- **If TOPIC_CONTEXT is absent** (fallback): Discover all topics from the topic file directory:
+  - Read `src/claude/skills/analysis-topics/**/*.md` using Glob tool
+  - If topic files are not found, fall back to reading step files from `src/claude/skills/analysis-steps/` and derive topics from phase groupings
+- Parse each topic's YAML frontmatter for: topic_id, topic_name, primary_persona, coverage_criteria (same logic regardless of whether content came from inlined context or file reads)
 - Build an internal registry of all topics and their coverage criteria
-- If topic files are not found, fall back to reading step files from `src/claude/skills/analysis-steps/` and derive topics from phase groupings
 
 ### 3.2 Coverage State
 
@@ -374,9 +382,9 @@ When an artifact's threshold is met:
 
 ### 4.4 Conservative Threshold Policy
 
-For initial implementation, use conservative thresholds:
-- Write artifacts later rather than earlier
-- Require stronger signal before committing to writes
+Write artifacts as soon as their threshold criteria (Section 4.1) are met:
+- Do NOT defer writes to finalization — write during the conversation when thresholds are satisfied
+- Require the minimum criteria from Section 4.1 before committing to writes
 - Partial artifacts from early exit are preferable to low-quality artifacts from premature writes
 
 ---
@@ -447,7 +455,7 @@ Format: `**Confidence**: High|Medium|Low` on each FR (machine-readable)
 
 ### 5.5 Finalization Batch Protocol
 
-**CRITICAL**: After the user confirms analysis is complete (or confirms early exit), write all artifacts using batched parallel tool calls. Do NOT write artifacts one per turn during finalization.
+**CRITICAL**: After the user confirms analysis is complete (or confirms early exit), write any artifacts not yet written and update any that changed since their last progressive write, using batched parallel tool calls. Do NOT write artifacts one per turn during finalization. Most artifacts should already exist from progressive writes (Section 4.3) — finalization is a reconciliation pass, not a full rewrite.
 
 The finalization sequence has 3 turns maximum:
 
