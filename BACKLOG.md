@@ -301,22 +301,7 @@
 
 ### Agent Compliance
 
-- #64 [A] Agents ignore injected gate requirements — wasted iterations on hook-blocked actions -> [requirements](docs/requirements/BUG-0028-agents-ignore-injected-gate-requirements/)
-  - **Problem**: Gate requirements pre-injection (REQ-0024, `gate-requirements-injector.cjs`) tells agents what hooks will enforce (e.g., "do not commit during intermediate phases"). But agents sometimes ignore these constraints and attempt the blocked action anyway. The hook safety net catches it, but the iteration is wasted and the agent has to recover.
-  - **Observed**: During BUG-0029 Phase 06, the software-developer agent ran `git commit` despite the injected constraint about Git Commit Prohibition. The `branch-guard` hook blocked it correctly, but the commit still partially executed (the commit message appeared in output).
-  - **Root causes to investigate**:
-    1. Injected gate requirements text gets buried in long agent prompts (context dilution)
-    2. Agent's own instructions contain competing patterns (e.g., "save your work" or training-data habits)
-    3. Agents don't treat injected constraints as hard rules vs. suggestions
-    4. The injection format may not be salient enough (wall of text vs. prominent warning)
-  - **Potential solutions**:
-    - Strengthen injection format (e.g., `CRITICAL CONSTRAINT:` prefix, shorter text, repeated at end of prompt)
-    - Audit agent files for competing instructions that contradict gate requirements
-    - Add a "constraint acknowledgment" step where agent echoes back constraints before starting work
-    - Post-hook feedback loop: when a hook blocks, inject the block reason into the agent's next turn as a high-priority correction
-  - **Impact**: Wasted iterations degrade performance budgets (REQ-0025). Each blocked-then-retried action costs ~1-2 min.
-  - **Related**: REQ-0024 (gate requirements pre-injection), REQ-0025 (performance budget), Git Commit Prohibition in CLAUDE.md
-  - **Complexity**: Medium — investigation + prompt engineering + possibly agent file updates
+- #64 [x] ~~Agents ignore injected gate requirements — wasted iterations on hook-blocked actions~~ -> [requirements](docs/requirements/BUG-0028-agents-ignore-injected-gate-requirements/) **Completed: 2026-02-22**
 
 ### Hook Bugs
 
@@ -396,6 +381,7 @@
 ## Completed
 
 ### 2026-02-22
+- [x] BUG-0028 (#64): Agents ignore injected gate requirements — refactored `gate-requirements-injector.cjs` to emit structured CRITICAL CONSTRAINTS block with `buildCriticalConstraints()` and `buildConstraintReminder()` APIs. Updated 4 agents (software-developer, integration-tester, quality-loop-engineer, roundtable-analyst) to parse and obey injected constraints. Fixed 3 pre-existing branch-guard test failures. 108/108 tests, 18 files changed, 1110 insertions, 247 deletions *(merged d7b42b9)*.
 - [x] REQ-0032 (#63): Concurrent phase execution in roundtable analyze flow — replaced monolithic `roundtable-analyst.md` with multi-agent architecture: `roundtable-analyst.md` (lead orchestrator) + 3 persona agents (`persona-business-analyst.md`, `persona-solutions-architect.md`, `persona-system-designer.md`) running Phase 02-04 concurrently. 6 topic files under `analysis-topics/` replace 24 step files. Updated `isdlc.md` dispatch for new agent routing. 50 new tests (33 structural + 17 meta compat), zero regressions. 17 files changed, 1985 insertions, 614 deletions *(merged 1d741d3)*.
 
 ### 2026-02-21
