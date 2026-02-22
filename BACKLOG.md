@@ -186,7 +186,7 @@
   - Docs: [docs.ollama.com/integrations/claude-code](https://docs.ollama.com/integrations/claude-code)
 - #42 [ ] SonarQube integration
 - #66 [ ] Spec reconciliation phase and selective code regeneration — close the spec-code knowledge gap so code becomes regenerable from complete specifications -> [requirements](docs/requirements/spec-reconciliation-and-code-regeneration/)
-- 3.7 [A] Issue tracker integration during installation — prompt user to connect GitHub Issues or Jira for issue management, store preference in CLAUDE.md, and route analyze flow intake accordingly -> [requirements](docs/requirements/REQ-0032-issue-tracker-integration-during-installation/)
+- 3.7 [x] Issue tracker integration during installation — prompt user to connect GitHub Issues or Jira for issue management, store preference in CLAUDE.md, and route analyze flow intake accordingly -> [requirements](docs/requirements/REQ-0032-issue-tracker-integration-during-installation/)
 
 
 ### Product/Vision
