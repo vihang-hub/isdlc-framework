@@ -243,6 +243,9 @@ in `src/claude/hooks/lib/three-verb-utils.cjs` for testability.
 - **updateBacklogMarker(backlogPath, slug, newMarker)**: Updates the marker character for a slug in BACKLOG.md.
 - **appendToBacklog(backlogPath, itemNumber, description, marker)**: Appends a new item to the Open section.
 - **resolveItem(input, requirementsDir, backlogPath)**: Resolves user input to a backlog item using priority chain: exact slug, partial slug, item number, external ref, fuzzy match.
+- **checkGhAvailability()**: Checks if `gh` CLI is installed and authenticated. Returns `{ available: true }` or `{ available: false, reason: "not_installed"|"not_authenticated" }`. Never throws. (REQ-0034)
+- **searchGitHubIssues(query, options?)**: Searches GitHub issues via `gh issue list --search`. Returns `{ matches: [{number, title, state}], error?: string }`. Options: `{ limit, timeout }`. Never throws. (REQ-0034)
+- **createGitHubIssue(title, body?)**: Creates a GitHub issue via `gh issue create`. Returns `{ number, url }` or null. Default body: "Created via iSDLC framework". Never throws. (REQ-0034)
 
 ---
 
@@ -546,6 +549,38 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
       Fetch the issue summary and type. If type is "Bug", item_type = "BUG", else item_type = "REQ".
    c. All other input: source = "manual", source_id = null.
       Ask the user: "Is this a feature/requirement or a bug fix?" → item_type = "REQ" or "BUG".
+   c'. **GitHub issue reverse-lookup** (REQ-0034): When `detectSource()` returns "manual", attempt to find a matching GitHub issue:
+      1. Call `checkGhAvailability()`. If `{ available: false }`:
+         - Display info: "GitHub CLI not available ({reason}). Proceeding with manual entry."
+         - Skip to step 4 (continue as manual).
+      2. Call `searchGitHubIssues(description)`. If error:
+         - Display warning: "GitHub search failed ({error}). Proceeding with manual entry."
+         - Skip to step 4 (continue as manual).
+      3. If matches found (matches.length > 0):
+         - Present numbered list:
+           ```
+           Found matching GitHub issues:
+             1. #{number} {title} ({state})
+             2. #{number} {title} ({state})
+             ...
+             C. Create new GitHub issue
+             S. Skip (keep as manual entry)
+           ```
+         - If user selects a match (1-N): override source = "github", source_id = "GH-{number}".
+           Re-fetch the issue title for slug generation.
+         - If user selects "C" (Create new): call `createGitHubIssue(description)`.
+           If successful: override source = "github", source_id = "GH-{number}".
+           If failed: display warning "Could not create issue. Proceeding as manual." and continue.
+         - If user selects "S" (Skip): proceed unchanged (manual).
+      4. If no matches found (matches.length === 0):
+         - Present:
+           ```
+           No matching GitHub issues found.
+             C. Create new GitHub issue
+             S. Skip (keep as manual entry)
+           ```
+         - If "C": call `createGitHubIssue(description)`, override as above.
+         - If "S": proceed unchanged.
 4. Generate description slug:
    - For external sources (github/jira): use `generateSlug()` on the fetched ticket title (NOT the reference number)
    - For manual input: use `generateSlug()` on the user's description text
@@ -640,17 +675,20 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
    7b. **Relay-and-resume loop**: The roundtable-analyst returns after each exchange when it needs user input. Loop as follows:
 
    WHILE the roundtable-analyst has NOT signaled completion:
-     i.   Display the agent's COMPLETE output to the user VERBATIM. Do NOT summarize, paraphrase, or replace the persona dialogue with your own commentary.
-     ii.  Collect the user's response using AskUserQuestion (freeform text prompt).
+     i.   **Output the agent's text VERBATIM as your response.** Copy-paste it. Do NOT summarize it into tables. Do NOT paraphrase it. Do NOT add headings like "Maya (Step 01-03):" above it. Do NOT re-present the agent's tables in your own formatting. The agent's output IS the user-facing content — just emit it directly.
+     ii.  **Let the user respond naturally.** Do NOT use AskUserQuestion. Do NOT present multiple-choice options. Do NOT create menus like "Looks good, continue / Needs adjustment". The roundtable is a conversation — the user types freeform text in response to the persona's question.
      iii. Resume the roundtable-analyst agent (using the `resume` parameter with the agent's ID), passing ONLY the user's exact response as the prompt. Do NOT add your own instructions, commentary, or analysis.
-     iv.  On return, check if the agent signaled completion (meta.json has analysis_status != "raw" and all expected artifacts written). If yes, exit loop.
+     iv.  On return, check if the agent signaled completion (output ends with "ROUNDTABLE_COMPLETE"). If yes, exit loop.
 
-   **Completion signal**: The roundtable-analyst signals completion by:
-   - Including "ROUNDTABLE_COMPLETE" as the last line of its final output
-   - Having written all required artifacts to the artifact folder
-   - Having updated meta.json with phases_completed
+   **Completion signal**: The roundtable-analyst signals completion by including "ROUNDTABLE_COMPLETE" as the last line of its final output.
 
-   **Orchestrator boundary**: During the loop, you (the orchestrator) MUST NOT read topic files, interpret content, summarize in your own voice, or present your own menus. The roundtable owns the analysis lifecycle.
+   **Orchestrator boundary**: During the loop, you are INVISIBLE. You are a relay. You do not:
+   - Summarize the agent's output ("Maya's asking whether...")
+   - Add your own tables or formatting
+   - Present AskUserQuestion menus
+   - Add commentary between the agent's output and the user's response
+   - Interpret what the agent said
+   The roundtable owns the entire user-facing experience. Your only job is: emit agent output → wait for user text → resume agent.
 
 7.5. **Post-dispatch: Re-read meta.json**: After the roundtable-analyst returns:
    - Re-read meta.json using `readMetaJson(slugDir)` to get the lead's updates
