@@ -346,18 +346,8 @@
 - #21 [x] ~~Elaboration mode — multi-persona roundtable discussions~~ -> [requirements](docs/requirements/gh-21-elaboration-mode-multi-persona-roundtable-discussions/) **Completed: 2026-02-20**
   - Multi-persona roundtable discussions in `roundtable-analyst.md`, elaboration records in meta.json, `elaborations[]` + `elaboration_config` in three-verb-utils.cjs. Built as part of #20 roundtable agent.
 
-- #22 [ ] Transparent Critic/Refiner at step boundaries
-  - **Problem**: The existing Creator/Critic/Refiner debate loop runs invisibly. Users don't see improvements and can't validate them. This erodes trust and misses opportunities for user input on refinements.
-  - **Design**: At each step boundary (after BA finishes requirements, after Architect finishes architecture, after Designer finishes design):
-    1. Critic reviews draft artifacts (runs in background)
-    2. Refiner improves based on critique (runs in background)
-    3. Roundtable agent presents improvements transparently: "My team reviewed this and suggested some improvements:"
-    4. Shows what changed, why, and the updated version
-    5. User menu: `[A] Accept improvements` / `[M] Modify` / `[R] Reject — keep original` / `[E] Elaboration Mode` / `[C] Continue`
-  - **Key principle**: Nothing hidden. The team's work is surfaced as "team feedback" within the persona's natural voice.
-  - **Files**: Critic/Refiner integration into roundtable agent step transitions, presentation format
-  - **Depends on**: #20 (roundtable agent exists)
-  - **Complexity**: Medium
+- #22 [x] ~~Transparent Critic/Refiner at step boundaries~~ *(GitHub #22)* -> [requirements](docs/requirements/REQ-0035-transparent-critic-refiner-at-step-bounds/) **Completed: 2026-02-22**
+  - Confirmation sequence state machine in roundtable-analyst.md Section 2.5. Sequential confirm-critic-refiner-accept flow at each analysis step boundary. 45 tests, 100% coverage on new code. Merged d42237e.
 
 - #79 [ ] Introduce Critic/Refiner pass in analyze flow before confirmation summaries -> [requirements](docs/requirements/REQ-0036-introduce-critic-refiner-in-analyze-flow/)
   - **Problem**: The roundtable analysis flow produces artifacts through conversation, but does not apply the same rigorous quality checks that the build flow's debate loop does. The Critic agents check for mechanical quality issues (e.g., ACs not in Given/When/Then format, orphan requirements, unquantified NFRs, incomplete STRIDE coverage) that the conversational flow naturally skips.
