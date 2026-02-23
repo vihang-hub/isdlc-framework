@@ -148,20 +148,14 @@
 
 ### Skills Management
 
-- #81 [ ] Fix `getAgentSkillIndex()` schema mismatch — function expects objects but manifest has strings
-  - **Problem**: `getAgentSkillIndex()` in `common.cjs` accesses `skill.path`, `skill.id`, `skill.name` on ownership entries, but production manifest stores skills as flat string arrays (`["DEV-001", "DEV-002"]`). Function silently returns empty arrays for every agent.
-  - **Fix**: Rewrite function to resolve skill metadata from `skill_lookup` + `path_lookup` tables
-  - **Severity**: Critical — built-in skill injection is completely broken
+- #81 [x] Fix `getAgentSkillIndex()` schema mismatch — function expects objects but manifest has strings
+  - **Completed:** 2026-02-23
 
-- #82 [ ] Fix skill path resolution — hardcoded `src/claude/skills/` fails in installed projects
-  - **Problem**: `getAgentSkillIndex()` resolves paths as `src/claude/skills/{path}/SKILL.md` but installed projects only have `.claude/skills/`. Skills can never be found post-install.
-  - **Fix**: Add fallback path resolution: `.claude/skills/` first, `src/claude/skills/` second
-  - **Depends on**: #81
+- #82 [x] Fix skill path resolution — hardcoded `src/claude/skills/` fails in installed projects
+  - **Completed:** 2026-02-23
 
-- #83 [ ] Fix skill injection tests — mock schema differs from production manifest
-  - **Problem**: Tests use object entries `{ id, name, path }` but production manifest has string arrays. Tests pass but code fails on real data.
-  - **Fix**: Update test fixtures to production format, add test against real manifest
-  - **Depends on**: #81
+- #83 [x] Fix skill injection tests — mock schema differs from production manifest
+  - **Completed:** 2026-02-23
 
 - #84 [ ] Wire SKILL INDEX BLOCK injection in isdlc.md phase delegation
   - **Problem**: STEP 3d line 1715 documents skill index injection but it's never executed. Agents are delegated to without knowing what skills they have.
@@ -426,6 +420,7 @@
 ## Completed
 
 ### 2026-02-23
+- [x] BUG-0035 (#81, #82, #83): getAgentSkillIndex() schema mismatch, skill path resolution, test fixture alignment — rewrote getAgentSkillIndex() for dual-schema support (string arrays + object arrays), added dual-path resolution (.claude/skills/ + src/claude/skills/), updated test fixtures to match production manifest. 27 new TDD tests, 40/40 skill-injection tests, zero regressions. 3 files changed, 927 insertions *(merged ed07eb9)*.
 - [x] BUG-0034 (#13): Jira updateStatus at finalize not implemented — replaced conceptual `updateStatus()` with concrete Atlassian MCP call chain (`getAccessibleAtlassianResources` -> `getTransitionsForJiraIssue` -> `transitionJiraIssue`) in `00-sdlc-orchestrator.md` and `isdlc.md`. Fixed field reference from `jira_ticket_id` to `external_id`/`source`. 80/80 spec tests, 3152/3162 regression tests, zero new failures. 2 production files changed, 20 insertions, 16 deletions *(merged e6cddd2)*.
 
 ### 2026-02-22
