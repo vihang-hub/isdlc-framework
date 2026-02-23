@@ -586,21 +586,22 @@ When the final phase gate passes AND `active_workflow.git_branch` exists (and hu
 1. Pre-merge: commit uncommitted changes (skip if clean)
 2. `git checkout main && git merge --no-ff {branch_name} -m "merge: {type} {artifact_folder} — all gates passed"`
 2.5. **JIRA STATUS SYNC (non-blocking):**
-   a) Read `active_workflow.jira_ticket_id`
-   b) If `jira_ticket_id` is absent or null: SKIP this step (local-only workflow)
-   c) If `jira_ticket_id` exists:
-      - Check MCP prerequisite (Atlassian MCP configured?)
-      - If MCP available: call `updateStatus(jira_ticket_id, "Done")` to transition the Jira ticket
-      - If transition succeeds: log "Jira {TICKET-ID} transitioned to Done"
-      - If transition fails: log WARNING, do NOT block finalize
-      - If MCP unavailable: log WARNING, do NOT block finalize
-   d) Set `jira_sync_status` in `workflow_history` entry:
+   a) Read `active_workflow.external_id` and `active_workflow.source`
+   b) If `source` is not `"jira"` OR `external_id` is absent/null: SKIP this step (not a Jira-backed workflow)
+   c) If source is `"jira"` and `external_id` exists:
+      i.   Call `getAccessibleAtlassianResources` to resolve `cloudId` (use the first accessible resource's `id`). If this call fails or MCP is not available: log "WARNING: Atlassian MCP not available. Skipping Jira status sync for {external_id}.", set `jira_sync_status = "failed"`, continue to step 3.
+      ii.  Call `getTransitionsForJiraIssue(cloudId, external_id)` to get available transitions. If this call fails: log "WARNING: Could not fetch transitions for Jira {external_id}: {error}", set `jira_sync_status = "failed"`, continue to step 3.
+      iii. Find target transition by matching name (case-insensitive), in priority order: "Done" first, then fall back to "Complete", "Resolved", "Closed", or any transition whose `to.statusCategory.key` equals `"done"`.
+      iv.  If no terminal transition found: log "WARNING: No 'Done' transition available for Jira {external_id}. Available: {transition names}", set `jira_sync_status = "failed"`, continue to step 3.
+      v.   Call `transitionJiraIssue(cloudId, external_id, transition: { id: targetTransitionId })`. If this call fails: log "WARNING: Could not transition Jira {external_id} to Done: {error}", set `jira_sync_status = "failed"`, continue to step 3.
+      vi.  On success: log "Jira {external_id} transitioned to Done", set `jira_sync_status = "synced"`.
+   d) Record `jira_sync_status` in the `workflow_history` entry:
       - `"synced"` if Jira transition succeeded
-      - `"failed"` if transition was attempted but failed
-      - absent/null if local-only workflow (no `jira_ticket_id`)
+      - `"failed"` if transition was attempted but failed at any step
+      - absent/null if not a Jira-backed workflow (source is not "jira" or `external_id` absent)
    **CRITICAL**: This step is non-blocking. Any failure in Jira sync logs a warning and continues to step 3. The workflow MUST complete regardless of Jira sync outcome (Article X: Fail-Safe Defaults).
 3. **BACKLOG.md COMPLETION (non-blocking):**
-   This step runs unconditionally (not dependent on `jira_ticket_id`).
+   This step runs unconditionally (not dependent on Jira source or `external_id`).
    a) Locate the matching BACKLOG.md item using these strategies (in order):
       - Match by `active_workflow.artifact_folder` slug (primary)
       - Match by `active_workflow.external_id` or `active_workflow.source_id` (fallback)
@@ -665,7 +666,7 @@ All modes return JSON with `status`, plus mode-specific fields:
 0. **init-only**: Run initialization (Section 3, including START_PHASE handling in 2b if provided), create branch (3a if requires_branch: true), parse --supervised flag. Return JSON immediately. OMIT: phase agent delegation, gate validation, plan generation (ORCH-012). All phase statuses set to "pending" (the first phase is NOT set to "in_progress" -- the Phase-Loop Controller sets that).
 1. **init-and-phase-01** *(deprecated -- use init-only)*: Run initialization (Section 3, including START_PHASE handling in 2b if provided), create branch (3a), delegate to the first phase in `phasesToUse` (Phase 01 by default, or the START_PHASE per REQ-0026), validate its gate, generate plan (3b). Return phases array (may be a sliced subset when START_PHASE is used). Deprecation notice: emit to stderr `"DEPRECATED: MODE init-and-phase-01 will be removed in v0.3.0. Use MODE init-only with Phase-Loop Controller."`.
 2. **single-phase**: Read `active_workflow`, delegate to PHASE agent, validate gate, update state. Return result.
-3. **finalize**: Human Review (if enabled) → merge branch → BACKLOG.md completion → `collectPhaseSnapshots(state)` → prune (`pruneSkillUsageLog(20)`, `pruneCompletedPhases([])`, `pruneHistory(50,200)`, `pruneWorkflowHistory(50,200)`) → move to `workflow_history` (include `phase_snapshots`, `metrics`, `phases` array, and `review_history` if present) → clear `active_workflow`.
+3. **finalize**: Human Review (if enabled) → merge branch → Jira status sync (non-blocking, via `getAccessibleAtlassianResources` + `getTransitionsForJiraIssue` + `transitionJiraIssue`) → GitHub sync → BACKLOG.md completion → `collectPhaseSnapshots(state)` → prune (`pruneSkillUsageLog(20)`, `pruneCompletedPhases([])`, `pruneHistory(50,200)`, `pruneWorkflowHistory(50,200)`) → move to `workflow_history` (include `phase_snapshots`, `metrics`, `phases` array, `jira_sync_status` if Jira-backed, and `review_history` if present) → clear `active_workflow`.
    - **Review history preservation** (REQ-0013): When constructing `workflow_history` entry:
      - Include `review_history` array if it exists (AC-08b)
      - For supervised workflows with empty/missing `review_history`: include `review_history: []` (AC-08c)
