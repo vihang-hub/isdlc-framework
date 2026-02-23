@@ -2240,9 +2240,12 @@ Use Task tool → sdlc-orchestrator with:
 
 The orchestrator runs the Human Review Checkpoint (if code_review.enabled), merges the branch, and then performs **non-blocking external status sync**:
 
-**Jira sync** (if `active_workflow.jira_ticket_id` exists):
-- Calls `updateStatus(jira_ticket_id, "Done")` via Atlassian MCP to transition the Jira ticket
-- Sets `jira_sync_status` in `workflow_history` (`"synced"`, `"failed"`, or absent for local-only)
+**Jira sync** (if `active_workflow.source === "jira"` and `active_workflow.external_id` exists):
+- Call `getAccessibleAtlassianResources` to resolve `cloudId` (first accessible resource). If MCP unavailable or call fails: log warning, set `jira_sync_status = "failed"`, continue.
+- Call `getTransitionsForJiraIssue(cloudId, external_id)` to discover available transitions. If call fails: log warning, set `jira_sync_status = "failed"`, continue.
+- Match transition name (case-insensitive): "Done" first, then fall back to "Complete", "Resolved", "Closed", or status category `"done"`. If no terminal transition found: log warning, set `jira_sync_status = "failed"`, continue.
+- Call `transitionJiraIssue(cloudId, external_id, transition: { id: targetTransitionId })` to execute the transition. If call fails: log warning, set `jira_sync_status = "failed"`, continue.
+- On success: set `jira_sync_status = "synced"` in `workflow_history`
 - Any Jira sync failure logs a warning but does **not** block workflow completion (non-blocking)
 
 **GitHub sync** (if `active_workflow.source === "github"` and `active_workflow.source_id` matches `GH-N`):
