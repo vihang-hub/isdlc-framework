@@ -1241,6 +1241,17 @@ function _extractSkillDescription(content) {
  * Returns array of {id, name, description, path} entries from the manifest,
  * with descriptions extracted from SKILL.md files.
  *
+ * Supports two manifest schemas:
+ *   - Production (v5+): ownership.skills is a flat string array ["DEV-001", ...]
+ *     Resolution uses path_lookup (path->agent) reversed to find skill paths,
+ *     then reads SKILL.md frontmatter to match skill_id to the string IDs.
+ *   - Legacy (v3): ownership.skills is an object array [{id, name, path}, ...]
+ *     Uses object properties directly.
+ *
+ * Dual-path resolution (GH-82 fix):
+ *   Tries .claude/skills/{path}/SKILL.md first (installed projects),
+ *   then src/claude/skills/{path}/SKILL.md (dev mode).
+ *
  * Fail-open: returns empty array on any failure (null input, missing manifest,
  * unknown agent, missing SKILL.md files).
  *
@@ -1272,33 +1283,133 @@ function getAgentSkillIndex(agentName) {
         const projectRoot = getProjectRoot();
         const result = [];
 
-        for (const skill of agentEntry.skills) {
-            try {
-                const skillMdPath = path.join(projectRoot, 'src', 'claude', 'skills', skill.path, 'SKILL.md');
-                const relativePath = path.join('src', 'claude', 'skills', skill.path, 'SKILL.md');
+        // Detect schema: string array (production v5+) vs object array (legacy v3)
+        const isStringSchema = typeof agentEntry.skills[0] === 'string';
 
-                if (!fs.existsSync(skillMdPath)) {
-                    // Fail-open: skip missing SKILL.md files (AC-06)
+        if (isStringSchema) {
+            // Production schema: skills are flat string IDs like "DEV-001"
+            // Build reverse index from path_lookup: collect all paths owned by this agent
+            const pathLookup = manifest.path_lookup || {};
+            const agentPaths = []; // array of category/skill-name paths for this agent
+            for (const [skillPath, ownerAgent] of Object.entries(pathLookup)) {
+                if (ownerAgent === agentName) {
+                    agentPaths.push(skillPath);
+                }
+            }
+
+            // For each path, resolve the SKILL.md and extract skill_id from frontmatter
+            // Build a map: skill_id -> { name, description, relativePath }
+            const skillIdToData = new Map();
+            for (const skillPath of agentPaths) {
+                try {
+                    // Dual-path resolution (GH-82 fix): .claude/skills/ first, then src/claude/skills/
+                    const installedMdPath = path.join(projectRoot, '.claude', 'skills', skillPath, 'SKILL.md');
+                    const devMdPath = path.join(projectRoot, 'src', 'claude', 'skills', skillPath, 'SKILL.md');
+
+                    let resolvedAbsPath = null;
+                    let resolvedRelPath = null;
+
+                    if (fs.existsSync(installedMdPath)) {
+                        resolvedAbsPath = installedMdPath;
+                        resolvedRelPath = path.join('.claude', 'skills', skillPath, 'SKILL.md');
+                    } else if (fs.existsSync(devMdPath)) {
+                        resolvedAbsPath = devMdPath;
+                        resolvedRelPath = path.join('src', 'claude', 'skills', skillPath, 'SKILL.md');
+                    } else {
+                        // Neither path exists -- skip this skill path
+                        continue;
+                    }
+
+                    const content = fs.readFileSync(resolvedAbsPath, 'utf8');
+
+                    // Extract skill_id from YAML frontmatter
+                    const skillIdMatch = content.match(/^skill_id:\s*(.+)$/m);
+                    const extractedId = skillIdMatch ? skillIdMatch[1].trim() : null;
+
+                    if (!extractedId) {
+                        continue; // Cannot match without skill_id
+                    }
+
+                    // Extract name from the path (last segment) or frontmatter
+                    const skillName = skillPath.split('/').pop();
+
+                    // Extract description
+                    let description = _extractSkillDescription(content);
+                    if (!description) {
+                        description = skillName;
+                    }
+
+                    skillIdToData.set(extractedId, {
+                        name: skillName,
+                        description: description,
+                        path: resolvedRelPath
+                    });
+                } catch (_pathErr) {
+                    // Fail-open: skip individual path on any error
                     continue;
                 }
+            }
 
-                const content = fs.readFileSync(skillMdPath, 'utf8');
-                let description = _extractSkillDescription(content);
+            // Now match the agent's skill IDs against our resolved data
+            for (const skillId of agentEntry.skills) {
+                try {
+                    const data = skillIdToData.get(skillId);
+                    if (!data) {
+                        // Skill ID not resolvable -- skip (fail-open)
+                        continue;
+                    }
 
-                // Fallback to manifest name if description can't be extracted
-                if (!description) {
-                    description = skill.name;
+                    result.push({
+                        id: skillId,
+                        name: data.name,
+                        description: data.description,
+                        path: data.path
+                    });
+                } catch (_skillErr) {
+                    // Fail-open: skip individual skill on any error
+                    continue;
                 }
+            }
+        } else {
+            // Legacy schema: skills are objects with {id, name, path}
+            for (const skill of agentEntry.skills) {
+                try {
+                    // Dual-path resolution (GH-82 fix)
+                    const installedMdPath = path.join(projectRoot, '.claude', 'skills', skill.path, 'SKILL.md');
+                    const devMdPath = path.join(projectRoot, 'src', 'claude', 'skills', skill.path, 'SKILL.md');
 
-                result.push({
-                    id: skill.id,
-                    name: skill.name,
-                    description: description,
-                    path: relativePath
-                });
-            } catch (_skillErr) {
-                // Fail-open: skip individual skill on any error
-                continue;
+                    let resolvedAbsPath = null;
+                    let relativePath = null;
+
+                    if (fs.existsSync(installedMdPath)) {
+                        resolvedAbsPath = installedMdPath;
+                        relativePath = path.join('.claude', 'skills', skill.path, 'SKILL.md');
+                    } else if (fs.existsSync(devMdPath)) {
+                        resolvedAbsPath = devMdPath;
+                        relativePath = path.join('src', 'claude', 'skills', skill.path, 'SKILL.md');
+                    } else {
+                        // Fail-open: skip missing SKILL.md files (AC-06)
+                        continue;
+                    }
+
+                    const content = fs.readFileSync(resolvedAbsPath, 'utf8');
+                    let description = _extractSkillDescription(content);
+
+                    // Fallback to manifest name if description can't be extracted
+                    if (!description) {
+                        description = skill.name;
+                    }
+
+                    result.push({
+                        id: skill.id,
+                        name: skill.name,
+                        description: description,
+                        path: relativePath
+                    });
+                } catch (_skillErr) {
+                    // Fail-open: skip individual skill on any error
+                    continue;
+                }
             }
         }
 

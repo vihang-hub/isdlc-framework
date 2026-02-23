@@ -46,9 +46,10 @@ function createTestProject(opts = {}) {
         return tmpDir;
     }
 
-    // Default manifest with test agents
+    // Default manifest with test agents -- production schema (v5+): flat string arrays
+    // Traces to: FR-03, AC-03-01, AC-03-04 (BUG-0035 fixture alignment)
     const manifest = opts.manifest || {
-        version: '3.0.0',
+        version: '5.0.0',
         total_skills: 5,
         enforcement_mode: 'observe',
         ownership: {
@@ -56,20 +57,13 @@ function createTestProject(opts = {}) {
                 agent_id: '99',
                 phase: 'all',
                 skill_count: 3,
-                skills: [
-                    { id: 'TEST-001', name: 'skill-one', path: 'testing/skill-one' },
-                    { id: 'TEST-002', name: 'skill-two', path: 'testing/skill-two' },
-                    { id: 'TEST-003', name: 'skill-three', path: 'testing/skill-three' }
-                ]
+                skills: ['TEST-001', 'TEST-002', 'TEST-003']
             },
             'test-agent-beta': {
                 agent_id: '98',
                 phase: '06-implementation',
                 skill_count: 2,
-                skills: [
-                    { id: 'BETA-001', name: 'beta-skill-one', path: 'beta/beta-skill-one' },
-                    { id: 'BETA-002', name: 'beta-skill-two', path: 'beta/beta-skill-two' }
-                ]
+                skills: ['BETA-001', 'BETA-002']
             },
             'test-agent-empty': {
                 agent_id: '97',
@@ -84,6 +78,13 @@ function createTestProject(opts = {}) {
             'TEST-003': 'test-agent-alpha',
             'BETA-001': 'test-agent-beta',
             'BETA-002': 'test-agent-beta'
+        },
+        path_lookup: {
+            'testing/skill-one': 'test-agent-alpha',
+            'testing/skill-two': 'test-agent-alpha',
+            'testing/skill-three': 'test-agent-alpha',
+            'beta/beta-skill-one': 'test-agent-beta',
+            'beta/beta-skill-two': 'test-agent-beta'
         }
     };
 
@@ -137,15 +138,15 @@ function createTestProject(opts = {}) {
     }
 
     if (opts.createMalformedSkill) {
-        // Overwrite skill-two with a malformed file (no description)
+        // Overwrite skill-two with a malformed file (has skill_id for resolution but no description)
         const malformedPath = path.join(skillsBaseDir, 'testing', 'skill-two', 'SKILL.md');
-        fs.writeFileSync(malformedPath, '# Just a title\n\nNo description field here.\n', 'utf8');
+        fs.writeFileSync(malformedPath, '---\nskill_id: TEST-002\n---\n# Just a title\n\nNo description field here.\n', 'utf8');
     }
 
     if (opts.createEmptySkill) {
-        // Overwrite skill-two with an empty file
+        // Overwrite skill-two with a minimal file (has skill_id for resolution but nothing else)
         const emptyPath = path.join(skillsBaseDir, 'testing', 'skill-two', 'SKILL.md');
-        fs.writeFileSync(emptyPath, '', 'utf8');
+        fs.writeFileSync(emptyPath, '---\nskill_id: TEST-002\n---\n', 'utf8');
     }
 
     if (opts.removeSkillFile) {
@@ -186,8 +187,13 @@ function createSkillFile(baseDir, skillPath, format, data) {
             ''
         ].join('\n');
     } else {
-        // Markdown format (quality-loop style)
+        // Markdown format (quality-loop style) with ## Description header
+        // Includes skill_id in frontmatter for string-schema resolution (BUG-0035)
         content = [
+            '---',
+            `skill_id: ${data.skill_id}`,
+            '---',
+            '',
             `# ${data.skill_id}: ${data.name}`,
             '',
             '## Description',
@@ -601,12 +607,12 @@ describe('TC-05: Caching Behavior', () => {
         const result1 = common.getAgentSkillIndex('test-agent-alpha');
         assert.equal(result1.length, 3);
 
-        // Modify manifest — change skill count
+        // Modify manifest — change skill count (production string schema)
         const manifestPath = path.join(tmpDir, '.claude', 'hooks', 'config', 'skills-manifest.json');
         const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-        manifest.ownership['test-agent-alpha'].skills.push(
-            { id: 'TEST-004', name: 'skill-four', path: 'testing/skill-four' }
-        );
+        manifest.ownership['test-agent-alpha'].skills.push('TEST-004');
+        manifest.skill_lookup['TEST-004'] = 'test-agent-alpha';
+        manifest.path_lookup['testing/skill-four'] = 'test-agent-alpha';
         // Ensure mtime changes (write with a small delay simulation via sync)
         const newContent = JSON.stringify(manifest, null, 2);
         // Force mtime change by waiting briefly
@@ -644,7 +650,7 @@ describe('TC-05: Caching Behavior', () => {
         const tmpDir1 = createTestProject();
         const tmpDir2 = createTestProject({
             manifest: {
-                version: '3.0.0',
+                version: '5.0.0',
                 total_skills: 1,
                 enforcement_mode: 'observe',
                 ownership: {
@@ -652,12 +658,11 @@ describe('TC-05: Caching Behavior', () => {
                         agent_id: '99',
                         phase: 'all',
                         skill_count: 1,
-                        skills: [
-                            { id: 'ONLY-001', name: 'only-skill', path: 'only/only-skill' }
-                        ]
+                        skills: ['ONLY-001']
                     }
                 },
-                skill_lookup: { 'ONLY-001': 'test-agent-alpha' }
+                skill_lookup: { 'ONLY-001': 'test-agent-alpha' },
+                path_lookup: { 'only/only-skill': 'test-agent-alpha' }
             }
         });
         // Create SKILL.md for the second project
