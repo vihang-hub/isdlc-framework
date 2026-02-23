@@ -42,12 +42,12 @@ node('linux && release') {
             echo "Version: ${packageVersion}, pre-release: ${isPreRelease}"
         }
 
-        stage('Publish to Gitea') {
+        stage('Publish') {
             withCredentials([string(credentialsId: 'NPM_TOKEN', variable: 'NPM_TOKEN')]) {
                 sh '''
                     cat > .npmrc <<EOF
-@enactor:registry=https://dev.enactor.co.uk/gitea/api/packages/DevOpsInfra/npm/
-//dev.enactor.co.uk/gitea/api/packages/DevOpsInfra/npm/:_authToken=${NPM_TOKEN}
+@enactor:registry=https://npm.enactor.co.uk/
+//npm.enactor.co.uk/:_authToken=${NPM_TOKEN}
 always-auth=true
 EOF
                 '''
@@ -56,12 +56,13 @@ EOF
                 def npmTag = isPreRelease ? '--tag next' : '--tag latest'
                 sh "npm publish ${npmTag}"
             }
-            echo "Published @enactor/isdlc@${packageVersion} to Gitea"
+            echo "Published @enactor/isdlc@${packageVersion} to npm.enactor.co.uk"
         }
 
         stage('Create Gitea Release') {
-            withCredentials([string(credentialsId: 'NPM_TOKEN', variable: 'GITEA_TOKEN')]) {
+            withCredentials([string(credentialsId: 'GITEA_RELEASE_TOKEN', variable: 'GITEA_TOKEN')]) {
                 def releaseName = isPreRelease ? "v${packageVersion} (Pre-release)" : "v${packageVersion}"
+                // Use basic auth (-u user:token) to pass through the Apache proxy
                 sh """
                     curl -sf -X POST \
                       -H 'Content-Type: application/json' \

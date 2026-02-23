@@ -25,7 +25,7 @@
   },
   "homepage": "https://dev.enactor.co.uk/gitea/DevOpsInfra/isdlc-framework",
   "publishConfig": {
-    "@enactor:registry": "https://dev.enactor.co.uk/gitea/api/packages/DevOpsInfra/npm/"
+    "@enactor:registry": "https://npm.enactor.co.uk/"
   },
   "bin": {
     "isdlc": "./bin/isdlc.js"
