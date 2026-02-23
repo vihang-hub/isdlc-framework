@@ -386,10 +386,7 @@
   - **Design**: After marking an item `[x]`, check if all siblings under same heading are also `[x]`. If yes, move entire heading block. Append `— COMPLETED {date}` suffix.
   - **Complexity**: Low-medium — extends the completion marking logic from #11
 
-- #13 [ ] Jira `updateStatus` at finalize not implemented — tickets not transitioned to Done
-  - **Problem**: Orchestrator finalize specifies calling `updateStatus(jira_ticket_id, "Done")` via Atlassian MCP and setting `jira_sync_status` in workflow_history. Not implemented. Jira tickets stay in original status.
-  - **Related**: #7 (Jira read) + this (Jira write) together complete the Jira lifecycle
-  - **Complexity**: Medium — needs MCP skill file + non-blocking finalize integration
+- #13 [x] ~~Jira `updateStatus` at finalize not implemented — tickets not transitioned to Done~~ **Completed: 2026-02-23**
 
 - #58 [x] ~~GitHub issue label sync — auto-label GitHub-sourced issues as they progress through the pipeline~~ **Completed: 2026-02-19**
   - Added analyze handler step 9 (`gh issue edit N --add-label ready-to-build` on analysis complete) and GitHub sync block in finalize (`gh issue close N` on build complete). Both non-blocking. 2 edits to `isdlc.md`.
@@ -427,6 +424,9 @@
   - **Complexity**: Low-medium
 
 ## Completed
+
+### 2026-02-23
+- [x] BUG-0034 (#13): Jira updateStatus at finalize not implemented — replaced conceptual `updateStatus()` with concrete Atlassian MCP call chain (`getAccessibleAtlassianResources` -> `getTransitionsForJiraIssue` -> `transitionJiraIssue`) in `00-sdlc-orchestrator.md` and `isdlc.md`. Fixed field reference from `jira_ticket_id` to `external_id`/`source`. 80/80 spec tests, 3152/3162 regression tests, zero new failures. 2 production files changed, 20 insertions, 16 deletions *(merged e6cddd2)*.
 
 ### 2026-02-22
 - [x] REQ-0034: Free-text intake reverse-lookup GitHub issues — added `checkGhAvailability()`, `searchGitHubIssues()`, `reverseMatchIssue()` to `three-verb-utils.cjs` + Step 3c-prime UX flow in `isdlc.md` for `/isdlc add` to auto-detect matching GitHub issues and offer linking or creation. 13 new tests, 306/306 passing, 96.83% coverage. 4 files changed, 367 insertions.
