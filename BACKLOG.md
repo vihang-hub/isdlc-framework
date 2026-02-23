@@ -198,12 +198,6 @@
   - **Fix**: Remove discovery context injection block. Project skills delivered via SessionStart cache to all phases with no expiry.
   - **Depends on**: #88, #89, #84, #91
 
-- #91 [ ] Implement SessionStart hook for skill cache injection
-  - **Problem**: External skill injection reads files sequentially at every phase delegation — 5-8 reads per phase, 45-72 per workflow.
-  - **Design**: SessionStart hook reads pre-assembled `.isdlc/skill-cache.md` once at session start, outputs to stdout (loaded into LLM context automatically). Zero file reads during workflow execution. Cache rebuilt by discover, skill add/remove/wire.
-  - ~25-30K chars context budget (4 project skills + 2-3 skills.sh skills)
-  - **Depends on**: #88, #89
-
 ### Framework Features
 
 - #33 [ ] TOON format integration — adopt Token-Oriented Object Notation for agent prompts and state data to reduce token usage
@@ -422,6 +416,7 @@
 ## Completed
 
 ### 2026-02-23
+- [x] REQ-0001 (#91): Implement SessionStart hook for skill cache injection — new `inject-session-cache.cjs` SessionStart hook reads pre-assembled `.isdlc/skill-cache.md` once at session start, outputs to stdout for LLM context injection. Eliminates ~200+ static file reads per workflow. New `bin/rebuild-cache.js` CLI, `rebuildSkillCache()`/`getProjectSkills()`/`buildCacheContent()` APIs in common.cjs, wired into discover and skill management commands. Updated installer.js and updater.js for hook registration. 43 new tests, 3277 total, zero regressions. 34 files changed, 2538 insertions, 591 deletions *(merged 5e0bb0b)*.
 - [x] BUG-0035 (#81, #82, #83): getAgentSkillIndex() schema mismatch, skill path resolution, test fixture alignment — rewrote getAgentSkillIndex() for dual-schema support (string arrays + object arrays), added dual-path resolution (.claude/skills/ + src/claude/skills/), updated test fixtures to match production manifest. 27 new TDD tests, 40/40 skill-injection tests, zero regressions. 3 files changed, 927 insertions *(merged ed07eb9)*.
 - [x] BUG-0034 (#13): Jira updateStatus at finalize not implemented — replaced conceptual `updateStatus()` with concrete Atlassian MCP call chain (`getAccessibleAtlassianResources` -> `getTransitionsForJiraIssue` -> `transitionJiraIssue`) in `00-sdlc-orchestrator.md` and `isdlc.md`. Fixed field reference from `jira_ticket_id` to `external_id`/`source`. 80/80 spec tests, 3152/3162 regression tests, zero new failures. 2 production files changed, 20 insertions, 16 deletions *(merged e6cddd2)*.
 
