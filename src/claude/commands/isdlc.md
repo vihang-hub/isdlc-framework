@@ -2242,7 +2242,6 @@ The orchestrator runs the Human Review Checkpoint (if code_review.enabled), merg
 
 **Jira sync** (if `active_workflow.jira_ticket_id` exists):
 - Calls `updateStatus(jira_ticket_id, "Done")` via Atlassian MCP to transition the Jira ticket
-- Updates `BACKLOG.md`: marks item `[x]`, moves to `## Completed` section
 - Sets `jira_sync_status` in `workflow_history` (`"synced"`, `"failed"`, or absent for local-only)
 - Any Jira sync failure logs a warning but does **not** block workflow completion (non-blocking)
 
@@ -2251,7 +2250,16 @@ The orchestrator runs the Human Review Checkpoint (if code_review.enabled), merg
 - Run `gh issue close N` to close the GitHub issue
 - If the command fails, log a warning and continue — never block workflow completion (non-blocking)
 
-After Jira sync, the orchestrator collects workflow progress snapshots (`collectPhaseSnapshots()`), applies state pruning, moves the workflow to `workflow_history` (with `phases`, `phase_snapshots`, and `metrics`), and clears `active_workflow`.
+**BACKLOG.md sync** (runs unconditionally for all workflows):
+- Locate the matching BACKLOG.md item by `artifact_folder` slug, `external_id`/`source_id`, or item number
+- Mark the item checkbox `[x]`
+- Add a `**Completed:** {YYYY-MM-DD}` sub-bullet beneath the item
+- Move the entire item block (parent line + all indented sub-bullets) to the `## Completed` section
+- If `## Completed` section does not exist, auto-create it at the end of BACKLOG.md
+- If BACKLOG.md does not exist or no matching item is found, skip silently
+- Any BACKLOG.md sync failure logs a warning but does **not** block workflow completion (non-blocking)
+
+After sync steps, the orchestrator collects workflow progress snapshots (`collectPhaseSnapshots()`), applies state pruning, moves the workflow to `workflow_history` (with `phases`, `phase_snapshots`, and `metrics`), and clears `active_workflow`.
 
 **CRITICAL — MANDATORY CLEANUP (must execute even if finalize output is long):**
 

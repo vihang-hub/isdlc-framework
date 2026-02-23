@@ -594,15 +594,28 @@ When the final phase gate passes AND `active_workflow.git_branch` exists (and hu
       - If transition succeeds: log "Jira {TICKET-ID} transitioned to Done"
       - If transition fails: log WARNING, do NOT block finalize
       - If MCP unavailable: log WARNING, do NOT block finalize
-   d) Update BACKLOG.md: find the item by `jira_ticket_id`, change `[ ]` to `[x]`, add `**Completed:** {date}` sub-bullet, move entire item block to `## Completed` section
-   e) Set `jira_sync_status` in `workflow_history` entry:
+   d) Set `jira_sync_status` in `workflow_history` entry:
       - `"synced"` if Jira transition succeeded
       - `"failed"` if transition was attempted but failed
       - absent/null if local-only workflow (no `jira_ticket_id`)
    **CRITICAL**: This step is non-blocking. Any failure in Jira sync logs a warning and continues to step 3. The workflow MUST complete regardless of Jira sync outcome (Article X: Fail-Safe Defaults).
-3. On merge conflict: `git merge --abort` → escalate to human (list conflicting files, suggest `/isdlc advance` after manual resolution)
-4. Post-merge: `git branch -d {branch_name}`, update state.json `git_branch` to `status: "merged"` + commit SHA
-5. Announce merge with banner, proceed with completion logic
+3. **BACKLOG.md COMPLETION (non-blocking):**
+   This step runs unconditionally (not dependent on `jira_ticket_id`).
+   a) Locate the matching BACKLOG.md item using these strategies (in order):
+      - Match by `active_workflow.artifact_folder` slug (primary)
+      - Match by `active_workflow.external_id` or `active_workflow.source_id` (fallback)
+      - Match by item number from `artifact_folder` prefix (e.g., `REQ-0033` or `BUG-0033`)
+   b) If no match found: log warning and skip (do not block finalize)
+   c) If match found:
+      - Change `[ ]` to `[x]` on the item checkbox line
+      - Add `**Completed:** {YYYY-MM-DD}` sub-bullet beneath the item
+      - Move the entire item block (parent line + all indented sub-bullets) to the `## Completed` section
+      - If `## Completed` section does not exist, auto-create it at the end of BACKLOG.md
+   d) If BACKLOG.md does not exist: skip silently (no warning needed)
+   **CRITICAL**: This step is non-blocking. Any failure in BACKLOG.md update logs a warning but does NOT block finalize. The workflow MUST complete regardless of BACKLOG.md sync outcome (Article X: Fail-Safe Defaults).
+4. On merge conflict: `git merge --abort` → escalate to human (list conflicting files, suggest `/isdlc advance` after manual resolution)
+5. Post-merge: `git branch -d {branch_name}`, update state.json `git_branch` to `status: "merged"` + commit SHA
+6. Announce merge with banner, proceed with completion logic
 
 ### Branch on Cancellation
 
@@ -652,7 +665,7 @@ All modes return JSON with `status`, plus mode-specific fields:
 0. **init-only**: Run initialization (Section 3, including START_PHASE handling in 2b if provided), create branch (3a if requires_branch: true), parse --supervised flag. Return JSON immediately. OMIT: phase agent delegation, gate validation, plan generation (ORCH-012). All phase statuses set to "pending" (the first phase is NOT set to "in_progress" -- the Phase-Loop Controller sets that).
 1. **init-and-phase-01** *(deprecated -- use init-only)*: Run initialization (Section 3, including START_PHASE handling in 2b if provided), create branch (3a), delegate to the first phase in `phasesToUse` (Phase 01 by default, or the START_PHASE per REQ-0026), validate its gate, generate plan (3b). Return phases array (may be a sliced subset when START_PHASE is used). Deprecation notice: emit to stderr `"DEPRECATED: MODE init-and-phase-01 will be removed in v0.3.0. Use MODE init-only with Phase-Loop Controller."`.
 2. **single-phase**: Read `active_workflow`, delegate to PHASE agent, validate gate, update state. Return result.
-3. **finalize**: Human Review (if enabled) → merge branch → `collectPhaseSnapshots(state)` → prune (`pruneSkillUsageLog(20)`, `pruneCompletedPhases([])`, `pruneHistory(50,200)`, `pruneWorkflowHistory(50,200)`) → move to `workflow_history` (include `phase_snapshots`, `metrics`, `phases` array, and `review_history` if present) → clear `active_workflow`.
+3. **finalize**: Human Review (if enabled) → merge branch → BACKLOG.md completion → `collectPhaseSnapshots(state)` → prune (`pruneSkillUsageLog(20)`, `pruneCompletedPhases([])`, `pruneHistory(50,200)`, `pruneWorkflowHistory(50,200)`) → move to `workflow_history` (include `phase_snapshots`, `metrics`, `phases` array, and `review_history` if present) → clear `active_workflow`.
    - **Review history preservation** (REQ-0013): When constructing `workflow_history` entry:
      - Include `review_history` array if it exists (AC-08b)
      - For supervised workflows with empty/missing `review_history`: include `review_history: []` (AC-08c)
