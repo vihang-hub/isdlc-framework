@@ -770,13 +770,14 @@ describe('TC-09: STEP 3d Prompt Template — Skill Injection Point', () => {
     const PROJECT_ROOT = path.join(__dirname, '..', '..', '..', '..');
     const ISDLC_MD_PATH = path.join(PROJECT_ROOT, 'src', 'claude', 'commands', 'isdlc.md');
 
-    // TC-09.1: STEP 3d template includes SKILL INDEX BLOCK placeholder
-    it('TC-09.1: STEP 3d delegation template includes SKILL INDEX BLOCK', () => {
+    // TC-09.1: STEP 3d template includes SKILL INJECTION STEP A with function references
+    it('TC-09.1: STEP 3d delegation template includes SKILL INJECTION STEP A', () => {
         const content = fs.readFileSync(ISDLC_MD_PATH, 'utf8');
         assert.ok(
-            content.includes('SKILL INDEX BLOCK') || content.includes('SKILL_INDEX_BLOCK') ||
-            content.includes('AVAILABLE SKILLS'),
-            'STEP 3d template must include skill index block placeholder or instruction'
+            content.includes('SKILL INJECTION STEP A') &&
+            content.includes('getAgentSkillIndex') &&
+            content.includes('formatSkillIndexBlock'),
+            'STEP 3d must include SKILL INJECTION STEP A with getAgentSkillIndex and formatSkillIndexBlock instructions'
         );
     });
 
@@ -784,9 +785,7 @@ describe('TC-09: STEP 3d Prompt Template — Skill Injection Point', () => {
     it('TC-09.2: skill block reference appears after WORKFLOW MODIFIERS in template', () => {
         const content = fs.readFileSync(ISDLC_MD_PATH, 'utf8');
         const modifiersPos = content.indexOf('WORKFLOW MODIFIERS');
-        const skillPos = content.indexOf('SKILL INDEX BLOCK') !== -1
-            ? content.indexOf('SKILL INDEX BLOCK')
-            : content.indexOf('AVAILABLE SKILLS');
+        const skillPos = content.indexOf('SKILL INJECTION STEP A');
 
         assert.ok(modifiersPos > -1, 'WORKFLOW MODIFIERS should exist in template');
         assert.ok(skillPos > -1, 'Skill block reference should exist in template');
@@ -803,6 +802,40 @@ describe('TC-09: STEP 3d Prompt Template — Skill Injection Point', () => {
         assert.ok(
             content.includes('Validate GATE'),
             'Template should retain Validate GATE instruction'
+        );
+    });
+
+    // TC-09.4: External skill injection instructions exist
+    it('TC-09.4: STEP 3d includes external skill injection instructions', () => {
+        const content = fs.readFileSync(ISDLC_MD_PATH, 'utf8');
+        assert.ok(
+            content.includes('SKILL INJECTION STEP B') &&
+            content.includes('external-skills-manifest.json'),
+            'STEP 3d must include SKILL INJECTION STEP B with external manifest reference'
+        );
+    });
+
+    // TC-09.5: Fail-open language is present for both steps
+    it('TC-09.5: skill injection steps include fail-open language', () => {
+        const content = fs.readFileSync(ISDLC_MD_PATH, 'utf8');
+        // Step A: "If the Bash tool call fails"
+        assert.ok(
+            content.includes('Bash tool call fails') || content.includes('fails or produces empty'),
+            'Step A must include fail-open handling for Bash failure'
+        );
+        // Step B: "fail-open" in the header
+        assert.ok(
+            content.includes('STEP B') && content.includes('fail-open'),
+            'Step B header must include fail-open declaration'
+        );
+    });
+
+    // TC-09.6: Assembly step exists
+    it('TC-09.6: STEP 3d includes skill assembly step', () => {
+        const content = fs.readFileSync(ISDLC_MD_PATH, 'utf8');
+        assert.ok(
+            content.includes('SKILL INJECTION STEP C'),
+            'STEP 3d must include SKILL INJECTION STEP C for assembly'
         );
     });
 });

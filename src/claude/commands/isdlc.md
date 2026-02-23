@@ -1545,6 +1545,50 @@ Parse the subcommand: `add`, `wire`, `list`, or `remove`.
 
 Use the **Phase-Loop Controller** protocol. This runs phases one at a time in the foreground, giving the user visible task progress and immediate hook-blocker escalation.
 
+Read `agent_modifiers` for this phase from `.isdlc/state.json` → `active_workflow.type`, then look up the workflow in `workflows.json` → `workflows[type].agent_modifiers[phase_key]`. If modifiers exist, include them as `WORKFLOW MODIFIERS: {json}` in the prompt.
+
+**Discovery context** (phases 02 and 03 only): If `phase_key` starts with `02-` or `03-`, read `.isdlc/state.json` → `discovery_context`. If it exists and `completed_at` is within 24 hours, include as a `DISCOVERY CONTEXT` block. If older than 24h, include with a `⚠️ STALE` warning. Otherwise omit.
+
+**Skill injection** (before constructing the Task tool prompt below, execute these steps to build skill context):
+
+**SKILL INJECTION STEP A — Built-In Skill Index**:
+1. Run this single-line Bash command (replace `{agent_name}` with the resolved agent name from the table above):
+   ```
+   node -e "const c = require('./src/claude/hooks/lib/common.cjs'); const r = c.getAgentSkillIndex('{agent_name}'); process.stdout.write(c.formatSkillIndexBlock(r));"
+   ```
+2. If the Bash tool call succeeds and produces non-empty stdout: save the output as `{built_in_skills_block}`.
+3. If the Bash tool call fails or produces empty output: set `{built_in_skills_block}` to empty string. Continue to Step B.
+
+**SKILL INJECTION STEP B — External Skills** (fail-open — if ANY step fails, set `{external_skills_blocks}` to empty and skip to Step C):
+1. Determine the external skills manifest path:
+   - If MONOREPO CONTEXT is present in the current delegation: `docs/isdlc/projects/{project-id}/external-skills-manifest.json`
+   - Otherwise: `docs/isdlc/external-skills-manifest.json`
+2. Read the manifest file using Read tool.
+   - If file does not exist or Read fails: set `{external_skills_blocks}` to empty. SKIP to Step C.
+3. Parse the content as JSON. If parse fails: set `{external_skills_blocks}` to empty. SKIP to Step C.
+4. Filter `manifest.skills[]` array: keep only skills where ALL of these conditions are true:
+   - `skill.bindings` exists (skip skills without bindings for backward compatibility)
+   - `skill.bindings.injection_mode === "always"`
+   - EITHER the current `{phase_key}` is in `skill.bindings.phases[]` OR the current `{agent_name}` is in `skill.bindings.agents[]`
+5. If no skills match the filter: set `{external_skills_blocks}` to empty. SKIP to Step C.
+6. For each matched skill:
+   a. Determine the external skills directory:
+      - If MONOREPO CONTEXT: `.isdlc/projects/{project-id}/skills/external/`
+      - Otherwise: `.claude/skills/external/`
+   b. Read `{skills_directory}/{skill.file}` using Read tool.
+   c. If Read fails for this skill: skip this skill, continue with next matched skill.
+   d. Let `content` = the file contents. If `content.length > 10000` characters: set `delivery_type` to `"reference"` regardless of `skill.bindings.delivery_type`.
+   e. Format the skill block based on `delivery_type` (use `skill.bindings.delivery_type` unless overridden by step 6d):
+      - `"context"`: `EXTERNAL SKILL CONTEXT: {skill.name}\n---\n{content}\n---`
+      - `"instruction"`: `EXTERNAL SKILL INSTRUCTION ({skill.name}): You MUST follow these guidelines:\n{content}`
+      - `"reference"`: `EXTERNAL SKILL AVAILABLE: {skill.name} -- Read from {skills_directory}/{skill.file} if relevant to your current task`
+7. Join all formatted skill blocks with double newlines (`\n\n`) as `{external_skills_blocks}`.
+
+**SKILL INJECTION STEP C — Assemble into delegation prompt**:
+- If `{built_in_skills_block}` is non-empty: include it in the delegation prompt after DISCOVERY CONTEXT (or after WORKFLOW MODIFIERS if no discovery context).
+- If `{external_skills_blocks}` is non-empty: include it after `{built_in_skills_block}`, separated by a blank line.
+- If both are empty: include nothing — no skill-related content in the prompt.
+
 #### STEP 1: INIT — Launch orchestrator for workflow initialization
 
 ```
@@ -1710,10 +1754,6 @@ Look up the agent for this phase from the PHASE→AGENT table:
 | `15-upgrade-execute` | `upgrade-engineer` |
 | `16-quality-loop` | `quality-loop-engineer` |
 
-Read `agent_modifiers` for this phase from `.isdlc/state.json` → `active_workflow.type`, then look up the workflow in `workflows.json` → `workflows[type].agent_modifiers[phase_key]`. If modifiers exist, include them as `WORKFLOW MODIFIERS: {json}` in the prompt.
-
-**Discovery context** (phases 02 and 03 only): If `phase_key` starts with `02-` or `03-`, read `.isdlc/state.json` → `discovery_context`. If it exists and `completed_at` is within 24 hours, include as a `DISCOVERY CONTEXT` block. If older than 24h, include with a `⚠️ STALE` warning. Otherwise omit.
-
 ```
 Use Task tool → {agent_name} with:
   "Execute Phase {NN} - {Phase Name} for {workflow_type} workflow.
@@ -1721,27 +1761,8 @@ Use Task tool → {agent_name} with:
    Phase key: {phase_key}
    {WORKFLOW MODIFIERS: {json} — if applicable}
    {DISCOVERY CONTEXT: ... — if phase 02 or 03}
-   {SKILL INDEX BLOCK — look up target agent's owned skills from skills-manifest, format as AVAILABLE SKILLS block using getAgentSkillIndex() + formatSkillIndexBlock(). Include only if non-empty.}
-   {EXTERNAL SKILL INJECTION (REQ-0022) — After constructing the delegation prompt above, inject any matched external skill content. This block is fail-open — if anything fails, continue with the unmodified prompt.
-    1. Read docs/isdlc/external-skills-manifest.json (or monorepo equivalent) using Read tool.
-       If file does not exist or is empty: SKIP injection entirely (no-op).
-       Parse as JSON. If parse fails: SKIP injection (log warning).
-    2. Filter skills for current phase/agent:
-       For each skill in manifest.skills:
-         - If skill.bindings is missing: SKIP (backward compat)
-         - If skill.bindings.injection_mode !== "always": SKIP
-         - If current phase_key is NOT in skill.bindings.phases AND current agent name is NOT in skill.bindings.agents: SKIP
-         - This skill matches — proceed to injection
-    3. For each matched skill, read and format:
-       - Read the skill .md file from the external skills directory (.claude/skills/external/)
-       - If file not found: log warning, skip this skill
-       - If content > 10,000 chars: truncate and switch to reference delivery
-       - Format based on delivery_type:
-         "context": EXTERNAL SKILL CONTEXT: {name}\n---\n{content}\n---
-         "instruction": EXTERNAL SKILL INSTRUCTION ({name}): You MUST follow these guidelines:\n{content}
-         "reference": EXTERNAL SKILL AVAILABLE: {name} -- Read from {path} if relevant
-    4. Append all formatted blocks to the delegation prompt, joined with double newlines.
-    5. Error handling: If any error occurs in steps 1-4, continue with unmodified prompt. Log warning but never block.}
+   {built_in_skills_block — from SKILL INJECTION STEP A above, omit if empty}
+   {external_skills_blocks — from SKILL INJECTION STEP B above, omit if empty}
    {GATE REQUIREMENTS INJECTION (REQ-0024) — Inject gate pass criteria so the agent knows what hooks will check before it starts. This block is fail-open — if anything fails, continue with the unmodified prompt.
     1. Read `src/claude/hooks/config/iteration-requirements.json` using Read tool.
        If file does not exist: SKIP injection entirely (no-op).
