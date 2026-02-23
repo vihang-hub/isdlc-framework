@@ -1,0 +1,27 @@
+Requirement,AC,Test Case,Test Type,Priority,Category,Status
+FR-001,AC-001 (happy path slug match),SV-03,positive,P0,Spec Validation,PASSING (content exists in nested 2.5d)
+FR-001,AC-002 (external ref match),SV-04,positive,P0,Spec Validation,FAILING (pre-fix)
+FR-001,"AC-001, AC-002 (matching strategy in isdlc.md)",SV-13,positive,P1,Spec Validation,PASSING (broad match on existing keywords)
+FR-002,AC-001 (mark checkbox [x]),SV-05,positive,P0,Spec Validation,PASSING (content exists in nested 2.5d)
+FR-003,AC-001 (Completed date sub-bullet),SV-06,positive,P1,Spec Validation,PASSING (content exists in nested 2.5d)
+FR-004,AC-001 (move to ## Completed),SV-07,positive,P1,Spec Validation,PASSING (content exists in nested 2.5d)
+FR-004,AC-006 (auto-create ## Completed),SV-09,positive,P1,Spec Validation,FAILING (pre-fix)
+FR-004,AC-007 (sub-bullet block integrity),SV-10,positive,P1,Spec Validation,PASSING (broad match on existing text)
+FR-005,"AC-003 (no match warning), AC-004 (no file skip), AC-005 (malformed warning)",SV-08,negative,P0,Spec Validation,PASSING (non-blocking exists in adjacent Jira section)
+FR-005,AC-003/AC-004/AC-005 (non-blocking in isdlc.md),SV-14,negative,P1,Spec Validation,FAILING (pre-fix)
+FR-006,AC-008 (top-level BACKLOG step in orchestrator),SV-01,positive,P0,Spec Validation,FAILING (pre-fix)
+FR-006,AC-008 (finalize mode summary includes BACKLOG),SV-02,positive,P0,Spec Validation,FAILING (pre-fix)
+FR-006,AC-008 (isdlc.md BACKLOG.md sync section),SV-11,positive,P0,Spec Validation,FAILING (pre-fix)
+FR-006,AC-008 (not nested under Jira in isdlc.md),SV-12,negative,P0,Spec Validation,FAILING (pre-fix)
+CON-002,Jira sync block preserved,RT-01,positive,P0,Regression,PASSING
+CON-002,Jira skip when absent,RT-02,positive,P0,Regression,PASSING
+CON-002,Finalize sequence preserved,RT-03,positive,P0,Regression,PASSING
+CON-002,isdlc.md Jira sync preserved,RT-04,positive,P0,Regression,PASSING
+CON-002,isdlc.md GitHub sync preserved,RT-05,positive,P0,Regression,PASSING
+CON-002,Trivial tier T8 preserved,RT-06,positive,P1,Regression,PASSING
+CON-003,updateBacklogMarker API preserved,RT-07,positive,P1,Regression,PASSING
+CON-003,appendToBacklog API preserved,RT-08,positive,P1,Regression,PASSING
+Structural Completeness,Three sync sections in STEP 4,SS-01,positive,P1,Structure,FAILING (pre-fix)
+Structural Parity,BACKLOG in finalize summary,SS-02,positive,P1,Structure,FAILING (pre-fix)
+Behavioral Parity,Non-blocking consistency,SS-03,positive,P1,Structure,FAILING (pre-fix)
+Structural Integrity,Step numbering consistency,SS-04,positive,P2,Structure,PASSING (2.5d has backup outside)

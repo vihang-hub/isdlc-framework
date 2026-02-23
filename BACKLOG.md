@@ -379,9 +379,7 @@
 
 - #7 [x] ~~Phase A cannot pull Jira ticket content — `jira_get_issue` MCP not implemented~~ — added Atlassian MCP getJiraIssue integration to add/analyze/fix handlers in isdlc.md **Completed: 2026-02-23**
 
-- #11 [ ] BACKLOG.md completion marking not implemented — items not marked done after finalize
-  - **Problem**: Orchestrator finalize step 2.5d specifies marking items `[x]`, adding `**Completed:** {date}`, and moving to `## Completed` section. None implemented. BACKLOG.md unchanged after workflow completion.
-  - **Complexity**: Medium — BACKLOG.md parsing + rewrite logic in finalize step
+- #11 [x] ~~BACKLOG.md completion marking not implemented — items not marked done after finalize~~ — un-nested BACKLOG.md step from Jira sync in orchestrator finalize + added explicit sync section in isdlc.md STEP 4 **Completed: 2026-02-23**
 
 - #12 [ ] Auto-move completed BACKLOG.md headings when all items are done
   - **Problem**: When all items under a `###` heading are `[x]`, the entire heading block should move to `## Completed`. Currently not specified or implemented.
