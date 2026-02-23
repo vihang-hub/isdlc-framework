@@ -6,9 +6,9 @@
  * Cross-platform CLI entry point for the iSDLC framework.
  *
  * Usage:
- *   npx isdlc init          # Initialize framework in current project
- *   npm install -g isdlc    # Install globally
- *   isdlc init              # Then use directly
+ *   npx @enactor/isdlc init          # Initialize framework in current project
+ *   npm install -g @enactor/isdlc    # Install globally
+ *   isdlc init                       # Then use directly
  */
 
 import { fileURLToPath } from 'url';
@@ -25,7 +25,7 @@ const cliPath = join(__dirname, '..', 'lib', 'cli.js');
 if (!existsSync(cliPath)) {
   console.error('Error: CLI module not found at', cliPath);
   console.error('This may indicate a corrupted installation.');
-  console.error('Try reinstalling: npm install -g isdlc');
+  console.error('Try reinstalling: npm install -g @enactor/isdlc');
   process.exit(1);
 }
 

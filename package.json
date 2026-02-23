@@ -1,5 +1,5 @@
 {
-  "name": "isdlc",
+  "name": "@enactor/isdlc",
   "version": "0.1.0-alpha",
   "type": "module",
   "description": "Structured AI-powered software development lifecycle framework for Claude Code - 48 agents, 240 skills, 17 quality gates",
@@ -18,12 +18,15 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/isdlc.git"
+    "url": "https://dev.enactor.co.uk/gitea/DevOpsInfra/isdlc-framework.git"
   },
   "bugs": {
-    "url": "https://github.com/your-org/isdlc/issues"
+    "url": "https://dev.enactor.co.uk/gitea/DevOpsInfra/isdlc-framework/issues"
   },
-  "homepage": "https://github.com/your-org/isdlc#readme",
+  "homepage": "https://dev.enactor.co.uk/gitea/DevOpsInfra/isdlc-framework",
+  "publishConfig": {
+    "@enactor:registry": "https://dev.enactor.co.uk/gitea/api/packages/DevOpsInfra/npm/"
+  },
   "bin": {
     "isdlc": "./bin/isdlc.js"
   },

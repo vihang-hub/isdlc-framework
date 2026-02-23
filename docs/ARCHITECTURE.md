@@ -59,7 +59,7 @@ The iSDLC framework installs into a user's project and integrates with Claude Co
 
 ## Installation Flow
 
-Running `npx isdlc init` (or `isdlc init` after global install) triggers a 6-step installer:
+Running `npx @enactor/isdlc init` (or `isdlc init` after global install) triggers a 6-step installer:
 
 ```
 Step 1/6: Detect project type

@@ -144,7 +144,7 @@ For users who prefer explicit control, slash commands are available:
 **Via npm (recommended):**
 ```bash
 cd /path/to/your-project
-npx isdlc
+npx @enactor/isdlc
 ```
 
 **From source (macOS / Linux):**

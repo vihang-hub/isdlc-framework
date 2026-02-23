@@ -201,8 +201,8 @@ The framework uses your constitution's testing thresholds to determine when cove
 
 | Method | Command |
 |--------|---------|
-| npx (one-time) | `npx isdlc init` |
-| Global install | `npm install -g isdlc && isdlc init` |
+| npx (one-time) | `npx @enactor/isdlc init` |
+| Global install | `npm install -g @enactor/isdlc && isdlc init` |
 | Git clone | `git clone <repo> && ./install.sh` |
 | Windows | `.\install.ps1` |
 
