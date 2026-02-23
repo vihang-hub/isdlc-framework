@@ -1047,7 +1047,8 @@ describe('TC-08: Non-Functional Requirements', () => {
         );
     });
 
-    // TC-08.4: No new hook files added
+    // TC-08.4: Hook file count matches expected (NFR-05)
+    // REQ-0001 FR-002 adds inject-session-cache.cjs (29 total)
     it('TC-08.4: no new hook files added (NFR-05)', () => {
         const hooksDir = path.join(PROJECT_ROOT, 'src', 'claude', 'hooks');
         if (!fs.existsSync(hooksDir)) {
@@ -1056,8 +1057,8 @@ describe('TC-08: Non-Functional Requirements', () => {
         const hookFiles = fs.readdirSync(hooksDir)
             .filter(f => f.endsWith('.cjs') && !f.includes('.test.'));
         assert.equal(
-            hookFiles.length, 28,
-            `Expected 28 hook files (no new hooks), found ${hookFiles.length}`
+            hookFiles.length, 29,
+            `Expected 29 hook files (28 original + inject-session-cache.cjs), found ${hookFiles.length}`
         );
     });
 });

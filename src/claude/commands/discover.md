@@ -221,6 +221,10 @@ When this command is invoked:
    Phases 1b, 1c, 1d run **sequentially** after Phase 1.
    For new projects, D7 handles vision + PRD, D8 handles architecture blueprint.
 
+4. **After the discover-orchestrator returns successfully** (REQ-0001 FR-007):
+   Rebuild the session cache by running: `node bin/rebuild-cache.js`
+   If the rebuild fails, log a warning but do not fail the discovery.
+
 ### Related Commands
 - `/isdlc feature` - Build a new feature after discover completes
 - `/isdlc fix` - Fix a bug after discover completes

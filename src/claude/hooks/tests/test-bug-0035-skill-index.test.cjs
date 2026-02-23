@@ -524,21 +524,21 @@ describe('TC-B35-08: Installed path .claude/skills/ resolution [FR-02, AC-02-02]
 // RED STATE: Current code never checks .claude/skills/ (GH-82)
 // =============================================================================
 
-describe('TC-B35-09: Installed path takes precedence [FR-02, AC-02-03]', () => {
-    it('[P1] AC-02-03: .claude/skills/ is used when both paths exist', () => {
+describe('TC-B35-09: Dev path takes precedence [FR-02, REQ-0001 ADR-0028]', () => {
+    it('[P1] AC-02-03: src/claude/skills/ is used when both paths exist (dev mode precedence)', () => {
         const tmpDir = createProductionSchemaProject({ bothPaths: true });
         const common = loadCommon(tmpDir);
 
         const result = common.getAgentSkillIndex('test-agent-alpha');
 
-        // RED: Current code returns [] (GH-81) and never checks .claude/ (GH-82)
+        // REQ-0001: _buildSkillPathIndex scans src/ first (dev mode takes precedence)
         assert.ok(result.length > 0,
             'Should resolve skills when both paths exist');
 
         const entry = result.find(e => e.id === 'TST-001');
         assert.ok(entry, 'Should find TST-001');
-        assert.ok(entry.path.includes('.claude/skills/'),
-            `Installed path .claude/skills/ should take precedence, got: ${entry.path}`);
+        assert.ok(entry.path.includes('src/claude/skills/'),
+            `Dev path src/claude/skills/ should take precedence, got: ${entry.path}`);
 
         cleanup(tmpDir);
     });

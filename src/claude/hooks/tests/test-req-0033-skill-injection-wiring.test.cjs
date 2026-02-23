@@ -420,10 +420,11 @@ describe('TC-R33-07: Monorepo path resolution in STEP B [FR-005]', () => {
 
 describe('TC-R33-08: Regression guards for unchanged blocks [CON-006]', () => {
 
+    // REQ-0001 FR-005: GATE REQUIREMENTS INJECTION block now includes session context lookup
     it('[P0] TC-R33-08.1: GATE REQUIREMENTS INJECTION block still present and intact', () => {
         const content = getIsdlcContent();
         assert.ok(
-            content.includes('GATE REQUIREMENTS INJECTION (REQ-0024)'),
+            content.includes('GATE REQUIREMENTS INJECTION (REQ-0024'),
             'GATE REQUIREMENTS INJECTION block must remain intact (CON-006)'
         );
         assert.ok(

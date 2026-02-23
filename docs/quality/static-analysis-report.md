@@ -1,9 +1,9 @@
 # Static Analysis Report
 
 **Project:** iSDLC Framework
-**Workflow:** BUG-0028-agents-ignore-injected-gate-requirements (fix)
+**Workflow:** REQ-0001-implement-sessionstart-hook-for-skill-cache-injection (feature)
 **Phase:** 08 - Code Review & QA
-**Date:** 2026-02-22
+**Date:** 2026-02-23
 **Updated by:** QA Engineer (Phase 08)
 
 ---
@@ -12,157 +12,185 @@
 
 | Tool | Status | Notes |
 |------|--------|-------|
-| Node --check (syntax) | PASS | All 2 modified JavaScript files validated |
-| Manual code review | PASS | All 8 changed files reviewed |
+| Manual code review | PASS | All 11 changed/new files reviewed |
+| Syntax validation (node -c) | PASS | CJS and ESM files validated |
+| JSON validation | PASS | settings.json, skills-manifest.json |
+| Module load test | PASS | common.cjs loads, exports verified |
+| npm audit | PASS | 0 vulnerabilities |
 | ESLint | NOT CONFIGURED | No `.eslintrc*` file in project |
 | TypeScript | NOT CONFIGURED | Project uses plain JavaScript |
 
 ---
 
-## 2. Syntax Validation
+## 2. File Validation
 
-| File | Command | Result |
-|------|---------|--------|
-| `src/claude/hooks/lib/gate-requirements-injector.cjs` | `node -c` | PASS |
-| `src/claude/hooks/branch-guard.cjs` | `node -c` | PASS |
-| `src/claude/hooks/tests/gate-requirements-injector.test.cjs` | Validated via `node --test` | PASS |
-| `src/claude/hooks/tests/branch-guard.test.cjs` | Validated via `node --test` | PASS |
-| `src/claude/agents/05-software-developer.md` | Markdown structure review | PASS |
-| `src/claude/agents/16-quality-loop-engineer.md` | Markdown structure review | PASS |
-| `src/claude/agents/06-integration-tester.md` | Markdown structure review | PASS |
-| `src/claude/commands/isdlc.md` | Markdown structure review | PASS |
+| File | Method | Result |
+|------|--------|--------|
+| `src/claude/hooks/inject-session-cache.cjs` | `node -c` | PASS |
+| `bin/rebuild-cache.js` | `node -c` | PASS |
+| `src/claude/hooks/lib/common.cjs` | `require()` | PASS (loads without errors) |
+| `src/claude/settings.json` | `JSON.parse()` | PASS |
+| `src/claude/hooks/config/skills-manifest.json` | `JSON.parse()` (implicit via tests) | PASS |
+| `src/claude/hooks/tests/test-session-cache-builder.test.cjs` | `node --test` execution | PASS (44/44) |
+| `src/claude/hooks/tests/test-inject-session-cache.test.cjs` | `node --test` execution | PASS (7/7) |
 
 ---
 
-## 3. Manual Static Analysis: Production Code
+## 3. Manual Static Analysis: New Production Files
 
-### 3.1 `gate-requirements-injector.cjs` -- BUG-0028 Changes
+### 3.1 `inject-session-cache.cjs` (SessionStart Hook)
 
 | Check | Result | Details |
 |-------|--------|---------|
-| Unused variables | PASS | All variables consumed within their scope |
-| Unreachable code | PASS | All paths reachable |
-| Type coercion risks | PASS | Explicit boolean checks, no implicit coercion |
-| eval() / Function() | PASS | Not present |
-| Shell execution | PASS | Not present |
-| throw statements | PASS | Zero `throw` statements (NFR-002) |
-| External dependencies | PASS | Only `fs` and `path` (CON-001) |
-| Error handling | PASS | All new functions wrapped in try/catch |
-| Fail-open design | PASS | `buildCriticalConstraints` returns `[]`, `buildConstraintReminder` returns `''` on error |
+| 'use strict' directive | PASS | Present at line 2 |
+| CJS require() only | PASS | `require('fs')`, `require('path')` only |
+| No common.cjs dependency | PASS | Self-contained per ADR-0027 |
+| process.stdout.write() | PASS | Used for clean output (no trailing newline) |
+| Error handling | PASS | Bare catch with empty body (fail-open) |
+| No process.exit() | PASS | Exits naturally (exit code 0) |
+| No console.log/error | PASS | Silent hook per design |
+| Path construction | PASS | `path.join()` with env var + hardcoded relative |
+| No user-controlled input in paths | PASS | Only CLAUDE_PROJECT_DIR env var |
 
-### 3.2 `branch-guard.cjs` -- BUG-0028 Changes
-
-| Check | Result | Details |
-|-------|--------|---------|
-| String template safety | PASS | Variables in template literals are validated upstream |
-| Control flow change | PASS | No control flow change, only string content changed |
-| Process exit behavior | PASS | Unchanged (exit 0 after outputBlockResponse) |
-
-### 3.3 Complexity
-
-| Component | Est. Cyclomatic Complexity | Change | Threshold | Status |
-|-----------|---------------------------|--------|-----------|--------|
-| buildCriticalConstraints() | 5 | New | < 15 | OK |
-| buildConstraintReminder() | 2 | New | < 15 | OK |
-| formatBlock() | ~8 | +1 branch | < 15 | OK |
-| buildGateRequirementsBlock() | ~7 | +1 branch | < 15 | OK |
-| branch-guard.cjs (block message) | 0 | String only | N/A | OK |
-
----
-
-## 4. Manual Static Analysis: Agent Prompt Files
-
-### 4.1 `05-software-developer.md` (line 29-31)
-
-| Check | Result |
-|-------|--------|
-| Markdown blockquote structure | PASS -- 3-line blockquote with bold heading |
-| No competing "save work" / "commit" language | PASS |
-| Dead cross-reference removed | PASS -- `See **Git Commit Prohibition** in CLAUDE.md` replaced with inline content |
-
-### 4.2 `16-quality-loop-engineer.md` (line 33-35)
-
-| Check | Result |
-|-------|--------|
-| Markdown blockquote structure | PASS -- identical pattern to 05-software-developer |
-| No competing language | PASS |
-| Dead cross-reference removed | PASS |
-
-### 4.3 `06-integration-tester.md` (line 23-25)
-
-| Check | Result |
-|-------|--------|
-| Markdown blockquote structure | PASS -- new 3-line blockquote |
-| Placement after iteration enforcement | PASS -- follows existing blockquote pattern |
-| No competing language | PASS |
-
----
-
-## 5. Manual Static Analysis: Test Code
-
-### 5.1 `gate-requirements-injector.test.cjs` (BUG-0028 additions)
+### 3.2 `bin/rebuild-cache.js` (CLI Escape Hatch)
 
 | Check | Result | Details |
 |-------|--------|---------|
-| Test isolation | PASS | Each test uses `loadModule()` with cache clearing |
-| Filesystem cleanup | PASS | `afterEach(() => destroyTestDir())` in all describe blocks |
-| Assertion library | PASS | `node:assert/strict` exclusively |
-| Test framework | PASS | `node:test` (built-in) |
-| No hardcoded paths | PASS | All paths resolved via `__dirname` |
-| No flaky patterns | PASS | No timers, no network, no randomness |
-| Assertion messages | PASS | All assertions include descriptive messages |
+| Shebang line | PASS | `#!/usr/bin/env node` |
+| ESM imports | PASS | `import { createRequire } from 'module'` |
+| createRequire() bridge | PASS | `createRequire(import.meta.url)` per ADR-0030 |
+| Flag parsing | PASS | `process.argv.includes('--verbose')` |
+| Error reporting | PASS | `console.error()` on failure, exit(1) |
+| Success reporting | PASS | `console.log()` with path, size, hash, sections |
+| process.exit() usage | PASS | Explicit exit(0) and exit(1) for CLI tool |
 
-### 5.2 `branch-guard.test.cjs` (BUG-0028 fixes)
+### 3.3 `common.cjs` Additions
 
 | Check | Result | Details |
 |-------|--------|---------|
-| T24 assertion update | PASS | Updated regex to match new block message format |
-| T27-T31 assertion updates | PASS | Updated to verify inline prohibition instead of CLAUDE.md cross-ref |
-| No test weakening | PASS | Assertions updated, not removed |
+| `_buildSkillPathIndex()` | | |
+| - Cache variable declaration | PASS | `_skillPathIndex` and `_skillPathIndexBuiltAt` at module scope |
+| - Mtime-based invalidation | PASS | Checks directory mtime against built timestamp |
+| - Recursive scan safety | PASS | Skips hidden dirs (`.`) and `node_modules` |
+| - First-found-wins | PASS | `if (!index.has(skillId))` guard |
+| - Cache update | PASS | Sets `_skillPathIndex` and `_skillPathIndexBuiltAt` after scan |
+| `_collectSourceMtimes()` | | |
+| - Source file enumeration | PASS | Config files, skill files, persona files, topic files |
+| - Sort determinism | PASS | `sources.sort((a, b) => a.path.localeCompare(b.path))` |
+| - Hash computation | PASS | DJB2-like rolling hash, 8-char hex output |
+| - Empty project handling | PASS | Returns count 0 with valid hash |
+| `rebuildSessionCache()` | | |
+| - .isdlc/ validation | PASS | Throws if missing (only hard failure) |
+| - Section builder pattern | PASS | `buildSection()` with try/catch per section |
+| - 8 sections assembled | PASS | CONSTITUTION through ROUNDTABLE_CONTEXT |
+| - Size warning | PASS | Logs to stderr if >128K chars |
+| - Atomic write | PASS | `fs.writeFileSync()` to final path |
+| - Export visibility | PASS | Public: `rebuildSessionCache`. Test-only: `_buildSkillPathIndex`, `_collectSourceMtimes` |
+| `_resetCaches()` | PASS | Correctly resets `_skillPathIndex` and `_skillPathIndexBuiltAt` |
 
 ---
 
-## 6. Dependency Analysis
+## 4. Manual Static Analysis: Modified Files
 
-No new dependencies introduced. All code uses Node.js built-in modules only (`fs`, `path`, `node:test`, `node:assert/strict`).
+### 4.1 `src/claude/settings.json` -- SessionStart Hook Registration
+
+| Check | Result | Details |
+|-------|--------|---------|
+| SessionStart key location | PASS | At end of hooks object |
+| Matcher format | PASS | Object format with `type: "event"`, `event: "startup"/"resume"` (NOT compact) |
+| Command path | PASS | `node $CLAUDE_PROJECT_DIR/.claude/hooks/inject-session-cache.cjs` |
+| Timeout | PASS | 5000ms per NFR-003 |
+| JSON validity | PASS | File parses without error |
+
+### 4.2 `src/claude/hooks/config/skills-manifest.json` -- FR-008 Cleanup
+
+| Check | Result | Details |
+|-------|--------|---------|
+| `path_lookup` removed | PASS | Not present in file |
+| `skill_paths` removed | PASS | Not present in file |
+| `ownership` preserved | PASS | Still present |
+| `skill_lookup` preserved | PASS | Still present |
+| JSON validity | PASS | File parses without error |
+
+### 4.3 `src/claude/commands/isdlc.md` -- Session Context Lookups
+
+| Check | Result | Details |
+|-------|--------|---------|
+| SKILL_INDEX lookup | PASS | `<!-- SECTION: SKILL_INDEX -->` with `## Agent:` extraction |
+| EXTERNAL_SKILLS lookup | PASS | `<!-- SECTION: EXTERNAL_SKILLS -->` with phase matching |
+| ITERATION_REQUIREMENTS lookup | PASS | `<!-- SECTION: ITERATION_REQUIREMENTS -->` with JSON parse |
+| ARTIFACT_PATHS lookup | PASS | `<!-- SECTION: ARTIFACT_PATHS -->` with JSON parse |
+| CONSTITUTION lookup | PASS | `<!-- SECTION: CONSTITUTION -->` for article extraction |
+| ROUNDTABLE_CONTEXT lookup | PASS | `<!-- SECTION: ROUNDTABLE_CONTEXT -->` for persona + topic |
+| Fail-open fallback pattern | PASS | All lookups have "If not found: FALLBACK" branches |
+| Skill add/wire/remove triggers | PASS | `node bin/rebuild-cache.js` with warning-only on failure |
+
+### 4.4 `src/claude/commands/discover.md` -- Cache Rebuild Trigger
+
+| Check | Result | Details |
+|-------|--------|---------|
+| Trigger placement | PASS | After discover-orchestrator returns |
+| Command | PASS | `node bin/rebuild-cache.js` |
+| Failure handling | PASS | "log a warning but do not fail the discovery" |
+
+### 4.5 `lib/installer.js` -- Cache Rebuild Trigger
+
+| Check | Result | Details |
+|-------|--------|---------|
+| Guard: dryRun | PASS | `if (!dryRun)` guard |
+| Guard: file exists | PASS | `fs.existsSync(commonPath)` |
+| Guard: function exists | PASS | `typeof common.rebuildSessionCache === 'function'` |
+| ESM/CJS bridge | PASS | `createRequire(import.meta.url)` |
+| Error handling | PASS | try/catch with `logger.warning()` |
+
+### 4.6 `lib/updater.js` -- Cache Rebuild Trigger
+
+| Check | Result | Details |
+|-------|--------|---------|
+| Guard: dryRun | PASS | `if (!dryRun)` guard |
+| Guard: file exists | PASS | `fs.existsSync(commonPath)` |
+| Guard: function exists | PASS | `typeof common.rebuildSessionCache === 'function'` |
+| ESM/CJS bridge | PASS | `createRequire(import.meta.url)` |
+| Error handling | PASS | try/catch with `logger.warning()` |
 
 ---
 
-## 7. Code Style Compliance
+## 5. Dependency Analysis
 
-| Check | Result |
-|-------|--------|
-| Consistent indentation (4 spaces) | PASS |
-| Consistent semicolons (required) | PASS |
-| Consistent quote style (single quotes) | PASS |
-| JSDoc on new functions | PASS (buildCriticalConstraints, buildConstraintReminder) |
-| CommonJS module pattern | PASS |
-| `'use strict'` at file top | PASS |
-| Max line length (< 200 chars) | PASS |
+No new dependencies introduced. Cache builder uses only Node.js built-in modules:
+- `fs` (file system operations)
+- `path` (path construction)
+- `module` (createRequire bridge in ESM files only)
+
+Runtime dependency count unchanged: `chalk`, `fs-extra`, `prompts`, `semver`.
 
 ---
 
-## 8. NFR-002 Compliance Check (Fail-Open)
+## 6. Security Scan
 
-| Function | try/catch present | Return on error | throw statements | Status |
-|----------|-------------------|-----------------|-------------------|--------|
-| buildCriticalConstraints() | Yes | `[]` | 0 | PASS |
-| buildConstraintReminder() | Yes | `''` | 0 | PASS |
-| formatBlock() | Yes (pre-existing) | `''` | 0 | PASS |
-| buildGateRequirementsBlock() | Yes (pre-existing) | `''` | 0 | PASS |
+| Check | Result | Details |
+|-------|--------|---------|
+| npm audit | PASS | 0 vulnerabilities |
+| No secrets in changes | PASS | No credentials, API keys, or tokens |
+| No eval()/Function() | PASS | Not present |
+| No shell injection vectors | PASS | No user input in command construction |
+| Path traversal prevention | PASS | All paths via path.join() from known roots |
+| No credential leakage in cache | PASS | TC-SEC-02 verifies .env and credentials excluded |
+| Hidden directory exclusion | PASS | TC-INDEX-09 verifies |
+| node_modules exclusion | PASS | TC-INDEX-10 verifies |
+| External content truncation | PASS | 5000 char limit prevents unbounded injection |
 
 ---
 
-## 9. Summary
+## 7. Summary
 
 | Category | Status |
 |----------|--------|
-| Syntax validation (node --check) | PASS (2/2 JS files) |
-| Markdown structure validation | PASS (4/4 .md files) |
-| No security issues | PASS |
-| No `throw` statements in injector | PASS |
-| No external dependencies (CON-001) | PASS |
-| Code style consistent | PASS |
-| Complexity within bounds | PASS (max: ~8, threshold: 15) |
-| Fail-open design preserved (NFR-002) | PASS |
-| Test code quality | PASS (proper isolation, no flaky patterns) |
+| Syntax validation (all files) | PASS |
+| Module loading | PASS |
+| JSON validity | PASS |
+| CJS convention compliance | PASS |
+| Test execution (51/51) | PASS |
+| Security scan | PASS (0 vulnerabilities) |
+| Dependency analysis | PASS (no new deps) |
+| Fail-open pattern compliance | PASS (all consumers) |

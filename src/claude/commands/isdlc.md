@@ -650,16 +650,22 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
    - **Jira** (if source is "jira" and source_id matches PROJECT-N pattern): Call `getAccessibleAtlassianResources` to resolve cloudId (use first accessible resource if multiple), then call `getJiraIssue(cloudId, source_id)` to fetch the ticket --> issueData (summary, description, issuetype, priority). If the Jira fetch fails, fail fast: "Could not fetch Jira ticket {source_id}: {error}" and STOP (matching GitHub fail-fast behavior). Pass fetched Jira content into draft.md: use the summary as the draft heading, the description body as context, and include acceptance criteria if present in the Jira description.
    - `Grep "GH-N"` (or source_id) across `docs/requirements/*/meta.json` --> existingMatch (slug and directory if found, null if not)
    - `Glob docs/requirements/{TYPE}-*` --> folderList (for sequence number calculation)
-   - Read 3 persona files in parallel --> personaContent:
-     - `src/claude/agents/persona-business-analyst.md`
-     - `src/claude/agents/persona-solutions-architect.md`
-     - `src/claude/agents/persona-system-designer.md`
-   - `Glob src/claude/skills/analysis-topics/**/*.md` --> topicPaths
+   - **Persona + topic files** (REQ-0001 FR-006): Check if session context contains `<!-- SECTION: ROUNDTABLE_CONTEXT -->`.
+     If found:
+       - Extract persona content from `### Persona: Business Analyst`, `### Persona: Solutions Architect`, `### Persona: System Designer` headings --> personaContent
+       - Extract topic content from `### Topic: {topic_id}` headings --> topicContent
+       - SKIP the persona file reads and topic Glob/reads below.
+     If not found (cache absent or section missing):
+       - FALLBACK: Read 3 persona files in parallel --> personaContent:
+         - `src/claude/agents/persona-business-analyst.md`
+         - `src/claude/agents/persona-solutions-architect.md`
+         - `src/claude/agents/persona-system-designer.md`
+       - `Glob src/claude/skills/analysis-topics/**/*.md` --> topicPaths
 
    **Group 2** (needs Group 1 results, fire all in parallel):
    - **If no existingMatch found**: Auto-add without confirmation prompt -- invoke the `add` handler with the input and pre-fetched issueData (title, labels, body for GitHub; summary, description, issuetype for Jira). The add handler creates the folder, draft.md, meta.json, and updates BACKLOG.md. Reuse the in-memory meta and draft objects it produces (do NOT re-read from disk).
    - **If existingMatch found**: Read meta.json from the existing folder; read draft.md from disk.
-   - Read all topic files from topicPaths in parallel --> topicContent
+   - **If topicPaths was populated (fallback path)**: Read all topic files from topicPaths in parallel --> topicContent
 
    **Auto-add rationale** (FR-002): For `#N` and `PROJECT-N` inputs, intent to analyze is unambiguous -- the user explicitly referenced an external ticket. Skip the "Add to backlog?" confirmation and invoke the add handler automatically when no existing folder is found. For non-external-ref inputs (slugs, descriptions), preserve the existing confirmation prompt behavior (step 3b).
 
@@ -672,9 +678,10 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
    - If no match: "No matching item found. Would you like to add it to the backlog first?"
      If user confirms: run `add` handler with the input, then continue with analysis.
 
-   For non-external refs, also pre-read persona and topic files for dispatch optimization:
-   - Read 3 persona files in parallel --> personaContent
-   - Glob + read topic files --> topicContent
+   For non-external refs, also pre-read persona and topic files for dispatch optimization (REQ-0001 FR-006):
+   - Check if session context contains `<!-- SECTION: ROUNDTABLE_CONTEXT -->`.
+     If found: extract personaContent and topicContent from cached section (same extraction as step 3a).
+     If not found: FALLBACK -- Read 3 persona files in parallel --> personaContent; Glob + read topic files --> topicContent
 
    After resolution, proceed to step 4.
 
@@ -1517,13 +1524,15 @@ Parse the subcommand: `add`, `wire`, `list`, or `remove`.
 7. Copy file to external skills directory (resolve via `resolveExternalSkillsPath()`, create dir if needed)
 8. Analyze content for binding suggestions (scan body for phase keywords, generate suggestions with confidence)
 9. Delegate to `skill-manager` agent for wiring session (pass: skill name, description, suggestions, available phases)
-10. Write manifest with skill entry (name, description, file, added_at, bindings)
+10. Write manifest with skill entry (name, description, file, added_at, source: "user", bindings) (REQ-0001 FR-009: include source field)
 11. Display confirmation: "Skill '{name}' registered and wired to phases: {phases}. Delivery: {delivery_type} | Mode: always"
+12. Rebuild session cache (REQ-0001 FR-007): Run `node bin/rebuild-cache.js`. If the rebuild fails, log a warning but do not fail the skill add operation.
 
 **`skill wire <name>`** (FR-003, FR-009):
 1. Load manifest. Find skill by name. If not found: display error with suggestion to run `skill list`.
 2. Delegate to `skill-manager` agent with existing bindings pre-loaded.
 3. Update skill entry with new bindings. Write manifest. Display confirmation.
+4. Rebuild session cache (REQ-0001 FR-007): Run `node bin/rebuild-cache.js`. If the rebuild fails, log a warning but do not fail the skill wire operation.
 
 **`skill list`** (FR-006):
 1. Load manifest. If null or empty: display "No external skills registered. Use '/isdlc skill add <path>' to add one."
@@ -1534,6 +1543,7 @@ Parse the subcommand: `add`, `wire`, `list`, or `remove`.
 2. Prompt: "Remove '{name}'? [K] Keep file [D] Delete file [C] Cancel"
 3. On K: Remove from manifest, preserve file. On D: Remove from manifest, delete file. On C: Abort.
 4. Write updated manifest. Display confirmation.
+5. Rebuild session cache (REQ-0001 FR-007): Run `node bin/rebuild-cache.js`. If the rebuild fails, log a warning but do not fail the skill remove operation.
 
 **If action is `add`**: Execute add handler inline -- no orchestrator, no Phase-Loop Controller.
 
@@ -1551,38 +1561,53 @@ Read `agent_modifiers` for this phase from `.isdlc/state.json` → `active_workf
 
 **Skill injection** (before constructing the Task tool prompt below, execute these steps to build skill context):
 
-**SKILL INJECTION STEP A — Built-In Skill Index**:
-1. Run this single-line Bash command (replace `{agent_name}` with the resolved agent name from the table above):
-   ```
-   node -e "const c = require('./src/claude/hooks/lib/common.cjs'); const r = c.getAgentSkillIndex('{agent_name}'); process.stdout.write(c.formatSkillIndexBlock(r));"
-   ```
-2. If the Bash tool call succeeds and produces non-empty stdout: save the output as `{built_in_skills_block}`.
-3. If the Bash tool call fails or produces empty output: set `{built_in_skills_block}` to empty string. Continue to Step B.
+**SKILL INJECTION STEP A — Built-In Skill Index** (REQ-0001 FR-005):
+1. Check if session context contains `<!-- SECTION: SKILL_INDEX -->`.
+   If found:
+     a. Extract the block for the current agent by searching for `## Agent: {agent_name}` within the SKILL_INDEX section.
+     b. Extract from `## Agent: {agent_name}` up to the next `## Agent:` heading or the closing `<!-- /SECTION: SKILL_INDEX -->` delimiter.
+     c. Save the extracted block as `{built_in_skills_block}`.
+   If not found (cache absent or section missing):
+     a. FALLBACK: Run this single-line Bash command (replace `{agent_name}` with the resolved agent name from the table above):
+        ```
+        node -e "const c = require('./src/claude/hooks/lib/common.cjs'); const r = c.getAgentSkillIndex('{agent_name}'); process.stdout.write(c.formatSkillIndexBlock(r));"
+        ```
+     b. If the Bash tool call succeeds and produces non-empty stdout: save the output as `{built_in_skills_block}`.
+     c. If the Bash tool call fails or produces empty output: set `{built_in_skills_block}` to empty string.
+2. Continue to Step B.
 
-**SKILL INJECTION STEP B — External Skills** (fail-open — if ANY step fails, set `{external_skills_blocks}` to empty and skip to Step C):
-1. Determine the external skills manifest path:
+**SKILL INJECTION STEP B — External Skills** (fail-open — if ANY step fails, set `{external_skills_blocks}` to empty and skip to Step C) (REQ-0001 FR-005):
+1. Check if session context contains `<!-- SECTION: EXTERNAL_SKILLS -->`.
+   If found AND the section contains skill entries matching the current `{phase_key}` or `{agent_name}`:
+     a. Extract matching skill blocks from the EXTERNAL_SKILLS section.
+     b. Format each block per the delivery_type rules (steps 6d-6e below).
+     c. Join as `{external_skills_blocks}`.
+     d. SKIP to Step C.
+   If not found (cache absent or section missing):
+     a. FALLBACK: Continue with disk-based approach (existing steps 2-7 below).
+2. Determine the external skills manifest path:
    - If MONOREPO CONTEXT is present in the current delegation: `docs/isdlc/projects/{project-id}/external-skills-manifest.json`
    - Otherwise: `docs/isdlc/external-skills-manifest.json`
-2. Read the manifest file using Read tool.
+3. Read the manifest file using Read tool.
    - If file does not exist or Read fails: set `{external_skills_blocks}` to empty. SKIP to Step C.
-3. Parse the content as JSON. If parse fails: set `{external_skills_blocks}` to empty. SKIP to Step C.
-4. Filter `manifest.skills[]` array: keep only skills where ALL of these conditions are true:
+4. Parse the content as JSON. If parse fails: set `{external_skills_blocks}` to empty. SKIP to Step C.
+5. Filter `manifest.skills[]` array: keep only skills where ALL of these conditions are true:
    - `skill.bindings` exists (skip skills without bindings for backward compatibility)
    - `skill.bindings.injection_mode === "always"`
    - EITHER the current `{phase_key}` is in `skill.bindings.phases[]` OR the current `{agent_name}` is in `skill.bindings.agents[]`
-5. If no skills match the filter: set `{external_skills_blocks}` to empty. SKIP to Step C.
-6. For each matched skill:
+6. If no skills match the filter: set `{external_skills_blocks}` to empty. SKIP to Step C.
+7. For each matched skill:
    a. Determine the external skills directory:
       - If MONOREPO CONTEXT: `.isdlc/projects/{project-id}/skills/external/`
       - Otherwise: `.claude/skills/external/`
    b. Read `{skills_directory}/{skill.file}` using Read tool.
    c. If Read fails for this skill: skip this skill, continue with next matched skill.
    d. Let `content` = the file contents. If `content.length > 10000` characters: set `delivery_type` to `"reference"` regardless of `skill.bindings.delivery_type`.
-   e. Format the skill block based on `delivery_type` (use `skill.bindings.delivery_type` unless overridden by step 6d):
+   e. Format the skill block based on `delivery_type` (use `skill.bindings.delivery_type` unless overridden by step 7d):
       - `"context"`: `EXTERNAL SKILL CONTEXT: {skill.name}\n---\n{content}\n---`
       - `"instruction"`: `EXTERNAL SKILL INSTRUCTION ({skill.name}): You MUST follow these guidelines:\n{content}`
       - `"reference"`: `EXTERNAL SKILL AVAILABLE: {skill.name} -- Read from {skills_directory}/{skill.file} if relevant to your current task`
-7. Join all formatted skill blocks with double newlines (`\n\n`) as `{external_skills_blocks}`.
+8. Join all formatted skill blocks with double newlines (`\n\n`) as `{external_skills_blocks}`.
 
 **SKILL INJECTION STEP C — Assemble into delegation prompt**:
 - If `{built_in_skills_block}` is non-empty: include it in the delegation prompt after DISCOVERY CONTEXT (or after WORKFLOW MODIFIERS if no discovery context).
@@ -1763,15 +1788,22 @@ Use Task tool → {agent_name} with:
    {DISCOVERY CONTEXT: ... — if phase 02 or 03}
    {built_in_skills_block — from SKILL INJECTION STEP A above, omit if empty}
    {external_skills_blocks — from SKILL INJECTION STEP B above, omit if empty}
-   {GATE REQUIREMENTS INJECTION (REQ-0024) — Inject gate pass criteria so the agent knows what hooks will check before it starts. This block is fail-open — if anything fails, continue with the unmodified prompt.
-    1. Read `src/claude/hooks/config/iteration-requirements.json` using Read tool.
-       If file does not exist: SKIP injection entirely (no-op).
+   {GATE REQUIREMENTS INJECTION (REQ-0024, REQ-0001 FR-005) — Inject gate pass criteria so the agent knows what hooks will check before it starts. This block is fail-open — if anything fails, continue with the unmodified prompt.
+    1. Check if session context contains `<!-- SECTION: ITERATION_REQUIREMENTS -->`.
+       If found: parse the JSON content from that section.
+       If not found: Read `src/claude/hooks/config/iteration-requirements.json` using Read tool.
+       If neither succeeds: SKIP injection entirely (no-op).
        Parse as JSON. If parse fails: SKIP injection.
     2. Look up `phase_requirements[{phase_key}]` from the parsed config.
        If the phase key has no entry: SKIP injection (phase has no gate requirements).
-    3. Read `src/claude/hooks/config/artifact-paths.json` using Read tool (optional — skip if missing).
+    3. Check if session context contains `<!-- SECTION: ARTIFACT_PATHS -->`.
+       If found: parse the JSON content from that section.
+       If not found: Read `src/claude/hooks/config/artifact-paths.json` using Read tool (optional — skip if missing).
        Extract `phases[{phase_key}].paths[]` if present. For each path, replace `{artifact_folder}` with the actual artifact folder name.
-    4. If `constitutional_validation` is enabled for this phase, read `docs/isdlc/constitution.md`.
+    4. If `constitutional_validation` is enabled for this phase:
+       Check if session context contains `<!-- SECTION: CONSTITUTION -->`.
+       If found: extract article titles from the cached constitution content.
+       If not found: read `docs/isdlc/constitution.md` from disk.
        Extract article titles using the pattern `### Article {ID}: {Title}` for each article ID listed in the phase config's `constitutional_validation.articles[]` array.
     5. Read `active_workflow.phases` array from state.json (the ordered list of phase keys in the current workflow).
        If missing or not an array: use `null` (the injector will use fail-safe defaults).

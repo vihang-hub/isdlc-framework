@@ -301,6 +301,34 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "matcher": {
+          "type": "event",
+          "event": "startup"
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/inject-session-cache.cjs",
+            "timeout": 5000
+          }
+        ]
+      },
+      {
+        "matcher": {
+          "type": "event",
+          "event": "resume"
+        },
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/inject-session-cache.cjs",
+            "timeout": 5000
+          }
+        ]
+      }
     ]
   }
 }

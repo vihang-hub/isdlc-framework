@@ -1,66 +1,64 @@
 # Technical Debt Inventory
 
 **Project:** iSDLC Framework
-**Workflow:** BUG-0028-agents-ignore-injected-gate-requirements (fix)
+**Workflow:** REQ-0001-implement-sessionstart-hook-for-skill-cache-injection (feature)
 **Phase:** 08 - Code Review & QA
-**Date:** 2026-02-22
+**Date:** 2026-02-23
 **Updated by:** QA Engineer (Phase 08)
 
 ---
 
-## 1. New Technical Debt (This Fix)
+## 1. New Technical Debt (This Feature)
 
-### TD-BUG28-001: Growth Budget Test Baseline Anomaly
+### TD-REQ01-N01: Cache Size Exceeds Context Window Budget
 
 **Severity**: Low
-**Location**: `src/claude/hooks/tests/gate-requirements-injector.test.cjs` (Test 6, lines 1052-1082)
-**Description**: The 40% growth budget test compares `formatBlock()` output without `isIntermediatePhase` (which defaults to `true`) against the same call with explicit `true`. Both produce identical output, so the "growth" is 0%. The test passes but does not actually measure old-format vs. new-format growth. Consider using a stored baseline character count instead.
-**Impact**: Test intent is still valid (prevents future bloat), but does not validate the original NFR-001 assertion about growth from the pre-BUG-0028 format.
+**Location**: `src/claude/hooks/lib/common.cjs` rebuildSessionCache()
+**Description**: The generated session cache file is 153,863 characters, exceeding the NFR-009 target of ~128,000 characters. The function correctly logs a warning to stderr in verbose mode but does not enforce or fail on the budget. The tilde in the requirement indicates this is approximate, and the cache functions correctly at the larger size.
+**Recommendation**: Consider adding section-level truncation for the SKILL_INDEX section (largest contributor) or implementing a `--budget-check` flag for CI integration. Could also be addressed by excluding less-used skill descriptions from the cache.
+
+### TD-REQ01-N02: Hardcoded Persona File List
+
+**Severity**: Low
+**Location**: `src/claude/hooks/lib/common.cjs` line 4079
+**Description**: The `rebuildSessionCache()` function hardcodes three persona filenames. If new persona files are added, the cache will not include them without a code change.
+**Recommendation**: Future enhancement: scan for all `persona-*.md` files in the agents directory.
 
 ---
 
-## 2. Resolved Technical Debt (This Fix)
+## 2. Resolved Technical Debt (This Feature)
 
-### TD-BUG28-R01: Dead Cross-References in Agent Prompt Files (RESOLVED)
+### TD-REQ01-R01: Redundant Static File Reads (RESOLVED)
+
+**Severity**: High
+**Location**: Framework-wide (hooks, commands, phase agents)
+**Description**: A single 9-phase feature workflow triggered 200-340 reads of static files that never change during execution. Skills, constitution, configuration, persona definitions, and topic definitions were re-read from disk at every phase transition and agent delegation.
+**Resolution**: Unified SessionStart cache pre-loads all static content into the LLM context at session start. All downstream consumers reference cached content from session context, failing open to disk reads when cache is absent.
+**Status**: RESOLVED. Verified by 51 unit/integration tests.
+
+### TD-REQ01-R02: Unused path_lookup and skill_paths in Manifest (RESOLVED)
 
 **Severity**: Medium
-**Location**: `src/claude/agents/05-software-developer.md` (line 29), `src/claude/agents/16-quality-loop-engineer.md` (line 33)
-**Description**: Both files contained `> See **Git Commit Prohibition** in CLAUDE.md.` -- a cross-reference to a section that DOES NOT EXIST in CLAUDE.md. This was the most impactful root cause (RC-2) of agents ignoring gate requirements: the agents followed the reference, found nothing, and proceeded without the constraint.
-**Resolution**: Replaced dead cross-references with inline 3-line prohibition blocks that state the prohibition, the reason, and the consequence explicitly.
-**Status**: RESOLVED. Verified by branch-guard.test.cjs T27-T31.
+**Location**: `src/claude/hooks/config/skills-manifest.json`
+**Description**: The `path_lookup` (240 entries) and `skill_paths` (redundant copy) fields consumed manifest space but were never used by runtime hooks. They were maintenance burdens and increased JSON parse time.
+**Resolution**: Removed both fields. Replaced with runtime `_buildSkillPathIndex()` that scans SKILL.md files directly with mtime-based caching.
+**Status**: RESOLVED. Verified by TC-MAN-01, TC-MAN-02, TC-MAN-03.
 
-### TD-BUG28-R02: Missing Commit Prohibition in integration-tester Agent (RESOLVED)
+### TD-PRE-005: SessionStart Skill Cache Not Implemented (RESOLVED)
 
-**Severity**: Low
-**Location**: `src/claude/agents/06-integration-tester.md`
-**Description**: The integration-tester agent had no commit prohibition despite being an implementation-adjacent agent that runs tests (and might attempt to commit test results).
-**Resolution**: Added inline 3-line prohibition block matching the pattern used by 07-qa-engineer.md.
+**Severity**: Low (previously tracked)
+**Location**: GitHub Issue #91
+**Description**: Previously tracked as pre-existing debt -- the SessionStart cache feature was proposed but not implemented. Now fully implemented by REQ-0001.
 **Status**: RESOLVED.
-
-### TD-BUG28-R03: Weak Constraint Delivery in Gate Requirements Injection (RESOLVED)
-
-**Severity**: Medium
-**Location**: `src/claude/hooks/lib/gate-requirements-injector.cjs`
-**Description**: The `formatBlock()` function produced an informational block (`GATE REQUIREMENTS FOR PHASE NN`) that agents treated as context rather than hard constraints. No imperative prohibitions, no primacy/recency bias reinforcement.
-**Resolution**: Added `CRITICAL CONSTRAINTS` section at the top (primacy bias) and `REMINDER` footer at the bottom (recency bias) with imperative prohibition statements derived from phase configuration.
-**Status**: RESOLVED. Verified by 18 new tests.
-
-### TD-BUG28-R04: Unhelpful Hook Block Messages (RESOLVED)
-
-**Severity**: Low
-**Location**: `src/claude/hooks/branch-guard.cjs`
-**Description**: When branch-guard blocked a commit, the message said "not allowed on the workflow branch during intermediate phases" without referencing the constraint the agent should have followed. Agents would sometimes retry the commit because the message did not explicitly say "Do NOT retry."
-**Resolution**: Updated message to reference `CRITICAL CONSTRAINTS` block and added "Do NOT retry the commit -- it will be blocked again" as the first bullet in the "What to do instead" section.
-**Status**: RESOLVED. Verified by branch-guard.test.cjs T24.
 
 ---
 
 ## 3. Pre-Existing Technical Debt (Unchanged)
 
-### TD-PRE-001: Pre-Existing Test Failures (68 total)
+### TD-PRE-001: Pre-Existing Test Failures (14 total)
 
 **Severity**: Medium
-**Description**: 68 tests fail in the full CJS hook suite, all pre-existing and unrelated to BUG-0028. These are in Jira sync tests (M4), backlog picker tests (M2a/M2b), workflow-finalizer tests (WF14-WF15), and state-json-pruning tests (T01-T14).
+**Description**: 14 tests fail in the full test suite (8 ESM, 6 CJS), all pre-existing and unrelated to REQ-0001. These include agent count checks (expects 48, found 64), sync drift checks, delegation-gate tests, and workflow-completion-enforcer tests.
 
 ### TD-PRE-002: No Mutation Testing
 
@@ -83,13 +81,13 @@
 
 | Category | Count | Details |
 |----------|-------|---------|
-| New debt items | 1 | TD-BUG28-001 (test baseline anomaly, low severity) |
-| Resolved debt items | 4 | TD-BUG28-R01 through R04 |
+| New debt items | 2 | TD-REQ01-N01 (cache budget), TD-REQ01-N02 (hardcoded personas) |
+| Resolved debt items | 3 | TD-REQ01-R01 (redundant reads), TD-REQ01-R02 (unused manifest fields), TD-PRE-005 (cache not implemented) |
 | Pre-existing debt | 4 | TD-PRE-001 through TD-PRE-004 |
-| Net change | -3 | Bug fix reduces technical debt |
+| Net change | -1 | Feature reduces net technical debt |
 
 ---
 
 ## 5. Summary
 
-This bug fix resolves 4 existing technical debt items (2 dead cross-references in agent files, weak constraint delivery in injection block, unhelpful hook block messages) and introduces 1 low-severity item (test baseline anomaly). The net effect is a reduction of 3 debt items. Pre-existing items remain unchanged and are tracked for future resolution.
+This feature resolves 3 technical debt items (redundant static file reads, unused manifest fields, and the previously tracked "SessionStart cache not implemented" item) while introducing 2 low-severity items (cache size budget and hardcoded persona list). The net effect is a reduction of 1 debt item. The 2 new items are low severity and documented with clear remediation paths.
