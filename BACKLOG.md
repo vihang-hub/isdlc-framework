@@ -146,6 +146,68 @@
   - **Scope**: Medium-large — contribution directory convention, task suggestion engine, gate integration, config. Depends on REQ-0013 (supervised mode) being complete first.
   - **Complexity**: Medium — builds on supervised mode infrastructure, main new work is task suggestion engine and contribution consumption logic
 
+### Skills Management
+
+- #81 [ ] Fix `getAgentSkillIndex()` schema mismatch — function expects objects but manifest has strings
+  - **Problem**: `getAgentSkillIndex()` in `common.cjs` accesses `skill.path`, `skill.id`, `skill.name` on ownership entries, but production manifest stores skills as flat string arrays (`["DEV-001", "DEV-002"]`). Function silently returns empty arrays for every agent.
+  - **Fix**: Rewrite function to resolve skill metadata from `skill_lookup` + `path_lookup` tables
+  - **Severity**: Critical — built-in skill injection is completely broken
+
+- #82 [ ] Fix skill path resolution — hardcoded `src/claude/skills/` fails in installed projects
+  - **Problem**: `getAgentSkillIndex()` resolves paths as `src/claude/skills/{path}/SKILL.md` but installed projects only have `.claude/skills/`. Skills can never be found post-install.
+  - **Fix**: Add fallback path resolution: `.claude/skills/` first, `src/claude/skills/` second
+  - **Depends on**: #81
+
+- #83 [ ] Fix skill injection tests — mock schema differs from production manifest
+  - **Problem**: Tests use object entries `{ id, name, path }` but production manifest has string arrays. Tests pass but code fails on real data.
+  - **Fix**: Update test fixtures to production format, add test against real manifest
+  - **Depends on**: #81
+
+- #84 [ ] Wire SKILL INDEX BLOCK injection in isdlc.md phase delegation
+  - **Problem**: STEP 3d line 1715 documents skill index injection but it's never executed. Agents are delegated to without knowing what skills they have.
+  - **Fix**: Ensure instruction is clear enough for LLM to execute; verify against fixed `getAgentSkillIndex()`
+  - **Depends on**: #81, #82
+
+- #85 [ ] Unify built-in and external skill injection into coherent two-tier system
+  - **Problem**: Two separate injection mechanisms — built-in via skill index (broken), external via STEP 3d manifest filtering (working). No unified view.
+  - **Design**: Two-tier model — built-in skills as reference list (agent reads on-demand), external/project skills pre-loaded via SessionStart cache (always in context). Both appear in delegation prompt without conflict.
+  - **Depends on**: #81, #82, #84, #91
+
+- #86 [ ] Clean up unused manifest entries — `path_lookup` and `skill_paths`
+  - **Problem**: `path_lookup` (247 entries) and `skill_paths` (1 entry) are not referenced by any production code. ~300 lines of dead data read at every hook invocation.
+  - **Fix**: Remove or repurpose based on #81 approach
+
+- #87 [ ] Add manifest schema validation on load
+  - **Problem**: `loadManifest()` performs no schema validation. Corrupt/mismatched manifests fail silently. The #81 schema mismatch went undetected.
+  - **Fix**: Add `validateManifestSchema()` with warnings on schema issues. Fail-open preserved.
+
+- #88 [ ] Implement project skills distillation step in discover orchestrator
+  - **Problem**: Discovery produces detailed reports but they're treated as documents on a shelf. Only phases 02-03 get discovery context injected, with a 24h expiry. Analyze gets nothing. Later phases are blind to project context.
+  - **Design**: New discover step distills 4 project skills from discovery artifacts:
+    - `project-architecture` (all agents) — component boundaries, data flow, patterns
+    - `project-conventions` (all agents) — naming, error handling, framework usage
+    - `project-domain` (all agents) — terminology, business rules, feature catalog
+    - `project-test-landscape` (testing agents) — coverage gaps, patterns, fragile areas
+  - Skills written to `.claude/skills/external/` with `source: "discover"` in manifest. Each < 5,000 chars, idempotent on re-run.
+  - Triggers `rebuildSkillCache()` after distillation for SessionStart injection (#91)
+  - **Depends on**: #81, #82, #84, #89, #91
+
+- #89 [ ] Update external skills manifest schema with source field for unified skill management
+  - **Design**: Add `source` field to manifest entries: `"discover"` (project skills), `"skills.sh"` (tech-stack skills), `"user"` (manually added). Discover overwrites only its own entries on re-run. User skills never touched. All skills live in `.claude/skills/external/`.
+  - Triggers `rebuildSkillCache()` on every manifest modification
+  - **Depends on**: #86
+
+- #90 [ ] Replace 24h staleness discovery context injection with project skills
+  - **Problem**: Line 1706 of isdlc.md injects discovery context only into phases 02-03 with 24h expiry. Arbitrary, limited, and redundant once project skills exist.
+  - **Fix**: Remove discovery context injection block. Project skills delivered via SessionStart cache to all phases with no expiry.
+  - **Depends on**: #88, #89, #84, #91
+
+- #91 [ ] Implement SessionStart hook for skill cache injection
+  - **Problem**: External skill injection reads files sequentially at every phase delegation — 5-8 reads per phase, 45-72 per workflow.
+  - **Design**: SessionStart hook reads pre-assembled `.isdlc/skill-cache.md` once at session start, outputs to stdout (loaded into LLM context automatically). Zero file reads during workflow execution. Cache rebuilt by discover, skill add/remove/wire.
+  - ~25-30K chars context budget (4 project skills + 2-3 skills.sh skills)
+  - **Depends on**: #88, #89
+
 ### Framework Features
 
 - #33 [ ] TOON format integration — adopt Token-Oriented Object Notation for agent prompts and state data to reduce token usage
@@ -315,10 +377,7 @@
 
 ### Backlog Management UX (from 2026-02-17 gap analysis)
 
-- #7 [ ] Phase A cannot pull Jira ticket content — `jira_get_issue` MCP not implemented
-  - **Problem**: Phase A Step 1 specifies pulling ticket content via Atlassian MCP but no MCP skill or delegation code exists. Users must manually copy-paste Jira ticket content.
-  - **Impact**: Breaks seamless Jira-link-to-analysis flow
-  - **Complexity**: Medium — needs MCP skill file + Phase A delegation code
+- #7 [x] ~~Phase A cannot pull Jira ticket content — `jira_get_issue` MCP not implemented~~ — added Atlassian MCP getJiraIssue integration to add/analyze/fix handlers in isdlc.md **Completed: 2026-02-23**
 
 - #11 [ ] BACKLOG.md completion marking not implemented — items not marked done after finalize
   - **Problem**: Orchestrator finalize step 2.5d specifies marking items `[x]`, adding `**Completed:** {date}`, and moving to `## Completed` section. None implemented. BACKLOG.md unchanged after workflow completion.

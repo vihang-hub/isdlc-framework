@@ -1,0 +1,27 @@
+Requirement,AC,Test Case,Test Type,Priority,Category,Status
+FR-001,AC-001-01,SV-01,positive,P0,Spec Validation,FAILING (pre-fix)
+FR-001,"AC-001-02, AC-001-03",SV-03,positive,P0,Spec Validation,PASSING
+FR-001,AC-001-04,SV-05,positive,P1,Spec Validation,PASSING
+FR-001,AC-001-05,SV-04,negative,P0,Spec Validation,FAILING (pre-fix)
+FR-002,AC-002-01,SV-06,positive,P0,Spec Validation,FAILING (pre-fix)
+FR-002,AC-002-02,SV-08,positive,P1,Spec Validation,PASSING
+FR-002,AC-002-03,SV-07,negative,P0,Spec Validation,FAILING (pre-fix)
+FR-002,AC-002-04,SV-11,positive,P1,Spec Validation,FAILING (pre-fix)
+FR-003,AC-003-01,SV-02,positive,P0,Spec Validation,FAILING (pre-fix)
+FR-003,AC-003-02,SV-12,positive,P2,Spec Validation,FAILING (pre-fix)
+FR-003,AC-003-03,SV-10,negative,P0,Spec Validation,FAILING (pre-fix)
+FR-004,AC-004-01,SV-09,positive,P1,Spec Validation,PASSING
+FR-004,AC-004-02,SV-01,positive,P0,Spec Validation,FAILING (pre-fix)
+FR-004,AC-004-03,SV-13,negative,P1,Spec Validation,PASSING
+CON-003,Backward compat (Jira),RT-01,positive,P0,Regression,PASSING
+CON-003,Backward compat (Jira),RT-02,positive,P0,Regression,PASSING
+CON-003,Backward compat (GitHub),RT-03,positive,P0,Regression,PASSING
+CON-003,Backward compat (manual),RT-04,positive,P0,Regression,PASSING
+CON-003,Backward compat (bare number jira),RT-05,positive,P1,Regression,PASSING
+CON-003,Backward compat (bare number github),RT-06,positive,P1,Regression,PASSING
+CON-003,Backward compat (slug gen raw),RT-07,positive,P2,Regression,PASSING
+CON-003,Backward compat (slug gen title),RT-08,positive,P2,Regression,PASSING
+Structural Parity,Add handler dual-branch,SS-01,positive,P1,Structure,FAILING (pre-fix)
+Structural Parity,Group 1 dual-conditional,SS-02,positive,P1,Structure,FAILING (pre-fix)
+Behavioral Parity,Error handling symmetry,SS-03,positive,P2,Structure,PASSING
+Regression Guard,gh issue view preserved,SS-04,positive,P1,Structure,PASSING
