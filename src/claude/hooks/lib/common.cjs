@@ -37,6 +37,22 @@ let _cachedProjectDirEnv = undefined;
  */
 const _configCache = new Map();
 
+/**
+ * Cached skill path index. Key: skillID (e.g., "DEV-001").
+ * Value: relative path to SKILL.md (e.g., "src/claude/skills/development/code-implementation/SKILL.md").
+ * Built by _buildSkillPathIndex(). Per-process lifetime.
+ * @type {Map<string, string>|null}
+ * Traces to: REQ-0001, FR-008 prerequisite, ADR-0028
+ */
+let _skillPathIndex = null;
+
+/**
+ * Timestamp (ms since epoch) when _skillPathIndex was last built.
+ * Used for mtime-based invalidation against the skills directory.
+ * @type {number}
+ */
+let _skillPathIndexBuiltAt = 0;
+
 // =========================================================================
 // Phase Prefixes (BUG-0009 item 0.13)
 // =========================================================================
@@ -171,6 +187,8 @@ function _resetCaches() {
     _cachedProjectRoot = null;
     _cachedProjectDirEnv = undefined;
     _configCache.clear();
+    _skillPathIndex = null;
+    _skillPathIndexBuiltAt = 0;
 }
 
 /**
@@ -1237,14 +1255,92 @@ function _extractSkillDescription(content) {
 }
 
 /**
+ * Build a skill path index: skillID -> relative path to SKILL.md.
+ * Scans src/claude/skills/ (dev mode) and .claude/skills/ (installed mode)
+ * for all SKILL.md files, extracting skill_id from YAML frontmatter.
+ *
+ * Per-process cached with invalidation based on skills directory mtime.
+ * Falls back to empty Map on any error (fail-open).
+ *
+ * @returns {Map<string, string>} Map of skillID -> relativePath
+ * @private
+ * Traces to: REQ-0001, FR-008 prerequisite, ADR-0028
+ */
+function _buildSkillPathIndex() {
+    const projectRoot = getProjectRoot();
+
+    // Check if cached index is still valid (mtime-based invalidation)
+    if (_skillPathIndex !== null) {
+        try {
+            const devDir = path.join(projectRoot, 'src', 'claude', 'skills');
+            const installedDir = path.join(projectRoot, '.claude', 'skills');
+            let latestMtime = 0;
+            if (fs.existsSync(devDir)) {
+                latestMtime = Math.max(latestMtime, fs.statSync(devDir).mtimeMs);
+            }
+            if (fs.existsSync(installedDir)) {
+                latestMtime = Math.max(latestMtime, fs.statSync(installedDir).mtimeMs);
+            }
+            if (latestMtime <= _skillPathIndexBuiltAt) {
+                return _skillPathIndex;
+            }
+        } catch (_) {
+            // Invalidation check failed -- rebuild
+        }
+    }
+
+    const index = new Map();
+
+    // Scan function: recursively find SKILL.md files in a base directory
+    function scanDir(baseDir, relativeBase) {
+        if (!fs.existsSync(baseDir)) return;
+        try {
+            const entries = fs.readdirSync(baseDir, { withFileTypes: true });
+            for (const entry of entries) {
+                const fullPath = path.join(baseDir, entry.name);
+                if (entry.isDirectory()) {
+                    if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
+                    scanDir(fullPath, path.join(relativeBase, entry.name));
+                } else if (entry.name === 'SKILL.md') {
+                    try {
+                        const content = fs.readFileSync(fullPath, 'utf8');
+                        const skillIdMatch = content.match(/^skill_id:\s*(.+)$/m);
+                        if (skillIdMatch) {
+                            const skillId = skillIdMatch[1].trim();
+                            const relativePath = path.join(relativeBase, 'SKILL.md');
+                            // First found wins (dev mode takes precedence if both exist)
+                            if (!index.has(skillId)) {
+                                index.set(skillId, relativePath);
+                            }
+                        }
+                    } catch (_) {
+                        // Skip unreadable files
+                    }
+                }
+            }
+        } catch (_) {
+            // Skip unreadable directories
+        }
+    }
+
+    // Scan dev directory first (takes precedence in dogfooding mode)
+    scanDir(path.join(projectRoot, 'src', 'claude', 'skills'), path.join('src', 'claude', 'skills'));
+    // Then scan installed directory
+    scanDir(path.join(projectRoot, '.claude', 'skills'), path.join('.claude', 'skills'));
+
+    _skillPathIndex = index;
+    _skillPathIndexBuiltAt = Date.now();
+    return index;
+}
+
+/**
  * Get skill index for a given agent name.
  * Returns array of {id, name, description, path} entries from the manifest,
  * with descriptions extracted from SKILL.md files.
  *
  * Supports two manifest schemas:
  *   - Production (v5+): ownership.skills is a flat string array ["DEV-001", ...]
- *     Resolution uses path_lookup (path->agent) reversed to find skill paths,
- *     then reads SKILL.md frontmatter to match skill_id to the string IDs.
+ *     Resolution uses _buildSkillPathIndex() for direct ID-to-path lookup (REQ-0001).
  *   - Legacy (v3): ownership.skills is an object array [{id, name, path}, ...]
  *     Uses object properties directly.
  *
@@ -1288,50 +1384,27 @@ function getAgentSkillIndex(agentName) {
 
         if (isStringSchema) {
             // Production schema: skills are flat string IDs like "DEV-001"
-            // Build reverse index from path_lookup: collect all paths owned by this agent
-            const pathLookup = manifest.path_lookup || {};
-            const agentPaths = []; // array of category/skill-name paths for this agent
-            for (const [skillPath, ownerAgent] of Object.entries(pathLookup)) {
-                if (ownerAgent === agentName) {
-                    agentPaths.push(skillPath);
-                }
-            }
+            // Use skill path index for direct ID-to-path resolution (REQ-0001, ADR-0028)
+            const skillPathIdx = _buildSkillPathIndex();
 
-            // For each path, resolve the SKILL.md and extract skill_id from frontmatter
-            // Build a map: skill_id -> { name, description, relativePath }
-            const skillIdToData = new Map();
-            for (const skillPath of agentPaths) {
+            for (const skillId of agentEntry.skills) {
                 try {
-                    // Dual-path resolution (GH-82 fix): .claude/skills/ first, then src/claude/skills/
-                    const installedMdPath = path.join(projectRoot, '.claude', 'skills', skillPath, 'SKILL.md');
-                    const devMdPath = path.join(projectRoot, 'src', 'claude', 'skills', skillPath, 'SKILL.md');
-
-                    let resolvedAbsPath = null;
-                    let resolvedRelPath = null;
-
-                    if (fs.existsSync(installedMdPath)) {
-                        resolvedAbsPath = installedMdPath;
-                        resolvedRelPath = path.join('.claude', 'skills', skillPath, 'SKILL.md');
-                    } else if (fs.existsSync(devMdPath)) {
-                        resolvedAbsPath = devMdPath;
-                        resolvedRelPath = path.join('src', 'claude', 'skills', skillPath, 'SKILL.md');
-                    } else {
-                        // Neither path exists -- skip this skill path
+                    const relativePath = skillPathIdx.get(skillId);
+                    if (!relativePath) {
+                        // Skill ID not in index -- skip (fail-open)
                         continue;
                     }
 
-                    const content = fs.readFileSync(resolvedAbsPath, 'utf8');
-
-                    // Extract skill_id from YAML frontmatter
-                    const skillIdMatch = content.match(/^skill_id:\s*(.+)$/m);
-                    const extractedId = skillIdMatch ? skillIdMatch[1].trim() : null;
-
-                    if (!extractedId) {
-                        continue; // Cannot match without skill_id
+                    const absPath = path.join(projectRoot, relativePath);
+                    if (!fs.existsSync(absPath)) {
+                        continue;
                     }
 
-                    // Extract name from the path (last segment) or frontmatter
-                    const skillName = skillPath.split('/').pop();
+                    const content = fs.readFileSync(absPath, 'utf8');
+
+                    // Extract name from the path (parent directory name)
+                    const pathParts = relativePath.split(path.sep);
+                    const skillName = pathParts[pathParts.length - 2] || skillId;
 
                     // Extract description
                     let description = _extractSkillDescription(content);
@@ -1339,31 +1412,11 @@ function getAgentSkillIndex(agentName) {
                         description = skillName;
                     }
 
-                    skillIdToData.set(extractedId, {
-                        name: skillName,
-                        description: description,
-                        path: resolvedRelPath
-                    });
-                } catch (_pathErr) {
-                    // Fail-open: skip individual path on any error
-                    continue;
-                }
-            }
-
-            // Now match the agent's skill IDs against our resolved data
-            for (const skillId of agentEntry.skills) {
-                try {
-                    const data = skillIdToData.get(skillId);
-                    if (!data) {
-                        // Skill ID not resolvable -- skip (fail-open)
-                        continue;
-                    }
-
                     result.push({
                         id: skillId,
-                        name: data.name,
-                        description: data.description,
-                        path: data.path
+                        name: skillName,
+                        description: description,
+                        path: relativePath
                     });
                 } catch (_skillErr) {
                     // Fail-open: skip individual skill on any error
@@ -3788,6 +3841,300 @@ function recordReviewAction(state, phaseKey, action, details = {}) {
     return true;
 }
 
+// =========================================================================
+// Session Cache (REQ-0001: Unified SessionStart Cache)
+// =========================================================================
+
+/**
+ * Collect mtimes of all source files for cache staleness detection.
+ * Returns sorted array and a hash computed from mtime concatenation.
+ *
+ * @param {string} projectRoot - Project root directory
+ * @returns {{ sources: Array<{path: string, mtimeMs: number}>, hash: string, count: number }}
+ * @private
+ * Traces to: REQ-0001, FR-001, NFR-006 (staleness detection)
+ */
+function _collectSourceMtimes(projectRoot) {
+    const sources = [];
+
+    function addSource(filePath) {
+        try {
+            const stat = fs.statSync(filePath);
+            sources.push({ path: filePath, mtimeMs: stat.mtimeMs });
+        } catch (_) {
+            // File missing -- skip
+        }
+    }
+
+    // Config files
+    const configFiles = [
+        path.join(projectRoot, 'docs', 'isdlc', 'constitution.md'),
+        path.join(projectRoot, 'src', 'isdlc', 'config', 'workflows.json'),
+        path.join(projectRoot, 'src', 'claude', 'hooks', 'config', 'skills-manifest.json'),
+        path.join(projectRoot, 'docs', 'isdlc', 'external-skills-manifest.json')
+    ];
+
+    const hookConfigPaths = [
+        path.join(projectRoot, '.claude', 'hooks', 'config', 'iteration-requirements.json'),
+        path.join(projectRoot, '.claude', 'hooks', 'config', 'artifact-paths.json')
+    ];
+
+    for (const f of [...configFiles, ...hookConfigPaths]) {
+        addSource(f);
+    }
+
+    // Skill files: use the skill path index to enumerate
+    const skillIndex = _buildSkillPathIndex();
+    for (const [, relPath] of skillIndex) {
+        addSource(path.join(projectRoot, relPath));
+    }
+
+    // Persona files
+    const personaDir = path.join(projectRoot, 'src', 'claude', 'agents');
+    if (fs.existsSync(personaDir)) {
+        try {
+            const files = fs.readdirSync(personaDir);
+            for (const f of files) {
+                if (f.startsWith('persona-') && f.endsWith('.md')) {
+                    addSource(path.join(personaDir, f));
+                }
+            }
+        } catch (_) { /* skip */ }
+    }
+
+    // Topic files
+    const topicDir = path.join(projectRoot, 'src', 'claude', 'skills', 'analysis-topics');
+    if (fs.existsSync(topicDir)) {
+        try {
+            const categories = fs.readdirSync(topicDir, { withFileTypes: true });
+            for (const cat of categories) {
+                if (cat.isDirectory()) {
+                    const catPath = path.join(topicDir, cat.name);
+                    try {
+                        const topicFiles = fs.readdirSync(catPath);
+                        for (const f of topicFiles) {
+                            if (f.endsWith('.md')) {
+                                addSource(path.join(catPath, f));
+                            }
+                        }
+                    } catch (_) { /* skip */ }
+                }
+            }
+        } catch (_) { /* skip */ }
+    }
+
+    // Sort by path for deterministic hash
+    sources.sort((a, b) => a.path.localeCompare(b.path));
+
+    // Compute hash: simple rolling hash from concatenated mtimes
+    let hashNum = 0;
+    for (const s of sources) {
+        hashNum = ((hashNum << 5) - hashNum + Math.round(s.mtimeMs)) | 0;
+    }
+    const hash = Math.abs(hashNum).toString(16).padStart(8, '0');
+
+    return { sources, hash, count: sources.length };
+}
+
+/**
+ * Rebuild the session cache file (.isdlc/session-cache.md).
+ * Reads all static framework content and assembles it into a single
+ * delimited Markdown file for SessionStart hook injection.
+ *
+ * Each section is wrapped in HTML comment delimiters:
+ *   <!-- SECTION: NAME -->
+ *   {content}
+ *   <!-- /SECTION: NAME -->
+ *
+ * Fail-open per section: if a source file is missing, the section is
+ * skipped with a <!-- SECTION: NAME SKIPPED: reason --> marker.
+ *
+ * @param {object} [options] - Optional configuration
+ * @param {string} [options.projectRoot] - Override project root (for testing)
+ * @param {boolean} [options.verbose] - Log progress to stderr
+ * @returns {{ path: string, size: number, hash: string, sections: string[], skipped: string[] }}
+ * @throws {Error} Only if .isdlc/ directory does not exist (no project)
+ *
+ * Traces to: FR-001 (AC-001-01 through AC-001-05), NFR-004, NFR-006, NFR-007, NFR-009
+ */
+function rebuildSessionCache(options = {}) {
+    const root = options.projectRoot || getProjectRoot();
+    const verbose = options.verbose || false;
+
+    // Validate .isdlc/ exists
+    const isdlcDir = path.join(root, '.isdlc');
+    if (!fs.existsSync(isdlcDir)) {
+        throw new Error(`No .isdlc/ directory at ${root}`);
+    }
+
+    // Collect source mtimes for hash
+    const { hash, count } = _collectSourceMtimes(root);
+
+    const sections = [];
+    const skipped = [];
+
+    // Helper: build a section with delimiters
+    function buildSection(name, contentFn) {
+        try {
+            const content = contentFn();
+            if (!content || content.trim().length === 0) {
+                skipped.push(name);
+                return `<!-- SECTION: ${name} SKIPPED: empty content -->`;
+            }
+            sections.push(name);
+            return `<!-- SECTION: ${name} -->\n${content}\n<!-- /SECTION: ${name} -->`;
+        } catch (err) {
+            skipped.push(name);
+            return `<!-- SECTION: ${name} SKIPPED: ${err.message} -->`;
+        }
+    }
+
+    const parts = [];
+
+    // Section 1: CONSTITUTION
+    parts.push(buildSection('CONSTITUTION', () => {
+        return fs.readFileSync(path.join(root, 'docs', 'isdlc', 'constitution.md'), 'utf8');
+    }));
+
+    // Section 2: WORKFLOW_CONFIG
+    parts.push(buildSection('WORKFLOW_CONFIG', () => {
+        return fs.readFileSync(path.join(root, 'src', 'isdlc', 'config', 'workflows.json'), 'utf8');
+    }));
+
+    // Section 3: ITERATION_REQUIREMENTS
+    parts.push(buildSection('ITERATION_REQUIREMENTS', () => {
+        return fs.readFileSync(path.join(root, '.claude', 'hooks', 'config', 'iteration-requirements.json'), 'utf8');
+    }));
+
+    // Section 4: ARTIFACT_PATHS
+    parts.push(buildSection('ARTIFACT_PATHS', () => {
+        return fs.readFileSync(path.join(root, '.claude', 'hooks', 'config', 'artifact-paths.json'), 'utf8');
+    }));
+
+    // Section 5: SKILLS_MANIFEST (filtered: exclude path_lookup and skill_paths)
+    parts.push(buildSection('SKILLS_MANIFEST', () => {
+        const manifestPath = path.join(root, 'src', 'claude', 'hooks', 'config', 'skills-manifest.json');
+        const raw = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        delete raw.path_lookup;
+        delete raw.skill_paths;
+        return JSON.stringify(raw, null, 2);
+    }));
+
+    // Section 6: SKILL_INDEX (per-agent blocks)
+    parts.push(buildSection('SKILL_INDEX', () => {
+        const manifest = loadManifest();
+        if (!manifest || !manifest.ownership) return '';
+
+        const blocks = [];
+        for (const [agentName, agentEntry] of Object.entries(manifest.ownership)) {
+            if (!agentEntry.skills || agentEntry.skills.length === 0) continue;
+            const skillIndex = getAgentSkillIndex(agentName);
+            if (skillIndex.length === 0) continue;
+            const block = formatSkillIndexBlock(skillIndex);
+            if (block) {
+                blocks.push(`## Agent: ${agentName}\n${block}`);
+            }
+        }
+        return blocks.join('\n\n');
+    }));
+
+    // Section 7: EXTERNAL_SKILLS
+    parts.push(buildSection('EXTERNAL_SKILLS', () => {
+        const extManifest = loadExternalManifest();
+        if (!extManifest || !extManifest.skills || extManifest.skills.length === 0) {
+            return '';
+        }
+        const blocks = [];
+        for (const skill of extManifest.skills) {
+            const meta = `### External Skill: ${skill.name || skill.file}`;
+            const bindingInfo = skill.bindings
+                ? `Phases: ${(skill.bindings.phases || []).join(', ') || 'all'}\nAgents: ${(skill.bindings.agents || []).join(', ') || 'all'}\nInjection: ${skill.bindings.injection_mode || 'manual'}\nDelivery: ${skill.bindings.delivery_type || 'reference'}`
+                : 'Bindings: none';
+            const source = skill.source || 'unknown';
+
+            let content = '';
+            const skillDir = path.join(root, '.claude', 'skills', 'external');
+            if (skill.file) {
+                try {
+                    content = fs.readFileSync(path.join(skillDir, skill.file), 'utf8');
+                    if (content.length > 5000) {
+                        content = content.substring(0, 5000) + '\n[... truncated for context budget ...]';
+                    }
+                } catch (_) {
+                    content = '(file not readable)';
+                }
+            }
+
+            blocks.push(`${meta}\nSource: ${source}\n${bindingInfo}\n\n${content}`);
+        }
+        return blocks.join('\n\n---\n\n');
+    }));
+
+    // Section 8: ROUNDTABLE_CONTEXT (persona + topic files)
+    parts.push(buildSection('ROUNDTABLE_CONTEXT', () => {
+        const rtParts = [];
+
+        // Persona files
+        const personaDir = path.join(root, 'src', 'claude', 'agents');
+        const personaFiles = ['persona-business-analyst.md', 'persona-solutions-architect.md', 'persona-system-designer.md'];
+        for (const pf of personaFiles) {
+            try {
+                const content = fs.readFileSync(path.join(personaDir, pf), 'utf8');
+                const name = pf.replace('persona-', '').replace('.md', '')
+                    .split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                rtParts.push(`### Persona: ${name}\n${content}`);
+            } catch (_) {
+                // Skip missing persona files
+            }
+        }
+
+        // Topic files
+        const topicDir = path.join(root, 'src', 'claude', 'skills', 'analysis-topics');
+        if (fs.existsSync(topicDir)) {
+            try {
+                const categories = fs.readdirSync(topicDir, { withFileTypes: true });
+                for (const cat of categories) {
+                    if (!cat.isDirectory()) continue;
+                    const catPath = path.join(topicDir, cat.name);
+                    try {
+                        const topicFiles = fs.readdirSync(catPath).filter(f => f.endsWith('.md')).sort();
+                        for (const tf of topicFiles) {
+                            try {
+                                const content = fs.readFileSync(path.join(catPath, tf), 'utf8');
+                                const topicId = tf.replace('.md', '');
+                                rtParts.push(`### Topic: ${topicId}\n${content}`);
+                            } catch (_) { /* skip */ }
+                        }
+                    } catch (_) { /* skip */ }
+                }
+            } catch (_) { /* skip */ }
+        }
+
+        return rtParts.join('\n\n');
+    }));
+
+    // Assemble header + all sections
+    const header = `<!-- SESSION CACHE: Generated ${new Date().toISOString()} | Sources: ${count} | Hash: ${hash} -->`;
+    const output = header + '\n\n' + parts.join('\n\n') + '\n';
+
+    // Validate size
+    if (output.length > 128000) {
+        if (verbose) {
+            process.stderr.write(`WARNING: Session cache exceeds 128K character budget (${output.length} chars)\n`);
+        }
+    }
+
+    // Write cache file
+    const cachePath = path.join(isdlcDir, 'session-cache.md');
+    fs.writeFileSync(cachePath, output, 'utf8');
+
+    if (verbose) {
+        process.stderr.write(`Session cache written: ${cachePath} (${output.length} chars, ${sections.length} sections)\n`);
+    }
+
+    return { path: cachePath, size: output.length, hash, sections, skipped };
+}
+
 module.exports = {
     getProjectRoot,
     // Phase prefixes (BUG-0009 item 0.13)
@@ -3898,7 +4245,9 @@ module.exports = {
     readSupervisedModeConfig,
     shouldReviewPhase,
     generatePhaseSummary,
-    recordReviewAction
+    recordReviewAction,
+    // Session cache (REQ-0001)
+    rebuildSessionCache
 };
 
 // Test-only exports (not part of public API) -- REQ-0020 FR-001/FR-002
@@ -3906,4 +4255,6 @@ if (process.env.NODE_ENV === 'test' || process.env.ISDLC_TEST_MODE === '1') {
     module.exports._resetCaches = _resetCaches;
     module.exports._getCacheStats = _getCacheStats;
     module.exports._loadConfigWithCache = _loadConfigWithCache;
+    module.exports._buildSkillPathIndex = _buildSkillPathIndex;
+    module.exports._collectSourceMtimes = _collectSourceMtimes;
 }

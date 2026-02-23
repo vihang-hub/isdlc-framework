@@ -157,15 +157,17 @@
 - #83 [x] Fix skill injection tests — mock schema differs from production manifest
   - **Completed:** 2026-02-23
 
-- #84 [ ] Wire SKILL INDEX BLOCK injection in isdlc.md phase delegation
+- #84 [x] Wire SKILL INDEX BLOCK injection in isdlc.md phase delegation
   - **Problem**: STEP 3d line 1715 documents skill index injection but it's never executed. Agents are delegated to without knowing what skills they have.
   - **Fix**: Ensure instruction is clear enough for LLM to execute; verify against fixed `getAgentSkillIndex()`
   - **Depends on**: #81, #82
+  - **Completed:** 2026-02-23
 
-- #85 [ ] Unify built-in and external skill injection into coherent two-tier system
+- #85 [x] Unify built-in and external skill injection into coherent two-tier system
   - **Problem**: Two separate injection mechanisms — built-in via skill index (broken), external via STEP 3d manifest filtering (working). No unified view.
   - **Design**: Two-tier model — built-in skills as reference list (agent reads on-demand), external/project skills pre-loaded via SessionStart cache (always in context). Both appear in delegation prompt without conflict.
   - **Depends on**: #81, #82, #84, #91
+  - **Completed:** 2026-02-23
 
 - #86 [ ] Clean up unused manifest entries — `path_lookup` and `skill_paths`
   - **Problem**: `path_lookup` (247 entries) and `skill_paths` (1 entry) are not referenced by any production code. ~300 lines of dead data read at every hook invocation.
