@@ -334,7 +334,9 @@ See the BACKLOG PICKER section in the orchestrator agent for full details.
    - If args contain "--no-fan-out": set flags.no_fan_out = true, remove "--no-fan-out" from description
 4. Initialize `active_workflow` with type `"fix"` and phases `["01-requirements", "02-tracing", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]`
    - If flags.supervised: pass `--supervised` flag to orchestrator init (sets supervised_mode.enabled=true in state)
-4. If `--link` provided, pass it to Agent 01 as the external bug URL
+4. If `--link` provided:
+   - **Jira URL parsing** (BUG-0032): If the `--link` URL matches pattern `https://*.atlassian.net/browse/{PROJECT-N}`, extract the Jira ticket ID ({PROJECT-N}). Call `getAccessibleAtlassianResources` to resolve cloudId (use first accessible resource), then call `getJiraIssue(cloudId, ticketId)` to fetch Jira ticket content (summary, description, issuetype, priority). Pass the fetched content to Agent 01 as pre-fetched issue context alongside the external bug URL.
+   - **GitHub/other URLs**: Pass the `--link` URL to Agent 01 as the external bug URL (existing behavior, unchanged).
 5. Delegate to Requirements Analyst (Phase 01) with `scope: "bug-report"`
 6. Agent 01 extracts external ID from URL and creates `BUG-NNNN-{external-id}/` folder
 7. If no `--link` provided, Agent 01 asks for the bug link during the bug report flow
@@ -550,8 +552,14 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
       Fetch the issue title using `gh issue view N --json title,labels -q '.title'`.
       Check labels: if "bug" label present, item_type = "BUG", else item_type = "REQ".
    b. Jira ticket (`PROJECT-N` pattern or bare number with jira preference): source = "jira", source_id = input.
-      If pre-fetched issue data is provided, use it instead of fetching. Otherwise:
-      Fetch the issue summary and type. If type is "Bug", item_type = "BUG", else item_type = "REQ".
+      If pre-fetched issue data is provided (issueData from the analyze handler fast path), use it instead of fetching. Otherwise:
+      **Jira ticket fetch via Atlassian MCP** (BUG-0032):
+      1. Check if Atlassian MCP is available. If Atlassian MCP is not available, log "Atlassian MCP not available. Provide Jira ticket details manually." and proceed with manual entry (ask user for summary and type).
+      2. Call `getAccessibleAtlassianResources` to resolve cloudId. If multiple cloud instances are returned, use the first accessible resource (first result). If the call fails, log "Could not fetch Jira ticket {source_id}: {error}" and fall back to manual entry.
+      3. Call `getJiraIssue(cloudId, source_id)` to fetch the ticket. Extract: `summary` (for slug via `generateSlug(summary)` instead of the raw PROJECT-N input), `description` (for draft content), `issuetype.name` (for type mapping), `priority.name`.
+      4. Map issue type: if `issuetype.name` is "Bug", set item_type = "BUG", else set item_type = "REQ".
+      5. On any error during fetch: log "Could not fetch Jira ticket {source_id}: {error}" and fall back to manual entry (ask user for summary and type).
+      6. Use the fetched summary for `generateSlug()` (producing a descriptive slug instead of the raw ticket ID).
    c. All other input: source = "manual", source_id = null.
       Ask the user: "Is this a feature/requirement or a bug fix?" → item_type = "REQ" or "BUG".
    c'. **GitHub issue reverse-lookup** (REQ-0034): When `detectSource()` returns "manual", attempt to find a matching GitHub issue:
@@ -637,8 +645,9 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 
    The following operations are structured as dependency groups. Fire all operations within a group as parallel tool calls in a single response. Groups execute sequentially (Group 2 needs Group 1 results).
 
-   **Group 1** (fire all 5 in parallel at T=0):
-   - `gh issue view N --json title,labels,body` --> issueData (title, labels, body). If this fails, fail fast: "Could not fetch issue #N: {error}" and STOP.
+   **Group 1** (fire all in parallel at T=0):
+   - **GitHub** (if source is "github"): `gh issue view N --json title,labels,body` --> issueData (title, labels, body). If this fails, fail fast: "Could not fetch issue #N: {error}" and STOP.
+   - **Jira** (if source is "jira" and source_id matches PROJECT-N pattern): Call `getAccessibleAtlassianResources` to resolve cloudId (use first accessible resource if multiple), then call `getJiraIssue(cloudId, source_id)` to fetch the ticket --> issueData (summary, description, issuetype, priority). If the Jira fetch fails, fail fast: "Could not fetch Jira ticket {source_id}: {error}" and STOP (matching GitHub fail-fast behavior). Pass fetched Jira content into draft.md: use the summary as the draft heading, the description body as context, and include acceptance criteria if present in the Jira description.
    - `Grep "GH-N"` (or source_id) across `docs/requirements/*/meta.json` --> existingMatch (slug and directory if found, null if not)
    - `Glob docs/requirements/{TYPE}-*` --> folderList (for sequence number calculation)
    - Read 3 persona files in parallel --> personaContent:
@@ -648,7 +657,7 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
    - `Glob src/claude/skills/analysis-topics/**/*.md` --> topicPaths
 
    **Group 2** (needs Group 1 results, fire all in parallel):
-   - **If no existingMatch found**: Auto-add without confirmation prompt -- invoke the `add` handler with the input and pre-fetched issueData (title, labels, body). The add handler creates the folder, draft.md, meta.json, and updates BACKLOG.md. Reuse the in-memory meta and draft objects it produces (do NOT re-read from disk).
+   - **If no existingMatch found**: Auto-add without confirmation prompt -- invoke the `add` handler with the input and pre-fetched issueData (title, labels, body for GitHub; summary, description, issuetype for Jira). The add handler creates the folder, draft.md, meta.json, and updates BACKLOG.md. Reuse the in-memory meta and draft objects it produces (do NOT re-read from disk).
    - **If existingMatch found**: Read meta.json from the existing folder; read draft.md from disk.
    - Read all topic files from topicPaths in parallel --> topicContent
 
