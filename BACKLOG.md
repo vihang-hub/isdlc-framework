@@ -169,19 +169,14 @@
   - **Depends on**: #81, #82, #84, #91
   - **Completed:** 2026-02-23
 
-- #86 [ ] Clean up unused manifest entries — `path_lookup` and `skill_paths`
-  - **Problem**: `path_lookup` (247 entries) and `skill_paths` (1 entry) are not referenced by any production code. ~300 lines of dead data read at every hook invocation.
-  - **Fix**: Remove or repurpose based on #81 approach
+- #86 [x] ~~Clean up unused manifest entries — `path_lookup` and `skill_paths`~~ **Completed: 2026-02-23** *(absorbed into #91)*
 
-- #87 [ ] Add manifest schema validation on load
-  - **Problem**: `loadManifest()` performs no schema validation. Corrupt/mismatched manifests fail silently. The #81 schema mismatch went undetected.
-  - **Fix**: Add `validateManifestSchema()` with warnings on schema issues. Fail-open preserved.
+- #87 [x] ~~Add manifest schema validation on load~~ **Completed: 2026-02-23** *(implemented as part of #91 — `loadSchema()`, `validateSchema()`, `_validateObject()` in common.cjs)*
 
 - #88 [x] ~~Implement project skills distillation step in discover orchestrator~~ -> [requirements](docs/requirements/REQ-0037-project-skills-distillation/) **Completed: 2026-02-24**
 
-- #89 [ ] Update external skills manifest schema with source field for unified skill management
-  - **Design**: Add `source` field to manifest entries: `"discover"` (project skills), `"skills.sh"` (tech-stack skills), `"user"` (manually added). Discover overwrites only its own entries on re-run. User skills never touched. All skills live in `.claude/skills/external/`.
-  - Triggers `rebuildSkillCache()` on every manifest modification
+- #89 [A] Update external skills manifest schema with source field for unified skill management -> [requirements](docs/requirements/REQ-0038-external-manifest-source-field/) **Analyzed: 2026-02-24**
+  - **Design**: Add `source` field to manifest entries: `"discover"` (project skills), `"skills.sh"` (tech-stack skills), `"user"` (manually added). Reconciliation preserves user binding customizations, phase-gated removal, conditional cache rebuild.
   - **Depends on**: #86
 
 - #90 [ ] Replace 24h staleness discovery context injection with project skills

@@ -1,0 +1,88 @@
+[
+  {
+    "id": "US-001",
+    "title": "Source-tagged skill registration",
+    "story": "As a framework user, I want every skill in the manifest to be tagged with its source so that automated processes only modify their own skills and never touch my manually added ones.",
+    "acceptance_criteria": [
+      "Skills added via /isdlc skill add have source: \"user\"",
+      "Skills distilled by discover have source: \"discover\"",
+      "Skills installed from skills.sh have source: \"skills.sh\"",
+      "Legacy entries without source are treated as \"user\""
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-001", "FR-008"]
+  },
+  {
+    "id": "US-002",
+    "title": "Safe discover re-run",
+    "story": "As a framework user, I want discover to safely update its own skills on re-run without deleting or modifying any skills I added manually.",
+    "acceptance_criteria": [
+      "Discover only modifies entries with source: \"discover\"",
+      "User-sourced skills are never touched during reconciliation",
+      "skills.sh-sourced skills are never touched during discover reconciliation"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-002", "FR-006"]
+  },
+  {
+    "id": "US-003",
+    "title": "Binding preservation on re-run",
+    "story": "As a framework user, I want my custom binding changes on discover-sourced skills to survive when discover runs again, so I don't have to re-wire skills after every discovery.",
+    "acceptance_criteria": [
+      "Reconciliation preserves the bindings object from existing entries",
+      "Only source-owned fields (file, description, updated_at) are updated",
+      "added_at timestamp is preserved from original creation"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-004", "FR-002"]
+  },
+  {
+    "id": "US-004",
+    "title": "Phase-gated skill removal",
+    "story": "As a framework user, I want discover to only remove skills whose source phase actually ran and produced nothing, so that incremental discovery doesn't lose skills from phases that weren't re-evaluated.",
+    "acceptance_criteria": [
+      "Skills whose source phase ran but produced no output are removed",
+      "Skills whose source phase did not run are preserved untouched",
+      "If no phases executed, no skills are removed"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-002"]
+  },
+  {
+    "id": "US-005",
+    "title": "Conditional cache rebuild",
+    "story": "As a framework user, I want the session cache to only rebuild when the manifest actually changed, so that no-op reconciliation runs are fast.",
+    "acceptance_criteria": [
+      "Cache rebuild is skipped when reconciliation reports changed: false",
+      "Cache rebuild runs when reconciliation reports changed: true",
+      "User commands (add, remove, wire) always trigger cache rebuild"
+    ],
+    "priority": "Should Have",
+    "traces": ["FR-005"]
+  },
+  {
+    "id": "US-006",
+    "title": "Reconciliation diff summary",
+    "story": "As a framework user, I want to see what changed after discover's reconciliation so I know which skills were added, updated, or removed.",
+    "acceptance_criteria": [
+      "Discover displays added skill names after reconciliation",
+      "Discover displays removed skill names after reconciliation",
+      "Discover displays updated skill names after reconciliation"
+    ],
+    "priority": "Should Have",
+    "traces": ["FR-003", "FR-006"]
+  },
+  {
+    "id": "US-007",
+    "title": "Backward compatible manifest",
+    "story": "As a framework user with an existing project, I want my current manifest to work without any migration when I upgrade to the version with source field support.",
+    "acceptance_criteria": [
+      "Manifests without source fields load successfully",
+      "Missing source defaults to \"user\" at read time",
+      "Missing updated_at defaults to null",
+      "All existing features continue to work"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-001", "FR-008"]
+  }
+]
