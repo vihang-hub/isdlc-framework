@@ -1,0 +1,12 @@
+{
+  "description": "software-developer invoked during 05-implementation phase",
+  "tool_name": "Task",
+  "tool_input": {
+    "subagent_type": "software-developer",
+    "description": "Implement feature X",
+    "prompt": "Write the code for feature X following TDD"
+  },
+  "expected_result": "allow",
+  "current_phase": "05-implementation",
+  "reason": "Agent phase matches current phase"
+}

@@ -1,0 +1,819 @@
+{
+  "version": "5.0.0",
+  "generated": "2026-02-10",
+  "total_skills": 246,
+  "enforcement_mode": "observe",
+  "cross_agent_delegation": {
+    "_comment": "Defines which agents can delegate to other agents for specific workflows",
+    "upgrade-engineer": {
+      "can_delegate_to": [
+        "impact-analysis-orchestrator"
+      ],
+      "delegation_context": {
+        "impact-analysis-orchestrator": {
+          "workflow": "upgrade",
+          "trigger": "user_choice_comprehensive",
+          "passes": [
+            "breaking_changes",
+            "deprecated_apis",
+            "preliminary_affected_files"
+          ],
+          "receives": [
+            "impact-analysis.md",
+            "blast_radius",
+            "entry_points",
+            "risk_zones"
+          ]
+        }
+      }
+    }
+  },
+  "ownership": {
+    "sdlc-orchestrator": {
+      "agent_id": "00",
+      "phase": "all",
+      "skill_count": 12,
+      "skills": [
+        "ORCH-001",
+        "ORCH-002",
+        "ORCH-003",
+        "ORCH-004",
+        "ORCH-005",
+        "ORCH-006",
+        "ORCH-007",
+        "ORCH-008",
+        "ORCH-009",
+        "ORCH-010",
+        "ORCH-011",
+        "ORCH-012"
+      ]
+    },
+    "discover-orchestrator": {
+      "agent_id": "D0",
+      "phase": "setup",
+      "skill_count": 4,
+      "skills": [
+        "DISC-001",
+        "DISC-002",
+        "DISC-003",
+        "DISC-004"
+      ]
+    },
+    "architecture-analyzer": {
+      "agent_id": "D1",
+      "phase": "setup",
+      "skill_count": 6,
+      "skills": [
+        "DISC-101",
+        "DISC-102",
+        "DISC-103",
+        "DISC-104",
+        "DISC-105",
+        "DISC-106"
+      ]
+    },
+    "test-evaluator": {
+      "agent_id": "D2",
+      "phase": "setup",
+      "skill_count": 6,
+      "skills": [
+        "DISC-201",
+        "DISC-202",
+        "DISC-203",
+        "DISC-204",
+        "DISC-205",
+        "DISC-206"
+      ]
+    },
+    "constitution-generator": {
+      "agent_id": "D3",
+      "phase": "setup",
+      "skill_count": 4,
+      "skills": [
+        "DISC-301",
+        "DISC-302",
+        "DISC-303",
+        "DISC-304"
+      ]
+    },
+    "skills-researcher": {
+      "agent_id": "D4",
+      "phase": "setup",
+      "skill_count": 4,
+      "skills": [
+        "DISC-401",
+        "DISC-402",
+        "DISC-403",
+        "DISC-404"
+      ]
+    },
+    "data-model-analyzer": {
+      "agent_id": "D5",
+      "phase": "setup",
+      "skill_count": 4,
+      "skills": [
+        "DISC-501",
+        "DISC-502",
+        "DISC-503",
+        "DISC-504"
+      ]
+    },
+    "feature-mapper": {
+      "agent_id": "D6",
+      "phase": "setup",
+      "skill_count": 12,
+      "skills": [
+        "DISC-601",
+        "DISC-602",
+        "DISC-603",
+        "DISC-604",
+        "RE-001",
+        "RE-002",
+        "RE-003",
+        "RE-004",
+        "RE-005",
+        "RE-006",
+        "RE-007",
+        "RE-008"
+      ]
+    },
+    "product-analyst": {
+      "agent_id": "D7",
+      "phase": "setup",
+      "skill_count": 4,
+      "skills": [
+        "DISC-701",
+        "DISC-702",
+        "DISC-703",
+        "DISC-704"
+      ]
+    },
+    "architecture-designer": {
+      "agent_id": "D8",
+      "phase": "setup",
+      "skill_count": 4,
+      "skills": [
+        "DISC-801",
+        "DISC-802",
+        "DISC-803",
+        "DISC-804"
+      ]
+    },
+    "characterization-test-generator": {
+      "agent_id": "R2",
+      "phase": "setup",
+      "skill_count": 7,
+      "skills": [
+        "RE-101",
+        "RE-102",
+        "RE-103",
+        "RE-104",
+        "RE-105",
+        "RE-106",
+        "RE-107"
+      ]
+    },
+    "artifact-integration": {
+      "agent_id": "R3",
+      "phase": "setup",
+      "skill_count": 3,
+      "skills": [
+        "RE-201",
+        "RE-202",
+        "RE-203"
+      ]
+    },
+    "atdd-bridge": {
+      "agent_id": "R4",
+      "phase": "setup",
+      "skill_count": 3,
+      "skills": [
+        "RE-301",
+        "RE-302",
+        "RE-303"
+      ]
+    },
+    "quick-scan-agent": {
+      "agent_id": "QS",
+      "phase": "00-quick-scan",
+      "skill_count": 3,
+      "skills": [
+        "QS-001",
+        "QS-002",
+        "QS-003"
+      ]
+    },
+    "impact-analysis-orchestrator": {
+      "agent_id": "IA0",
+      "phase": "02-impact-analysis",
+      "skill_count": 3,
+      "skills": [
+        "IA-001",
+        "IA-002",
+        "IA-003"
+      ]
+    },
+    "impact-analyzer": {
+      "agent_id": "IA1",
+      "phase": "02-impact-analysis",
+      "skill_count": 4,
+      "skills": [
+        "IA-101",
+        "IA-102",
+        "IA-103",
+        "IA-104"
+      ]
+    },
+    "entry-point-finder": {
+      "agent_id": "IA2",
+      "phase": "02-impact-analysis",
+      "skill_count": 4,
+      "skills": [
+        "IA-201",
+        "IA-202",
+        "IA-203",
+        "IA-204"
+      ]
+    },
+    "risk-assessor": {
+      "agent_id": "IA3",
+      "phase": "02-impact-analysis",
+      "skill_count": 4,
+      "skills": [
+        "IA-301",
+        "IA-302",
+        "IA-303",
+        "IA-304"
+      ]
+    },
+    "cross-validation-verifier": {
+      "agent_id": "IA4",
+      "phase": "02-impact-analysis",
+      "skill_count": 2,
+      "skills": [
+        "IA-401",
+        "IA-402"
+      ]
+    },
+    "tracing-orchestrator": {
+      "agent_id": "T0",
+      "phase": "02-tracing",
+      "skill_count": 3,
+      "skills": [
+        "TRACE-001",
+        "TRACE-002",
+        "TRACE-003"
+      ]
+    },
+    "symptom-analyzer": {
+      "agent_id": "T1",
+      "phase": "02-tracing",
+      "skill_count": 4,
+      "skills": [
+        "TRACE-101",
+        "TRACE-102",
+        "TRACE-103",
+        "TRACE-104"
+      ]
+    },
+    "execution-path-tracer": {
+      "agent_id": "T2",
+      "phase": "02-tracing",
+      "skill_count": 5,
+      "skills": [
+        "TRACE-201",
+        "TRACE-202",
+        "TRACE-203",
+        "TRACE-204",
+        "TRACE-205"
+      ]
+    },
+    "root-cause-identifier": {
+      "agent_id": "T3",
+      "phase": "02-tracing",
+      "skill_count": 4,
+      "skills": [
+        "TRACE-301",
+        "TRACE-302",
+        "TRACE-303",
+        "TRACE-304"
+      ]
+    },
+    "requirements-analyst": {
+      "agent_id": "01",
+      "phase": "01-requirements",
+      "skill_count": 11,
+      "skills": [
+        "REQ-001",
+        "REQ-002",
+        "REQ-003",
+        "REQ-004",
+        "REQ-005",
+        "REQ-006",
+        "REQ-007",
+        "REQ-008",
+        "REQ-009",
+        "REQ-010",
+        "REQ-011"
+      ]
+    },
+    "solution-architect": {
+      "agent_id": "02",
+      "phase": "03-architecture",
+      "skill_count": 13,
+      "skills": [
+        "ARCH-001",
+        "ARCH-002",
+        "ARCH-003",
+        "ARCH-004",
+        "ARCH-005",
+        "ARCH-006",
+        "ARCH-007",
+        "ARCH-008",
+        "ARCH-009",
+        "ARCH-010",
+        "ARCH-011",
+        "ARCH-012",
+        "DOC-009"
+      ]
+    },
+    "system-designer": {
+      "agent_id": "03",
+      "phase": "04-design",
+      "skill_count": 11,
+      "skills": [
+        "DES-001",
+        "DES-002",
+        "DES-003",
+        "DES-004",
+        "DES-005",
+        "DES-006",
+        "DES-007",
+        "DES-008",
+        "DES-009",
+        "DES-010",
+        "DOC-010"
+      ]
+    },
+    "test-design-engineer": {
+      "agent_id": "04",
+      "phase": "05-test-strategy",
+      "skill_count": 9,
+      "skills": [
+        "TEST-001",
+        "TEST-002",
+        "TEST-003",
+        "TEST-004",
+        "TEST-005",
+        "TEST-014",
+        "TEST-015",
+        "TEST-016",
+        "TEST-017"
+      ]
+    },
+    "test-strategy-critic": {
+      "agent_id": "04",
+      "phase": "05-test-strategy",
+      "skill_count": 3,
+      "skills": [
+        "TEST-002",
+        "TEST-004",
+        "TEST-005"
+      ]
+    },
+    "test-strategy-refiner": {
+      "agent_id": "04",
+      "phase": "05-test-strategy",
+      "skill_count": 5,
+      "skills": [
+        "TEST-001",
+        "TEST-002",
+        "TEST-003",
+        "TEST-004",
+        "TEST-005"
+      ]
+    },
+    "software-developer": {
+      "agent_id": "05",
+      "phase": "06-implementation",
+      "skill_count": 14,
+      "skills": [
+        "DEV-001",
+        "DEV-002",
+        "DEV-003",
+        "DEV-004",
+        "DEV-005",
+        "DEV-006",
+        "DEV-007",
+        "DEV-008",
+        "DEV-009",
+        "DEV-010",
+        "DEV-011",
+        "DEV-012",
+        "DEV-013",
+        "DEV-014"
+      ]
+    },
+    "integration-tester": {
+      "agent_id": "06",
+      "phase": "07-testing",
+      "skill_count": 8,
+      "skills": [
+        "TEST-006",
+        "TEST-007",
+        "TEST-008",
+        "TEST-009",
+        "TEST-010",
+        "TEST-011",
+        "TEST-012",
+        "TEST-013"
+      ]
+    },
+    "qa-engineer": {
+      "agent_id": "07",
+      "phase": "08-code-review",
+      "skill_count": 1,
+      "skills": [
+        "DEV-015"
+      ]
+    },
+    "security-compliance-auditor": {
+      "agent_id": "08",
+      "phase": "09-validation",
+      "skill_count": 13,
+      "skills": [
+        "SEC-001",
+        "SEC-002",
+        "SEC-003",
+        "SEC-004",
+        "SEC-005",
+        "SEC-006",
+        "SEC-007",
+        "SEC-008",
+        "SEC-009",
+        "SEC-010",
+        "SEC-011",
+        "SEC-012",
+        "SEC-013"
+      ]
+    },
+    "cicd-engineer": {
+      "agent_id": "09",
+      "phase": "10-cicd",
+      "skill_count": 6,
+      "skills": [
+        "OPS-001",
+        "OPS-002",
+        "OPS-003",
+        "OPS-004",
+        "OPS-005",
+        "OPS-006"
+      ]
+    },
+    "environment-builder": {
+      "agent_id": "10",
+      "phase": "11-local-testing",
+      "skill_count": 7,
+      "skills": [
+        "OPS-007",
+        "OPS-008",
+        "OPS-015",
+        "OPS-016",
+        "DOC-001",
+        "DOC-002",
+        "DOC-003"
+      ]
+    },
+    "deployment-engineer-staging": {
+      "agent_id": "11",
+      "phase": "12-test-deploy",
+      "skill_count": 4,
+      "skills": [
+        "OPS-009",
+        "OPS-010",
+        "OPS-011",
+        "DOC-004"
+      ]
+    },
+    "release-manager": {
+      "agent_id": "12",
+      "phase": "13-production",
+      "skill_count": 5,
+      "skills": [
+        "OPS-012",
+        "OPS-013",
+        "OPS-014",
+        "DOC-005",
+        "DOC-006"
+      ]
+    },
+    "site-reliability-engineer": {
+      "agent_id": "13",
+      "phase": "14-operations",
+      "skill_count": 14,
+      "skills": [
+        "SRE-001",
+        "SRE-002",
+        "SRE-003",
+        "SRE-004",
+        "SRE-005",
+        "SRE-006",
+        "SRE-007",
+        "SRE-008",
+        "SRE-009",
+        "SRE-010",
+        "SRE-011",
+        "SRE-012",
+        "DOC-007",
+        "DOC-008"
+      ]
+    },
+    "upgrade-engineer": {
+      "agent_id": "14",
+      "phase": "15-upgrade",
+      "skill_count": 6,
+      "skills": [
+        "UPG-001",
+        "UPG-002",
+        "UPG-003",
+        "UPG-004",
+        "UPG-005",
+        "UPG-006"
+      ]
+    },
+    "quality-loop-engineer": {
+      "agent_id": "16",
+      "phase": "16-quality-loop",
+      "skill_count": 12,
+      "skills": [
+        "QL-001",
+        "QL-002",
+        "QL-003",
+        "QL-004",
+        "QL-005",
+        "QL-006",
+        "QL-007",
+        "QL-008",
+        "QL-009",
+        "QL-010",
+        "QL-011",
+        "QL-012"
+      ]
+    },
+    "skill-manager": {
+      "agent_id": "SM",
+      "phase": "all",
+      "skill_count": 3,
+      "skills": [
+        "EXT-001",
+        "EXT-002",
+        "EXT-003"
+      ]
+    }
+  },
+  "skill_lookup": {
+    "QS-001": "quick-scan-agent",
+    "QS-002": "quick-scan-agent",
+    "QS-003": "quick-scan-agent",
+    "IA-001": "impact-analysis-orchestrator",
+    "IA-002": "impact-analysis-orchestrator",
+    "IA-003": "impact-analysis-orchestrator",
+    "IA-101": "impact-analyzer",
+    "IA-102": "impact-analyzer",
+    "IA-103": "impact-analyzer",
+    "IA-104": "impact-analyzer",
+    "IA-201": "entry-point-finder",
+    "IA-202": "entry-point-finder",
+    "IA-203": "entry-point-finder",
+    "IA-204": "entry-point-finder",
+    "IA-301": "risk-assessor",
+    "IA-302": "risk-assessor",
+    "IA-303": "risk-assessor",
+    "IA-304": "risk-assessor",
+    "IA-401": "cross-validation-verifier",
+    "IA-402": "cross-validation-verifier",
+    "TRACE-001": "tracing-orchestrator",
+    "TRACE-002": "tracing-orchestrator",
+    "TRACE-003": "tracing-orchestrator",
+    "TRACE-101": "symptom-analyzer",
+    "TRACE-102": "symptom-analyzer",
+    "TRACE-103": "symptom-analyzer",
+    "TRACE-104": "symptom-analyzer",
+    "TRACE-201": "execution-path-tracer",
+    "TRACE-202": "execution-path-tracer",
+    "TRACE-203": "execution-path-tracer",
+    "TRACE-204": "execution-path-tracer",
+    "TRACE-205": "execution-path-tracer",
+    "TRACE-301": "root-cause-identifier",
+    "TRACE-302": "root-cause-identifier",
+    "TRACE-303": "root-cause-identifier",
+    "TRACE-304": "root-cause-identifier",
+    "ORCH-001": "sdlc-orchestrator",
+    "ORCH-002": "sdlc-orchestrator",
+    "ORCH-003": "sdlc-orchestrator",
+    "ORCH-004": "sdlc-orchestrator",
+    "ORCH-005": "sdlc-orchestrator",
+    "ORCH-006": "sdlc-orchestrator",
+    "ORCH-007": "sdlc-orchestrator",
+    "ORCH-008": "sdlc-orchestrator",
+    "ORCH-009": "sdlc-orchestrator",
+    "ORCH-010": "sdlc-orchestrator",
+    "ORCH-011": "sdlc-orchestrator",
+    "ORCH-012": "sdlc-orchestrator",
+    "REQ-001": "requirements-analyst",
+    "REQ-002": "requirements-analyst",
+    "REQ-003": "requirements-analyst",
+    "REQ-004": "requirements-analyst",
+    "REQ-005": "requirements-analyst",
+    "REQ-006": "requirements-analyst",
+    "REQ-007": "requirements-analyst",
+    "REQ-008": "requirements-analyst",
+    "REQ-009": "requirements-analyst",
+    "REQ-010": "requirements-analyst",
+    "REQ-011": "requirements-analyst",
+    "ARCH-001": "solution-architect",
+    "ARCH-002": "solution-architect",
+    "ARCH-003": "solution-architect",
+    "ARCH-004": "solution-architect",
+    "ARCH-005": "solution-architect",
+    "ARCH-006": "solution-architect",
+    "ARCH-007": "solution-architect",
+    "ARCH-008": "solution-architect",
+    "ARCH-009": "solution-architect",
+    "ARCH-010": "solution-architect",
+    "ARCH-011": "solution-architect",
+    "ARCH-012": "solution-architect",
+    "DES-001": "system-designer",
+    "DES-002": "system-designer",
+    "DES-003": "system-designer",
+    "DES-004": "system-designer",
+    "DES-005": "system-designer",
+    "DES-006": "system-designer",
+    "DES-007": "system-designer",
+    "DES-008": "system-designer",
+    "DES-009": "system-designer",
+    "DES-010": "system-designer",
+    "TEST-001": "test-design-engineer",
+    "TEST-002": "test-design-engineer",
+    "TEST-003": "test-design-engineer",
+    "TEST-004": "test-design-engineer",
+    "TEST-005": "test-design-engineer",
+    "TEST-014": "test-design-engineer",
+    "TEST-015": "test-design-engineer",
+    "TEST-016": "test-design-engineer",
+    "TEST-017": "test-design-engineer",
+    "TEST-006": "integration-tester",
+    "TEST-007": "integration-tester",
+    "TEST-008": "integration-tester",
+    "TEST-009": "integration-tester",
+    "TEST-010": "integration-tester",
+    "TEST-011": "integration-tester",
+    "TEST-012": "integration-tester",
+    "TEST-013": "integration-tester",
+    "DEV-001": "software-developer",
+    "DEV-002": "software-developer",
+    "DEV-003": "software-developer",
+    "DEV-004": "software-developer",
+    "DEV-005": "software-developer",
+    "DEV-006": "software-developer",
+    "DEV-007": "software-developer",
+    "DEV-008": "software-developer",
+    "DEV-009": "software-developer",
+    "DEV-010": "software-developer",
+    "DEV-011": "software-developer",
+    "DEV-012": "software-developer",
+    "DEV-013": "software-developer",
+    "DEV-014": "software-developer",
+    "DEV-015": "qa-engineer",
+    "SEC-001": "security-compliance-auditor",
+    "SEC-002": "security-compliance-auditor",
+    "SEC-003": "security-compliance-auditor",
+    "SEC-004": "security-compliance-auditor",
+    "SEC-005": "security-compliance-auditor",
+    "SEC-006": "security-compliance-auditor",
+    "SEC-007": "security-compliance-auditor",
+    "SEC-008": "security-compliance-auditor",
+    "SEC-009": "security-compliance-auditor",
+    "SEC-010": "security-compliance-auditor",
+    "SEC-011": "security-compliance-auditor",
+    "SEC-012": "security-compliance-auditor",
+    "SEC-013": "security-compliance-auditor",
+    "OPS-001": "cicd-engineer",
+    "OPS-002": "cicd-engineer",
+    "OPS-003": "cicd-engineer",
+    "OPS-004": "cicd-engineer",
+    "OPS-005": "cicd-engineer",
+    "OPS-006": "cicd-engineer",
+    "OPS-007": "environment-builder",
+    "OPS-008": "environment-builder",
+    "OPS-009": "deployment-engineer-staging",
+    "OPS-010": "deployment-engineer-staging",
+    "OPS-011": "deployment-engineer-staging",
+    "OPS-012": "release-manager",
+    "OPS-013": "release-manager",
+    "OPS-014": "release-manager",
+    "OPS-015": "environment-builder",
+    "OPS-016": "environment-builder",
+    "DOC-001": "environment-builder",
+    "DOC-002": "environment-builder",
+    "DOC-003": "environment-builder",
+    "DOC-004": "deployment-engineer-staging",
+    "DOC-005": "release-manager",
+    "DOC-006": "release-manager",
+    "DOC-007": "site-reliability-engineer",
+    "DOC-008": "site-reliability-engineer",
+    "DOC-009": "solution-architect",
+    "DOC-010": "system-designer",
+    "SRE-001": "site-reliability-engineer",
+    "SRE-002": "site-reliability-engineer",
+    "SRE-003": "site-reliability-engineer",
+    "SRE-004": "site-reliability-engineer",
+    "SRE-005": "site-reliability-engineer",
+    "SRE-006": "site-reliability-engineer",
+    "SRE-007": "site-reliability-engineer",
+    "SRE-008": "site-reliability-engineer",
+    "SRE-009": "site-reliability-engineer",
+    "SRE-010": "site-reliability-engineer",
+    "SRE-011": "site-reliability-engineer",
+    "SRE-012": "site-reliability-engineer",
+    "DISC-001": "discover-orchestrator",
+    "DISC-002": "discover-orchestrator",
+    "DISC-003": "discover-orchestrator",
+    "DISC-004": "discover-orchestrator",
+    "DISC-101": "architecture-analyzer",
+    "DISC-102": "architecture-analyzer",
+    "DISC-103": "architecture-analyzer",
+    "DISC-104": "architecture-analyzer",
+    "DISC-105": "architecture-analyzer",
+    "DISC-106": "architecture-analyzer",
+    "DISC-201": "test-evaluator",
+    "DISC-202": "test-evaluator",
+    "DISC-203": "test-evaluator",
+    "DISC-204": "test-evaluator",
+    "DISC-205": "test-evaluator",
+    "DISC-206": "test-evaluator",
+    "DISC-301": "constitution-generator",
+    "DISC-302": "constitution-generator",
+    "DISC-303": "constitution-generator",
+    "DISC-304": "constitution-generator",
+    "DISC-401": "skills-researcher",
+    "DISC-402": "skills-researcher",
+    "DISC-403": "skills-researcher",
+    "DISC-404": "skills-researcher",
+    "DISC-501": "data-model-analyzer",
+    "DISC-502": "data-model-analyzer",
+    "DISC-503": "data-model-analyzer",
+    "DISC-504": "data-model-analyzer",
+    "DISC-601": "feature-mapper",
+    "DISC-602": "feature-mapper",
+    "DISC-603": "feature-mapper",
+    "DISC-604": "feature-mapper",
+    "DISC-701": "product-analyst",
+    "DISC-702": "product-analyst",
+    "DISC-703": "product-analyst",
+    "DISC-704": "product-analyst",
+    "DISC-801": "architecture-designer",
+    "DISC-802": "architecture-designer",
+    "DISC-803": "architecture-designer",
+    "DISC-804": "architecture-designer",
+    "RE-001": "feature-mapper",
+    "RE-002": "feature-mapper",
+    "RE-003": "feature-mapper",
+    "RE-004": "feature-mapper",
+    "RE-005": "feature-mapper",
+    "RE-006": "feature-mapper",
+    "RE-007": "feature-mapper",
+    "RE-008": "feature-mapper",
+    "RE-101": "characterization-test-generator",
+    "RE-102": "characterization-test-generator",
+    "RE-103": "characterization-test-generator",
+    "RE-104": "characterization-test-generator",
+    "RE-105": "characterization-test-generator",
+    "RE-106": "characterization-test-generator",
+    "RE-107": "characterization-test-generator",
+    "RE-201": "artifact-integration",
+    "RE-202": "artifact-integration",
+    "RE-203": "artifact-integration",
+    "RE-301": "atdd-bridge",
+    "RE-302": "atdd-bridge",
+    "RE-303": "atdd-bridge",
+    "UPG-001": "upgrade-engineer",
+    "UPG-002": "upgrade-engineer",
+    "UPG-003": "upgrade-engineer",
+    "UPG-004": "upgrade-engineer",
+    "UPG-005": "upgrade-engineer",
+    "UPG-006": "upgrade-engineer",
+    "QL-001": "quality-loop-engineer",
+    "QL-002": "quality-loop-engineer",
+    "QL-003": "quality-loop-engineer",
+    "QL-004": "quality-loop-engineer",
+    "QL-005": "quality-loop-engineer",
+    "QL-006": "quality-loop-engineer",
+    "QL-007": "quality-loop-engineer",
+    "QL-008": "quality-loop-engineer",
+    "QL-009": "quality-loop-engineer",
+    "QL-010": "quality-loop-engineer",
+    "QL-011": "quality-loop-engineer",
+    "QL-012": "quality-loop-engineer"
+  }
+}

@@ -1,0 +1,53 @@
+# =============================================================================
+# npm distribution filter
+# Only framework source ships to end users via npm. All development artifacts,
+# tests, dogfooding docs, and project-specific config are excluded.
+# =============================================================================
+
+# Test files (all types)
+*.test.js
+*.test.cjs
+lib/utils/test-helpers.js
+src/claude/hooks/tests/
+tests/
+coverage/
+
+# Dogfooding docs and project config
+docs/requirements/
+docs/architecture/
+docs/design/
+docs/isdlc/
+docs/common/
+docs/testing/
+docs/.validations/
+docs/SESSION-*.md
+docs/archive/
+docs/agent-skill-mapping.md
+docs/AGENTS.md
+docs/ARCHITECTURE.md
+docs/AUTONOMOUS-ITERATION.md
+docs/BUG-*/
+
+# Project-specific files
+CLAUDE.md
+CHANGELOG.md
+BACKLOG.md
+NEXT-SESSION.md
+framework-info.md
+setup-remotes.sh
+
+# Development tooling
+src/claude/agents-backup/
+src/isdlc/scripts/
+src/isdlc/checklists/
+scripts/
+
+# CI/CD (users don't need our CI config)
+.github/
+
+# Build config (not needed at runtime)
+.validations/
+
+# Runtime directories (should never be in npm anyway)
+.claude/
+.isdlc/

@@ -1,0 +1,12 @@
+{
+  "description": "sdlc-orchestrator invoked during any phase",
+  "tool_name": "Task",
+  "tool_input": {
+    "subagent_type": "sdlc-orchestrator",
+    "description": "Coordinate workflow",
+    "prompt": "Assess complexity and delegate to appropriate agent"
+  },
+  "expected_result": "allow",
+  "current_phase": "05-implementation",
+  "reason": "Orchestrator has phase=all, always authorized"
+}
