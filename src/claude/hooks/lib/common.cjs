@@ -4011,12 +4011,10 @@ function rebuildSessionCache(options = {}) {
         return fs.readFileSync(path.join(root, '.claude', 'hooks', 'config', 'artifact-paths.json'), 'utf8');
     }));
 
-    // Section 5: SKILLS_MANIFEST (filtered: exclude path_lookup and skill_paths)
+    // Section 5: SKILLS_MANIFEST
     parts.push(buildSection('SKILLS_MANIFEST', () => {
         const manifestPath = path.join(root, 'src', 'claude', 'hooks', 'config', 'skills-manifest.json');
         const raw = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-        delete raw.path_lookup;
-        delete raw.skill_paths;
         return JSON.stringify(raw, null, 2);
     }));
 
@@ -4111,6 +4109,25 @@ function rebuildSessionCache(options = {}) {
         }
 
         return rtParts.join('\n\n');
+    }));
+
+    // Section 9: DISCOVERY_CONTEXT (discover phase artifacts)
+    parts.push(buildSection('DISCOVERY_CONTEXT', () => {
+        const discoveryFiles = [
+            { label: 'Project Discovery Report', path: path.join(root, 'docs', 'project-discovery-report.md') },
+            { label: 'Test Evaluation Report', path: resolveTestEvaluationPath() },
+            { label: 'Reverse Engineer Report', path: path.join(root, 'docs', 'isdlc', 'reverse-engineer-report.md') },
+        ];
+        const dcParts = [];
+        for (const df of discoveryFiles) {
+            try {
+                const content = fs.readFileSync(df.path, 'utf8');
+                if (content.trim().length > 0) {
+                    dcParts.push(`### ${df.label}\n${content}`);
+                }
+            } catch (_) { /* skip missing files */ }
+        }
+        return dcParts.join('\n\n');
     }));
 
     // Assemble header + all sections

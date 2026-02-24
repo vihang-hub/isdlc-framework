@@ -706,7 +706,10 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 7. **Roundtable conversation loop** (REQ-0032, FR-014, REQ-0037):
    Read the draft content: `docs/requirements/{slug}/draft.md`. If missing and not already in-memory from step 3a, set draftContent = "(No draft available)".
 
-   7a. **Initial dispatch**: Delegate to the `roundtable-analyst` agent via Task tool with the following prompt. The prompt now includes PERSONA_CONTEXT and TOPIC_CONTEXT fields (REQ-0037, FR-005) so the roundtable can skip file reads at startup:
+   7a. **Initial dispatch**: Delegate to the `roundtable-analyst` agent via Task tool with the following prompt. The prompt includes PERSONA_CONTEXT, TOPIC_CONTEXT, and DISCOVERY_CONTEXT fields so the roundtable can skip file reads at startup:
+
+   **Discovery context extraction**: Check if session context contains `<!-- SECTION: DISCOVERY_CONTEXT -->`. If found, extract the full section content as `{discoveryContent}`. If not found, set `{discoveryContent}` to empty string.
+
    ```
    "Analyze '{slug}' using concurrent roundtable analysis.
 
@@ -747,10 +750,13 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
     --- topic: security ---
     {topic content}
 
+    DISCOVERY_CONTEXT:
+    {discoveryContent}
+
     ANALYSIS_MODE: No state.json writes, no branch creation."
    ```
 
-   The PERSONA_CONTEXT and TOPIC_CONTEXT fields use `--- persona-{name} ---` and `--- topic: {topic_id} ---` delimiters. The roundtable-analyst parses these to skip file reads. If either field is absent (e.g., pre-reading failed), the roundtable falls back to reading files from disk.
+   The PERSONA_CONTEXT and TOPIC_CONTEXT fields use `--- persona-{name} ---` and `--- topic: {topic_id} ---` delimiters. The roundtable-analyst parses these to skip file reads. The DISCOVERY_CONTEXT field contains project discovery reports (architecture, test coverage, reverse-engineered behavior) when available. If any field is absent (e.g., pre-reading failed), the roundtable falls back to reading files from disk.
 
    **Task description format**: `Concurrent analysis for {slug}`
 
@@ -1557,7 +1563,7 @@ Use the **Phase-Loop Controller** protocol. This runs phases one at a time in th
 
 Read `agent_modifiers` for this phase from `.isdlc/state.json` → `active_workflow.type`, then look up the workflow in `workflows.json` → `workflows[type].agent_modifiers[phase_key]`. If modifiers exist, include them as `WORKFLOW MODIFIERS: {json}` in the prompt.
 
-**Discovery context** (phases 02 and 03 only): If `phase_key` starts with `02-` or `03-`, read `.isdlc/state.json` → `discovery_context`. If it exists and `completed_at` is within 24 hours, include as a `DISCOVERY CONTEXT` block. If older than 24h, include with a `⚠️ STALE` warning. Otherwise omit.
+**Discovery context** (all phases): Check if session context contains `<!-- SECTION: DISCOVERY_CONTEXT -->`. If found, extract the full section content and include it as a `DISCOVERY CONTEXT` block in the delegation prompt. If not found (cache absent or section missing), fall back to reading `.isdlc/state.json` → `discovery_context` — if it exists, include as a `DISCOVERY CONTEXT` block regardless of age. Otherwise omit.
 
 **Skill injection** (before constructing the Task tool prompt below, execute these steps to build skill context):
 

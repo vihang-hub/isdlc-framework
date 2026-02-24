@@ -59,9 +59,9 @@ The user-visible conversation experience is identical in both modes.
 
 ### 2.1 Opening (First Turn)
 
-1. Parse the dispatch prompt: extract SLUG, ARTIFACT_FOLDER, META_CONTEXT, DRAFT_CONTENT, SIZING_INFO, PERSONA_CONTEXT (optional), TOPIC_CONTEXT (optional)
-2. Load personas from inlined PERSONA_CONTEXT (if present in dispatch prompt) or read persona files as fallback (see Section 1.1). Load topics from inlined TOPIC_CONTEXT (if present) or glob+read topic files as fallback (see Section 3.1).
-3. **Defer codebase scan** (REQ-0037, FR-007): Do NOT run the codebase scan before the first exchange. Maya carries the first exchange solo from draft knowledge. The scan runs on resume after the user's first reply (see step 6 below).
+1. Parse the dispatch prompt: extract SLUG, ARTIFACT_FOLDER, META_CONTEXT, DRAFT_CONTENT, SIZING_INFO, PERSONA_CONTEXT (optional), TOPIC_CONTEXT (optional), DISCOVERY_CONTEXT (optional)
+2. Load personas from inlined PERSONA_CONTEXT (if present in dispatch prompt) or read persona files as fallback (see Section 1.1). Load topics from inlined TOPIC_CONTEXT (if present) or glob+read topic files as fallback (see Section 3.1). Load discovery context from inlined DISCOVERY_CONTEXT (if present) -- this provides Alex with project architecture, test coverage, and reverse-engineered behavior knowledge from the discover phase. If absent, Alex relies solely on the live codebase scan.
+3. **Defer codebase scan** (REQ-0037, FR-007): Do NOT run the codebase scan before the first exchange. Maya carries the first exchange solo from draft knowledge. The scan runs on resume after the user's first reply (see step 6 below). When DISCOVERY_CONTEXT is available, Alex uses it to inform the codebase scan -- focusing on areas not already covered by discovery artifacts rather than re-scanning everything.
 4. Open the conversation as Maya, naturally, from draft content without waiting for codebase scan results:
    - Acknowledge what is already known from the draft
    - Ask a single natural opening question about the problem (not a numbered list)
@@ -465,8 +465,15 @@ The finalization sequence has 3 turns maximum:
 3. Run cross-check validation (Section 5.3 steps 3-4) against the read content
 
 **Turn 2 — Parallel Write (all artifacts):**
-1. Prepare all artifact content (merge new information, update metadata headers, apply cross-check corrections)
-2. Write ALL artifacts in a SINGLE response using parallel Write tool calls — up to 11 Write calls in one response. Do NOT write them sequentially across multiple turns.
+
+⚠️ ANTI-PATTERN: Writing one artifact per turn (generate → Write → generate → Write → ...) is FORBIDDEN. This causes 5+ minutes of sequential writes. You MUST batch writes.
+
+1. Generate ALL artifact content in memory first. Do NOT issue any Write calls until all content is ready.
+2. Issue ALL Write tool calls in a SINGLE response — up to 11 parallel Write calls. The Write tool supports parallel execution; use it.
+3. If 11 parallel writes exceed your tool-call capacity, batch by owner (2 responses max):
+   - Batch A: quick-scan.md, requirements-spec.md, user-stories.json, traceability-matrix.csv, impact-analysis.md, architecture-overview.md
+   - Batch B: module-design.md, interface-spec.md, error-taxonomy.md, data-flow.md, design-summary.md
+4. After ALL writes complete, proceed to Turn 3.
 
 **Turn 3 — meta.json + signal:**
 1. Write meta.json with finalization data (Section 8.3)
