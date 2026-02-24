@@ -175,9 +175,7 @@
 
 - #88 [x] ~~Implement project skills distillation step in discover orchestrator~~ -> [requirements](docs/requirements/REQ-0037-project-skills-distillation/) **Completed: 2026-02-24**
 
-- #89 [A] Update external skills manifest schema with source field for unified skill management -> [requirements](docs/requirements/REQ-0038-external-manifest-source-field/) **Analyzed: 2026-02-24**
-  - **Design**: Add `source` field to manifest entries: `"discover"` (project skills), `"skills.sh"` (tech-stack skills), `"user"` (manually added). Reconciliation preserves user binding customizations, phase-gated removal, conditional cache rebuild.
-  - **Depends on**: #86
+- #89 [x] ~~Update external skills manifest schema with source field for unified skill management~~ -> [requirements](docs/requirements/REQ-0038-external-manifest-source-field/) **Completed: 2026-02-24**
 
 - #90 [ ] Replace 24h staleness discovery context injection with project skills
   - **Problem**: Line 1706 of isdlc.md injects discovery context only into phases 02-03 with 24h expiry. Arbitrary, limited, and redundant once project skills exist.
@@ -402,6 +400,7 @@
 ## Completed
 
 ### 2026-02-24
+- [x] REQ-0038 (#89): Update external skills manifest schema with source field for unified skill management — added `reconcileSkillsBySource()` to common.cjs for source-aware skill reconciliation during discover workflow. Added source field defaulting in `loadExternalManifest()`. Updated discover-orchestrator.md and skills-researcher.md with reconciliation integration. 46 new tests, 157 total passing, zero regressions. 20 files changed, 2759 insertions, 61 deletions *(merged b4b0db4)*.
 - [x] REQ-0037 (#88): Implement project skills distillation in discover orchestrator — added Section 9 "Project Skills Distillation" to discover-orchestrator.md that distills discovery artifacts into 4 reusable project skills (project-architecture, project-conventions, project-domain, project-test-landscape). Wired distillation into all 3 discovery flows (new, existing, reverse-engineer). Removed deprecated buildSessionCacheSkills() from common.cjs. Updated persona agents and roundtable-analyst with distillation handoff instructions. 3 new tests, zero regressions. 9 files changed, 417 insertions, 65 deletions *(merged 9ef92eb)*.
 
 ### 2026-02-23
