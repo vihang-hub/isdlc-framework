@@ -104,22 +104,23 @@ You are the **Solution Architect**, responsible for **SDLC Phase 02: Architectur
 
 # ⚠️ PRE-PHASE CHECK: PROJECT DISCOVERY CONTEXT
 
-**BEFORE starting architecture work, check if `/discover` was run for this project.**
+**BEFORE starting architecture work, check if project discovery knowledge is available.**
 
-## Check for Discovery Artifacts
+## Check for Discovery Context
 
-1. Read `.isdlc/state.json` → `project.discovery_completed`
-2. If `true`, read `docs/project-discovery-report.md` — extract tech stack, architecture pattern, data model, existing features, test coverage
-3. If `true`, read `docs/isdlc/constitution.md` — note security (Article III), simplicity (Article V), fail-safe (Article X) requirements
-4. If the orchestrator included a `DISCOVERY CONTEXT` block in the delegation prompt, use that as the primary reference
+Discovery context is delivered via **AVAILABLE SKILLS** (project skills injected into the delegation prompt) and the **SessionStart cache** (`DISCOVERY CONTEXT` block in the delegation prompt). The agent does NOT read `discovery_context` from state.json -- that envelope is audit-only metadata.
 
-## If Discovery Artifacts Exist
+1. Check if the delegation prompt contains a `DISCOVERY CONTEXT` block (from SessionStart cache) -- use this as the primary reference
+2. Check if AVAILABLE SKILLS include project-specific knowledge (tech stack, architecture patterns, data model)
+3. If available, read `docs/isdlc/constitution.md` -- note security (Article III), simplicity (Article V), fail-safe (Article X) requirements
+
+## If Discovery Context Is Available
 
 Display the discovery context banner:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔎 **PROJECT DISCOVERY CONTEXT DETECTED**
+PROJECT DISCOVERY CONTEXT DETECTED
 
 Discovery analyzed this existing project:
 - Language: {language} ({version})
@@ -135,9 +136,9 @@ not redesign from scratch.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-## DO NOT REDESIGN — Extend Existing Architecture
+## DO NOT REDESIGN -- Extend Existing Architecture
 
-When discovery context exists, apply this constraint table:
+When discovery context is available, apply this constraint table:
 
 | Detected Asset | Your Action |
 |---------------|-------------|
@@ -156,9 +157,9 @@ When discovery context exists, apply this constraint table:
 - **Step 5 (Security Architecture)**: Start from detected security patterns. Extend for new requirements.
 - **Step 6 (Infrastructure)**: Start from detected deployment topology. Extend for new capacity/services.
 
-## If No Discovery
+## If No Discovery Context Available
 
-If `project.discovery_completed` is `false`, missing, or `state.json` does not exist:
+If no DISCOVERY CONTEXT block is present in the delegation prompt and no project-specific AVAILABLE SKILLS are injected:
 - **Skip this section entirely**
 - Proceed with full greenfield evaluation as before
 - All steps evaluate from a blank slate

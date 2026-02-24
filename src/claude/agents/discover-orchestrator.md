@@ -667,7 +667,7 @@ PHASE 7: Project Structure                           [Complete ✓]
 
 #### Write Discovery Context Envelope
 
-Before writing the final state update, assemble and write the `discovery_context` envelope to state.json. This structured envelope enables seamless handover to subsequent /isdlc workflows.
+Before writing the final state update, assemble and write the `discovery_context` envelope to state.json. This envelope is **audit-only metadata** -- it records when discovery was last run and what was found, for provenance tracking. Project knowledge is delivered to subsequent workflows via AVAILABLE SKILLS and the SessionStart cache, not by reading this envelope from state.json.
 
 Read the current state.json and add/update the `discovery_context` key:
 
@@ -706,7 +706,7 @@ Read the current state.json and add/update the `discovery_context` key:
 }
 ```
 
-Populate each field from the results already collected during the new project setup phases. For new projects, coverage fields default to 0, re_artifacts fields default to 0/empty (no existing code to analyze), and walkthrough fields default to false (new projects do not have the interactive walkthrough).
+Populate each field from the results already collected during the new project setup phases. For new projects, coverage fields default to 0, re_artifacts fields default to 0/empty (no existing code to analyze), and walkthrough fields default to false (new projects do not have the interactive walkthrough). Note: this envelope is retained for audit/provenance purposes only -- downstream workflows do NOT read it for context injection.
 
 #### Update Project State
 
@@ -1188,9 +1188,9 @@ Execute walkthrough inline (same protocol as existing Step 7.5):
 - Step 3.5: Iteration configuration
 - Step 4: Smart next steps
 
-#### 5.2 Write discovery_context Envelope (AC-16)
+#### 5.2 Write discovery_context Envelope (AC-16) -- Audit-Only
 
-Write discovery_context to state.json with the SAME schema as sequential mode:
+Write discovery_context to state.json with the SAME schema as sequential mode. This envelope is **audit-only metadata** for provenance tracking -- downstream workflows receive project knowledge via AVAILABLE SKILLS and SessionStart cache, not from this envelope:
 
 ```json
 {
@@ -2536,7 +2536,7 @@ What would you like to do next?
 [2] I'm done for now
 ```
 
-Record the user's selection in `.isdlc/state.json` under `discovery_context.user_next_action`. Use the command string (e.g., `/isdlc test generate`, `/isdlc feature`, `/isdlc fix`, or `none`).
+Record the user's selection in `.isdlc/state.json` under `discovery_context.user_next_action` (audit-only metadata). Use the command string (e.g., `/isdlc test generate`, `/isdlc feature`, `/isdlc fix`, or `none`).
 
 **Update progress:**
 ```
@@ -2559,14 +2559,14 @@ If the user selected an action other than "I'm done for now", proceed to finaliz
 **Show progress:**
 ```
 PHASE 5: Finalize                                    [In Progress]
-├─ ◐ Write discovery context envelope                   (running)
+├─ ◐ Write discovery context envelope (audit-only)       (running)
 ├─ □ Update project state                              (pending)
 └─ □ Generate setup summary                            (pending)
 ```
 
 #### Write Discovery Context Envelope
 
-Before writing the final state update, assemble and write the `discovery_context` envelope to state.json. This structured envelope enables seamless handover to subsequent /isdlc workflows.
+Before writing the final state update, assemble and write the `discovery_context` envelope to state.json. This envelope is **audit-only metadata** -- it records when discovery was last run and what was found, for provenance tracking. Project knowledge is delivered to subsequent workflows via AVAILABLE SKILLS and the SessionStart cache, not by reading this envelope from state.json.
 
 Read the current state.json and add/update the `discovery_context` key:
 
@@ -2605,7 +2605,7 @@ Read the current state.json and add/update the `discovery_context` key:
 }
 ```
 
-Populate each field from the results already collected during the discovery phases. If a field cannot be determined, use sensible defaults (0 for numbers, false for booleans, empty string for strings).
+Populate each field from the results already collected during the discovery phases. If a field cannot be determined, use sensible defaults (0 for numbers, false for booleans, empty string for strings). Note: this envelope is retained for audit/provenance purposes only -- downstream workflows do NOT read it for context injection.
 
 #### Update Project State
 

@@ -42,7 +42,7 @@ IF DEBATE_CONTEXT is NOT present:
 ## Conversational Opening (both modes, Round 1 only)
 
 1. READ the feature description from the Task prompt
-2. READ discovery_context from state.json (if available and < 24h old)
+2. USE project knowledge from AVAILABLE SKILLS and DISCOVERY CONTEXT (if provided in the delegation prompt via SessionStart cache)
 
 IF feature description is rich (> 50 words or references a BACKLOG.md item):
   - Reflect: "Here's what I understand from your description: {summary}"
@@ -230,30 +230,32 @@ Then proceed with the normal workflow, but use the exploration context to:
 
 # PRE-PHASE CHECK: PROJECT DISCOVERY CONTEXT
 
-Before starting requirements capture, check if `/discover` was run for this project.
+Before starting requirements capture, check if project discovery knowledge is available.
 
-## Check for Discovery Artifacts
+## Check for Discovery Context
 
-1. Read `.isdlc/state.json` → `project.discovery_completed`
-2. If `true`, read `docs/project-discovery-report.md` (if it exists)
-3. If `true`, read `docs/isdlc/constitution.md` (if it exists)
+Discovery context is delivered via **AVAILABLE SKILLS** (project skills injected into the delegation prompt) and the **SessionStart cache** (`DISCOVERY CONTEXT` block in the delegation prompt). The agent does NOT read `discovery_context` from state.json -- that envelope is audit-only metadata.
 
-## If Discovery Artifacts Exist
+1. Check if the delegation prompt contains a `DISCOVERY CONTEXT` block (from SessionStart cache)
+2. Check if AVAILABLE SKILLS include project-specific knowledge (tech stack, patterns, conventions)
+3. If available, read `docs/isdlc/constitution.md` (if it exists)
+
+## If Discovery Context Is Available
 
 Display the discovery context banner and integrate findings into the workflow.
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔎 **PROJECT DISCOVERY CONTEXT DETECTED**
+PROJECT DISCOVERY CONTEXT DETECTED
 
 Discovery has already analyzed this project:
 - Tech Stack: {language} + {framework} + {database}
 - Architecture: {detected pattern}
 - Features: {count} existing features detected
 - Test Coverage: {coverage}% ({gaps summary})
-- Constitution: {status — loaded / not found}
+- Constitution: {status -- loaded / not found}
 
-I'll use this as context — focusing questions on
+I'll use this as context -- focusing questions on
 what's NEW for this feature, not re-discovering
 what already exists.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -272,7 +274,7 @@ what already exists.
 
 ## Workflow Augmentation
 
-When discovery context exists:
+When discovery context is available (from delegation prompt or AVAILABLE SKILLS):
 
 ### Stage 1.4 (Technical Context) — Augmented
 Instead of asking about the tech stack from scratch, present what discovery detected:
@@ -320,12 +322,12 @@ Tell me about risks specific to this feature.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-## If No Discovery
+## If No Discovery Context Available
 
-If `project.discovery_completed` is `false`, missing, or `state.json` does not exist:
+If no DISCOVERY CONTEXT block is present in the delegation prompt and no project-specific AVAILABLE SKILLS are injected:
 - **Skip this section entirely**
 - Proceed with the original workflow unchanged
-- No banner, no augmentation — all stages work as before
+- No banner, no augmentation -- all stages work as before
 
 ---
 

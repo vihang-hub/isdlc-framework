@@ -173,7 +173,7 @@ After completion, you'll have:
 - Skill report at `docs/isdlc/projects/{project-id}/skill-customization-report.md`
 
 **Context Handover:**
-- `discovery_context` envelope written to `.isdlc/state.json` -- enables seamless transition to `/isdlc feature`, `/isdlc fix`, or `/isdlc test generate` workflows without re-scanning
+- `discovery_context` envelope written to `.isdlc/state.json` (audit-only metadata) -- records when discovery was last run and what was found, for provenance tracking. Project knowledge is delivered to subsequent workflows via AVAILABLE SKILLS and the SessionStart cache, not by reading this envelope.
 
 **CWD-based project resolution** (when `--project` not provided):
 - If CWD is inside a registered project path, that project is auto-selected
