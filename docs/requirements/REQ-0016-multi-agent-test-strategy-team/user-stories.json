@@ -1,0 +1,222 @@
+{
+  "feature_id": "REQ-0016",
+  "feature_name": "Multi-agent Test Strategy Team",
+  "version": "1.0",
+  "created": "2026-02-15",
+  "stories": [
+    {
+      "id": "US-01",
+      "title": "Test Strategy Critique During Debate",
+      "persona": "SDLC Orchestrator",
+      "story": "As the SDLC Orchestrator, I want to delegate test strategy artifacts to a Test Strategy Critic agent so that test strategy defects are caught before implementation begins.",
+      "acceptance_criteria": [
+        {
+          "id": "AC-01.1",
+          "description": "Critic agent file exists with valid frontmatter"
+        },
+        {
+          "id": "AC-01.2",
+          "description": "Critic reads all Phase 05 artifacts when invoked with DEBATE_CONTEXT"
+        },
+        {
+          "id": "AC-01.3",
+          "description": "Critic applies all 8 mandatory checks (TC-01 through TC-08)"
+        },
+        {
+          "id": "AC-01.4",
+          "description": "Findings categorized as BLOCKING or WARNING with unique IDs"
+        },
+        {
+          "id": "AC-01.5",
+          "description": "Output follows round-{N}-critique.md format"
+        }
+      ],
+      "priority": "must-have",
+      "requirement_refs": ["FR-01"]
+    },
+    {
+      "id": "US-02",
+      "title": "Comprehensive Test Defect Detection",
+      "persona": "Software Developer (Phase 06)",
+      "story": "As a Software Developer consuming test strategy artifacts, I want the test strategy to have been reviewed for completeness so that I don't discover missing test cases during implementation.",
+      "acceptance_criteria": [
+        {
+          "id": "AC-02.1",
+          "description": "TC-01: Untested acceptance criteria detected"
+        },
+        {
+          "id": "AC-02.2",
+          "description": "TC-02: Incomplete test pyramid detected"
+        },
+        {
+          "id": "AC-02.3",
+          "description": "TC-03: Missing negative test cases detected"
+        },
+        {
+          "id": "AC-02.4",
+          "description": "TC-04: Test data gaps detected"
+        },
+        {
+          "id": "AC-02.5",
+          "description": "TC-05: Flaky test risk detected"
+        },
+        {
+          "id": "AC-02.6",
+          "description": "TC-06: Untested error paths detected"
+        },
+        {
+          "id": "AC-02.7",
+          "description": "TC-07: Missing performance tests detected"
+        },
+        {
+          "id": "AC-02.8",
+          "description": "TC-08: Orphan test cases detected"
+        }
+      ],
+      "priority": "must-have",
+      "requirement_refs": ["FR-02"]
+    },
+    {
+      "id": "US-03",
+      "title": "Test Strategy Refinement After Critique",
+      "persona": "SDLC Orchestrator",
+      "story": "As the SDLC Orchestrator, I want a Test Strategy Refiner agent to address Critic findings and produce improved artifacts so that test strategy quality improves with each debate round.",
+      "acceptance_criteria": [
+        {
+          "id": "AC-03.1",
+          "description": "Refiner agent file exists with valid frontmatter"
+        },
+        {
+          "id": "AC-03.2",
+          "description": "Every BLOCKING finding addressed with documented fix strategy"
+        },
+        {
+          "id": "AC-03.3",
+          "description": "Refined output includes: complete test pyramid, Given/When/Then for every AC, negative test cases, test data strategy, flaky-test mitigation, risk-mapped coverage"
+        },
+        {
+          "id": "AC-03.4",
+          "description": "Change log appended with finding-by-finding resolution"
+        },
+        {
+          "id": "AC-03.5",
+          "description": "Unresolvable findings marked [NEEDS CLARIFICATION] and escalated"
+        }
+      ],
+      "priority": "must-have",
+      "requirement_refs": ["FR-03"]
+    },
+    {
+      "id": "US-04",
+      "title": "Orchestrator Routes Phase 05 Through Debate",
+      "persona": "SDLC Orchestrator",
+      "story": "As the SDLC Orchestrator, I want Phase 05 in the DEBATE_ROUTING table so that when debate_mode is true and Phase 05 is reached, the Creator/Critic/Refiner loop is automatically engaged.",
+      "acceptance_criteria": [
+        {
+          "id": "AC-04.1",
+          "description": "DEBATE_ROUTING row maps 05-test-strategy to correct agents"
+        },
+        {
+          "id": "AC-04.2",
+          "description": "Phase artifacts list: test-strategy.md, test-cases/, traceability-matrix.csv, test-data-plan.md"
+        },
+        {
+          "id": "AC-04.3",
+          "description": "Critical artifact is test-strategy.md"
+        },
+        {
+          "id": "AC-04.4",
+          "description": "Orchestrator engages debate loop for Phase 05 when debate_mode is true"
+        }
+      ],
+      "priority": "must-have",
+      "requirement_refs": ["FR-04"]
+    },
+    {
+      "id": "US-05",
+      "title": "Creator Mode for test-design-engineer",
+      "persona": "Test Design Engineer (Agent 04)",
+      "story": "As the test-design-engineer, I want to detect DEBATE_CONTEXT in my Task prompt so that I can produce draft artifacts labeled and optimized for Critic review when in debate mode.",
+      "acceptance_criteria": [
+        {
+          "id": "AC-05.1",
+          "description": "DEBATE_CONTEXT detected: artifacts labeled 'Round {N} Draft', optimized for review"
+        },
+        {
+          "id": "AC-05.2",
+          "description": "Round > 1: Creator reads Refiner's improvements before producing updated draft"
+        },
+        {
+          "id": "AC-05.3",
+          "description": "No DEBATE_CONTEXT: single-agent mode preserved exactly"
+        },
+        {
+          "id": "AC-05.4",
+          "description": "Creator mode adds section markers for Critic reference"
+        }
+      ],
+      "priority": "must-have",
+      "requirement_refs": ["FR-05"]
+    },
+    {
+      "id": "US-06",
+      "title": "Skills Manifest Registration",
+      "persona": "Framework Developer",
+      "story": "As a framework developer, I want the new Critic and Refiner agents registered in the skills manifest so that skill observability and validation work correctly for the new agents.",
+      "acceptance_criteria": [
+        {
+          "id": "AC-06.1",
+          "description": "Critic agent listed in skills manifest with TEST-002, TEST-004, TEST-005"
+        },
+        {
+          "id": "AC-06.2",
+          "description": "Refiner agent listed in skills manifest with TEST-001, TEST-002, TEST-003, TEST-004, TEST-005"
+        },
+        {
+          "id": "AC-06.3",
+          "description": "Primary owner for shared skills remains test-design-engineer"
+        },
+        {
+          "id": "AC-06.4",
+          "description": "Total skills count unchanged (no new skill IDs created)"
+        }
+      ],
+      "priority": "must-have",
+      "requirement_refs": ["FR-06"]
+    },
+    {
+      "id": "US-07",
+      "title": "Test Validation for Debate Team",
+      "persona": "QA Engineer",
+      "story": "As a QA Engineer, I want comprehensive tests for the new agents, orchestrator changes, and manifest updates so that the debate team pattern is validated and regressions are prevented.",
+      "acceptance_criteria": [
+        {
+          "id": "AC-07.1",
+          "description": "Tests validate Critic agent: frontmatter, 8 checks, output format, severity"
+        },
+        {
+          "id": "AC-07.2",
+          "description": "Tests validate Refiner agent: frontmatter, fix strategies, change log, escalation"
+        },
+        {
+          "id": "AC-07.3",
+          "description": "Tests validate DEBATE_ROUTING: Phase 05 row, agent mapping, artifacts"
+        },
+        {
+          "id": "AC-07.4",
+          "description": "Tests validate Creator awareness: mode detection, round labeling, fallback"
+        },
+        {
+          "id": "AC-07.5",
+          "description": "Tests validate skills manifest: agents listed, skills correct, count unchanged"
+        },
+        {
+          "id": "AC-07.6",
+          "description": "Zero pre-existing test regressions"
+        }
+      ],
+      "priority": "must-have",
+      "requirement_refs": ["FR-07"]
+    }
+  ]
+}

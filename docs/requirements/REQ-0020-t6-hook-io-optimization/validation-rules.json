@@ -1,0 +1,199 @@
+{
+  "feature": "REQ-0020",
+  "phase": "04-design",
+  "version": "1.0",
+  "created": "2026-02-16",
+  "description": "Validation rules for T6 Hook I/O Optimization -- internal refactoring, no new APIs",
+
+  "cache_key_validation": {
+    "description": "Rules for config cache key format and monorepo isolation",
+    "rules": [
+      {
+        "id": "CK-001",
+        "field": "_configCache key",
+        "rule": "Must be formatted as '{projectRoot}:{configName}'",
+        "type": "string",
+        "pattern": "^.+:.+$",
+        "rationale": "Monorepo isolation requires project root in key (AC-001e)"
+      },
+      {
+        "id": "CK-002",
+        "field": "configName component",
+        "rule": "Must be one of: 'skills-manifest', 'iteration-requirements', 'workflows'",
+        "type": "enum",
+        "valid_values": ["skills-manifest", "iteration-requirements", "workflows"],
+        "rationale": "Only 3 config files are cached (FR-001)"
+      },
+      {
+        "id": "CK-003",
+        "field": "projectRoot component",
+        "rule": "Must be an absolute filesystem path",
+        "type": "string",
+        "rationale": "getProjectRoot() always returns absolute path"
+      }
+    ]
+  },
+
+  "cache_entry_validation": {
+    "description": "Rules for config cache entry structure",
+    "rules": [
+      {
+        "id": "CE-001",
+        "field": "_configCache value.mtimeMs",
+        "rule": "Must be a positive number (milliseconds since epoch)",
+        "type": "number",
+        "minimum": 0,
+        "rationale": "fs.statSync().mtimeMs is always a positive number"
+      },
+      {
+        "id": "CE-002",
+        "field": "_configCache value.data",
+        "rule": "Must be a non-null object (parsed JSON)",
+        "type": "object",
+        "rationale": "Only successfully parsed objects are cached (AC-001d)"
+      },
+      {
+        "id": "CE-003",
+        "field": "_configCache size",
+        "rule": "Must not exceed 6 entries (3 config types x 2 paths max)",
+        "type": "integer",
+        "maximum": 6,
+        "rationale": "Per-process cache has bounded size"
+      }
+    ]
+  },
+
+  "project_root_cache_validation": {
+    "description": "Rules for getProjectRoot() cache behavior",
+    "rules": [
+      {
+        "id": "PR-001",
+        "field": "_cachedProjectRoot",
+        "rule": "After first getProjectRoot() call, must be a non-null string",
+        "type": "string",
+        "rationale": "getProjectRoot() always returns a string (AC-002c)"
+      },
+      {
+        "id": "PR-002",
+        "field": "_cachedProjectRoot",
+        "rule": "Must equal the return value of every subsequent getProjectRoot() call",
+        "type": "invariant",
+        "invariant": "getProjectRoot() === _cachedProjectRoot",
+        "rationale": "Consistency within process (AC-002c)"
+      },
+      {
+        "id": "PR-003",
+        "field": "_cachedProjectRoot initial value",
+        "rule": "Must be null before first getProjectRoot() call",
+        "type": "null",
+        "rationale": "Cache starts empty"
+      }
+    ]
+  },
+
+  "disk_state_parameter_validation": {
+    "description": "Rules for diskState parameter in state-write-validator",
+    "rules": [
+      {
+        "id": "DS-001",
+        "field": "diskState parameter to checkVersionLock",
+        "rule": "Must be object|null. When null, V7 allows all writes (fail-open).",
+        "type": ["object", "null"],
+        "rationale": "AC-003d: graceful null handling"
+      },
+      {
+        "id": "DS-002",
+        "field": "diskState parameter to checkPhaseFieldProtection",
+        "rule": "Must be object|null. When null, V8 allows all writes (fail-open).",
+        "type": ["object", "null"],
+        "rationale": "AC-003d: graceful null handling"
+      },
+      {
+        "id": "DS-003",
+        "field": "diskState in check()",
+        "rule": "Must be read exactly once via fs.readFileSync + JSON.parse before V7/V8 calls",
+        "type": "invariant",
+        "invariant": "readFileSync call count for state.json path <= 1 per check() invocation (Write events)",
+        "rationale": "AC-003a: single disk read"
+      },
+      {
+        "id": "DS-004",
+        "field": "diskState consistency",
+        "rule": "Same diskState object instance must be passed to both checkVersionLock and checkPhaseFieldProtection",
+        "type": "invariant",
+        "rationale": "AC-003b: shared parsed object"
+      }
+    ]
+  },
+
+  "manifest_passthrough_validation": {
+    "description": "Rules for manifest parameter in gate-blocker",
+    "rules": [
+      {
+        "id": "MP-001",
+        "field": "manifest parameter to checkAgentDelegationRequirement",
+        "rule": "Must be object|null|undefined. When null/undefined, falls back to loadManifest().",
+        "type": ["object", "null"],
+        "rationale": "AC-004b: backward compatibility for standalone mode"
+      },
+      {
+        "id": "MP-002",
+        "field": "ctx.manifest at call site (gate-blocker.cjs line 730)",
+        "rule": "Must be passed as the 5th argument to checkAgentDelegationRequirement",
+        "type": "invariant",
+        "rationale": "AC-004c: eliminate direct loadManifest() call at line 369"
+      }
+    ]
+  },
+
+  "batch_write_verification": {
+    "description": "Rules verifying FR-005 batch write pattern (no code changes, verification only)",
+    "rules": [
+      {
+        "id": "BW-001",
+        "field": "writeState calls per dispatcher",
+        "rule": "At most 1 writeState() call per dispatcher invocation",
+        "type": "invariant",
+        "invariant": "writeState call count <= 1",
+        "rationale": "AC-005a"
+      },
+      {
+        "id": "BW-002",
+        "field": "stateModified flag",
+        "rule": "writeState() must only be called when stateModified === true",
+        "type": "invariant",
+        "invariant": "writeState called => stateModified === true",
+        "rationale": "AC-005d: no write when no hook modified state"
+      },
+      {
+        "id": "BW-003",
+        "field": "workflow-completion-enforcer contract",
+        "rule": "Must return stateModified: false",
+        "type": "invariant",
+        "invariant": "wce.check(ctx).stateModified === false",
+        "rationale": "AC-005c: no double-write"
+      }
+    ]
+  },
+
+  "mtime_comparison_validation": {
+    "description": "Rules for mtime-based cache invalidation correctness",
+    "rules": [
+      {
+        "id": "MT-001",
+        "field": "mtimeMs comparison",
+        "rule": "Must use strict equality (===) for mtime comparison",
+        "type": "invariant",
+        "invariant": "cached.mtimeMs === currentMtime",
+        "rationale": "ADR-0002: deterministic invalidation"
+      },
+      {
+        "id": "MT-002",
+        "field": "null caching prohibition",
+        "rule": "When _loadConfigWithCache returns null, the _configCache must NOT contain an entry for that cache key",
+        "type": "invariant",
+        "rationale": "AC-001d: do not cache failures"
+      }
+    ]
+  }
+}

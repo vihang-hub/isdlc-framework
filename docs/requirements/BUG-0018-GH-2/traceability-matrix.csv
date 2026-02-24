@@ -1,0 +1,27 @@
+Requirement,AC,Test Case ID,Test Case Name,Priority,Type,Status
+FR-1,AC-1.1,TC-FR1-01,Requirements link suffix stripping instruction exists,P0,Content verification,Designed
+FR-1,AC-1.2,TC-FR1-02,Design link suffix stripping instruction exists,P0,Content verification,Designed
+FR-1,AC-1.3,TC-FR1-03,Items without suffix still display correctly,P0,Content verification,Designed
+FR-1,AC-1.4,TC-FR1-04,Stripped text used as workflow description,P0,Content verification,Designed
+FR-2,AC-2.1,TC-FR2-01,Numbered item pattern N.N recognized,P0,Content verification,Designed
+FR-2,AC-2.2,TC-FR2-02,Checked items excluded,P0,Content verification,Designed
+FR-2,AC-2.3,TC-FR2-03,Unchecked items included,P0,Content verification,Designed
+FR-2,AC-2.4,TC-FR2-04,Strikethrough items excluded,P1,Content verification,Designed
+FR-2,AC-2.5,TC-FR2-05,Section headers not parsed as items,P1,Content verification,Designed
+FR-2,AC-2.6,TC-FR2-06,Sub-bullets not parsed as items,P1,Content verification,Designed
+FR-3,AC-3.1,TC-FR3-01,Jira sub-bullet parsing preserved,P1,Content verification,Designed
+FR-3,AC-3.2,TC-FR3-02,Jira-backed items show ticket suffix,P1,Content verification,Designed
+FR-3,AC-3.3,TC-FR3-03,Non-Jira items display without suffix,P1,Content verification,Designed
+FR-4,AC-4.1,TC-FR4-01,Backlog test files existence check,P1,Filesystem verification,Designed
+FR-4,AC-4.2,TC-FR4-04,Old format tests still valid,P1,Content verification,Designed
+FR-4,AC-4.3,TC-FR4-02,New test file covers suffix stripping,P1,Self-referential verification,Designed
+FR-4,AC-4.4,TC-FR4-03,All tests pass after implementation,P0,Execution verification,Deferred to Phase 16
+FR-5,AC-5.1,TC-FR5-01,Start action documented as feature reuse,P2,Content verification,Designed
+FR-5,AC-5.2,TC-FR5-02,workflows.json has no start entry (by design),P2,Content verification,Designed
+FR-5,AC-5.3,TC-FR5-03,Reuse mechanism documented in code comment or ADR,P2,Content verification,Designed
+NFR-1,N/A,TC-NFR1-01,Fallback to CLAUDE.md documented,P1,Content verification,Designed
+NFR-1,N/A,TC-NFR1-02,Old format still parseable,P1,Content verification,Designed
+NFR-2,N/A,TC-NFR2-01,ESM tests still pass,P1,Execution verification,Deferred to Phase 16
+NFR-2,N/A,TC-NFR2-02,CJS tests still pass,P1,Execution verification,Deferred to Phase 16
+FR-1+FR-2,AC-1.1+AC-2.1,TC-CROSS-01,Phase A format matches picker strip pattern,P0,Cross-file verification,Designed
+FR-1+FR-2,AC-1.1,TC-CROSS-02,Fix mode scan also strips suffix,P0,Content verification,Designed

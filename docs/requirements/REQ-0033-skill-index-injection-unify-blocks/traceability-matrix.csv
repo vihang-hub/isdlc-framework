@@ -1,0 +1,12 @@
+Requirement ID,User Story ID,Epic,Priority,Status
+FR-001,US-001,Skill Index Injection,Must Have,Draft
+FR-001,US-003,Skill Index Injection,Must Have,Draft
+FR-002,US-002,External Skill Injection,Must Have,Draft
+FR-002,US-005,External Skill Injection,Must Have,Draft
+FR-003,US-003,Unified Skill Presentation,Must Have,Draft
+FR-003,US-004,Unified Skill Presentation,Must Have,Draft
+FR-004,US-003,Skill Index Injection,Must Have,Draft
+FR-005,US-005,Monorepo Support,Must Have,Draft
+FR-005,US-006,Monorepo Support,Must Have,Draft
+FR-006,US-003,Fail-Open Semantics,Must Have,Draft
+FR-006,US-005,Fail-Open Semantics,Must Have,Draft

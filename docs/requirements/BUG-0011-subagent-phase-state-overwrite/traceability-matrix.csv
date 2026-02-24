@@ -1,0 +1,42 @@
+Requirement,AC,Test ID,Test Name,Expected Result,Priority,Status
+FR-01,AC-01a,T32,Block write when incoming current_phase_index < disk,BLOCK,P0,designed
+FR-01,AC-01a,T58,Block on phase index regression from 1 to 0 (boundary),BLOCK,P0,designed
+FR-01,AC-01a,T62,Block on phase_status regression across multiple phases simultaneously,BLOCK,P0,designed
+FR-01,AC-01a,T63,V8 works with monorepo state.json paths,BLOCK,P1,designed
+FR-01,AC-01b,T33,Allow write when incoming current_phase_index == disk,ALLOW,P0,designed
+FR-01,AC-01b,T34,Allow write when incoming current_phase_index > disk,ALLOW,P0,designed
+FR-01,AC-01c,T35,Allow write when incoming has no active_workflow,ALLOW,P0,designed
+FR-01,AC-01d,T36,Allow write when disk has no active_workflow,ALLOW,P0,designed
+FR-01,AC-01e,T37,Block message includes incoming and disk phase index values,BLOCK,P1,designed
+FR-01,AC-01f,T38,V8 block is logged to stderr,BLOCK,P1,designed
+FR-02,AC-02a,T39,Block phase_status change from completed to pending,BLOCK,P0,designed
+FR-02,AC-02b,T40,Block phase_status change from completed to in_progress,BLOCK,P0,designed
+FR-02,AC-02b,T62,Block on phase_status regression across multiple phases simultaneously,BLOCK,P0,designed
+FR-02,AC-02c,T41,Block phase_status change from in_progress to pending,BLOCK,P0,designed
+FR-02,AC-02c,T62,Block on phase_status regression across multiple phases simultaneously,BLOCK,P0,designed
+FR-02,AC-02d,T42,Allow phase_status change from pending to in_progress,ALLOW,P0,designed
+FR-02,AC-02e,T43,Allow phase_status change from in_progress to completed,ALLOW,P0,designed
+FR-02,AC-02f,T44,Allow adding new phase_status entries not on disk,ALLOW,P0,designed
+FR-02,AC-02g,T45,Block when one valid change plus one regression,BLOCK,P0,designed
+FR-02,AC-02g,T62,Block on phase_status regression across multiple phases simultaneously,BLOCK,P0,designed
+FR-03,AC-03a,T46,Allow when incoming content is not valid JSON,ALLOW,P1,designed
+FR-03,AC-03b,T47,Allow when disk state cannot be read,ALLOW,P1,designed
+FR-03,AC-03c,T48,Allow when incoming has no active_workflow,ALLOW,P1,designed
+FR-03,AC-03c,T49,Allow when disk has no active_workflow,ALLOW,P1,designed
+FR-03,AC-03d,T50,Allow when disk has no phase_status but incoming does,ALLOW,P1,designed
+FR-03,AC-03d,T51,Allow when incoming has no phase_status but disk does,ALLOW,P1,designed
+FR-03,AC-03e,T52,Allow when V8 logic throws an unexpected error,ALLOW,P1,designed
+FR-03,AC-03e,T59,Allow when phase_status has unknown status values,ALLOW,P2,designed
+FR-04,AC-04a,T53,V8 is skipped for Edit events,ALLOW,P0,designed
+FR-04,AC-04b,T54,V8 runs for Write events targeting state.json,BLOCK,P0,designed
+FR-05,AC-05a,T55,V7 blocks before V8 runs -- short circuit,BLOCK,P1,designed
+FR-05,AC-05a,T56,V8 blocks before V1-V3 content validation runs,BLOCK,P1,designed
+FR-05,AC-05a,T57,V8 allows then V1-V3 runs and warns,ALLOW,P1,designed
+FR-05,AC-05b,T55,V7 blocks before V8 runs -- short circuit,BLOCK,P1,designed
+FR-05,AC-05c,T56,V8 blocks before V1-V3 content validation runs,BLOCK,P1,designed
+NFR-01,-,T66,Hook completes within 100ms budget,ALLOW,P2,designed
+NFR-01,-,T67,V8 overhead measured by comparing allow with and without active_workflow,ALLOW,P2,designed
+NFR-02,-,T60,Allow when current_phase_index is missing in incoming,ALLOW,P1,designed
+NFR-02,-,T61,Allow when current_phase_index is missing in disk state,ALLOW,P1,designed
+Regression,-,T64,V7 version block still works after V8 addition,BLOCK,P2,designed
+Regression,-,T65,V1 content warning still fires after V8 addition,ALLOW,P2,designed

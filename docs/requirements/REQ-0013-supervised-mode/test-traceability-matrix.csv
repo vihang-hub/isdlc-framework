@@ -1,0 +1,48 @@
+Requirement,AC_ID,AC_Description,Test_IDs,Test_Type,Priority,Coverage
+FR-01,AC-01a,supervised_mode enabled=true activates review gates,"T02,T-manual-09",Unit+Manual,Must Have,Covered
+FR-01,AC-01b,supervised_mode enabled=false behaves as autonomous,"T03,T-manual-10,T93",Unit+Manual,Must Have,Covered
+FR-01,AC-01c,supervised_mode block missing behaves as autonomous,"T01,T05,T06,T07,T92",Unit,Must Have,Covered
+FR-01,AC-01d,review_phases=all activates after every phase,"T24,T25,T26",Unit,Must Have,Covered
+FR-01,AC-01e,review_phases array activates for specified phases,"T04,T27,T28,T29,T30,T31,T36",Unit,Must Have,Covered
+FR-01,AC-01f,invalid review_phases entries silently ignored,"T15,T16,T17",Unit,Must Have,Covered
+FR-01,AC-01g,parallel_summary=true generates full summary,"T37,T38,T39,T40",Unit,Must Have,Covered
+FR-01,AC-01h,parallel_summary=false generates minimal summary,"T41,T42,T43",Unit,Must Have,Covered
+FR-02,AC-02a,summary file created with all required sections,"T37,T38,T39,T40,T57,T58",Unit,Must Have,Covered
+FR-02,AC-02b,no file changes produces summary with note,"T44,T45,T47",Unit,Must Have,Covered
+FR-02,AC-02c,reviews directory auto-created,"T49",Unit,Must Have,Covered
+FR-02,AC-02d,previous summary overwritten on redo,"T50",Unit,Must Have,Covered
+FR-02,AC-02e,minimal summary created when parallel_summary=false,"T41,T42,T43",Unit,Must Have,Covered
+FR-03,AC-03a,review gate menu presented after phase completion,"T-manual-01",Manual,Must Have,Covered
+FR-03,AC-03b,Continue advances to next phase,"T-manual-02",Manual,Must Have,Covered
+FR-03,AC-03c,Review pauses and shows instructions,"T-manual-03",Manual,Must Have,Covered
+FR-03,AC-03d,Redo prompts for guidance and re-runs phase,"T-manual-05",Manual,Must Have,Covered
+FR-03,AC-03e,Non-reviewed phase auto-advances,"T28,T-manual-07",Unit+Manual,Must Have,Covered
+FR-03,AC-03f,supervised_mode disabled = no review gate,"T21,T22,T23,T92,T93",Unit,Must Have,Covered
+FR-03,AC-03g,Final phase review gate fires before finalize,"T-manual-08",Manual,Must Have,Covered
+FR-04,AC-04a,Review pause displays summary and instructions,"T-manual-03",Manual,Must Have,Covered
+FR-04,AC-04b,supervised_review written to state with reviewing status,"T-manual-03,T84,T88",Manual+Unit,Must Have,Covered
+FR-04,AC-04c,Resume after review advances to next phase,"T-manual-04",Manual,Must Have,Covered
+FR-04,AC-04d,User-edited artifacts consumed by next phase,"T-manual-04",Manual,Must Have,Covered
+FR-04,AC-04e,supervised_review updated with completed status,"T-manual-04",Manual,Must Have,Covered
+FR-05,AC-05a,Redo prompts for additional guidance,"T-manual-05",Manual,Must Have,Covered
+FR-05,AC-05b,Phase re-delegated with REDO GUIDANCE block,"T-manual-05",Manual,Must Have,Covered
+FR-05,AC-05c,Post-redo summary regenerated and menu re-presented,"T-manual-05",Manual,Must Have,Covered
+FR-05,AC-05d,Redo option removed after 3 redos,"T-manual-06",Manual,Must Have,Covered
+FR-05,AC-05e,Phase state transitions on redo,"T-manual-05",Manual,Must Have,Covered
+FR-05,AC-05f,redo_count incremented on each redo,"T65,T66,T-manual-05",Unit+Manual,Must Have,Covered
+FR-06,AC-06a,Gate-blocker allows advancement with supervised_mode,"T75,T79,T80",Integration,Must Have,Covered
+FR-06,AC-06b,Gate-blocker blocks when requirements fail regardless,"T76,T78,T81",Integration,Must Have,Covered
+FR-06,AC-06c,Gate-blocker fail-open on corrupt config,"T77,T82",Integration,Must Have,Covered
+FR-07,AC-07a,STEP 3e-review executes after STEP 3e,"T-manual-01",Manual,Must Have,Covered
+FR-07,AC-07b,STEP 3e-review skipped when disabled,"T92,T93",Unit,Must Have,Covered
+FR-07,AC-07c,Review gate skipped for non-reviewed phases,"T-manual-07",Manual,Must Have,Covered
+FR-07,AC-07d,Review gate fires on final phase before finalize,"T-manual-08",Manual,Must Have,Covered
+FR-08,AC-08a,Review action appended to review_history,"T59,T60,T61,T62,T63,T64,T65,T66,T67,T68,T69,T70,T71,T72,T73,T74,T83,T85,T86,T87",Unit,Should Have,Covered
+FR-08,AC-08b,review_history preserved in workflow_history,"T-manual-11",Manual,Should Have,Covered
+FR-08,AC-08c,No review_history when supervised_mode disabled,"T93",Unit,Should Have,Covered
+NFR-013-01,--,Backward compatibility (100% existing tests pass),"T89,T90,T91,T92,T93",Regression,Must Have,Covered
+NFR-013-02,--,Fail-open on config errors,"T05,T06,T07,T08,T09,T10,T11,T12,T13,T14,T15,T16,T17,T18,T19,T20,T48,T54,T55,T56,T77,T82",Unit+Integration,Must Have,Covered
+NFR-013-03,--,Summary generation < 10s,"T94",Performance,Should Have,Covered
+NFR-013-04,--,State integrity during review pause,"T-manual-03,T-manual-12,T-manual-13",Manual,Must Have,Covered
+NFR-013-05,--,Redo circuit breaker (max 3),"T65,T66,T-manual-06",Unit+Manual,Must Have,Covered
+NFR-013-06,--,No new npm dependencies,"T95",Verification,Must Have,Covered

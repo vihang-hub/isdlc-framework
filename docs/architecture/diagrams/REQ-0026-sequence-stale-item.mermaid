@@ -1,0 +1,41 @@
+%% REQ-0026: Sequence Diagram - Stale Analysis Detection
+%% Traces: FR-004, FR-005
+
+sequenceDiagram
+    participant U as User
+    participant BV as Build Verb (isdlc.md)
+    participant TVU as three-verb-utils.cjs
+    participant Git as Git CLI
+    participant O as Orchestrator
+
+    U->>BV: /isdlc build "payment-processing"
+    BV->>TVU: resolveItem + readMetaJson
+    TVU-->>BV: { analysis_status: "analyzed", codebase_hash: "abc1234" }
+
+    BV->>TVU: computeStartPhase(meta, featurePhases)
+    TVU-->>BV: { status: "analyzed", startPhase: "05-test-strategy" }
+
+    BV->>Git: git rev-parse --short HEAD
+    Git-->>BV: "def5678" (different from abc1234)
+    BV->>TVU: checkStaleness(meta, "def5678")
+    TVU-->>BV: { stale: true, originalHash: "abc1234", currentHash: "def5678" }
+
+    BV->>Git: git rev-list --count abc1234..HEAD
+    Git-->>BV: 15
+
+    BV->>U: Staleness Warning: 15 commits since analysis
+    BV->>U: [P] Proceed anyway / [Q] Re-run quick-scan / [A] Re-analyze
+
+    alt User selects [P] Proceed
+        U-->>BV: [P]
+        Note over BV: Continue with existing analysis (stale)
+        BV->>O: START_PHASE: "05-test-strategy"
+    else User selects [Q] Re-run quick-scan
+        U-->>BV: [Q]
+        BV->>BV: Update meta.json codebase_hash to "def5678"
+        BV->>O: START_PHASE: "00-quick-scan"
+    else User selects [A] Re-analyze
+        U-->>BV: [A]
+        BV->>BV: Clear phases_completed, set status "raw", update hash
+        BV->>O: No START_PHASE (full workflow)
+    end

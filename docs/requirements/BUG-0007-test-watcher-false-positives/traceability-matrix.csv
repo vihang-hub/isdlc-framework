@@ -1,0 +1,20 @@
+Requirement,AC,Test Case ID,Test Description,Priority,Source Function,Source Lines,Status
+FR-1,AC-1.1,TC-INC-01,Inconclusive for unmatched output with no exit code,P0,parseTestResult(),206-207,Designed
+FR-1,AC-1.2,TC-INC-02,Exit code 0 still returns PASSED (not inconclusive),P0,parseTestResult(),199-203,Designed
+FR-1,AC-1.2,TC-INC-03,Exit code non-zero still returns FAILED (not inconclusive),P0,parseTestResult(),199-203,Designed
+FR-1,AC-1.3,TC-INC-04,Failure patterns still return FAILED,P1,parseTestResult(),187-196,Designed
+FR-1,AC-1.4,TC-INC-05,Success patterns still return PASSED,P1,parseTestResult(),166-184,Designed
+FR-1,AC-1.5,TC-INC-05b,Inconclusive property absent on determinate results,P1,parseTestResult(),all paths,Designed
+FR-2,AC-2.1,TC-INC-06,History entry records INCONCLUSIVE result,P0,check(),495-502,Designed
+FR-2,AC-2.2,TC-INC-07,failures_count is NOT incremented,P0,check(),608,Designed
+FR-2,AC-2.3,TC-INC-08,identical_failure_count is NOT incremented,P0,check(),615-618,Designed
+FR-2,AC-2.4,TC-INC-09,Circuit breaker is skipped entirely,P0,check(),621-632,Designed
+FR-2,AC-2.5,TC-INC-10,last_test_result set to inconclusive,P1,check(),506,Designed
+FR-2,AC-2.6,TC-INC-11,Output message is warning not error,P1,check(),new-branch,Designed
+FR-3,AC-3.1,TC-INC-12,current_iteration IS incremented,P0,check(),505,Designed
+FR-3,AC-3.2,TC-INC-13,Max iterations check still applies,P0,check(),634-644,Designed
+FR-3,AC-3.3,TC-INC-14,Escalation reason is max_iterations for all-inconclusive,P1,check(),638,Designed
+FR-4,AC-4.1,TC-INC-15,All existing tests pass without modification,P0,all,all,Designed
+FR-4,AC-4.2,TC-INC-16,check() function signature unchanged,P2,check(),398,Designed
+FR-4,AC-4.3,TC-INC-17,Module exports unchanged plus parseTestResult,P2,module.exports,678,Designed
+FR-4,AC-4.4,TC-INC-18,State schema backward compatible,P2,check(),all state writes,Designed

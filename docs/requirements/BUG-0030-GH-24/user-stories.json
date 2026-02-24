@@ -1,0 +1,72 @@
+{
+  "bug_id": "BUG-0030-GH-24",
+  "title": "Impact analysis sub-agents anchor on quick scan file list instead of performing independent search",
+  "type": "bug-fix",
+  "severity": "medium",
+  "external_link": "https://github.com/vihangshah/isdlc/issues/24",
+  "user_stories": [
+    {
+      "id": "US-01",
+      "role": "framework user",
+      "action": "run a feature or fix workflow through impact analysis",
+      "benefit": "all relevant files are discovered even when the quick scan misses some",
+      "acceptance_criteria": ["AC-01", "AC-02", "AC-03", "AC-05"]
+    },
+    {
+      "id": "US-02",
+      "role": "framework user",
+      "action": "review the cross-validation report after Phase 02",
+      "benefit": "gaps where all sub-agents missed files are flagged as critical findings",
+      "acceptance_criteria": ["AC-04"]
+    }
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-01",
+      "description": "M1 (Impact Analyzer) performs independent file search using Grep/Glob, not relying on quick scan file list",
+      "verification": "Review impact-analyzer.md prompt for explicit independent search instructions"
+    },
+    {
+      "id": "AC-02",
+      "description": "M2 (Entry Point Finder) performs independent file search using Grep/Glob, not relying on quick scan file list",
+      "verification": "Review entry-point-finder.md prompt for explicit independent search instructions"
+    },
+    {
+      "id": "AC-03",
+      "description": "M3 (Risk Assessor) performs independent file search using Grep/Glob, not relying on quick scan file list",
+      "verification": "Review risk-assessor.md prompt for explicit independent search instructions"
+    },
+    {
+      "id": "AC-04",
+      "description": "M4 (Cross-Validation Verifier) independently verifies file list completeness against the actual codebase",
+      "verification": "Review cross-validation-verifier.md for new completeness verification step with CRITICAL severity findings"
+    },
+    {
+      "id": "AC-05",
+      "description": "Quick scan output is explicitly labeled as non-authoritative in M1/M2/M3 prompts",
+      "verification": "Each agent prompt contains explicit warning that quick scan is a hint, not an exhaustive inventory"
+    }
+  ],
+  "affected_files": [
+    {
+      "path": "src/claude/agents/impact-analysis/impact-analyzer.md",
+      "agent": "M1",
+      "change_type": "prompt-modification"
+    },
+    {
+      "path": "src/claude/agents/impact-analysis/entry-point-finder.md",
+      "agent": "M2",
+      "change_type": "prompt-modification"
+    },
+    {
+      "path": "src/claude/agents/impact-analysis/risk-assessor.md",
+      "agent": "M3",
+      "change_type": "prompt-modification"
+    },
+    {
+      "path": "src/claude/agents/impact-analysis/cross-validation-verifier.md",
+      "agent": "M4",
+      "change_type": "prompt-modification-plus-new-step"
+    }
+  ]
+}

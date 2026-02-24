@@ -1,0 +1,9 @@
+{
+  "description": "Jira updateStatus at finalize not implemented — tickets not transitioned to Done #13",
+  "source": "manual",
+  "created_at": "2026-02-23T10:00:00.000Z",
+  "analysis_status": "raw",
+  "phases_completed": [],
+  "build_started_at": "2026-02-23T10:00:00.000Z",
+  "workflow_type": "fix"
+}

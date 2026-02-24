@@ -1,0 +1,59 @@
+{
+  "feature_id": "REQ-0001",
+  "title": "Discover Command Enhancements",
+  "stories": [
+    {
+      "id": "US-001",
+      "enhancement": "DE-004",
+      "title": "Always-thorough discovery",
+      "story": "As a framework user, I want discovery to always perform full analysis so that I get a complete picture of my project without needing to know about flags.",
+      "acceptance_criteria": ["AC-DE004-1", "AC-DE004-2", "AC-DE004-3"],
+      "priority": "Low",
+      "complexity": "Small",
+      "dependencies": []
+    },
+    {
+      "id": "US-002",
+      "enhancement": "DE-001",
+      "title": "Agent orchestration visibility",
+      "story": "As a framework user running /discover on an agent-based project, I want the discovery to analyze markdown agent/command definitions so that the agent orchestration layer is visible in the discovery report.",
+      "acceptance_criteria": ["AC-DE001-1", "AC-DE001-2", "AC-DE001-3", "AC-DE001-4", "AC-DE001-5"],
+      "priority": "High",
+      "complexity": "Large",
+      "dependencies": ["US-001"]
+    },
+    {
+      "id": "US-003",
+      "enhancement": "DE-005",
+      "title": "Better discovery presentation",
+      "story": "As a framework user, I want discovery output to use progress indicators and structured dashboards so that I can quickly understand the analysis results without reading walls of text.",
+      "acceptance_criteria": ["AC-DE005-1", "AC-DE005-2", "AC-DE005-3", "AC-DE005-4", "AC-DE005-5"],
+      "priority": "Medium",
+      "complexity": "Medium",
+      "dependencies": ["US-002"]
+    },
+    {
+      "id": "US-004",
+      "enhancement": "DE-002",
+      "title": "Guided post-discovery walkthrough",
+      "story": "As a framework user, I want a guided walkthrough after discovery completes so that I can review and customize the constitution, understand architecture decisions, configure iteration limits, and get context-aware next-step recommendations.",
+      "acceptance_criteria": ["AC-DE002-1", "AC-DE002-2", "AC-DE002-3", "AC-DE002-4", "AC-DE002-5", "AC-DE002-6", "AC-DE002-7"],
+      "priority": "High",
+      "complexity": "Large",
+      "dependencies": ["US-002", "US-003"]
+    },
+    {
+      "id": "US-005",
+      "enhancement": "DE-003",
+      "title": "Clean handover to SDLC workflows",
+      "story": "As a framework user, I want /discover to pass structured context to /sdlc workflows so that phase agents receive pre-filled context without re-analyzing discovery outputs.",
+      "acceptance_criteria": ["AC-DE003-1", "AC-DE003-2", "AC-DE003-3", "AC-DE003-4"],
+      "priority": "Medium",
+      "complexity": "Medium",
+      "dependencies": ["US-004"]
+    }
+  ],
+  "total_stories": 5,
+  "total_acceptance_criteria": 24,
+  "implementation_order": ["US-001", "US-002", "US-003", "US-004", "US-005"]
+}

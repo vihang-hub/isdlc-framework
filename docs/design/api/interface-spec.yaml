@@ -1,0 +1,395 @@
+# Interface Specification: Multi-agent Test Strategy Team (REQ-0016)
+#
+# This file defines the interface contracts between all components in the
+# Phase 05 debate team. Since the system is agent-based (markdown prompts
+# invoked via Task tool), interfaces are defined as input/output contracts
+# rather than REST API endpoints.
+#
+# Version: 1.0
+# Created: 2026-02-15
+# Phase: 04-design
+# Traces: FR-01 through FR-07, NFR-01 through NFR-04, C-01 through C-04
+
+---
+# ==========================================================================
+# COMPONENT INTERFACES
+# ==========================================================================
+
+components:
+
+  # --------------------------------------------------------------------------
+  # 1. Orchestrator DEBATE_ROUTING Extension
+  # --------------------------------------------------------------------------
+  orchestrator_debate_routing:
+    description: >
+      One new row in the DEBATE_ROUTING markdown table that maps phase key
+      '05-test-strategy' to the Creator, Critic, and Refiner agents.
+    traces: [FR-04, AC-04.1, AC-04.2, AC-04.3, AC-04.4]
+    file: src/claude/agents/00-sdlc-orchestrator.md
+    change_type: MODIFY
+    interface:
+      input:
+        phase_key: "05-test-strategy"
+        debate_mode: boolean  # resolved from flags + sizing
+      output:
+        routing_entry:
+          creator_agent: "04-test-design-engineer.md"
+          critic_agent: "04-test-strategy-critic.md"
+          refiner_agent: "04-test-strategy-refiner.md"
+          phase_artifacts:
+            - test-strategy.md
+            - test-cases/
+            - traceability-matrix.csv
+            - test-data-plan.md
+          critical_artifact: test-strategy.md
+    contract:
+      - Lookup logic: IF current_phase == "05-test-strategy" AND debate_mode == true THEN enter debate loop
+      - Fallback: IF debate_mode == false THEN delegate to Creator only (no DEBATE_CONTEXT)
+      - Max rounds: 3 (same as all existing debate teams)
+      - Convergence: 0 BLOCKING findings in critique report
+
+  # --------------------------------------------------------------------------
+  # 2. Test Strategy Critic Agent
+  # --------------------------------------------------------------------------
+  test_strategy_critic:
+    description: >
+      Reviews Phase 05 test strategy artifacts against 8 mandatory checks
+      (TC-01..TC-08). Produces a structured critique report with BLOCKING
+      and WARNING findings.
+    traces: [FR-01, FR-02, AC-01.1 through AC-01.5, AC-02.1 through AC-02.8]
+    file: src/claude/agents/04-test-strategy-critic.md
+    change_type: CREATE
+    interface:
+      input:
+        debate_context:
+          round: integer  # Current debate round (1-3)
+        phase_05_artifacts:
+          test_strategy: "docs/common/test-strategy.md"
+          test_cases: "docs/testing/test-cases/"
+          traceability_matrix: "docs/testing/traceability-matrix.csv"
+          test_data_plan: "docs/common/test-data-plan.md"
+        reference_artifacts:
+          requirements_spec: "docs/requirements/{artifact_folder}/requirements-spec.md"
+          error_taxonomy: "docs/common/error-taxonomy.md"  # optional, used by TC-06
+          nfr_matrix: "docs/requirements/{artifact_folder}/nfr-matrix.md"  # optional, used by TC-07
+        feature_description: string
+      output:
+        critique_report:
+          file: "round-{N}-critique.md"
+          location: "docs/requirements/{artifact_folder}/"
+          format:
+            header:
+              round: integer
+              phase: "05-test-strategy"
+              reviewed_at: ISO_timestamp
+              artifacts_reviewed: list
+            summary:
+              total_findings: integer
+              blocking_count: integer
+              warning_count: integer
+              ac_coverage_percent: integer
+              test_pyramid_levels: integer
+              negative_test_ratio: float  # negative / total test cases
+            blocking_findings:
+              finding_id: "B-{NNN}"  # sequential, 3-digit zero-padded
+              target: string  # artifact + section reference
+              category: "TC-{01..08}"
+              issue: string
+              recommendation: string
+            warning_findings:
+              finding_id: "W-{NNN}"
+              target: string
+              category: "TC-{01..08}"
+              issue: string
+              recommendation: string
+    mandatory_checks:
+      TC-01:
+        name: UNTESTED_ACCEPTANCE_CRITERION
+        severity: BLOCKING
+        artifact: traceability-matrix.csv
+        condition: "Any AC from requirements-spec.md has no test case mapping"
+      TC-02:
+        name: INCOMPLETE_TEST_PYRAMID
+        severity: BLOCKING
+        artifact: test-strategy.md
+        condition: "Test pyramid has fewer than 2 levels"
+      TC-03:
+        name: MISSING_NEGATIVE_TESTS
+        severity: BLOCKING
+        artifact: test-cases/
+        condition: "Any requirement has only positive-path test cases"
+      TC-04:
+        name: TEST_DATA_GAPS
+        severity: BLOCKING
+        artifact: test-data-plan.md
+        condition: "Missing boundary values, empty inputs, invalid types, or max-size inputs"
+      TC-05:
+        name: FLAKY_TEST_RISK
+        severity: BLOCKING
+        artifact: test-strategy.md
+        condition: "Test relies on timing, external services, random data, or shared mutable state without mitigation"
+      TC-06:
+        name: UNTESTED_ERROR_PATHS
+        severity: BLOCKING
+        artifact: test-cases/
+        condition: "Error paths in error-taxonomy.md have no test case"
+      TC-07:
+        name: MISSING_PERFORMANCE_TESTS
+        severity: BLOCKING
+        artifact: test-strategy.md
+        condition: "NFRs with quantified metrics have no performance/load/benchmark test plan"
+      TC-08:
+        name: ORPHAN_TEST_CASE
+        severity: WARNING
+        artifact: traceability-matrix.csv
+        condition: "Test case does not trace back to any requirement"
+
+  # --------------------------------------------------------------------------
+  # 3. Test Strategy Refiner Agent
+  # --------------------------------------------------------------------------
+  test_strategy_refiner:
+    description: >
+      Addresses Critic findings and produces improved Phase 05 artifacts.
+      Every BLOCKING finding must be addressed. WARNING findings are best-effort.
+    traces: [FR-03, AC-03.1 through AC-03.5]
+    file: src/claude/agents/04-test-strategy-refiner.md
+    change_type: CREATE
+    interface:
+      input:
+        debate_context:
+          round: integer
+        phase_05_artifacts:
+          test_strategy: "docs/common/test-strategy.md"
+          test_cases: "docs/testing/test-cases/"
+          traceability_matrix: "docs/testing/traceability-matrix.csv"
+          test_data_plan: "docs/common/test-data-plan.md"
+        critique_report: "docs/requirements/{artifact_folder}/round-{N}-critique.md"
+        reference_artifacts:
+          requirements_spec: "docs/requirements/{artifact_folder}/requirements-spec.md"
+          error_taxonomy: "docs/common/error-taxonomy.md"
+          nfr_matrix: "docs/requirements/{artifact_folder}/nfr-matrix.md"
+        feature_description: string
+      output:
+        updated_artifacts:
+          - test-strategy.md  # in-place updates
+          - test-cases/  # in-place updates
+          - traceability-matrix.csv  # in-place updates
+          - test-data-plan.md  # in-place updates
+        change_log:
+          location: "appended to test-strategy.md"
+          format:
+            round: integer
+            refiner_action_at: ISO_timestamp
+            findings_addressed: "{X} BLOCKING, {Y} WARNING"
+            table_columns:
+              - finding_id  # B-NNN or W-NNN
+              - severity  # BLOCKING or WARNING
+              - action  # Completed, Added, Escalated, Skipped
+              - target  # artifact name
+              - description  # what was done
+    fix_strategies:
+      TC-01_UNTESTED_AC:
+        action: "Add missing test cases to test-cases/ and update traceability-matrix.csv"
+        target: ["test-cases/", "traceability-matrix.csv"]
+      TC-02_INCOMPLETE_PYRAMID:
+        action: "Add missing test levels (integration, E2E) to test-strategy.md with rationale"
+        target: ["test-strategy.md"]
+      TC-03_MISSING_NEGATIVE:
+        action: "Add negative/error test cases for each requirement"
+        target: ["test-cases/"]
+      TC-04_DATA_GAPS:
+        action: "Add boundary values, empty inputs, invalid types, max-size inputs to test-data-plan.md"
+        target: ["test-data-plan.md"]
+      TC-05_FLAKY_RISK:
+        action: "Add mitigation strategies (timeouts, retries, isolation, deterministic data)"
+        target: ["test-strategy.md"]
+      TC-06_UNTESTED_ERRORS:
+        action: "Add error path test cases for each error taxonomy entry"
+        target: ["test-cases/"]
+      TC-07_MISSING_PERF:
+        action: "Add performance/load/benchmark test plan for NFRs with quantified metrics"
+        target: ["test-strategy.md"]
+      TC-08_ORPHAN_TEST:
+        action: "Map orphan test to requirement or document as exploratory (WARNING -- best effort)"
+        target: ["traceability-matrix.csv"]
+    escalation:
+      trigger: "BLOCKING finding cannot be resolved without user input"
+      marker: "[NEEDS CLARIFICATION]"
+      documentation: "B-NNN: Escalated -- requires user input on {question}"
+      convergence_effect: "Counts as addressed"
+
+  # --------------------------------------------------------------------------
+  # 4. Creator Awareness in test-design-engineer
+  # --------------------------------------------------------------------------
+  test_design_engineer_creator_mode:
+    description: >
+      Modifications to the existing test-design-engineer agent to handle
+      DEBATE_CONTEXT when present, switching to Creator mode.
+    traces: [FR-05, AC-05.1 through AC-05.4]
+    file: src/claude/agents/04-test-design-engineer.md
+    change_type: MODIFY
+    interface:
+      mode_detection:
+        condition: "DEBATE_CONTEXT block present in Task prompt"
+        creator_mode:
+          active_when: "DEBATE_CONTEXT is present"
+          behaviors:
+            - "Labels artifacts as 'Round {N} Draft'"
+            - "Produces section markers for Critic reference"
+            - "Skips final save menu (orchestrator manages saving)"
+            - "Ends with: 'Round {N} artifacts produced. Awaiting review.'"
+          round_gt_1:
+            condition: "DEBATE_CONTEXT.round > 1 AND prior_critique exists"
+            behavior: "Reads Refiner's updated artifacts as baseline; does not re-ask opening questions"
+        single_agent_mode:
+          active_when: "DEBATE_CONTEXT is NOT present"
+          behavior: "Current behavior preserved exactly -- no changes"
+      section_markers:
+        description: "Explicit markers the Critic can reference"
+        examples:
+          - "Requirement IDs on each test case (FR-NN, AC-NN.N)"
+          - "Section headers matching check categories (Test Pyramid, Negative Tests, Test Data, etc.)"
+          - "Traceability matrix with explicit AC -> test case mapping"
+
+  # --------------------------------------------------------------------------
+  # 5. Skills Manifest Update
+  # --------------------------------------------------------------------------
+  skills_manifest_update:
+    description: >
+      Add 2 agent entries to the skills-manifest.json agents section.
+      No new skill IDs. Primary owners unchanged.
+    traces: [FR-06, AC-06.1 through AC-06.4, C-02]
+    file: src/claude/hooks/config/skills-manifest.json
+    change_type: MODIFY
+    interface:
+      new_entries:
+        test-strategy-critic:
+          agent_id: "04"
+          phase: "05-test-strategy"
+          skill_count: 3
+          skills: ["TEST-002", "TEST-004", "TEST-005"]
+        test-strategy-refiner:
+          agent_id: "04"
+          phase: "05-test-strategy"
+          skill_count: 5
+          skills: ["TEST-001", "TEST-002", "TEST-003", "TEST-004", "TEST-005"]
+      invariants:
+        - total_skills count unchanged
+        - No new skill IDs created
+        - skill_owners primary_owner values unchanged
+        - total_agents increases by 2 (from 20 to 22)
+
+  # --------------------------------------------------------------------------
+  # 6. isdlc.md Documentation Update
+  # --------------------------------------------------------------------------
+  isdlc_documentation_update:
+    description: >
+      Update the debate-enabled phases documentation text to include Phase 05.
+    traces: [implicit documentation alignment]
+    file: src/claude/commands/isdlc.md
+    change_type: MODIFY
+    interface:
+      current_text: "The debate loop currently supports Phase 01 (Requirements), Phase 03 (Architecture), and Phase 04 (Design)."
+      updated_text: "The debate loop currently supports Phase 01 (Requirements), Phase 03 (Architecture), Phase 04 (Design), and Phase 05 (Test Strategy)."
+      lines_affected: "~2-3 lines"
+
+  # --------------------------------------------------------------------------
+  # 7. Test File
+  # --------------------------------------------------------------------------
+  test_file:
+    description: >
+      CJS test file validating all new and modified components.
+    traces: [FR-07, AC-07.1 through AC-07.6]
+    file: src/claude/hooks/tests/test-strategy-debate-team.test.cjs
+    change_type: CREATE
+    interface:
+      framework: "node:test + node:assert/strict (CJS)"
+      test_groups:
+        critic_agent_validation:
+          traces: [AC-07.1]
+          tests:
+            - "frontmatter has required fields (name, description, model, owned_skills)"
+            - "all 8 mandatory checks documented (TC-01 through TC-08)"
+            - "output format matches round-{N}-critique.md pattern"
+            - "BLOCKING/WARNING severity classification correct (TC-01..07=BLOCKING, TC-08=WARNING)"
+            - "agent name is 'test-strategy-critic'"
+            - "model is 'opus'"
+            - "owned_skills reference TEST-* IDs only"
+        refiner_agent_validation:
+          traces: [AC-07.2]
+          tests:
+            - "frontmatter has required fields"
+            - "fix strategies documented for each TC-NN finding category"
+            - "change log format documented"
+            - "artifact update rules documented"
+            - "[NEEDS CLARIFICATION] escalation documented"
+            - "agent name is 'test-strategy-refiner'"
+        orchestrator_routing_validation:
+          traces: [AC-07.3]
+          tests:
+            - "DEBATE_ROUTING table has Phase 05-test-strategy row"
+            - "Creator column maps to 04-test-design-engineer.md"
+            - "Critic column maps to 04-test-strategy-critic.md"
+            - "Refiner column maps to 04-test-strategy-refiner.md"
+            - "Phase Artifacts column lists all 4 artifacts"
+            - "Critical Artifact column is test-strategy.md"
+        creator_awareness_validation:
+          traces: [AC-07.4]
+          tests:
+            - "DEBATE_CONTEXT mode detection section exists"
+            - "Round labeling documented"
+            - "Single-agent fallback section preserved"
+            - "Section markers for Critic reference documented"
+        skills_manifest_validation:
+          traces: [AC-07.5]
+          tests:
+            - "test-strategy-critic agent entry exists in manifest"
+            - "test-strategy-refiner agent entry exists in manifest"
+            - "Critic skill assignments are TEST-002, TEST-004, TEST-005"
+            - "Refiner skill assignments are TEST-001..TEST-005"
+            - "total_skills count unchanged"
+            - "No duplicate skill IDs created"
+        regression_validation:
+          traces: [AC-07.6]
+          tests:
+            - "Zero pre-existing tests regress"
+
+---
+# ==========================================================================
+# DATA FLOW DIAGRAM
+# ==========================================================================
+
+data_flow:
+  round_lifecycle:
+    step_1:
+      actor: Orchestrator
+      action: "Check DEBATE_ROUTING[05-test-strategy]"
+      output: routing_entry
+    step_2:
+      actor: Orchestrator
+      action: "Delegate to Creator (test-design-engineer) with DEBATE_CONTEXT"
+      output: "Phase 05 artifacts (Round N Draft)"
+    step_3:
+      actor: Orchestrator
+      action: "Delegate to Critic (test-strategy-critic) with DEBATE_CONTEXT"
+      output: "round-N-critique.md"
+    step_4:
+      actor: Orchestrator
+      action: "Parse critique report for BLOCKING count"
+      decision:
+        if_blocking_gt_0: "Delegate to Refiner (step 5)"
+        if_blocking_eq_0: "Convergence achieved (step 6)"
+        if_round_eq_3_and_blocking_gt_0: "Escalate to human (step 7)"
+    step_5:
+      actor: Orchestrator
+      action: "Delegate to Refiner (test-strategy-refiner) with DEBATE_CONTEXT + critique"
+      output: "Updated Phase 05 artifacts + change log"
+      next: "Loop to step 2 (round N+1)"
+    step_6:
+      actor: Orchestrator
+      action: "Write debate-summary.md and proceed to GATE-05"
+      output: "debate-summary.md"
+    step_7:
+      actor: Orchestrator
+      action: "Escalate unresolved findings to human"
+      output: "Escalation message with remaining BLOCKING findings"

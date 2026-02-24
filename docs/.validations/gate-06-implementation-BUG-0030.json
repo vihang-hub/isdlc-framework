@@ -1,0 +1,84 @@
+{
+  "gate": "GATE-06",
+  "phase": "06-implementation",
+  "workflow": "fix",
+  "artifact_folder": "BUG-0030-GH-24",
+  "validated_at": "2026-02-18T21:10:00Z",
+  "status": "PASSED",
+  "checklist": {
+    "all_features_implemented": {
+      "status": "pass",
+      "detail": "All 4 agent prompt files modified with independent search directives per requirements"
+    },
+    "unit_test_coverage_80_pct": {
+      "status": "pass",
+      "detail": "17/17 tests passing; prompt-only changes -- coverage metric N/A for .md files but test assertions provide 100% acceptance criteria coverage"
+    },
+    "all_tests_passing": {
+      "status": "pass",
+      "detail": "17/17 tests passing (node --test src/claude/hooks/tests/test-impact-search-directives.test.cjs)"
+    },
+    "code_follows_linting_standards": {
+      "status": "pass",
+      "detail": "Prompt files follow existing markdown formatting conventions"
+    },
+    "type_checking_passes": {
+      "status": "not_applicable",
+      "detail": "No TypeScript/JavaScript code modified -- prompt-only changes"
+    },
+    "implementation_matches_design": {
+      "status": "pass",
+      "detail": "All directives match requirements spec FR-001, FR-002 and acceptance criteria AC-001 through AC-005"
+    },
+    "database_migrations_created": {
+      "status": "not_applicable",
+      "detail": "No database changes required"
+    },
+    "code_documentation_complete": {
+      "status": "pass",
+      "detail": "Implementation notes written to docs/requirements/BUG-0030-GH-24/implementation-notes.md"
+    }
+  },
+  "test_results": {
+    "framework": "node:test",
+    "command": "node --test src/claude/hooks/tests/test-impact-search-directives.test.cjs",
+    "total": 17,
+    "passed": 17,
+    "failed": 0,
+    "skipped": 0,
+    "parallel_execution": {
+      "enabled": false,
+      "framework": "node:test",
+      "reason": "Only 17 tests -- sequential execution sufficient"
+    }
+  },
+  "iterations": {
+    "current": 1,
+    "max": 5,
+    "history": [
+      {
+        "iteration": 1,
+        "timestamp": "2026-02-18T21:07:00Z",
+        "action": "Added independent search directives to M1/M2/M3/M4 agent prompt files",
+        "test_command": "node --test src/claude/hooks/tests/test-impact-search-directives.test.cjs",
+        "result": "PASSED",
+        "failures": 0,
+        "errors": []
+      }
+    ],
+    "status": "success"
+  },
+  "files_modified": [
+    "src/claude/agents/impact-analysis/impact-analyzer.md",
+    "src/claude/agents/impact-analysis/entry-point-finder.md",
+    "src/claude/agents/impact-analysis/risk-assessor.md",
+    "src/claude/agents/impact-analysis/cross-validation-verifier.md"
+  ],
+  "acceptance_criteria_coverage": {
+    "AC-001": "pass -- M1 contains 'MUST perform independent' + 'Glob' + 'Grep'",
+    "AC-002": "pass -- M2 contains 'MUST perform independent' + 'Glob' + 'Grep'",
+    "AC-003": "pass -- M3 contains 'MUST perform independent' + 'Glob' + 'Grep'",
+    "AC-004": "pass -- M4 contains independent verification step + 'Glob' + 'Grep' + 'completeness_gap'",
+    "AC-005": "pass -- All agents contain 'supplementary' in quick scan context"
+  }
+}

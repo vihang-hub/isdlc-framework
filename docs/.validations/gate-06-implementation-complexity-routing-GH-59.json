@@ -1,0 +1,51 @@
+{
+  "gate": "GATE-06",
+  "phase": "06-implementation",
+  "feature": "complexity-routing-GH-59",
+  "validated_at": "2026-02-20T14:00:00Z",
+  "status": "PASS",
+  "checklist": {
+    "all_features_implemented": true,
+    "unit_test_coverage_above_80": true,
+    "all_tests_passing": true,
+    "code_follows_style_standards": true,
+    "implementation_matches_design": true,
+    "code_documentation_complete": true
+  },
+  "test_results": {
+    "total_tests": 262,
+    "passing": 262,
+    "failing": 0,
+    "new_tests_added": 52,
+    "coverage": {
+      "line": 97.29,
+      "branch": 93.01,
+      "function": 100.0
+    }
+  },
+  "files_modified": [
+    "src/claude/hooks/lib/three-verb-utils.cjs",
+    "src/claude/hooks/tests/test-three-verb-utils.test.cjs",
+    ".isdlc/config/workflows.json",
+    "src/isdlc/config/workflows.json",
+    "src/claude/commands/isdlc.md"
+  ],
+  "constitutional_compliance": {
+    "article_I_specification_primacy": "PASS",
+    "article_II_test_first": "PASS",
+    "article_III_security_by_design": "PASS",
+    "article_V_simplicity_first": "PASS",
+    "article_VII_artifact_traceability": "PASS",
+    "article_VIII_documentation_currency": "PASS",
+    "article_IX_quality_gate_integrity": "PASS",
+    "article_X_fail_safe_defaults": "PASS"
+  },
+  "pre_existing_failures": {
+    "test_gate_blocker_extended": "1 failure (supervised review info logging - unrelated)",
+    "esm_suite": "3 failures (agent count, plan tracking, deep discovery - unrelated)"
+  },
+  "phase_timing": {
+    "debate_rounds_used": 0,
+    "fan_out_chunks": 0
+  }
+}

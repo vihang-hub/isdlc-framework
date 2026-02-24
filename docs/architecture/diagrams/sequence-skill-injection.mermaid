@@ -1,0 +1,70 @@
+%% Sequence Diagram: Runtime Skill Injection (STEP 3d)
+%% REQ-0022: Custom Skill Management
+%% Shows the injection flow during phase delegation with fail-open handling
+
+sequenceDiagram
+    participant PLC as Phase-Loop Controller
+    participant CJS as common.cjs
+    participant FS as Filesystem
+    participant TASK as Task Tool
+    participant PA as Phase Agent
+
+    PLC->>PLC: Construct base delegation prompt
+    PLC->>PLC: Begin external skill injection (try)
+
+    PLC->>CJS: loadExternalManifest()
+    CJS->>FS: Read external-skills-manifest.json
+
+    alt Manifest not found
+        FS-->>CJS: File not found
+        CJS-->>PLC: null
+        PLC->>PLC: Skip injection (no-op)
+    else Manifest parse error
+        FS-->>CJS: Corrupted JSON
+        CJS-->>PLC: null (fail-open)
+        PLC->>PLC: Skip injection (no-op)
+    else Manifest loaded
+        FS-->>CJS: Valid JSON
+        CJS-->>PLC: Manifest object
+
+        loop For each skill in manifest.skills
+            PLC->>PLC: Check bindings exist (backward compat)
+
+            alt No bindings object
+                PLC->>PLC: Skip (legacy entry)
+            else Has bindings
+                PLC->>PLC: Check phase/agent match
+
+                alt No match
+                    PLC->>PLC: Skip (not relevant to this phase)
+                else Match found
+                    PLC->>CJS: resolveExternalSkillsPath() + skill.file
+                    CJS-->>PLC: Full file path
+                    PLC->>FS: Read skill .md file
+
+                    alt File not found
+                        FS-->>PLC: Error
+                        PLC->>PLC: Log warning, skip this skill
+                    else File read success
+                        FS-->>PLC: File content
+
+                        alt Content > 10,000 chars
+                            PLC->>PLC: Truncate, switch to reference delivery
+                        end
+
+                        PLC->>CJS: formatSkillInjectionBlock(name, content, deliveryType)
+                        CJS-->>PLC: Formatted block
+                        PLC->>PLC: Add to injection blocks
+                    end
+                end
+            end
+        end
+
+        PLC->>PLC: Append injection blocks to delegation prompt
+    end
+
+    PLC->>TASK: Invoke Task tool with augmented prompt
+    TASK->>PA: Execute phase agent
+    PA-->>PLC: Phase result
+
+    Note over PLC: If ANY error occurs in injection,<br/>catch block logs warning and<br/>continues with unmodified prompt

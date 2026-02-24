@@ -1,0 +1,93 @@
+{
+  "gate": "GATE-08",
+  "phase": "08-code-review",
+  "workflow": "feature",
+  "artifact_folder": "REQ-0021-t7-agent-prompt-boilerplate-extraction",
+  "status": "PASS",
+  "validated_at": "2026-02-17T12:00:00Z",
+  "validated_by": "qa-engineer",
+  "checklist": {
+    "code_review_completed": true,
+    "no_critical_issues_open": true,
+    "static_analysis_passing": true,
+    "code_coverage_meets_thresholds": true,
+    "coding_standards_followed": true,
+    "performance_acceptable": true,
+    "security_review_complete": true,
+    "qa_sign_off_obtained": true
+  },
+  "test_results": {
+    "cjs_hooks": {
+      "total": 1608,
+      "pass": 1607,
+      "fail": 1,
+      "pre_existing_failures": 1,
+      "regressions": 0
+    },
+    "esm": {
+      "total": 632,
+      "pass": 629,
+      "fail": 3,
+      "pre_existing_failures": 3,
+      "regressions": 0
+    },
+    "new_tests": 0,
+    "updated_tests": 5
+  },
+  "review_findings": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 1,
+    "informational": 2
+  },
+  "requirements_coverage": {
+    "functional_requirements": {
+      "total": 12,
+      "satisfied": 12,
+      "coverage": "100%"
+    },
+    "non_functional_requirements": {
+      "total": 6,
+      "must_have_satisfied": 5,
+      "should_have_satisfied": 0,
+      "should_have_minor": 1,
+      "coverage": "100% Must-Have"
+    }
+  },
+  "duplication_elimination": {
+    "monorepo_blockquotes": { "before": 26, "after": 0 },
+    "iteration_enforcement": { "before": 7, "after": 0 },
+    "git_commit_warnings": { "before": 2, "after": 0 },
+    "root_resolution_blocks": { "before": 2, "after": 0 }
+  },
+  "line_metrics": {
+    "agent_lines_removed": 210,
+    "agent_lines_added": 44,
+    "agent_net": -166,
+    "claude_md_lines_added": 103,
+    "claude_md_budget": 120,
+    "within_budget": true
+  },
+  "constitutional_compliance": {
+    "article_V_simplicity_first": "PASS",
+    "article_VI_code_review_required": "PASS",
+    "article_VII_artifact_traceability": "PASS",
+    "article_VIII_documentation_currency": "PASS",
+    "article_IX_quality_gate_integrity": "PASS"
+  },
+  "technical_debt": {
+    "resolved": 3,
+    "introduced": 2,
+    "net_change": -1
+  },
+  "artifacts_produced": [
+    "docs/requirements/REQ-0021-t7-agent-prompt-boilerplate-extraction/code-review-report.md",
+    "docs/quality/code-review-report.md",
+    "docs/quality/quality-metrics.md",
+    "docs/quality/static-analysis-report.md",
+    "docs/quality/technical-debt.md",
+    "docs/quality/qa-sign-off.md",
+    "docs/.validations/gate-08-code-review-REQ-0021.json"
+  ]
+}

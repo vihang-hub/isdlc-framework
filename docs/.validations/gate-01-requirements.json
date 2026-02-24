@@ -1,0 +1,63 @@
+{
+  "gate": "GATE-01",
+  "scope": "bug-report",
+  "phase": "01-requirements",
+  "artifact_folder": "BUG-0033-backlog-completion-marking-not-wired-into-finalize",
+  "bug_id": "BUG-0033",
+  "external_id": "GH-11",
+  "external_url": "https://github.com/vihang-hub/isdlc-framework/issues/11",
+  "validated_at": "2026-02-23T09:15:00Z",
+  "status": "PASSED",
+  "checklist": {
+    "sufficiency_check": {
+      "expected_behavior_present": true,
+      "actual_behavior_present": true,
+      "reproduction_steps_present": true,
+      "follow_ups_needed": 0,
+      "incompleteness_warning": false
+    },
+    "bug_report": {
+      "bug_report_md_exists": true,
+      "has_expected_vs_actual": true,
+      "has_reproduction_steps": true,
+      "bug_id_assigned": "BUG-0033",
+      "external_link_captured": true
+    },
+    "requirements_spec": {
+      "requirements_spec_md_exists": true,
+      "has_fix_requirements": true,
+      "fix_requirement_count": 6,
+      "has_acceptance_criteria": true,
+      "acceptance_criteria_count": 8,
+      "given_when_then_format": true,
+      "has_constraints": true,
+      "has_assumptions": true,
+      "has_out_of_scope": true
+    },
+    "stakeholder_approval": {
+      "user_selected_save": true
+    }
+  },
+  "constitutional_validation": {
+    "iterations": 1,
+    "max_iterations": 5,
+    "articles_checked": ["IV", "V", "VII", "IX", "XI"],
+    "violations_found": 0,
+    "status": "compliant"
+  },
+  "interactive_elicitation": {
+    "menu_interactions": 3,
+    "min_required": 3
+  },
+  "artifacts": {
+    "bug-report.md": "docs/requirements/BUG-0033-backlog-completion-marking-not-wired-into-finalize/bug-report.md",
+    "requirements-spec.md": "docs/requirements/BUG-0033-backlog-completion-marking-not-wired-into-finalize/requirements-spec.md"
+  },
+  "summary": {
+    "fix_requirements": 6,
+    "constraints": 3,
+    "assumptions": 5,
+    "acceptance_criteria": 8,
+    "severity": "Medium"
+  }
+}

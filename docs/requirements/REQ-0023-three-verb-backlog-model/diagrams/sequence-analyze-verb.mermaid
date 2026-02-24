@@ -1,0 +1,42 @@
+%% Sequence Diagram: Analyze Verb Flow (with Resumability)
+%% Traces: FR-002, AC-002-01 through AC-002-09, NFR-003
+sequenceDiagram
+    participant U as Developer
+    participant C as Claude Code
+    participant CMD as isdlc.md<br/>(Analyze Handler)
+    participant META as meta.json
+    participant AG as Phase Agent<br/>(00-04)
+    participant BL as BACKLOG.md
+
+    U->>C: "analyze payment processing"
+    C->>C: Intent detection: maps to /isdlc analyze
+
+    Note over C: Skill hook fires
+    C->>C: skill-delegation-enforcer: action=analyze, EXEMPT -> skip
+
+    C->>CMD: Load isdlc.md, action=analyze, args="payment processing"
+
+    CMD->>CMD: Resolve item: find slug "payment-processing"
+    CMD->>META: Read meta.json
+    META-->>CMD: analysis_status=partial,<br/>phases_completed=["00-quick-scan"]
+
+    Note over CMD: Determine next phase: "01-requirements"
+    CMD->>CMD: Check codebase_hash vs git HEAD
+
+    loop For each remaining phase (01 through 04)
+        CMD->>AG: Delegate to phase agent via Task tool
+        AG-->>CMD: Phase artifacts written
+
+        CMD->>META: Append phase key to phases_completed
+        CMD->>META: Update analysis_status (partial or analyzed)
+        CMD->>BL: Update marker ([~] or [A])
+
+        CMD->>U: "Phase N complete. Continue? [Y/n]"
+        U-->>CMD: Y (continue) or N (exit)
+
+        Note over CMD: If user exits, analysis is<br/>resumable from next phase (NFR-003)
+    end
+
+    CMD->>U: "Analysis complete. Ready to build."
+
+    Note over META: state.json NOT modified (NFR-002)

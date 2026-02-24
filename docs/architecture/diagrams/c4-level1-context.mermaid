@@ -1,0 +1,38 @@
+%% C4 Level 1 - System Context Diagram
+%% REQ-0022: Custom Skill Management
+%% Shows the iSDLC system boundary and external actors interacting with skill management
+
+graph TB
+    subgraph External["External Actors"]
+        DEV["Developer<br/>(Framework User)"]
+        FS["Local Filesystem<br/>(Skill .md files)"]
+    end
+
+    subgraph iSDLC["iSDLC Framework"]
+        CMD["isdlc.md<br/>Command Dispatcher"]
+        PLC["Phase-Loop Controller<br/>(STEP 3d)"]
+        SM["Skill Manager Agent<br/>(Wiring Session)"]
+        CJS["common.cjs<br/>(Skill Utilities)"]
+        MAN["external-skills-manifest.json<br/>(Skill Registry)"]
+        PA["Phase Agents<br/>(Receive Injected Skills)"]
+    end
+
+    DEV -->|"skill add/wire/list/remove"| CMD
+    DEV -->|"NL: 'add a NestJS skill'"| CMD
+    CMD -->|"Delegates wiring"| SM
+    CMD -->|"Calls utilities"| CJS
+    CMD -->|"Reads/writes"| MAN
+    FS -->|"Skill .md files"| CJS
+    CJS -->|"Validates, analyzes"| CMD
+    PLC -->|"Injects matched skills"| PA
+    PLC -->|"Reads manifest"| MAN
+    PLC -->|"Reads skill files"| FS
+    MAN -->|"Binding config"| PLC
+
+    classDef external fill:#f9f,stroke:#333,stroke-width:2px
+    classDef system fill:#bbf,stroke:#333,stroke-width:2px
+    classDef new fill:#bfb,stroke:#333,stroke-width:2px
+
+    class DEV,FS external
+    class CMD,PLC,CJS,PA system
+    class SM,MAN new

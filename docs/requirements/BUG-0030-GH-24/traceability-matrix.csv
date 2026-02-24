@@ -1,0 +1,18 @@
+Requirement,AC,Test Case,Test Type,Priority,Description,TDD Pre-Fix Status
+FR-001,AC-001,TC-01,positive,P0,M1 prompt contains "MUST perform independent" search instruction,FAIL
+FR-001,AC-001,TC-02,positive,P0,M1 prompt references Glob tool explicitly,FAIL
+FR-001,AC-001,TC-03,positive,P0,M1 prompt references Grep tool explicitly,FAIL
+FR-001,AC-002,TC-05,positive,P0,M2 prompt contains "MUST perform independent" search instruction,FAIL
+FR-001,AC-002,TC-06,positive,P0,M2 prompt references Glob tool explicitly,FAIL
+FR-001,AC-002,TC-07,positive,P0,M2 prompt references Grep tool explicitly,FAIL
+FR-001,AC-003,TC-09,positive,P0,M3 prompt contains "MUST perform independent" search instruction,FAIL
+FR-001,AC-003,TC-10,positive,P0,M3 prompt references Glob tool explicitly,FAIL
+FR-001,AC-003,TC-11,positive,P0,M3 prompt references Grep tool explicitly,FAIL
+FR-002,AC-004,TC-13,positive,P0,M4 prompt contains independent completeness verification step,FAIL
+FR-002,AC-004,TC-14,positive,P0,M4 prompt references Glob or Grep for independent search,FAIL
+FR-002,AC-004,TC-15,positive,P1,M4 prompt defines completeness_gap finding category,FAIL
+FR-002,AC-004,TC-17,negative,P1,M4 prompt contains at least one step for independent codebase action,FAIL
+AC-005,,TC-04,positive,P1,M1 prompt labels quick scan as supplementary,FAIL
+AC-005,,TC-08,positive,P1,M2 prompt labels quick scan as supplementary,FAIL
+AC-005,,TC-12,positive,P1,M3 prompt labels quick scan as supplementary,FAIL
+AC-005,,TC-16,negative,P1,No agent prompt treats quick scan as authoritative without negation,PASS

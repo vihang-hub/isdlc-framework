@@ -1,0 +1,101 @@
+{
+  "gate": "GATE-06",
+  "phase": "06-implementation",
+  "workflow": "fix",
+  "artifact_folder": "BUG-0012-premature-git-commit",
+  "status": "PASSED",
+  "validated_at": "2026-02-13T07:30:00.000Z",
+  "agent": "software-developer",
+  "checklist": {
+    "all_features_implemented": {
+      "status": "PASS",
+      "details": "3 files modified: branch-guard.cjs (phase-aware blocking), 05-software-developer.md (no-commit instruction), 16-quality-loop-engineer.md (no-commit instruction)"
+    },
+    "unit_test_coverage_80_percent": {
+      "status": "PASS",
+      "details": "31/31 tests passing (14 existing + 17 new BUG-0012 tests). All code paths covered including block, allow, fail-open, and agent content checks."
+    },
+    "all_tests_passing": {
+      "status": "PASS",
+      "details": "31/31 branch-guard tests pass, 1129/1129 full CJS hook suite pass, 0 regressions"
+    },
+    "code_follows_standards": {
+      "status": "PASS",
+      "details": "CJS format (.cjs extension), JSDoc comments, consistent with existing hook patterns, uses readState/outputBlockResponse/debugLog/logHookEvent from common.cjs"
+    },
+    "implementation_matches_design": {
+      "status": "PASS",
+      "details": "Implements H1 (branch-guard.cjs phase-aware blocking) and H2 (agent no-commit instructions) from trace-analysis.md. Matches test-strategy.md test cases T15-T31."
+    },
+    "code_documentation_complete": {
+      "status": "PASS",
+      "details": "Updated JSDoc header with BUG-0012 traceability (FR-01 through FR-05, AC-07 through AC-20), inline comments explain phase logic, implementation-notes.md written"
+    },
+    "no_regressions": {
+      "status": "PASS",
+      "details": "All 14 existing branch-guard tests still pass (T1-T14), 1129 CJS tests pass including all existing hooks"
+    }
+  },
+  "files_modified": [
+    "src/claude/hooks/branch-guard.cjs",
+    "src/claude/agents/05-software-developer.md",
+    "src/claude/agents/16-quality-loop-engineer.md"
+  ],
+  "files_created": [
+    "docs/requirements/BUG-0012-premature-git-commit/implementation-notes.md"
+  ],
+  "test_results": {
+    "branch_guard_tests": {
+      "total": 31,
+      "passing": 31,
+      "failing": 0,
+      "new_tests": 17,
+      "existing_tests": 14
+    },
+    "full_cjs_suite": {
+      "total": 1129,
+      "passing": 1129,
+      "failing": 0,
+      "regressions": 0
+    }
+  },
+  "tdd_iterations": {
+    "red_phase": {
+      "tests_failing_before_fix": 9,
+      "tests_passing_before_fix": 22,
+      "notes": "T15-T17, T24 (hook blocking tests) + T27-T31 (agent content tests) = 9 failing"
+    },
+    "green_phase": {
+      "iterations_to_green": 1,
+      "notes": "All 9 failing tests passed on first implementation attempt. 31/31 total."
+    }
+  },
+  "ac_coverage": {
+    "AC-01": "PASS (T27: software-developer contains Do NOT git commit instruction)",
+    "AC-02": "PASS (T27: instruction within first 80 lines)",
+    "AC-03": "PASS (T28: references quality-loop/Phase 16 and code-review/Phase 08)",
+    "AC-04": "PASS (T29: mentions orchestrator manages git operations)",
+    "AC-05": "PASS (T30: quality-loop-engineer contains Do NOT git commit instruction)",
+    "AC-06": "PASS (T31: quality-loop-engineer explains code-review/Phase 08 not yet run)",
+    "AC-07": "PASS (T15, T16, T17: commits blocked during intermediate phases)",
+    "AC-08": "PASS (T18: commits allowed during final phase 08-code-review)",
+    "AC-09": "PASS (T15, T16, T17: block output produced with continue=false)",
+    "AC-10": "PASS (T18: no output during final phase = commit allowed)",
+    "AC-11": "PASS (T19: fail-open when no active_workflow)",
+    "AC-12": "PASS (T20: non-workflow branch allowed unconditionally)",
+    "AC-13": "PASS (T24: block message includes phase name)",
+    "AC-14": "PASS (T21, T22: fail-open when current_phase or phases missing)",
+    "AC-15": "PASS (T18, T25: last phase of workflow allows commits)",
+    "AC-16": "PASS (T25: non-standard workflow with different last phase also works)",
+    "AC-18": "PASS (T23: git add without commit always allowed)",
+    "AC-19": "PASS (T24: block message suggests git stash)",
+    "AC-20": "PASS (T24: block message mentions orchestrator)"
+  },
+  "constitutional_compliance": {
+    "articles_checked": ["I", "II", "III", "V", "VII", "VIII", "IX", "X"],
+    "violations": 0,
+    "iterations": 1,
+    "notes": "Art I: Implementation matches trace-analysis.md (H1+H2) and requirements-spec.md (FR-01 through FR-05). Art II: TDD Red (9 failing) -> Green (31 passing) in 1 iteration. Art III: Fail-open design, input validation on all state fields. Art V: ~50 lines added to branch-guard.cjs, 4 lines to each agent. Art VII: BUG-0012 FR/AC IDs referenced in code and docs. Art VIII: JSDoc updated, implementation-notes.md written. Art IX: All gate checklist items pass. Art X: Fail-open on missing data, defensive null checks."
+  },
+  "summary": "GATE-06 PASSED: BUG-0012 implementation complete. Phase-aware commit blocking added to branch-guard.cjs (v2.0.0), no-commit instructions added to 05-software-developer.md and 16-quality-loop-engineer.md. 31/31 tests pass, 1129/1129 CJS suite pass, 0 regressions. TDD Red(9)->Green(31) in 1 iteration. All 19 ACs covered."
+}

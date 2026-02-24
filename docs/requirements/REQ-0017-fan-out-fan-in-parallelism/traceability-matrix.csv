@@ -1,0 +1,12 @@
+Requirement ID,Type,Description,User Story,Acceptance Criteria,Priority,Status
+FR-001,Functional,Shared Fan-Out/Fan-In Engine,US-003,"AC-001-01,AC-001-02,AC-001-03,AC-001-04,AC-001-05",P0,Draft
+FR-002,Functional,Chunk Splitting Logic,"US-003,US-004","AC-002-01,AC-002-02,AC-002-03,AC-002-04,AC-002-05",P0,Draft
+FR-003,Functional,Parallel Task Spawner,US-003,"AC-003-01,AC-003-02,AC-003-03,AC-003-04,AC-003-05",P0,Draft
+FR-004,Functional,Result Merger,"US-003,US-005,US-007","AC-004-01,AC-004-02,AC-004-03,AC-004-04,AC-004-05",P0,Draft
+FR-005,Functional,Phase 16 Fan-Out (Quality Loop),US-001,"AC-005-01,AC-005-02,AC-005-03,AC-005-04,AC-005-05,AC-005-06,AC-005-07",P0,Draft
+FR-006,Functional,Phase 08 Fan-Out (Code Review),"US-002,US-005","AC-006-01,AC-006-02,AC-006-03,AC-006-04,AC-006-05,AC-006-06,AC-006-07",P0,Draft
+FR-007,Functional,Configuration and Overrides,US-006,"AC-007-01,AC-007-02,AC-007-03,AC-007-04",P1,Draft
+NFR-001,Non-Functional,Performance,"US-001,US-002,US-003,US-004",,P0,Draft
+NFR-002,Non-Functional,Reliability,"US-001,US-002,US-003,US-005",,P0,Draft
+NFR-003,Non-Functional,Backward Compatibility,"US-001,US-002,US-006",,P0,Draft
+NFR-004,Non-Functional,Observability,US-007,,P1,Draft

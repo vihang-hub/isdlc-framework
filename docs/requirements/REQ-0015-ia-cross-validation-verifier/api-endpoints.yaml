@@ -1,0 +1,121 @@
+# API Endpoints: REQ-0015 -- Cross-Validation Verifier
+# Type: Agent-to-Agent delegation protocol (not HTTP API)
+# Created: 2026-02-15
+#
+# This feature has no REST/HTTP endpoints. All communication occurs
+# via Claude Code's Task tool delegation mechanism. This file documents
+# the delegation contracts as "endpoints" for traceability purposes.
+
+---
+
+delegation_endpoints:
+
+  # Orchestrator -> M4
+  - id: DEL-001
+    caller: impact-analysis-orchestrator (IA0)
+    callee: cross-validation-verifier (IA4)
+    trigger: Step 3.5 in orchestrator process
+    condition: M4 agent file exists (Tier 1 check passes)
+    input_format: Text prompt with embedded JSON
+    input_fields:
+      - workflow: "feature | upgrade"
+      - m1_response: "Full M1 JSON response"
+      - m2_response: "Full M2 JSON response"
+      - m3_response: "Full M3 JSON response"
+    output_format: JSON response
+    output_fields:
+      - status: "success"
+      - report_section: "Markdown string"
+      - verification_report: "Structured JSON object"
+    error_handling:
+      tier_1: "Agent not found -> silent skip"
+      tier_2: "Task call fails -> WARNING log, skip"
+      tier_3: "Bad response -> WARNING log, skip"
+    traces:
+      - AC-05.1
+      - NFR-02
+      - ADR-0003
+
+  # M4 -> Orchestrator (return)
+  - id: DEL-002
+    caller: cross-validation-verifier (IA4)
+    callee: impact-analysis-orchestrator (IA0)
+    trigger: M4 completes cross-validation
+    input_format: N/A (return value)
+    output_format: JSON matching M4 output contract
+    output_fields:
+      - verification_status: "PASS | WARN | FAIL"
+      - completeness_score: "0-100"
+      - findings: "Array of finding objects"
+      - report_section: "Markdown for impact-analysis.md"
+    traces:
+      - AC-06.1
+      - AC-06.2
+      - AC-06.3
+      - AC-06.4
+      - AC-06.5
+
+---
+
+state_updates:
+
+  # Orchestrator updates state.json after M4
+  - id: STATE-001
+    file: ".isdlc/state.json"
+    path: "phases['02-impact-analysis'].sub_agents['M4-cross-validation-verifier']"
+    when: "After M4 completes or is skipped"
+    fields:
+      - status: "completed | skipped"
+      - duration_ms: "integer"
+      - verification_status: "PASS | WARN | FAIL (if completed)"
+      - findings_count: "integer (if completed)"
+      - completeness_score: "0-100 (if completed)"
+    traces:
+      - AC-05.5
+
+  # Metadata in impact-analysis.md
+  - id: STATE-002
+    file: "docs/requirements/{artifact-folder}/impact-analysis.md"
+    path: "Last JSON block (metadata)"
+    when: "During Step 4 consolidation"
+    fields_added:
+      - sub_agents: "['M1', 'M2', 'M3', 'M4']"
+      - verification_status: "PASS | WARN | FAIL | not_performed"
+      - verification_findings: "integer"
+      - completeness_score: "0-100"
+    traces:
+      - AC-05.2
+
+---
+
+config_changes:
+
+  # Skills manifest additions
+  - id: CONFIG-001
+    file: "src/claude/hooks/config/skills-manifest.json"
+    changes:
+      - section: ownership
+        action: add
+        key: cross-validation-verifier
+        value:
+          agent_id: IA4
+          phase: 02-impact-analysis
+          skill_count: 2
+          skills: ["IA-401", "IA-402"]
+      - section: skill_lookup
+        action: add
+        entries:
+          IA-401: cross-validation-verifier
+          IA-402: cross-validation-verifier
+      - section: skill_paths
+        action: add
+        entry:
+          "impact-analysis/cross-validation": cross-validation-verifier
+      - section: total_skills
+        action: update
+        from: 240
+        to: 242
+    traces:
+      - AC-07.1
+      - AC-07.3
+      - ADR-0002

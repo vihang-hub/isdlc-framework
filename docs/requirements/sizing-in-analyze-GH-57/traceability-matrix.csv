@@ -1,0 +1,31 @@
+Requirement,Acceptance Criteria,Test Case ID,Test Priority,Test Type,Coverage Status,Notes
+FR-007,AC-007a: optional second parameter,TC-DAS-S01 through TC-DAS-S10,P0/P1,Unit,FULL,All 10 tests use 2-arg signature
+FR-007,AC-007b: light sizing returns analyzed,TC-DAS-S01,P0,Unit,FULL,Core happy path
+FR-007,AC-007c: null/undefined = unchanged,TC-DAS-S02 TC-DAS-S03,P0,Unit,FULL,Backward compatibility
+FR-007,AC-007d: pure function preserved,TC-DAS-S01,P0,Unit,FULL,No I/O in test validates purity
+FR-008,AC-008a: sizing-aware derivation,TC-WMJ-S01,P0,Unit,FULL,Delegates to deriveAnalysisStatus with sizing_decision
+FR-008,AC-008b: sizing_decision preserved,TC-WMJ-S01 TC-WMJ-S05,P0/P1,Unit,FULL,JSON.stringify preserves all fields
+FR-008,AC-008c: backward compatible,TC-WMJ-S03 TC-WMJ-S04,P0,Unit,FULL,No sizing_decision = same behavior
+FR-009,AC-009a: reads meta.sizing_decision,TC-CSP-S01,P0,Unit,FULL,Step 3.5 reads sizing_decision directly
+FR-009,AC-009b: light + 3 phases = analyzed startPhase=05,TC-CSP-S01,P0,Unit,FULL,Core happy path for build resume
+FR-009,AC-009c: completedPhases = only executed,TC-CSP-S02,P0,Unit,FULL,Phases 03-04 NOT in completedPhases
+FR-009,AC-009d: remainingPhases excludes skipped,TC-CSP-S03,P0,Unit,FULL,Build skips 03-04 correctly
+FR-009,AC-009e: absent sizing_decision = backward compat,TC-CSP-S04,P0,Unit,FULL,Existing behavior preserved
+FR-005,AC-005a: sizing written to meta.json,TC-WMJ-S05,P1,Unit,FULL,Round-trip write/read preserves record
+FR-005,AC-005b: context = analyze,TC-SC-S01,P1,Unit,FULL,Schema validation
+FR-005,AC-005c: light_skip_phases recorded,TC-SC-S03,P1,Unit,FULL,Schema validation
+NFR-001,AC-NFR-001b: no applySizingDecision in analyze,TC-SC-S02,P1,Unit,FULL,Constraint: build-only function
+NFR-002,AC-NFR-002b: writeMetaJson unchanged w/o sizing,TC-WMJ-S03 TC-WMJ-S04 + 6 existing,P0,Unit,FULL,42 existing tests pass unchanged
+NFR-002,AC-NFR-002c: deriveAnalysisStatus unchanged w/o sizing,TC-DAS-S02 TC-DAS-S03 + 5 existing,P0,Unit,FULL,5 existing tests pass unchanged
+NFR-002,AC-NFR-002d: computeStartPhase unchanged w/o sizing,TC-CSP-S04 + 14 existing,P0,Unit,FULL,14 existing tests pass unchanged
+CON-002,No applySizingDecision reuse for analyze,TC-SC-S02,P1,Unit,FULL,Design constraint validated
+FR-001,AC-001a through AC-001d: sizing decision point,N/A,N/A,Manual,NOT_UNIT_TESTABLE,Handler logic in isdlc.md
+FR-002,AC-002a through AC-002f: sizing menu presentation,N/A,N/A,Manual,NOT_UNIT_TESTABLE,UX/visual verification
+FR-003,AC-003a through AC-003e: light skip phases 03-04,TC-CSP-S01 TC-CSP-S03 (partial),P0,Unit+Manual,PARTIAL,Build-side recognition tested; handler skip not unit-testable
+FR-004,AC-004a AC-004b: standard continues all phases,TC-CSP-S05 (partial),P0,Unit+Manual,PARTIAL,Build-side recognition tested; handler continuation not unit-testable
+FR-006,AC-006a through AC-006e: -light flag on analyze,N/A,N/A,Manual,NOT_UNIT_TESTABLE,Flag parsing in isdlc.md
+FR-010,AC-010a AC-010b: GitHub label sync respects light,N/A,N/A,Manual,NOT_UNIT_TESTABLE,Integration with gh CLI
+NFR-003,AC-NFR-003a through AC-NFR-003d: UX consistency,N/A,N/A,Manual,NOT_UNIT_TESTABLE,Visual verification
+NFR-004,AC-NFR-004a AC-NFR-004b: resumability,N/A,N/A,Manual,NOT_UNIT_TESTABLE,End-to-end flow
+NFR-005,AC-NFR-005a: performance overhead,N/A,N/A,Manual,NOT_UNIT_TESTABLE,Existing perf tests cover utilities
+CON-004,No epic in analyze,N/A,N/A,Manual,NOT_UNIT_TESTABLE,Menu restriction in handler

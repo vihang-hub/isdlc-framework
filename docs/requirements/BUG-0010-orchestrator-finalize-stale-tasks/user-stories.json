@@ -1,0 +1,79 @@
+{
+  "bug_id": "BUG-0010",
+  "title": "Orchestrator finalize creates tasks but doesn't mark them completed",
+  "type": "bug-report",
+  "stories": [
+    {
+      "id": "US-BUG10-01",
+      "title": "Task cleanup after workflow completion",
+      "as_a": "developer using the iSDLC framework",
+      "i_want": "all workflow tasks to be automatically marked completed when the workflow finishes",
+      "so_that": "I don't see stale in-progress or pending tasks cluttering my terminal after a successful workflow",
+      "acceptance_criteria": [
+        {
+          "id": "AC-01a",
+          "description": "After successful workflow completion, zero tasks remain in pending or in_progress state",
+          "testable": true
+        },
+        {
+          "id": "AC-01b",
+          "description": "All completed tasks have strikethrough formatting in their subjects",
+          "testable": true
+        },
+        {
+          "id": "AC-01c",
+          "description": "Cleanup is deterministic and does not depend on LLM working memory for task IDs",
+          "testable": true
+        }
+      ],
+      "priority": "high"
+    },
+    {
+      "id": "US-BUG10-02",
+      "title": "Task ID persistence across sub-agent calls",
+      "as_a": "Phase-Loop Controller",
+      "i_want": "a reliable way to identify workflow tasks after the orchestrator finalize returns",
+      "so_that": "I can clean up the correct tasks without depending on conversation context",
+      "acceptance_criteria": [
+        {
+          "id": "AC-02a",
+          "description": "Task IDs created in STEP 2 are available for cleanup in STEP 4",
+          "testable": true
+        },
+        {
+          "id": "AC-02b",
+          "description": "The mechanism is explicit and documented in the instruction flow",
+          "testable": true
+        }
+      ],
+      "priority": "high"
+    },
+    {
+      "id": "US-BUG10-03",
+      "title": "Idempotent task cleanup",
+      "as_a": "Phase-Loop Controller",
+      "i_want": "task cleanup to be safe to run multiple times",
+      "so_that": "already-completed tasks are not corrupted by redundant cleanup calls",
+      "acceptance_criteria": [
+        {
+          "id": "AC-03a",
+          "description": "TaskUpdate on an already-completed task does not fail",
+          "testable": true
+        },
+        {
+          "id": "AC-03b",
+          "description": "Double-strikethrough subjects are not produced by redundant cleanup",
+          "testable": true
+        }
+      ],
+      "priority": "medium"
+    }
+  ],
+  "traceability": {
+    "requirements": ["REQ-BUG10-01", "REQ-BUG10-02", "REQ-BUG10-03"],
+    "affected_files": [
+      "src/claude/commands/isdlc.md"
+    ],
+    "related_bugs": ["BUG-0005", "BUG-0006"]
+  }
+}

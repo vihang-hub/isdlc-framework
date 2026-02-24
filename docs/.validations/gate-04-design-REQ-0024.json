@@ -1,0 +1,69 @@
+{
+  "gate": "GATE-04",
+  "phase": "04-design",
+  "requirement_id": "REQ-0024",
+  "feature": "Gate Requirements Pre-Injection -- inject gate pass criteria into phase agent delegation prompts so agents know what hooks will check before they start",
+  "validated_at": "2026-02-18T23:45:00Z",
+  "status": "PASSED",
+  "checklist": {
+    "interface_specification_complete": {
+      "status": "PASSED",
+      "evidence": "Complete function-level specification in module-design.md Section 2. 1 exported function (buildGateRequirementsBlock) and 7 internal functions (loadIterationRequirements, loadArtifactPaths, parseConstitutionArticles, loadWorkflowModifiers, resolveTemplateVars, deepMerge, formatBlock) with full signatures, pseudocode, JSDoc types, error handling, and traceability."
+    },
+    "all_modules_designed": {
+      "status": "PASSED",
+      "evidence": "Single module: src/claude/hooks/lib/gate-requirements-injector.cjs. File-level structure in Section 8. Data structures in Section 7. Integration specification for isdlc.md STEP 3d in Section 5 with exact text to add."
+    },
+    "ui_wireframes": {
+      "status": "N/A",
+      "evidence": "No UI component. This is a framework-internal utility module producing text output for LLM consumption. Output format specification with 6 exact examples in Section 3."
+    },
+    "user_flows_documented": {
+      "status": "PASSED",
+      "evidence": "Data flow documented in architecture-overview.md Section 3 (sequence diagram + data assembly pipeline). Integration flow in module-design.md Section 5 (STEP 3d execution semantics)."
+    },
+    "error_taxonomy_complete": {
+      "status": "PASSED",
+      "evidence": "15 error codes across 4 categories (INVALID_INPUT, FILE_MISSING, PARSE_ERROR, SCHEMA_MISMATCH, RUNTIME) in module-design.md Section 4.1. 12 edge case input/output pairs in Section 4.2. 5 defensive coding rules in Section 4.3."
+    },
+    "validation_rules_defined": {
+      "status": "PASSED",
+      "evidence": "Input parameter validation (4 rules) in Section 6.1. Config file validation (4 rules) in Section 6.2. Output validation guarantees in Section 6.3."
+    },
+    "designs_cover_all_requirements": {
+      "status": "PASSED",
+      "evidence": "All 6 FRs traced: FR-01 (config reading, Section 2.1-2.3), FR-02 (template resolution, Section 2.6), FR-03 (constitution parsing, Section 2.4), FR-04 (workflow overrides, Section 2.5, 2.7), FR-05 (formatted output, Section 2.8, 3), FR-06 (STEP 3d integration, Section 5). All 5 NFRs traced: NFR-01 (fail-open, Section 4), NFR-02 (performance, no caching), NFR-03 (single source of truth, dual-path lookups), NFR-04 (backward compatibility, Section 5.5), NFR-05 (CJS module, Section 8). Full traceability matrix in Section 9."
+    },
+    "interface_contracts_reviewed": {
+      "status": "PASSED",
+      "evidence": "Single exported function contract verified: string parameters, optional parameters with defaults, empty string return on any error. Internal function contracts verified against gate-blocker.cjs patterns (same file loading, same merge semantics). Output format verified against architecture examples (6 exact I/O pairs in Section 3.3)."
+    }
+  },
+  "constitutional_compliance": {
+    "article_I": {
+      "status": "COMPLIANT",
+      "evidence": "Design implements architecture specification exactly: same function signatures (Arch 2.1), same file paths (Arch 3.3), same error handling contract (Arch 6), same output format (Arch 4). No deviations."
+    },
+    "article_IV": {
+      "status": "COMPLIANT",
+      "evidence": "All error scenarios documented with exact behavior (15 error codes, 12 edge cases). All conditional output sections documented with inclusion/exclusion criteria (Section 3.1). No [NEEDS CLARIFICATION] markers. No undocumented assumptions."
+    },
+    "article_V": {
+      "status": "COMPLIANT",
+      "evidence": "Single file, 8 total functions, only fs and path dependencies. No caching (ADR-0001), no abstraction layers, no new config formats (CON-003). Regex parsing instead of Markdown parser (ADR-0002). Plain text output instead of JSON schema (ADR-0003)."
+    },
+    "article_VII": {
+      "status": "COMPLIANT",
+      "evidence": "Every function traces to specific FRs and ACs. Complete traceability matrix in Section 9 (14 rows mapping design elements to requirements and architecture sections)."
+    },
+    "article_IX": {
+      "status": "COMPLIANT",
+      "evidence": "All 8 GATE-04 checklist items pass. Hooks remain enforcement mechanism (CON-004). Utility is informational, not authoritative."
+    }
+  },
+  "artifacts": [
+    "docs/requirements/REQ-0024-gate-requirements-pre-injection/module-design.md"
+  ],
+  "iteration_count": 1,
+  "max_iterations": 5
+}

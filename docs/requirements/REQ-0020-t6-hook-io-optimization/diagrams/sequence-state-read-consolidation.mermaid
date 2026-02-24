@@ -1,0 +1,52 @@
+%% Sequence Diagram: State Read Consolidation in state-write-validator
+%% Before: 3 disk reads. After: 1 disk read.
+
+sequenceDiagram
+    participant PWE as post-write-edit-dispatcher
+    participant SWV as state-write-validator.check()
+    participant V7 as checkVersionLock()
+    participant V8 as checkPhaseFieldProtection()
+    participant V1V3 as validatePhase() [V1-V3]
+    participant FS as Filesystem
+
+    Note over PWE,FS: BEFORE optimization (3 disk reads)
+
+    PWE->>SWV: check(ctx)
+    SWV->>V7: checkVersionLock(filePath, toolInput, toolName)
+    V7->>FS: existsSync(filePath)
+    V7->>FS: readFileSync(filePath) [READ 1]
+    V7->>V7: JSON.parse -> diskState.state_version
+    V7-->>SWV: null (version OK)
+
+    SWV->>V8: checkPhaseFieldProtection(filePath, toolInput, toolName)
+    V8->>FS: existsSync(filePath)
+    V8->>FS: readFileSync(filePath) [READ 2]
+    V8->>V8: JSON.parse -> diskState.active_workflow
+    V8-->>SWV: null (no regression)
+
+    SWV->>FS: readFileSync(filePath) [READ 3]
+    SWV->>SWV: JSON.parse -> scan phases for V1-V3
+    SWV->>V1V3: validatePhase(phaseName, phaseData)
+
+    Note over PWE,FS: AFTER optimization (1 disk read)
+
+    PWE->>SWV: check(ctx)
+
+    rect rgb(200, 255, 200)
+        Note over SWV,FS: Single disk read at top of check()
+        SWV->>FS: existsSync(filePath)
+        SWV->>FS: readFileSync(filePath) [READ 1 - ONLY READ]
+        SWV->>SWV: JSON.parse -> diskState
+    end
+
+    SWV->>V7: checkVersionLock(filePath, toolInput, toolName, diskState)
+    Note over V7: Uses diskState parameter, no disk access
+    V7-->>SWV: null (version OK)
+
+    SWV->>V8: checkPhaseFieldProtection(filePath, toolInput, toolName, diskState)
+    Note over V8: Uses diskState parameter, no disk access
+    V8-->>SWV: null (no regression)
+
+    Note over SWV: V1-V3 use incomingState from toolInput.content
+    SWV->>SWV: parse toolInput.content -> incomingState
+    SWV->>V1V3: validatePhase(phaseName, phaseData)

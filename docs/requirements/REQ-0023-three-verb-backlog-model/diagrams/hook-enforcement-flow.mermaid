@@ -1,0 +1,33 @@
+%% Hook Enforcement Flow for Three-Verb Model
+%% Traces: FR-008, AC-008-01, AC-008-02
+flowchart TD
+    A[/isdlc loaded via Skill tool/] --> B[skill-delegation-enforcer.cjs]
+
+    B --> C{Parse action from args}
+    C -->|"add"| D{Is action in EXEMPT_ACTIONS?}
+    C -->|"analyze"| D
+    C -->|"build"| D
+    C -->|"feature"| D
+    C -->|"fix"| D
+
+    D -->|"Yes: add, analyze"| E[Exit 0<br/>No pending_delegation marker]
+    D -->|"No: build, feature, fix"| F[Write pending_delegation<br/>to state.json]
+
+    F --> G[Output mandatory<br/>delegation message]
+
+    E --> H[Inline execution<br/>No orchestrator needed]
+
+    G --> I[Claude delegates to<br/>orchestrator via Task]
+
+    I --> J[delegation-gate.cjs<br/>Stop hook]
+    H --> J
+
+    J --> K{pending_delegation<br/>marker exists?}
+    K -->|"No marker"| L[Exit 0<br/>Nothing to enforce]
+    K -->|"Yes"| M{Is action exempt?}
+
+    M -->|"Yes: add, analyze"| N[Auto-clear marker<br/>Exit 0]
+    M -->|"No: build, feature, fix"| O{Delegation to<br/>orchestrator found?}
+
+    O -->|"Yes"| P[Clear marker<br/>Exit 0]
+    O -->|"No"| Q[BLOCK response<br/>Require delegation]

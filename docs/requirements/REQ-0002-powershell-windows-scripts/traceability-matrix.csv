@@ -1,0 +1,15 @@
+Requirement ID,User Story ID,Epic,Priority,Status
+REQ-001,US-001,Windows Support,Must Have,Draft
+REQ-001,US-002,Windows Support,Must Have,Draft
+REQ-002,US-003,Windows Support,Must Have,Draft
+REQ-003,US-004,Windows Support,Must Have,Draft
+REQ-004,US-001,Windows Support,Must Have,Draft
+REQ-005,US-001,Windows Support,Should Have,Draft
+REQ-006,US-005,Windows Support,Must Have,Draft
+NFR-001,,Windows Support,Must Have,Draft
+NFR-002,,Windows Support,Must Have,Draft
+NFR-003,,Windows Support,Should Have,Draft
+NFR-004,,Windows Support,Must Have,Draft
+NFR-005,,Windows Support,Must Have,Draft
+NFR-006,,Windows Support,Must Have,Draft
+NFR-007,,Windows Support,Must Have,Draft

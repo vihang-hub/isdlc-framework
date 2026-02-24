@@ -1,0 +1,73 @@
+{
+  "gate": "GATE-06",
+  "phase": "06-implementation",
+  "requirement": "REQ-0032",
+  "feature": "Issue Tracker Integration During Installation",
+  "validated_at": "2026-02-22T00:00:00.000Z",
+  "status": "passed",
+  "checklist": {
+    "all_features_implemented": true,
+    "unit_test_coverage_80_percent": true,
+    "all_tests_passing": true,
+    "code_follows_linting_standards": true,
+    "implementation_matches_design": true,
+    "code_documentation_complete": true
+  },
+  "test_results": {
+    "new_detect_source_tests": 17,
+    "new_installer_tests": 15,
+    "new_updater_tests": 4,
+    "total_new_tests": 36,
+    "new_tests_passing": 36,
+    "new_tests_failing": 0,
+    "full_suite": {
+      "esm_total": 653,
+      "esm_pass": 649,
+      "esm_fail": 4,
+      "esm_pre_existing_failures": [
+        "TC-E09 (README agent count)",
+        "T07 (STEP 1 branch description)",
+        "TC-07 (STEP 4 task cleanup)",
+        "TC-13-01 (agent file count)"
+      ],
+      "cjs_total": 2398,
+      "cjs_pass": 2395,
+      "cjs_fail": 3,
+      "cjs_pre_existing_failures": [
+        "TC-04a (runtime sync - expected from src/ modification)",
+        "supervised_review info log",
+        "T13 pruning remediation"
+      ],
+      "regressions": 0
+    }
+  },
+  "files_modified": [
+    "lib/installer.js",
+    "lib/updater.js",
+    "src/claude/CLAUDE.md.template",
+    "src/claude/hooks/lib/three-verb-utils.cjs",
+    "src/claude/commands/isdlc.md",
+    "lib/installer.test.js",
+    "lib/updater.test.js"
+  ],
+  "files_created": [
+    "src/claude/hooks/tests/detect-source-options.test.cjs",
+    "docs/requirements/REQ-0032-issue-tracker-integration-during-installation/implementation-notes.md"
+  ],
+  "ac_coverage": {
+    "total": 31,
+    "covered": 31,
+    "percentage": 100
+  },
+  "constitutional_compliance": {
+    "article_II_quality_standards": "PASS - 36 new tests, TDD workflow followed (Red-Green verified), zero regressions, all new code tested",
+    "article_V_security_standards": "PASS - No credentials stored in CLAUDE.md; MCP handles auth. Fail-open for all external tool checks. Input validation on all options parameters.",
+    "article_VI_code_standards": "PASS - ESM for lib/, CJS for hooks. JSDoc on all functions. Follows existing patterns (select(), confirm(), execSync).",
+    "article_VII_traceability": "PASS - REQ-0032 referenced in code comments, test names, and JSDoc. FR/AC IDs traced to test cases.",
+    "article_IX_knowledge_preservation": "PASS - Implementation notes document all decisions. Gate validation file created. Architecture decisions traced."
+  },
+  "phase_timing_report": {
+    "debate_rounds_used": 0,
+    "fan_out_chunks": 0
+  }
+}

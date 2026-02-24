@@ -1,0 +1,75 @@
+Requirement,AC,Test ID,Test Name,Test File,Priority,Type,Coverage
+FR-001,AC-001-01,TC-P02,SKILL.md contains chunk splitter section,test-fan-out-protocol.test.cjs,P0,Content validation,Direct
+FR-001,AC-001-02,TC-P03,SKILL.md contains parallel spawner section,test-fan-out-protocol.test.cjs,P0,Content validation,Direct
+FR-001,AC-001-03,TC-P04,SKILL.md contains result merger section,test-fan-out-protocol.test.cjs,P0,Content validation,Direct
+FR-001,AC-001-04,TC-M01,QL-012 in quality-loop-engineer skills array,test-fan-out-manifest.test.cjs,P0,Unit,Direct
+FR-001,AC-001-04,TC-M02,skill_count updated to 12,test-fan-out-manifest.test.cjs,P0,Unit,Direct
+FR-001,AC-001-04,TC-M03,QL-012 in skill_lookup,test-fan-out-manifest.test.cjs,P0,Unit,Direct
+FR-001,AC-001-04,TC-M04,fan-out-engine in path_lookup,test-fan-out-manifest.test.cjs,P0,Unit,Direct
+FR-001,AC-001-04,TC-M05,total_skills incremented to 243,test-fan-out-manifest.test.cjs,P1,Unit,Direct
+FR-001,AC-001-04,TC-M06,QL skills array is sequential,test-fan-out-manifest.test.cjs,P2,Unit,Direct
+FR-001,AC-001-04,TC-P01,SKILL.md file exists at expected path,test-fan-out-protocol.test.cjs,P0,Content validation,Direct
+FR-001,AC-001-04,TC-P05,SKILL.md references QL-012 skill ID,test-fan-out-protocol.test.cjs,P0,Content validation,Direct
+FR-001,AC-001-05,TC-P14,SKILL.md documents partial failure handling,test-fan-out-protocol.test.cjs,P0,Content validation,Direct
+FR-001,,TC-I01,Phase 16 agent references QL-012 skill,test-fan-out-integration.test.cjs,P0,Integration,Cross-validation
+FR-001,,TC-I02,Phase 08 agent references QL-012 or fan-out-engine,test-fan-out-integration.test.cjs,P0,Integration,Cross-validation
+FR-001,,TC-I07,SKILL.md version matches interface spec,test-fan-out-integration.test.cjs,P2,Integration,Cross-validation
+FR-002,AC-002-01,TC-P02,SKILL.md contains chunk splitter section,test-fan-out-protocol.test.cjs,P0,Content validation,Implicit
+FR-002,AC-002-02,TC-P02,SKILL.md contains chunk splitter section (round-robin + group-by-directory),test-fan-out-protocol.test.cjs,P0,Content validation,Direct
+FR-002,AC-002-03,TC-P09,Phase 16 agent max agents is 8,test-fan-out-protocol.test.cjs,P1,Content validation,Direct
+FR-002,AC-002-03,TC-I05,Max agents (8) consistent across all files,test-fan-out-integration.test.cjs,P1,Integration,Cross-validation
+FR-002,AC-002-04,TC-P06,Phase 16 agent contains fan-out decision tree (threshold 250),test-fan-out-protocol.test.cjs,P0,Content validation,Implicit
+FR-002,AC-002-05,TC-P02,SKILL.md contains chunk splitter section (metadata),test-fan-out-protocol.test.cjs,P0,Content validation,Implicit
+FR-003,AC-003-01,TC-P03,SKILL.md contains parallel spawner section,test-fan-out-protocol.test.cjs,P0,Content validation,Direct
+FR-003,AC-003-02,TC-P16,Phase 16 agent chunk spawner includes read-only constraints,test-fan-out-protocol.test.cjs,P1,Content validation,Implicit
+FR-003,AC-003-03,TC-I05,Max agents (8) consistent across all files,test-fan-out-integration.test.cjs,P1,Integration,Cross-validation
+FR-003,AC-003-04,TC-P03,SKILL.md contains parallel spawner section (timeout ref),test-fan-out-protocol.test.cjs,P0,Content validation,Implicit
+FR-003,AC-003-05,TC-P16,Phase 16 agent chunk spawner includes read-only constraints,test-fan-out-protocol.test.cjs,P1,Content validation,Direct
+FR-004,AC-004-01,TC-P04,SKILL.md contains result merger section,test-fan-out-protocol.test.cjs,P0,Content validation,Direct
+FR-004,AC-004-02,TC-P13,Phase 08 agent specifies deduplication for findings,test-fan-out-protocol.test.cjs,P1,Content validation,Direct
+FR-004,AC-004-03,TC-P04,SKILL.md contains result merger section (dedup reference),test-fan-out-protocol.test.cjs,P0,Content validation,Direct
+FR-004,AC-004-04,TC-P04,SKILL.md result merger section (source chunk tracking),test-fan-out-protocol.test.cjs,P0,Content validation,Implicit
+FR-004,AC-004-05,TC-I06,Merged output format backward compatible with gate-blocker,test-fan-out-integration.test.cjs,P0,Integration,Direct
+FR-005,AC-005-01,TC-P06,Phase 16 agent contains fan-out decision tree,test-fan-out-protocol.test.cjs,P0,Content validation,Direct
+FR-005,AC-005-01,TC-I03,Phase 16 test threshold matches across spec and agent,test-fan-out-integration.test.cjs,P0,Integration,Cross-validation
+FR-005,AC-005-02,TC-P06,Phase 16 agent fan-out section (chunk reporting),test-fan-out-protocol.test.cjs,P0,Content validation,Implicit
+FR-005,AC-005-03,TC-I06,Merged output format backward compatible with gate-blocker,test-fan-out-integration.test.cjs,P0,Integration,Direct
+FR-005,AC-005-04,TC-P06,Phase 16 agent fan-out section (failure bubbling),test-fan-out-protocol.test.cjs,P0,Content validation,Implicit
+FR-005,AC-005-05,TC-P08,Phase 16 agent specifies coverage aggregation as union,test-fan-out-protocol.test.cjs,P1,Content validation,Direct
+FR-005,AC-005-06,TC-P07,Phase 16 agent references Track A only,test-fan-out-protocol.test.cjs,P0,Content validation,Direct
+FR-005,AC-005-07,TC-P06,Phase 16 agent contains fan-out decision tree (below threshold skip),test-fan-out-protocol.test.cjs,P0,Content validation,Direct
+FR-005,,TC-I01,Phase 16 agent references QL-012 skill,test-fan-out-integration.test.cjs,P0,Integration,Cross-validation
+FR-006,AC-006-01,TC-P10,Phase 08 agent contains fan-out decision tree,test-fan-out-protocol.test.cjs,P0,Content validation,Direct
+FR-006,AC-006-01,TC-P11,Phase 08 agent specifies group-by-directory strategy,test-fan-out-protocol.test.cjs,P0,Content validation,Direct
+FR-006,AC-006-01,TC-I04,Phase 08 file threshold matches across spec and agent,test-fan-out-integration.test.cjs,P0,Integration,Cross-validation
+FR-006,AC-006-02,TC-P10,Phase 08 agent fan-out section (review categories),test-fan-out-protocol.test.cjs,P0,Content validation,Implicit
+FR-006,AC-006-03,TC-P10,Phase 08 agent fan-out section (structured findings),test-fan-out-protocol.test.cjs,P0,Content validation,Implicit
+FR-006,AC-006-04,TC-I06,Merged output format backward compatible with gate-blocker,test-fan-out-integration.test.cjs,P0,Integration,Direct
+FR-006,AC-006-05,TC-P13,Phase 08 agent specifies deduplication for findings,test-fan-out-protocol.test.cjs,P1,Content validation,Direct
+FR-006,AC-006-06,TC-P10,Phase 08 agent contains fan-out decision tree (below threshold skip),test-fan-out-protocol.test.cjs,P0,Content validation,Direct
+FR-006,AC-006-07,TC-P12,Phase 08 agent specifies cross-cutting concerns section,test-fan-out-protocol.test.cjs,P1,Content validation,Direct
+FR-006,,TC-I02,Phase 08 agent references QL-012 or fan-out-engine,test-fan-out-integration.test.cjs,P0,Integration,Cross-validation
+FR-006,,TC-I11,Phase 16 and Phase 08 use different default strategies,test-fan-out-integration.test.cjs,P1,Integration,Cross-validation
+FR-007,AC-007-01,TC-C01,Default config when fan_out section absent,test-fan-out-config.test.cjs,P0,Unit,Direct
+FR-007,AC-007-01,TC-C02,Complete fan_out config is valid JSON,test-fan-out-config.test.cjs,P0,Unit,Direct
+FR-007,AC-007-01,TC-C05,max_agents value 1 (minimum boundary),test-fan-out-config.test.cjs,P1,Unit (boundary),Direct
+FR-007,AC-007-01,TC-C06,max_agents value 8 (maximum boundary),test-fan-out-config.test.cjs,P1,Unit (boundary),Direct
+FR-007,AC-007-01,TC-C09,fan_out.enabled = false disables fan-out globally,test-fan-out-config.test.cjs,P0,Unit,Direct
+FR-007,AC-007-02,TC-C07,Phase 16 override config structure,test-fan-out-config.test.cjs,P1,Unit,Direct
+FR-007,AC-007-02,TC-C08,Phase 08 override config structure,test-fan-out-config.test.cjs,P1,Unit,Direct
+FR-007,AC-007-02,TC-C10,Per-phase override can disable fan-out for one phase only,test-fan-out-config.test.cjs,P1,Unit,Direct
+FR-007,AC-007-03,TC-C03,no_fan_out flag set in active_workflow.flags,test-fan-out-config.test.cjs,P0,Unit,Direct
+FR-007,AC-007-03,TC-C04,no_fan_out flag absent means fan-out enabled,test-fan-out-config.test.cjs,P0,Unit,Direct
+FR-007,AC-007-03,TC-I08,isdlc.md flag parsing section includes --no-fan-out,test-fan-out-integration.test.cjs,P0,Integration,Direct
+FR-007,AC-007-03,TC-I09,isdlc.md flag table includes --no-fan-out row,test-fan-out-integration.test.cjs,P1,Integration,Direct
+FR-007,AC-007-04,TC-C04,no_fan_out flag absent means fan-out enabled (config per-workflow),test-fan-out-config.test.cjs,P0,Unit,Implicit
+FR-007,,TC-I10,validation-rules.json covers all config fields,test-fan-out-integration.test.cjs,P1,Integration,Cross-validation
+NFR-001,,TC-P18,NFR-001 orchestration overhead limit documented,test-fan-out-protocol.test.cjs,P2,Content validation,Direct
+NFR-001,,TC-P09,Phase 16 agent max agents is 8 (bounding parallelism),test-fan-out-protocol.test.cjs,P1,Content validation,Indirect
+NFR-002,,TC-P14,SKILL.md documents partial failure handling,test-fan-out-protocol.test.cjs,P0,Content validation,Direct
+NFR-002,,TC-P15,SKILL.md documents below-threshold skip behavior,test-fan-out-protocol.test.cjs,P0,Content validation,Direct (graceful degradation)
+NFR-003,,TC-C04,no_fan_out flag absent means fan-out enabled (backward compat),test-fan-out-config.test.cjs,P0,Unit,Direct
+NFR-003,,TC-I06,Merged output format backward compatible with gate-blocker,test-fan-out-integration.test.cjs,P0,Integration,Direct
+NFR-003,,TC-P15,SKILL.md documents below-threshold skip behavior,test-fan-out-protocol.test.cjs,P0,Content validation,Direct
+NFR-004,,TC-P17,SKILL.md documents observability / skill usage logging,test-fan-out-protocol.test.cjs,P1,Content validation,Direct
+NFR-004,,TC-I12,Observability log entry schema includes fan_out_metadata,test-fan-out-integration.test.cjs,P1,Integration,Direct

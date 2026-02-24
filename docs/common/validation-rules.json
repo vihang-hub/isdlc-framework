@@ -1,0 +1,281 @@
+{
+  "feature": "REQ-0015",
+  "phase": "04-design",
+  "version": "1.0",
+  "created": "2026-02-15",
+  "description": "Validation rules for M4 Cross-Validation Verifier input/output contracts",
+
+  "m4_input_validation": {
+    "description": "Rules for validating orchestrator input to M4",
+    "rules": [
+      {
+        "id": "IV-001",
+        "field": "workflow",
+        "rule": "Must be 'feature' or 'upgrade'",
+        "required": true,
+        "type": "enum",
+        "valid_values": ["feature", "upgrade"],
+        "on_failure": "Default to 'feature'"
+      },
+      {
+        "id": "IV-002",
+        "field": "m1_response.status",
+        "rule": "Must be a string",
+        "required": true,
+        "type": "string",
+        "on_failure": "Skip M1-dependent checks, generate WARNING finding"
+      },
+      {
+        "id": "IV-003",
+        "field": "m2_response.status",
+        "rule": "Must be a string",
+        "required": true,
+        "type": "string",
+        "on_failure": "Skip M2-dependent checks, generate WARNING finding"
+      },
+      {
+        "id": "IV-004",
+        "field": "m3_response.status",
+        "rule": "Must be a string",
+        "required": true,
+        "type": "string",
+        "on_failure": "Skip M3-dependent checks, generate WARNING finding"
+      },
+      {
+        "id": "IV-005",
+        "field": "m1_response.impact_summary.directly_affected",
+        "rule": "Should be an array of objects with 'file' field",
+        "required": false,
+        "type": "array",
+        "on_failure": "Treat as empty array, note in findings"
+      },
+      {
+        "id": "IV-006",
+        "field": "m1_response.impact_summary.change_propagation.level_0",
+        "rule": "Should be an array of file path strings",
+        "required": false,
+        "type": "array",
+        "on_failure": "Treat as empty array"
+      },
+      {
+        "id": "IV-007",
+        "field": "m2_response.entry_points.by_acceptance_criterion",
+        "rule": "Should be an object mapping AC names to entry point data",
+        "required": false,
+        "type": "object",
+        "on_failure": "Treat as empty object, skip completeness check 4a"
+      },
+      {
+        "id": "IV-008",
+        "field": "m2_response.entry_points.implementation_chains",
+        "rule": "Should be an object mapping entry points to layer arrays",
+        "required": false,
+        "type": "object",
+        "on_failure": "Treat as empty object, skip risk check 3b"
+      },
+      {
+        "id": "IV-009",
+        "field": "m3_response.risk_assessment.overall_risk",
+        "rule": "Should be a string: low, medium, high, or unknown",
+        "required": false,
+        "type": "string",
+        "on_failure": "Treat as 'unknown', skip risk check 3c"
+      },
+      {
+        "id": "IV-010",
+        "field": "m3_response.risk_assessment.by_acceptance_criterion",
+        "rule": "Should be an object mapping AC names to risk data",
+        "required": false,
+        "type": "object",
+        "on_failure": "Treat as empty object, skip completeness check 4b"
+      }
+    ]
+  },
+
+  "m4_output_validation": {
+    "description": "Rules for validating M4 output before orchestrator accepts it",
+    "rules": [
+      {
+        "id": "OV-001",
+        "field": "status",
+        "rule": "Must be 'success'",
+        "required": true,
+        "type": "enum",
+        "valid_values": ["success"],
+        "on_failure": "Tier 3: treat as unparseable response"
+      },
+      {
+        "id": "OV-002",
+        "field": "verification_report",
+        "rule": "Must be a non-null object",
+        "required": true,
+        "type": "object",
+        "on_failure": "Tier 3: treat as unparseable response"
+      },
+      {
+        "id": "OV-003",
+        "field": "verification_report.verification_status",
+        "rule": "Must be one of: PASS, WARN, FAIL",
+        "required": true,
+        "type": "enum",
+        "valid_values": ["PASS", "WARN", "FAIL"],
+        "on_failure": "Tier 3: treat as unparseable response"
+      },
+      {
+        "id": "OV-004",
+        "field": "verification_report.completeness_score",
+        "rule": "Must be integer 0-100",
+        "required": true,
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 100,
+        "on_failure": "Default to 0"
+      },
+      {
+        "id": "OV-005",
+        "field": "verification_report.summary.total_findings",
+        "rule": "Must equal findings array length",
+        "required": true,
+        "type": "integer",
+        "invariant": "summary.total_findings == len(findings)",
+        "on_failure": "Log warning, accept response anyway"
+      },
+      {
+        "id": "OV-006",
+        "field": "verification_report.summary",
+        "rule": "critical + warning + info must equal total_findings",
+        "required": true,
+        "type": "invariant",
+        "invariant": "summary.critical + summary.warning + summary.info == summary.total_findings",
+        "on_failure": "Log warning, accept response anyway"
+      },
+      {
+        "id": "OV-007",
+        "field": "verification_report.findings[].id",
+        "rule": "Must match pattern CV-NNN (3 digits, zero-padded)",
+        "required": true,
+        "type": "string",
+        "pattern": "^CV-\\d{3}$",
+        "on_failure": "Accept finding without valid ID"
+      },
+      {
+        "id": "OV-008",
+        "field": "verification_report.findings[].severity",
+        "rule": "Must be one of: CRITICAL, WARNING, INFO",
+        "required": true,
+        "type": "enum",
+        "valid_values": ["CRITICAL", "WARNING", "INFO"],
+        "on_failure": "Default to WARNING"
+      },
+      {
+        "id": "OV-009",
+        "field": "verification_report.findings[].category",
+        "rule": "Must be one of: file_list, risk_scoring, completeness",
+        "required": true,
+        "type": "enum",
+        "valid_values": ["file_list", "risk_scoring", "completeness"],
+        "on_failure": "Accept finding without valid category"
+      },
+      {
+        "id": "OV-010",
+        "field": "report_section",
+        "rule": "Must be a non-empty string starting with '## Cross-Validation'",
+        "required": true,
+        "type": "string",
+        "on_failure": "Generate placeholder section"
+      }
+    ]
+  },
+
+  "orchestrator_pre_invocation": {
+    "description": "Rules the orchestrator checks before invoking M4",
+    "rules": [
+      {
+        "id": "PRE-001",
+        "check": "Agent existence",
+        "rule": "cross-validation-verifier agent must be available for Task delegation",
+        "on_failure": "Tier 1: skip M4 entirely, silent"
+      },
+      {
+        "id": "PRE-002",
+        "check": "M1 response available",
+        "rule": "M1 response must exist (may have status != success)",
+        "on_failure": "Include in M4 input with status as-is"
+      },
+      {
+        "id": "PRE-003",
+        "check": "M2 response available",
+        "rule": "M2 response must exist (may have status != success)",
+        "on_failure": "Include in M4 input with status as-is"
+      },
+      {
+        "id": "PRE-004",
+        "check": "M3 response available",
+        "rule": "M3 response must exist (may have status != success)",
+        "on_failure": "Include in M4 input with status as-is"
+      }
+    ]
+  },
+
+  "finding_severity_rules": {
+    "description": "Rules governing severity assignment to finding types",
+    "rules": [
+      {
+        "id": "SEV-001",
+        "finding_type": "MISSING_FROM_BLAST_RADIUS",
+        "severity": "WARNING",
+        "rationale": "Potential gap in M1 analysis but not proven dangerous"
+      },
+      {
+        "id": "SEV-002",
+        "finding_type": "ORPHAN_IMPACT",
+        "severity": "INFO",
+        "rationale": "May be stale or indirect; low confidence of actual problem"
+      },
+      {
+        "id": "SEV-003",
+        "finding_type": "RISK_SCORING_GAP",
+        "severity": "WARNING",
+        "rationale": "Mismatch between agents but does not indicate regression risk"
+      },
+      {
+        "id": "SEV-004",
+        "finding_type": "UNDERTESTED_CRITICAL_PATH",
+        "severity": "CRITICAL",
+        "rationale": "Combines structural risk (deep chain) with safety gap (low coverage)"
+      },
+      {
+        "id": "SEV-005",
+        "finding_type": "INCOMPLETE_ANALYSIS",
+        "severity": "WARNING",
+        "rationale": "Gap in cross-references, may indicate analysis incompleteness"
+      }
+    ]
+  },
+
+  "completeness_score_rules": {
+    "description": "Rules for computing the completeness score",
+    "rules": [
+      {
+        "id": "CS-001",
+        "rule": "total = count(M2 entry points checked) + count(M1 modules checked)"
+      },
+      {
+        "id": "CS-002",
+        "rule": "valid = count(M2 entries with M1 match) + count(M1 modules with M3 match)"
+      },
+      {
+        "id": "CS-003",
+        "rule": "score = round((valid / total) * 100)"
+      },
+      {
+        "id": "CS-004",
+        "rule": "If total == 0, score = 100 (vacuously complete)"
+      },
+      {
+        "id": "CS-005",
+        "rule": "Score must be integer in range [0, 100]"
+      }
+    ]
+  }
+}

@@ -1,0 +1,373 @@
+{
+  "feature": "REQ-0023",
+  "phase": "04-design",
+  "version": "1.0.0",
+  "created": "2026-02-18",
+  "description": "Validation rules for three-verb backlog model (add/analyze/build)",
+
+  "slug_validation": {
+    "description": "Rules for validating and generating item slugs",
+    "rules": [
+      {
+        "id": "VR-SLUG-001",
+        "field": "slug",
+        "rule": "Must contain only lowercase alphanumeric characters and hyphens",
+        "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+        "on_failure": "Strip invalid characters and regenerate",
+        "traces": "FR-001, AC-001-01"
+      },
+      {
+        "id": "VR-SLUG-002",
+        "field": "slug",
+        "rule": "Maximum 50 characters",
+        "max_length": 50,
+        "on_failure": "Truncate to 50 characters at word boundary",
+        "traces": "FR-001"
+      },
+      {
+        "id": "VR-SLUG-003",
+        "field": "slug",
+        "rule": "Must not be empty after sanitization",
+        "min_length": 1,
+        "on_failure": "Use 'untitled-item' as default",
+        "traces": "FR-001, AC-001-01"
+      },
+      {
+        "id": "VR-SLUG-004",
+        "field": "slug",
+        "rule": "Must not collide with existing directory in docs/requirements/",
+        "type": "uniqueness",
+        "on_failure": "Warn user and offer rename (ERR-ADD-001)",
+        "traces": "FR-001, AC-001-07"
+      }
+    ]
+  },
+
+  "meta_json_validation": {
+    "description": "Rules for validating meta.json schema (v2)",
+    "rules": [
+      {
+        "id": "VR-META-001",
+        "field": "source",
+        "rule": "Must be one of: manual, github, jira, backlog-migration",
+        "type": "enum",
+        "valid_values": ["manual", "github", "jira", "backlog-migration"],
+        "required": true,
+        "default": "manual",
+        "on_failure": "Default to 'manual'",
+        "traces": "FR-009, AC-009-01"
+      },
+      {
+        "id": "VR-META-002",
+        "field": "source_id",
+        "rule": "String or null. If source is github, format GH-N. If jira, format PROJECT-N.",
+        "type": "string_or_null",
+        "required": false,
+        "default": null,
+        "on_failure": "Set to null",
+        "traces": "FR-001, AC-001-03"
+      },
+      {
+        "id": "VR-META-003",
+        "field": "slug",
+        "rule": "Must match VR-SLUG-001 pattern",
+        "type": "string",
+        "required": true,
+        "on_failure": "ERR-META-002",
+        "traces": "FR-009, AC-009-01"
+      },
+      {
+        "id": "VR-META-004",
+        "field": "created_at",
+        "rule": "Must be valid ISO-8601 timestamp",
+        "type": "iso8601",
+        "required": true,
+        "default": "current timestamp",
+        "on_failure": "Set to current timestamp",
+        "traces": "FR-009"
+      },
+      {
+        "id": "VR-META-005",
+        "field": "analysis_status",
+        "rule": "Must be one of: raw, partial, analyzed",
+        "type": "enum",
+        "valid_values": ["raw", "partial", "analyzed"],
+        "required": true,
+        "default": "raw",
+        "on_failure": "Default to 'raw'",
+        "traces": "FR-009, AC-009-01"
+      },
+      {
+        "id": "VR-META-006",
+        "field": "phases_completed",
+        "rule": "Must be an array of phase key strings from the analysis phase set",
+        "type": "array",
+        "valid_items": ["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design"],
+        "required": true,
+        "default": [],
+        "on_failure": "Default to empty array",
+        "traces": "FR-009, AC-009-05"
+      },
+      {
+        "id": "VR-META-007",
+        "field": "codebase_hash",
+        "rule": "Should be a git short SHA (7-12 hex chars) or 'unknown'",
+        "type": "string",
+        "pattern": "^([0-9a-f]{7,12}|unknown)$",
+        "required": false,
+        "default": "unknown",
+        "on_failure": "Set to 'unknown'",
+        "traces": "FR-001, AC-002-09"
+      },
+      {
+        "id": "VR-META-008",
+        "field": "analysis_status consistency",
+        "rule": "analysis_status must match derived value from phases_completed count",
+        "type": "cross_field",
+        "logic": "0 phases = raw, 1-4 phases = partial, 5 phases = analyzed",
+        "on_failure": "Recompute analysis_status from phases_completed",
+        "traces": "FR-009, AC-009-01"
+      }
+    ]
+  },
+
+  "meta_json_legacy_migration": {
+    "description": "Rules for migrating legacy meta.json (v1 -> v2)",
+    "rules": [
+      {
+        "id": "VR-MIGRATE-001",
+        "condition": "'phase_a_completed' exists AND 'analysis_status' does NOT exist",
+        "action": "Apply read-time migration",
+        "traces": "FR-009, AC-009-03, AC-009-04, ADR-0013"
+      },
+      {
+        "id": "VR-MIGRATE-002",
+        "condition": "phase_a_completed === true",
+        "result": "analysis_status = 'analyzed', phases_completed = all 5 phases",
+        "traces": "FR-009, AC-009-03"
+      },
+      {
+        "id": "VR-MIGRATE-003",
+        "condition": "phase_a_completed === false OR phase_a_completed is missing",
+        "result": "analysis_status = 'raw', phases_completed = []",
+        "traces": "FR-009, AC-009-04"
+      },
+      {
+        "id": "VR-MIGRATE-004",
+        "condition": "Both phase_a_completed AND analysis_status exist",
+        "result": "Prefer analysis_status (v2 takes precedence), ignore phase_a_completed",
+        "traces": "FR-009"
+      }
+    ]
+  },
+
+  "backlog_marker_validation": {
+    "description": "Rules for validating and parsing BACKLOG.md markers",
+    "rules": [
+      {
+        "id": "VR-MARKER-001",
+        "field": "marker character",
+        "rule": "Must be one of: space, ~, A, x",
+        "type": "enum",
+        "valid_values": [" ", "~", "A", "x"],
+        "on_failure": "Treat as space (raw)",
+        "traces": "FR-007, AC-007-05, AC-007-06"
+      },
+      {
+        "id": "VR-MARKER-002",
+        "field": "line format",
+        "rule": "Must match regex: /^(\\s*-\\s+)(\\d+\\.\\d+)\\s+\\[([ ~Ax])\\]\\s+(.+)$/",
+        "type": "regex",
+        "on_failure": "Line is not a backlog item -- skip",
+        "traces": "FR-007, AC-007-06, ADR-0014"
+      },
+      {
+        "id": "VR-MARKER-003",
+        "field": "marker progression",
+        "rule": "Markers progress forward: [ ] -> [~] -> [A] -> [x]. Only re-analysis resets to [ ].",
+        "type": "business_rule",
+        "on_failure": "Allow any marker write (user may have hand-edited)",
+        "traces": "FR-007"
+      },
+      {
+        "id": "VR-MARKER-004",
+        "field": "item number",
+        "rule": "Must be a decimal number format N.N (e.g., 16.2, 3.1)",
+        "type": "regex",
+        "pattern": "^\\d+\\.\\d+$",
+        "on_failure": "Skip line -- not a numbered backlog item",
+        "traces": "FR-007"
+      }
+    ]
+  },
+
+  "item_resolution_validation": {
+    "description": "Rules for validating item resolution input",
+    "rules": [
+      {
+        "id": "VR-RESOLVE-001",
+        "field": "input",
+        "rule": "Must not be empty or whitespace-only",
+        "type": "required",
+        "on_failure": "ERR-ADD-004 equivalent for analyze/build",
+        "traces": "FR-002, FR-003"
+      },
+      {
+        "id": "VR-RESOLVE-002",
+        "field": "input pattern: slug",
+        "rule": "Alphanumeric with hyphens, no spaces",
+        "pattern": "^[a-z0-9-]+$",
+        "priority": 1,
+        "traces": "ADR-0015"
+      },
+      {
+        "id": "VR-RESOLVE-003",
+        "field": "input pattern: item number",
+        "rule": "Decimal number N.N",
+        "pattern": "^\\d+\\.\\d+$",
+        "priority": 2,
+        "traces": "ADR-0015"
+      },
+      {
+        "id": "VR-RESOLVE-004",
+        "field": "input pattern: GitHub issue",
+        "rule": "Hash followed by digits",
+        "pattern": "^#\\d+$",
+        "priority": 3,
+        "traces": "ADR-0015, FR-001 AC-001-03"
+      },
+      {
+        "id": "VR-RESOLVE-005",
+        "field": "input pattern: Jira ticket",
+        "rule": "Project key followed by number",
+        "pattern": "^[A-Z]+-\\d+$",
+        "priority": 3,
+        "traces": "ADR-0015"
+      },
+      {
+        "id": "VR-RESOLVE-006",
+        "field": "input pattern: free text",
+        "rule": "Any other input (contains spaces or does not match above patterns)",
+        "priority": 4,
+        "match_type": "fuzzy_substring",
+        "traces": "ADR-0015"
+      }
+    ]
+  },
+
+  "action_verb_validation": {
+    "description": "Rules for parsing and validating action verbs from command arguments",
+    "rules": [
+      {
+        "id": "VR-ACTION-001",
+        "field": "action verb",
+        "rule": "Must be one of recognized actions",
+        "valid_values": ["add", "analyze", "build", "feature", "fix", "test", "upgrade", "cancel", "status", "gate-check", "advance", "delegate", "escalate", "constitution", "configure-cloud", "discover", "skill", "project"],
+        "on_failure": "Treat as unknown action, pass through to orchestrator",
+        "traces": "FR-005"
+      },
+      {
+        "id": "VR-ACTION-002",
+        "field": "exempt actions",
+        "rule": "add and analyze are inline-exempt (no orchestrator delegation required)",
+        "exempt_set": ["add", "analyze"],
+        "on_failure": "If action not in exempt set, require delegation",
+        "traces": "FR-008, AC-008-01, AC-008-02, ADR-0012"
+      },
+      {
+        "id": "VR-ACTION-003",
+        "field": "action parsing regex",
+        "rule": "Extract first non-flag word from args: /^(?:--?\\w+\\s+)*(\\w+)/",
+        "type": "regex",
+        "on_failure": "Empty action string -- treat as no-arg invocation",
+        "traces": "FR-008"
+      },
+      {
+        "id": "VR-ACTION-004",
+        "field": "feature alias",
+        "rule": "The 'feature' action is treated as an alias for 'build'",
+        "type": "alias",
+        "alias_map": { "feature": "build" },
+        "traces": "FR-003, NFR-001"
+      }
+    ]
+  },
+
+  "source_detection_validation": {
+    "description": "Rules for detecting source type from add verb input",
+    "rules": [
+      {
+        "id": "VR-SOURCE-001",
+        "field": "github reference",
+        "rule": "Input matching #N pattern detected as GitHub issue",
+        "pattern": "^#(\\d+)$",
+        "result": { "source": "github", "source_id_format": "GH-{N}" },
+        "traces": "FR-001, AC-001-03"
+      },
+      {
+        "id": "VR-SOURCE-002",
+        "field": "jira reference",
+        "rule": "Input matching PROJECT-N pattern detected as Jira ticket",
+        "pattern": "^([A-Z]+-\\d+)$",
+        "result": { "source": "jira", "source_id_format": "{input}" },
+        "traces": "FR-001, AC-001-03"
+      },
+      {
+        "id": "VR-SOURCE-003",
+        "field": "manual description",
+        "rule": "All other input treated as manual description",
+        "result": { "source": "manual", "source_id": null },
+        "traces": "FR-001, AC-001-01"
+      }
+    ]
+  },
+
+  "analysis_phase_validation": {
+    "description": "Rules for validating analysis phase progression",
+    "rules": [
+      {
+        "id": "VR-PHASE-001",
+        "field": "analysis phase sequence",
+        "rule": "Analysis phases must be completed in order",
+        "sequence": ["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design"],
+        "on_failure": "Skip completed phases, start from first incomplete",
+        "traces": "FR-002, AC-002-01, AC-002-04"
+      },
+      {
+        "id": "VR-PHASE-002",
+        "field": "phases_completed array",
+        "rule": "Each entry must be a valid phase key from the analysis sequence",
+        "type": "array_subset",
+        "valid_set": ["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design"],
+        "on_failure": "Remove invalid entries, recompute analysis_status",
+        "traces": "FR-009, AC-009-05"
+      },
+      {
+        "id": "VR-PHASE-003",
+        "field": "analysis status derivation",
+        "rule": "0 completed = raw, 1-4 = partial, 5 = analyzed",
+        "type": "derived",
+        "traces": "FR-002, AC-002-02, AC-002-03"
+      }
+    ]
+  },
+
+  "cross_line_ending_validation": {
+    "description": "Cross-platform line ending handling (NFR-005)",
+    "rules": [
+      {
+        "id": "VR-CRLF-001",
+        "field": "BACKLOG.md line endings",
+        "rule": "Must handle both LF and CRLF when reading",
+        "on_failure": "Normalize to LF before processing, preserve original on write",
+        "traces": "NFR-005"
+      },
+      {
+        "id": "VR-CRLF-002",
+        "field": "meta.json line endings",
+        "rule": "Always write with LF (JSON standard)",
+        "traces": "NFR-005"
+      }
+    ]
+  }
+}

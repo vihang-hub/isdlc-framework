@@ -1,0 +1,56 @@
+Requirement,Test ID,Test Name,Test File,Priority,Category,Status
+FR-01,TC-APC-01,artifact-paths.json exists and is valid JSON,artifact-path-consistency.test.cjs,P0,Consistency,Designed
+FR-01,TC-APC-02,artifact-paths.json covers all phases with artifact_validation,artifact-path-consistency.test.cjs,P0,Consistency,Designed
+FR-01,TC-APC-04,artifact-paths.json paths contain {artifact_folder} template,artifact-path-consistency.test.cjs,P1,Consistency,Designed
+FR-01,TC-APC-05,artifact-paths.json schema validation,artifact-path-consistency.test.cjs,P1,Consistency,Designed
+FR-01,TC-APC-12,No orphan phases in artifact-paths.json,artifact-path-consistency.test.cjs,P2,Consistency,Designed
+FR-02,TC-APC-03,artifact-paths.json paths match iteration-requirements.json,artifact-path-consistency.test.cjs,P0,Consistency,Designed
+FR-02,TC-APC-06,Phase 01 paths are aligned,artifact-path-consistency.test.cjs,P1,Consistency,Designed
+FR-02,TC-APC-07,Phase 03 paths are aligned,artifact-path-consistency.test.cjs,P1,Consistency,Designed
+FR-02,TC-APC-08,Phase 04 paths are aligned,artifact-path-consistency.test.cjs,P1,Consistency,Designed
+FR-02,TC-APC-09,Phase 05 paths are aligned,artifact-path-consistency.test.cjs,P1,Consistency,Designed
+FR-02,TC-APC-10,Phase 08 paths are aligned,artifact-path-consistency.test.cjs,P1,Consistency,Designed
+FR-03,TC-BUG20-INT01,Gate-blocker reads paths from artifact-paths.json,test-gate-blocker-extended.test.cjs,P0,Integration,Designed
+FR-03,TC-BUG20-INT02,Gate-blocker falls back to iteration-requirements.json,test-gate-blocker-extended.test.cjs,P0,Integration,Designed
+FR-03,TC-BUG20-INT03,Gate-blocker falls back on malformed artifact-paths.json,test-gate-blocker-extended.test.cjs,P1,Integration,Designed
+FR-03,TC-BUG20-INT04,Gate-blocker blocks when artifact missing with artifact-paths.json,test-gate-blocker-extended.test.cjs,P1,Integration,Designed
+FR-03,TC-BUG20-INT05,artifact_folder template resolution with artifact-paths.json,test-gate-blocker-extended.test.cjs,P1,Integration,Designed
+FR-03,TC-BUG20-INT06,Gate-blocker handles missing phase in artifact-paths.json,test-gate-blocker-extended.test.cjs,P2,Integration,Designed
+FR-04,TC-BUG20-DOC01,Agent 02 references artifact-paths.json,Manual inspection,P2,Documentation,Designed
+FR-04,TC-BUG20-DOC02,Agent 03 references artifact-paths.json,Manual inspection,P2,Documentation,Designed
+FR-04,TC-BUG20-DOC03,Agent 04 references artifact-paths.json,Manual inspection,P2,Documentation,Designed
+FR-04,TC-BUG20-DOC04,Agent 07 references artifact-paths.json,Manual inspection,P2,Documentation,Designed
+FR-04,TC-BUG20-DOC05,Agent 01 references artifact-paths.json,Manual inspection,P2,Documentation,Designed
+FR-05,TC-APC-03,artifact-paths.json paths match iteration-requirements.json,artifact-path-consistency.test.cjs,P0,Consistency,Designed
+FR-05,TC-APC-11,Mismatch detection catches changed paths,artifact-path-consistency.test.cjs,P0,Consistency,Designed
+FR-05,TC-APC-02,All artifact_validation phases covered,artifact-path-consistency.test.cjs,P0,Consistency,Designed
+FR-05,TC-APC-12,No orphan phases in artifact-paths.json,artifact-path-consistency.test.cjs,P2,Consistency,Designed
+NFR-01,TC-BUG20-INT02,Fallback to iteration-requirements.json when missing,test-gate-blocker-extended.test.cjs,P0,Integration,Designed
+NFR-01,TC-BUG20-INT03,Fallback on malformed artifact-paths.json,test-gate-blocker-extended.test.cjs,P1,Integration,Designed
+NFR-01,TC-BUG20-INT06,Fallback for missing phase entry,test-gate-blocker-extended.test.cjs,P2,Integration,Designed
+NFR-02,TC-BUG20-REG01,All existing gate-blocker tests pass,test-gate-blocker-extended.test.cjs,P0,Regression,Designed
+NFR-02,TC-BUG20-REG02,Full test suite passes (npm run test:all),Full suite,P0,Regression,Designed
+AC-01,TC-APC-01,artifact-paths.json exists and is valid,artifact-path-consistency.test.cjs,P0,Consistency,Designed
+AC-01,TC-APC-04,Paths contain {artifact_folder} template,artifact-path-consistency.test.cjs,P1,Consistency,Designed
+AC-01,TC-APC-05,Schema validation,artifact-path-consistency.test.cjs,P1,Consistency,Designed
+AC-02,TC-APC-03,Paths match between config files,artifact-path-consistency.test.cjs,P0,Consistency,Designed
+AC-03,TC-BUG20-INT01,Gate-blocker reads from artifact-paths.json,test-gate-blocker-extended.test.cjs,P0,Integration,Designed
+AC-03,TC-BUG20-INT05,Template resolution works,test-gate-blocker-extended.test.cjs,P1,Integration,Designed
+AC-04,TC-BUG20-INT02,Fallback to iteration-requirements.json,test-gate-blocker-extended.test.cjs,P0,Integration,Designed
+AC-04,TC-BUG20-INT03,Fallback on malformed JSON,test-gate-blocker-extended.test.cjs,P1,Integration,Designed
+AC-05,TC-BUG20-RED01,Phase 03 path mismatch reproduction,test-gate-blocker-extended.test.cjs,P0,TDD-Red,Designed
+AC-05,TC-APC-07,Phase 03 paths aligned post-fix,artifact-path-consistency.test.cjs,P1,Consistency,Designed
+AC-06,TC-BUG20-RED02,Phase 04 path mismatch reproduction,test-gate-blocker-extended.test.cjs,P0,TDD-Red,Designed
+AC-06,TC-APC-08,Phase 04 paths aligned post-fix,artifact-path-consistency.test.cjs,P1,Consistency,Designed
+AC-07,TC-BUG20-RED03,Phase 05 path mismatch reproduction,test-gate-blocker-extended.test.cjs,P0,TDD-Red,Designed
+AC-07,TC-APC-09,Phase 05 paths aligned post-fix,artifact-path-consistency.test.cjs,P1,Consistency,Designed
+AC-08,TC-BUG20-RED04,Phase 08 path mismatch reproduction,test-gate-blocker-extended.test.cjs,P0,TDD-Red,Designed
+AC-08,TC-APC-10,Phase 08 paths aligned post-fix,artifact-path-consistency.test.cjs,P1,Consistency,Designed
+AC-09,TC-APC-11,Mismatch detection catches drift,artifact-path-consistency.test.cjs,P0,Consistency,Designed
+AC-10,TC-BUG20-DOC01,Agent 02 references artifact-paths.json,Manual inspection,P2,Documentation,Designed
+AC-10,TC-BUG20-DOC02,Agent 03 references artifact-paths.json,Manual inspection,P2,Documentation,Designed
+AC-10,TC-BUG20-DOC03,Agent 04 references artifact-paths.json,Manual inspection,P2,Documentation,Designed
+AC-10,TC-BUG20-DOC04,Agent 07 references artifact-paths.json,Manual inspection,P2,Documentation,Designed
+AC-10,TC-BUG20-DOC05,Agent 01 references artifact-paths.json,Manual inspection,P2,Documentation,Designed
+AC-11,TC-BUG20-REG01,Existing gate-blocker tests pass,test-gate-blocker-extended.test.cjs,P0,Regression,Designed
+AC-11,TC-BUG20-REG02,Full test suite passes,Full suite,P0,Regression,Designed

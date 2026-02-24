@@ -1,0 +1,9 @@
+{
+  "source": "github",
+  "source_id": "GH-91",
+  "slug": "REQ-0001-implement-sessionstart-hook-for-skill-cache-injection",
+  "created_at": "2026-02-23T00:00:00Z",
+  "analysis_status": "raw",
+  "phases_completed": [],
+  "codebase_hash": "6c91cac"
+}

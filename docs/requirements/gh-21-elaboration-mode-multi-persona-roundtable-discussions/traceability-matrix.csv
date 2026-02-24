@@ -1,0 +1,24 @@
+Requirement ID,Title,User Stories,AC Count,Priority,Status
+FR-001,Elaboration Mode Entry,"US-001, US-008",4,Must Have,Draft
+FR-002,Multi-Persona Participation,"US-001, US-003",4,Must Have,Draft
+FR-003,User Participation and Persona Addressing,"US-002",4,Must Have,Draft
+FR-004,Topic-Focused Discussion,"US-002, US-006, US-008",3,Must Have,Draft
+FR-005,Cross-Talk Between Personas,"US-003",3,Should Have,Draft
+FR-006,Elaboration Mode Exit,"US-004",4,Must Have,Draft
+FR-007,Turn Limits,"US-005",3,Should Have,Draft
+FR-008,Discussion Synthesis,"US-004",5,Must Have,Draft
+FR-009,Elaboration State Tracking,"US-007",4,Should Have,Draft
+FR-010,Persona Voice Integrity During Elaboration,"US-003",4,Must Have,Draft
+NFR-001,Elaboration Entry Responsiveness,"US-001",1,Should Have,Draft
+NFR-002,Persona Voice Distinctiveness,"US-003",1,Must Have,Draft
+NFR-003,Synthesis Completeness,"US-004",1,Must Have,Draft
+NFR-004,Artifact Integrity After Synthesis,"US-004",1,Must Have,Draft
+NFR-005,Session Resume After Elaboration,"US-007",1,Must Have,Draft
+NFR-006,Turn Limit Enforcement,"US-005",1,Should Have,Draft
+NFR-007,Backward Compatibility with Existing Menu,"US-008",1,Must Have,Draft
+CON-001,Single Agent File,--,0,Must Have,Draft
+CON-002,Analyze Verb Only,--,0,Must Have,Draft
+CON-003,No State.json Writes,--,0,Must Have,Draft
+CON-004,Single-Line Bash Convention,--,0,Must Have,Draft
+CON-005,Sequential Persona Execution,--,0,Must Have,Draft
+CON-006,Step File Immutability,"US-008",0,Must Have,Draft

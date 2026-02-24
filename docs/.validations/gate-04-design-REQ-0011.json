@@ -1,0 +1,65 @@
+{
+  "gate": "GATE-04",
+  "phase": "04-design",
+  "status": "PASS",
+  "validated_at": "2026-02-12T22:10:00.000Z",
+  "workflow": "REQ-0011-adaptive-workflow-sizing",
+  "checklist": {
+    "interface_specification_complete": {
+      "status": "PASS",
+      "notes": "Full interface spec in interface-spec.yaml: 3 function signatures with JSDoc, parameter types, return types, schemas (SizingMetrics, Thresholds, SizingRecommendation), decision tables, examples, error handling. Configuration schema for workflows.json sizing block. State schema for active_workflow.sizing. Module.exports additions specified."
+    },
+    "all_modules_designed": {
+      "status": "PASS",
+      "notes": "3 module designs: (1) module-design-common-cjs.md -- 3 public functions + 3 private helpers with complete pseudo-code, JSDoc, error handling tables. (2) module-design-isdlc-md.md -- STEP 3e-sizing block full markdown spec, -light flag parsing, UX interaction flow with state diagram. (3) module-design-config-hooks.md -- workflows.json schema, gate-blocker rule rename, state-write-validator allowlist, workflow-completion-enforcer guard, IA agent format stabilization, orchestrator flags propagation."
+    },
+    "ui_wireframes_exist": {
+      "status": "PASS",
+      "notes": "12 wireframes in ui-wireframes.md covering all user-facing screens: W-01 (light recommendation), W-02 (standard recommendation), W-03 (epic recommendation), W-04 (sizing menu), W-05 (override picker), W-06 (full analysis display), W-07 (light applied confirmation), W-08 (standard/epic confirmation), W-09 (forced light banner), W-10 (no config/silent skip), W-11 (parsing failure warning), W-12 (override confirmation). Task list before/after visualization included."
+    },
+    "user_flows_documented": {
+      "status": "PASS",
+      "notes": "3 Mermaid flowcharts in user-flows.mermaid: (1) Standard sizing flow -- complete decision tree from Phase 02 completion through sizing execution to phase continuation. (2) -light flag flow -- from command invocation through flag propagation to forced sizing. (3) Epic deferral flow -- epic recommendation through accept/override to standard continuation. Additionally, module-design-isdlc-md.md Section 5 has an ASCII interaction flow diagram."
+    },
+    "error_taxonomy_complete": {
+      "status": "PASS",
+      "notes": "20 error codes in error-taxonomy.md across 4 categories: SZ-1xx Parsing (10 codes), SZ-2xx Configuration (7 codes), SZ-3xx State Mutation (7 codes), SZ-4xx UX Interaction (3 codes). Each code has name, category (WARNING/FALLBACK/ABORT), description, trigger, and action. Fail-safe cascade diagram showing all errors converge on standard intensity. Error-to-banner mapping table."
+    },
+    "validation_rules_defined": {
+      "status": "PASS",
+      "notes": "Comprehensive validation-rules.json with 7 validation groups: sizing_metrics (5 field validators), thresholds (2 fields + 1 cross-field constraint), intensity_parameter (enum validator), sizing_config (3 field validators), state_invariants (4 post-mutation checks), sizing_record (13 required fields + 5 cross-field constraints), impact_analysis_json_metadata (4 required + 1 optional field), light_flag (2 rules). All validators linked to error codes."
+    },
+    "designs_cover_all_requirements": {
+      "status": "PASS",
+      "notes": "In-scope ACs covered: AC-01 (parseSizingFromImpactAnalysis in module-design-common-cjs), AC-02 (STEP 3e-sizing trigger check in module-design-isdlc-md), AC-03 (computeSizingRecommendation pure function), AC-04 (applySizingDecision light path), AC-05 (standard path -- no modification), AC-07 (thresholds in workflows.json + validation-rules.json), AC-08 (wireframes W-01/02/03), AC-09 (wireframe W-04 menu), AC-10 (wireframe W-05 override picker), AC-11 (sizing record schema), AC-12 (flag parser + STEP S2), AC-13 (flags.light flow bypasses UX), AC-14 (only -light flag designed), AC-15 (applySizingDecision filter), AC-16 (phase_status removal), AC-17 (top-level phases removal), AC-18 (current_phase_index recalculation), AC-24 (sizing record schema + interface-spec), AC-25 (database-design.md Section 5 workflow_history). Out-of-scope: AC-06, AC-19-23 (FR-06 epic decomposition -- future)."
+    },
+    "interface_contracts_reviewed": {
+      "status": "PASS",
+      "notes": "3 function contracts in interface-spec.yaml with full parameter/return schemas. Data contract between IA agent and sizing parser (component-spec.md Section 7). State mutation contract in module-design-common-cjs.md (snapshot/rollback pattern). Configuration contract in module-design-config-hooks.md (workflows.json schema). UX interaction contract in module-design-isdlc-md.md (AskUserQuestion menu format)."
+    }
+  },
+  "artifacts": [
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/interface-spec.yaml",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/module-design-common-cjs.md",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/module-design-isdlc-md.md",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/module-design-config-hooks.md",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/ui-wireframes.md",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/user-flows.mermaid",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/error-taxonomy.md",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/validation-rules.json",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/component-spec.md"
+  ],
+  "summary": "GATE-04 PASS: Design for REQ-0011 Adaptive Workflow Sizing. 3 new functions in common.cjs (~150 lines), 1 new Phase-Loop Controller step (~120 lines in isdlc.md), 4 hook/config modifications (minimal). 12 UI wireframes for all user-facing interactions. 20 error codes with fail-safe-to-standard pattern. Comprehensive validation rules with 4 post-mutation invariant checks and rollback mechanism. Full traceability from 7 FRs / 18 in-scope ACs to design artifacts across 9 files.",
+  "constitutional_compliance": {
+    "articles_checked": ["I", "IV", "V", "VII", "IX"],
+    "violations": 0,
+    "iterations": 1,
+    "details": {
+      "article_I": "Designs implement all 4 ADRs exactly: sizing insertion point as STEP 3e-sizing (ADR-0001), 3 functions in common.cjs (ADR-0002), JSON metadata block parsing (ADR-0003), no_phase_skipping -> no_agent_phase_skipping rename (ADR-0004). Every architecture decision faithfully translated to implementable specification.",
+      "article_IV": "All design decisions explicit and documented. 20 error codes enumerate every failure mode. 12 wireframes cover every user-visible interaction. Validation rules cover every input boundary. No [NEEDS CLARIFICATION] markers found. Edge cases table in module-design-isdlc-md.md addresses 6 scenarios. Cross-field validation constraints documented.",
+      "article_V": "Simplest viable design: 3 functions in existing file (~150 lines total), 1 markdown step in existing controller, reuses existing patterns (state mutation, stderr logging, module.exports). No new files created. No new dependencies. No new hooks. Private helpers follow existing underscore-prefix convention. Hardcoded defaults as fallbacks avoid configuration complexity.",
+      "article_VII": "Complete traceability: interface-spec.yaml traces each function to FR/AC IDs. Module designs have per-section traceability tables. Component-spec.md Section 9 has full component-to-requirement matrix. Error taxonomy traces error code ranges to requirements and constitutional articles. Validation rules link each group to FR IDs.",
+      "article_IX": "All 8 GATE-04 checklist items pass. Sizing does not bypass gates -- it removes phases BEFORE they are encountered. Remaining gates are fully enforced. INV-01 through INV-04 invariant checks prevent corrupt state. Double-sizing guard prevents re-entry. Rollback mechanism ensures fail-safe on invariant failure."
+    }
+  }
+}

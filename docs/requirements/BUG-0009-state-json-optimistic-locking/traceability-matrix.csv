@@ -1,0 +1,38 @@
+Requirement,Acceptance Criteria,Test ID,Test Name,Test File,Category,Priority
+FIX-001,AC-01a,C1,writeState increments version from existing file,common.test.cjs,Unit,P0
+FIX-001,AC-01a,C2,writeState initializes version to 1 on first write,common.test.cjs,Unit,P0
+FIX-001,AC-01b,C5,writeState increments by exactly 1 each call,common.test.cjs,Unit,P0
+FIX-001,AC-01c,C6,writeState preserves state_version across read/write cycle,common.test.cjs,Unit,P0
+FIX-001,AC-01d,C3,writeState initializes version to 1 for legacy file,common.test.cjs,Unit,P1
+FIX-002,AC-02a,T17,Version match allows write via Edit tool,state-write-validator.test.cjs,Unit,P0
+FIX-002,AC-02a,T18,Stale version blocks write,state-write-validator.test.cjs,Integration,P0
+FIX-002,AC-02b,T18,Stale version blocks write (extracts incoming version),state-write-validator.test.cjs,Integration,P0
+FIX-002,AC-02b,T19,Block message includes expected and actual version,state-write-validator.test.cjs,Integration,P0
+FIX-002,AC-02c,T18,Stale version blocks write,state-write-validator.test.cjs,Integration,P0
+FIX-002,AC-02c,T21,Version behind by 1 blocks write,state-write-validator.test.cjs,Integration,P0
+FIX-002,AC-02c,T26,Concurrent write simulation -- second stale write blocked,state-write-validator.test.cjs,Integration,P0
+FIX-002,AC-02d,T16,Version match allows write,state-write-validator.test.cjs,Integration,P0
+FIX-002,AC-02d,T17,Version match allows write via Edit tool,state-write-validator.test.cjs,Integration,P0
+FIX-002,AC-02d,T27,Sequential valid writes succeed,state-write-validator.test.cjs,Integration,P1
+FIX-002,AC-02e,T19,Block message includes expected and actual version,state-write-validator.test.cjs,Integration,P0
+FIX-002,AC-02e,T20,Block message includes re-read guidance,state-write-validator.test.cjs,Integration,P0
+FIX-002,AC-02f,T24,Missing disk state_version allows write (migration case),state-write-validator.test.cjs,Integration,P1
+FIX-002,AC-02f,T25,Both missing state_version allows write,state-write-validator.test.cjs,Integration,P1
+FIX-003,AC-03a,C1,writeState increments version from existing file,common.test.cjs,Unit,P0
+FIX-003,AC-03b,C1,writeState increments version from existing file,common.test.cjs,Unit,P0
+FIX-003,AC-03b,C5,writeState increments by exactly 1 each call,common.test.cjs,Unit,P0
+FIX-003,AC-03c,C2,writeState initializes version to 1 on first write,common.test.cjs,Unit,P0
+FIX-003,AC-03c,C3,writeState initializes version to 1 for legacy file,common.test.cjs,Unit,P1
+FIX-003,AC-03d,C4,writeState does not mutate caller in-memory object,common.test.cjs,Unit,P0
+FIX-004,AC-04a,T22,Missing incoming state_version allows write,state-write-validator.test.cjs,Integration,P1
+FIX-004,AC-04a,T23,Null incoming state_version allows write,state-write-validator.test.cjs,Integration,P1
+FIX-004,AC-04a,T25,Both missing state_version allows write,state-write-validator.test.cjs,Integration,P1
+FIX-004,AC-04b,C3,writeState initializes version to 1 for legacy file,common.test.cjs,Unit,P1
+FIX-004,AC-04c,T31,V1 structural warning still emitted when version matches,state-write-validator.test.cjs,Integration,P1
+FIX-004,AC-04c,T1-T15,Existing tests (regression),state-write-validator.test.cjs,Regression,P0
+FIX-004,AC-04d,T31,V1 structural warning coexists with version check,state-write-validator.test.cjs,Integration,P1
+FIX-005,AC-05a,T30,State.json unreadable on disk allows write,state-write-validator.test.cjs,Integration,P0
+FIX-005,AC-05b,T12,Fail-open on invalid JSON stdin (existing),state-write-validator.test.cjs,Regression,P0
+FIX-005,AC-05c,T28,Corrupted state_version allows write,state-write-validator.test.cjs,Integration,P1
+FIX-005,AC-05c,T29,Negative state_version allows write,state-write-validator.test.cjs,Integration,P1
+FIX-005,AC-05d,T18,Stale version blocks write (stderr logging check),state-write-validator.test.cjs,Integration,P0

@@ -1,0 +1,44 @@
+%% Sequence Diagram: Build Verb Flow
+%% Traces: FR-003, AC-003-01 through AC-003-07
+sequenceDiagram
+    participant U as Developer
+    participant C as Claude Code
+    participant CMD as isdlc.md<br/>(Build Handler)
+    participant HK as Hook Chain
+    participant ORC as Orchestrator<br/>(00-sdlc-orchestrator.md)
+    participant ST as state.json
+    participant GIT as Git
+
+    U->>C: "build payment processing"
+    C->>C: Intent detection: maps to /isdlc build
+
+    Note over C: Skill hook fires
+    C->>HK: skill-delegation-enforcer: action=build
+    HK->>HK: NOT in EXEMPT_ACTIONS
+    HK->>ST: Write pending_delegation marker
+    HK-->>C: "MANDATORY: Delegate to orchestrator"
+
+    C->>CMD: Load isdlc.md, action=build, args="payment processing"
+
+    CMD->>CMD: Resolve item: find slug "payment-processing"
+    CMD->>CMD: Read meta.json (informational)
+
+    CMD->>ORC: Delegate to orchestrator via Task tool
+
+    ORC->>ST: Check active_workflow == null
+    ST-->>ORC: No active workflow
+
+    ORC->>ST: Initialize active_workflow (feature phases)
+    ORC->>ST: Increment counters.next_req_id (23 -> 24)
+
+    ORC->>GIT: Create branch feature/REQ-0024-payment-processing
+
+    ORC->>C: Start Phase-Loop Controller
+
+    Note over C: Stop hook fires
+    C->>HK: delegation-gate: check pending_delegation
+    HK->>ST: Read skill_usage_log
+    HK->>HK: Delegation to orchestrator confirmed
+    HK->>HK: Clear pending_delegation marker
+
+    Note over C: Standard feature workflow proceeds<br/>(identical to /isdlc feature)

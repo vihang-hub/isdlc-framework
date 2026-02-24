@@ -1,0 +1,76 @@
+{
+  "gate": "GATE-04",
+  "phase": "04-design",
+  "requirement_id": "REQ-0022",
+  "feature": "Custom skill management -- add, wire, and inject user-provided skills into workflows (GH-14)",
+  "validated_at": "2026-02-18T08:55:00Z",
+  "status": "PASSED",
+  "checklist": {
+    "interface_specification_complete": {
+      "status": "PASSED",
+      "evidence": "Complete interface spec at docs/design/api/interface-spec-REQ-0022.yaml (26KB). Covers all 6 utility function signatures (validateSkillFrontmatter, analyzeSkillContent, suggestBindings, writeExternalManifest, formatSkillInjectionBlock, removeSkillFromManifest), 4 command actions (skill add/wire/list/remove), STEP 3d injection protocol, skill-manager delegation interface, manifest JSON schema, and skills-manifest.json registration."
+    },
+    "all_modules_designed": {
+      "status": "PASSED",
+      "evidence": "6 modules designed in docs/requirements/REQ-0022-custom-skill-management/module-design.md (31KB). M1: common.cjs utilities (6 functions with full implementation approach), M2: isdlc.md command dispatcher (4 action handlers + STEP 3d injection), M3: skill-manager.md agent (session flow, constraints, output format), M4: external-skills-manifest.json (schema, constraints, locations), M5: CLAUDE.md intent detection (new row, subcommand routing), M6: skills-manifest.json registration (new agent entry). Implementation order, cross-module data flow, error propagation, and sync requirements documented."
+    },
+    "ui_wireframes": {
+      "status": "PASSED",
+      "evidence": "19 text-based wireframes in docs/requirements/REQ-0022-custom-skill-management/ui-wireframes.md (17KB). Covers: validation error display, success confirmation, duplicate detection, wiring session steps 1-4 (context, phase selection, delivery type, confirmation), re-wire mode, final confirmation, skill list output, empty state, remove prompt/confirmation, not-found error, all 3 injection block formats (context/instruction/reference), truncation warning, and natural language consent messages."
+    },
+    "user_flows_documented": {
+      "status": "PASSED",
+      "evidence": "7 user flow diagrams plus a complete sequence diagram in docs/requirements/REQ-0022-custom-skill-management/user-flows.mermaid (8KB). Flows: skill add (FR-001/002/003), skill wire/re-wire (FR-003/009), interactive wiring session (FR-003), skill list (FR-006), skill remove (FR-007), runtime injection (FR-005), error recovery (NFR-003). Sequence diagram covers complete skill add + injection lifecycle."
+    },
+    "error_taxonomy_complete": {
+      "status": "PASSED",
+      "evidence": "Complete error taxonomy in docs/requirements/REQ-0022-custom-skill-management/error-taxonomy.md (9KB). 13 user-facing error codes (SKL-E001 through SKL-E021) with trigger conditions, guidance messages, and recovery paths. 7 fail-open warning codes (SKL-W001 through SKL-W007) with 7-level failure hierarchy. Error traceability matrix maps all codes to FRs, NFRs, security threats, and ADRs."
+    },
+    "validation_rules_defined": {
+      "status": "PASSED",
+      "evidence": "Comprehensive validation rules in docs/requirements/REQ-0022-custom-skill-management/validation-rules.json (11KB). 6 rule categories: skill file validation (SV-001..006), path security (PS-001..004), manifest validation (MV-001..005), bindings validation (BV-001..006), runtime injection validation (RV-001..003), skill entry validation (SE-001..005). Each rule has ID, field, constraint, type, and on_failure behavior."
+    },
+    "designs_cover_all_requirements": {
+      "status": "PASSED",
+      "evidence": "All 9 FRs traced: FR-001 (validateSkillFrontmatter + skill add), FR-002 (analyzeSkillContent + suggestBindings), FR-003 (skill-manager agent), FR-004 (writeExternalManifest + manifest schema), FR-005 (STEP 3d injection + formatSkillInjectionBlock), FR-006 (skill list), FR-007 (removeSkillFromManifest + skill remove), FR-008 (CLAUDE.md intent detection), FR-009 (re-wire mode in skill-manager). All 6 NFRs addressed: NFR-001 (100ms latency bound), NFR-002 (50 skill limit), NFR-003 (7-level fail-open hierarchy), NFR-004 (monorepo paths via existing resolve functions), NFR-005 (backward compat for entries without bindings), NFR-006 (validation error guidance)."
+    },
+    "interface_contracts_reviewed": {
+      "status": "PASSED",
+      "evidence": "Interface contracts fully specified: 6 function signatures with parameter types, return types, validation checks, error handling, and examples. 4 command action contracts with preconditions, postconditions, and side effects in api-endpoints.yaml. Manifest JSON schema with field types, constraints, and enums. Skill-manager delegation prompt template with expected return format. All contracts reviewed for consistency with ADR-0008 (prompt boundary injection), ADR-0009 (common.cjs utilities), ADR-0010 (standalone agent), ADR-0011 (manifest schema)."
+    }
+  },
+  "constitutional_compliance": {
+    "article_I": {
+      "status": "COMPLIANT",
+      "evidence": "Designs implement architecture specifications (ADR-0008 through ADR-0011) exactly as defined. Injection at STEP 3d prompt boundary (ADR-0008), 6 utility functions in common.cjs (ADR-0009), standalone skill-manager agent (ADR-0010), JSON manifest with optional bindings (ADR-0011). No deviations."
+    },
+    "article_IV": {
+      "status": "COMPLIANT",
+      "evidence": "All design decisions documented with rationale. No [NEEDS CLARIFICATION] markers. Complete validation rules with on_failure behaviors. Error taxonomy with recovery paths. Module dependencies explicit. Sync requirements documented."
+    },
+    "article_V": {
+      "status": "COMPLIANT",
+      "evidence": "Extends existing patterns only: common.cjs for utilities (existing pattern), isdlc.md action branches (existing dispatch pattern), agent .md file for conversational interaction (existing agent pattern), JSON manifest on filesystem (existing config pattern). Simple regex frontmatter parser (no js-yaml dependency). No new abstractions or frameworks."
+    },
+    "article_VII": {
+      "status": "COMPLIANT",
+      "evidence": "Every interface, module, and UI component traces to specific FR/NFR identifiers. Traceability matrix in error taxonomy. Cross-references in validation rules. All ADRs linked from interface spec and module design."
+    },
+    "article_IX": {
+      "status": "COMPLIANT",
+      "evidence": "All 8 GATE-04 checklist items pass. All required design artifacts exist and are complete. Constitutional compliance validated."
+    }
+  },
+  "artifacts": [
+    "docs/design/api/interface-spec-REQ-0022.yaml",
+    "docs/requirements/REQ-0022-custom-skill-management/module-design.md",
+    "docs/requirements/REQ-0022-custom-skill-management/component-spec.md",
+    "docs/requirements/REQ-0022-custom-skill-management/ui-wireframes.md",
+    "docs/requirements/REQ-0022-custom-skill-management/user-flows.mermaid",
+    "docs/requirements/REQ-0022-custom-skill-management/error-taxonomy.md",
+    "docs/requirements/REQ-0022-custom-skill-management/validation-rules.json",
+    "docs/requirements/REQ-0022-custom-skill-management/api-endpoints.yaml"
+  ],
+  "iteration_count": 1,
+  "max_iterations": 5
+}

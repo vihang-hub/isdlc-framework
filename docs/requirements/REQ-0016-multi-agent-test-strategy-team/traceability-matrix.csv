@@ -1,0 +1,8 @@
+Requirement,User Story,Acceptance Criteria,Priority,Dependencies
+FR-01,US-01,"AC-01.1, AC-01.2, AC-01.3, AC-01.4, AC-01.5",must-have,None
+FR-02,US-02,"AC-02.1, AC-02.2, AC-02.3, AC-02.4, AC-02.5, AC-02.6, AC-02.7, AC-02.8",must-have,FR-01
+FR-03,US-03,"AC-03.1, AC-03.2, AC-03.3, AC-03.4, AC-03.5",must-have,FR-01
+FR-04,US-04,"AC-04.1, AC-04.2, AC-04.3, AC-04.4",must-have,"FR-01, FR-03"
+FR-05,US-05,"AC-05.1, AC-05.2, AC-05.3, AC-05.4",must-have,None
+FR-06,US-06,"AC-06.1, AC-06.2, AC-06.3, AC-06.4",must-have,"FR-01, FR-03"
+FR-07,US-07,"AC-07.1, AC-07.2, AC-07.3, AC-07.4, AC-07.5, AC-07.6",must-have,"FR-01, FR-03, FR-04, FR-05, FR-06"

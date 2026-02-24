@@ -1,0 +1,90 @@
+{
+  "gate": "GATE-05",
+  "phase": "05-test-strategy",
+  "workflow": "feature",
+  "artifact_folder": "REQ-0011-adaptive-workflow-sizing",
+  "validated_at": "2026-02-12T23:45:00Z",
+  "validated_by": "test-design-engineer",
+  "status": "PASS",
+  "checklist": {
+    "test_strategy_covers_all_types": {
+      "status": "PASS",
+      "detail": "Unit tests (61 cases across 3 functions: 19 parseSizing, 16 computeSizing, 26 applySizing), Integration tests (8 end-to-end flow tests), Error path tests (20+ covering all SZ-xxx codes). Security covered by input validation tests (SZ-105 through SZ-109, SZ-300, SZ-305). Performance not required (pure functions, no I/O, NFR-01 is 5s budget for entire sizing flow)."
+    },
+    "test_cases_exist_for_all_requirements": {
+      "status": "PASS",
+      "detail": "74 test cases covering 7 FRs (FR-01 through FR-07). FR-06 (epic decomposition) is out of scope per requirements spec. 18 in-scope ACs all have at least one test case. AC-02, AC-08, AC-09, AC-13, AC-14 are Phase-Loop Controller concerns documented as integration-level tests."
+    },
+    "traceability_matrix_complete": {
+      "status": "PASS",
+      "detail": "100% AC coverage verified in traceability-matrix.csv. 74 rows mapping TC-SZ-001 through TC-SZ-074. Every in-scope AC (AC-01 through AC-18, AC-24) has at least one test. AC-25 (history persist) is workflow-completion logic, not sizing function. FR-06 ACs (AC-19 through AC-23) are future scope."
+    },
+    "coverage_targets_defined": {
+      "status": "PASS",
+      "detail": "Line coverage target: >= 95% for 3 pure functions. Branch coverage target: >= 90%. Error code coverage: 100% (24/24 SZ-xxx codes, of which 20 are testable at unit level, 4 at integration level). Test baseline: 555 existing tests + 74 new = 629 target."
+    },
+    "test_data_strategy_documented": {
+      "status": "PASS",
+      "detail": "test-data-plan.md defines all test data organized by function. 3 categories per function: valid, boundary, invalid. Includes buildFeatureState(), buildMinimalState(), buildIAContent() helper factories. 17 threshold configurations. 9 invalid intensity values. Decision table with 17 expected outcomes."
+    },
+    "critical_paths_identified": {
+      "status": "PASS",
+      "detail": "Critical paths: (1) Light phase removal and rollback (TC-SZ-036 through TC-SZ-050), (2) Threshold boundaries at 5/6 and 19/20 (TC-SZ-020/021/024/025), (3) High-risk override preventing light (TC-SZ-028), (4) Invariant failure rollback (TC-SZ-047 through TC-SZ-050), (5) Full end-to-end flow (TC-SZ-062 through TC-SZ-069)."
+    }
+  },
+  "constitutional_compliance": {
+    "article_II": {
+      "status": "COMPLIANT",
+      "detail": "74 test cases designed during Phase 05 before implementation (Phase 06). Test-first development: every function has tests specified before code is written. Coverage targets align with Article II thresholds (>= 80% unit, >= 70% integration, 100% critical paths)."
+    },
+    "article_VII": {
+      "status": "COMPLIANT",
+      "detail": "Traceability matrix (test-traceability-matrix.csv) maps all 18 in-scope ACs to specific TC-IDs. 100% requirement coverage. No orphan tests (every test traces to at least one AC or error code). 5 out-of-scope ACs (AC-19 through AC-23) documented as FUTURE."
+    },
+    "article_IX": {
+      "status": "COMPLIANT",
+      "detail": "All required artifacts present: test-strategy.md, test-cases.md, test-data-plan.md, test-traceability-matrix.csv. GATE-05 checklist all items PASS. tasks.md updated with Phase 05 completion."
+    },
+    "article_XI": {
+      "status": "COMPLIANT",
+      "detail": "8 integration tests validate component interactions across all 3 functions: parseSizing -> computeSizing -> applySizing. INT-01 through INT-08 exercise light, standard, epic, parsing failure, risk override, custom thresholds, invariant rollback, and determinism."
+    }
+  },
+  "artifacts": [
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/test-strategy.md",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/test-cases.md",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/test-data-plan.md",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/test-traceability-matrix.csv"
+  ],
+  "metrics": {
+    "total_requirements": 7,
+    "total_acceptance_criteria": 25,
+    "in_scope_acceptance_criteria": 18,
+    "out_of_scope_acceptance_criteria": 7,
+    "total_test_cases": 74,
+    "unit_test_cases": 61,
+    "integration_test_cases": 8,
+    "error_path_test_cases": 5,
+    "deferred_integration_tests": 2,
+    "test_file": "src/claude/hooks/tests/test-sizing.test.cjs",
+    "p0_test_count": 38,
+    "p1_test_count": 29,
+    "p2_test_count": 7,
+    "error_codes_covered": 24,
+    "error_codes_total": 24,
+    "requirement_coverage_percent": 100,
+    "functions_under_test": [
+      "parseSizingFromImpactAnalysis",
+      "computeSizingRecommendation",
+      "applySizingDecision"
+    ]
+  },
+  "constitutional_iteration": {
+    "iteration_count": 1,
+    "max_iterations": 5,
+    "violations_found_initial": 0,
+    "violations_fixed": 0,
+    "violations_remaining": 0,
+    "fix_log": []
+  }
+}

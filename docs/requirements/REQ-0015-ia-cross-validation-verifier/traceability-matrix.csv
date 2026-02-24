@@ -1,0 +1,34 @@
+Requirement_ID,AC_ID,Test_Case_ID,Test_Description,Priority,Category,Test_File,Status
+FR-01,AC-01.1,TC-01.1,Agent file exists at correct path,P0,Agent Definition,lib/cross-validation-verifier.test.js,Designed
+FR-01,AC-01.2,TC-01.2,Agent has required frontmatter fields,P0,Agent Definition,lib/cross-validation-verifier.test.js,Designed
+FR-01,AC-01.3,TC-01.3,Agent specifies M1/M2/M3 input parsing,P1,Agent Definition,lib/cross-validation-verifier.test.js,Designed
+FR-01,AC-01.4,TC-01.4,Agent specifies severity-categorized findings,P1,Agent Definition,lib/cross-validation-verifier.test.js,Designed
+FR-02,AC-02.1,TC-02.1,Agent specifies MISSING_FROM_BLAST_RADIUS finding,P1,File List Cross-Validation,lib/cross-validation-verifier.test.js,Designed
+FR-02,AC-02.2,TC-02.2,Agent specifies ORPHAN_IMPACT finding,P1,File List Cross-Validation,lib/cross-validation-verifier.test.js,Designed
+FR-02,AC-02.3,TC-02.3,Agent specifies symmetric difference computation,P1,File List Cross-Validation,lib/cross-validation-verifier.test.js,Designed
+FR-02,AC-02.4,TC-02.4,Agent specifies affected_agents attribution,P1,File List Cross-Validation,lib/cross-validation-verifier.test.js,Designed
+FR-03,AC-03.1,TC-03.1,Agent specifies RISK_SCORING_GAP finding,P1,Risk Scoring Gap Detection,lib/cross-validation-verifier.test.js,Designed
+FR-03,AC-03.2,TC-03.2,Agent specifies UNDERTESTED_CRITICAL_PATH finding,P1,Risk Scoring Gap Detection,lib/cross-validation-verifier.test.js,Designed
+FR-03,AC-03.3,TC-03.3,Agent specifies blast radius vs risk validation,P1,Risk Scoring Gap Detection,lib/cross-validation-verifier.test.js,Designed
+FR-03,AC-03.4,TC-03.4,Agent specifies recommendation field for each gap,P1,Risk Scoring Gap Detection,lib/cross-validation-verifier.test.js,Designed
+FR-04,AC-04.1,TC-04.1,Agent specifies M2 entry point to M1 file mapping,P1,Completeness Validation,lib/cross-validation-verifier.test.js,Designed
+FR-04,AC-04.2,TC-04.2,Agent specifies M1 module to M3 risk mapping,P1,Completeness Validation,lib/cross-validation-verifier.test.js,Designed
+FR-04,AC-04.3,TC-04.3,Agent specifies INCOMPLETE_ANALYSIS finding,P1,Completeness Validation,lib/cross-validation-verifier.test.js,Designed
+FR-04,AC-04.4,TC-04.4,Agent specifies completeness_score computation,P1,Completeness Validation,lib/cross-validation-verifier.test.js,Designed
+FR-05,AC-05.1,TC-05.1,Orchestrator contains Step 3.5 with M4 invocation,P0,Orchestrator Integration,lib/cross-validation-verifier.test.js,Designed
+FR-05,AC-05.2,TC-05.2,Orchestrator includes Cross-Validation section in report,P0,Orchestrator Integration,lib/cross-validation-verifier.test.js,Designed
+FR-05,AC-05.3,TC-05.3,Orchestrator surfaces CRITICAL findings in executive summary,P1,Orchestrator Integration,lib/cross-validation-verifier.test.js,Designed
+FR-05,AC-05.4,TC-05.4,Orchestrator shows M4 in progress display,P1,Orchestrator Integration,lib/cross-validation-verifier.test.js,Designed
+FR-05,AC-05.5,TC-05.5,Orchestrator includes M4 in sub_agents state,P1,Orchestrator Integration,lib/cross-validation-verifier.test.js,Designed
+FR-06,AC-06.1,TC-06.1,Agent specifies report summary with severity counts,P1,Report Structure,lib/cross-validation-verifier.test.js,Designed
+FR-06,AC-06.2,TC-06.2,Agent specifies finding structure with all required fields,P1,Report Structure,lib/cross-validation-verifier.test.js,Designed
+FR-06,AC-06.3,TC-06.3,Agent specifies completeness_score in output,P1,Report Structure,lib/cross-validation-verifier.test.js,Designed
+FR-06,AC-06.4,TC-06.4,Agent specifies verification_status (PASS/WARN/FAIL),P1,Report Structure,lib/cross-validation-verifier.test.js,Designed
+FR-06,AC-06.5,TC-06.5,Agent specifies dual JSON and markdown output,P1,Report Structure,lib/cross-validation-verifier.test.js,Designed
+FR-07,AC-07.1,TC-07.1,Skills manifest has IA-401 and IA-402 entries,P0,Skill Registration,lib/cross-validation-verifier.test.js,Designed
+FR-07,AC-07.2,TC-07.2,Skill file exists at correct path,P0,Skill Registration,lib/cross-validation-verifier.test.js,Designed
+FR-07,AC-07.3,TC-07.3,Skills manifest ownership/lookup/paths entries correct,P0,Skill Registration,lib/cross-validation-verifier.test.js,Designed
+NFR-01,NFR-01,TC-NFR01,M4 step is sequential (after M1/M2/M3 before consolidation),P2,Performance,lib/cross-validation-verifier.test.js,Designed
+NFR-02,NFR-02,TC-NFR02,Orchestrator specifies three-tier fail-open handling,P0,Fail-Open,lib/cross-validation-verifier.test.js,Designed
+NFR-03,NFR-03,TC-NFR03,M1/M2/M3 agent files are not modified,P0,Backward Compatibility,lib/cross-validation-verifier.test.js,Designed
+C-02,C-02,TC-C02,Agent supports both feature and upgrade workflows,P1,Constraint,lib/cross-validation-verifier.test.js,Designed

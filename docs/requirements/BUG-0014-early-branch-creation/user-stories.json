@@ -1,0 +1,32 @@
+{
+  "bug_id": "BUG-0014",
+  "title": "Early Branch Creation",
+  "user_stories": [
+    {
+      "id": "US-01",
+      "story": "As a developer using iSDLC, I want the workflow branch to be created before any phases run, so that the main branch remains clean during the entire workflow.",
+      "acceptance_criteria": ["AC-01a", "AC-01b", "AC-01c", "AC-01d"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-02",
+      "story": "As a developer who cancels a workflow during Phase 01, I want to find main branch unchanged, so that incomplete artifacts do not pollute my primary branch.",
+      "acceptance_criteria": ["AC-01a", "AC-01d"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-03",
+      "story": "As a framework maintainer, I want the orchestrator documentation to accurately describe when branches are created, so that the behavior matches the documentation.",
+      "acceptance_criteria": ["AC-02a", "AC-02b", "AC-02c", "AC-03a", "AC-03b", "AC-03c"],
+      "priority": "P2"
+    },
+    {
+      "id": "US-04",
+      "story": "As a developer using iSDLC in a non-git project, I want the framework to gracefully skip branch creation with a warning, so that workflows still function without version control.",
+      "acceptance_criteria": ["AC-04a", "AC-04d"],
+      "priority": "P2"
+    }
+  ],
+  "total_stories": 4,
+  "total_acceptance_criteria": 17
+}

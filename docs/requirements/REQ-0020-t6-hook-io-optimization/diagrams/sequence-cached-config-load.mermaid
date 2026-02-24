@@ -1,0 +1,50 @@
+%% Sequence Diagram: Cached Config Load Flow
+%% Shows cache miss (first load) and cache hit (subsequent loads)
+
+sequenceDiagram
+    participant D as Dispatcher
+    participant C as common.cjs
+    participant Cache as _configCache (Map)
+    participant FS as Filesystem
+
+    Note over D,FS: Phase 1: First Load (Cache Miss)
+
+    D->>C: loadManifest()
+    C->>C: getProjectRoot() [cached after first call]
+    C->>C: getManifestPath()
+    C->>Cache: get("root:skills-manifest.json")
+    Cache-->>C: undefined (miss)
+    C->>FS: fs.statSync(manifestPath)
+    FS-->>C: { mtimeMs: 1708123456789 }
+    C->>FS: fs.readFileSync(manifestPath)
+    FS-->>C: JSON string (~50KB)
+    C->>C: JSON.parse(content)
+    C->>Cache: set("root:skills-manifest.json", { mtimeMs, data })
+    C-->>D: manifest object
+
+    Note over D,FS: Phase 2: Sub-Hook Calls (Cache Hit)
+
+    D->>C: Sub-hook calls getSkillOwner() internally
+    C->>C: loadManifest()
+    C->>C: getProjectRoot() [returns _cachedProjectRoot]
+    C->>C: getManifestPath()
+    C->>Cache: get("root:skills-manifest.json")
+    Cache-->>C: { mtimeMs: 1708123456789, data: {...} }
+    C->>FS: fs.statSync(manifestPath)
+    FS-->>C: { mtimeMs: 1708123456789 } [unchanged]
+    Note over C: mtimeMs matches -> cache hit
+    C-->>D: manifest object (from cache, no disk read)
+
+    Note over D,FS: Phase 3: Config Changed (Cache Invalidation)
+
+    D->>C: loadManifest()
+    C->>Cache: get("root:skills-manifest.json")
+    Cache-->>C: { mtimeMs: 1708123456789, data: {...} }
+    C->>FS: fs.statSync(manifestPath)
+    FS-->>C: { mtimeMs: 1708123460000 } [changed!]
+    Note over C: mtimeMs differs -> invalidate
+    C->>FS: fs.readFileSync(manifestPath)
+    FS-->>C: updated JSON string
+    C->>C: JSON.parse(content)
+    C->>Cache: set("root:skills-manifest.json", { mtimeMs: 1708123460000, data: newData })
+    C-->>D: updated manifest object

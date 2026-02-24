@@ -1,0 +1,32 @@
+Requirement ID,User Story ID,Epic,Priority,Status,Design Artifact,Validation Rule,Test Cases
+REQ-001,US-001,Suggested Prompts,Must Have,Test Strategy Complete,module-design-phase-agents.md (universal template),VR-008,"TC-08-01, TC-08-02, TC-08-03"
+REQ-001,US-003,Suggested Prompts,Must Have,Test Strategy Complete,interface-spec.md (tier structure),VR-008,"TC-08-01, TC-08-02, TC-08-03"
+REQ-002,US-001,Suggested Prompts,Must Have,Test Strategy Complete,interface-spec.md (dynamic resolution),VR-007,"TC-07-01, TC-07-02, TC-07-03"
+REQ-002,US-002,Suggested Prompts,Must Have,Test Strategy Complete,module-design-phase-agents.md (per-agent customization),VR-007,"TC-07-01, TC-07-02, TC-07-03"
+REQ-003,US-005,Suggested Prompts,Must Have,Test Strategy Complete,module-design-phase-agents.md + module-design-sub-agents.md + module-design-sub-orchestrators.md,VR-001,"TC-01-01, TC-01-02, TC-01-03, TC-01-04"
+REQ-004,US-002,Suggested Prompts,Must Have,Test Strategy Complete,module-design-orchestrator-prompts.md (5 emission points),VR-005,"TC-05-01, TC-05-02, TC-05-03, TC-05-04"
+REQ-004,US-004,Suggested Prompts,Should Have,Test Strategy Complete,module-design-sub-orchestrators.md (user-facing),VR-004,"TC-04-01, TC-04-02, TC-04-03, TC-04-04"
+REQ-005,US-003,Suggested Prompts,Must Have,Test Strategy Complete,interface-spec.md (canonical format),VR-002,"TC-02-01, TC-02-02, TC-02-03, TC-02-04, TC-02-05"
+REQ-006,US-001,Suggested Prompts,Must Have,Test Strategy Complete,interface-spec.md (phase resolution algorithm),VR-007,"TC-07-01, TC-07-02, TC-07-03"
+REQ-006,US-002,Suggested Prompts,Must Have,Test Strategy Complete,module-design-phase-agents.md (dynamic resolution),VR-007,"TC-07-01, TC-07-02, TC-07-03"
+REQ-007,US-005,Suggested Prompts,Must Have,Test Strategy Complete,module-design-phase-agents.md (Agent 01 interactive exception),VR-010,"TC-10-01, TC-10-02"
+NFR-001,US-001,Suggested Prompts,Must Have,Test Strategy Complete,validation-rules.md (VR-012),VR-012,npm run test:all (regression)
+NFR-002,US-005,Suggested Prompts,Must Have,Test Strategy Complete,module-design-phase-agents.md (insertion convention),VR-014,TC-02-06
+NFR-003,US-001,Suggested Prompts,Must Have,Test Strategy Complete,validation-rules.md (VR-013),VR-013,TC-12-01
+NFR-004,US-001,Suggested Prompts,Must Have,Test Strategy Complete,interface-spec.md (no code changes),VR-011,TC-11-01
+NFR-005,US-003,Suggested Prompts,Should Have,Test Strategy Complete,interface-spec.md (ASCII-only),VR-006,"TC-06-01, TC-06-02"
+NFR-006,US-001,Suggested Prompts,Must Have,Test Strategy Complete,interface-spec.md (write contract),VR-011,TC-11-01
+NFR-007,US-001,Suggested Prompts,Should Have,Test Strategy Complete,interface-spec.md (phase name resolution),VR-007,"TC-07-01, TC-07-02, TC-07-03"
+AC-001-01,US-001,Suggested Prompts,Must Have,Test Strategy Complete,module-design-phase-agents.md (universal template),VR-002,"TC-02-01, TC-02-04"
+AC-001-02,US-001,Suggested Prompts,Must Have,Test Strategy Complete,interface-spec.md (dynamic resolution example),VR-007,TC-07-01
+AC-001-03,US-001,Suggested Prompts,Must Have,Test Strategy Complete,interface-spec.md (dynamic resolution example),VR-007,TC-07-01
+AC-002-01,US-002,Suggested Prompts,Must Have,Test Strategy Complete,module-design-phase-agents.md (dynamic resolution),VR-007,"TC-07-01, TC-07-02"
+AC-002-02,US-002,Suggested Prompts,Must Have,Test Strategy Complete,module-design-phase-agents.md (dynamic resolution),VR-007,TC-07-01
+AC-002-03,US-002,Suggested Prompts,Must Have,Test Strategy Complete,interface-spec.md (last-phase detection),VR-008,TC-08-01
+AC-003-01,US-003,Suggested Prompts,Must Have,Test Strategy Complete,interface-spec.md (canonical format),VR-002,"TC-02-01, TC-02-02, TC-02-03, TC-02-04, TC-02-05"
+AC-003-02,US-003,Suggested Prompts,Must Have,Test Strategy Complete,interface-spec.md (tier structure),VR-008,"TC-08-01, TC-08-02"
+AC-004-01,US-004,Suggested Prompts,Should Have,Test Strategy Complete,module-design-orchestrator-prompts.md (emission point 1),VR-005,"TC-05-02, TC-05-04"
+AC-004-02,US-004,Suggested Prompts,Should Have,Test Strategy Complete,module-design-orchestrator-prompts.md (emission point 5),VR-005,"TC-05-02, TC-05-04"
+AC-005-01,US-005,Suggested Prompts,Must Have,Test Strategy Complete,module-design-phase-agents.md (section structure),VR-001,"TC-01-02, TC-01-03, TC-01-04"
+AC-005-02,US-005,Suggested Prompts,Must Have,Test Strategy Complete,module-design-phase-agents.md (Agent 01 interactive),VR-010,"TC-10-01, TC-10-02"
+AC-005-03,US-005,Suggested Prompts,Must Have,Test Strategy Complete,error-taxonomy.md (E-001 fallback),VR-009,"TC-09-01, TC-09-02, TC-09-03"

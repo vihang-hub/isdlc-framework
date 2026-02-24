@@ -1,0 +1,15 @@
+{
+  "feature": "REQ-0002-powershell-windows-scripts",
+  "phase": "11-local-testing",
+  "generated_at": "2026-02-08T17:00:00Z",
+  "defects": [],
+  "summary": {
+    "total": 0,
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "open": 0,
+    "resolved": 0
+  }
+}

@@ -1,0 +1,37 @@
+%% Sequence Diagram: Workflow Completion with Regression Check
+%% Traces: FR-006, FR-007 (REQ-0025)
+
+sequenceDiagram
+    participant PLC as isdlc.md (Phase-Loop Controller)
+    participant State as state.json
+    participant WCE as workflow-completion-enforcer.cjs
+    participant PB as performance-budget.cjs
+
+    Note over PLC: All phases completed
+
+    Note over PLC: STEP 3-dashboard
+    PLC->>State: Read all phases[].timing
+    PLC->>State: Read workflow_history[]
+    PLC->>PB: computeRollingAverage(history, intensity, 5)
+    PB-->>PLC: { avg_minutes, count } or null
+    PLC->>PB: detectRegression(total, rolling_avg, 0.20)
+    PB-->>PLC: regression result or null
+    PLC->>PB: formatCompletionDashboard(phases, budget, regression)
+    PB-->>PLC: formatted dashboard string
+    PLC->>PLC: Display dashboard to terminal
+
+    Note over PLC: STEP 4 (Finalize)
+    PLC->>State: Clear active_workflow, write workflow_history entry
+
+    Note over WCE: PostToolUse[Write] fires
+    WCE->>State: Read fresh state
+    WCE->>WCE: collectPhaseSnapshots() (includes timing)
+    WCE->>PB: computeRollingAverage(history[0..-2], intensity, 5)
+    PB-->>WCE: { avg_minutes, count } or null
+    WCE->>PB: detectRegression(current, rolling_avg, 0.20)
+    PB-->>WCE: regression result or null
+
+    alt regression detected
+        WCE->>WCE: Find slowest phase from snapshots
+        WCE->>State: Write regression_check to workflow_history entry
+    end

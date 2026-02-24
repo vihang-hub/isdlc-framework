@@ -1,0 +1,54 @@
+%% C4 Level 2 - Container Diagram
+%% REQ-0022: Custom Skill Management
+%% Shows containers involved in skill registration and runtime injection
+
+graph TB
+    subgraph Registration["Skill Registration Flow"]
+        direction TB
+        ISDLC_REG["isdlc.md<br/>skill add/wire/list/remove"]
+        VALIDATE["validateSkillFrontmatter()<br/>(common.cjs)"]
+        ANALYZE["analyzeSkillContent()<br/>(common.cjs)"]
+        SUGGEST["suggestBindings()<br/>(common.cjs)"]
+        AGENT["skill-manager.md<br/>(Wiring Session Agent)"]
+        WRITE["writeExternalManifest()<br/>(common.cjs)"]
+        MANIFEST_W["external-skills-manifest.json"]
+        SKILL_DIR["External Skills Directory<br/>(.claude/skills/external/)"]
+    end
+
+    subgraph Injection["Runtime Injection Flow (STEP 3d)"]
+        direction TB
+        PLC["Phase-Loop Controller"]
+        LOAD["loadExternalManifest()<br/>(common.cjs)"]
+        MATCH["Match skills to<br/>current phase/agent"]
+        READ_F["Read skill .md files"]
+        FORMAT["formatSkillInjectionBlock()<br/>(common.cjs)"]
+        APPEND["Append blocks to<br/>delegation prompt"]
+        TASK["Task tool invocation<br/>(Augmented prompt)"]
+        MANIFEST_R["external-skills-manifest.json"]
+    end
+
+    ISDLC_REG -->|"1. Validate"| VALIDATE
+    VALIDATE -->|"2. Analyze"| ANALYZE
+    ANALYZE -->|"3. Suggest"| SUGGEST
+    SUGGEST -->|"4. Delegate"| AGENT
+    AGENT -->|"5. Return bindings"| ISDLC_REG
+    ISDLC_REG -->|"6. Save"| WRITE
+    WRITE --> MANIFEST_W
+    ISDLC_REG -->|"Copy .md file"| SKILL_DIR
+
+    PLC -->|"1. Load"| LOAD
+    LOAD --> MANIFEST_R
+    MANIFEST_R -->|"2. Skills list"| MATCH
+    MATCH -->|"3. Matched skills"| READ_F
+    READ_F -->|"4. Content"| FORMAT
+    FORMAT -->|"5. Blocks"| APPEND
+    APPEND -->|"6. Augmented"| TASK
+
+    classDef existing fill:#bbf,stroke:#333
+    classDef new fill:#bfb,stroke:#333
+    classDef data fill:#ffd,stroke:#333
+
+    class ISDLC_REG,PLC,LOAD existing
+    class VALIDATE,ANALYZE,SUGGEST,AGENT,WRITE,FORMAT new
+    class MANIFEST_W,MANIFEST_R,SKILL_DIR data
+    class MATCH,READ_F,APPEND,TASK existing

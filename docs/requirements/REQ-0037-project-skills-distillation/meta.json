@@ -1,0 +1,45 @@
+{
+  "source": "github",
+  "source_id": "GH-88",
+  "slug": "REQ-0037-project-skills-distillation",
+  "created_at": "2026-02-23T21:45:00.000Z",
+  "updated_at": "2026-02-24T00:00:00.000Z",
+  "analysis_status": "building",
+  "build_started_at": "2026-02-24T06:00:00.000Z",
+  "workflow_type": "feature",
+  "phases_completed": [
+    "00-quick-scan",
+    "01-requirements",
+    "02-impact-analysis",
+    "03-architecture",
+    "04-design"
+  ],
+  "topics_covered": [
+    "problem-discovery",
+    "requirements-definition",
+    "technical-analysis",
+    "architecture",
+    "specification"
+  ],
+  "steps_completed": [
+    "00-01", "00-02", "00-03",
+    "01-01", "01-02", "01-03", "01-04", "01-05", "01-06", "01-07", "01-08",
+    "02-01", "02-02", "02-03", "02-04",
+    "03-01", "03-02", "03-03", "03-04",
+    "04-01", "04-02", "04-03", "04-04", "04-05"
+  ],
+  "codebase_hash": "d568e9b",
+  "sizing_decision": null,
+  "recommended_tier": null,
+  "artifacts_produced": [
+    "quick-scan.md",
+    "requirements-spec.md",
+    "impact-analysis.md",
+    "architecture-overview.md",
+    "module-design.md",
+    "interface-spec.md",
+    "error-taxonomy.md",
+    "user-stories.json",
+    "traceability-matrix.csv"
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "gate": "GATE-08",
+  "phase": "08-code-review",
+  "status": "PASS",
+  "timestamp": "2026-02-18T23:45:00Z",
+  "workflow": "feature",
+  "workflow_id": "REQ-0023",
+  "artifact_folder": "REQ-0023-three-verb-backlog-model",
+  "reviewer": "qa-engineer",
+  "checklist": {
+    "code_review_completed": true,
+    "no_critical_issues_open": true,
+    "static_analysis_passing": true,
+    "code_coverage_meets_thresholds": true,
+    "coding_standards_followed": true,
+    "performance_acceptable": true,
+    "security_review_complete": true,
+    "qa_signoff_obtained": true
+  },
+  "test_results": {
+    "new_tests": 126,
+    "new_tests_passing": 126,
+    "cjs_total": 1945,
+    "cjs_passing": 1944,
+    "cjs_pre_existing_failures": 1,
+    "esm_total": 632,
+    "esm_passing": 630,
+    "esm_pre_existing_failures": 2,
+    "new_regressions": 0
+  },
+  "findings_summary": {
+    "critical": 0,
+    "high": 0,
+    "medium": 2,
+    "low": 3,
+    "advisory": 2,
+    "blocking": 0
+  },
+  "constitutional_compliance": {
+    "article_v_simplicity": "compliant",
+    "article_vi_code_review": "compliant",
+    "article_vii_traceability": "compliant",
+    "article_viii_documentation": "partially_compliant",
+    "article_ix_gate_integrity": "compliant",
+    "notes": "Article VIII partial: 3 non-blocking stale documentation references (CR-006, CR-007, CR-008)"
+  },
+  "verdict": "APPROVED",
+  "artifacts": [
+    "docs/quality/code-review-report.md",
+    "docs/quality/quality-metrics.md",
+    "docs/quality/static-analysis-report.md",
+    "docs/quality/technical-debt.md",
+    "docs/quality/qa-sign-off.md",
+    "docs/requirements/REQ-0023-three-verb-backlog-model/code-review-report.md"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "bug_id": "BUG-0016",
+  "title": "Orchestrator exceeds init-and-phase-01 scope",
+  "user_stories": [
+    {
+      "id": "US-01",
+      "story": "As the phase-loop controller (isdlc.md), I need the orchestrator to return control after Phase 01 so that I can manage subsequent phases with per-phase task visibility and hook enforcement.",
+      "acceptance_criteria": ["AC-01.1", "AC-01.2", "AC-02.1", "AC-02.2"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-02",
+      "story": "As a developer using supervised mode, I need the orchestrator to respect execution mode boundaries so that review gates between phases are not bypassed.",
+      "acceptance_criteria": ["AC-01.1", "AC-03.1", "AC-03.2"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-03",
+      "story": "As the framework, I need controlled execution modes (init-and-phase-01, single-phase, finalize) to each return structured JSON results so that the calling controller can parse and act on them.",
+      "acceptance_criteria": ["AC-04.1", "AC-04.2", "AC-04.3"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-04",
+      "story": "As a developer running full-workflow mode (no MODE parameter), I need the orchestrator to continue working autonomously so that backward compatibility is maintained.",
+      "acceptance_criteria": ["AC-01.5"],
+      "priority": "P1"
+    }
+  ],
+  "total_stories": 4,
+  "total_acceptance_criteria": 17,
+  "priority_breakdown": {
+    "P1": 4
+  }
+}

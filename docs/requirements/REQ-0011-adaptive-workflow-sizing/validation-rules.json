@@ -1,0 +1,297 @@
+{
+  "_metadata": {
+    "version": "1.0.0",
+    "phase": "04-design",
+    "feature": "REQ-0011: Adaptive Workflow Sizing",
+    "traces_to": ["FR-01", "FR-02", "FR-05", "FR-07", "NFR-04"]
+  },
+
+  "sizing_metrics": {
+    "description": "Validation rules for SizingMetrics object returned by parseSizingFromImpactAnalysis",
+    "fields": {
+      "file_count": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0,
+        "default_on_invalid": 0,
+        "error_code": "SZ-105",
+        "validation": "typeof === 'number' && Number.isInteger(value) && value >= 0"
+      },
+      "module_count": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0,
+        "default_on_invalid": 0,
+        "error_code": "SZ-106",
+        "validation": "typeof === 'number' && Number.isInteger(value) && value >= 0"
+      },
+      "risk_score": {
+        "type": "string",
+        "required": true,
+        "enum": ["low", "medium", "high"],
+        "default_on_invalid": "medium",
+        "error_code": "SZ-107",
+        "validation": "['low', 'medium', 'high'].includes(String(value).toLowerCase())"
+      },
+      "coupling": {
+        "type": "string",
+        "required": true,
+        "enum": ["low", "medium", "high"],
+        "default_on_invalid": "medium",
+        "error_code": "SZ-108",
+        "validation": "['low', 'medium', 'high'].includes(String(value).toLowerCase())"
+      },
+      "coverage_gaps": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0,
+        "default_on_invalid": 0,
+        "error_code": "SZ-109",
+        "validation": "typeof === 'number' && Number.isInteger(value) && value >= 0"
+      }
+    }
+  },
+
+  "thresholds": {
+    "description": "Validation rules for sizing thresholds from workflows.json -> feature.sizing.thresholds",
+    "fields": {
+      "light_max_files": {
+        "type": "integer",
+        "required": true,
+        "minimum": 1,
+        "default_on_invalid": 5,
+        "error_code": "SZ-202",
+        "validation": "typeof === 'number' && Number.isInteger(value) && value >= 1"
+      },
+      "epic_min_files": {
+        "type": "integer",
+        "required": true,
+        "minimum": 2,
+        "default_on_invalid": 20,
+        "error_code": "SZ-203",
+        "validation": "typeof === 'number' && Number.isInteger(value) && value >= 2"
+      }
+    },
+    "cross_field_constraints": [
+      {
+        "id": "THRESHOLD_ORDER",
+        "rule": "light_max_files < epic_min_files",
+        "error_code": "SZ-204",
+        "action_on_violation": "Reset both to defaults: light_max_files=5, epic_min_files=20"
+      }
+    ]
+  },
+
+  "intensity_parameter": {
+    "description": "Validation for the intensity argument to applySizingDecision",
+    "type": "string",
+    "enum": ["light", "standard", "epic"],
+    "default_on_invalid": "standard",
+    "error_code": "SZ-305",
+    "validation": "['light', 'standard', 'epic'].includes(value)"
+  },
+
+  "sizing_config": {
+    "description": "Validation for feature.sizing block in workflows.json",
+    "fields": {
+      "enabled": {
+        "type": "boolean",
+        "default": true,
+        "validation": "typeof === 'boolean'"
+      },
+      "light_skip_phases": {
+        "type": "array",
+        "items_type": "string",
+        "default_on_invalid": ["03-architecture", "04-design"],
+        "error_code": "SZ-205",
+        "validation": "Array.isArray(value) && value.every(v => typeof v === 'string')"
+      },
+      "risk_override.high_risk_forces_standard_minimum": {
+        "type": "boolean",
+        "default": true,
+        "validation": "typeof === 'boolean'"
+      }
+    }
+  },
+
+  "state_invariants": {
+    "description": "Post-mutation invariant checks for applySizingDecision (light intensity only)",
+    "checks": [
+      {
+        "id": "INV-01",
+        "description": "Minimum viable workflow requires at least 3 phases",
+        "rule": "state.active_workflow.phases.length >= 3",
+        "error_code": "SZ-301",
+        "action_on_failure": "Rollback all mutations, apply standard"
+      },
+      {
+        "id": "INV-02",
+        "description": "Phase index must be within array bounds",
+        "rule": "state.active_workflow.current_phase_index < state.active_workflow.phases.length",
+        "error_code": "SZ-302",
+        "action_on_failure": "Rollback all mutations, apply standard"
+      },
+      {
+        "id": "INV-03",
+        "description": "No orphaned entries in phase_status",
+        "rule": "Every key in phase_status exists in phases array",
+        "error_code": "SZ-303",
+        "action_on_failure": "Rollback all mutations, apply standard"
+      },
+      {
+        "id": "INV-04",
+        "description": "Next phase must be in pending status",
+        "rule": "phase_status[phases[current_phase_index]] === 'pending'",
+        "error_code": "SZ-304",
+        "action_on_failure": "Rollback all mutations, apply standard"
+      }
+    ]
+  },
+
+  "sizing_record": {
+    "description": "Validation for the sizing record written to active_workflow.sizing",
+    "fields": {
+      "intensity": {
+        "type": "string",
+        "required": true,
+        "enum": ["light", "standard", "epic"]
+      },
+      "effective_intensity": {
+        "type": "string",
+        "required": true,
+        "enum": ["light", "standard"]
+      },
+      "file_count": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "module_count": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "risk_score": {
+        "type": "string",
+        "required": true,
+        "enum": ["low", "medium", "high", "unknown"]
+      },
+      "coupling": {
+        "type": "string",
+        "required": true,
+        "enum": ["low", "medium", "high", "unknown"]
+      },
+      "coverage_gaps": {
+        "type": "integer",
+        "required": true,
+        "minimum": 0
+      },
+      "recommended_by": {
+        "type": "string",
+        "required": true,
+        "enum": ["framework", "user"]
+      },
+      "overridden": {
+        "type": "boolean",
+        "required": true
+      },
+      "overridden_to": {
+        "type": ["string", "null"],
+        "required": false,
+        "enum_when_string": ["light", "standard", "epic"]
+      },
+      "decided_at": {
+        "type": "string",
+        "required": true,
+        "format": "ISO-8601"
+      },
+      "forced_by_flag": {
+        "type": "boolean",
+        "required": true
+      },
+      "epic_deferred": {
+        "type": "boolean",
+        "required": true
+      },
+      "fallback_reason": {
+        "type": ["string", "null"],
+        "required": false,
+        "description": "Only set when invariant check fails"
+      }
+    },
+    "cross_field_constraints": [
+      {
+        "id": "EFFECTIVE_LIGHT",
+        "rule": "if intensity === 'light' then effective_intensity === 'light'",
+        "unless": "fallback_reason is set (invariant failure reverts to standard)"
+      },
+      {
+        "id": "EFFECTIVE_STANDARD",
+        "rule": "if intensity === 'standard' then effective_intensity === 'standard'"
+      },
+      {
+        "id": "EFFECTIVE_EPIC",
+        "rule": "if intensity === 'epic' then effective_intensity === 'standard' AND epic_deferred === true"
+      },
+      {
+        "id": "OVERRIDE_CONSISTENCY",
+        "rule": "if overridden === true then overridden_to must be a valid intensity string"
+      },
+      {
+        "id": "FLAG_FORCE",
+        "rule": "if forced_by_flag === true then recommended_by === 'user'"
+      }
+    ]
+  },
+
+  "impact_analysis_json_metadata": {
+    "description": "Validation for the JSON metadata block in impact-analysis.md",
+    "required_fields": {
+      "files_directly_affected": {
+        "type": "integer",
+        "minimum": 0,
+        "maps_to": "file_count"
+      },
+      "modules_affected": {
+        "type": "integer",
+        "minimum": 0,
+        "maps_to": "module_count"
+      },
+      "risk_level": {
+        "type": "string",
+        "enum": ["low", "medium", "high"],
+        "maps_to": "risk_score"
+      },
+      "blast_radius": {
+        "type": "string",
+        "enum": ["low", "medium", "high"],
+        "maps_to": "coupling"
+      }
+    },
+    "optional_fields": {
+      "coverage_gaps": {
+        "type": "integer",
+        "minimum": 0,
+        "default": 0,
+        "maps_to": "coverage_gaps"
+      }
+    }
+  },
+
+  "light_flag": {
+    "description": "Validation for the -light command flag",
+    "rules": [
+      {
+        "id": "FLAG_WORKFLOW_TYPE",
+        "rule": "-light is only valid for feature workflow (active_workflow.type === 'feature')",
+        "action_on_violation": "Ignore flag, log warning"
+      },
+      {
+        "id": "FLAG_FORMAT",
+        "rule": "Must appear as '-light' in command arguments (case-sensitive)",
+        "examples_valid": ["/isdlc feature -light \"desc\""],
+        "examples_invalid": ["/isdlc feature --light \"desc\"", "/isdlc fix -light \"desc\""]
+      }
+    ]
+  }
+}

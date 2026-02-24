@@ -1,0 +1,69 @@
+Requirement,AC ID,Test Case ID,Test Type,Priority,Description,Status
+FR-001,AC-001-01,MP-01,Manual,P0,Verify state.json after init-only (active_workflow fields),Designed
+FR-001,AC-001-02,MP-02,Manual,P0,Verify START_PHASE slicing in init-only mode,Designed
+FR-001,AC-001-03,MP-01,Manual,P0,Verify branch creation during init-only,Designed
+FR-001,AC-001-04,MP-01,Manual,P0,Verify init-only return JSON format,Designed
+FR-001,AC-001-05,MP-01,Manual,P0,Verify no phase delegation in init-only,Designed
+FR-001,AC-001-06,MP-01,Manual,P0,Verify supervised mode flag in init-only,Designed
+FR-002,AC-002-01,MP-01,Manual,P0,Phase-Loop delegates to Phase 01 agent,Designed
+FR-002,AC-002-02,MP-02,Manual,P0,Phase-Loop starts from START_PHASE (skips 00-04),Designed
+FR-002,AC-002-03,MP-01,Manual,P0,Phase 01 follows STEP 3 protocol (no special case),Designed
+FR-002,AC-002-04,MP-01,Manual,P0,Phase 01 task in task list not pre-marked completed,Designed
+FR-002,AC-002-05,MP-01,Manual,P0,STEP 1 uses MODE init-only,Designed
+FR-003,AC-003-01,MP-07,Manual,P0,init-and-phase-01 full behavior preserved,Designed
+FR-003,AC-003-02,MP-07,Manual,P1,Deprecated label in orchestrator mode table,Designed
+FR-003,AC-003-03,MP-01,Manual,P0,STEP 1 uses init-only (not init-and-phase-01),Designed
+FR-003,AC-003-04,MP-07,Manual,P1,Deprecation notice emitted on init-and-phase-01,Designed
+FR-004,AC-004-01,TC-BR-01,Unit,P0,Changed files detection via git diff,Designed
+FR-004,AC-004-01,TC-BR-02,Unit,P0,Same hash returns not stale,Designed
+FR-004,AC-004-02,TC-BR-03,Unit,P0,Zero overlap returns severity none,Designed
+FR-004,AC-004-02,TC-BR-04,Unit,P1,Zero overlap with many changed files,Designed
+FR-004,AC-004-03,TC-BR-05,Unit,P0,1-3 overlap returns severity info,Designed
+FR-004,AC-004-03,TC-BR-06,Unit,P1,Exactly 3 overlap boundary (info),Designed
+FR-004,AC-004-04,TC-BR-07,Unit,P0,4+ overlap returns severity warning,Designed
+FR-004,AC-004-04,TC-BR-08,Unit,P1,Exactly 4 overlap boundary (warning),Designed
+FR-004,AC-004-05,TC-BR-09,Unit,P0,Null impactAnalysisContent falls back,Designed
+FR-004,AC-004-05,TC-BR-10,Unit,P1,Empty string impactAnalysisContent falls back,Designed
+FR-004,AC-004-06,TC-BR-11,Unit,P0,Unparseable impact analysis falls back,Designed
+FR-004,AC-004-06,TC-BR-12,Unit,P1,Empty blast radius (no table rows) falls back,Designed
+FR-005,AC-005-01,TC-EF-01,Unit,P0,Parse standard Directly Affected Files table,Designed
+FR-005,AC-005-01,TC-EF-02,Unit,P1,Parse with ## heading level,Designed
+FR-005,AC-005-01,TC-EF-03,Unit,P2,Parse with numbered heading prefix,Designed
+FR-005,AC-005-02,TC-EF-04,Unit,P0,Extract only from Directly Affected table (not others),Designed
+FR-005,AC-005-02,TC-EF-05,Unit,P1,Stop at next section heading boundary,Designed
+FR-005,AC-005-03,TC-EF-06,Unit,P0,Return empty array for null input,Designed
+FR-005,AC-005-03,TC-EF-07,Unit,P0,Return empty array for undefined input,Designed
+FR-005,AC-005-03,TC-EF-08,Unit,P0,Return empty array for empty string,Designed
+FR-005,AC-005-04,TC-EF-09,Unit,P0,Normalize paths with ./ prefix,Designed
+FR-005,AC-005-04,TC-EF-10,Unit,P0,Normalize paths with / prefix,Designed
+FR-005,AC-005-04,TC-EF-11,Unit,P1,Deduplicate normalized paths,Designed
+FR-006,AC-006-01,TC-BR-03,Unit,P0,Severity none -> silent proceed,Designed
+FR-006,AC-006-01,MP-03,Manual,P1,Manual: no staleness output,Designed
+FR-006,AC-006-02,TC-BR-05,Unit,P0,Severity info -> informational note,Designed
+FR-006,AC-006-02,MP-04,Manual,P1,Manual: info note displayed no menu,Designed
+FR-006,AC-006-03,TC-BR-07,Unit,P0,Severity warning -> warning menu,Designed
+FR-006,AC-006-03,MP-05,Manual,P1,Manual: warning menu with P/Q/A options,Designed
+FR-006,AC-006-04,TC-BR-09,Unit,P0,Severity fallback -> naive hash behavior,Designed
+FR-006,AC-006-04,MP-06,Manual,P0,Manual: fallback matches current step 4c,Designed
+FR-007,AC-007-01,MP-01,Manual,P0,Init-only return includes all required fields,Designed
+FR-007,AC-007-02,MP-01,Manual,P0,Phase-Loop reads next_phase_index = 0,Designed
+FR-007,AC-007-03,MP-02,Manual,P0,Sliced phases with next_phase_index = 0,Designed
+NFR-001,AC-NFR-001-01,MP-01,Manual,P0,Feature workflow no behavioral change,Designed
+NFR-001,AC-NFR-001-02,MP-07,Manual,P1,Fix workflow unchanged,Designed
+NFR-001,AC-NFR-001-03,MP-07,Manual,P0,init-and-phase-01 produces same output,Designed
+NFR-002,AC-NFR-002-01,TC-BR-15,Unit,P2,Large diff completes in time,Designed
+NFR-002,AC-NFR-002-02,TC-EF-12,Unit,P2,Large table parses in time,Designed
+NFR-003,AC-NFR-003-01,TC-BR-09,Unit,P0,Missing impact-analysis.md -> naive fallback,Designed
+NFR-003,AC-NFR-003-02,TC-BR-11,Unit,P0,Git diff failure -> naive fallback,Designed
+NFR-003,AC-NFR-003-03,TC-EF-06,Unit,P0,Unparseable table returns empty array,Designed
+NFR-004,AC-NFR-004-01,TC-EF-*,Unit,P0,extractFiles is pure (string in array out),Designed
+NFR-004,AC-NFR-004-02,TC-BR-*,Unit,P0,checkBlastRadius accepts injectable changedFiles,Designed
+NFR-005,AC-NFR-005-01,MP-01,Manual,P0,All phases via Phase-Loop Controller,Designed
+NFR-005,AC-NFR-005-02,MP-01,Manual,P0,init-only does only initialization,Designed
+FR-004+FR-005,Pipeline,TC-INT-01,Integration,P0,Full pipeline: real MD + overlapping changes,Designed
+FR-004+FR-005,Pipeline,TC-INT-02,Integration,P0,Full pipeline: real MD + no overlap,Designed
+FR-004+FR-005,Pipeline,TC-INT-03,Integration,P1,Full pipeline: mixed path formats,Designed
+NFR-001,Backward,TC-INT-04,Integration,P0,Existing checkStaleness unchanged,Designed
+NFR-001,Backward,TC-INT-05,Integration,P1,Both functions coexist without interference,Designed
+FR-004,Return Type,TC-RT-01,Unit,P0,StalenessResult all fields present (none),Designed
+FR-004,Return Type,TC-RT-02,Unit,P0,StalenessResult all fields present (fallback),Designed

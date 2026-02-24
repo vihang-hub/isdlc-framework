@@ -1,0 +1,117 @@
+{
+  "metadata": {
+    "issue": "GH-64",
+    "artifact_folder": "gh-64-agents-ignore-injected-gate-requirements",
+    "created": "2026-02-20",
+    "status": "draft"
+  },
+  "stories": [
+    {
+      "id": "US-001",
+      "epic": "Gate Constraint Salience",
+      "persona": "Phase Agent",
+      "goal": "see a dedicated PROHIBITED ACTIONS section at the top of the gate requirements block",
+      "benefit": "I know which actions are forbidden before I start work, avoiding wasted iterations from hook blocks",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        { "id": "AC-001-01", "given": "a phase where git commits are prohibited", "when": "the gate requirements block is generated", "then": "it contains a PROHIBITED ACTIONS section listing the git commit prohibition" },
+        { "id": "AC-001-02", "given": "a phase with no specific prohibitions", "when": "the gate requirements block is generated", "then": "the PROHIBITED ACTIONS section is omitted entirely" },
+        { "id": "AC-001-03", "given": "the PROHIBITED ACTIONS section exists", "when": "I read the gate requirements block", "then": "the prohibitions section appears before all other sections in the block" }
+      ],
+      "linked_requirements": ["FR-001"]
+    },
+    {
+      "id": "US-002",
+      "epic": "Gate Constraint Salience",
+      "persona": "Phase Agent",
+      "goal": "receive gate requirements in a visually distinct, compact format with separator lines",
+      "benefit": "the constraints stand out from other context blocks and I can scan them quickly",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        { "id": "AC-002-01", "given": "a phase with all gate requirement features enabled", "when": "the block is generated", "then": "the total line count does not exceed 30 lines" },
+        { "id": "AC-002-02", "given": "any generated gate requirements block", "when": "rendered in my delegation prompt", "then": "it starts and ends with a unique visual separator line" },
+        { "id": "AC-002-03", "given": "a phase with git commit prohibition", "when": "the block is generated", "then": "the final line before the closing separator repeats the commit prohibition" }
+      ],
+      "linked_requirements": ["FR-002"]
+    },
+    {
+      "id": "US-003",
+      "epic": "Gate Constraint Salience",
+      "persona": "Phase Agent",
+      "goal": "see gate requirements before my core task instructions in the delegation prompt",
+      "benefit": "I process constraints first and factor them into my work plan before starting the task",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        { "id": "AC-003-01", "given": "a delegation prompt being constructed in STEP 3d", "when": "gate requirements injection succeeds", "then": "the gate requirements text appears before the Execute Phase instruction line" },
+        { "id": "AC-003-02", "given": "gate requirements injection fails", "when": "the prompt is constructed", "then": "the prompt proceeds without the block and core task instructions remain unchanged" }
+      ],
+      "linked_requirements": ["FR-003"]
+    },
+    {
+      "id": "US-004",
+      "epic": "Competing Instruction Elimination",
+      "persona": "Phase Agent",
+      "goal": "read my agent file and find an explicit inline prohibition against git commits",
+      "benefit": "I have the prohibition reinforced at the agent level, not just in the delegation prompt",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        { "id": "AC-004-01", "given": "the software-developer agent file", "when": "I read it", "then": "it contains an explicit inline statement that git commit/add/push are prohibited during phase work" },
+        { "id": "AC-004-02", "given": "any agent that operates during intermediate phases", "when": "audited", "then": "it either contains inline constraint reinforcement or does not perform actions that could trigger hook blocks" }
+      ],
+      "linked_requirements": ["FR-004"]
+    },
+    {
+      "id": "US-005",
+      "epic": "Competing Instruction Elimination",
+      "persona": "Phase Agent",
+      "goal": "read constitutional articles without encountering language that could be interpreted as an instruction to run git commit",
+      "benefit": "there are no competing instructions between the constitution and the commit prohibition",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        { "id": "AC-005-01", "given": "Article VII in constitution.md", "when": "I read it", "then": "it includes a clarifying note that commit management is handled at workflow finalization" },
+        { "id": "AC-005-02", "given": "the full text of constitution.md", "when": "searched for the word commit", "then": "every occurrence refers to finalize/merge phase or is non-prescriptive" }
+      ],
+      "linked_requirements": ["FR-005"]
+    },
+    {
+      "id": "US-006",
+      "epic": "Feedback Loop",
+      "persona": "Phase Agent",
+      "goal": "see a reference to the PROHIBITED ACTIONS section in hook block messages",
+      "benefit": "I can connect the block to the constraint I was told about and avoid repeating the same mistake",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        { "id": "AC-006-01", "given": "the branch-guard hook blocks a git commit", "when": "I read the block message", "then": "it includes text referencing the gate requirements prohibition" },
+        { "id": "AC-006-02", "given": "any hook block corresponding to an injected prohibition", "when": "I read the message", "then": "it includes actionable guidance" }
+      ],
+      "linked_requirements": ["FR-006"]
+    },
+    {
+      "id": "US-007",
+      "epic": "Observability",
+      "persona": "Framework Developer",
+      "goal": "see whether gate requirements injection succeeded or failed for each delegation",
+      "benefit": "I can debug constraint violations by checking whether the agent actually received the constraints",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        { "id": "AC-007-01", "given": "a successful gate requirements injection", "when": "the block is generated", "then": "a log entry is written with phase key, line count, and whether PROHIBITED ACTIONS was included" },
+        { "id": "AC-007-02", "given": "a failed injection", "when": "the empty string is returned", "then": "a warning log entry is written with the failure reason" }
+      ],
+      "linked_requirements": ["FR-007"]
+    },
+    {
+      "id": "US-008",
+      "epic": "Configuration",
+      "persona": "Framework Developer",
+      "goal": "add new prohibited actions by editing iteration-requirements.json without modifying injector code",
+      "benefit": "I can extend the prohibition system to new constraints without code changes",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        { "id": "AC-008-01", "given": "iteration-requirements.json with a prohibited_actions array for a phase", "when": "the gate requirements block is generated", "then": "the PROHIBITED ACTIONS section lists those actions" },
+        { "id": "AC-008-02", "given": "a phase without a prohibited_actions key", "when": "the block is generated", "then": "no PROHIBITED ACTIONS section is included" },
+        { "id": "AC-008-03", "given": "a new prohibition added to config", "when": "the block is next generated", "then": "the new prohibition appears without code changes" }
+      ],
+      "linked_requirements": ["FR-008"]
+    }
+  ]
+}

@@ -1,0 +1,185 @@
+{
+  "stories": [
+    {
+      "id": "US-001",
+      "epic": "Windows Support",
+      "persona": "Windows Developer",
+      "goal": "run install.ps1 to install the iSDLC framework on Windows",
+      "benefit": "use iSDLC without needing bash or WSL",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-001-01",
+          "given": "I cloned the iSDLC framework into my project folder",
+          "when": "I run .\\isdlc-framework\\install.ps1",
+          "then": ".claude/, .isdlc/, and docs/ are created with all framework files identical to install.sh output"
+        },
+        {
+          "id": "AC-001-02",
+          "given": "I have an existing .claude/ folder with custom agents",
+          "when": "I run install.ps1",
+          "then": "my custom agents are preserved and framework agents are merged alongside them"
+        },
+        {
+          "id": "AC-001-03",
+          "given": "I run install.ps1 on a fresh project",
+          "when": "installation completes",
+          "then": "state.json is created with correct project name, timestamp, and default configuration"
+        },
+        {
+          "id": "AC-001-04",
+          "given": "I run install.ps1",
+          "when": "the framework folder is cleaned up",
+          "then": "uninstall.ps1 and update.ps1 have been copied to .isdlc/scripts/ before deletion"
+        },
+        {
+          "id": "AC-001-05",
+          "given": "I select agent model option 3 (free)",
+          "when": "installation completes",
+          "then": "providers.yaml has active_mode set to 'free'"
+        }
+      ],
+      "linked_requirements": ["REQ-001", "REQ-004", "REQ-005"]
+    },
+    {
+      "id": "US-002",
+      "epic": "Windows Support",
+      "persona": "Windows Developer",
+      "goal": "have install.ps1 detect and configure my monorepo sub-projects",
+      "benefit": "get per-project state tracking on Windows identical to install.sh behavior",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-002-01",
+          "given": "my project has pnpm-workspace.yaml",
+          "when": "I run install.ps1",
+          "then": "monorepo mode is detected and I am prompted to confirm"
+        },
+        {
+          "id": "AC-002-02",
+          "given": "I confirm monorepo detection with 3 sub-projects",
+          "when": "installation completes",
+          "then": "monorepo.json is created with all 3 projects and per-project state.json files exist"
+        },
+        {
+          "id": "AC-002-03",
+          "given": "auto-detection finds no monorepo indicators but I answer 'Y' to the monorepo prompt",
+          "when": "I enter project directories manually (comma-separated)",
+          "then": "valid directories are registered and invalid ones are skipped with a warning"
+        }
+      ],
+      "linked_requirements": ["REQ-001"]
+    },
+    {
+      "id": "US-003",
+      "epic": "Windows Support",
+      "persona": "Windows Developer",
+      "goal": "run uninstall.ps1 to cleanly remove iSDLC from my project",
+      "benefit": "only framework files are removed and all my work is preserved",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-003-01",
+          "given": "iSDLC is installed with a manifest tracking 200+ files",
+          "when": "I run uninstall.ps1",
+          "then": "only files listed in installed-files.json are removed"
+        },
+        {
+          "id": "AC-003-02",
+          "given": "I have custom agents in .claude/agents/ not in the manifest",
+          "when": "I run uninstall.ps1",
+          "then": "my custom agents are NOT deleted"
+        },
+        {
+          "id": "AC-003-03",
+          "given": "I run uninstall.ps1 with -Backup",
+          "when": "uninstall completes",
+          "then": "a timestamped backup archive exists containing all removed framework files"
+        },
+        {
+          "id": "AC-003-04",
+          "given": "I run uninstall.ps1 with -DryRun",
+          "when": "the script finishes",
+          "then": "no files are actually removed and the output shows what WOULD be removed"
+        },
+        {
+          "id": "AC-003-05",
+          "given": "I run uninstall.ps1 without -PurgeAll",
+          "when": "uninstall completes",
+          "then": "state.json, constitution.md, CLAUDE.md, settings.local.json, and providers.yaml still exist"
+        }
+      ],
+      "linked_requirements": ["REQ-002"]
+    },
+    {
+      "id": "US-004",
+      "epic": "Windows Support",
+      "persona": "Windows Developer",
+      "goal": "run update.ps1 to update iSDLC to the latest version",
+      "benefit": "my state, constitution, and customizations are preserved during the update",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-004-01",
+          "given": "a newer framework version is cloned alongside my project",
+          "when": "I run .\\isdlc-framework\\update.ps1",
+          "then": "framework files are updated and state.json framework_version is bumped"
+        },
+        {
+          "id": "AC-004-02",
+          "given": "my settings.json has custom user keys",
+          "when": "I run update.ps1",
+          "then": "user keys are preserved via deep merge and new framework keys are added"
+        },
+        {
+          "id": "AC-004-03",
+          "given": "the old manifest has files that the new manifest does not",
+          "when": "I run update.ps1",
+          "then": "those obsolete files are removed"
+        },
+        {
+          "id": "AC-004-04",
+          "given": "I run update.ps1 with -DryRun",
+          "when": "the script finishes",
+          "then": "no files are modified and the output shows what WOULD change"
+        },
+        {
+          "id": "AC-004-05",
+          "given": "I have a monorepo with 3 projects",
+          "when": "I run update.ps1",
+          "then": "each per-project state.json has its framework_version updated"
+        }
+      ],
+      "linked_requirements": ["REQ-003"]
+    },
+    {
+      "id": "US-005",
+      "epic": "Windows Support",
+      "persona": "CI/CD Pipeline",
+      "goal": "run install.ps1 -Force for unattended installation on Windows CI",
+      "benefit": "framework installation completes without any interactive prompts",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-005-01",
+          "given": "-Force parameter is passed",
+          "when": "install.ps1 runs",
+          "then": "no confirmation prompts appear, no Read-Host calls execute"
+        },
+        {
+          "id": "AC-005-02",
+          "given": "-Force parameter is passed",
+          "when": "installation completes",
+          "then": "the result is functionally identical to interactive install with all defaults accepted"
+        },
+        {
+          "id": "AC-005-03",
+          "given": "-Force is passed to uninstall.ps1",
+          "when": "uninstall runs",
+          "then": "no confirmation prompts and framework files are removed immediately"
+        }
+      ],
+      "linked_requirements": ["REQ-006"]
+    }
+  ]
+}

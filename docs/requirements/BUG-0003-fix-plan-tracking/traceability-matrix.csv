@@ -1,0 +1,13 @@
+Test Case,Fix Requirement,Acceptance Criteria,Root Cause,Category,File Under Test
+TC-01,FIX-001,AC-1,RC1,Cross-reference,isdlc.md STEP 2 table
+TC-02,FIX-001,AC-1,RC1,Cross-reference,orchestrator Task Definitions table
+TC-03,FIX-001,AC-1,RC3,Cross-reference,isdlc.md fix phases inline
+TC-04,FIX-002,AC-2,RC4,Structural,isdlc.md STEP 2 strikethrough
+TC-05,FIX-002,AC-3,RC4,Structural,isdlc.md STEP 3e strikethrough
+TC-06,FIX-002,"AC-2, AC-3",RC4,Structural,isdlc.md STEP 2 task-ID mapping
+TC-07,FIX-003,"AC-4, AC-5","RC5, RC6",Structural,isdlc.md STEP 4 cleanup
+TC-08,FIX-001,AC-1,RC2,Example validation,orchestrator fix example
+TC-09,FIX-001,AC-1,RC2,Example validation,orchestrator feature example
+TC-10,FIX-001,AC-1,RC1,Structural,isdlc.md STEP 2 numbering
+TC-11,FIX-001,AC-1,RC1,Completeness,workflows.json vs all tables
+TC-12,FIX-001,AC-1,RC1,Hygiene,all tables vs workflows.json

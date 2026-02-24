@@ -1,0 +1,99 @@
+Requirement,AC,Test Case,Test Name,Test Type,Group,Priority,VR Rule
+FR-01,AC-01.1,TC-001,critic agent file exists and is readable,positive,1-Critic,P0,VR-AGENT-001
+FR-01,AC-01.1,TC-002,critic has valid YAML frontmatter delimiters,positive,1-Critic,P0,VR-AGENT-001
+FR-01,AC-01.1,TC-003,critic frontmatter has name: test-strategy-critic,positive,1-Critic,P0,VR-AGENT-002
+FR-01,AC-01.1,TC-004,critic frontmatter has model: opus,positive,1-Critic,P0,VR-AGENT-003
+FR-01,AC-01.1,TC-005,critic frontmatter owned_skills reference only TEST-* IDs,positive,1-Critic,P0,VR-AGENT-004
+FR-01,AC-01.2,TC-008,critic references all 4 Phase 05 input artifacts,positive,1-Critic,P0,VR-CRITIC-004
+FR-01,AC-01.3,TC-007,critic documents all 8 mandatory checks TC-01 through TC-08,positive,1-Critic,P0,VR-CRITIC-001
+FR-01,AC-01.4,TC-010,critic documents BLOCKING/WARNING finding IDs,positive,1-Critic,P1,VR-CRITIC-006
+FR-01,AC-01.5,TC-009,critic output follows round-{N}-critique.md naming,positive,1-Critic,P1,VR-CRITIC-005
+FR-02,AC-02.1,TC-011,critic classifies TC-01 through TC-07 as BLOCKING (includes TC-01),positive,1-Critic,P0,VR-CRITIC-002
+FR-02,AC-02.2,TC-011,critic classifies TC-01 through TC-07 as BLOCKING (includes TC-02),positive,1-Critic,P0,VR-CRITIC-002
+FR-02,AC-02.3,TC-011,critic classifies TC-01 through TC-07 as BLOCKING (includes TC-03),positive,1-Critic,P0,VR-CRITIC-002
+FR-02,AC-02.4,TC-011,critic classifies TC-01 through TC-07 as BLOCKING (includes TC-04),positive,1-Critic,P0,VR-CRITIC-002
+FR-02,AC-02.5,TC-011,critic classifies TC-01 through TC-07 as BLOCKING (includes TC-05),positive,1-Critic,P0,VR-CRITIC-002
+FR-02,AC-02.6,TC-011,critic classifies TC-01 through TC-07 as BLOCKING (includes TC-06),positive,1-Critic,P0,VR-CRITIC-002
+FR-02,AC-02.7,TC-011,critic classifies TC-01 through TC-07 as BLOCKING (includes TC-07),positive,1-Critic,P0,VR-CRITIC-002
+FR-02,AC-02.8,TC-012,critic classifies TC-08 as WARNING,positive,1-Critic,P0,VR-CRITIC-003
+FR-02,AC-02.1,TC-086,TC-01 classified as BLOCKING not WARNING,boundary,10-Edge,P1,VR-CRITIC-002
+FR-02,AC-02.8,TC-087,TC-08 classified as WARNING not BLOCKING,boundary,10-Edge,P1,VR-CRITIC-003
+FR-02,AC-02.1,TC-088,each TC-NN has exactly one severity classification,boundary,10-Edge,P1,VR-CRITIC-001
+FR-02,AC-02.1,TC-082,detects critic missing a TC check,negative,10-Edge,P1,VR-CRITIC-001
+FR-03,AC-03.1,TC-014,refiner agent file exists and is readable,positive,2-Refiner,P0,VR-AGENT-006
+FR-03,AC-03.1,TC-015,refiner has valid YAML frontmatter delimiters,positive,2-Refiner,P0,VR-AGENT-006
+FR-03,AC-03.1,TC-016,refiner frontmatter has name: test-strategy-refiner,positive,2-Refiner,P0,VR-AGENT-007
+FR-03,AC-03.1,TC-017,refiner frontmatter has model: opus,positive,2-Refiner,P0,VR-AGENT-008
+FR-03,AC-03.2,TC-019,refiner documents fix strategies for all 8 TC-NN categories,positive,2-Refiner,P0,VR-REFINER-001
+FR-03,AC-03.3,TC-022,refiner documents in-place artifact updates,positive,2-Refiner,P1,VR-REFINER-004
+FR-03,AC-03.4,TC-020,refiner documents change log format with required columns,positive,2-Refiner,P1,VR-REFINER-002
+FR-03,AC-03.5,TC-021,refiner documents [NEEDS CLARIFICATION] escalation,positive,2-Refiner,P0,VR-REFINER-003
+FR-03,AC-03.5,TC-083,detects refiner missing NEEDS CLARIFICATION,negative,10-Edge,P1,VR-REFINER-003
+FR-04,AC-04.1,TC-026,DEBATE_ROUTING has 05-test-strategy row,positive,3-Routing,P0,VR-ROUTING-001
+FR-04,AC-04.1,TC-027,Phase 05 Creator maps to 04-test-design-engineer.md,positive,3-Routing,P0,VR-ROUTING-002
+FR-04,AC-04.1,TC-028,Phase 05 Critic maps to 04-test-strategy-critic.md,positive,3-Routing,P0,VR-ROUTING-003
+FR-04,AC-04.1,TC-029,Phase 05 Refiner maps to 04-test-strategy-refiner.md,positive,3-Routing,P0,VR-ROUTING-004
+FR-04,AC-04.2,TC-030,Phase 05 row lists test-strategy.md in artifacts,positive,3-Routing,P0,VR-ROUTING-005
+FR-04,AC-04.2,TC-031,Phase 05 row lists test-cases/ in artifacts,positive,3-Routing,P0,VR-ROUTING-005
+FR-04,AC-04.2,TC-032,Phase 05 row lists traceability-matrix.csv in artifacts,positive,3-Routing,P0,VR-ROUTING-005
+FR-04,AC-04.2,TC-033,Phase 05 row lists test-data-plan.md in artifacts,positive,3-Routing,P0,VR-ROUTING-005
+FR-04,AC-04.3,TC-034,Phase 05 critical artifact is test-strategy.md,positive,3-Routing,P0,VR-ROUTING-006
+FR-04,AC-04.4,TC-035,DEBATE_ROUTING table has at least 4 rows,positive,3-Routing,P1,
+FR-04,AC-04.1,TC-081,detects missing 05-test-strategy routing row,negative,10-Edge,P1,VR-ROUTING-001
+FR-05,AC-05.1,TC-036,test-design-engineer has DEBATE_CONTEXT mode detection,positive,4-Creator,P0,VR-CREATOR-001
+FR-05,AC-05.1,TC-037,test-design-engineer documents Round labeling,positive,4-Creator,P0,VR-CREATOR-002
+FR-05,AC-05.1,TC-040,Creator mode labels artifacts as Round N Draft,positive,4-Creator,P1,
+FR-05,AC-05.1,TC-041,Creator mode skips final save menu in debate,positive,4-Creator,P1,
+FR-05,AC-05.2,TC-042,Creator round > 1 reads Refiner improvements,positive,4-Creator,P0,
+FR-05,AC-05.3,TC-038,test-design-engineer preserves single-agent fallback,positive,4-Creator,P0,VR-CREATOR-003
+FR-05,AC-05.4,TC-039,test-design-engineer documents section markers for Critic,positive,4-Creator,P0,VR-CREATOR-004
+FR-05,AC-05.4,TC-043,Creator produces section markers matching TC-01..TC-08,positive,4-Creator,P1,
+FR-06,AC-06.1,TC-044,manifest has test-strategy-critic agent entry,positive,5-Manifest,P0,VR-MANIFEST-001
+FR-06,AC-06.1,TC-046,critic agent_id is 04,positive,5-Manifest,P0,
+FR-06,AC-06.1,TC-048,critic phase is 05-test-strategy,positive,5-Manifest,P0,
+FR-06,AC-06.1,TC-050,critic skills are [TEST-002 TEST-004 TEST-005],positive,5-Manifest,P0,VR-AGENT-005
+FR-06,AC-06.1,TC-052,critic skill_count matches skills array length,positive,5-Manifest,P1,
+FR-06,AC-06.1,TC-006,critic owned_skills includes TEST-002 TEST-004 TEST-005,positive,1-Critic,P0,VR-AGENT-005
+FR-06,AC-06.2,TC-045,manifest has test-strategy-refiner agent entry,positive,5-Manifest,P0,VR-MANIFEST-002
+FR-06,AC-06.2,TC-047,refiner agent_id is 04,positive,5-Manifest,P0,
+FR-06,AC-06.2,TC-049,refiner phase is 05-test-strategy,positive,5-Manifest,P0,
+FR-06,AC-06.2,TC-051,refiner skills are [TEST-001..TEST-005],positive,5-Manifest,P0,VR-AGENT-009
+FR-06,AC-06.2,TC-053,refiner skill_count matches skills array length,positive,5-Manifest,P1,
+FR-06,AC-06.2,TC-018,refiner owned_skills includes TEST-001 through TEST-005,positive,2-Refiner,P0,VR-AGENT-009
+FR-06,AC-06.3,TC-056,skill_owners for TEST-001..005 unchanged,positive,6-Invariants,P0,
+FR-06,AC-06.4,TC-054,total_skills count remains 242,positive,6-Invariants,P0,VR-MANIFEST-003
+FR-06,AC-06.4,TC-055,no new skill IDs created in manifest,negative,6-Invariants,P0,
+FR-06,AC-06.4,TC-059,no duplicate skill IDs in critic entry,negative,6-Invariants,P1,VR-MANIFEST-004
+FR-06,AC-06.4,TC-060,no duplicate skill IDs in refiner entry,negative,6-Invariants,P1,VR-MANIFEST-004
+FR-06,AC-06.1,TC-057,critic skills are subset of test-design-engineer skills,positive,6-Invariants,P0,
+FR-06,AC-06.2,TC-058,refiner skills are subset of test-design-engineer skills,positive,6-Invariants,P0,
+FR-06,AC-06.1,TC-084,detects manifest missing critic entry,negative,10-Edge,P1,VR-MANIFEST-001
+FR-06,AC-06.4,TC-085,detects manifest skill_count mismatch,negative,10-Edge,P1,VR-MANIFEST-004
+FR-06,,TC-061,manifest JSON is valid and parseable,positive,6-Invariants,P0,VR-MANIFEST-001
+FR-07,AC-07.1,TC-001..TC-013,Critic validation tests cover AC-07.1,positive,1-Critic,P0,
+FR-07,AC-07.2,TC-014..TC-025,Refiner validation tests cover AC-07.2,positive,2-Refiner,P0,
+FR-07,AC-07.3,TC-026..TC-035,Routing validation tests cover AC-07.3,positive,3-Routing,P0,
+FR-07,AC-07.4,TC-036..TC-043,Creator validation tests cover AC-07.4,positive,4-Creator,P0,
+FR-07,AC-07.5,TC-044..TC-061,Manifest validation tests cover AC-07.5,positive,5/6-Manifest,P0,
+FR-07,AC-07.6,TC-075..TC-078,Regression guards cover AC-07.6,positive,9-Regression,P0,
+NFR-01,,TC-062,critic name in agent file matches manifest key,positive,7-CrossMod,P1,
+NFR-01,,TC-063,refiner name in agent file matches manifest key,positive,7-CrossMod,P1,
+NFR-01,,TC-064,critic skills in agent file match manifest exactly,positive,7-CrossMod,P1,
+NFR-01,,TC-065,refiner skills in agent file match manifest exactly,positive,7-CrossMod,P1,
+NFR-01,,TC-066,orchestrator critic filename exists on disk,positive,7-CrossMod,P0,
+NFR-01,,TC-067,orchestrator refiner filename exists on disk,positive,7-CrossMod,P0,
+NFR-01,,TC-068,orchestrator creator filename exists on disk,positive,7-CrossMod,P0,
+NFR-01,,TC-069,all new agent skill IDs exist in skill_owners map,positive,7-CrossMod,P0,
+NFR-01,C-01,TC-070,critic uses same file prefix as creator (04-),positive,8-Pattern,P1,
+NFR-01,C-01,TC-071,refiner uses same file prefix as creator (04-),positive,8-Pattern,P1,
+NFR-01,,TC-072,critic follows design-critic frontmatter fields,positive,8-Pattern,P1,
+NFR-01,,TC-073,refiner follows design-refiner frontmatter fields,positive,8-Pattern,P1,
+NFR-01,,TC-074,Phase 05 routing row has same column count as existing,positive,8-Pattern,P1,
+NFR-04,,TC-075,01-requirements debate routing entry unchanged,positive,9-Regression,P0,
+NFR-04,,TC-076,03-architecture debate routing entry unchanged,positive,9-Regression,P0,
+NFR-04,,TC-077,04-design debate routing entry unchanged,positive,9-Regression,P0,
+NFR-04,,TC-078,documentation lists Phases 01/03/04/05 in DEBATE_ROUTING,positive,9-Regression,P1,
+C-03,,TC-013,critic description mentions orchestrator-only invocation,positive,1-Critic,P0,VR-AGENT-010
+C-03,,TC-023,refiner description mentions orchestrator-only invocation,positive,2-Refiner,P0,VR-AGENT-010
+FR-01,,TC-079,detects critic without model field,negative,10-Edge,P2,VR-AGENT-003
+FR-03,,TC-080,detects refiner without owned_skills,negative,10-Edge,P2,VR-AGENT-009

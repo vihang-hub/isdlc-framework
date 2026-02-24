@@ -1,0 +1,43 @@
+%% Deployment Diagram
+%% REQ-0022: Custom Skill Management
+%% Shows file locations and sync paths for skill management artifacts
+
+graph LR
+    subgraph Source["Source of Truth (src/claude/)"]
+        SRC_AGENT["src/claude/agents/<br/>skill-manager.md"]
+        SRC_CMD["src/claude/commands/<br/>isdlc.md"]
+        SRC_COMMON["src/claude/hooks/lib/<br/>common.cjs"]
+        SRC_MANIFEST["src/claude/hooks/config/<br/>skills-manifest.json"]
+    end
+
+    subgraph Runtime["Runtime (.claude/)"]
+        RT_AGENT[".claude/agents/<br/>skill-manager.md"]
+        RT_CMD[".claude/commands/<br/>isdlc.md"]
+        RT_SKILLS[".claude/skills/external/<br/>(user .md files)"]
+    end
+
+    subgraph UserData["User Data (docs/)"]
+        EXT_MANIFEST["docs/isdlc/<br/>external-skills-manifest.json"]
+    end
+
+    subgraph Project["Project Root"]
+        CLAUDE_MD["CLAUDE.md<br/>(intent detection)"]
+    end
+
+    SRC_AGENT -->|"sync"| RT_AGENT
+    SRC_CMD -->|"sync"| RT_CMD
+
+    RT_CMD -->|"reads at injection time"| EXT_MANIFEST
+    RT_CMD -->|"reads skill files"| RT_SKILLS
+    RT_CMD -->|"writes on skill add"| EXT_MANIFEST
+    RT_CMD -->|"copies files on skill add"| RT_SKILLS
+
+    classDef src fill:#bbf,stroke:#333
+    classDef runtime fill:#bfb,stroke:#333
+    classDef data fill:#ffd,stroke:#333
+    classDef project fill:#fdb,stroke:#333
+
+    class SRC_AGENT,SRC_CMD,SRC_COMMON,SRC_MANIFEST src
+    class RT_AGENT,RT_CMD,RT_SKILLS runtime
+    class EXT_MANIFEST data
+    class CLAUDE_MD project

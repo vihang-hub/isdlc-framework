@@ -1,0 +1,61 @@
+%% Sequence Diagram: M4 Cross-Validation Flow
+%% REQ-0015: Shows the orchestrator invoking M4 after M1/M2/M3
+%% Includes fail-open error handling path
+
+sequenceDiagram
+    participant PLC as Phase-Loop Controller
+    participant ORCH as Orchestrator
+    participant M1 as M1: Impact Analyzer
+    participant M2 as M2: Entry Point Finder
+    participant M3 as M3: Risk Assessor
+    participant M4 as M4: Verifier (NEW)
+    participant FS as Filesystem
+
+    PLC->>ORCH: Delegate Phase 02 (requirements context)
+
+    Note over ORCH: Step 1: Load requirements
+
+    ORCH->>FS: Read requirements-spec.md
+    FS-->>ORCH: requirements_context
+
+    Note over ORCH: Step 2: Launch M1/M2/M3 in parallel
+
+    par Parallel execution
+        ORCH->>M1: Task(analyze impact, requirements_context)
+        ORCH->>M2: Task(find entry points, requirements_context)
+        ORCH->>M3: Task(assess risk, requirements_context)
+    end
+
+    M1-->>ORCH: { impact_summary, report_section }
+    M2-->>ORCH: { entry_points, report_section }
+    M3-->>ORCH: { risk_assessment, report_section }
+
+    Note over ORCH: Step 3: Collect results
+
+    Note over ORCH,M4: Step 3.5: Launch M4 (NEW)
+
+    alt M4 agent exists
+        ORCH->>M4: Task(cross-validate, {m1, m2, m3 outputs})
+
+        alt M4 succeeds
+            M4-->>ORCH: { verification_report, report_section }
+            Note over ORCH: verification_status = report.status
+        else M4 fails (timeout/error/malformed)
+            M4--xORCH: Error
+            Note over ORCH: verification_status = "incomplete"
+            Note over ORCH: Log WARNING, proceed without verification
+        end
+    else M4 agent not found
+        Note over ORCH: Skip Step 3.5 entirely
+        Note over ORCH: No warning (backward compatible)
+    end
+
+    Note over ORCH: Step 4: Consolidate
+
+    ORCH->>FS: Write impact-analysis.md (M1+M2+M3+M4)
+
+    Note over ORCH: Step 5: Update state
+
+    ORCH->>FS: Update state.json (sub_agents: M1-M4)
+
+    ORCH-->>PLC: Phase 02 complete

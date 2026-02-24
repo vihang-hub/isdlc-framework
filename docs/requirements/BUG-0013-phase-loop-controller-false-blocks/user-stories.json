@@ -1,0 +1,44 @@
+{
+  "bug_id": "BUG-0013",
+  "title": "Phase-loop-controller false blocks on sub-agent Task calls",
+  "user_stories": [
+    {
+      "id": "US-01",
+      "role": "phase agent (tracing-orchestrator, impact-analysis-orchestrator)",
+      "action": "spawn sub-agents via Task tool within my active phase",
+      "benefit": "I can parallelize work across specialized sub-agents without false hook blocks",
+      "acceptance_criteria": ["AC-01", "AC-04", "AC-11", "AC-12"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-02",
+      "role": "SDLC orchestrator",
+      "action": "delegate to a phase agent for a different phase",
+      "benefit": "cross-phase delegations are still validated for proper phase status tracking",
+      "acceptance_criteria": ["AC-05", "AC-06", "AC-07"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-03",
+      "role": "developer",
+      "action": "run a fix workflow end-to-end without manual intervention",
+      "benefit": "I don't have to work around false blocks in sub-agent-heavy phases like tracing",
+      "acceptance_criteria": ["AC-01", "AC-02", "AC-03", "AC-08", "AC-09", "AC-10"],
+      "priority": "P1"
+    }
+  ],
+  "traceability": {
+    "AC-01": { "fr": "FR-01", "test_cases": ["TC-01", "TC-02", "TC-03"] },
+    "AC-02": { "fr": "FR-01", "test_cases": ["TC-04"] },
+    "AC-03": { "fr": "FR-01", "test_cases": ["TC-05"] },
+    "AC-04": { "fr": "FR-01", "test_cases": ["TC-06"] },
+    "AC-05": { "fr": "FR-02", "test_cases": ["TC-07", "TC-08"] },
+    "AC-06": { "fr": "FR-02", "test_cases": ["TC-09"] },
+    "AC-07": { "fr": "FR-02", "test_cases": ["TC-10"] },
+    "AC-08": { "fr": "FR-03", "test_cases": ["TC-11"] },
+    "AC-09": { "fr": "FR-03", "test_cases": ["TC-12"] },
+    "AC-10": { "fr": "FR-03", "test_cases": ["TC-13"] },
+    "AC-11": { "fr": "FR-04", "test_cases": ["TC-14"] },
+    "AC-12": { "fr": "FR-04", "test_cases": ["TC-14"] }
+  }
+}

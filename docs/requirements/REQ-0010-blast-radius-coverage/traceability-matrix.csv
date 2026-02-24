@@ -1,0 +1,18 @@
+Requirement ID,User Story ID,Epic,Priority,Status,Acceptance Criteria Count
+REQ-001,US-001;US-004,Blast Radius Validation,Must Have,Draft,6
+REQ-002,US-001;US-004,Blast Radius Validation,Must Have,Draft,4
+REQ-003,US-002,Blast Radius Validation,Must Have,Draft,5
+REQ-004,US-002;US-003,Blast Radius Validation,Should Have,Draft,4
+REQ-005,US-001,Blast Radius Validation,Must Have,Draft,4
+REQ-006,US-001,Blast Radius Validation,Must Have,Draft,5
+REQ-007,US-001;US-004,Blast Radius Validation,Must Have,Draft,4
+NFR-001,,Quality Attributes,Must Have,Draft,1
+NFR-002,US-004,Quality Attributes,Must Have,Draft,1
+NFR-003,,Quality Attributes,Must Have,Draft,1
+NFR-004,,Quality Attributes,Must Have,Draft,1
+NFR-005,,Quality Attributes,Must Have,Draft,1
+CON-001,,Constraints,Must Have,Draft,0
+CON-002,,Constraints,Must Have,Draft,0
+CON-003,,Constraints,Must Have,Draft,0
+CON-004,,Constraints,Must Have,Draft,0
+CON-005,,Constraints,Must Have,Draft,0

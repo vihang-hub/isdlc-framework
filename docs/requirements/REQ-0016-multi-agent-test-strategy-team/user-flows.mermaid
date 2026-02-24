@@ -1,0 +1,88 @@
+%% User Flow: Phase 05 Test Strategy Debate Loop
+%% Feature: REQ-0016 Multi-agent Test Strategy Team
+%% Traces: FR-04, NFR-03
+
+flowchart TD
+    A[Phase-Loop Controller reaches Phase 05] --> B{Is 05-test-strategy in DEBATE_ROUTING?}
+    B -->|Yes| C{Is debate_mode == true?}
+    B -->|No - should not happen after implementation| Z1[Delegate to test-design-engineer single-agent]
+
+    C -->|Yes| D[Enter Debate Loop]
+    C -->|No| E[Delegate to Creator only - no DEBATE_CONTEXT]
+
+    D --> F["Round 1: Delegate to Creator
+    04-test-design-engineer.md
+    with DEBATE_CONTEXT round=1"]
+
+    F --> G["Creator produces Round 1 Draft:
+    - test-strategy.md
+    - test-cases/
+    - traceability-matrix.csv
+    - test-data-plan.md"]
+
+    G --> H{"Critical artifact exists?
+    (test-strategy.md)"}
+
+    H -->|No| I["Abort debate, fall back to single-agent mode
+    (Article X fail-safe)"]
+    H -->|Yes| J["Delegate to Critic
+    04-test-strategy-critic.md
+    with DEBATE_CONTEXT round=N"]
+
+    J --> K["Critic applies 8 mandatory checks:
+    TC-01: Untested AC
+    TC-02: Incomplete Pyramid
+    TC-03: Missing Negative Tests
+    TC-04: Test Data Gaps
+    TC-05: Flaky Test Risk
+    TC-06: Untested Error Paths
+    TC-07: Missing Perf Tests
+    TC-08: Orphan Test Cases"]
+
+    K --> L["Critic produces round-N-critique.md
+    with BLOCKING and WARNING findings"]
+
+    L --> M{"Parse BLOCKING count
+    from critique report"}
+
+    M -->|Cannot parse - malformed| N["Treat as 0 BLOCKING
+    (fail-open per Article X)"]
+    N --> O[Convergence - proceed to GATE-05]
+
+    M -->|BLOCKING == 0| O
+    M -->|BLOCKING > 0| P{Round < 3?}
+
+    P -->|No - round == 3| Q["ESCALATE to human
+    List remaining BLOCKING findings"]
+
+    P -->|Yes| R["Delegate to Refiner
+    04-test-strategy-refiner.md
+    with DEBATE_CONTEXT + critique"]
+
+    R --> S["Refiner addresses findings:
+    - Fix BLOCKING findings (mandatory)
+    - Fix WARNING findings (best effort)
+    - Escalate unresolvable with NEEDS CLARIFICATION
+    - Append change log to test-strategy.md"]
+
+    S --> T["Refiner produces updated:
+    - test-strategy.md
+    - test-cases/
+    - traceability-matrix.csv
+    - test-data-plan.md"]
+
+    T --> U["Round N+1: Delegate to Creator
+    with prior_critique (Refiner output)"]
+
+    U --> G
+
+    O --> V["Write debate-summary.md
+    Record debate_state in state.json"]
+    V --> W[Proceed to GATE-05 validation]
+
+    E --> W
+
+    style D fill:#f0f0ff,stroke:#333
+    style O fill:#d4edda,stroke:#333
+    style Q fill:#f8d7da,stroke:#333
+    style I fill:#fff3cd,stroke:#333

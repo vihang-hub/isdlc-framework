@@ -1,0 +1,9 @@
+Requirement ID,Requirement Description,Test Case ID,Test Case Description,Test Type,Priority,Execution,Status,Notes
+BUG-0036,Fix roundtable sequential write pattern,TC-001,File exists check,Smoke,P0,Automated,Pass,"Verify src/claude/agents/roundtable-analyst.md exists"
+BUG-0036,Fix roundtable sequential write pattern,TC-002,Section header present,Smoke,P0,Automated,Pass,"Verify 'Turn 2 — Parallel Write' section exists"
+BUG-0036,Fix roundtable sequential write pattern,TC-003,Anti-pattern warning present,Static,P1,Automated,Pass,"Verify ANTI-PATTERN warning text exists in instructions"
+BUG-0036,Fix roundtable sequential write pattern,TC-004,Batching instructions present,Static,P1,Automated,Pass,"Verify 'batch by owner' fallback instructions exist"
+BUG-0036,Fix roundtable sequential write pattern,TC-101,Roundtable finalization batching,Behavioral,P0,Manual,Pending,"Agent writes all artifacts in 1-2 responses (not 11 sequential)"
+BUG-0036,Fix roundtable sequential write pattern,TC-102,Finalization performance,Behavioral,P0,Manual,Pending,"Finalization completes in <1 minute (not ~5.5 minutes)"
+BUG-0036,Fix roundtable sequential write pattern,TC-103,Artifact completeness,Behavioral,P0,Manual,Pending,"All 11 artifacts written correctly"
+BUG-0036,Fix roundtable sequential write pattern,TC-104,No regression in finalization,Behavioral,P0,Manual,Pending,"Agent still completes finalization successfully without errors"

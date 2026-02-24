@@ -1,0 +1,337 @@
+{
+  "version": "1.0",
+  "created": "2026-02-15",
+  "feature": "REQ-0016-multi-agent-test-strategy-team",
+  "phase": "04-design",
+  "description": "Validation rules for the multi-agent test strategy team debate loop components",
+  "total_rules": 34,
+  "rule_categories": {
+    "VR-AGENT": "Agent file structure validation",
+    "VR-CRITIC": "Critic-specific validation",
+    "VR-REFINER": "Refiner-specific validation",
+    "VR-ROUTING": "DEBATE_ROUTING table validation",
+    "VR-CREATOR": "Creator awareness validation",
+    "VR-MANIFEST": "Skills manifest validation",
+    "VR-REPORT": "Critique report format validation"
+  },
+  "rules": [
+    {
+      "id": "VR-AGENT-001",
+      "category": "VR-AGENT",
+      "target": "04-test-strategy-critic.md",
+      "description": "Critic agent file must have valid YAML frontmatter",
+      "pattern": "^---\\n[\\s\\S]*?\\n---",
+      "required": true,
+      "traces": ["FR-01", "AC-01.1"]
+    },
+    {
+      "id": "VR-AGENT-002",
+      "category": "VR-AGENT",
+      "target": "04-test-strategy-critic.md",
+      "description": "Critic frontmatter must have name: test-strategy-critic",
+      "pattern": "name:\\s*test-strategy-critic",
+      "required": true,
+      "traces": ["AC-01.1"]
+    },
+    {
+      "id": "VR-AGENT-003",
+      "category": "VR-AGENT",
+      "target": "04-test-strategy-critic.md",
+      "description": "Critic frontmatter must have model: opus",
+      "pattern": "model:\\s*opus",
+      "required": true,
+      "traces": ["AC-01.1"]
+    },
+    {
+      "id": "VR-AGENT-004",
+      "category": "VR-AGENT",
+      "target": "04-test-strategy-critic.md",
+      "description": "Critic frontmatter owned_skills must reference only TEST-* IDs",
+      "pattern": "owned_skills:\\n(\\s+-\\s+TEST-\\d{3}.*\\n)+",
+      "required": true,
+      "traces": ["AC-01.1"]
+    },
+    {
+      "id": "VR-AGENT-005",
+      "category": "VR-AGENT",
+      "target": "04-test-strategy-critic.md",
+      "description": "Critic owned_skills must include TEST-002, TEST-004, TEST-005",
+      "field": "owned_skills",
+      "expected": ["TEST-002", "TEST-004", "TEST-005"],
+      "required": true,
+      "traces": ["AC-06.1"]
+    },
+    {
+      "id": "VR-AGENT-006",
+      "category": "VR-AGENT",
+      "target": "04-test-strategy-refiner.md",
+      "description": "Refiner agent file must have valid YAML frontmatter",
+      "pattern": "^---\\n[\\s\\S]*?\\n---",
+      "required": true,
+      "traces": ["FR-03", "AC-03.1"]
+    },
+    {
+      "id": "VR-AGENT-007",
+      "category": "VR-AGENT",
+      "target": "04-test-strategy-refiner.md",
+      "description": "Refiner frontmatter must have name: test-strategy-refiner",
+      "pattern": "name:\\s*test-strategy-refiner",
+      "required": true,
+      "traces": ["AC-03.1"]
+    },
+    {
+      "id": "VR-AGENT-008",
+      "category": "VR-AGENT",
+      "target": "04-test-strategy-refiner.md",
+      "description": "Refiner frontmatter must have model: opus",
+      "pattern": "model:\\s*opus",
+      "required": true,
+      "traces": ["AC-03.1"]
+    },
+    {
+      "id": "VR-AGENT-009",
+      "category": "VR-AGENT",
+      "target": "04-test-strategy-refiner.md",
+      "description": "Refiner owned_skills must include TEST-001 through TEST-005",
+      "field": "owned_skills",
+      "expected": ["TEST-001", "TEST-002", "TEST-003", "TEST-004", "TEST-005"],
+      "required": true,
+      "traces": ["AC-06.2"]
+    },
+    {
+      "id": "VR-AGENT-010",
+      "category": "VR-AGENT",
+      "target": "04-test-strategy-critic.md, 04-test-strategy-refiner.md",
+      "description": "Both agent descriptions must mention orchestrator-only invocation",
+      "pattern": "ONLY invoked by the orchestrator",
+      "required": true,
+      "traces": ["C-03"]
+    },
+    {
+      "id": "VR-CRITIC-001",
+      "category": "VR-CRITIC",
+      "target": "04-test-strategy-critic.md",
+      "description": "Critic must document all 8 mandatory checks TC-01 through TC-08",
+      "check_ids": ["TC-01", "TC-02", "TC-03", "TC-04", "TC-05", "TC-06", "TC-07", "TC-08"],
+      "required": true,
+      "traces": ["FR-02", "AC-01.3"]
+    },
+    {
+      "id": "VR-CRITIC-002",
+      "category": "VR-CRITIC",
+      "target": "04-test-strategy-critic.md",
+      "description": "TC-01 through TC-07 must be classified as BLOCKING",
+      "severity_map": {
+        "TC-01": "BLOCKING",
+        "TC-02": "BLOCKING",
+        "TC-03": "BLOCKING",
+        "TC-04": "BLOCKING",
+        "TC-05": "BLOCKING",
+        "TC-06": "BLOCKING",
+        "TC-07": "BLOCKING"
+      },
+      "required": true,
+      "traces": ["AC-02.1", "AC-02.2", "AC-02.3", "AC-02.4", "AC-02.5", "AC-02.6", "AC-02.7"]
+    },
+    {
+      "id": "VR-CRITIC-003",
+      "category": "VR-CRITIC",
+      "target": "04-test-strategy-critic.md",
+      "description": "TC-08 must be classified as WARNING",
+      "severity_map": {
+        "TC-08": "WARNING"
+      },
+      "required": true,
+      "traces": ["AC-02.8"]
+    },
+    {
+      "id": "VR-CRITIC-004",
+      "category": "VR-CRITIC",
+      "target": "04-test-strategy-critic.md",
+      "description": "Critic must reference input artifacts: test-strategy.md, test-cases/, traceability-matrix.csv, test-data-plan.md",
+      "required_references": ["test-strategy.md", "test-cases/", "traceability-matrix.csv", "test-data-plan.md"],
+      "required": true,
+      "traces": ["AC-01.2"]
+    },
+    {
+      "id": "VR-CRITIC-005",
+      "category": "VR-CRITIC",
+      "target": "04-test-strategy-critic.md",
+      "description": "Critic output must follow round-{N}-critique.md naming pattern",
+      "pattern": "round-\\{N\\}-critique\\.md|round-.*-critique\\.md",
+      "required": true,
+      "traces": ["AC-01.5"]
+    },
+    {
+      "id": "VR-CRITIC-006",
+      "category": "VR-CRITIC",
+      "target": "04-test-strategy-critic.md",
+      "description": "Critic must document finding categorization as BLOCKING or WARNING with B-NNN or W-NNN IDs",
+      "pattern": "B-\\{?NNN\\}?|B-\\d{3}|W-\\{?NNN\\}?|W-\\d{3}",
+      "required": true,
+      "traces": ["AC-01.4"]
+    },
+    {
+      "id": "VR-REFINER-001",
+      "category": "VR-REFINER",
+      "target": "04-test-strategy-refiner.md",
+      "description": "Refiner must document fix strategies for each TC-NN finding category",
+      "check_ids": ["TC-01", "TC-02", "TC-03", "TC-04", "TC-05", "TC-06", "TC-07", "TC-08"],
+      "required": true,
+      "traces": ["AC-03.2"]
+    },
+    {
+      "id": "VR-REFINER-002",
+      "category": "VR-REFINER",
+      "target": "04-test-strategy-refiner.md",
+      "description": "Refiner must document change log format with finding ID, severity, action, target, description",
+      "required_columns": ["Finding", "Severity", "Action", "Target", "Description"],
+      "required": true,
+      "traces": ["AC-03.4"]
+    },
+    {
+      "id": "VR-REFINER-003",
+      "category": "VR-REFINER",
+      "target": "04-test-strategy-refiner.md",
+      "description": "Refiner must document [NEEDS CLARIFICATION] escalation protocol",
+      "pattern": "\\[NEEDS CLARIFICATION\\]",
+      "required": true,
+      "traces": ["AC-03.5"]
+    },
+    {
+      "id": "VR-REFINER-004",
+      "category": "VR-REFINER",
+      "target": "04-test-strategy-refiner.md",
+      "description": "Refiner must document in-place artifact updates for all 4 Phase 05 artifacts",
+      "required_references": ["test-strategy.md", "test-cases/", "traceability-matrix.csv", "test-data-plan.md"],
+      "required": true,
+      "traces": ["AC-03.3"]
+    },
+    {
+      "id": "VR-ROUTING-001",
+      "category": "VR-ROUTING",
+      "target": "00-sdlc-orchestrator.md",
+      "description": "DEBATE_ROUTING table must have a row with Phase Key '05-test-strategy'",
+      "pattern": "\\|\\s*05-test-strategy\\s*\\|",
+      "required": true,
+      "traces": ["AC-04.1"]
+    },
+    {
+      "id": "VR-ROUTING-002",
+      "category": "VR-ROUTING",
+      "target": "00-sdlc-orchestrator.md",
+      "description": "Phase 05 row Creator must map to 04-test-design-engineer.md",
+      "pattern": "05-test-strategy.*04-test-design-engineer\\.md",
+      "required": true,
+      "traces": ["AC-04.1"]
+    },
+    {
+      "id": "VR-ROUTING-003",
+      "category": "VR-ROUTING",
+      "target": "00-sdlc-orchestrator.md",
+      "description": "Phase 05 row Critic must map to 04-test-strategy-critic.md",
+      "pattern": "05-test-strategy.*04-test-strategy-critic\\.md",
+      "required": true,
+      "traces": ["AC-04.1"]
+    },
+    {
+      "id": "VR-ROUTING-004",
+      "category": "VR-ROUTING",
+      "target": "00-sdlc-orchestrator.md",
+      "description": "Phase 05 row Refiner must map to 04-test-strategy-refiner.md",
+      "pattern": "05-test-strategy.*04-test-strategy-refiner\\.md",
+      "required": true,
+      "traces": ["AC-04.1"]
+    },
+    {
+      "id": "VR-ROUTING-005",
+      "category": "VR-ROUTING",
+      "target": "00-sdlc-orchestrator.md",
+      "description": "Phase 05 row Phase Artifacts must list all 4 artifacts",
+      "required_in_row": ["test-strategy.md", "test-cases/", "traceability-matrix.csv", "test-data-plan.md"],
+      "required": true,
+      "traces": ["AC-04.2"]
+    },
+    {
+      "id": "VR-ROUTING-006",
+      "category": "VR-ROUTING",
+      "target": "00-sdlc-orchestrator.md",
+      "description": "Phase 05 row Critical Artifact must be test-strategy.md",
+      "pattern": "05-test-strategy.*test-strategy\\.md\\s*\\|\\s*$",
+      "required": true,
+      "traces": ["AC-04.3"]
+    },
+    {
+      "id": "VR-CREATOR-001",
+      "category": "VR-CREATOR",
+      "target": "04-test-design-engineer.md",
+      "description": "Creator must have DEBATE_CONTEXT mode detection",
+      "pattern": "DEBATE_CONTEXT",
+      "required": true,
+      "traces": ["AC-05.1"]
+    },
+    {
+      "id": "VR-CREATOR-002",
+      "category": "VR-CREATOR",
+      "target": "04-test-design-engineer.md",
+      "description": "Creator must document Round labeling",
+      "pattern": "Round.*Draft|Round labeling",
+      "required": true,
+      "traces": ["AC-05.1"]
+    },
+    {
+      "id": "VR-CREATOR-003",
+      "category": "VR-CREATOR",
+      "target": "04-test-design-engineer.md",
+      "description": "Creator must preserve single-agent fallback (DEBATE_CONTEXT absent = no change)",
+      "pattern": "single-agent mode|current behavior preserved",
+      "required": true,
+      "traces": ["AC-05.3"]
+    },
+    {
+      "id": "VR-CREATOR-004",
+      "category": "VR-CREATOR",
+      "target": "04-test-design-engineer.md",
+      "description": "Creator must document section markers for Critic review",
+      "pattern": "section marker|check categor|TC-\\d{2}",
+      "required": true,
+      "traces": ["AC-05.4"]
+    },
+    {
+      "id": "VR-MANIFEST-001",
+      "category": "VR-MANIFEST",
+      "target": "skills-manifest.json",
+      "description": "Manifest agents must include test-strategy-critic entry",
+      "json_path": "agents.test-strategy-critic",
+      "required": true,
+      "traces": ["AC-06.1"]
+    },
+    {
+      "id": "VR-MANIFEST-002",
+      "category": "VR-MANIFEST",
+      "target": "skills-manifest.json",
+      "description": "Manifest agents must include test-strategy-refiner entry",
+      "json_path": "agents.test-strategy-refiner",
+      "required": true,
+      "traces": ["AC-06.2"]
+    },
+    {
+      "id": "VR-MANIFEST-003",
+      "category": "VR-MANIFEST",
+      "target": "skills-manifest.json",
+      "description": "total_skills count must remain unchanged after adding agents",
+      "invariant": "total_skills == 242",
+      "required": true,
+      "traces": ["AC-06.4", "C-02"]
+    },
+    {
+      "id": "VR-MANIFEST-004",
+      "category": "VR-MANIFEST",
+      "target": "skills-manifest.json",
+      "description": "No duplicate skill IDs across the manifest",
+      "constraint": "All skill IDs in the manifest are unique per category",
+      "required": true,
+      "traces": ["AC-06.4"]
+    }
+  ]
+}

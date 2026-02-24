@@ -1,0 +1,87 @@
+{
+  "feature_id": "REQ-0015",
+  "feature_name": "Impact Analysis Cross-Validation Verifier",
+  "created": "2026-02-15T00:56:08Z",
+  "user_stories": [
+    {
+      "id": "US-01",
+      "title": "Cross-validate M1/M2 file lists",
+      "story": "As the Impact Analysis Orchestrator, I want a Verifier agent that cross-references M1's affected files with M2's entry point chains, so that file list inconsistencies are detected before consolidation.",
+      "priority": "P0",
+      "acceptance_criteria": ["AC-02.1", "AC-02.2", "AC-02.3", "AC-02.4"],
+      "functional_requirements": ["FR-02"]
+    },
+    {
+      "id": "US-02",
+      "title": "Detect risk scoring gaps",
+      "story": "As the Impact Analysis Orchestrator, I want the Verifier to check that M3's risk assessment accounts for M1's coupling analysis and M2's chain depth, so that risk scores reflect the full picture.",
+      "priority": "P0",
+      "acceptance_criteria": ["AC-03.1", "AC-03.2", "AC-03.3", "AC-03.4"],
+      "functional_requirements": ["FR-03"]
+    },
+    {
+      "id": "US-03",
+      "title": "Validate analysis completeness",
+      "story": "As the Impact Analysis Orchestrator, I want the Verifier to ensure every entry point maps to an affected file and every affected module has a risk assessment, so that no gaps flow into downstream phases.",
+      "priority": "P0",
+      "acceptance_criteria": ["AC-04.1", "AC-04.2", "AC-04.3", "AC-04.4"],
+      "functional_requirements": ["FR-04"]
+    },
+    {
+      "id": "US-04",
+      "title": "Invoke Verifier from orchestrator",
+      "story": "As the Impact Analysis Orchestrator, I want to automatically invoke the Verifier after M1/M2/M3 complete, so that cross-validation happens transparently without manual intervention.",
+      "priority": "P0",
+      "acceptance_criteria": ["AC-05.1", "AC-05.2", "AC-05.3", "AC-05.4", "AC-05.5"],
+      "functional_requirements": ["FR-05"]
+    },
+    {
+      "id": "US-05",
+      "title": "Create Verifier agent definition",
+      "story": "As a framework developer, I want a well-structured Verifier agent definition that follows existing agent conventions, so that it integrates seamlessly with the impact-analysis agent family.",
+      "priority": "P0",
+      "acceptance_criteria": ["AC-01.1", "AC-01.2", "AC-01.3", "AC-01.4"],
+      "functional_requirements": ["FR-01"]
+    },
+    {
+      "id": "US-06",
+      "title": "Structured verification report",
+      "story": "As the Impact Analysis Orchestrator, I want the Verifier to produce a structured report with severity-categorized findings, so that I can include critical issues in the executive summary and INFO-level items in an appendix.",
+      "priority": "P1",
+      "acceptance_criteria": ["AC-06.1", "AC-06.2", "AC-06.3", "AC-06.4", "AC-06.5"],
+      "functional_requirements": ["FR-06"]
+    },
+    {
+      "id": "US-07",
+      "title": "Register Verifier skills",
+      "story": "As a framework developer, I want the Verifier's skills registered in the skills manifest, so that skill observability and audit trails work correctly.",
+      "priority": "P1",
+      "acceptance_criteria": ["AC-07.1", "AC-07.2", "AC-07.3"],
+      "functional_requirements": ["FR-07"]
+    },
+    {
+      "id": "US-08",
+      "title": "Fail-open on Verifier errors",
+      "story": "As the Impact Analysis Orchestrator, I want the Verifier to fail open if it encounters errors, so that Phase 02 is never blocked by a verification failure.",
+      "priority": "P0",
+      "acceptance_criteria": ["NFR-02"],
+      "functional_requirements": []
+    },
+    {
+      "id": "US-09",
+      "title": "Support both feature and upgrade workflows",
+      "story": "As the Impact Analysis Orchestrator, I want the Verifier to work with both feature workflow and upgrade workflow outputs, so that cross-validation covers all use cases.",
+      "priority": "P1",
+      "acceptance_criteria": ["C-02"],
+      "functional_requirements": ["FR-01", "FR-05"]
+    }
+  ],
+  "summary": {
+    "total_stories": 9,
+    "p0_count": 5,
+    "p1_count": 4,
+    "total_acceptance_criteria": 28,
+    "total_functional_requirements": 7,
+    "total_nfr": 3
+  }
+}

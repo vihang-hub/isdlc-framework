@@ -1,0 +1,9 @@
+{
+  "source": "manual",
+  "source_id": "GH-18",
+  "slug": "BUG-0029-GH-18-multiline-bash-permission-bypass",
+  "created_at": "2026-02-18T22:30:00Z",
+  "analysis_status": "analyzed",
+  "phases_completed": ["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design"],
+  "codebase_hash": "fa585b7"
+}

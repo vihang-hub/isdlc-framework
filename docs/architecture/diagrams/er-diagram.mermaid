@@ -1,0 +1,55 @@
+%% Entity-Relationship Diagram
+%% REQ-0022: Custom Skill Management
+%% Shows data relationships between skill management entities
+%% (No database -- represents file/JSON relationships)
+
+erDiagram
+    EXTERNAL_SKILLS_MANIFEST ||--o{ SKILL_ENTRY : contains
+    SKILL_ENTRY ||--o| BINDINGS : "has (optional)"
+    SKILL_ENTRY ||--|| SKILL_FILE : "references via filename"
+    SKILL_FILE ||--|| FRONTMATTER : "starts with"
+    BINDINGS ||--o{ PHASE_KEY : "targets"
+    BINDINGS ||--o{ AGENT_NAME : "targets"
+
+    EXTERNAL_SKILLS_MANIFEST {
+        string version PK "1.0.0"
+        array skills "SKILL_ENTRY[]"
+    }
+
+    SKILL_ENTRY {
+        string name UK "Unique identifier"
+        string description "Human-readable"
+        string file "Filename only"
+        string added_at "ISO 8601"
+        object bindings "Optional"
+    }
+
+    BINDINGS {
+        array agents "Agent names"
+        array phases "Phase keys"
+        string injection_mode "always"
+        string delivery_type "context|instruction|reference"
+    }
+
+    SKILL_FILE {
+        string path "Resolved at runtime"
+        string frontmatter "YAML between --- delimiters"
+        string body "Markdown content"
+    }
+
+    FRONTMATTER {
+        string name "Required"
+        string description "Required"
+        string owner "Optional"
+        string when_to_use "Optional"
+        array dependencies "Optional"
+        string skill_id "Optional"
+    }
+
+    PHASE_KEY {
+        string key "e.g. 06-implementation"
+    }
+
+    AGENT_NAME {
+        string name "e.g. software-developer"
+    }

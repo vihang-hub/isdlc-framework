@@ -1,0 +1,99 @@
+%% Entity Relationship Diagram: state.json Schema Extensions
+%% Shows the fan_out configuration and execution state data model
+
+erDiagram
+    STATE_JSON ||--o| FAN_OUT_CONFIG : "contains (optional)"
+    STATE_JSON ||--|| ACTIVE_WORKFLOW : contains
+    ACTIVE_WORKFLOW ||--o| WORKFLOW_FLAGS : "contains (optional)"
+    STATE_JSON ||--o{ PHASE_STATE : contains
+
+    STATE_JSON {
+        int state_version PK
+        string framework_version
+        object project
+        object fan_out "NEW: fan-out configuration"
+        object active_workflow
+        array phases
+    }
+
+    FAN_OUT_CONFIG {
+        boolean enabled "default: true"
+        object defaults "max_agents, timeout"
+        object phase_overrides "keyed by phase_key"
+    }
+
+    FAN_OUT_CONFIG ||--|| FAN_OUT_DEFAULTS : contains
+    FAN_OUT_CONFIG ||--o{ PHASE_OVERRIDE : "contains (0..N)"
+
+    FAN_OUT_DEFAULTS {
+        int max_agents "default: 8, range: 1-8"
+        int timeout_per_chunk_ms "default: 600000"
+    }
+
+    PHASE_OVERRIDE {
+        string phase_key PK "e.g. 16-quality-loop"
+        boolean enabled "inherits from parent"
+        int tests_per_agent "Phase 16: default 250"
+        int files_per_agent "Phase 08: default 7"
+        int min_tests_threshold "Phase 16: default 250"
+        int min_files_threshold "Phase 08: default 5"
+        int max_agents "inherits from defaults"
+        string strategy "round-robin or group-by-directory"
+    }
+
+    ACTIVE_WORKFLOW {
+        string type "feature, fix, etc."
+        string description
+        array phases
+        string current_phase
+        object flags "NEW: workflow flags"
+    }
+
+    WORKFLOW_FLAGS {
+        boolean no_fan_out "from --no-fan-out CLI flag"
+    }
+
+    PHASE_STATE ||--o| TEST_RESULTS : "contains (Phase 16)"
+    PHASE_STATE {
+        string phase_key PK
+        string status
+        object test_results
+    }
+
+    TEST_RESULTS ||--o| PARALLEL_EXECUTION : contains
+    TEST_RESULTS {
+        boolean all_tests_passing
+        boolean lint_passing
+        boolean type_check_passing
+        boolean no_critical_vulnerabilities
+        float coverage_percent
+    }
+
+    PARALLEL_EXECUTION ||--o| FAN_OUT_EXECUTION : "contains (optional, NEW)"
+    PARALLEL_EXECUTION {
+        boolean enabled
+        string framework
+        string flag
+        int workers
+        object fan_out "NEW: fan-out execution metadata"
+    }
+
+    FAN_OUT_EXECUTION {
+        boolean used
+        int total_items
+        int chunk_count
+        string strategy
+        array chunks "per-chunk results"
+        int merge_elapsed_ms
+        int total_elapsed_ms
+        array failures
+        boolean degraded
+    }
+
+    FAN_OUT_EXECUTION ||--o{ CHUNK_RESULT : contains
+    CHUNK_RESULT {
+        int index PK
+        int item_count
+        int elapsed_ms
+        string status "completed or failed"
+    }

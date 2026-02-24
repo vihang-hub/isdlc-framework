@@ -1,0 +1,126 @@
+{
+  "bug_id": "BUG-0003",
+  "artifact_folder": "BUG-0003-fix-plan-tracking",
+  "traced_at": "2026-02-09T09:30:00Z",
+  "confidence": "high",
+  "symptoms": [
+    {
+      "id": "S1",
+      "description": "Task numbering not sequential [1], [2], [3] format",
+      "severity": "medium",
+      "root_causes": ["RC1", "RC2", "RC3"]
+    },
+    {
+      "id": "S2",
+      "description": "Completed tasks not struck through with ~~strikethrough~~",
+      "severity": "medium",
+      "root_causes": ["RC1", "RC4"]
+    },
+    {
+      "id": "S3",
+      "description": "Task list not cleaned up after workflow completion",
+      "severity": "medium",
+      "root_causes": ["RC5", "RC6"]
+    }
+  ],
+  "root_causes": [
+    {
+      "id": "RC1",
+      "description": "Phase key mismatch: workflows.json uses keys like 05-test-strategy, 06-implementation, 11-local-testing; isdlc.md STEP 2 lookup table uses 04-test-strategy, 05-implementation, 10-local-testing. 6 of 8 fix workflow phase keys do not match. 10 of 11 feature workflow keys do not match.",
+      "category": "instruction-defect",
+      "severity": "high",
+      "files": [
+        "src/claude/commands/isdlc.md (STEP 2 lookup table, lines 732-751)",
+        "src/claude/agents/00-sdlc-orchestrator.md (Phase table, lines 2128-2146)"
+      ],
+      "fix": "Align lookup table keys with workflows.json: 04->05 (test-strategy), 05->06 (implementation), 10->11 (local-testing), 06->07 (testing), 09->10 (cicd), 07->08 (code-review), 02->03 (architecture), 03->04 (design). Add missing: 00-quick-scan, 02-impact-analysis, 12-remote-build."
+    },
+    {
+      "id": "RC2",
+      "description": "Orchestrator fix workflow example (lines 2178-2186) shows only 6 tasks, missing 02-tracing and 05-test-strategy phases",
+      "category": "stale-documentation",
+      "severity": "medium",
+      "files": [
+        "src/claude/agents/00-sdlc-orchestrator.md (lines 2178-2186)"
+      ],
+      "fix": "Update fix workflow example to include all 8 phases from workflows.json"
+    },
+    {
+      "id": "RC3",
+      "description": "isdlc.md line 244 hardcodes fix phases with OLD numbering (04-test-strategy instead of 05-test-strategy etc.), inconsistent with workflows.json",
+      "category": "stale-documentation",
+      "severity": "medium",
+      "files": [
+        "src/claude/commands/isdlc.md (line 244)"
+      ],
+      "fix": "Update inline phase list to match workflows.json keys"
+    },
+    {
+      "id": "RC4",
+      "description": "No explicit phase-key-to-taskId mapping between STEP 2 (task creation) and STEP 3 (task update). Agent must reconstruct subject from mismatched lookup table, which fails because keys don't match.",
+      "category": "instruction-gap",
+      "severity": "high",
+      "files": [
+        "src/claude/commands/isdlc.md (STEP 2 and STEP 3)"
+      ],
+      "fix": "Add instruction to maintain phase-to-taskId mapping. Simplify strikethrough: read current subject, wrap in ~~."
+    },
+    {
+      "id": "RC5",
+      "description": "STEP 4 (FINALIZE) has zero task cleanup instructions. After orchestrator returns, no tasks are updated or removed.",
+      "category": "instruction-omission",
+      "severity": "high",
+      "files": [
+        "src/claude/commands/isdlc.md (STEP 4, lines 801-811)"
+      ],
+      "fix": "Add post-finalize cleanup: mark all tasks completed with strikethrough on success, or mark cancelled tasks appropriately."
+    },
+    {
+      "id": "RC6",
+      "description": "Orchestrator cancellation note (line 2154) says 'Do NOT update remaining tasks (they will be discarded with the context)' but tasks persist within the same Claude Code session.",
+      "category": "wrong-assumption",
+      "severity": "medium",
+      "files": [
+        "src/claude/agents/00-sdlc-orchestrator.md (line 2154)"
+      ],
+      "fix": "Remove the incorrect assumption. Add cancellation cleanup instructions."
+    }
+  ],
+  "files_affected": {
+    "primary": [
+      {
+        "path": "src/claude/commands/isdlc.md",
+        "sections": [
+          "STEP 2: FOREGROUND TASKS (lines 726-759) — lookup table key mismatch",
+          "STEP 3e (line 797) — strikethrough needs taskId mapping",
+          "STEP 4: FINALIZE (lines 801-811) — missing cleanup",
+          "Line 244 — stale inline phase keys"
+        ]
+      },
+      {
+        "path": "src/claude/agents/00-sdlc-orchestrator.md",
+        "sections": [
+          "Task Definitions table (lines 2128-2146) — key mismatch",
+          "Fix Workflow example (lines 2178-2186) — stale, missing 2 phases",
+          "Task Lifecycle (line 2154) — wrong cancellation assumption"
+        ]
+      }
+    ],
+    "reference_only": [
+      {
+        "path": "src/isdlc/config/workflows.json",
+        "role": "Source of truth for phase keys — this file is CORRECT, others must align to it"
+      }
+    ]
+  },
+  "fix_plan": {
+    "changes_required": 2,
+    "files_to_modify": [
+      "src/claude/commands/isdlc.md",
+      "src/claude/agents/00-sdlc-orchestrator.md"
+    ],
+    "approach": "Update lookup tables and examples to match workflows.json phase keys. Add task-ID mapping instructions. Add STEP 4 cleanup instructions.",
+    "risk": "low",
+    "estimated_lines_changed": 80
+  }
+}

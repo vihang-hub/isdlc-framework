@@ -1,0 +1,41 @@
+%% Component Diagram: Files Affected by T6 Optimization
+%% Shows the dependency graph and which FR applies to each file
+
+graph LR
+    subgraph "Shared Library (src/claude/hooks/lib/)"
+        COMMON["common.cjs<br/>(FR-001, FR-002)<br/>---<br/>+ _cachedProjectRoot<br/>+ _configCache Map<br/>+ getProjectRoot() cached<br/>+ loadManifest() cached<br/>+ loadIterationRequirements() cached<br/>+ loadWorkflowDefinitions() cached"]
+    end
+
+    subgraph "Dispatchers (src/claude/hooks/dispatchers/)"
+        PTD["pre-task-dispatcher.cjs<br/>(FR-005 verify)"]
+        PSD["pre-skill-dispatcher.cjs<br/>(FR-005 verify)"]
+        POTD["post-task-dispatcher.cjs<br/>(FR-005 verify)"]
+        PBD["post-bash-dispatcher.cjs<br/>(FR-005 verify)"]
+        PWED["post-write-edit-dispatcher.cjs<br/>(FR-005 verify)"]
+    end
+
+    subgraph "Sub-Hooks (src/claude/hooks/)"
+        GB["gate-blocker.cjs<br/>(FR-004)<br/>---<br/>Fix line 369:<br/>loadManifest() -> ctx.manifest"]
+        IC["iteration-corridor.cjs<br/>(FR-004)<br/>---<br/>Already uses ctx fallback"]
+        CV["constitution-validator.cjs<br/>(FR-004)<br/>---<br/>Already uses ctx fallback"]
+        TW["test-watcher.cjs<br/>(FR-004)<br/>---<br/>Already uses ctx fallback"]
+        SWV["state-write-validator.cjs<br/>(FR-003)<br/>---<br/>Consolidate 3 reads to 1<br/>diskState parameter injection"]
+    end
+
+    PTD --> COMMON
+    PSD --> COMMON
+    POTD --> COMMON
+    PBD --> COMMON
+    PWED --> COMMON
+
+    PTD --> GB
+    PTD --> IC
+    PTD --> CV
+    PTD --> TW
+
+    PWED --> SWV
+
+    GB -.->|"currently calls<br/>loadManifest() directly<br/>(FR-004 fix target)"| COMMON
+    IC -.->|"ctx.requirements || fallback"| COMMON
+    CV -.->|"ctx.requirements || fallback"| COMMON
+    TW -.->|"ctx.requirements || fallback"| COMMON

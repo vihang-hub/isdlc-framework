@@ -1,0 +1,47 @@
+Requirement,AC,Test Case ID,Test Case Name,Test Type,Test File,Target Module,Priority,Status
+FR-001,AC-001a,TC-001a-01,loadManifest first call reads from disk,Unit,test-io-optimization.test.cjs,common.cjs,P0,Designed
+FR-001,AC-001a,TC-001a-02,loadManifest second call returns cached copy,Unit,test-io-optimization.test.cjs,common.cjs,P0,Designed
+FR-001,AC-001a,TC-001a-03,loadIterationRequirements first call caches result,Unit,test-io-optimization.test.cjs,common.cjs,P1,Designed
+FR-001,AC-001a,TC-001a-04,loadWorkflowDefinitions first call caches result,Unit,test-io-optimization.test.cjs,common.cjs,P1,Designed
+FR-001,AC-001b,TC-001b-01,Config re-read after file modification,Unit,test-io-optimization.test.cjs,common.cjs,P0,Designed
+FR-001,AC-001b,TC-001b-02,Touch file without content change triggers re-read,Unit,test-io-optimization.test.cjs,common.cjs,P1,Designed
+FR-001,AC-001c,TC-001c-01,Repeated calls without file changes return cached object,Unit,test-io-optimization.test.cjs,common.cjs,P0,Designed
+FR-001,AC-001d,TC-001d-01,loadManifest returns null when manifest file missing,Unit,test-io-optimization.test.cjs,common.cjs,P0,Designed
+FR-001,AC-001d,TC-001d-02,Missing file null result is retried on next call,Unit,test-io-optimization.test.cjs,common.cjs,P1,Designed
+FR-001,AC-001d,TC-001d-03,Corrupt JSON returns null not cached,Unit,test-io-optimization.test.cjs,common.cjs,P1,Designed
+FR-001,AC-001e,TC-001e-01,Different project roots get different cache entries,Unit,test-io-optimization.test.cjs,common.cjs,P0,Designed
+FR-002,AC-002a,TC-002a-01,Second call returns without filesystem traversal,Unit,test-io-optimization.test.cjs,common.cjs,P0,Designed
+FR-002,AC-002a,TC-002a-02,Ten calls all return same value,Unit,test-io-optimization.test.cjs,common.cjs,P1,Designed
+FR-002,AC-002b,TC-002b-01,Env var value returned and cached,Unit,test-io-optimization.test.cjs,common.cjs,P0,Designed
+FR-002,AC-002b,TC-002b-02,Env var takes priority over .isdlc folder traversal,Unit,test-io-optimization.test.cjs,common.cjs,P1,Designed
+FR-002,AC-002c,TC-002c-01,Value remains consistent even if env var changes after first call,Unit,test-io-optimization.test.cjs,common.cjs,P0,Designed
+FR-002,AC-002c,TC-002c-02,Cache starts null before first call,Unit,test-io-optimization.test.cjs,common.cjs,P2,Designed
+FR-003,AC-003a,TC-003a-01,Write event reads state file at most once,Integration,state-write-validator.test.cjs,state-write-validator.cjs,P0,Designed
+FR-003,AC-003a,TC-003a-02,Write event with version mismatch still reads once,Integration,state-write-validator.test.cjs,state-write-validator.cjs,P0,Designed
+FR-003,AC-003a,TC-003a-03,Edit event behavior unchanged,Integration,state-write-validator.test.cjs,state-write-validator.cjs,P1,Designed
+FR-003,AC-003b,TC-003b-01,V7 and V8 use same disk data both allow,Integration,state-write-validator.test.cjs,state-write-validator.cjs,P0,Designed
+FR-003,AC-003b,TC-003b-02,V7 passes but V8 blocks using same diskState,Integration,state-write-validator.test.cjs,state-write-validator.cjs,P0,Designed
+FR-003,AC-003c,TC-003c-01,Write event validates incoming content not disk,Unit,state-write-validator.test.cjs,state-write-validator.cjs,P0,Designed
+FR-003,AC-003c,TC-003c-02,Write with invalid incoming phases produces warning,Unit,state-write-validator.test.cjs,state-write-validator.cjs,P1,Designed
+FR-003,AC-003d,TC-003d-01,No state file on disk allows all writes,Integration,state-write-validator.test.cjs,state-write-validator.cjs,P0,Designed
+FR-003,AC-003d,TC-003d-02,Corrupt state file on disk allows all writes,Integration,state-write-validator.test.cjs,state-write-validator.cjs,P1,Designed
+FR-004,AC-004a,TC-004a-01,gate-blocker reads manifest from ctx when available,Unit,test-gate-blocker-extended.test.cjs,gate-blocker.cjs,P0,Designed
+FR-004,AC-004a,TC-004a-02,gate-blocker delegation check works with ctx.manifest,Unit,test-gate-blocker-extended.test.cjs,gate-blocker.cjs,P1,Designed
+FR-004,AC-004b,TC-004b-01,checkAgentDelegationRequirement works without manifest param,Unit,test-gate-blocker-extended.test.cjs,gate-blocker.cjs,P0,Designed
+FR-004,AC-004b,TC-004b-02,checkAgentDelegationRequirement works with null manifest,Unit,test-gate-blocker-extended.test.cjs,gate-blocker.cjs,P1,Designed
+FR-004,AC-004c,TC-004c-01,gate-blocker check passes ctx.manifest to delegation check,Integration,test-gate-blocker-extended.test.cjs,gate-blocker.cjs,P0,Designed
+FR-004,AC-004c,TC-004c-02,gate-blocker check with no ctx.manifest standalone still works,Integration,test-gate-blocker-extended.test.cjs,gate-blocker.cjs,P0,Designed
+FR-004,AC-004d,TC-004d-01,iteration-corridor uses ctx.requirements existing pattern,Unit,test-io-optimization.test.cjs,iteration-corridor.cjs,P2,Designed
+FR-004,AC-004d,TC-004d-02,constitution-validator uses ctx.requirements existing pattern,Unit,test-io-optimization.test.cjs,constitution-validator.cjs,P2,Designed
+FR-005,AC-005a,TC-005a-01,pre-task-dispatcher writes state at most once,Integration,test-pre-task-dispatcher.test.cjs,pre-task-dispatcher.cjs,P0,Designed
+FR-005,AC-005a,TC-005a-02,post-task-dispatcher writes state at most once,Integration,test-post-task-dispatcher.test.cjs,post-task-dispatcher.cjs,P1,Designed
+FR-005,AC-005a,TC-005a-03,post-bash-dispatcher writes state at most once,Integration,test-post-bash-dispatcher.test.cjs,post-bash-dispatcher.cjs,P1,Designed
+FR-005,AC-005b,TC-005b-01,State modifications accumulated before write,Unit,test-pre-task-dispatcher.test.cjs,pre-task-dispatcher.cjs,P0,Designed
+FR-005,AC-005c,TC-005c-01,WCE returns stateModified false,Unit,test-io-optimization.test.cjs,workflow-completion-enforcer.cjs,P0,Designed
+FR-005,AC-005c,TC-005c-02,No double-write when WCE manages its own state,Integration,test-post-task-dispatcher.test.cjs,post-task-dispatcher.cjs,P1,Designed
+FR-005,AC-005d,TC-005d-01,Dispatcher skips writeState when stateModified is false,Integration,test-pre-task-dispatcher.test.cjs,pre-task-dispatcher.cjs,P0,Designed
+NFR-001,,TC-NFR001-01,Config cache reduces redundant reads,Unit,test-io-optimization.test.cjs,common.cjs,P1,Designed
+NFR-001,,TC-NFR001-02,getProjectRoot cache eliminates traversals,Unit,test-io-optimization.test.cjs,common.cjs,P1,Designed
+NFR-003,,TC-NFR003-01,V7 version lock still blocks on mismatch,Regression,state-write-validator.test.cjs,state-write-validator.cjs,P0,Designed
+NFR-003,,TC-NFR003-02,V8 phase protection still blocks on regression,Regression,state-write-validator.test.cjs,state-write-validator.cjs,P0,Designed
+NFR-004,,TC-NFR004-01,Debug mode logs cache hit/miss,Unit,test-io-optimization.test.cjs,common.cjs,P2,Designed

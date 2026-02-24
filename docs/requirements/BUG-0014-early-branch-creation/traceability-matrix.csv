@@ -1,0 +1,44 @@
+Requirement,AC_ID,AC_Description,Test_ID,Test_Description,Priority,TDD_Status,Test_File
+FR-01,AC-01a,"Branch created before Phase 00 (quick-scan) for feature workflows",T05,"Feature action: branch at init",P0,RED,early-branch-creation.test.js
+FR-01,AC-01a,"Branch created before Phase 00 (quick-scan) for feature workflows",T09,"No After GATE-01 branch in feature workflow",P0,RED,early-branch-creation.test.js
+FR-01,AC-01a,"Branch created before Phase 00 (quick-scan) for feature workflows",T18,"Cross-file: no stale timing in orchestrator + isdlc.md",P1,RED,early-branch-creation.test.js
+FR-01,AC-01b,"Branch created before Phase 01 (requirements) for fix workflows",T06,"Fix action: branch at init",P0,RED,early-branch-creation.test.js
+FR-01,AC-01b,"Branch created before Phase 01 (requirements) for fix workflows",T10,"No After GATE-01 branch in fix workflow",P0,RED,early-branch-creation.test.js
+FR-01,AC-01b,"Branch created before Phase 01 (requirements) for fix workflows",T18,"Cross-file: no stale timing in orchestrator + isdlc.md",P1,RED,early-branch-creation.test.js
+FR-01,AC-01c,"Branch name uses artifact_folder computed at init time",T14,"Feature branch naming convention preserved",P0,GREEN,early-branch-creation.test.js
+FR-01,AC-01c,"Branch name uses artifact_folder computed at init time",T15,"Bugfix branch naming convention preserved",P0,GREEN,early-branch-creation.test.js
+FR-01,AC-01d,"All subsequent phase work happens on the new branch",T03,"init-and-phase-01 mode: branch before Phase 01",P0,RED,early-branch-creation.test.js
+FR-01,AC-01d,"All subsequent phase work happens on the new branch",T17,"git checkout -b preserved in Section 3a",P1,GREEN,early-branch-creation.test.js
+FR-01,AC-01d,"All subsequent phase work happens on the new branch",T18,"Cross-file: no stale timing in orchestrator + isdlc.md",P1,RED,early-branch-creation.test.js
+FR-01,AC-01d,"All subsequent phase work happens on the new branch",T21,"generate-plan skill says branch already exists",P2,RED,early-branch-creation.test.js
+FR-02,AC-02a,"Section 3a moved from Post-GATE-01 to Post-Initialization",T01,"Section 3a header says At Initialization",P0,RED,early-branch-creation.test.js
+FR-02,AC-02a,"Section 3a moved from Post-GATE-01 to Post-Initialization",T02,"Trigger references initializing a workflow",P0,RED,early-branch-creation.test.js
+FR-02,AC-02a,"Section 3a moved from Post-GATE-01 to Post-Initialization",T09,"No After GATE-01 branch in feature workflow",P0,RED,early-branch-creation.test.js
+FR-02,AC-02a,"Section 3a moved from Post-GATE-01 to Post-Initialization",T10,"No After GATE-01 branch in fix workflow",P0,RED,early-branch-creation.test.js
+FR-02,AC-02a,"Section 3a moved from Post-GATE-01 to Post-Initialization",T11,"No GATE-01 passes trigger in Section 3a",P0,RED,early-branch-creation.test.js
+FR-02,AC-02a,"Section 3a moved from Post-GATE-01 to Post-Initialization",T12,"Step 7 no longer says after GATE-01",P1,RED,early-branch-creation.test.js
+FR-02,AC-02b,"init-and-phase-01 mode includes branch creation before Phase 01",T03,"init-and-phase-01 mode: branch before Phase 01",P0,RED,early-branch-creation.test.js
+FR-02,AC-02b,"init-and-phase-01 mode includes branch creation before Phase 01",T04,"Mode table row reflects new ordering",P1,RED,early-branch-creation.test.js
+FR-02,AC-02c,"Plan generation still happens after GATE-01",T13,"Section 3b no branch creation (3a) next step",P1,RED,early-branch-creation.test.js
+FR-02,AC-02c,"Plan generation still happens after GATE-01",T16,"Plan Generation still Post-GATE-01",P0,GREEN,early-branch-creation.test.js
+FR-03,AC-03a,"STEP 1 description updated to mention branch creation at init",T05,"Feature action: branch at init",P0,RED,early-branch-creation.test.js
+FR-03,AC-03a,"STEP 1 description updated to mention branch creation at init",T06,"Fix action: branch at init",P0,RED,early-branch-creation.test.js
+FR-03,AC-03a,"STEP 1 description updated to mention branch creation at init",T07,"STEP 1: branch creation before Phase 01",P0,RED,early-branch-creation.test.js
+FR-03,AC-03b,"Post-GATE-01 branch creation references removed from STEP 1",T07,"STEP 1: branch creation before Phase 01",P0,RED,early-branch-creation.test.js
+FR-03,AC-03b,"Post-GATE-01 branch creation references removed from STEP 1",T08,"STEP 1: no after GATE-01 for branch",P0,RED,early-branch-creation.test.js
+FR-03,AC-03c,"Plan generation remains documented as post-GATE-01",T16,"Plan Generation still Post-GATE-01",P0,GREEN,early-branch-creation.test.js
+FR-04,AC-04a,"git rev-parse check runs during workflow init",T19,"Pre-flight checks in Section 3a",P1,GREEN,early-branch-creation.test.js
+FR-04,AC-04b,"Dirty working directory auto-commit before branch creation",T19,"Pre-flight checks in Section 3a",P1,GREEN,early-branch-creation.test.js
+FR-04,AC-04c,"Checkout to main before branch creation",T19,"Pre-flight checks in Section 3a",P1,GREEN,early-branch-creation.test.js
+FR-04,AC-04d,"Non-git VCS detection at init time",T19,"Pre-flight checks in Section 3a",P1,GREEN,early-branch-creation.test.js
+FR-05,AC-05a,"git_branch.name set after branch creation",T20,"git_branch state recording in Section 3a",P1,GREEN,early-branch-creation.test.js
+FR-05,AC-05b,"git_branch.created_from records source branch",T20,"git_branch state recording in Section 3a",P1,GREEN,early-branch-creation.test.js
+FR-05,AC-05c,"git_branch.created_at records ISO-8601 timestamp",T20,"git_branch state recording in Section 3a",P1,GREEN,early-branch-creation.test.js
+FR-05,AC-05d,"git_branch.status set to active",T20,"git_branch state recording in Section 3a",P1,GREEN,early-branch-creation.test.js
+NFR-01,AC-01c,"Backward compat: naming conventions unchanged",T14,"Feature branch naming convention preserved",P0,GREEN,early-branch-creation.test.js
+NFR-01,AC-01c,"Backward compat: naming conventions unchanged",T15,"Bugfix branch naming convention preserved",P0,GREEN,early-branch-creation.test.js
+NFR-01,AC-01d,"Backward compat: git checkout -b preserved",T17,"git checkout -b preserved in Section 3a",P1,GREEN,early-branch-creation.test.js
+NFR-03,AC-02c,"Plan generation timing unchanged",T13,"Section 3b no branch creation (3a) next step",P1,RED,early-branch-creation.test.js
+NFR-03,AC-02c,"Plan generation timing unchanged",T16,"Plan Generation still Post-GATE-01",P0,GREEN,early-branch-creation.test.js
+NFR-02,AC-04a,"Error handling: fail-open if not a git repo",T19,"Pre-flight checks in Section 3a",P1,GREEN,early-branch-creation.test.js
+NFR-03,AC-03c,"Plan generation timing unchanged in isdlc.md",T16,"Plan Generation still Post-GATE-01",P0,GREEN,early-branch-creation.test.js

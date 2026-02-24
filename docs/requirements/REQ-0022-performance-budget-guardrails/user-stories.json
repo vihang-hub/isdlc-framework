@@ -1,0 +1,62 @@
+{
+  "req_id": "REQ-0025",
+  "artifact_folder": "REQ-0022-performance-budget-guardrails",
+  "feature": "Performance Budget and Guardrail System",
+  "generated_at": "2026-02-19T00:31:00.000Z",
+  "user_stories": [
+    {
+      "id": "US-001",
+      "title": "Developer sees workflow timing at completion",
+      "as_a": "developer using the iSDLC framework",
+      "i_want": "to see a timing breakdown when my workflow completes",
+      "so_that": "I know which phases took the longest and whether the workflow stayed within budget",
+      "acceptance_criteria": ["AC-007a", "AC-007b", "AC-007e", "AC-007f"],
+      "priority": "P0"
+    },
+    {
+      "id": "US-002",
+      "title": "Developer is warned when budget is exceeded",
+      "as_a": "developer running a feature workflow",
+      "i_want": "to see a warning when the workflow exceeds its time budget",
+      "so_that": "I'm aware the workflow is slower than expected and can investigate",
+      "acceptance_criteria": ["AC-003a", "AC-003b", "AC-003c", "AC-003e"],
+      "priority": "P0"
+    },
+    {
+      "id": "US-003",
+      "title": "Framework automatically reduces overhead when over budget",
+      "as_a": "developer whose workflow is running over budget",
+      "i_want": "the framework to automatically reduce debate rounds and fan-out parallelism",
+      "so_that": "subsequent phases complete faster without manual intervention",
+      "acceptance_criteria": ["AC-004a", "AC-004b", "AC-005a", "AC-005b"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-004",
+      "title": "Framework maintainer detects performance regressions",
+      "as_a": "framework maintainer",
+      "i_want": "each completed workflow to be compared against recent workflows of the same intensity",
+      "so_that": "I can detect when a code change has caused a performance regression",
+      "acceptance_criteria": ["AC-006a", "AC-006b", "AC-006c", "AC-006d", "AC-006e"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-005",
+      "title": "Framework maintainer monitors hook dispatcher overhead",
+      "as_a": "framework maintainer",
+      "i_want": "each hook dispatcher to report its execution time",
+      "so_that": "I can identify which dispatchers are slowest and optimize them",
+      "acceptance_criteria": ["AC-008a", "AC-008b", "AC-008c"],
+      "priority": "P2"
+    }
+  ],
+  "summary": {
+    "total_stories": 5,
+    "p0_count": 2,
+    "p1_count": 2,
+    "p2_count": 1,
+    "total_acceptance_criteria": 35,
+    "total_functional_requirements": 8,
+    "total_nonfunctional_requirements": 5
+  }
+}

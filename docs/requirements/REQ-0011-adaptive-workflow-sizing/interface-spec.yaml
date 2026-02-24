@@ -1,0 +1,696 @@
+# Interface Specification -- REQ-0011: Adaptive Workflow Sizing
+# Version: 1.0.0
+# Phase: 04-design
+# Traces to: FR-01, FR-02, FR-05, FR-07
+
+# This specification defines the three pure functions added to common.cjs
+# and the configuration schema for workflows.json.
+
+---
+
+# =============================================================================
+# 1. Function: parseSizingFromImpactAnalysis
+# =============================================================================
+# Location: src/claude/hooks/lib/common.cjs
+# Traces to: FR-01 (AC-01, AC-03), ADR-0003
+
+parseSizingFromImpactAnalysis:
+  description: >
+    Extracts structured sizing metrics from the raw markdown content of
+    impact-analysis.md. Uses a two-tier parsing strategy: primary (JSON metadata
+    block) and fallback (Executive Summary regex).
+
+  signature: "parseSizingFromImpactAnalysis(content: string): SizingMetrics | null"
+
+  parameters:
+    content:
+      type: string
+      required: true
+      description: >
+        Raw markdown content of the impact-analysis.md file. May be empty or
+        malformed. The function never throws -- it returns null on failure.
+
+  returns:
+    type: "SizingMetrics | null"
+    description: >
+      A SizingMetrics object if parsing succeeds, or null if both primary and
+      fallback parsing fail. Null signals the caller to default to standard
+      intensity.
+    schema:
+      SizingMetrics:
+        type: object
+        required: [file_count, module_count, risk_score, coupling, coverage_gaps]
+        properties:
+          file_count:
+            type: integer
+            minimum: 0
+            description: "Number of directly affected files (from files_directly_affected)"
+          module_count:
+            type: integer
+            minimum: 0
+            description: "Number of affected modules (from modules_affected)"
+          risk_score:
+            type: string
+            enum: [low, medium, high]
+            description: "Risk level from impact analysis"
+          coupling:
+            type: string
+            enum: [low, medium, high]
+            description: "Coupling/blast radius level from impact analysis"
+          coverage_gaps:
+            type: integer
+            minimum: 0
+            description: "Count of files with no test coverage"
+
+  behavior:
+    primary_parsing:
+      description: >
+        Search for the last fenced JSON code block in the content. The regex
+        pattern matches triple-backtick json blocks. Parse the JSON and extract
+        the five required fields with validation.
+      regex: "/```json\\s*\\n([\\s\\S]*?)\\n```/g"
+      extraction_map:
+        files_directly_affected: file_count
+        modules_affected: module_count
+        risk_level: risk_score
+        blast_radius: coupling
+        coverage_gaps: coverage_gaps
+      validation:
+        file_count: "typeof === 'number' && value >= 0 && Number.isInteger(value)"
+        module_count: "typeof === 'number' && value >= 0 && Number.isInteger(value)"
+        risk_score: "['low', 'medium', 'high'].includes(value)"
+        coupling: "['low', 'medium', 'high'].includes(value)"
+        coverage_gaps: "typeof === 'number' && value >= 0 && Number.isInteger(value)"
+      on_invalid_field:
+        file_count: 0
+        module_count: 0
+        risk_score: "medium"
+        coupling: "medium"
+        coverage_gaps: 0
+
+    fallback_parsing:
+      description: >
+        If no JSON metadata block is found, scan for Executive Summary bullet
+        points. This is a best-effort fallback for manually created IA files.
+      patterns:
+        file_count: "/\\*\\*Affected Files\\*\\*:\\s*(\\d+)/i"
+        module_count: "/\\*\\*Modules? Affected\\*\\*:\\s*(\\d+)/i"
+        risk_score: "/\\*\\*Risk(?:\\s*Level)?\\*\\*:\\s*(low|medium|high)/i"
+        coupling: "/\\*\\*Blast\\s*Radius\\*\\*:\\s*(low|medium|high)/i"
+        coverage_gaps: "/\\*\\*Coverage\\s*Gaps?\\*\\*:\\s*(\\d+)/i"
+      on_no_match: "Return null (all-or-nothing for fallback)"
+
+    error_handling:
+      - "JSON.parse failure: swallow, proceed to fallback"
+      - "Empty content string: return null immediately"
+      - "Content without any code blocks: proceed to fallback"
+      - "Never throws -- all errors return null"
+
+  examples:
+    - name: "Valid JSON metadata block"
+      input: |
+        # Impact Analysis
+        ...content...
+        ## Impact Analysis Metadata
+        ```json
+        {
+          "files_directly_affected": 3,
+          "modules_affected": 1,
+          "risk_level": "low",
+          "blast_radius": "low",
+          "coverage_gaps": 0
+        }
+        ```
+      output:
+        file_count: 3
+        module_count: 1
+        risk_score: "low"
+        coupling: "low"
+        coverage_gaps: 0
+
+    - name: "Missing JSON block, fallback to prose"
+      input: |
+        ## Executive Summary
+        **Affected Files**: 12
+        **Modules Affected**: 3
+        **Risk Level**: medium
+        **Blast Radius**: high
+        **Coverage Gaps**: 2
+      output:
+        file_count: 12
+        module_count: 3
+        risk_score: "medium"
+        coupling: "high"
+        coverage_gaps: 2
+
+    - name: "Both parsing strategies fail"
+      input: "Some random text without any structured data"
+      output: null
+
+---
+
+# =============================================================================
+# 2. Function: computeSizingRecommendation
+# =============================================================================
+# Location: src/claude/hooks/lib/common.cjs
+# Traces to: FR-01 (AC-03), FR-02 (AC-04, AC-05, AC-07), ADR-0002
+
+computeSizingRecommendation:
+  description: >
+    Pure, deterministic function that applies threshold logic to sizing metrics
+    to produce a sizing recommendation. No I/O, no side effects, no file reads.
+    Given the same inputs, always produces the same output.
+
+  signature: "computeSizingRecommendation(metrics: SizingMetrics | null, thresholds: Thresholds): SizingRecommendation"
+
+  parameters:
+    metrics:
+      type: "SizingMetrics | null"
+      required: true
+      description: >
+        Output from parseSizingFromImpactAnalysis. If null, the function
+        returns standard intensity with a rationale explaining the fallback.
+    thresholds:
+      type: Thresholds
+      required: true
+      description: >
+        Threshold configuration from workflows.json -> feature.sizing.thresholds.
+        Validated internally -- invalid values are replaced with hardcoded defaults.
+      schema:
+        Thresholds:
+          type: object
+          required: [light_max_files, epic_min_files]
+          properties:
+            light_max_files:
+              type: integer
+              minimum: 1
+              default: 5
+              description: "Maximum file count for light intensity"
+            epic_min_files:
+              type: integer
+              minimum: 2
+              default: 20
+              description: "Minimum file count for epic intensity"
+          constraints:
+            - "light_max_files < epic_min_files (enforced at runtime)"
+
+  returns:
+    type: SizingRecommendation
+    schema:
+      SizingRecommendation:
+        type: object
+        required: [intensity, rationale, metrics]
+        properties:
+          intensity:
+            type: string
+            enum: [light, standard, epic]
+            description: "Recommended workflow intensity"
+          rationale:
+            type: string
+            description: "Human-readable explanation of the recommendation"
+          metrics:
+            type: "SizingMetrics | null"
+            description: "Echo of input metrics for state recording"
+
+  algorithm:
+    step_1_validate_thresholds:
+      description: >
+        Validate and sanitize thresholds before applying algorithm. Replace
+        invalid values with hardcoded defaults.
+      pseudocode: |
+        if (typeof thresholds.light_max_files !== 'number' || thresholds.light_max_files < 1)
+            thresholds.light_max_files = 5;
+        if (typeof thresholds.epic_min_files !== 'number' || thresholds.epic_min_files < 2)
+            thresholds.epic_min_files = 20;
+        if (thresholds.light_max_files >= thresholds.epic_min_files)
+            thresholds = { light_max_files: 5, epic_min_files: 20 };
+
+    step_2_null_metrics_guard:
+      description: "Handle null metrics (parsing failure)"
+      pseudocode: |
+        if (metrics === null)
+            return {
+                intensity: 'standard',
+                rationale: 'Unable to parse impact analysis metrics. Defaulting to standard workflow.',
+                metrics: null
+            };
+
+    step_3_risk_override:
+      description: >
+        High risk score forces at least standard intensity, regardless of file
+        count. This prevents a 2-file change to authentication logic from
+        getting light treatment.
+      pseudocode: |
+        const highRisk = metrics.risk_score === 'high';
+
+    step_4_apply_thresholds:
+      description: "Apply the sizing algorithm"
+      pseudocode: |
+        if (metrics.file_count <= thresholds.light_max_files && !highRisk)
+            intensity = 'light';
+            rationale = `Low scope (${metrics.file_count} files, ${metrics.risk_score} risk). ` +
+                        `Architecture and Design phases can be skipped.`;
+        else if (metrics.file_count >= thresholds.epic_min_files || highRisk)
+            intensity = 'epic';
+            rationale = `Large scope (${metrics.file_count} files, ${metrics.risk_score} risk). ` +
+                        `Epic decomposition recommended.`;
+        else
+            intensity = 'standard';
+            rationale = `Medium scope (${metrics.file_count} files, ${metrics.risk_score} risk). ` +
+                        `Full workflow recommended.`;
+
+    step_5_return:
+      pseudocode: |
+        return { intensity, rationale, metrics };
+
+  decision_table:
+    - condition: "metrics === null"
+      result: "standard"
+      rationale: "Parsing failure fallback"
+    - condition: "file_count <= light_max_files AND risk_score !== 'high'"
+      result: "light"
+      rationale: "Low scope, low/medium risk"
+    - condition: "file_count >= epic_min_files"
+      result: "epic"
+      rationale: "High file count"
+    - condition: "risk_score === 'high'"
+      result: "epic"
+      rationale: "High risk override"
+    - condition: "light_max_files < file_count < epic_min_files AND risk_score !== 'high'"
+      result: "standard"
+      rationale: "Medium scope, not high risk"
+
+  examples:
+    - name: "Light recommendation"
+      input:
+        metrics: { file_count: 3, module_count: 1, risk_score: "low", coupling: "low", coverage_gaps: 0 }
+        thresholds: { light_max_files: 5, epic_min_files: 20 }
+      output:
+        intensity: "light"
+        rationale: "Low scope (3 files, low risk). Architecture and Design phases can be skipped."
+
+    - name: "Standard recommendation"
+      input:
+        metrics: { file_count: 12, module_count: 4, risk_score: "medium", coupling: "medium", coverage_gaps: 1 }
+        thresholds: { light_max_files: 5, epic_min_files: 20 }
+      output:
+        intensity: "standard"
+        rationale: "Medium scope (12 files, medium risk). Full workflow recommended."
+
+    - name: "Epic recommendation (high file count)"
+      input:
+        metrics: { file_count: 25, module_count: 8, risk_score: "medium", coupling: "high", coverage_gaps: 3 }
+        thresholds: { light_max_files: 5, epic_min_files: 20 }
+      output:
+        intensity: "epic"
+        rationale: "Large scope (25 files, medium risk). Epic decomposition recommended."
+
+    - name: "High risk forces epic even with low file count"
+      input:
+        metrics: { file_count: 4, module_count: 2, risk_score: "high", coupling: "high", coverage_gaps: 0 }
+        thresholds: { light_max_files: 5, epic_min_files: 20 }
+      output:
+        intensity: "epic"
+        rationale: "Large scope (4 files, high risk). Epic decomposition recommended."
+
+    - name: "Null metrics fallback"
+      input:
+        metrics: null
+        thresholds: { light_max_files: 5, epic_min_files: 20 }
+      output:
+        intensity: "standard"
+        rationale: "Unable to parse impact analysis metrics. Defaulting to standard workflow."
+
+---
+
+# =============================================================================
+# 3. Function: applySizingDecision
+# =============================================================================
+# Location: src/claude/hooks/lib/common.cjs
+# Traces to: FR-05 (AC-15 through AC-18), FR-07 (AC-24, AC-25), ADR-0002
+
+applySizingDecision:
+  description: >
+    Mutates the in-memory state object to apply a sizing decision. For light
+    intensity, removes phases from the workflow arrays. For all intensities,
+    writes the sizing record. Performs invariant checks after mutation and
+    falls back to standard if any invariant fails.
+
+  signature: "applySizingDecision(state: object, intensity: string, sizingData: object): object"
+
+  parameters:
+    state:
+      type: object
+      required: true
+      description: >
+        The in-memory state.json object. Must have active_workflow with phases,
+        phase_status, and current_phase_index. Mutated in place.
+    intensity:
+      type: string
+      required: true
+      enum: [light, standard, epic]
+      description: >
+        The chosen workflow intensity. Validated against the enum. Any other
+        value causes a fallback to standard with a warning.
+    sizingData:
+      type: object
+      required: true
+      description: >
+        Additional data to merge into the sizing record. May include metrics,
+        override information, and flag data.
+      properties:
+        metrics:
+          type: "SizingMetrics | null"
+          description: "Sizing metrics from parseSizingFromImpactAnalysis"
+        forced_by_flag:
+          type: boolean
+          default: false
+          description: "True if -light flag forced this intensity"
+        overridden:
+          type: boolean
+          default: false
+          description: "True if user overrode the framework recommendation"
+        overridden_to:
+          type: "string | null"
+          default: null
+          description: "The intensity the user overrode to, if overridden"
+        recommended_intensity:
+          type: string
+          description: "What the framework originally recommended"
+
+  returns:
+    type: object
+    description: >
+      The mutated state object (same reference), returned for chaining.
+      If invariant checks fail, the state is reverted to pre-mutation and
+      the sizing record reflects the fallback.
+
+  mutations:
+    light:
+      description: "Remove skipped phases and write sizing record"
+      steps:
+        - step: "1. Read light_skip_phases from workflows.json config"
+          detail: >
+            Read feature.sizing.light_skip_phases from the sizingData.config
+            or fall back to hardcoded default ["03-architecture", "04-design"].
+        - step: "2. Snapshot current state for rollback"
+          detail: >
+            Deep copy phases array, phase_status, current_phase_index, and
+            top-level phases object.
+        - step: "3. Filter phases array"
+          detail: >
+            state.active_workflow.phases = phases.filter(p => !skip_phases.includes(p))
+        - step: "4. Remove from phase_status"
+          detail: >
+            for (const p of skip_phases) delete state.active_workflow.phase_status[p]
+        - step: "5. Remove from top-level phases"
+          detail: >
+            for (const p of skip_phases) delete state.phases[p]
+        - step: "6. Recalculate current_phase_index"
+          detail: >
+            Find index of the last completed phase (02-impact-analysis) in the
+            new phases array. Set current_phase_index = that_index + 1.
+        - step: "7. Write sizing record"
+          detail: "Write active_workflow.sizing object (see schema below)"
+        - step: "8. Run invariant checks"
+          detail: "Validate post-mutation state integrity (see invariants below)"
+        - step: "9. If invariants fail: rollback and set standard"
+          detail: >
+            Restore from snapshot, write sizing record with intensity: 'standard'
+            and fallback_reason: 'invariant_check_failed'.
+
+    standard:
+      description: "No phase changes, write sizing record only"
+      steps:
+        - step: "1. Write sizing record to state.active_workflow.sizing"
+        - step: "2. No phase array, phase_status, or top-level phases modifications"
+
+    epic:
+      description: "No phase changes (deferred), write sizing record with deferral flag"
+      steps:
+        - step: "1. Write sizing record with effective_intensity: 'standard'"
+        - step: "2. Set epic_deferred: true in sizing record"
+        - step: "3. No phase array modifications"
+
+  sizing_record_schema:
+    type: object
+    properties:
+      intensity:
+        type: string
+        enum: [light, standard, epic]
+        description: "The decided intensity"
+      effective_intensity:
+        type: string
+        enum: [light, standard]
+        description: "The intensity actually applied (epic -> standard when deferred)"
+      file_count:
+        type: integer
+        minimum: 0
+        source: "sizingData.metrics.file_count || 0"
+      module_count:
+        type: integer
+        minimum: 0
+        source: "sizingData.metrics.module_count || 0"
+      risk_score:
+        type: string
+        enum: [low, medium, high, unknown]
+        source: "sizingData.metrics.risk_score || 'unknown'"
+      coupling:
+        type: string
+        enum: [low, medium, high, unknown]
+        source: "sizingData.metrics.coupling || 'unknown'"
+      coverage_gaps:
+        type: integer
+        minimum: 0
+        source: "sizingData.metrics.coverage_gaps || 0"
+      recommended_by:
+        type: string
+        enum: [framework, user]
+        description: "'framework' if algorithm recommended; 'user' if -light flag"
+      overridden:
+        type: boolean
+        description: "True if user overrode the framework recommendation"
+      overridden_to:
+        type: "string | null"
+        description: "The intensity the user overrode to"
+      decided_at:
+        type: string
+        format: "ISO-8601"
+        description: "Timestamp of the sizing decision"
+      forced_by_flag:
+        type: boolean
+        description: "True if -light flag was used"
+      epic_deferred:
+        type: boolean
+        description: "True if epic was recommended but deferred to standard"
+      fallback_reason:
+        type: "string | null"
+        description: "Populated only on invariant failure: 'invariant_check_failed'"
+
+  invariants:
+    post_mutation:
+      - id: "INV-01"
+        check: "state.active_workflow.phases.length >= 3"
+        description: "Minimum viable workflow requires at least 3 phases"
+        failure_action: "Rollback to standard"
+      - id: "INV-02"
+        check: "state.active_workflow.current_phase_index < state.active_workflow.phases.length"
+        description: "Phase index must be within bounds"
+        failure_action: "Rollback to standard"
+      - id: "INV-03"
+        check: "Every key in phase_status exists in phases array"
+        description: "No orphaned phase_status entries"
+        failure_action: "Rollback to standard"
+      - id: "INV-04"
+        check: "phases[current_phase_index] has status 'pending' in phase_status"
+        description: "Next phase must be pending (not already started)"
+        failure_action: "Rollback to standard"
+
+  examples:
+    - name: "Apply light intensity"
+      input:
+        state:
+          active_workflow:
+            phases: ["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]
+            current_phase_index: 3
+            phase_status:
+              "00-quick-scan": "completed"
+              "01-requirements": "completed"
+              "02-impact-analysis": "completed"
+              "03-architecture": "pending"
+              "04-design": "pending"
+              "05-test-strategy": "pending"
+              "06-implementation": "pending"
+              "16-quality-loop": "pending"
+              "08-code-review": "pending"
+          phases:
+            "00-quick-scan": { status: "completed" }
+            "01-requirements": { status: "completed" }
+            "02-impact-analysis": { status: "completed" }
+            "03-architecture": { status: "pending" }
+            "04-design": { status: "pending" }
+            "05-test-strategy": { status: "pending" }
+            "06-implementation": { status: "pending" }
+            "16-quality-loop": { status: "pending" }
+            "08-code-review": { status: "pending" }
+        intensity: "light"
+        sizingData:
+          metrics: { file_count: 3, module_count: 1, risk_score: "low", coupling: "low", coverage_gaps: 0 }
+          forced_by_flag: false
+          overridden: false
+      output_state:
+        active_workflow:
+          phases: ["00-quick-scan", "01-requirements", "02-impact-analysis", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]
+          current_phase_index: 3
+          phase_status:
+            "00-quick-scan": "completed"
+            "01-requirements": "completed"
+            "02-impact-analysis": "completed"
+            "05-test-strategy": "pending"
+            "06-implementation": "pending"
+            "16-quality-loop": "pending"
+            "08-code-review": "pending"
+          sizing:
+            intensity: "light"
+            effective_intensity: "light"
+            file_count: 3
+            module_count: 1
+            risk_score: "low"
+            coupling: "low"
+            coverage_gaps: 0
+            recommended_by: "framework"
+            overridden: false
+            overridden_to: null
+            decided_at: "2026-02-12T15:30:00Z"
+            forced_by_flag: false
+            epic_deferred: false
+        phases:
+          "00-quick-scan": { status: "completed" }
+          "01-requirements": { status: "completed" }
+          "02-impact-analysis": { status: "completed" }
+          "05-test-strategy": { status: "pending" }
+          "06-implementation": { status: "pending" }
+          "16-quality-loop": { status: "pending" }
+          "08-code-review": { status: "pending" }
+
+---
+
+# =============================================================================
+# 4. Configuration Schema: workflows.json Extensions
+# =============================================================================
+# Location: .isdlc/config/workflows.json
+# Traces to: FR-02 (AC-07), FR-04 (AC-12), ADR-0004
+
+workflows_json_extensions:
+  feature_sizing_block:
+    description: "New 'sizing' block added inside the 'feature' workflow definition"
+    schema:
+      sizing:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+            description: "Master switch for adaptive sizing"
+          thresholds:
+            type: object
+            required: [light_max_files, epic_min_files]
+            properties:
+              light_max_files:
+                type: integer
+                minimum: 1
+                default: 5
+              epic_min_files:
+                type: integer
+                minimum: 2
+                default: 20
+            constraints:
+              - "light_max_files < epic_min_files"
+          light_skip_phases:
+            type: array
+            items:
+              type: string
+            default: ["03-architecture", "04-design"]
+            description: "Phase keys to remove for light intensity"
+          risk_override:
+            type: object
+            properties:
+              high_risk_forces_standard_minimum:
+                type: boolean
+                default: true
+                description: "When true, high-risk features cannot get light intensity"
+
+  feature_options_light:
+    description: "New 'light' option added to feature.options"
+    schema:
+      light:
+        type: object
+        properties:
+          description:
+            type: string
+            value: "Force lightweight workflow (skip architecture and design phases)"
+          default:
+            type: boolean
+            value: false
+          flag:
+            type: string
+            value: "-light"
+
+  rules_rename:
+    description: "Rename no_phase_skipping to no_agent_phase_skipping (ADR-0004)"
+    before:
+      no_phase_skipping: true
+    after:
+      no_agent_phase_skipping: true
+      _comment_phase_skipping: "Agents cannot skip phases at runtime. Framework-level sizing modifications to the phase array (REQ-0011) are permitted before phases are encountered."
+
+---
+
+# =============================================================================
+# 5. State Schema: active_workflow.sizing
+# =============================================================================
+# Location: .isdlc/state.json -> active_workflow.sizing
+# Traces to: FR-07 (AC-24, AC-25)
+# See: database-design.md for full schema details
+
+state_schema:
+  description: >
+    New optional field on active_workflow. Only present after STEP 3e-sizing
+    executes. Persisted to workflow_history on workflow completion.
+  path: "active_workflow.sizing"
+  type: object
+  required_fields:
+    - intensity
+    - effective_intensity
+    - file_count
+    - module_count
+    - risk_score
+    - coupling
+    - coverage_gaps
+    - recommended_by
+    - overridden
+    - decided_at
+    - forced_by_flag
+    - epic_deferred
+  optional_fields:
+    - overridden_to
+    - fallback_reason
+
+---
+
+# =============================================================================
+# 6. Module.exports Additions
+# =============================================================================
+# Location: src/claude/hooks/lib/common.cjs -> module.exports
+
+exports_additions:
+  description: >
+    Three new functions added to the module.exports block under a new section
+    header '// Sizing Utilities (REQ-0011)'.
+  additions:
+    - parseSizingFromImpactAnalysis
+    - computeSizingRecommendation
+    - applySizingDecision
+  placement: >
+    After the 'loadWorkflowDefinitions' export and before 'checkPhaseTimeout',
+    grouped under a comment '// Sizing utilities (REQ-0011)'.

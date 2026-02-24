@@ -1,0 +1,9 @@
+{
+  "source": "github",
+  "source_id": "GH-60+GH-61",
+  "slug": "gh-60-61-build-consumption-init-split-smart-staleness",
+  "created_at": "2026-02-20T18:00:00.000Z",
+  "analysis_status": "analyzed",
+  "phases_completed": ["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design"],
+  "codebase_hash": "450c272"
+}

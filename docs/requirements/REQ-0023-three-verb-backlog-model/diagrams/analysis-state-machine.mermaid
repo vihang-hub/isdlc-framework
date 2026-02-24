@@ -1,0 +1,45 @@
+%% Analysis Status State Machine
+%% Traces: FR-002, FR-007, FR-009
+stateDiagram-v2
+    [*] --> raw : add verb creates item
+    raw --> partial : analyze completes phase 00
+    partial --> partial : analyze completes phase 01-03
+    partial --> analyzed : analyze completes phase 04 (all 5 done)
+
+    raw --> workflow_active : build verb starts workflow
+    partial --> workflow_active : build verb starts workflow
+    analyzed --> workflow_active : build verb starts workflow
+
+    workflow_active --> completed : workflow finalize
+
+    state raw {
+        direction LR
+        note right of raw
+            BACKLOG marker: [ ]
+            phases_completed: []
+        end note
+    }
+
+    state partial {
+        direction LR
+        note right of partial
+            BACKLOG marker: [~]
+            phases_completed: 1-4 entries
+        end note
+    }
+
+    state analyzed {
+        direction LR
+        note right of analyzed
+            BACKLOG marker: [A]
+            phases_completed: 5 entries
+        end note
+    }
+
+    state completed {
+        direction LR
+        note right of completed
+            BACKLOG marker: [x]
+            Workflow finished
+        end note
+    }

@@ -1,0 +1,102 @@
+{
+  "gate": "GATE-06",
+  "phase": "06-implementation",
+  "workflow": "fix",
+  "artifact_folder": "BUG-0032-phase-a-cannot-pull-jira-ticket-content",
+  "validated_at": "2026-02-23T07:25:00Z",
+  "status": "PASSED",
+  "checklist": {
+    "all_features_implemented": {
+      "status": "pass",
+      "detail": "Jira MCP integration added to add handler (step 3b), analyze handler (Group 1), and fix handler (--link flag) per FR-001 through FR-004"
+    },
+    "unit_test_coverage_80_pct": {
+      "status": "pass",
+      "detail": "26 tests covering all specification patterns: 10 new spec validation tests + 8 regression tests + 4 structure tests + 4 existing passing tests. 100% AC coverage."
+    },
+    "all_tests_passing": {
+      "status": "pass",
+      "detail": "BUG-0032 tests: 26/26 pass. Full hooks suite: 2448/2455 (7 pre-existing failures unrelated to this change)"
+    },
+    "code_follows_linting_standards": {
+      "status": "pass",
+      "detail": "Specification-only change follows existing markdown conventions in isdlc.md"
+    },
+    "type_checking_passes": {
+      "status": "not_applicable",
+      "detail": "Specification markdown file, no TypeScript involved"
+    },
+    "implementation_matches_design": {
+      "status": "pass",
+      "detail": "Implementation matches requirements-spec.md exactly: getAccessibleAtlassianResources for cloudId, getJiraIssue for ticket fetch, error fallback, MCP unavailability, first-resource selection, draft content inclusion"
+    },
+    "database_migrations_created": {
+      "status": "not_applicable",
+      "detail": "No database changes required"
+    },
+    "code_documentation_complete": {
+      "status": "pass",
+      "detail": "Implementation notes written to docs/requirements/BUG-0032-phase-a-cannot-pull-jira-ticket-content/implementation-notes.md"
+    }
+  },
+  "test_results": {
+    "framework": "node:test",
+    "commands": [
+      "node --test src/claude/hooks/tests/test-bug-0032-jira-spec.test.cjs"
+    ],
+    "total_new_tests": 10,
+    "bug_0032_tests": {
+      "total": 26,
+      "passed": 26,
+      "failed": 0
+    },
+    "full_hooks_suite": {
+      "total": 2455,
+      "passed": 2448,
+      "failed": 7,
+      "pre_existing_failures": 7
+    }
+  },
+  "iterations": {
+    "current": 1,
+    "max": 10,
+    "history": [
+      {
+        "iteration": 1,
+        "timestamp": "2026-02-23T07:24:00Z",
+        "action": "Added Jira MCP integration to add handler step 3b, analyze handler Group 1, and fix handler --link flag in isdlc.md",
+        "test_command": "node --test src/claude/hooks/tests/test-bug-0032-jira-spec.test.cjs",
+        "result": "PASSED",
+        "failures": 0,
+        "tests_passed": 26,
+        "tests_total": 26,
+        "errors": []
+      }
+    ],
+    "status": "success"
+  },
+  "files_modified": [
+    "src/claude/commands/isdlc.md"
+  ],
+  "acceptance_criteria_coverage": {
+    "AC-001-01": "pass -- SV-01: getJiraIssue present in ADD handler section",
+    "AC-001-02": "pass -- SV-03: issuetype Bug maps to item_type BUG",
+    "AC-001-03": "pass -- SV-03: non-Bug issuetype maps to item_type REQ",
+    "AC-001-04": "pass -- SV-05: fetched summary used for slug generation",
+    "AC-001-05": "pass -- SV-04: error fallback 'Could not fetch Jira' with manual entry",
+    "AC-002-01": "pass -- SV-06: getJiraIssue in Group 1 section",
+    "AC-002-02": "pass -- SV-08: issueData passed from Group 1 to add handler",
+    "AC-002-03": "pass -- SV-07: Jira fail-fast with STOP in Group 1",
+    "AC-002-04": "pass -- SV-11: Jira content goes into draft.md (summary heading, description body)",
+    "AC-003-01": "pass -- SV-02: getAccessibleAtlassianResources for cloudId resolution",
+    "AC-003-02": "pass -- SV-12: first accessible resource used when multiple cloud instances",
+    "AC-003-03": "pass -- SV-10: Atlassian MCP not available graceful degradation to manual entry",
+    "AC-004-01": "pass -- SV-09: Jira URL parsing for --link flag (atlassian.net/browse pattern)",
+    "AC-004-03": "pass -- SV-13: non-Jira URLs preserve existing behavior",
+    "CON-003": "pass -- RT-01 through RT-08: detectSource and generateSlug backward compatibility preserved"
+  },
+  "phase_timing_report": {
+    "debate_rounds_used": 0,
+    "fan_out_chunks": 0
+  }
+}

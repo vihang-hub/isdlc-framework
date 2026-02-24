@@ -1,0 +1,45 @@
+%% REQ-0026: Sequence Diagram - Partially Analyzed Item
+%% Traces: FR-001, FR-003, FR-005
+
+sequenceDiagram
+    participant U as User
+    participant BV as Build Verb (isdlc.md)
+    participant TVU as three-verb-utils.cjs
+    participant O as Orchestrator
+    participant PLC as Phase-Loop Controller
+
+    U->>BV: /isdlc build "login-feature"
+    BV->>TVU: resolveItem("login-feature")
+    TVU-->>BV: { slugDir, slug }
+    BV->>TVU: readMetaJson(slugDir)
+    TVU-->>BV: { analysis_status: "partial", phases_completed: ["00-quick-scan", "01-requirements"] }
+
+    BV->>TVU: validatePhasesCompleted(["00-quick-scan", "01-requirements"])
+    TVU-->>BV: { valid: ["00-quick-scan", "01-requirements"], warnings: [] }
+    BV->>TVU: computeStartPhase(meta, featurePhases)
+    TVU-->>BV: { status: "partial", startPhase: "02-impact-analysis", completedPhases: [00,01], remainingPhases: [02,03,04,05,06,16,08] }
+
+    BV->>U: Partial analysis summary (2 done, 3 analysis + 4 build remaining)
+    BV->>U: [R] Resume / [S] Skip to implementation / [F] Full restart
+
+    alt User selects [R] Resume
+        U-->>BV: [R]
+        BV->>O: START_PHASE: "02-impact-analysis", ARTIFACT_FOLDER: "login-feature"
+        O->>O: Slice: [02,03,04,05,06,16,08]
+        O-->>BV: { phases: [02..08] }
+        BV->>PLC: Drive remaining phases
+    else User selects [S] Skip
+        U-->>BV: [S]
+        BV->>U: Warning: skipped analysis may reduce quality
+        BV->>O: START_PHASE: "05-test-strategy", ARTIFACT_FOLDER: "login-feature"
+        O->>O: Slice: [05,06,16,08]
+        O-->>BV: { phases: [05,06,16,08] }
+        BV->>PLC: Drive remaining phases
+    else User selects [F] Full restart
+        U-->>BV: [F]
+        BV->>BV: Clear meta.json phases_completed, set status "raw"
+        BV->>O: MODE: init-and-phase-01 (no START_PHASE)
+        O->>O: Full workflow [00..08]
+        O-->>BV: { phases: [00..08] }
+        BV->>PLC: Drive all phases
+    end

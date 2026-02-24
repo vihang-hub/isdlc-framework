@@ -1,0 +1,57 @@
+{
+  "gate": "GATE-01",
+  "phase": "01-requirements",
+  "scope": "bug-report",
+  "workflow_type": "fix",
+  "artifact_folder": "BUG-0032-phase-a-cannot-pull-jira-ticket-content",
+  "bug_id": "BUG-0032-GH-7",
+  "external_id": "GH-7",
+  "external_url": "https://github.com/isdlc/isdlc/issues/7",
+  "validated_at": "2026-02-23T06:56:00.000Z",
+  "status": "PASS",
+  "checklist": {
+    "sufficiency_check_completed": true,
+    "expected_behavior_documented": true,
+    "actual_behavior_documented": true,
+    "reproduction_steps_documented": true,
+    "bug_id_assigned": true,
+    "external_link_captured": true,
+    "bug_report_md_exists": true,
+    "requirements_spec_md_exists": true,
+    "fix_requirement_documented": true,
+    "acceptance_criteria_present": true,
+    "acceptance_criteria_format": "Given/When/Then",
+    "functional_requirements_count": 4,
+    "acceptance_criteria_count": 14,
+    "constraints_documented": true,
+    "assumptions_documented": true,
+    "out_of_scope_documented": true
+  },
+  "relaxed_gate_items_skipped": [
+    "user-stories.json",
+    "nfr-matrix.md",
+    "traceability-matrix.csv"
+  ],
+  "constitutional_compliance": {
+    "article_iv_explicit_over_implicit": "PASS",
+    "article_v_simplicity_first": "PASS",
+    "article_vii_artifact_traceability": "PASS",
+    "article_ix_quality_gate_integrity": "PASS",
+    "article_xi_human_ai_collaboration": "PASS"
+  },
+  "artifacts": {
+    "bug-report.md": "docs/requirements/BUG-0032-phase-a-cannot-pull-jira-ticket-content/bug-report.md",
+    "requirements-spec.md": "docs/requirements/BUG-0032-phase-a-cannot-pull-jira-ticket-content/requirements-spec.md"
+  },
+  "summary": {
+    "functional_requirements": 4,
+    "acceptance_criteria": 14,
+    "constraints": 3,
+    "assumptions": 3,
+    "severity": "Medium"
+  },
+  "phase_timing_report": {
+    "debate_rounds_used": 0,
+    "fan_out_chunks": 0
+  }
+}

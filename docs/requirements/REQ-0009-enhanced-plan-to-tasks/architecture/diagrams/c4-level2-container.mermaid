@@ -1,0 +1,82 @@
+%% C4 Level 2: Container Diagram
+%% Enhanced Plan-to-Tasks Pipeline -- Component Interactions
+%% Traces: FR-01 through FR-08
+
+graph LR
+    subgraph PlanGeneration["Plan Generation (Post-GATE-01)"]
+        direction TB
+        G01["GATE-01 passes"]
+        S3b["Section 3b:<br/>Invoke ORCH-012"]
+        ORCH012["ORCH-012 generate-plan<br/>SKILL.md"]
+        Template["workflow-tasks-<br/>template.md"]
+        ReqSpec1["requirements-spec.md"]
+        Tasks1["tasks.md v2.0<br/>(high-level tasks +<br/>traceability tags)"]
+
+        G01 --> S3b
+        S3b --> ORCH012
+        Template --> ORCH012
+        ReqSpec1 --> ORCH012
+        ORCH012 --> Tasks1
+    end
+
+    subgraph TaskRefinement["Task Refinement (Post-GATE-04) [NEW]"]
+        direction TB
+        G04["GATE-04 passes"]
+        Trigger["Refinement trigger<br/>check in phase-loop"]
+        S3c["Section 3c:<br/>Refinement Step"]
+        DesignArt["Design Artifacts<br/>(interface-spec,<br/>module-designs)"]
+        ReqSpec2["requirements-spec.md"]
+        Tasks2in["tasks.md<br/>(high-level)"]
+        Tasks2out["tasks.md<br/>(file-level Phase 06 +<br/>Dep Graph + Trace Matrix)"]
+        RefLog["task-refinement-<br/>log.md"]
+
+        G04 --> Trigger
+        Trigger --> S3c
+        DesignArt --> S3c
+        ReqSpec2 --> S3c
+        Tasks2in --> S3c
+        S3c --> Tasks2out
+        S3c --> RefLog
+    end
+
+    subgraph MechanicalExec["Mechanical Execution (Phase 06) [NEW]"]
+        direction TB
+        ModeCheck["Check<br/>mechanical_mode<br/>in state.json"]
+        HasFiles{"File-level<br/>tasks?"}
+        Standard["Standard Mode<br/>(self-decompose)"]
+        Mechanical["Mechanical Mode<br/>(task-by-task)"]
+        ParseTasks["Parse Phase 06<br/>tasks + deps"]
+        TopoSort["Topological sort<br/>(dependency order)"]
+        ExecLoop["Execute loop:<br/>implement -> test -><br/>[X] or [BLOCKED]"]
+
+        ModeCheck --> HasFiles
+        HasFiles -->|"NO"| Standard
+        HasFiles -->|"YES"| Mechanical
+        Mechanical --> ParseTasks
+        ParseTasks --> TopoSort
+        TopoSort --> ExecLoop
+    end
+
+    subgraph HookValidation["Hook Validation [ENHANCED]"]
+        direction TB
+        HookEntry["plan-surfacer<br/>check()"]
+        ExistCheck{"tasks.md<br/>exists?"}
+        Block["BLOCK:<br/>Plan not generated"]
+        IsImpl{"Phase 06?"}
+        FormatCheck{"File-level<br/>tasks present?"}
+        Warn["WARNING:<br/>No file-level tasks"]
+        Allow["ALLOW"]
+
+        HookEntry --> ExistCheck
+        ExistCheck -->|"NO"| Block
+        ExistCheck -->|"YES"| IsImpl
+        IsImpl -->|"NO"| Allow
+        IsImpl -->|"YES"| FormatCheck
+        FormatCheck -->|"NO"| Warn
+        FormatCheck -->|"YES"| Allow
+        Warn --> Allow
+    end
+
+    PlanGeneration --> TaskRefinement
+    TaskRefinement --> MechanicalExec
+    TaskRefinement --> HookValidation

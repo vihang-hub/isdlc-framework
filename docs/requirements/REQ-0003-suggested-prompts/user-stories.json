@@ -1,0 +1,137 @@
+{
+  "stories": [
+    {
+      "id": "US-001",
+      "epic": "Suggested Prompts",
+      "persona": "Developer",
+      "goal": "see contextual next-step prompts after a phase completes",
+      "benefit": "I know exactly what to do next without memorizing phase sequences",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-001-01",
+          "given": "a phase agent completes its work successfully",
+          "when": "the agent emits its final response",
+          "then": "a SUGGESTED NEXT STEPS block appears with 2-4 contextual prompts"
+        },
+        {
+          "id": "AC-001-02",
+          "given": "a feature workflow is at Phase 01 (requirements)",
+          "when": "the requirements analyst completes and gate passes",
+          "then": "the primary suggested prompt is 'Continue to Phase 02 - Impact Analysis'"
+        },
+        {
+          "id": "AC-001-03",
+          "given": "a fix workflow is at Phase 05 (implementation)",
+          "when": "the developer completes the fix and tests pass",
+          "then": "the primary suggested prompt references the next phase in the fix workflow (Phase 11 - Local Testing)"
+        }
+      ],
+      "linked_requirements": ["REQ-001", "REQ-002", "REQ-006"]
+    },
+    {
+      "id": "US-002",
+      "epic": "Suggested Prompts",
+      "persona": "Developer",
+      "goal": "see workflow-specific prompts that match my current workflow type",
+      "benefit": "I am not confused by prompts referencing phases that are not part of my workflow",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-002-01",
+          "given": "I am running a fix workflow (01, 05, 11, 07, 10, 08)",
+          "when": "Phase 01 completes",
+          "then": "the suggested prompt references Phase 05 (Test Strategy), not Phase 02 (Architecture)"
+        },
+        {
+          "id": "AC-002-02",
+          "given": "I am running a test-run workflow (11, 07)",
+          "when": "Phase 11 (local testing) completes",
+          "then": "the suggested prompt references Phase 07 (Integration Testing)"
+        },
+        {
+          "id": "AC-002-03",
+          "given": "the current phase is the last phase in the workflow",
+          "when": "the last phase completes",
+          "then": "the suggested prompt says 'Complete workflow and merge' instead of referencing a next phase"
+        }
+      ],
+      "linked_requirements": ["REQ-002", "REQ-004", "REQ-006"]
+    },
+    {
+      "id": "US-003",
+      "epic": "Suggested Prompts",
+      "persona": "Developer",
+      "goal": "have a consistent prompt format across all agents",
+      "benefit": "I can quickly scan prompts without learning different formats per agent",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-003-01",
+          "given": "any phase agent emits suggested prompts",
+          "when": "I read the output",
+          "then": "the format is always: numbered list with [N] prefix, wrapped in --- delimiters"
+        },
+        {
+          "id": "AC-003-02",
+          "given": "any agent's suggested prompts block",
+          "when": "there are multiple prompts",
+          "then": "the first prompt is always the primary/recommended next action"
+        }
+      ],
+      "linked_requirements": ["REQ-005"]
+    },
+    {
+      "id": "US-004",
+      "epic": "Suggested Prompts",
+      "persona": "Developer",
+      "goal": "see the orchestrator suggest next steps after workflow initialization",
+      "benefit": "I understand the full plan and what the first phase will involve",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-004-01",
+          "given": "I run /sdlc feature 'Build user auth'",
+          "when": "the workflow initializes and Phase 01 begins",
+          "then": "suggested prompts include 'Describe your feature to the requirements analyst' and 'Show workflow status'"
+        },
+        {
+          "id": "AC-004-02",
+          "given": "a workflow completes successfully",
+          "when": "the orchestrator displays the completion summary",
+          "then": "suggested prompts include 'Start a new feature', 'Run tests', 'View project status'"
+        }
+      ],
+      "linked_requirements": ["REQ-004"]
+    },
+    {
+      "id": "US-005",
+      "epic": "Suggested Prompts",
+      "persona": "Developer",
+      "goal": "each agent markdown file contains a documented SUGGESTED PROMPTS section",
+      "benefit": "the prompt catalog is maintainable and auditable alongside agent behavior",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-005-01",
+          "given": "any phase agent markdown file in src/claude/agents/",
+          "when": "I search for '# SUGGESTED PROMPTS'",
+          "then": "I find a section defining primary, alternative, and utility prompts"
+        },
+        {
+          "id": "AC-005-02",
+          "given": "a SUGGESTED PROMPTS section in an agent file",
+          "when": "the agent reads this section during execution",
+          "then": "the agent uses the templates to generate prompts with dynamic values from state.json"
+        },
+        {
+          "id": "AC-005-03",
+          "given": "an agent markdown file without a SUGGESTED PROMPTS section",
+          "when": "the agent completes its work",
+          "then": "no error occurs -- the agent simply does not emit suggested prompts (backward compatible)"
+        }
+      ],
+      "linked_requirements": ["REQ-003", "REQ-007"]
+    }
+  ]
+}

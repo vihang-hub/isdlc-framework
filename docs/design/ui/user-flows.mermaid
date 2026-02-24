@@ -1,0 +1,78 @@
+%% User Flow: Impact Analysis Phase 02 with M4 Cross-Validation
+%% Feature: REQ-0015
+%% Created: 2026-02-15
+
+%% Flow 1: Happy Path (M4 completes successfully)
+flowchart TD
+    A[Phase 02: Impact Analysis Start] --> B[Step 1: Load Requirements]
+    B --> C[Step 2: Launch M1/M2/M3 in Parallel]
+    C --> D1[M1: Impact Analyzer]
+    C --> D2[M2: Entry Point Finder]
+    C --> D3[M3: Risk Assessor]
+    D1 --> E[Step 3: Collect Results]
+    D2 --> E
+    D3 --> E
+    E --> F{Step 3.5: M4 Agent Available?}
+    F -->|Yes - Tier 1 Pass| G[Launch M4: Cross-Validation Verifier]
+    F -->|No - Tier 1 Skip| J[Step 4: Consolidate without M4]
+    G --> H{M4 Task Call Success?}
+    H -->|Yes| I{M4 Response Valid?}
+    H -->|No - Tier 2| K[Log WARNING, set M4=skipped]
+    I -->|Yes - Tier 3 Pass| L[Include M4 in Report]
+    I -->|No - Tier 3 Fail| K
+    K --> J
+    L --> M[Step 4: Consolidate with M4]
+    J --> N[Step 5: Update State]
+    M --> N
+    N --> O[Step 6: Display Summary]
+    O --> P[Phase 02 Complete]
+
+%% Flow 2: M4 Verification Status Decision Tree
+flowchart TD
+    V1[M4 Findings Generated] --> V2{Any CRITICAL findings?}
+    V2 -->|Yes| V3[verification_status = FAIL]
+    V2 -->|No| V4{Any WARNING findings?}
+    V4 -->|Yes| V5[verification_status = WARN]
+    V4 -->|No| V6[verification_status = PASS]
+    V3 --> V7[Surface in Executive Summary]
+    V5 --> V8[List in Cross-Validation Section]
+    V6 --> V9[Clean Pass Note]
+
+%% Flow 3: M4 Cross-Validation Checks
+flowchart LR
+    subgraph Inputs
+        M1[M1 Output]
+        M2[M2 Output]
+        M3[M3 Output]
+    end
+    subgraph Step2["Step 2: File List"]
+        FL1[Extract m1_files]
+        FL2[Extract m2_files]
+        FL3[Compute Delta]
+    end
+    subgraph Step3["Step 3: Risk Gaps"]
+        RG1[Check Coupling vs Risk]
+        RG2[Check Chain Depth vs Coverage]
+        RG3[Check Blast vs Overall Risk]
+    end
+    subgraph Step4["Step 4: Completeness"]
+        CP1[M2 Entry -> M1 File]
+        CP2[M1 Module -> M3 Risk]
+        CP3[Compute Score]
+    end
+    M1 --> FL1
+    M2 --> FL2
+    FL1 --> FL3
+    FL2 --> FL3
+    M1 --> RG1
+    M3 --> RG1
+    M2 --> RG2
+    M3 --> RG2
+    M1 --> RG3
+    M3 --> RG3
+    M1 --> CP1
+    M2 --> CP1
+    M1 --> CP2
+    M3 --> CP2
+    CP1 --> CP3
+    CP2 --> CP3

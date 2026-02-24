@@ -1,0 +1,350 @@
+{
+  "feature": "REQ-0001",
+  "phase": "04-design",
+  "version": "1.0",
+  "created": "2026-02-23",
+  "description": "Validation rules for Unified SessionStart Cache components",
+
+  "rebuildSessionCache_input": {
+    "description": "Validation rules for rebuildSessionCache() options parameter",
+    "rules": [
+      {
+        "id": "VR-001",
+        "field": "options",
+        "rule": "Must be an object or undefined",
+        "required": false,
+        "type": "object",
+        "default": "{}",
+        "on_failure": "Use empty defaults"
+      },
+      {
+        "id": "VR-002",
+        "field": "options.projectRoot",
+        "rule": "If provided, must be a non-empty string pointing to an existing directory with .isdlc/",
+        "required": false,
+        "type": "string",
+        "on_failure": "Fall back to getProjectRoot()"
+      },
+      {
+        "id": "VR-003",
+        "field": "options.verbose",
+        "rule": "If provided, must be a boolean",
+        "required": false,
+        "type": "boolean",
+        "default": false,
+        "on_failure": "Treat as false"
+      }
+    ]
+  },
+
+  "rebuildSessionCache_output": {
+    "description": "Validation rules for rebuildSessionCache() return value",
+    "rules": [
+      {
+        "id": "VR-010",
+        "field": "result.path",
+        "rule": "Must be an absolute path to .isdlc/session-cache.md",
+        "required": true,
+        "type": "string",
+        "constraint": "Path ends with '.isdlc/session-cache.md'"
+      },
+      {
+        "id": "VR-011",
+        "field": "result.size",
+        "rule": "Must be a positive integer representing character count",
+        "required": true,
+        "type": "number",
+        "constraint": "size > 0"
+      },
+      {
+        "id": "VR-012",
+        "field": "result.hash",
+        "rule": "Must be an 8-character lowercase hexadecimal string",
+        "required": true,
+        "type": "string",
+        "pattern": "^[0-9a-f]{8}$"
+      },
+      {
+        "id": "VR-013",
+        "field": "result.sections",
+        "rule": "Must be an array of section name strings",
+        "required": true,
+        "type": "array",
+        "items": "string",
+        "valid_values": ["CONSTITUTION", "WORKFLOW_CONFIG", "ITERATION_REQUIREMENTS", "ARTIFACT_PATHS", "SKILLS_MANIFEST", "SKILL_INDEX", "EXTERNAL_SKILLS", "ROUNDTABLE_CONTEXT"]
+      },
+      {
+        "id": "VR-014",
+        "field": "result.skipped",
+        "rule": "Must be an array of section name strings (subset of all section names)",
+        "required": true,
+        "type": "array",
+        "items": "string"
+      }
+    ]
+  },
+
+  "cache_file_format": {
+    "description": "Validation rules for the .isdlc/session-cache.md file format",
+    "rules": [
+      {
+        "id": "VR-020",
+        "field": "header",
+        "rule": "First line must match the header pattern",
+        "required": true,
+        "type": "regex",
+        "pattern": "^<!-- SESSION CACHE: Generated .+ \\| Sources: \\d+ \\| Hash: [0-9a-f]{8} -->$"
+      },
+      {
+        "id": "VR-021",
+        "field": "section_delimiters",
+        "rule": "Each included section must have matching open/close delimiters",
+        "required": true,
+        "type": "structural",
+        "constraint": "For every '<!-- SECTION: X -->', there must be a corresponding '<!-- /SECTION: X -->'"
+      },
+      {
+        "id": "VR-022",
+        "field": "section_names",
+        "rule": "Section names must be UPPER_SNAKE_CASE from the allowed set",
+        "required": true,
+        "type": "enum",
+        "valid_values": ["CONSTITUTION", "WORKFLOW_CONFIG", "ITERATION_REQUIREMENTS", "ARTIFACT_PATHS", "SKILLS_MANIFEST", "SKILL_INDEX", "EXTERNAL_SKILLS", "ROUNDTABLE_CONTEXT"]
+      },
+      {
+        "id": "VR-023",
+        "field": "total_size",
+        "rule": "Total file size should not exceed 128000 characters",
+        "required": false,
+        "type": "number",
+        "constraint": "size <= 128000",
+        "on_failure": "Warning emitted, file still written"
+      },
+      {
+        "id": "VR-024",
+        "field": "skipped_section",
+        "rule": "Skipped sections must use the SKIPPED marker format",
+        "required": true,
+        "type": "regex",
+        "pattern": "^<!-- SECTION: [A-Z_]+ SKIPPED: .+ -->$"
+      }
+    ]
+  },
+
+  "settings_json_registration": {
+    "description": "Validation rules for SessionStart hook registration in settings.json",
+    "rules": [
+      {
+        "id": "VR-030",
+        "field": "hooks.SessionStart",
+        "rule": "Must be an array with exactly 2 entries (startup + resume)",
+        "required": true,
+        "type": "array",
+        "constraint": "length === 2"
+      },
+      {
+        "id": "VR-031",
+        "field": "hooks.SessionStart[0].matcher.event",
+        "rule": "First entry must match 'startup' event",
+        "required": true,
+        "type": "string",
+        "value": "startup"
+      },
+      {
+        "id": "VR-032",
+        "field": "hooks.SessionStart[1].matcher.event",
+        "rule": "Second entry must match 'resume' event",
+        "required": true,
+        "type": "string",
+        "value": "resume"
+      },
+      {
+        "id": "VR-033",
+        "field": "hooks.SessionStart[*].hooks[0].command",
+        "rule": "Command must reference inject-session-cache.cjs via $CLAUDE_PROJECT_DIR",
+        "required": true,
+        "type": "string",
+        "pattern": "node \\$CLAUDE_PROJECT_DIR/.claude/hooks/inject-session-cache\\.cjs"
+      },
+      {
+        "id": "VR-034",
+        "field": "hooks.SessionStart[*].hooks[0].timeout",
+        "rule": "Timeout must be 5000ms",
+        "required": true,
+        "type": "number",
+        "value": 5000
+      },
+      {
+        "id": "VR-035",
+        "field": "hooks.SessionStart[*].matcher",
+        "rule": "Matcher must NOT use compact format (bug #15174 avoidance)",
+        "required": true,
+        "type": "structural",
+        "constraint": "matcher must be an object with 'type' and 'event' fields, NOT a bare string"
+      }
+    ]
+  },
+
+  "skill_path_index": {
+    "description": "Validation rules for the _buildSkillPathIndex() output",
+    "rules": [
+      {
+        "id": "VR-040",
+        "field": "Map entries",
+        "rule": "Keys must be valid skill IDs (uppercase prefix + hyphen + digits)",
+        "required": true,
+        "type": "regex",
+        "pattern": "^[A-Z]+-\\d{3}$"
+      },
+      {
+        "id": "VR-041",
+        "field": "Map values",
+        "rule": "Values must be relative paths ending in SKILL.md",
+        "required": true,
+        "type": "string",
+        "constraint": "Ends with '/SKILL.md' or '\\SKILL.md'"
+      },
+      {
+        "id": "VR-042",
+        "field": "Map uniqueness",
+        "rule": "Each skill ID must map to exactly one path (first-found wins)",
+        "required": true,
+        "type": "structural",
+        "constraint": "No duplicate keys (Map enforces this)"
+      }
+    ]
+  },
+
+  "getAgentSkillIndex_output": {
+    "description": "Validation rules for getAgentSkillIndex() return value (post-refactor)",
+    "rules": [
+      {
+        "id": "VR-050",
+        "field": "return value",
+        "rule": "Must be an array (empty array on failure)",
+        "required": true,
+        "type": "array"
+      },
+      {
+        "id": "VR-051",
+        "field": "entry.id",
+        "rule": "Must be a non-empty string matching a skill ID pattern",
+        "required": true,
+        "type": "string",
+        "pattern": "^[A-Z]+-\\d{3}$"
+      },
+      {
+        "id": "VR-052",
+        "field": "entry.name",
+        "rule": "Must be a non-empty string (skill directory name)",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "id": "VR-053",
+        "field": "entry.description",
+        "rule": "Must be a non-empty string (extracted from SKILL.md or fallback to name)",
+        "required": true,
+        "type": "string"
+      },
+      {
+        "id": "VR-054",
+        "field": "entry.path",
+        "rule": "Must be a relative path to SKILL.md",
+        "required": true,
+        "type": "string",
+        "constraint": "Ends with '/SKILL.md' or '\\SKILL.md'"
+      }
+    ]
+  },
+
+  "external_manifest_source": {
+    "description": "Validation rules for the external manifest source field (FR-009)",
+    "rules": [
+      {
+        "id": "VR-060",
+        "field": "skill.source",
+        "rule": "Must be one of the allowed source values",
+        "required": false,
+        "type": "enum",
+        "valid_values": ["discover", "skills.sh", "user", "unknown"],
+        "default": "unknown",
+        "on_failure": "Treat as 'unknown'"
+      }
+    ]
+  },
+
+  "inject_session_cache_hook": {
+    "description": "Validation rules for the SessionStart hook behavior",
+    "rules": [
+      {
+        "id": "VR-070",
+        "field": "exit_code",
+        "rule": "Hook must always exit with code 0 regardless of errors",
+        "required": true,
+        "type": "number",
+        "value": 0
+      },
+      {
+        "id": "VR-071",
+        "field": "stderr",
+        "rule": "Hook must never write to stderr",
+        "required": true,
+        "type": "empty"
+      },
+      {
+        "id": "VR-072",
+        "field": "stdout",
+        "rule": "If cache exists, stdout must contain the complete cache file content. If cache missing, stdout must be empty.",
+        "required": true,
+        "type": "conditional"
+      },
+      {
+        "id": "VR-073",
+        "field": "execution_time",
+        "rule": "Must complete within 5000ms timeout",
+        "required": true,
+        "type": "number",
+        "constraint": "execution_time_ms < 5000"
+      }
+    ]
+  },
+
+  "rebuild_cache_cli": {
+    "description": "Validation rules for bin/rebuild-cache.js CLI behavior",
+    "rules": [
+      {
+        "id": "VR-080",
+        "field": "exit_code_success",
+        "rule": "Exit code 0 when cache built successfully",
+        "required": true,
+        "type": "number",
+        "value": 0
+      },
+      {
+        "id": "VR-081",
+        "field": "exit_code_failure",
+        "rule": "Exit code 1 when cache build fails",
+        "required": true,
+        "type": "number",
+        "value": 1
+      },
+      {
+        "id": "VR-082",
+        "field": "stdout_success",
+        "rule": "On success, stdout must contain path, size, hash, and sections",
+        "required": true,
+        "type": "structural",
+        "constraint": "Contains 'Path:', 'Size:', 'Hash:', 'Sections:'"
+      },
+      {
+        "id": "VR-083",
+        "field": "stderr_failure",
+        "rule": "On failure, stderr must contain error message",
+        "required": true,
+        "type": "string",
+        "constraint": "Contains 'Failed to rebuild session cache:'"
+      }
+    ]
+  }
+}

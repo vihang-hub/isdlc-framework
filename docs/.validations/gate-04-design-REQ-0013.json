@@ -1,0 +1,146 @@
+{
+  "gate": "GATE-04",
+  "phase": "04-design",
+  "feature": "REQ-0013-supervised-mode",
+  "validated_at": "2026-02-14T11:30:00Z",
+  "validated_by": "system-designer",
+  "status": "PASS",
+
+  "checklist": {
+    "interface_specification_complete": {
+      "status": "PASS",
+      "notes": "No external API. Internal interfaces specified via function signatures in module-design-common-cjs.md (4 functions with full JSDoc, pseudo-code, parameter types, return types). CLI flag specification in module-design-gate-blocker-orchestrator.md Section 3."
+    },
+    "all_modules_designed_with_clear_responsibilities": {
+      "status": "PASS",
+      "notes": "4 module design files: common-cjs (4 helper functions), isdlc-md (STEP 3e-review insertion), gate-blocker-orchestrator (gate-blocker + orchestrator + workflows.json). Each has clear responsibility tables, function signatures, and pseudo-code.",
+      "artifacts": [
+        "module-design-common-cjs.md",
+        "module-design-isdlc-md.md",
+        "module-design-gate-blocker-orchestrator.md"
+      ]
+    },
+    "ui_wireframes_for_all_screens": {
+      "status": "PASS",
+      "notes": "CLI-only feature. No graphical UI. All user-facing menus and banners are specified in module-design-isdlc-md.md Section 6 (Review Gate Banner, Redo Guidance Prompt, Review Pause Instructions, Session Recovery Banner)."
+    },
+    "user_flows_documented": {
+      "status": "PASS",
+      "notes": "User flows documented in module-design-isdlc-md.md: STEP 3e-review flow (Section 3), state transitions (Section 5), SCENARIO 4 recovery (Section 4), final phase handling (Section 7). Sequence diagram in architecture-overview.md Section 6.2."
+    },
+    "error_taxonomy_complete": {
+      "status": "PASS",
+      "notes": "error-taxonomy.md covers 7 error categories (ERR-SM-1xx through ERR-SM-7xx), 24 specific error codes. All follow fail-open principle with SILENT/WARN/DEGRADE severity levels.",
+      "artifact": "error-taxonomy.md"
+    },
+    "validation_rules_defined": {
+      "status": "PASS",
+      "notes": "validation-rules.json covers 3 schemas (supervised_mode_config, supervised_review_state, review_history_entry), CLI flags, file system rules, and circuit breaker configuration.",
+      "artifact": "validation-rules.json"
+    },
+    "designs_cover_all_requirements": {
+      "status": "PASS",
+      "notes": "All 35 ACs traced. See ac_coverage below.",
+      "total_acs": 35,
+      "acs_covered": 35,
+      "acs_uncovered": 0
+    },
+    "interface_contracts_reviewed": {
+      "status": "PASS",
+      "notes": "All function signatures use existing patterns (readCodeReviewConfig, collectPhaseSnapshots, applySizingDecision). State schema follows code_review.enabled pattern. No new external interfaces."
+    }
+  },
+
+  "ac_coverage": {
+    "AC-01a": { "covered_by": ["module-design-common-cjs.md", "module-design-gate-blocker-orchestrator.md"], "design_element": "readSupervisedModeConfig(), orchestrator --supervised flag" },
+    "AC-01b": { "covered_by": ["module-design-common-cjs.md"], "design_element": "readSupervisedModeConfig() returns { enabled: false }" },
+    "AC-01c": { "covered_by": ["module-design-common-cjs.md"], "design_element": "readSupervisedModeConfig() fail-open default" },
+    "AC-01d": { "covered_by": ["module-design-common-cjs.md"], "design_element": "shouldReviewPhase() with review_phases='all'" },
+    "AC-01e": { "covered_by": ["module-design-common-cjs.md"], "design_element": "shouldReviewPhase() with review_phases array" },
+    "AC-01f": { "covered_by": ["module-design-common-cjs.md"], "design_element": "readSupervisedModeConfig() filter invalid entries" },
+    "AC-01g": { "covered_by": ["module-design-common-cjs.md", "module-design-gate-blocker-orchestrator.md"], "design_element": "parallel_summary=true generates full summary" },
+    "AC-01h": { "covered_by": ["module-design-common-cjs.md"], "design_element": "parallel_summary=false generates minimal summary" },
+    "AC-02a": { "covered_by": ["module-design-common-cjs.md", "module-design-isdlc-md.md"], "design_element": "generatePhaseSummary() full output template" },
+    "AC-02b": { "covered_by": ["module-design-common-cjs.md"], "design_element": "generatePhaseSummary() handles empty artifacts" },
+    "AC-02c": { "covered_by": ["module-design-common-cjs.md"], "design_element": "fs.mkdirSync(reviewsDir, { recursive: true })" },
+    "AC-02d": { "covered_by": ["module-design-common-cjs.md"], "design_element": "fs.writeFileSync overwrites existing" },
+    "AC-02e": { "covered_by": ["module-design-common-cjs.md"], "design_element": "options.minimal=true minimal template" },
+    "AC-03a": { "covered_by": ["module-design-isdlc-md.md"], "design_element": "Review gate banner + AskUserQuestion" },
+    "AC-03b": { "covered_by": ["module-design-isdlc-md.md"], "design_element": "CASE [C] Continue handling" },
+    "AC-03c": { "covered_by": ["module-design-isdlc-md.md"], "design_element": "CASE [R] Review handling" },
+    "AC-03d": { "covered_by": ["module-design-isdlc-md.md"], "design_element": "CASE [D] Redo handling" },
+    "AC-03e": { "covered_by": ["module-design-common-cjs.md", "module-design-isdlc-md.md"], "design_element": "shouldReviewPhase returns false -> skip" },
+    "AC-03f": { "covered_by": ["module-design-common-cjs.md", "module-design-isdlc-md.md"], "design_element": "config.enabled=false -> skip" },
+    "AC-03g": { "covered_by": ["module-design-isdlc-md.md"], "design_element": "Final phase handling (Section 7)" },
+    "AC-04a": { "covered_by": ["module-design-isdlc-md.md"], "design_element": "CASE [R] Review: display summary + instructions" },
+    "AC-04b": { "covered_by": ["module-design-isdlc-md.md", "module-design-gate-blocker-orchestrator.md"], "design_element": "supervised_review.status='reviewing', paused_at set" },
+    "AC-04c": { "covered_by": ["module-design-isdlc-md.md"], "design_element": "User says 'continue' -> advance" },
+    "AC-04d": { "covered_by": ["module-design-isdlc-md.md"], "design_element": "Next phase reads from disk (no special handling)" },
+    "AC-04e": { "covered_by": ["module-design-isdlc-md.md", "module-design-gate-blocker-orchestrator.md"], "design_element": "supervised_review.status='completed', resumed_at set" },
+    "AC-05a": { "covered_by": ["module-design-isdlc-md.md"], "design_element": "CASE [D] Redo: prompt for guidance" },
+    "AC-05b": { "covered_by": ["module-design-isdlc-md.md", "module-design-gate-blocker-orchestrator.md"], "design_element": "Append REDO GUIDANCE to prompt + redo_guidance_history" },
+    "AC-05c": { "covered_by": ["module-design-isdlc-md.md"], "design_element": "Re-generate summary, re-present menu" },
+    "AC-05d": { "covered_by": ["module-design-isdlc-md.md"], "design_element": "Circuit breaker: redo_count >= 3 removes [D]" },
+    "AC-05e": { "covered_by": ["module-design-isdlc-md.md"], "design_element": "Phase state: completed->in_progress->completed" },
+    "AC-05f": { "covered_by": ["module-design-isdlc-md.md", "module-design-gate-blocker-orchestrator.md"], "design_element": "redo_count incremented in supervised_review" },
+    "AC-06a": { "covered_by": ["module-design-gate-blocker-orchestrator.md"], "design_element": "Gate-blocker allows, defers to review gate" },
+    "AC-06b": { "covered_by": ["module-design-gate-blocker-orchestrator.md"], "design_element": "Gate-blocker no behavioral change" },
+    "AC-06c": { "covered_by": ["module-design-gate-blocker-orchestrator.md"], "design_element": "readSupervisedModeConfig fail-open" },
+    "AC-07a": { "covered_by": ["module-design-isdlc-md.md"], "design_element": "STEP 3e-review executes after 3e" },
+    "AC-07b": { "covered_by": ["module-design-isdlc-md.md"], "design_element": "config.enabled=false -> skip" },
+    "AC-07c": { "covered_by": ["module-design-isdlc-md.md"], "design_element": "shouldReviewPhase=false -> skip" },
+    "AC-07d": { "covered_by": ["module-design-isdlc-md.md"], "design_element": "Final phase handling" },
+    "AC-08a": { "covered_by": ["module-design-common-cjs.md", "module-design-isdlc-md.md"], "design_element": "recordReviewAction() appends to review_history" },
+    "AC-08b": { "covered_by": ["module-design-gate-blocker-orchestrator.md"], "design_element": "Finalize preserves review_history" },
+    "AC-08c": { "covered_by": ["module-design-gate-blocker-orchestrator.md"], "design_element": "Empty review_history for non-supervised" }
+  },
+
+  "nfr_coverage": {
+    "NFR-013-01": { "status": "covered", "design_element": "All changes additive. Skip logic on disabled/missing config. Backward compatibility table in module-design-gate-blocker-orchestrator.md Section 7." },
+    "NFR-013-02": { "status": "covered", "design_element": "readSupervisedModeConfig fail-open defaults. ERR-SM-1xx error codes." },
+    "NFR-013-03": { "status": "covered", "design_element": "Performance analysis in module-design-common-cjs.md Section 5.5. Total <1s typical." },
+    "NFR-013-04": { "status": "covered", "design_element": "SCENARIO 4 enhancement in module-design-isdlc-md.md Section 4. ERR-SM-5xx recovery codes." },
+    "NFR-013-05": { "status": "covered", "design_element": "Circuit breaker in module-design-isdlc-md.md Section 5.3. validation-rules.json circuit_breaker." },
+    "NFR-013-06": { "status": "covered", "design_element": "No new dependencies. Only child_process (stdlib) added as lazy require." }
+  },
+
+  "constitutional_validation": {
+    "status": "compliant",
+    "iterations_used": 1,
+    "max_iterations": 5,
+    "articles_checked": ["I", "IV", "V", "VII", "IX"],
+    "violations_found": 0,
+    "article_results": {
+      "I_specification_primacy": {
+        "status": "compliant",
+        "notes": "All designs trace to requirements spec (8 FRs, 6 NFRs, 35 ACs). No deviations from specifications. No assumptions beyond what is specified."
+      },
+      "IV_explicit_over_implicit": {
+        "status": "compliant",
+        "notes": "All decisions documented with traces. auto_advance_timeout explicitly deferred (CON-013-05). No [NEEDS CLARIFICATION] markers remaining. Error handling explicitly cataloged (24 error codes)."
+      },
+      "V_simplicity_first": {
+        "status": "compliant",
+        "notes": "Simplest architecture: 4 utility functions + 1 conditional step. No new agents, hooks, phases, or dependencies. Follows existing patterns (readCodeReviewConfig, applySizingDecision). Gate-blocker requires minimal change (comments + info log)."
+      },
+      "VII_artifact_traceability": {
+        "status": "compliant",
+        "notes": "All 35 ACs traced to specific design elements. All 6 NFRs covered. Every function, state field, and error code traces to requirements."
+      },
+      "IX_quality_gate_integrity": {
+        "status": "compliant",
+        "notes": "All GATE-04 checklist items pass. Required artifacts exist: 3 module designs, error taxonomy, validation rules, state schemas, user flow documentation."
+      }
+    },
+    "completed_at": "2026-02-14T11:30:00Z"
+  },
+
+  "artifacts_produced": [
+    "docs/requirements/REQ-0013-supervised-mode/module-design-common-cjs.md",
+    "docs/requirements/REQ-0013-supervised-mode/module-design-isdlc-md.md",
+    "docs/requirements/REQ-0013-supervised-mode/module-design-gate-blocker-orchestrator.md",
+    "docs/requirements/REQ-0013-supervised-mode/error-taxonomy.md",
+    "docs/requirements/REQ-0013-supervised-mode/validation-rules.json",
+    "docs/.validations/gate-04-design-REQ-0013.json"
+  ]
+}

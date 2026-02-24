@@ -1,0 +1,66 @@
+{
+  "gate": "GATE-08",
+  "phase": "08-code-review",
+  "workflow": "feature",
+  "artifact_folder": "REQ-0014-backlog-scaffolding",
+  "req_id": "REQ-0014",
+  "timestamp": "2026-02-14T18:20:00.000Z",
+  "result": "PASS",
+  "checklist": {
+    "code_review_completed": true,
+    "no_critical_issues_open": true,
+    "static_analysis_passing": true,
+    "code_coverage_meets_thresholds": true,
+    "coding_standards_followed": true,
+    "performance_acceptable": true,
+    "security_review_complete": true,
+    "qa_sign_off_obtained": true
+  },
+  "test_results": {
+    "esm_pass": 598,
+    "esm_fail": 1,
+    "esm_total": 599,
+    "esm_pre_existing_failures": ["TC-E09"],
+    "cjs_pass": 1280,
+    "cjs_fail": 0,
+    "cjs_total": 1280,
+    "new_tests_pass": 18,
+    "new_tests_fail": 0,
+    "new_tests_total": 18,
+    "regressions": 0
+  },
+  "traceability": {
+    "functional_requirements": 4,
+    "functional_requirements_covered": 4,
+    "acceptance_criteria": 12,
+    "acceptance_criteria_covered": 12,
+    "nfrs": 2,
+    "nfrs_covered": 2,
+    "test_cases": 18,
+    "test_cases_implemented": 18,
+    "coverage_percent": 100
+  },
+  "constitutional_compliance": {
+    "article_V_simplicity": "PASS",
+    "article_VI_code_review": "PASS",
+    "article_VII_traceability": "PASS",
+    "article_VIII_documentation": "PASS",
+    "article_IX_gate_integrity": "PASS"
+  },
+  "findings": {
+    "critical": 0,
+    "major": 0,
+    "minor": 0,
+    "info": 0
+  },
+  "recommendation": "APPROVE",
+  "artifacts": [
+    "docs/quality/code-review-report.md",
+    "docs/quality/quality-metrics.md",
+    "docs/quality/static-analysis-report.md",
+    "docs/quality/technical-debt.md",
+    "docs/quality/qa-sign-off.md",
+    "docs/requirements/REQ-0014-backlog-scaffolding/code-review-report.md",
+    "docs/.validations/gate-08-code-review-REQ-0014.json"
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "gate": "GATE-04",
+  "phase": "04-design",
+  "requirement_id": "REQ-0021",
+  "feature": "T7 Agent Prompt Boilerplate Extraction",
+  "validated_at": "2026-02-17T18:00:00Z",
+  "status": "PASSED",
+  "checklist": {
+    "interface_specification_complete": {
+      "status": "PASSED",
+      "evidence": "CLAUDE.md section content fully specified in design-spec.md Section 1 (5 subsections, 113 lines total). No API/OpenAPI needed -- pure markdown refactoring."
+    },
+    "all_modules_designed": {
+      "status": "PASSED",
+      "evidence": "29 file modifications specified with exact remove/replace content in design-spec.md Section 2. 8 implementation phases with dependency chain."
+    },
+    "ui_wireframes": {
+      "status": "N/A",
+      "evidence": "No UI in this refactoring. Pure markdown file changes."
+    },
+    "user_flows_documented": {
+      "status": "N/A",
+      "evidence": "No user-facing flows. Agent delegation flow is unchanged (CLAUDE.md auto-loaded)."
+    },
+    "error_taxonomy_complete": {
+      "status": "N/A",
+      "evidence": "No error codes. Verification failures documented as pass/fail criteria in V-001 through V-005."
+    },
+    "validation_rules_defined": {
+      "status": "PASSED",
+      "evidence": "5 verification checks (V-001 through V-005) with exact grep commands, expected values, and pass criteria in design-spec.md Section 4."
+    },
+    "designs_cover_all_requirements": {
+      "status": "PASSED",
+      "evidence": "Traceability matrix in design-spec.md Section 7 maps all 12 FRs, 6 NFRs, and 4 SMs to design elements."
+    },
+    "interface_contracts_reviewed": {
+      "status": "PASSED",
+      "evidence": "Reference format convention (blockquote + bold section name) follows T2 pattern per ADR-0005."
+    }
+  },
+  "constitutional_compliance": {
+    "article_I": {
+      "status": "COMPLIANT",
+      "evidence": "Design implements requirements.md and architecture.md specifications exactly."
+    },
+    "article_IV": {
+      "status": "COMPLIANT",
+      "evidence": "Every agent modification specified with exact content. No ambiguities."
+    },
+    "article_V": {
+      "status": "COMPLIANT",
+      "evidence": "Extends proven T2 extraction pattern. No new mechanisms."
+    },
+    "article_VII": {
+      "status": "COMPLIANT",
+      "evidence": "Full traceability matrix in Section 7."
+    },
+    "article_IX": {
+      "status": "COMPLIANT",
+      "evidence": "All gate checklist items pass or documented as N/A."
+    }
+  },
+  "artifacts": [
+    "docs/requirements/REQ-0021-t7-agent-prompt-boilerplate-extraction/design-spec.md"
+  ],
+  "iteration_count": 1,
+  "max_iterations": 5
+}

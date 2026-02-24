@@ -1,0 +1,19 @@
+Requirement ID,User Story ID,Epic,Priority,Status
+REQ-013-FR-01,US-001,Supervised Mode Configuration,Must Have,Draft
+REQ-013-FR-01,US-002,Supervised Mode Configuration,Must Have,Draft
+REQ-013-FR-02,US-003,Phase Summary,Must Have,Draft
+REQ-013-FR-03,US-004,Review Gate,Must Have,Draft
+REQ-013-FR-03,US-005,Review Gate,Must Have,Draft
+REQ-013-FR-04,US-006,Review Pause,Must Have,Draft
+REQ-013-FR-05,US-007,Redo Phase,Must Have,Draft
+REQ-013-FR-06,US-008,Infrastructure Integration,Must Have,Draft
+REQ-013-FR-07,US-004,Review Gate,Must Have,Draft
+REQ-013-FR-07,US-005,Review Gate,Must Have,Draft
+REQ-013-FR-07,US-008,Infrastructure Integration,Must Have,Draft
+REQ-013-FR-08,US-009,Review History,Should Have,Draft
+NFR-013-01,US-001,Supervised Mode Configuration,Must Have,Draft
+NFR-013-02,US-001,Supervised Mode Configuration,Must Have,Draft
+NFR-013-03,US-003,Phase Summary,Should Have,Draft
+NFR-013-04,US-006,Review Pause,Must Have,Draft
+NFR-013-05,US-007,Redo Phase,Must Have,Draft
+NFR-013-06,--,No New Dependencies,Must Have,Draft

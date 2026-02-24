@@ -1,0 +1,39 @@
+%% Component Diagram: Fan-Out Engine Internal Structure
+%% Shows the three protocol components and their JSON contracts
+
+graph LR
+    subgraph "Fan-Out Engine Protocol (QL-012)"
+        direction TB
+
+        subgraph "1. Chunk Splitter"
+            CS_IN["INPUT<br/>items: string[]<br/>strategy: round-robin | group-by-dir<br/>max_chunks: 8<br/>min_items_per_chunk: N<br/>items_per_agent: N"]
+            CS_ALGO["ALGORITHM<br/><br/>Round-Robin:<br/>1. Sort items alphabetically<br/>2. N = min(ceil(items/per_agent), max)<br/>3. Enforce min_items_per_chunk<br/>4. Distribute round-robin<br/><br/>Group-by-Directory:<br/>1. Group by parent dir<br/>2. Sort groups by name<br/>3. First-fit-decreasing assignment"]
+            CS_OUT["OUTPUT<br/>chunks: [{index, items, count, weight}]<br/>metadata: {total, chunk_count, strategy}"]
+            CS_IN --> CS_ALGO --> CS_OUT
+        end
+
+        subgraph "2. Parallel Spawner"
+            PS_IN["INPUT<br/>chunks: from splitter<br/>prompt_template: string<br/>phase_context: {artifact_folder, phase_key}<br/>timeout_ms: 600000"]
+            PS_ALGO["PATTERN<br/><br/>Generate N Task tool calls<br/>in a SINGLE response block<br/><br/>Each Task includes:<br/>- Chunk index and items<br/>- Phase context<br/>- Return format spec<br/>- Constraints (no state writes)"]
+            PS_OUT["OUTPUT<br/>N parallel Task invocations<br/>(Claude Code executes concurrently)"]
+            PS_IN --> PS_ALGO --> PS_OUT
+        end
+
+        subgraph "3. Result Merger"
+            RM_IN["INPUT<br/>N result objects (any order)<br/>merger_type: test | review"]
+            RM_ALGO["ALGORITHM<br/><br/>Test Merger:<br/>- Sum pass/fail/skip counts<br/>- Union coverage (line-level)<br/>- Aggregate check results (all-pass)<br/>- Collect all failures<br/><br/>Review Merger:<br/>- Concatenate findings<br/>- Deduplicate (file + lines + category)<br/>- Sort by severity<br/>- Detect cross-cutting concerns"]
+            RM_OUT["OUTPUT<br/>Unified result<br/>(SAME SCHEMA as single-agent)<br/>+ optional fan_out metadata<br/>+ Parallelism Summary"]
+            RM_IN --> RM_ALGO --> RM_OUT
+        end
+    end
+
+    subgraph "Consumers"
+        P16["Phase 16<br/>quality-loop-engineer<br/><br/>Strategy: round-robin<br/>Threshold: 250 tests<br/>Items per agent: 250"]
+        P08["Phase 08<br/>qa-engineer<br/><br/>Strategy: group-by-directory<br/>Threshold: 5 files<br/>Items per agent: 7"]
+    end
+
+    CS_OUT --> PS_IN
+    PS_OUT -.->|"N results"| RM_IN
+
+    P16 -.->|"references"| CS_IN
+    P08 -.->|"references"| CS_IN

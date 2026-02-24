@@ -1,0 +1,91 @@
+{
+  "feature_id": "REQ-0023",
+  "feature_name": "Three-Verb Backlog Model",
+  "version": "1.0.0",
+  "created": "2026-02-18",
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Add Item to Backlog (Manual)",
+      "as_a": "developer",
+      "i_want_to": "add a feature idea to my backlog using natural language",
+      "so_that": "I can capture ideas quickly without starting a full workflow",
+      "acceptance_criteria": ["AC-001-01", "AC-001-02", "AC-001-04", "AC-001-05", "AC-001-06"],
+      "priority": "must-have",
+      "functional_requirements": ["FR-001"]
+    },
+    {
+      "id": "US-002",
+      "title": "Add Item from External Reference",
+      "as_a": "developer",
+      "i_want_to": "add a Jira ticket or GitHub issue to my backlog by reference",
+      "so_that": "the framework tracks the source and can pull content when MCP is available",
+      "acceptance_criteria": ["AC-001-03", "AC-001-07"],
+      "priority": "must-have",
+      "functional_requirements": ["FR-001"]
+    },
+    {
+      "id": "US-003",
+      "title": "Analyze a Backlog Item",
+      "as_a": "developer",
+      "i_want_to": "analyze a backlog item interactively through requirements, impact analysis, architecture, and design",
+      "so_that": "I have well-thought-out artifacts before I start building",
+      "acceptance_criteria": ["AC-002-01", "AC-002-02", "AC-002-03", "AC-002-05", "AC-002-06", "AC-002-07"],
+      "priority": "must-have",
+      "functional_requirements": ["FR-002"]
+    },
+    {
+      "id": "US-004",
+      "title": "Resume Partial Analysis",
+      "as_a": "developer",
+      "i_want_to": "resume analysis of an item I started yesterday",
+      "so_that": "I don't have to redo work I've already completed",
+      "acceptance_criteria": ["AC-002-04", "AC-002-08"],
+      "priority": "must-have",
+      "functional_requirements": ["FR-002"]
+    },
+    {
+      "id": "US-005",
+      "title": "Build a Feature",
+      "as_a": "developer",
+      "i_want_to": "say 'build this' to start implementing a backlog item",
+      "so_that": "the framework handles workflow initialization, branching, and phase progression automatically",
+      "acceptance_criteria": ["AC-003-01", "AC-003-02", "AC-003-03", "AC-003-06"],
+      "priority": "must-have",
+      "functional_requirements": ["FR-003"]
+    },
+    {
+      "id": "US-006",
+      "title": "Natural Language Intent Detection",
+      "as_a": "developer",
+      "i_want_to": "use natural language like 'add this to the backlog' or 'let's build this'",
+      "so_that": "I never need to remember slash commands",
+      "acceptance_criteria": ["AC-004-01", "AC-004-02", "AC-004-03", "AC-004-04", "AC-004-05", "AC-004-06", "AC-004-07", "AC-004-08"],
+      "priority": "must-have",
+      "functional_requirements": ["FR-004"]
+    },
+    {
+      "id": "US-007",
+      "title": "View Analysis Status in Backlog",
+      "as_a": "developer",
+      "i_want_to": "see which items are raw, partially analyzed, fully analyzed, or completed when viewing my backlog",
+      "so_that": "I know what's ready to build",
+      "acceptance_criteria": ["AC-007-01", "AC-007-02", "AC-007-03", "AC-007-04", "AC-007-05", "AC-007-06"],
+      "priority": "must-have",
+      "functional_requirements": ["FR-007"]
+    },
+    {
+      "id": "US-008",
+      "title": "Fix a Bug (Unchanged)",
+      "as_a": "developer",
+      "i_want_to": "say 'this is broken' or 'fix this bug' to start a bug fix workflow",
+      "so_that": "the fix workflow remains distinct from the feature workflow",
+      "acceptance_criteria": ["AC-004-05", "AC-006-04"],
+      "priority": "must-have",
+      "functional_requirements": ["FR-004", "FR-006"]
+    }
+  ],
+  "total_stories": 8,
+  "total_acceptance_criteria": 44,
+  "all_must_have": true
+}

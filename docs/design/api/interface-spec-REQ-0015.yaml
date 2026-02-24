@@ -1,0 +1,423 @@
+# Interface Specification: M4 Cross-Validation Verifier
+# Feature: REQ-0015 -- Impact Analysis Cross-Validation Verifier
+# Type: Agent-to-Agent JSON protocol (not REST API)
+# Version: 1.0
+# Created: 2026-02-15
+
+# Note: This is not an OpenAPI spec because M4 is an LLM agent, not an HTTP API.
+# This YAML defines the JSON contracts between the orchestrator and M4.
+
+---
+
+metadata:
+  feature: REQ-0015
+  phase: 04-design
+  interface_type: agent-json-protocol
+  participants:
+    - role: caller
+      agent: impact-analysis-orchestrator
+      agent_id: IA0
+    - role: callee
+      agent: cross-validation-verifier
+      agent_id: IA4
+
+---
+
+# M4 Input Contract
+# Passed from orchestrator to M4 via Task delegation prompt
+
+input:
+  description: >
+    The orchestrator packages M1/M2/M3 responses into the delegation prompt
+    for M4. The input is embedded as text in the prompt, not as structured
+    function parameters.
+
+  schema:
+    type: object
+    required:
+      - workflow
+      - m1_response
+      - m2_response
+      - m3_response
+    properties:
+      workflow:
+        type: string
+        enum: [feature, upgrade]
+        description: Workflow type determines output format adaptation
+
+      m1_response:
+        type: object
+        required: [status]
+        properties:
+          status:
+            type: string
+            enum: [success, error]
+          report_section:
+            type: string
+            description: Markdown report section
+          impact_summary:
+            type: object
+            description: Structured impact data
+            properties:
+              directly_affected:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    file:
+                      type: string
+                      description: File path
+                    acceptance_criteria:
+                      type: array
+                      items:
+                        type: string
+              outward_dependencies:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    from:
+                      type: string
+                    to:
+                      type: string
+                    type:
+                      type: string
+              change_propagation:
+                type: object
+                properties:
+                  level_0:
+                    type: array
+                    items:
+                      type: string
+                  level_1:
+                    type: array
+                    items:
+                      type: string
+                  level_2:
+                    type: array
+                    items:
+                      type: string
+              blast_radius:
+                type: string
+                enum: [low, medium, high]
+              files_estimated:
+                type: integer
+              modules_estimated:
+                type: integer
+
+      m2_response:
+        type: object
+        required: [status]
+        properties:
+          status:
+            type: string
+          report_section:
+            type: string
+          entry_points:
+            type: object
+            properties:
+              by_acceptance_criterion:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    existing:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          type:
+                            type: string
+                          path:
+                            type: string
+                          file:
+                            type: string
+                    suggested_new:
+                      type: array
+                      items:
+                        type: object
+              implementation_chains:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      layer:
+                        type: string
+                      location:
+                        type: string
+              implementation_order:
+                type: array
+
+      m3_response:
+        type: object
+        required: [status]
+        properties:
+          status:
+            type: string
+          report_section:
+            type: string
+          risk_assessment:
+            type: object
+            properties:
+              overall_risk:
+                type: string
+                enum: [low, medium, high, unknown]
+              risk_score:
+                type: integer
+                minimum: 0
+                maximum: 100
+              by_acceptance_criterion:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    risk_level:
+                      type: string
+                    risk_areas:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          module:
+                            type: string
+                          coverage:
+                            type: number
+                          complexity:
+                            type: string
+                          risk:
+                            type: string
+              coverage_gaps:
+                type: array
+              recommendations:
+                type: array
+
+---
+
+# M4 Output Contract
+# Returned from M4 to orchestrator via Task response
+
+output:
+  description: >
+    M4 returns a structured JSON response containing the verification report
+    and a markdown report section for embedding in impact-analysis.md.
+
+  schema:
+    type: object
+    required:
+      - status
+      - report_section
+      - verification_report
+    properties:
+      status:
+        type: string
+        enum: [success]
+        description: Always "success" -- M4 handles internal errors gracefully
+
+      report_section:
+        type: string
+        description: >
+          Markdown content for the Cross-Validation section of
+          impact-analysis.md. Starts with "## Cross-Validation".
+
+      verification_report:
+        type: object
+        required:
+          - verification_status
+          - completeness_score
+          - summary
+          - findings
+          - file_list_delta
+          - cross_references
+        properties:
+          verification_status:
+            type: string
+            enum: [PASS, WARN, FAIL]
+            description: >
+              PASS = no critical or warning findings.
+              WARN = warnings exist but no critical.
+              FAIL = at least one critical finding.
+
+          completeness_score:
+            type: integer
+            minimum: 0
+            maximum: 100
+            description: >
+              Percentage of cross-references between M1/M2/M3 that validated
+              successfully. 100 = perfect consistency.
+
+          summary:
+            type: object
+            required:
+              - total_findings
+              - critical
+              - warning
+              - info
+            properties:
+              total_findings:
+                type: integer
+                minimum: 0
+              critical:
+                type: integer
+                minimum: 0
+              warning:
+                type: integer
+                minimum: 0
+              info:
+                type: integer
+                minimum: 0
+            validation:
+              - total_findings == critical + warning + info
+              - total_findings == len(findings)
+
+          findings:
+            type: array
+            items:
+              type: object
+              required:
+                - id
+                - severity
+                - category
+                - description
+                - affected_agents
+                - recommendation
+              properties:
+                id:
+                  type: string
+                  pattern: "^CV-\\d{3}$"
+                  description: Sequential finding ID (CV-001, CV-002, ...)
+                severity:
+                  type: string
+                  enum: [CRITICAL, WARNING, INFO]
+                category:
+                  type: string
+                  enum: [file_list, risk_scoring, completeness]
+                description:
+                  type: string
+                  description: Human-readable description of the finding
+                affected_agents:
+                  type: array
+                  items:
+                    type: string
+                  description: >
+                    Agent identifiers showing which agents contributed to this
+                    finding (e.g., "M1-found", "M2-missing")
+                recommendation:
+                  type: string
+                  description: Actionable recommendation to address the finding
+
+          file_list_delta:
+            type: object
+            required:
+              - m1_only
+              - m2_only
+              - symmetric_difference_count
+            properties:
+              m1_only:
+                type: array
+                items:
+                  type: string
+                description: Files in M1 blast radius but not in M2 entry points
+              m2_only:
+                type: array
+                items:
+                  type: string
+                description: Files in M2 entry points but not in M1 blast radius
+              symmetric_difference_count:
+                type: integer
+                minimum: 0
+
+          cross_references:
+            type: object
+            required:
+              - m2_entry_to_m1_file
+              - m1_module_to_m3_risk
+            properties:
+              m2_entry_to_m1_file:
+                type: object
+                required: [total, valid, missing]
+                properties:
+                  total:
+                    type: integer
+                  valid:
+                    type: integer
+                  missing:
+                    type: integer
+              m1_module_to_m3_risk:
+                type: object
+                required: [total, valid, missing]
+                properties:
+                  total:
+                    type: integer
+                  valid:
+                    type: integer
+                  missing:
+                    type: integer
+
+---
+
+# Finding Types Reference
+
+finding_types:
+  MISSING_FROM_BLAST_RADIUS:
+    severity: WARNING
+    category: file_list
+    trigger: File in M2 entry points but not in M1 affected files
+    traces: AC-02.1
+
+  ORPHAN_IMPACT:
+    severity: INFO
+    category: file_list
+    trigger: File in M1 blast radius but not reachable from M2 entry points
+    traces: AC-02.2
+
+  RISK_SCORING_GAP:
+    severity: WARNING
+    category: risk_scoring
+    trigger: High coupling (M1) paired with low risk (M3), or high blast radius with low overall risk
+    traces: AC-03.1, AC-03.3
+
+  UNDERTESTED_CRITICAL_PATH:
+    severity: CRITICAL
+    category: risk_scoring
+    trigger: Deep M2 call chain (>=4 layers) passing through file with <50% coverage (M3)
+    traces: AC-03.2
+
+  INCOMPLETE_ANALYSIS:
+    severity: WARNING
+    category: completeness
+    trigger: M2 entry point has no corresponding M1 file, or M1 module has no M3 risk assessment
+    traces: AC-04.1, AC-04.2, AC-04.3
+
+---
+
+# State.json Sub-Agent Entry
+
+state_entry:
+  description: >
+    Added to .isdlc/state.json under phases["02-impact-analysis"].sub_agents
+
+  schema:
+    "M4-cross-validation-verifier":
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [completed, skipped]
+        duration_ms:
+          type: integer
+        verification_status:
+          type: string
+          enum: [PASS, WARN, FAIL]
+          description: Only present when status is "completed"
+        findings_count:
+          type: integer
+          description: Only present when status is "completed"
+        completeness_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Only present when status is "completed"
+
+  traces: AC-05.5

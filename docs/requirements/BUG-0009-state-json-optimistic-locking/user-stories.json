@@ -1,0 +1,95 @@
+{
+  "bug_id": "BUG-0009",
+  "title": "State.json Optimistic Locking",
+  "stories": [
+    {
+      "id": "US-01",
+      "role": "iSDLC framework user",
+      "action": "run workflows without state.json being overwritten by stale subagent data",
+      "benefit": "workflows complete without manual state.json repairs",
+      "acceptance_criteria": [
+        "AC-01a: state.json contains state_version integer at root level",
+        "AC-01b: Every valid write increments state_version by 1",
+        "AC-01c: state_version survives read/write cycles",
+        "AC-01d: Missing state_version initialized to 1 on next write"
+      ],
+      "priority": "critical",
+      "traces_to": ["FR-01"]
+    },
+    {
+      "id": "US-02",
+      "role": "iSDLC hook system",
+      "action": "detect when a subagent writes state.json using a stale snapshot",
+      "benefit": "stale writes are blocked before they corrupt workflow state",
+      "acceptance_criteria": [
+        "AC-02a: Hook reads current state_version from disk on Write/Edit to state.json",
+        "AC-02b: Hook extracts state_version from incoming write content",
+        "AC-02c: Write blocked if incoming version < current version",
+        "AC-02d: Write allowed if incoming version == current version",
+        "AC-02e: Error message includes expected vs actual version and re-read guidance",
+        "AC-02f: Version check skipped for files without state_version (migration)"
+      ],
+      "priority": "critical",
+      "traces_to": ["FR-02"]
+    },
+    {
+      "id": "US-03",
+      "role": "iSDLC common utility",
+      "action": "auto-increment state_version when writeState() is called",
+      "benefit": "version counter stays accurate without requiring callers to manage it",
+      "acceptance_criteria": [
+        "AC-03a: writeState() reads current state_version from disk before writing",
+        "AC-03b: writeState() sets state_version to current + 1",
+        "AC-03c: First write to file without state_version sets it to 1",
+        "AC-03d: Caller's in-memory state object is not mutated"
+      ],
+      "priority": "critical",
+      "traces_to": ["FR-03"]
+    },
+    {
+      "id": "US-04",
+      "role": "existing iSDLC user with legacy state files",
+      "action": "continue using iSDLC without disruption after the optimistic locking feature is added",
+      "benefit": "no breaking changes for existing installations",
+      "acceptance_criteria": [
+        "AC-04a: State files without state_version handled gracefully",
+        "AC-04b: First write to legacy file adds state_version: 1",
+        "AC-04c: Existing tests pass without modification (or minimal adaptation)",
+        "AC-04d: Hook remains observational for V1/V2/V3 rules"
+      ],
+      "priority": "high",
+      "traces_to": ["FR-04"]
+    },
+    {
+      "id": "US-05",
+      "role": "iSDLC framework",
+      "action": "allow state.json writes if the version check itself encounters an error",
+      "benefit": "hook errors never prevent users from working",
+      "acceptance_criteria": [
+        "AC-05a: Unreadable current state.json allows the write",
+        "AC-05b: Unparseable incoming content allows the write",
+        "AC-05c: All exception paths result in allow decision",
+        "AC-05d: All failure paths log warnings to stderr"
+      ],
+      "priority": "high",
+      "traces_to": ["FR-05"]
+    }
+  ],
+  "nfr": [
+    {
+      "id": "NFR-01",
+      "category": "performance",
+      "requirement": "Version check completes within 100ms performance budget"
+    },
+    {
+      "id": "NFR-02",
+      "category": "maintainability",
+      "requirement": "No changes to agent markdown files required"
+    },
+    {
+      "id": "NFR-03",
+      "category": "compatibility",
+      "requirement": "All changes use CommonJS module system (Article XIII)"
+    }
+  ]
+}

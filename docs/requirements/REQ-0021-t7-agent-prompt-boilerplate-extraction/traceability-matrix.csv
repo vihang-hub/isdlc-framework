@@ -1,0 +1,71 @@
+Requirement ID,Requirement Description,Test Case ID,Test Case Description,Verification Check,Priority,Status
+FR-001,Extract Monorepo Mode Protocol to CLAUDE.md,TC-005,CLAUDE.md contains monorepo full delegation form,V-003,P0,Designed
+FR-001,Extract Monorepo Mode Protocol to CLAUDE.md,TC-006,CLAUDE.md contains monorepo analysis-scoped form,V-003,P0,Designed
+FR-001,Extract Monorepo Mode Protocol to CLAUDE.md,TC-013,CLAUDE.md section order matches FR-012 spec,V-005,P1,Designed
+FR-002,Remove monorepo from 17 phase agents,TC-020,No agent file contains full delegation monorepo blockquote,V-002,P0,Designed
+FR-002,Remove monorepo from 17 phase agents,TC-022,17+ agents contain full-form Monorepo Mode Protocol reference,V-002,P0,Designed
+FR-003,Remove monorepo from 7 analysis sub-agents,TC-021,No agent file contains short analysis monorepo blockquote,V-002,P0,Designed
+FR-003,Remove monorepo from 7 analysis sub-agents,TC-023,7 agents contain analysis-scoped reference,V-002,P0,Designed
+FR-004,Remove monorepo from 2 remaining agents,TC-020,No agent file contains full delegation monorepo blockquote,V-002,P0,Designed
+FR-004,Remove monorepo from 2 remaining agents,TC-024,quick-scan-agent contains reference,V-002,P1,Designed
+FR-004,Remove monorepo from 2 remaining agents,TC-025,impact-analysis-orchestrator contains reference,V-002,P1,Designed
+FR-005,Extract Iteration Enforcement Protocol to CLAUDE.md,TC-007,CLAUDE.md contains iteration enforcement core rules,V-003,P0,Designed
+FR-005,Extract Iteration Enforcement Protocol to CLAUDE.md,TC-008,CLAUDE.md contains test-watcher hook reference,V-003,P0,Designed
+FR-005,Extract Iteration Enforcement Protocol to CLAUDE.md,TC-009,CLAUDE.md contains iteration config hierarchy,V-003,P1,Designed
+FR-005,Extract Iteration Enforcement Protocol to CLAUDE.md,TC-010,CLAUDE.md iteration section has NO agent-specific criteria,V-003,P0,Designed
+FR-006,Replace iteration in 7 agents with reference + customization,TC-030,No agent file contains full iteration enforcement never-declare-while-failing,V-002,P0,Designed
+FR-006,Replace iteration in 7 agents with reference + customization,TC-031,No agent file contains never-declare-while-incomplete,V-002,P0,Designed
+FR-006,Replace iteration in 7 agents with reference + customization,TC-032,7 agents contain Mandatory Iteration Enforcement Protocol reference,V-002,P0,Designed
+FR-006,Replace iteration in 7 agents with reference + customization,TC-033,05-software-developer retains >=80% COVERAGE criteria,V-003,P0,Designed
+FR-006,Replace iteration in 7 agents with reference + customization,TC-034,06-integration-tester retains ALL TESTS PASS criteria,V-003,P0,Designed
+FR-006,Replace iteration in 7 agents with reference + customization,TC-035,14-upgrade-engineer retains circuit breaker: 3,V-003,P0,Designed
+FR-006,Replace iteration in 7 agents with reference + customization,TC-036,discover/artifact-integration retains max iterations 5,V-003,P0,Designed
+FR-006,Replace iteration in 7 agents with reference + customization,TC-037,discover/atdd-bridge retains max iterations 5,V-003,P0,Designed
+FR-006,Replace iteration in 7 agents with reference + customization,TC-038,16-quality-loop-engineer retains BOTH tracks pass,V-003,P0,Designed
+FR-006,Replace iteration in 7 agents with reference + customization,TC-039,characterization-test-generator retains CHARACTERIZATION TESTS,V-003,P0,Designed
+FR-007,Extract Git Commit Warning to CLAUDE.md,TC-011,CLAUDE.md contains Git Commit Prohibition with prohibition text,V-003,P0,Designed
+FR-008,Remove git commit warning from 2 agents,TC-040,No agent file contains full git commit warning section,V-002,P0,Designed
+FR-008,Remove git commit warning from 2 agents,TC-041,2 agents contain Git Commit Prohibition reference,V-002,P0,Designed
+FR-008,Remove git commit warning from 2 agents,TC-042,05-software-developer has git commit reference,V-002,P1,Designed
+FR-008,Remove git commit warning from 2 agents,TC-043,16-quality-loop-engineer has git commit reference,V-002,P1,Designed
+FR-009,Extract ROOT RESOLUTION to CLAUDE.md,TC-001,CLAUDE.md contains Root Resolution Protocol subsection,V-003,P0,Designed
+FR-009,Extract ROOT RESOLUTION to CLAUDE.md,TC-002,CLAUDE.md contains 5-step root resolution algorithm,V-003,P0,Designed
+FR-010,Extract PROJECT CONTEXT RESOLUTION to CLAUDE.md,TC-003,CLAUDE.md contains Project Context Resolution subsection,V-003,P0,Designed
+FR-010,Extract PROJECT CONTEXT RESOLUTION to CLAUDE.md,TC-004,CLAUDE.md contains delegation context template,V-003,P0,Designed
+FR-011,Remove ROOT RESOLUTION + CONTEXT from orchestrators,TC-050,No agent file contains ROOT RESOLUTION header,V-002,P0,Designed
+FR-011,Remove ROOT RESOLUTION + CONTEXT from orchestrators,TC-051,No agent file contains SECTION 0 header,V-002,P0,Designed
+FR-011,Remove ROOT RESOLUTION + CONTEXT from orchestrators,TC-052,No agent file contains MONOREPO PREAMBLE header,V-002,P0,Designed
+FR-011,Remove ROOT RESOLUTION + CONTEXT from orchestrators,TC-053,2 orchestrators contain Root Resolution Protocol reference,V-002,P0,Designed
+FR-011,Remove ROOT RESOLUTION + CONTEXT from orchestrators,TC-054,00-sdlc-orchestrator.md has reduced line count,V-001,P0,Designed
+FR-011,Remove ROOT RESOLUTION + CONTEXT from orchestrators,TC-055,discover-orchestrator.md has reduced line count,V-001,P0,Designed
+FR-012,Preserve CLAUDE.md section organization,TC-013,CLAUDE.md section order matches FR-012 specification,V-005,P1,Designed
+FR-012,Preserve CLAUDE.md section organization,TC-070,CLAUDE.md Agent Framework Context contains all 8 subsections,V-005,P0,Designed
+FR-012,Preserve CLAUDE.md section organization,TC-071,New sections appear after existing T2 sections,V-005,P1,Designed
+FR-012,Preserve CLAUDE.md section organization,TC-072,CLAUDE.md total line increase <= 120,V-001,P0,Designed
+NFR-001,Token reduction,TC-012,CLAUDE.md line count within budget,V-001,P0,Designed
+NFR-001,Token reduction,TC-054,00-sdlc-orchestrator.md has reduced line count,V-001,P0,Designed
+NFR-001,Token reduction,TC-055,discover-orchestrator.md has reduced line count,V-001,P0,Designed
+NFR-001,Token reduction,TC-072,CLAUDE.md total line increase <= 120,V-001,P0,Designed
+NFR-002,Zero behavioral regression,TC-033,05-software-developer retains >=80% COVERAGE criteria,V-003,P0,Designed
+NFR-002,Zero behavioral regression,TC-034,06-integration-tester retains ALL TESTS PASS criteria,V-003,P0,Designed
+NFR-002,Zero behavioral regression,TC-035,14-upgrade-engineer retains circuit breaker: 3,V-003,P0,Designed
+NFR-002,Zero behavioral regression,TC-036,discover/artifact-integration retains max iterations 5,V-003,P0,Designed
+NFR-002,Zero behavioral regression,TC-037,discover/atdd-bridge retains max iterations 5,V-003,P0,Designed
+NFR-002,Zero behavioral regression,TC-038,16-quality-loop-engineer retains BOTH tracks pass,V-003,P0,Designed
+NFR-002,Zero behavioral regression,TC-039,characterization-test-generator retains CHARACTERIZATION TESTS,V-003,P0,Designed
+NFR-002,Zero behavioral regression,TC-060,CJS hook test suite passes with no new failures,V-004,P0,Designed
+NFR-002,Zero behavioral regression,TC-061,ESM test suite passes with no new failures,V-004,P0,Designed
+NFR-003,Single source of truth,TC-020,No agent file contains full delegation monorepo blockquote,V-002,P0,Designed
+NFR-003,Single source of truth,TC-021,No agent file contains short analysis monorepo blockquote,V-002,P0,Designed
+NFR-003,Single source of truth,TC-030,No agent file contains full iteration enforcement never-declare-while-failing,V-002,P0,Designed
+NFR-003,Single source of truth,TC-031,No agent file contains never-declare-while-incomplete,V-002,P0,Designed
+NFR-003,Single source of truth,TC-040,No agent file contains full git commit warning section,V-002,P0,Designed
+NFR-003,Single source of truth,TC-050,No agent file contains ROOT RESOLUTION header,V-002,P0,Designed
+NFR-003,Single source of truth,TC-051,No agent file contains SECTION 0 header,V-002,P0,Designed
+NFR-003,Single source of truth,TC-052,No agent file contains MONOREPO PREAMBLE header,V-002,P0,Designed
+NFR-004,Reference brevity,TC-073,Reference lines are all <= 120 characters,V-005,P2,Designed
+NFR-005,Backward compatibility,TC-060,CJS hook test suite passes with no new failures,V-004,P0,Designed
+NFR-005,Backward compatibility,TC-061,ESM test suite passes with no new failures,V-004,P0,Designed
+NFR-005,Backward compatibility,TC-062,No new test skips introduced,V-004,P1,Designed
+NFR-006,CLAUDE.md size budget,TC-012,CLAUDE.md line count within budget,V-001,P0,Designed
+NFR-006,CLAUDE.md size budget,TC-072,CLAUDE.md total line increase <= 120,V-001,P0,Designed

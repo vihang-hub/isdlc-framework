@@ -1,0 +1,52 @@
+Requirement,AC,Test Case,Test Type,Priority,Status
+FR-001,AC-001-01,MVT-001,Manual,Must Have,Pending
+FR-001,AC-001-02,MVT-001,Manual,Must Have,Pending
+FR-001,AC-001-03,MVT-001,Manual,Must Have,Pending
+FR-001,AC-001-04,MVT-001,Manual,Must Have,Pending
+FR-002,AC-002-01,MVT-002,Manual,Must Have,Pending
+FR-002,AC-002-02,MVT-002,Manual,Must Have,Pending
+FR-002,AC-002-03,MVT-002,Manual,Must Have,Pending
+FR-002,AC-002-04,MVT-002,Manual,Must Have,Pending
+FR-003,AC-003-01,MVT-003,Manual,Must Have,Pending
+FR-003,AC-003-02,MVT-003,Manual,Must Have,Pending
+FR-003,AC-003-03,MVT-003,Manual,Must Have,Pending
+FR-003,AC-003-04,MVT-003,Manual,Must Have,Pending
+FR-004,AC-004-01,MVT-006,Manual,Must Have,Pending
+FR-004,AC-004-02,MVT-006,Manual,Must Have,Pending
+FR-004,AC-004-03,MVT-001,Manual,Must Have,Pending
+FR-005,AC-005-01,MVT-002,Manual,Should Have,Pending
+FR-005,AC-005-02,MVT-002,Manual,Should Have,Pending
+FR-005,AC-005-03,MVT-003,Manual,Should Have,Pending
+FR-006,AC-006-01,MVT-004,Manual,Must Have,Pending
+FR-006,AC-006-02,MVT-005,Manual,Must Have,Pending
+FR-006,AC-006-03,MVT-004,Manual,Must Have,Pending
+FR-006,AC-006-04,MVT-004,Manual,Must Have,Pending
+FR-007,AC-007-01,MVT-005,Manual,Should Have,Pending
+FR-007,AC-007-02,MVT-005,Manual,Should Have,Pending
+FR-007,AC-007-03,TC-E07;TC-E08;TC-E09;TC-E10,Unit,Should Have,Pending
+FR-008,AC-008-01,MVT-004,Manual,Must Have,Pending
+FR-008,AC-008-02,MVT-004,Manual,Must Have,Pending
+FR-008,AC-008-03,MVT-008,Manual,Must Have,Pending
+FR-008,AC-008-04,MVT-004,Manual,Must Have,Pending
+FR-008,AC-008-05,MVT-004,Manual,Must Have,Pending
+FR-009,AC-009-01,TC-E13;TC-E20,Unit,Should Have,Pending
+FR-009,AC-009-02,TC-E01;TC-E03;TC-E04;TC-E05;TC-E06,Unit,Should Have,Pending
+FR-009,AC-009-03,MVT-009,Manual,Should Have,Pending
+FR-009,AC-009-04,TC-E02;TC-E16;TC-E20;TC-E21,Unit,Should Have,Pending
+FR-010,AC-010-01,MVT-007,Manual,Must Have,Pending
+FR-010,AC-010-02,MVT-007,Manual,Must Have,Pending
+FR-010,AC-010-03,MVT-007,Manual,Must Have,Pending
+FR-010,AC-010-04,MVT-007,Manual,Must Have,Pending
+NFR-001,,MVT-001 (timing),Manual,Should Have,Pending
+NFR-002,,MVT-007,Manual,Must Have,Pending
+NFR-003,,MVT-004,Manual,Must Have,Pending
+NFR-004,,MVT-008,Manual,Must Have,Pending
+NFR-005,,MVT-009;TC-E11;TC-E12;TC-E19,Manual+Unit,Must Have,Pending
+NFR-006,,MVT-005,Manual,Should Have,Pending
+NFR-007,,MVT-010;TC-E17;TC-E18,Manual+Unit,Must Have,Pending
+CON-001,,Design Review,N/A,Must Have,Pending
+CON-002,,Design Review,N/A,Must Have,Pending
+CON-003,,TC-E01..E21 (meta.json only),Unit,Must Have,Pending
+CON-004,,Code Review,N/A,Must Have,Pending
+CON-005,,Design Review,N/A,Must Have,Pending
+CON-006,,Design Review,N/A,Must Have,Pending

@@ -1,0 +1,74 @@
+%% Component Interaction Diagram -- Adaptive Workflow Sizing
+%% Shows how sizing components interact with existing framework
+
+graph TB
+    subgraph UserLayer["User Interaction"]
+        USER["User"]
+        CLI["CLI: /isdlc feature"]
+    end
+
+    subgraph CommandLayer["Command Layer"]
+        ISDLC["isdlc.md<br/>(Phase-Loop Controller)"]
+        ORC["00-sdlc-orchestrator.md"]
+    end
+
+    subgraph SizingLogic["Sizing Logic (NEW)"]
+        STEP["STEP 3e-sizing<br/>(in isdlc.md)"]
+        PARSE["parseSizingFromImpactAnalysis()"]
+        COMPUTE["computeSizingRecommendation()"]
+        APPLY["applySizingDecision()"]
+    end
+
+    subgraph DataLayer["Data Layer"]
+        STATE["state.json"]
+        WFJSON["workflows.json"]
+        IAMD["impact-analysis.md"]
+    end
+
+    subgraph HookLayer["Hook Layer (Existing)"]
+        GATE["gate-blocker.cjs"]
+        PSG["phase-sequence-guard.cjs"]
+        SWV["state-write-validator.cjs"]
+        WCE["workflow-completion-enforcer.cjs"]
+    end
+
+    subgraph AgentLayer["Agent Layer (Existing)"]
+        IA["Impact Analysis Agent"]
+        ARCH["Solution Architect"]
+        DESIGN["System Designer"]
+        TEST["Test Design Engineer"]
+    end
+
+    USER -->|"/isdlc feature -light 'desc'"| CLI
+    CLI -->|"Parse -light flag"| ISDLC
+    ISDLC -->|"init-and-phase-01"| ORC
+    ORC -->|"Store flags.light"| STATE
+
+    ISDLC -->|"After Phase 02 completion"| STEP
+    STEP -->|"Read content"| IAMD
+    STEP -->|"Extract metrics"| PARSE
+    STEP -->|"Read thresholds"| WFJSON
+    STEP -->|"Get recommendation"| COMPUTE
+    STEP -->|"Apply decision"| APPLY
+    APPLY -->|"Mutate phases, sizing"| STATE
+
+    IA -->|"Generates"| IAMD
+
+    GATE -->|"Reads active_workflow.phases"| STATE
+    PSG -->|"Reads current_phase"| STATE
+    SWV -->|"Validates writes"| STATE
+    WCE -->|"Reads phases for snapshots"| STATE
+
+    ISDLC -->|"Delegates (standard)"| ARCH
+    ISDLC -->|"Delegates (standard)"| DESIGN
+    ISDLC -->|"Delegates (always)"| TEST
+    ISDLC -.->|"Skipped (light)"| ARCH
+    ISDLC -.->|"Skipped (light)"| DESIGN
+
+    style STEP fill:#e1f5fe,stroke:#01579b
+    style PARSE fill:#e1f5fe,stroke:#01579b
+    style COMPUTE fill:#e1f5fe,stroke:#01579b
+    style APPLY fill:#e1f5fe,stroke:#01579b
+    style SizingLogic fill:#e8f5e9,stroke:#1b5e20
+
+    classDef skipped stroke-dasharray: 5 5

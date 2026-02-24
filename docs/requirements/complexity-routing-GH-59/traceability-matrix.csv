@@ -1,0 +1,102 @@
+Requirement,AC,Test Case ID,Test Type,Test Name,Priority,Status
+FR-001,AC-001a,MT-001,Manual,"Tier displayed after analysis completes (tier value is one of trivial/light/standard/epic)",P0,Designed
+FR-001,AC-001b,MT-001,Manual,"impact-analysis.md contains Recommended Tier section (verified via analyze output)",P1,Designed
+FR-001,AC-001c,TC-INT-001,Integration,"Write and read recommended_tier in meta.json",P0,Designed
+FR-002,AC-002a,TC-CRT-001,Unit,"Zero files maps to trivial",P0,Designed
+FR-002,AC-002a,TC-CRT-002,Unit,"1 file with low risk maps to trivial",P0,Designed
+FR-002,AC-002a,TC-CRT-003,Unit,"2 files at trivial upper boundary (inclusive)",P0,Designed
+FR-002,AC-002a,TC-CRT-004,Unit,"3 files just above trivial boundary returns light",P0,Designed
+FR-002,AC-002a,TC-CRT-005,Unit,"5 files in mid light range",P0,Designed
+FR-002,AC-002a,TC-CRT-006,Unit,"8 files at light upper boundary (inclusive)",P0,Designed
+FR-002,AC-002a,TC-CRT-007,Unit,"9 files just above light boundary returns standard",P0,Designed
+FR-002,AC-002a,TC-CRT-008,Unit,"15 files in mid standard range",P0,Designed
+FR-002,AC-002a,TC-CRT-009,Unit,"20 files at standard upper boundary (inclusive)",P0,Designed
+FR-002,AC-002a,TC-CRT-010,Unit,"21 files just above standard boundary returns epic",P0,Designed
+FR-002,AC-002a,TC-CRT-011,Unit,"100 files far above standard returns epic",P0,Designed
+FR-002,AC-002b,TC-CRT-012,Unit,"Trivial promoted to light for medium risk",P0,Designed
+FR-002,AC-002b,TC-CRT-013,Unit,"Trivial promoted to light for high risk",P0,Designed
+FR-002,AC-002b,TC-CRT-014,Unit,"Light promoted to standard for medium risk",P0,Designed
+FR-002,AC-002b,TC-CRT-015,Unit,"Light at boundary promoted to standard for high risk",P0,Designed
+FR-002,AC-002b,TC-CRT-016,Unit,"Standard promoted to epic for medium risk",P0,Designed
+FR-002,AC-002b,TC-CRT-017,Unit,"Standard at boundary promoted to epic for high risk",P0,Designed
+FR-002,AC-002b,TC-CRT-018,Unit,"Epic not promoted beyond ceiling for high risk",P0,Designed
+FR-002,AC-002b,TC-CRT-019,Unit,"Epic not promoted for medium risk (ceiling)",P0,Designed
+FR-002,AC-002b,TC-CRT-020,Unit,"Low risk does not trigger promotion",P0,Designed
+FR-002,AC-002b,TC-CRT-021,Unit,"Null risk does not trigger promotion",P0,Designed
+FR-002,AC-002b,TC-CRT-022,Unit,"Undefined risk does not trigger promotion",P0,Designed
+FR-002,AC-002c,TC-CRT-023,Unit,"Null estimatedFiles returns standard with warning",P0,Designed
+FR-002,AC-002c,TC-CRT-024,Unit,"Undefined estimatedFiles returns standard with warning",P0,Designed
+FR-002,AC-002c,TC-CRT-025,Unit,"NaN estimatedFiles returns standard with warning",P0,Designed
+FR-002,AC-002c,TC-CRT-026,Unit,"Negative estimatedFiles returns standard with warning",P0,Designed
+FR-002,AC-002c,TC-CRT-027,Unit,"Large negative estimatedFiles returns standard",P0,Designed
+FR-002,AC-002c,TC-CRT-028,Unit,"String estimatedFiles returns standard with warning",P0,Designed
+FR-002,AC-002c,TC-CRT-029,Unit,"Infinity estimatedFiles returns standard with warning",P0,Designed
+FR-002,AC-002d,TC-CRT-030,Unit,"Unrecognized riskLevel 'critical' treated as low",P1,Designed
+FR-002,AC-002d,TC-CRT-031,Unit,"Wrong case 'MEDIUM' treated as low (case-sensitive)",P1,Designed
+FR-002,AC-002d,TC-CRT-032,Unit,"Empty string riskLevel treated as low",P1,Designed
+FR-002,AC-002d,TC-CRT-033,Unit,"Arbitrary unknown riskLevel treated as low",P1,Designed
+FR-003,AC-003a,TC-INT-001,Integration,"Write and read recommended_tier field at top level",P0,Designed
+FR-003,AC-003b,TC-INT-006,Integration,"Read legacy meta.json without tier fields -- no error",P0,Designed
+FR-003,AC-003c,TC-INT-005,Integration,"Overwrite recommended_tier on re-analysis",P1,Designed
+FR-004,AC-004a,MT-001,Manual,"Analyze step 8 displays tier and description",P1,Designed
+FR-004,AC-004b,MT-002,Manual,"Analyze step 8 omits tier line for legacy meta",P1,Designed
+FR-004,AC-004c,MT-003,Manual,"Tier preserved through partial analysis resume",P2,Designed
+FR-005,AC-005a,MT-004,Manual,"Build tier menu display with RECOMMENDED marker",P0,Designed
+FR-005,AC-005b,MT-005,Manual,"Default selection (Enter) uses recommended tier",P0,Designed
+FR-005,AC-005c,MT-006,Manual,"No recommendation defaults to standard with warning",P1,Designed
+FR-005,AC-005d,MT-007,Manual,"Trivial selection routes to trivial path",P0,Designed
+FR-005,AC-005e,MT-008,Manual,"Override recording in meta.json (tier_override)",P1,Designed
+FR-005,AC-005e,TC-INT-003,Integration,"Write and read tier_override object persistence",P1,Designed
+FR-006,AC-006a,MT-011,Manual,"Trivial: no workflow/branch/state.json/gates",P0,Designed
+FR-006,AC-006b,MT-011,Manual,"Trivial: reads requirements context for edit",P0,Designed
+FR-006,AC-006c,MT-011,Manual,"Trivial: commits to current branch with slug",P0,Designed
+FR-006,AC-006d,MT-011,Manual,"Trivial: displays completion summary",P1,Designed
+FR-006,AC-006e,MT-013,Manual,"Trivial: error reported with no change record written",P0,Designed
+FR-007,AC-007a,MT-011,Manual,"change-record.md created with required fields",P0,Designed
+FR-007,AC-007b,MT-012,Manual,"Subsequent entries appended with --- separator",P1,Designed
+FR-007,AC-007c,TC-INT-002,Integration,"tier_used field persistence in meta.json",P0,Designed
+FR-007,AC-007c,TC-INT-004,Integration,"last_trivial_change object persistence in meta.json",P0,Designed
+FR-007,AC-007c,MT-011,Manual,"meta.json updated with tier_used and last_trivial_change",P0,Designed
+FR-007,AC-007d,MT-014,Manual,"BACKLOG.md marker updated for trivial change",P2,Designed
+FR-008,AC-008a,MT-008,Manual,"Override from trivial recommended to standard selected",P1,Designed
+FR-008,AC-008b,MT-009,Manual,"Downward override: standard recommended to trivial",P1,Designed
+FR-008,AC-008c,MT-008,Manual,"tier_override readable by downstream phases",P2,Designed
+FR-009,AC-009a,TC-GTD-001,Unit,"getTierDescription trivial returns correct object",P0,Designed
+FR-009,AC-009a,TC-GTD-002,Unit,"getTierDescription light returns correct object",P0,Designed
+FR-009,AC-009a,TC-GTD-003,Unit,"getTierDescription standard returns correct object",P0,Designed
+FR-009,AC-009a,TC-GTD-004,Unit,"getTierDescription epic returns correct object",P0,Designed
+FR-009,AC-009b,TC-GTD-005,Unit,"getTierDescription unknown string returns Unknown",P1,Designed
+FR-009,AC-009b,TC-GTD-006,Unit,"getTierDescription null returns Unknown",P1,Designed
+FR-009,AC-009b,TC-GTD-007,Unit,"getTierDescription undefined returns Unknown",P1,Designed
+FR-009,AC-009b,TC-GTD-008,Unit,"getTierDescription empty string returns Unknown",P1,Designed
+FR-009,AC-009b,TC-GTD-009,Unit,"getTierDescription number input returns Unknown",P1,Designed
+FR-009,AC-009b,TC-GTD-010,Unit,"getTierDescription mutation safety (copy returned)",P1,Designed
+FR-009,AC-009b,TC-GTD-011,Unit,"getTierDescription boolean input returns Unknown",P2,Designed
+FR-009,AC-009b,TC-GTD-012,Unit,"getTierDescription array input returns Unknown",P2,Designed
+NFR-001,AC-NFR-001a,MT-015,Manual,"Tier menu always presented -- no auto-execute",P0,Designed
+NFR-001,AC-NFR-001b,MT-016,Manual,"--trivial flag shows confirmation prompt",P0,Designed
+NFR-001,AC-NFR-001c,MT-017,Manual,"Audit trail records selection context",P1,Designed
+NFR-002,AC-NFR-002a,TC-INT-006,Integration,"Legacy meta.json without recommended_tier -- no error",P0,Designed
+NFR-002,AC-NFR-002b,TC-INT-007,Integration,"Legacy meta.json without tier_override/tier_used -- no error",P0,Designed
+NFR-002,AC-NFR-002c,TC-BC-001,Integration,"computeStartPhase unchanged with no tier fields",P0,Designed
+NFR-002,AC-NFR-002c,TC-BC-002,Integration,"computeStartPhase unchanged with tier fields present",P0,Designed
+NFR-002,AC-NFR-002c,TC-BC-003,Integration,"writeMetaJson empty meta does not inject tier fields",P1,Designed
+NFR-003,AC-NFR-003a,MT-019,Manual,"change-record.md answers what/why/files/commit/when",P1,Designed
+NFR-003,AC-NFR-003b,MT-019,Manual,"Every slug folder has workflow artifacts or change-record.md",P2,Designed
+NFR-003,AC-NFR-003c,MT-019,Manual,"change-record.md and requirements-spec.md answer same questions",P2,Designed
+NFR-005,AC-NFR-005a,MT-018,Manual,"state.json byte-identical before and after trivial",P0,Designed
+NFR-005,AC-NFR-005b,MT-018,Manual,"No phase-loop/gate-blocker/state-write hooks fire",P0,Designed
+NFR-005,AC-NFR-005c,MT-018,Manual,"No active_workflow entry for trivial change",P0,Designed
+CON-002,CON-002,TC-CRT-034,Unit,"Custom thresholds {3 10 25} -- mid light range",P1,Designed
+CON-002,CON-002,TC-CRT-035,Unit,"Custom thresholds -- at trivial boundary",P1,Designed
+CON-002,CON-002,TC-CRT-036,Unit,"Custom thresholds -- just above trivial",P1,Designed
+CON-002,CON-002,TC-CRT-037,Unit,"Custom thresholds -- within standard range",P1,Designed
+CON-002,CON-002,TC-CRT-038,Unit,"Custom thresholds -- above standard (epic)",P1,Designed
+CON-002,CON-002,TC-CRT-039,Unit,"Null thresholds fallback to defaults",P1,Designed
+CON-002,CON-002,TC-CRT-040,Unit,"Undefined thresholds fallback to defaults",P1,Designed
+CON-002,CON-002,TC-CRT-041,Unit,"Partial thresholds -- missing fields use defaults",P1,Designed
+CON-002,CON-002,TC-CONST-002,Unit,"DEFAULT_TIER_THRESHOLDS has correct default values",P1,Designed
+NFR-004,AC-NFR-004a,MT-020,Manual,"Trivial setup completes in under 5 seconds",P2,Designed
+NFR-004,AC-NFR-004b,MT-020,Manual,"Post-edit recording completes in under 10 seconds",P2,Designed
+NFR-004,AC-NFR-004c,MT-020,Manual,"Total framework overhead under 30 seconds (excluding edit time)",P2,Designed
+CON-003,CON-003,MT-010,Manual,"Epic placeholder routes to standard workflow",P1,Designed

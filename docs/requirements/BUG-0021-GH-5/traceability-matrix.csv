@@ -1,0 +1,24 @@
+Requirement,Acceptance Criteria,Test Case ID,Test Description,Priority,Test File,Expected RED Result
+FR-01,AC-01,TC-SDE-01,"EXEMPT_ACTIONS constant contains analyze -- no marker for /isdlc analyze",P0,test-skill-delegation-enforcer.test.cjs,FAIL
+FR-01,AC-01,TC-SDE-08,"Other exempt actions: status -- no marker for /isdlc status",P1,test-skill-delegation-enforcer.test.cjs,FAIL
+FR-01,AC-01,TC-SDE-09,"Other exempt actions: cancel -- no marker for /isdlc cancel",P1,test-skill-delegation-enforcer.test.cjs,FAIL
+FR-02,AC-02,TC-SDE-02,"Action parsing extracts first word from args string",P0,test-skill-delegation-enforcer.test.cjs,FAIL
+FR-02,AC-06,TC-SDE-06,"Empty args falls through to normal enforcement",P1,test-skill-delegation-enforcer.test.cjs,PASS
+FR-02,AC-06,TC-SDE-07,"Missing args key defaults gracefully",P1,test-skill-delegation-enforcer.test.cjs,PASS
+FR-02,NFR-03,TC-SDE-10,"Action parsing is case-insensitive",P2,test-skill-delegation-enforcer.test.cjs,FAIL
+FR-01+FR-02,AC-03,TC-SDE-03,"No marker written AND no message for /isdlc analyze",P0,test-skill-delegation-enforcer.test.cjs,FAIL
+NFR-01,AC-04,TC-SDE-04,"Marker STILL written for /isdlc feature (backward compat)",P0,test-skill-delegation-enforcer.test.cjs,PASS
+NFR-01,AC-04,TC-SDE-05,"Marker STILL written for /isdlc fix (backward compat)",P1,test-skill-delegation-enforcer.test.cjs,PASS
+FR-03,AC-05,TC-DG-01,"Auto-clears marker when pending.args starts with exempt action (analyze)",P0,test-delegation-gate.test.cjs,FAIL
+FR-03,AC-05,TC-DG-03,"Auto-clear works for stale marker with exempt args",P0,test-delegation-gate.test.cjs,FAIL
+FR-03,AC-05,TC-DG-04,"Auto-clear resets error counter",P1,test-delegation-gate.test.cjs,FAIL
+FR-03,AC-05,TC-DG-06,"Auto-clears marker for exempt action: status",P1,test-delegation-gate.test.cjs,FAIL
+FR-03,AC-05,TC-DG-07,"Auto-clears marker for exempt action: cancel",P2,test-delegation-gate.test.cjs,FAIL
+FR-02+FR-03,AC-05,TC-DG-08,"Case-insensitive exempt check in pending args",P2,test-delegation-gate.test.cjs,FAIL
+NFR-01,AC-04,TC-DG-02,"Does NOT auto-clear for non-exempt args (feature)",P0,test-delegation-gate.test.cjs,PASS
+FR-02,AC-06,TC-DG-05,"Empty args in pending marker does NOT trigger auto-clear",P1,test-delegation-gate.test.cjs,PASS
+FR-01+FR-02+FR-03,AC-01..AC-05,TC-INT-01,"Full flow: enforcer skip + gate allow for /isdlc analyze",P0,test-delegation-gate.test.cjs,FAIL
+NFR-01,AC-04,TC-INT-02,"Full flow: enforcer writes marker + gate blocks for /isdlc feature",P0,test-delegation-gate.test.cjs,PASS
+FR-04,AC-08,TC-SYNC-01,"Runtime hooks synced: skill-delegation-enforcer.cjs matches src",P1,manual verification,N/A
+FR-04,AC-08,TC-SYNC-02,"Runtime hooks synced: delegation-gate.cjs matches src",P1,manual verification,N/A
+NFR-02,AC-07,TC-REG-01,"All existing tests pass with zero regressions (npm run test:all)",P0,full suite,PASS

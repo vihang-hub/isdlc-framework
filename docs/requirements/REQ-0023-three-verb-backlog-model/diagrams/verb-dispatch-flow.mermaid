@@ -1,0 +1,36 @@
+%% Three-Verb Backlog Model: Command Dispatch Flow
+%% Traces: FR-001, FR-002, FR-003, FR-005
+flowchart TD
+    A[User Input] --> B{Intent Detection<br/>CLAUDE.md}
+
+    B -->|"add to backlog,<br/>track this"| C[/isdlc add/]
+    B -->|"analyze,<br/>think through"| D[/isdlc analyze/]
+    B -->|"build,<br/>implement"| E[/isdlc build/]
+    B -->|"fix, broken,<br/>bug"| F[/isdlc fix/]
+
+    C --> G{Skill Hook:<br/>skill-delegation-enforcer}
+    D --> G
+    E --> G
+    F --> G
+
+    G -->|"add: EXEMPT"| H[Inline: Add Handler]
+    G -->|"analyze: EXEMPT"| I[Inline: Analyze Handler]
+    G -->|"build: NOT exempt"| J[Write pending_delegation]
+    G -->|"fix: NOT exempt"| J
+
+    J --> K[Orchestrator Delegation<br/>via Task tool]
+
+    H --> L[Create draft.md]
+    H --> M[Create meta.json]
+    H --> N[Append BACKLOG.md]
+
+    I --> O{Read meta.json<br/>phases_completed}
+    O -->|"Next phase"| P[Delegate to Phase Agent<br/>00 through 04]
+    P --> Q[Update meta.json]
+    Q --> R[Update BACKLOG marker]
+    R -->|"More phases?"| O
+    R -->|"All complete"| S[Analysis Done<br/>status: analyzed]
+
+    K --> T[Initialize active_workflow]
+    T --> U[Create feature branch]
+    U --> V[Phase-Loop Controller<br/>Standard workflow]

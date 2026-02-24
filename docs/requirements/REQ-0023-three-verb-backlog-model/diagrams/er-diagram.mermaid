@@ -1,0 +1,51 @@
+%% Entity-Relationship Diagram: Three-Verb Data Model
+%% Traces: FR-001, FR-007, FR-009
+erDiagram
+    BACKLOG_MD ||--o{ BACKLOG_ITEM : contains
+    BACKLOG_ITEM ||--o| ITEM_FOLDER : "has artifacts"
+    ITEM_FOLDER ||--|| META_JSON : "has metadata"
+    ITEM_FOLDER ||--o| DRAFT_MD : "has raw content"
+    ITEM_FOLDER ||--o{ ANALYSIS_ARTIFACT : "has analysis outputs"
+    STATE_JSON ||--o| ACTIVE_WORKFLOW : "may have"
+
+    BACKLOG_ITEM {
+        string item_number PK "e.g. 3.2"
+        char marker "space ~  A  x"
+        string description "Item title"
+        string link "Optional docs link"
+    }
+
+    META_JSON {
+        string slug PK "Directory name"
+        enum source "manual github jira"
+        string source_id "External ref or null"
+        datetime created_at "ISO-8601"
+        enum analysis_status "raw partial analyzed"
+        array phases_completed "Phase key strings"
+        string codebase_hash "Git HEAD short SHA"
+    }
+
+    DRAFT_MD {
+        string slug FK "Parent directory"
+        string content "Raw description"
+        string source_metadata "External content"
+    }
+
+    ANALYSIS_ARTIFACT {
+        string slug FK "Parent directory"
+        string phase_key "Producing phase"
+        string filename "e.g. requirements-spec.md"
+    }
+
+    STATE_JSON {
+        int state_version "Incrementing version"
+        int next_req_id "Read-only for add"
+        int next_bug_id "Unchanged"
+    }
+
+    ACTIVE_WORKFLOW {
+        enum type "feature or fix"
+        string artifact_folder "REQ-NNNN-slug"
+        array phases "From workflows.json"
+        int current_phase_index "Progress"
+    }

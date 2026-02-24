@@ -1,0 +1,187 @@
+# Interface Specification: BACKLOG.md Scaffolding
+#
+# REQ ID: REQ-0014
+# Phase: 04-design
+# Created: 2026-02-14
+# Type: Internal module interface (no HTTP/CLI surface change)
+#
+# This feature adds no new public interfaces. All changes are internal
+# to lib/installer.js. This spec documents the internal function contracts
+# for developer implementation clarity.
+
+---
+
+module: lib/installer.js
+type: ESM
+exports_changed: false
+new_exports: []
+
+functions:
+
+  # ------------------------------------------------------------------
+  # EXISTING (unchanged) -- documented for insertion-point context
+  # ------------------------------------------------------------------
+
+  install:
+    visibility: exported
+    signature: "async function install(projectRoot: string, options?: InstallOptions): Promise<void>"
+    changes:
+      - description: "Add BACKLOG.md creation block after CLAUDE.md creation block"
+        location: "After line 569 (CLAUDE.md block), before line 572 (Done! section)"
+        type: additive
+        breaks_existing_callers: false
+        breaks_existing_tests: false
+
+    parameters:
+      projectRoot:
+        type: string
+        required: true
+        description: "Absolute path to the target project directory"
+        validation: "Must be a valid directory path (validated upstream by CLI)"
+        example: "/Users/dev/my-project"
+      options:
+        type: InstallOptions
+        required: false
+        default: "{}"
+        properties:
+          dryRun:
+            type: boolean
+            default: false
+            description: "When true, skip all file writes (log messages still emitted)"
+            relevance: "Controls whether writeFile(backlogPath, ...) is called"
+          force:
+            type: boolean
+            default: false
+            description: "Skip interactive prompts"
+            relevance: "Not directly used by BACKLOG.md block"
+          monorepo:
+            type: boolean
+            default: false
+            description: "Force monorepo mode"
+            relevance: "Not used by BACKLOG.md block"
+          providerMode:
+            type: string
+            default: null
+            description: "LLM provider selection"
+            relevance: "Not used by BACKLOG.md block"
+
+    return:
+      type: void (Promise<void>)
+      description: "Resolves on success, rejects on fatal error"
+
+  # ------------------------------------------------------------------
+  # NEW -- internal helper function
+  # ------------------------------------------------------------------
+
+  generateBacklogMd:
+    visibility: module-private
+    signature: "function generateBacklogMd(): string"
+    description: >
+      Returns the BACKLOG.md template string with preamble, ## Open, and
+      ## Completed section headers. Follows the format convention documented
+      in CLAUDE.md.template (Backlog Management > BACKLOG.md Format Convention).
+    parameters: none
+    return:
+      type: string
+      description: "BACKLOG.md markdown content"
+      contract:
+        - "MUST contain '## Open' as a level-2 heading"
+        - "MUST contain '## Completed' as a level-2 heading"
+        - "MUST contain a preamble (blockquote) before ## Open"
+        - "'## Open' MUST appear before '## Completed' in the string"
+        - "MUST end with a trailing newline"
+        - "MUST NOT contain any backlog items (empty sections only)"
+      exact_output: |
+        # Project Backlog
+
+        > Backlog and completed items are tracked here.
+        > This file is NOT loaded into every conversation -- reference it explicitly when needed.
+
+        ## Open
+
+        ## Completed
+    side_effects: none
+    dependencies: none
+    throws: never
+    pure: true
+    testable: true
+    test_approach: "Direct invocation, string assertions on return value"
+
+# ------------------------------------------------------------------
+# Type Definitions (for reference -- not new)
+# ------------------------------------------------------------------
+
+types:
+  InstallOptions:
+    description: "Options for the install() function"
+    defined_at: "lib/installer.js line 38 (destructured)"
+    properties:
+      monorepo: { type: boolean, default: false }
+      force: { type: boolean, default: false }
+      dryRun: { type: boolean, default: false }
+      providerMode: { type: "string | undefined", default: undefined }
+
+# ------------------------------------------------------------------
+# Behavioral Contract: BACKLOG.md Creation Block
+# ------------------------------------------------------------------
+
+behavioral_contracts:
+
+  backlog_creation:
+    description: "BACKLOG.md file creation during install()"
+    preconditions:
+      - "install() has been called with a valid projectRoot"
+      - "Step 6 (docs setup) and CLAUDE.md creation have completed"
+    postconditions:
+      creation_case:
+        condition: "BACKLOG.md does not exist at projectRoot AND dryRun is false"
+        result: "BACKLOG.md is created at path.join(projectRoot, 'BACKLOG.md')"
+        file_content: "Exactly matches generateBacklogMd() return value"
+        log_output: "logger.success('Created BACKLOG.md') is called"
+      skip_case:
+        condition: "BACKLOG.md already exists at projectRoot"
+        result: "No file is written or modified"
+        log_output: "logger.info('BACKLOG.md already exists -- skipping') is called"
+      dry_run_case:
+        condition: "BACKLOG.md does not exist AND dryRun is true"
+        result: "No file is written"
+        log_output: "logger.success('Created BACKLOG.md') is called (consistent with other dry-run behavior)"
+    invariants:
+      - "An existing BACKLOG.md is NEVER overwritten or modified"
+      - "The uninstaller NEVER removes or references BACKLOG.md"
+      - "BACKLOG.md is NOT tracked in installed-files.json manifest"
+
+  uninstaller_preservation:
+    description: "BACKLOG.md must survive all uninstaller operations"
+    preconditions:
+      - "BACKLOG.md exists at projectRoot"
+    postconditions:
+      standard_uninstall:
+        result: "BACKLOG.md is untouched"
+      purge_all:
+        result: "BACKLOG.md is untouched (purge-all only removes .isdlc/)"
+      purge_docs:
+        result: "BACKLOG.md is untouched (purge-docs only removes docs/)"
+    invariants:
+      - "uninstaller.js contains zero string references to 'BACKLOG'"
+      - "BACKLOG.md is not in frameworkFiles, frameworkDirs, or frameworkPatterns"
+
+# ------------------------------------------------------------------
+# Dependencies (no new ones)
+# ------------------------------------------------------------------
+
+dependencies:
+  existing_used:
+    - module: path
+      function: join
+      usage: "Construct backlogPath from projectRoot"
+    - module: ./utils/fs-helpers.js
+      function: exists
+      usage: "Check if BACKLOG.md already exists"
+    - module: ./utils/fs-helpers.js
+      function: writeFile
+      usage: "Write BACKLOG.md to disk"
+    - module: ./utils/logger.js
+      function: "logger.success, logger.info"
+      usage: "Log creation or skip messages"
+  new_required: []

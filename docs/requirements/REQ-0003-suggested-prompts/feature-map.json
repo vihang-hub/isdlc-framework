@@ -1,0 +1,251 @@
+{
+  "feature_id": "REQ-0003",
+  "feature_name": "Framework-Controlled Suggested Prompts",
+  "blast_radius": "MEDIUM",
+  "risk_level": "LOW",
+  "analyzed_at": "2026-02-08T18:00:00Z",
+
+  "affected_files": {
+    "total_count": 38,
+    "categories": {
+      "phase_agents": {
+        "count": 15,
+        "change_type": "append",
+        "risk": "LOW",
+        "files": [
+          "src/claude/agents/01-requirements-analyst.md",
+          "src/claude/agents/02-solution-architect.md",
+          "src/claude/agents/03-system-designer.md",
+          "src/claude/agents/04-test-design-engineer.md",
+          "src/claude/agents/05-software-developer.md",
+          "src/claude/agents/06-integration-tester.md",
+          "src/claude/agents/07-qa-engineer.md",
+          "src/claude/agents/08-security-compliance-auditor.md",
+          "src/claude/agents/09-cicd-engineer.md",
+          "src/claude/agents/10-dev-environment-engineer.md",
+          "src/claude/agents/11-deployment-engineer-staging.md",
+          "src/claude/agents/12-release-manager.md",
+          "src/claude/agents/13-site-reliability-engineer.md",
+          "src/claude/agents/14-upgrade-engineer.md",
+          "src/claude/agents/quick-scan/quick-scan-agent.md"
+        ]
+      },
+      "sub_orchestrators": {
+        "count": 3,
+        "change_type": "append",
+        "risk": "LOW",
+        "files": [
+          "src/claude/agents/impact-analysis/impact-analysis-orchestrator.md",
+          "src/claude/agents/tracing/tracing-orchestrator.md",
+          "src/claude/agents/discover-orchestrator.md"
+        ]
+      },
+      "main_orchestrator": {
+        "count": 1,
+        "change_type": "modify",
+        "risk": "MEDIUM",
+        "files": [
+          "src/claude/agents/00-sdlc-orchestrator.md"
+        ],
+        "modification_points": [
+          "Add PROMPT EMISSION PROTOCOL section",
+          "Workflow initialization output",
+          "Phase gate transition output",
+          "Workflow completion output",
+          "Workflow cancellation output"
+        ]
+      },
+      "sub_agents": {
+        "count": 17,
+        "change_type": "append",
+        "risk": "LOW",
+        "files": [
+          "src/claude/agents/discover/architecture-analyzer.md",
+          "src/claude/agents/discover/test-evaluator.md",
+          "src/claude/agents/discover/constitution-generator.md",
+          "src/claude/agents/discover/skills-researcher.md",
+          "src/claude/agents/discover/data-model-analyzer.md",
+          "src/claude/agents/discover/product-analyst.md",
+          "src/claude/agents/discover/architecture-designer.md",
+          "src/claude/agents/discover/feature-mapper.md",
+          "src/claude/agents/discover/characterization-test-generator.md",
+          "src/claude/agents/discover/artifact-integration.md",
+          "src/claude/agents/discover/atdd-bridge.md",
+          "src/claude/agents/impact-analysis/impact-analyzer.md",
+          "src/claude/agents/impact-analysis/entry-point-finder.md",
+          "src/claude/agents/impact-analysis/risk-assessor.md",
+          "src/claude/agents/tracing/symptom-analyzer.md",
+          "src/claude/agents/tracing/execution-path-tracer.md",
+          "src/claude/agents/tracing/root-cause-identifier.md"
+        ]
+      },
+      "documentation": {
+        "count": 2,
+        "change_type": "update",
+        "risk": "LOW",
+        "files": [
+          "CLAUDE.md",
+          "README.md"
+        ]
+      }
+    }
+  },
+
+  "unaffected_areas": {
+    "hooks": {
+      "reason": "CON-002: No hook-based prompt injection",
+      "files": [
+        "src/claude/hooks/skill-validator.cjs",
+        "src/claude/hooks/delegation-gate.cjs",
+        "src/claude/hooks/log-skill-usage.cjs",
+        "src/claude/hooks/model-provider-router.cjs",
+        "src/claude/hooks/test-watcher.cjs",
+        "src/claude/hooks/menu-tracker.cjs",
+        "src/claude/hooks/skill-delegation-enforcer.cjs",
+        "src/claude/hooks/review-reminder.cjs",
+        "src/claude/hooks/iteration-corridor.cjs",
+        "src/claude/hooks/constitution-validator.cjs",
+        "src/claude/hooks/gate-blocker.cjs",
+        "src/claude/hooks/lib/common.cjs",
+        "src/claude/hooks/lib/provider-utils.cjs"
+      ]
+    },
+    "lib": {
+      "reason": "No runtime library changes needed",
+      "count": "10+ modules"
+    },
+    "config": {
+      "reason": "No schema or config changes",
+      "files": [
+        ".isdlc/config/workflows.json",
+        "src/claude/hooks/config/skills-manifest.json",
+        "src/claude/hooks/config/iteration-requirements.json",
+        "src/claude/settings.json"
+      ]
+    },
+    "skills": {
+      "reason": "No new skills added",
+      "count": 229
+    },
+    "installers": {
+      "reason": "Framework installation logic unchanged",
+      "files": [
+        "install.sh", "install.ps1",
+        "uninstall.sh", "uninstall.ps1",
+        "update.sh", "update.ps1"
+      ]
+    },
+    "state_schema": {
+      "reason": "NFR-006: Prompts are ephemeral output, not persisted state"
+    }
+  },
+
+  "entry_points": [
+    {
+      "trigger": "Phase agent completes work",
+      "responsible": "Each phase agent (01-14)",
+      "output": "SUGGESTED NEXT STEPS block in agent response"
+    },
+    {
+      "trigger": "Gate passage (phase transition)",
+      "responsible": "SDLC Orchestrator (00)",
+      "output": "Prompt block after GATE-NN PASSED announcement"
+    },
+    {
+      "trigger": "Workflow initialization",
+      "responsible": "SDLC Orchestrator (00)",
+      "output": "Prompt block after workflow setup"
+    },
+    {
+      "trigger": "Workflow completion",
+      "responsible": "SDLC Orchestrator (00)",
+      "output": "Prompt block after completion summary"
+    },
+    {
+      "trigger": "Workflow cancellation",
+      "responsible": "SDLC Orchestrator (00)",
+      "output": "Prompt block after cancellation"
+    },
+    {
+      "trigger": "Interactive pause (A/R/C menu)",
+      "responsible": "Requirements Analyst (01)",
+      "output": "Context-specific input guidance prompts"
+    }
+  ],
+
+  "risks": [
+    {
+      "id": "R-001",
+      "description": "Agent context window pressure from added section",
+      "likelihood": "LOW",
+      "impact": "LOW",
+      "severity": "LOW",
+      "mitigation": "Section is ~20-40 lines per agent. Marginal increase relative to file sizes (197-2158 lines)."
+    },
+    {
+      "id": "R-002",
+      "description": "Inconsistent prompt format across 36 agents",
+      "likelihood": "MEDIUM",
+      "impact": "LOW",
+      "severity": "LOW",
+      "mitigation": "Define canonical format in orchestrator. Validate during code review (Phase 08)."
+    },
+    {
+      "id": "R-003",
+      "description": "Hardcoded phase references break non-standard workflows",
+      "likelihood": "MEDIUM",
+      "impact": "MEDIUM",
+      "severity": "MEDIUM",
+      "mitigation": "All prompts MUST use dynamic references from active_workflow.phases[] array. No literal phase numbers."
+    },
+    {
+      "id": "R-004",
+      "description": "Sub-agents emit user-facing navigation prompts",
+      "likelihood": "LOW",
+      "impact": "LOW",
+      "severity": "LOW",
+      "mitigation": "Sub-agent prompts are minimal status messages, not workflow navigation."
+    },
+    {
+      "id": "R-005",
+      "description": "Prompt block conflicts with existing output banners",
+      "likelihood": "LOW",
+      "impact": "MEDIUM",
+      "severity": "LOW",
+      "mitigation": "Use distinct --- delimiters, visually separate from ===== and +----| formats."
+    }
+  ],
+
+  "dependencies": {
+    "upstream": [
+      {
+        "name": "state.json active_workflow structure",
+        "status": "EXISTS",
+        "notes": "Agents already read this for phase awareness"
+      },
+      {
+        "name": "workflows.json phase definitions",
+        "status": "EXISTS",
+        "notes": "Used by orchestrator for phase sequencing"
+      }
+    ],
+    "downstream": [],
+    "new_dependencies_required": false
+  },
+
+  "implementation_order": [
+    "00-sdlc-orchestrator.md (define format + emission protocol)",
+    "01-requirements-analyst.md",
+    "02-solution-architect.md",
+    "03-system-designer.md",
+    "04-test-design-engineer.md",
+    "05-software-developer.md",
+    "06-integration-tester.md",
+    "07-qa-engineer.md through 14-upgrade-engineer.md",
+    "quick-scan-agent.md",
+    "impact-analysis-orchestrator.md + sub-agents",
+    "tracing-orchestrator.md + sub-agents",
+    "discover-orchestrator.md + sub-agents",
+    "Documentation updates (CLAUDE.md, README.md)"
+  ]
+}

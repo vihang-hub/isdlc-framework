@@ -1,0 +1,97 @@
+{
+  "version": "1.0.0",
+  "feature": "REQ-0009-enhanced-plan-to-tasks",
+  "generated": "2026-02-11T20:05:00Z",
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "File-level implementation tasks",
+      "as_a": "Software Developer Agent (Agent 05)",
+      "i_want": "to see implementation tasks decomposed to specific file paths and functions in tasks.md",
+      "so_that": "I can execute each task precisely without self-decomposing from high-level descriptions",
+      "priority": "P0",
+      "acceptance_criteria": ["AC-01a", "AC-01b", "AC-01c", "AC-01d", "AC-01e"],
+      "traces_to": ["FR-01"]
+    },
+    {
+      "id": "US-002",
+      "title": "Requirement traceability on tasks",
+      "as_a": "Human Developer",
+      "i_want": "every task in tasks.md to show which requirement and acceptance criterion it fulfills",
+      "so_that": "I can verify complete coverage and trace any code change back to its justification",
+      "priority": "P0",
+      "acceptance_criteria": ["AC-02a", "AC-02b", "AC-02c", "AC-02d", "AC-02e"],
+      "traces_to": ["FR-02"]
+    },
+    {
+      "id": "US-003",
+      "title": "Task dependency visibility",
+      "as_a": "SDLC Orchestrator (Agent 00)",
+      "i_want": "tasks to declare explicit blocking relationships and a visible critical path",
+      "so_that": "I can identify parallel execution opportunities and understand the impact of task failures",
+      "priority": "P1",
+      "acceptance_criteria": ["AC-03a", "AC-03b", "AC-03c", "AC-03d", "AC-03e"],
+      "traces_to": ["FR-03"]
+    },
+    {
+      "id": "US-004",
+      "title": "Automatic task refinement after design",
+      "as_a": "SDLC Orchestrator (Agent 00)",
+      "i_want": "a refinement step that automatically converts design artifacts into file-level implementation tasks",
+      "so_that": "tasks.md becomes implementation-ready without manual decomposition by the developer agent",
+      "priority": "P0",
+      "acceptance_criteria": ["AC-04a", "AC-04b", "AC-04c", "AC-04d", "AC-04e", "AC-04f", "AC-04g"],
+      "traces_to": ["FR-04"]
+    },
+    {
+      "id": "US-005",
+      "title": "Mechanical execution mode",
+      "as_a": "Human Developer",
+      "i_want": "an option to have the developer agent follow tasks.md literally instead of self-decomposing",
+      "so_that": "I can ensure the implementation exactly matches the planned tasks with no drift",
+      "priority": "P1",
+      "acceptance_criteria": ["AC-05a", "AC-05b", "AC-05c", "AC-05d", "AC-05e", "AC-05f", "AC-05g"],
+      "traces_to": ["FR-05"]
+    },
+    {
+      "id": "US-006",
+      "title": "Backward-compatible enhanced format",
+      "as_a": "Phase Agent (any agent consuming tasks.md)",
+      "i_want": "the enhanced tasks.md format to preserve the existing checkbox pattern and not break my PLAN INTEGRATION PROTOCOL parsing",
+      "so_that": "I can continue working without changes while new agents leverage the enhanced data",
+      "priority": "P0",
+      "acceptance_criteria": ["AC-06a", "AC-06b", "AC-06c", "AC-06d", "AC-06e", "AC-06f", "AC-06g"],
+      "traces_to": ["FR-06"]
+    },
+    {
+      "id": "US-007",
+      "title": "Updated plan integration protocol",
+      "as_a": "Phase Agent (any agent consuming tasks.md)",
+      "i_want": "the PLAN INTEGRATION PROTOCOL to document how to handle the new annotations",
+      "so_that": "I know to preserve traceability and dependency data when updating tasks",
+      "priority": "P1",
+      "acceptance_criteria": ["AC-07a", "AC-07b", "AC-07c", "AC-07d"],
+      "traces_to": ["FR-07"]
+    },
+    {
+      "id": "US-008",
+      "title": "Enhanced plan validation",
+      "as_a": "Plan Surfacer Hook",
+      "i_want": "to optionally validate that implementation tasks have file-level granularity",
+      "so_that": "agents are warned if the plan lacks detail before implementation begins",
+      "priority": "P2",
+      "acceptance_criteria": ["AC-08a", "AC-08b", "AC-08c"],
+      "traces_to": ["FR-08"]
+    }
+  ],
+  "summary": {
+    "total_stories": 8,
+    "priorities": {
+      "P0": 4,
+      "P1": 3,
+      "P2": 1
+    },
+    "total_acceptance_criteria": 38,
+    "total_requirements": 8
+  }
+}

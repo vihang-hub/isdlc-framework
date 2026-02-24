@@ -1,0 +1,54 @@
+%% Sequence Diagram: Phase 08 Code Review with Fan-Out
+%% Shows file review fan-out by directory flow
+
+sequenceDiagram
+    participant PLC as Phase Loop Controller
+    participant QA as QA Engineer
+    participant R0 as Reviewer Agent 0
+    participant R1 as Reviewer Agent 1
+    participant RN as Reviewer Agent N-1
+    participant SJ as state.json
+    participant GB as Gate Blocker
+    participant Git as Git Repository
+
+    PLC->>QA: Task: Execute Phase 08
+
+    QA->>SJ: Read fan_out config + flags
+    SJ-->>QA: { enabled: true, no_fan_out: false, files_per_agent: 7 }
+
+    QA->>Git: git diff --name-only main...HEAD
+    Git-->>QA: [22 changed files]
+
+    Note over QA: Count changed files: F = 22
+
+    alt F >= 5 (fan-out active)
+        Note over QA: Chunk Splitter: group by directory, split into N chunks
+        Note over QA: N = min(ceil(22/7), 8) = 4 chunks
+
+        par N reviewer agents run concurrently
+            QA->>R0: Task: Review files in dirs [src/auth, src/config]
+            QA->>R1: Task: Review files in dirs [src/api, src/utils]
+            QA->>RN: Task: Review files in dirs [test/auth, test/api]
+        end
+
+        R0-->>QA: { chunk_index: 0, findings: [{severity: "high", ...}] }
+        R1-->>QA: { chunk_index: 1, findings: [{severity: "medium", ...}] }
+        RN-->>QA: { chunk_index: N-1, findings: [{severity: "low", ...}] }
+
+        Note over QA: Result Merger:
+        Note over QA: 1. Deduplicate (same file + line range + category)
+        Note over QA: 2. Priority sort (critical > high > medium > low)
+        Note over QA: 3. Detect cross-cutting concerns
+        Note over QA: 4. Produce unified code-review-report.md
+
+    else F < 5 (single-agent path)
+        Note over QA: Review all files as single agent (unchanged behavior)
+    end
+
+    Note over QA: Add Parallelism Summary (if fan-out used)
+    Note over QA: Write code-review-report.md
+    Note over QA: Write review-summary.md
+
+    QA->>GB: GATE-07 validation
+    GB-->>QA: PASS
+    QA-->>PLC: Phase 08 complete

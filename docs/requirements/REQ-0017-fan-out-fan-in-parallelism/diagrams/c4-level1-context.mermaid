@@ -1,0 +1,29 @@
+%% C4 Level 1: System Context Diagram
+%% Fan-Out/Fan-In Parallelism (REQ-0017)
+
+graph TB
+    User["Developer<br/>(Human User)"]
+    CC["Claude Code<br/>(AI Development Assistant)"]
+    FS["Local Filesystem<br/>(state.json, agent markdowns,<br/>test files, source code)"]
+    Git["Git Repository<br/>(Changed files via git diff)"]
+
+    User -->|"Natural language<br/>development requests"| CC
+    CC -->|"Read/write configs,<br/>agent instructions,<br/>test results"| FS
+    CC -->|"Read changed files<br/>(Phase 08 input)"| Git
+    CC -->|"Display quality reports,<br/>review findings"| User
+
+    subgraph "iSDLC Framework (within Claude Code)"
+        PLC["Phase Loop Controller<br/>(isdlc.md)"]
+        P16["Phase 16 Agent<br/>(quality-loop-engineer)"]
+        P08["Phase 08 Agent<br/>(qa-engineer)"]
+        FOE["Fan-Out Engine<br/>(Protocol / Skill QL-012)"]
+        GB["Gate Blocker<br/>(gate-blocker.cjs)"]
+    end
+
+    CC --> PLC
+    PLC -->|"Delegate"| P16
+    PLC -->|"Delegate"| P08
+    P16 -.->|"References"| FOE
+    P08 -.->|"References"| FOE
+    P16 -->|"Validate"| GB
+    P08 -->|"Validate"| GB

@@ -1,0 +1,132 @@
+{
+  "schema_version": "1.0.0",
+  "feature": "REQ-0014",
+  "description": "Validation rules for BACKLOG.md scaffolding in installer",
+  "created": "2026-02-14",
+
+  "rules": [
+    {
+      "id": "VR-01",
+      "name": "projectRoot must be valid directory path",
+      "scope": "install() parameter",
+      "type": "input",
+      "enforcement": "upstream",
+      "enforced_by": "lib/cli.js argument parsing",
+      "constraint": "projectRoot must be a non-empty string pointing to an existing directory",
+      "validation_logic": "Validated by CLI layer before install() is called. The BACKLOG.md block does not re-validate.",
+      "traces": ["FR-01", "AC-01"]
+    },
+    {
+      "id": "VR-02",
+      "name": "BACKLOG.md must not be overwritten if exists",
+      "scope": "BACKLOG.md creation block",
+      "type": "guard",
+      "enforcement": "inline",
+      "enforced_by": "exists() check in BACKLOG.md creation block",
+      "constraint": "If path.join(projectRoot, 'BACKLOG.md') exists, the file must NOT be written or modified",
+      "validation_logic": "if (!(await exists(backlogPath))) { ... }",
+      "traces": ["FR-02", "AC-06", "AC-07"]
+    },
+    {
+      "id": "VR-03",
+      "name": "Dry-run mode must prevent file writes",
+      "scope": "BACKLOG.md creation block",
+      "type": "guard",
+      "enforcement": "inline",
+      "enforced_by": "dryRun flag check",
+      "constraint": "If dryRun is true, writeFile() must NOT be called for BACKLOG.md",
+      "validation_logic": "if (!dryRun) { await writeFile(...) }",
+      "traces": ["FR-03", "AC-08", "AC-09"]
+    },
+    {
+      "id": "VR-04",
+      "name": "Template must contain ## Open header",
+      "scope": "generateBacklogMd() return value",
+      "type": "content",
+      "enforcement": "static",
+      "enforced_by": "Hard-coded template literal",
+      "constraint": "Return value must contain the string '## Open' as a standalone line",
+      "validation_logic": "Template string contains '## Open\\n'",
+      "test_regex": "/^## Open$/m",
+      "traces": ["FR-01", "AC-02"]
+    },
+    {
+      "id": "VR-05",
+      "name": "Template must contain ## Completed header",
+      "scope": "generateBacklogMd() return value",
+      "type": "content",
+      "enforcement": "static",
+      "enforced_by": "Hard-coded template literal",
+      "constraint": "Return value must contain the string '## Completed' as a standalone line",
+      "validation_logic": "Template string contains '## Completed\\n'",
+      "test_regex": "/^## Completed$/m",
+      "traces": ["FR-01", "AC-03"]
+    },
+    {
+      "id": "VR-06",
+      "name": "Template must contain preamble before ## Open",
+      "scope": "generateBacklogMd() return value",
+      "type": "content",
+      "enforcement": "static",
+      "enforced_by": "Hard-coded template literal",
+      "constraint": "Return value must contain a blockquote (line starting with '>') before the ## Open header",
+      "validation_logic": "indexOf('>') < indexOf('## Open')",
+      "traces": ["FR-01", "AC-04"]
+    },
+    {
+      "id": "VR-07",
+      "name": "## Open must appear before ## Completed in template",
+      "scope": "generateBacklogMd() return value",
+      "type": "content",
+      "enforcement": "static",
+      "enforced_by": "Hard-coded template literal ordering",
+      "constraint": "The position of '## Open' must be less than the position of '## Completed' in the return string",
+      "validation_logic": "indexOf('## Open') < indexOf('## Completed')",
+      "traces": ["FR-01", "AC-05"]
+    },
+    {
+      "id": "VR-08",
+      "name": "Uninstaller must not reference BACKLOG",
+      "scope": "lib/uninstaller.js",
+      "type": "absence",
+      "enforcement": "static-analysis",
+      "enforced_by": "Grep/test verification",
+      "constraint": "The string 'BACKLOG' (case-insensitive) must NOT appear in lib/uninstaller.js",
+      "validation_logic": "grep -i BACKLOG lib/uninstaller.js returns 0 results",
+      "traces": ["FR-04", "AC-10", "AC-11", "AC-12"]
+    },
+    {
+      "id": "VR-09",
+      "name": "BACKLOG.md must not appear in installed-files.json",
+      "scope": "Installation manifest",
+      "type": "absence",
+      "enforcement": "design",
+      "enforced_by": "BACKLOG.md creation block does not call installedFiles.push()",
+      "constraint": "The BACKLOG.md file path must NOT be added to the installedFiles array",
+      "validation_logic": "The creation block does not modify the installedFiles array",
+      "traces": ["FR-04", "AC-10"]
+    },
+    {
+      "id": "VR-10",
+      "name": "Template must not contain backlog items",
+      "scope": "generateBacklogMd() return value",
+      "type": "content",
+      "enforcement": "static",
+      "enforced_by": "Hard-coded template literal",
+      "constraint": "The template must contain only headers, preamble, and empty sections -- no list items (lines starting with '-')",
+      "validation_logic": "No lines matching /^- / in the return value",
+      "test_regex": "/^- /m",
+      "expected_match": false,
+      "traces": ["NFR-01"]
+    }
+  ],
+
+  "summary": {
+    "total_rules": 10,
+    "input_validation": 1,
+    "guard_clauses": 2,
+    "content_validation": 5,
+    "absence_checks": 2,
+    "all_traces_to_requirements": true
+  }
+}

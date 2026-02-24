@@ -1,0 +1,116 @@
+Requirement,AC,Test Case,Test Type,Priority,Test Name
+FR-001,V-001,TC-02.01,negative,P0,File not found returns error
+FR-001,V-002,TC-02.02,negative,P0,Non-.md extension (.txt) rejected
+FR-001,V-002,TC-02.03,negative,P0,Non-.md extension (.json) rejected
+FR-001,V-002,TC-02.04,negative,P0,No extension at all rejected
+FR-001,V-003,TC-02.05,negative,P0,No YAML frontmatter detected
+FR-001,V-003,TC-02.06,negative,P0,Empty file detected
+FR-001,V-004,TC-02.07,negative,P0,Missing name field error
+FR-001,V-004,TC-02.16,negative,P0,Empty name (whitespace only) error
+FR-001,V-005,TC-02.08,negative,P0,Missing description field error
+FR-001,V-005,TC-02.17,negative,P0,Empty description (whitespace only) error
+FR-001,V-004+V-005,TC-02.09,negative,P0,Both name and description missing -- all errors collected
+FR-001,V-006,TC-02.10,negative,P0,Name with uppercase rejected
+FR-001,V-006,TC-02.11,negative,P0,Name with underscores rejected
+FR-001,V-006,TC-02.12,negative,P0,Name with spaces rejected
+FR-001,V-006,TC-02.13,negative,P0,Name starting with hyphen rejected
+FR-001,V-006,TC-02.14,negative,P0,Name ending with hyphen rejected
+FR-001,V-006,TC-02.15,negative,P0,Single character name rejected
+FR-001,V-004+V-005,TC-01.01,positive,P0,Valid skill file with minimal frontmatter
+FR-001,All optional,TC-01.02,positive,P0,Valid skill file with all optional fields
+FR-001,Body extract,TC-01.03,positive,P0,Body content extracted correctly
+FR-001,V-006,TC-01.04,positive,P0,Name with hyphens and numbers valid
+FR-001,V-006,TC-01.05,positive,P0,Two-character name valid (minimum)
+FR-001,NFR-006,TC-02.18,negative,P0,All errors collected (not fail-fast)
+FR-002,Keywords,TC-03.01,positive,P1,Testing keywords detected
+FR-002,Keywords,TC-03.02,positive,P1,Architecture keywords detected
+FR-002,Keywords,TC-03.03,positive,P1,DevOps keywords detected
+FR-002,Keywords,TC-03.04,positive,P1,Security keywords detected
+FR-002,Keywords,TC-03.05,positive,P1,Implementation keywords detected
+FR-002,Keywords,TC-03.06,positive,P1,Requirements keywords detected
+FR-002,Keywords,TC-03.07,positive,P1,Review keywords detected
+FR-002,Keywords,TC-03.08,positive,P1,Mixed categories (cross-cutting) detected
+FR-002,Keywords,TC-03.09,positive,P1,Case insensitive matching
+FR-002,Confidence,TC-03.10,positive,P1,High confidence (3+ keywords)
+FR-002,Confidence,TC-03.11,positive,P1,Medium confidence (1-2 keywords)
+FR-002,Confidence,TC-03.12,positive,P1,Low confidence (no keywords) -- fallback
+FR-002,Edge,TC-04.01,negative,P1,Null input handled
+FR-002,Edge,TC-04.02,negative,P1,Undefined input handled
+FR-002,Edge,TC-04.03,negative,P1,Empty string handled
+FR-002,Edge,TC-04.04,negative,P1,Non-string input handled
+FR-002,Edge,TC-04.05,positive,P1,Phases deduplicated
+FR-002,Suggestion,TC-05.01,positive,P1,Maps phases to agents correctly
+FR-002,Suggestion,TC-05.02,positive,P1,Multiple phases map to multiple agents
+FR-002,Suggestion,TC-05.03,positive,P1,Default delivery type is context
+FR-002,Suggestion,TC-05.04,positive,P1,Frontmatter owner adds agent
+FR-002,Suggestion,TC-05.05,positive,P1,Owner upgrades confidence from low
+FR-002,Suggestion,TC-05.06,positive,P1,when_to_use with must suggests instruction
+FR-002,Suggestion,TC-05.07,positive,P1,when_to_use with standard suggests instruction
+FR-002,Suggestion,TC-05.08,positive,P1,Large content suggests reference
+FR-002,Suggestion,TC-05.09,negative,P1,Null analysis uses defaults
+FR-002,Suggestion,TC-05.10,positive,P1,Null frontmatterHints is safe
+FR-002,Constants,TC-18.01,positive,P2,SKILL_KEYWORD_MAP exported
+FR-002,Constants,TC-18.02,positive,P2,SKILL_KEYWORD_MAP has 7 categories
+FR-002,Constants,TC-18.03,positive,P2,PHASE_TO_AGENT_MAP exported
+FR-002,Constants,TC-18.04,positive,P2,PHASE_TO_AGENT_MAP has 11 entries
+FR-002,Constants,TC-18.05,positive,P2,All keyword entries have phases array
+FR-003,Behavioral,TC-11.01,positive,P0,Wiring session receives correct suggestions (integration)
+FR-004,Write,TC-06.01,positive,P0,Writes valid manifest to disk
+FR-004,Write,TC-06.02,positive,P0,Creates parent directories
+FR-004,Write,TC-06.03,positive,P0,Writes with 2-space indentation
+FR-004,Write,TC-06.04,positive,P0,Overwrites existing manifest
+FR-004,Verify,TC-06.05,positive,P0,Validates JSON after write
+FR-004,Write,TC-06.06,positive,P0,Returns path in result
+FR-004,Write,TC-06.07,positive,P0,Manifest with single skill
+FR-004,Write+NFR-002,TC-06.08,positive,P0,Manifest with 50 skills (max)
+FR-004,Error,TC-07.01,negative,P0,Returns error on write failure
+FR-004,Error,TC-07.02,negative,P0,Returns error on verification failure
+FR-005,Format,TC-08.01,positive,P0,Context delivery format correct
+FR-005,Format,TC-08.02,positive,P0,Instruction delivery format correct
+FR-005,Format,TC-08.03,positive,P0,Reference delivery format correct
+FR-005,Format,TC-08.04,negative,P0,Unknown delivery type returns empty
+FR-005,Format,TC-08.05,positive,P0,Empty content handled
+FR-005,Format,TC-08.06,positive,P0,Content with special characters
+FR-005,Format,TC-08.07,positive,P0,Long skill name handled
+FR-005,Format,TC-08.08,positive,P0,Multiline content preserved
+FR-005,Injection,TC-12.01,positive,P0,Matching phase produces injection
+FR-005,Injection,TC-12.02,negative,P0,Non-matching phase produces no injection
+FR-005,Injection,TC-12.03,negative,P0,Missing skill file at injection time
+FR-005,Injection,TC-12.04,negative,P0,Malformed manifest at injection time
+FR-006,Read,TC-10.04,positive,P0,loadExternalManifest returns parsed object
+FR-007,Remove,TC-09.01,positive,P2,Removes existing skill by name
+FR-007,Remove,TC-09.02,negative,P2,Name not found returns removed: false
+FR-007,Remove,TC-09.03,negative,P2,Null manifest handled safely
+FR-007,Remove,TC-09.04,negative,P2,Manifest without skills array handled
+FR-007,Remove,TC-09.05,negative,P2,Case-sensitive name matching
+FR-007,Remove,TC-09.06,positive,P2,Removes only the named skill
+FR-007,Pipeline,TC-13.01,positive,P1,Remove and rewrite manifest
+FR-007,Pipeline,TC-13.02,positive,P1,Remove last skill leaves empty array
+FR-007,Pipeline,TC-13.03,negative,P1,Remove non-existent skill unchanged
+FR-008,Structural,Deferred,positive,P2,CLAUDE.md intent table row (post-implementation)
+FR-009,Re-wire,TC-05.04,positive,P1,suggestBindings with existing hints
+FR-009,Re-wire,TC-06.04,positive,P0,writeExternalManifest overwrites existing
+NFR-001,Performance,TC-17.01,positive,P1,Single skill injection under 100ms
+NFR-001,Performance,TC-17.03,positive,P1,analyzeSkillContent under 10ms
+NFR-002,Performance,TC-17.02,positive,P1,50-skill manifest parse under 500ms
+NFR-002,Scalability,TC-06.08,positive,P0,Manifest with 50 skills
+NFR-003,Fail-open,TC-14.01,negative,P0,No manifest file -- injection skipped
+NFR-003,Fail-open,TC-14.02,negative,P0,Empty skills array -- no injection
+NFR-003,Fail-open,TC-14.04,negative,P0,Skill file missing from disk
+NFR-003,Fail-open,TC-14.05,negative,P0,Entire injection pipeline error
+NFR-003,Fail-open,TC-10.05,negative,P0,Corrupt JSON returns null
+NFR-004,Monorepo,TC-10.01,positive,P0,resolveExternalSkillsPath single project
+NFR-004,Monorepo,TC-10.02,positive,P0,resolveExternalManifestPath single project
+NFR-004,Monorepo,TC-10.06,positive,P0,resolveExternalSkillsPath with projectId
+NFR-005,Backward,TC-14.01,negative,P0,No manifest = no injection
+NFR-005,Backward,TC-14.03,negative,P0,Entry without bindings skipped
+NFR-005,Backward,TC-15.01,positive,P1,No manifest file no external dir
+NFR-005,Backward,TC-15.02,positive,P1,loadExternalManifest returns null
+NFR-005,Backward,TC-15.03,positive,P1,Manifest entry without bindings object
+NFR-006,Clarity,TC-02.07,negative,P0,Error message identifies missing name field
+NFR-006,Clarity,TC-02.08,negative,P0,Error message identifies missing description field
+NFR-006,Clarity,TC-02.18,negative,P0,All errors collected for single-pass correction
+Security T1,Path,TC-16.01,negative,P0,Forward slash in filename rejected
+Security T1,Path,TC-16.02,negative,P0,Backslash in filename rejected
+Security T1,Path,TC-16.03,negative,P0,Double-dot in filename rejected
+Security T1,Path,TC-16.04,positive,P0,Clean filename accepted

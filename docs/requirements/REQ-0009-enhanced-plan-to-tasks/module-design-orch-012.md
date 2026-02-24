@@ -1,0 +1,375 @@
+# Module Design: ORCH-012 Enhanced generate-plan SKILL.md
+
+**Version**: 1.0.0
+**Date**: 2026-02-11
+**Author**: System Designer (Agent 03)
+**Phase**: 04-design
+**Traces**: FR-01, FR-02, FR-03, FR-06, ADR-0001, ADR-0004
+
+---
+
+## 1. Module Overview
+
+This design specifies the enhanced ORCH-012 generate-plan skill. The skill is a markdown specification (`src/claude/skills/orchestration/generate-plan/SKILL.md`) executed by the orchestrator agent (Agent 00). It is NOT executable code -- it is an instruction set that the LLM follows to produce `docs/isdlc/tasks.md`.
+
+### Responsibility
+
+Transform workflow definition, Phase 01 artifacts, and (optionally) requirements-spec.md into a tasks.md file using the v2.0 format with traceability annotations, dependency sub-lines, and summary sections.
+
+### Change Summary
+
+| Aspect | Current (v1.0) | Enhanced (v2.0) |
+|--------|-----------------|-----------------|
+| Inputs | state.json, Phase 01 artifacts, template | + requirements-spec.md |
+| Task format | `- [ ] TNNNN Description` | `- [ ] TNNNN Description \| traces: REQ-NNN, AC-NNx` |
+| Sub-lines | None | `blocked_by:`, `blocks:`, `files:`, `reason:` |
+| Sections | Phase sections + Progress | + Dependency Graph + Traceability Matrix |
+| Header | Title, Generated, Workflow, Phases | + `Format: v2.0` |
+| Validation | Task count, checkbox state | + Acyclicity, traceability coverage |
+
+---
+
+## 2. Enhanced Process (Step-by-Step)
+
+### Step 1: Read Workflow Context (MODIFIED)
+
+```
+1. Read active_workflow from .isdlc/state.json
+2. Extract: type, artifact_folder, phases array
+3. Read Phase 01 artifacts to understand scope:
+   - feature: docs/requirements/{artifact_folder}/requirements-spec.md
+   - fix: docs/requirements/{artifact_folder}/bug-report.md
+4. [NEW] Read requirements-spec.md to extract REQ-NNN and AC-NNx identifiers:
+   - Parse all "### FR-NN:" headings to extract functional requirement IDs
+   - Parse all "- AC-NNx:" lines to extract acceptance criterion IDs
+   - Build a lookup table: { FR-NN: [AC-NNa, AC-NNb, ...] }
+   - For fix workflows: extract AC IDs from bug-report.md acceptance criteria
+5. [NEW] If requirements-spec.md is not found or has no REQ/AC identifiers:
+   - Continue without traceability tags (graceful degradation)
+   - Log warning: "No requirement identifiers found; tasks will lack traces"
+```
+
+**Inputs**:
+| Input | Path | Required | Purpose |
+|-------|------|----------|---------|
+| state.json | `.isdlc/state.json` | YES | Workflow type, phases, artifact folder |
+| requirements-spec.md | `docs/requirements/{folder}/requirements-spec.md` | NO (graceful) | REQ/AC identifiers for traceability |
+| bug-report.md | `docs/requirements/{folder}/bug-report.md` | NO (fix only) | AC identifiers for bug fix traceability |
+
+### Step 2: Load Template (UNCHANGED)
+
+```
+1. Read .isdlc/templates/workflow-tasks-template.md
+2. Locate the section matching active_workflow.type (## feature or ## fix)
+3. Extract task descriptions for each phase listed in the workflow
+```
+
+No changes. The template continues to provide plain-text descriptions.
+
+### Step 3: Generate Task IDs and Format (MODIFIED)
+
+```
+For each phase in the workflow's phases array:
+  1. Start task counter at T0001 (incrementing across all phases)
+  2. For each task description in the template:
+     a. Format base line: - [ ] TNNNN Description
+     b. [NEW] Add [P] marker if phase is parallel-eligible (see Step 4)
+     c. [NEW] Add traceability annotation:
+        - Map the task description to the most relevant FR-NN and AC-NNx
+        - Append after description: | traces: FR-NN, AC-NNa [, AC-NNb ...]
+        - Mapping heuristic: match task keywords against FR descriptions
+          and AC text. Each task should trace to at least one FR.
+        - If no match found: omit traces annotation (do NOT force a match)
+     d. [NEW] For implementation phase tasks ONLY:
+        - Do NOT add file-level annotations at this stage
+        - File-level detail is added later by the refinement step (Section 3c)
+        - Implementation tasks remain high-level with traces only
+  3. Group under phase header with status:
+     - Phase 01: ## Phase NN: Name -- COMPLETE (mark all tasks [X])
+     - All others: ## Phase NN: Name -- PENDING
+```
+
+### Step 4: Add Parallel Markers (UNCHANGED)
+
+Apply `[P]` markers based on workflow type. The existing parallel marker logic remains unchanged.
+
+### Step 5: Add Summary Sections (NEW)
+
+After generating all phase sections, add the following sections at the bottom of the document:
+
+#### 5a. Traceability Matrix Section
+
+```
+## Traceability Matrix
+
+### Requirement Coverage
+| Requirement | ACs | Tasks | Coverage |
+|-------------|-----|-------|----------|
+| FR-01 | AC-01a, AC-01b, AC-01c | T0001, T0040 | 3/3 (100%) |
+| FR-02 | AC-02a, AC-02b | T0002 | 2/2 (100%) |
+| ... | ... | ... | ... |
+
+### Orphan Tasks (No Traceability)
+- T0055 Description (no matching requirement found)
+
+### Uncovered Requirements
+- FR-09 AC-09c (no task covers this acceptance criterion)
+```
+
+**Generation algorithm**:
+1. Iterate all tasks. Group by their `traces:` values.
+2. For each FR-NN: count how many of its ACs appear in task traces.
+3. Coverage = (ACs-in-traces / total-ACs-for-FR) as percentage.
+4. Orphan tasks: tasks without any `traces:` annotation.
+5. Uncovered requirements: ACs not referenced by any task.
+
+#### 5b. Progress Summary Section (ENHANCED)
+
+```
+## Progress Summary
+
+| Phase | Status | Tasks | Complete | Blocked |
+|-------|--------|-------|----------|---------|
+| 01 Requirements | COMPLETE | 7 | 7 | 0 |
+| 02 Architecture | PENDING | 7 | 0 | 0 |
+| ... | ... | ... | ... | ... |
+| **TOTAL** | | **63** | **7** | **0** |
+
+**Progress**: 7 / 63 tasks (11%) | 0 blocked
+**Traceability**: 38/38 AC covered (100%)
+```
+
+The Blocked column is always 0 at generation time (BLOCKED status is only set during mechanical execution).
+
+**NOTE**: The Dependency Graph section is NOT generated at this step. It is generated by the refinement step (Section 3c) after design artifacts exist. At initial generation, Phase 06 tasks are high-level and have no inter-task dependencies.
+
+### Step 6: Write tasks.md (MODIFIED)
+
+```
+1. Compose the full document with:
+   - Header block (including Format: v2.0)
+   - Phase sections with annotated tasks
+   - Traceability Matrix section
+   - Progress Summary section
+2. Write to docs/isdlc/tasks.md
+3. Display the full plan to the user with announcement banner
+```
+
+### Step 7: Display to User (UNCHANGED)
+
+Same banner format as current. Summary line gains traceability count.
+
+---
+
+## 3. Output Format Specification
+
+### 3.1 Header Block
+
+```markdown
+# Task Plan: {type} {artifact_folder}
+
+Generated: {ISO-8601 timestamp}
+Workflow: {type}
+Format: v2.0
+Phases: {count}
+```
+
+The `Format: v2.0` line is new. Omission implies v1.0 (legacy). Parsers check for this field to determine whether enhanced annotations are expected.
+
+### 3.2 Phase Section
+
+```markdown
+---
+
+## Phase 01: Requirements Capture -- COMPLETE
+- [X] T0001 Discover project context and business requirements | traces: FR-01, AC-01a
+- [X] T0002 Identify users and define personas | traces: FR-01, AC-01b
+- [X] T0003 Write user stories with acceptance criteria | traces: FR-01, AC-01c, AC-01d
+...
+
+## Phase 03: System Design -- PENDING
+- [ ] T0015 Design interface specifications (API contracts) | traces: FR-06, AC-06a, AC-06b
+- [ ] T0016 Create module designs | traces: FR-01, AC-01c
+...
+
+## Phase 06: Implementation -- PENDING
+- [ ] T0030 Check existing test infrastructure | traces: NFR-02
+- [ ] T0031 Write failing unit tests (TDD Red) | traces: FR-01, FR-02
+- [ ] T0032 Implement code to pass tests (TDD Green) | traces: FR-01, FR-02, FR-03
+- [ ] T0033 Iterate until all tests pass with 80% coverage | traces: NFR-01
+- [ ] T0034 Refactor and validate code quality | traces: NFR-03
+- [ ] T0035 Validate constitutional compliance | traces: C-01, C-02
+```
+
+Note: Phase 06 tasks are HIGH-LEVEL at initial generation. No `files:`, `blocked_by:`, or `blocks:` sub-lines. These are added by the refinement step after GATE-04.
+
+### 3.3 Task Line EBNF (Reference from database-design.md)
+
+```ebnf
+task_line     ::= checkbox SPACE task_id SPACE description [SPACE parallel_marker]
+                  [SPACE pipe annotations] NEWLINE [sub_lines]
+checkbox      ::= "- [ ]" | "- [X]" | "- [BLOCKED]"
+task_id       ::= "T" DIGIT{4}
+description   ::= TEXT
+parallel_marker ::= "[P]"
+pipe          ::= "|"
+annotations   ::= annotation ("," annotation)*
+annotation    ::= SPACE key ":" SPACE value
+key           ::= "traces" | "effort" | "priority" | IDENTIFIER
+value         ::= TEXT
+
+sub_lines     ::= (sub_line NEWLINE)*
+sub_line      ::= INDENT structured_annotation
+INDENT        ::= "  "
+structured_annotation ::= dependency_annotation | file_annotation | blocked_annotation
+dependency_annotation ::= ("blocked_by" | "blocks") ":" SPACE "[" task_id_list "]"
+file_annotation       ::= "files:" SPACE file_spec ("," SPACE file_spec)*
+blocked_annotation    ::= "reason:" SPACE TEXT
+task_id_list  ::= task_id ("," SPACE task_id)*
+file_spec     ::= file_path SPACE "(" file_action ")"
+file_action   ::= "CREATE" | "MODIFY"
+```
+
+### 3.4 Traceability Annotation Rules
+
+1. Every task SHOULD have a `| traces:` annotation.
+2. The traces value is a comma-separated list of REQ-NNN and/or AC-NNx identifiers.
+3. At least one identifier per task (FR-NN level minimum).
+4. AC-level granularity is preferred when the mapping is clear.
+5. If no mapping is found, omit the traces annotation entirely (do not fabricate).
+6. Multiple tasks may trace to the same FR/AC (many-to-many).
+
+### 3.5 Traceability Mapping Heuristic
+
+Since the generate-plan skill is executed by an LLM (not deterministic code), the mapping uses natural language understanding:
+
+```
+For each task description:
+  1. Read the task description text
+  2. Read all FR-NN descriptions and their AC-NNx text
+  3. Identify the FR(s) whose description most closely matches the task
+  4. Within those FRs, identify the specific AC(s) the task addresses
+  5. Assign: | traces: FR-NN, AC-NNa [, AC-NNb ...]
+
+Validation:
+  - After all tasks are annotated, check for uncovered FRs
+  - If an FR has zero tasks tracing to it, emit a warning in the
+    Traceability Matrix "Uncovered Requirements" section
+  - If a task has no matching FR, list it in "Orphan Tasks"
+```
+
+---
+
+## 4. Phase Name Mapping (CORRECTED)
+
+The current ORCH-012 has a phase name inconsistency: it maps `05-implementation` but the canonical phase key in workflows.json and state.json is `06-implementation`. This design corrects the mapping.
+
+| Phase Key | Display Name |
+|-----------|-------------|
+| 00-quick-scan | Quick Scan |
+| 01-requirements | Requirements Capture |
+| 02-impact-analysis | Impact Analysis |
+| 02-tracing | Bug Tracing |
+| 03-architecture | Architecture Assessment |
+| 04-design | System Design |
+| 05-test-strategy | Test Strategy |
+| 06-implementation | Implementation |
+| 16-quality-loop | Quality Loop |
+| 07-testing | Integration Testing |
+| 08-code-review | Code Review & QA |
+| 09-validation | Security Validation |
+| 10-cicd | CI/CD Pipeline |
+| 11-local-testing | Environment Build (Local) |
+| 12-remote-build | Environment Build (Remote) |
+| 12-test-deploy | Staging Deployment |
+| 13-production | Production Release |
+| 14-operations | Operations & Monitoring |
+
+**Key change**: `05-implementation` removed. `06-implementation` is the canonical key.
+
+---
+
+## 5. Validation Rules
+
+After generating the complete tasks.md, the skill instructs the generating agent to validate:
+
+1. **Sequential IDs**: Task IDs are T0001, T0002, ... with no gaps.
+2. **Phase coverage**: Every phase in `active_workflow.phases` has a section.
+3. **Phase 01 complete**: All Phase 01 tasks are marked `[X]`.
+4. **Others pending**: All non-Phase-01 tasks are marked `[ ]`.
+5. **Traceability coverage**: At least 80% of FRs have at least one task with traces (warning if below).
+6. **No orphan phases**: No phase section exists for phases not in the workflow.
+7. **Format header**: `Format: v2.0` is present in the header block.
+8. **Progress consistency**: Progress Summary counts match actual checkbox counts.
+
+---
+
+## 6. Backward Compatibility
+
+### What existing agents see
+
+Agents using the PLAN INTEGRATION PROTOCOL match these patterns:
+- `## Phase NN:` -- locate phase section (UNCHANGED)
+- `PENDING` / `IN PROGRESS` / `COMPLETE` -- phase status (UNCHANGED)
+- `- [ ]` / `- [X]` -- checkbox toggle (UNCHANGED)
+- `TNNNN` -- task IDs (UNCHANGED)
+
+Pipe-delimited annotations after the description are ignored by agents that only regex-match `^- \[[ X]\] T\d{4}`.
+
+### What changes
+
+The `Format: v2.0` header signals enhanced format to parsers that want to consume annotations. Absence of this header means legacy format -- no annotations expected.
+
+---
+
+## 7. Inputs/Outputs Summary
+
+### Inputs
+
+| Input | Type | Required | Path |
+|-------|------|----------|------|
+| state.json | JSON | YES | `.isdlc/state.json` |
+| requirements-spec.md | Markdown | NO (graceful) | `docs/requirements/{folder}/requirements-spec.md` |
+| bug-report.md | Markdown | NO (fix only) | `docs/requirements/{folder}/bug-report.md` |
+| workflow-tasks-template.md | Markdown | YES | `.isdlc/templates/workflow-tasks-template.md` |
+
+### Outputs
+
+| Output | Type | Path |
+|--------|------|------|
+| tasks.md | Markdown (v2.0) | `docs/isdlc/tasks.md` |
+
+---
+
+## 8. Template Enhancement
+
+The `workflow-tasks-template.md` file needs one change: rename the implementation phase key from `### 05-implementation` to `### 06-implementation` to match the canonical phase key.
+
+Additionally, add a comment indicating that implementation-phase tasks are high-level placeholders that get refined by Section 3c:
+
+```markdown
+### 06-implementation
+<!-- These tasks are high-level. The refinement step (Section 3c) converts
+     them to file-level tasks after GATE-04. -->
+- Check existing test infrastructure
+- Write failing unit tests (TDD Red)
+- Implement code to pass tests (TDD Green)
+- Iterate until all tests pass with 80% coverage
+- Refactor and validate code quality
+- Validate constitutional compliance
+```
+
+---
+
+## 9. Traces
+
+| Requirement | How Addressed |
+|-------------|---------------|
+| FR-01 (File-Level Granularity) | Phase 06 tasks are high-level at generation; file-level detail added by refinement (Section 3c). Format supports `files:` sub-lines. |
+| FR-02 (Traceability) | Step 1 reads REQ/AC IDs. Step 3 adds `\| traces:` annotations. Step 5 generates Traceability Matrix. |
+| FR-03 (Dependency Graph) | Format supports `blocked_by:`/`blocks:` sub-lines. Dependency Graph section generated by refinement step. |
+| FR-06 (Enhanced Format) | Full v2.0 format with pipe annotations, sub-lines, new sections, `Format: v2.0` header. |
+| ADR-0001 | Inline annotations (no separate metadata file). |
+| ADR-0004 | Dual format: inline sub-lines + Dependency Graph summary section. |
+| NFR-02 | Backward compatible: existing checkbox parsing unaffected. |
+| NFR-04 | Pipe-delimited format extensible to future keys. |

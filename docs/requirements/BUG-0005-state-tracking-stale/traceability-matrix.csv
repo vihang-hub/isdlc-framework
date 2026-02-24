@@ -1,0 +1,63 @@
+Requirement,AC,Test Case ID,Test Description,Test File,Test Type,Priority
+FR-01,AC-01a,TC-01a-01,phase_status updated to completed for finished phase,test-state-sync-integration.test.cjs,Integration,P0
+FR-01,AC-01a,TC-01a-02,top-level phases also updated (regression),test-state-sync-integration.test.cjs,Integration,P0
+FR-01,AC-01b,TC-01b-01,Next phase marked in_progress in phase_status,test-state-sync-integration.test.cjs,Integration,P0
+FR-01,AC-01b,TC-01b-02,No next phase update when completing final phase,test-state-sync-integration.test.cjs,Integration,P1
+FR-01,AC-01c,TC-01c-01,Multi-phase consistency check,test-state-sync-integration.test.cjs,Integration,P0
+FR-01,AC-01c,TC-01c-02,current_phase matches current_phase_index,test-state-sync-integration.test.cjs,Integration,P0
+FR-01,AC-01c,TC-01c-03,top-level current_phase matches active_workflow.current_phase,test-state-sync-integration.test.cjs,Integration,P0
+FR-02,AC-02a,TC-02a-01,active_agent updated to next phase agent,test-state-sync-integration.test.cjs,Integration,P1
+FR-02,AC-02a,TC-02a-02,active_agent reflects final phase agent,test-state-sync-integration.test.cjs,Integration,P1
+FR-02,AC-02a,TC-02a-03,active_agent not changed when no next phase,test-state-sync-integration.test.cjs,Integration,P2
+FR-02,AC-02b,TC-02b-01,Phase keys resolve to correct agents,test-state-sync-integration.test.cjs,Integration,P1
+FR-02,AC-02b,TC-02b-02,Unknown phase key does not crash,test-state-sync-integration.test.cjs,Integration,P2
+FR-03,AC-03a,TC-03a-01,constitution-validator prefers active_workflow.current_phase,test-constitution-validator.test.cjs,Unit,P0
+FR-03,AC-03a,TC-03a-02,constitution-validator falls back to top-level,test-constitution-validator.test.cjs,Unit,P0
+FR-03,AC-03a,TC-03a-03,constitution-validator allows when both missing,test-constitution-validator.test.cjs,Unit,P1
+FR-03,AC-03a,TC-03a-04,constitution-validator prefers active_workflow over stale top-level,test-constitution-validator.test.cjs,Unit,P0
+FR-03,AC-03b,TC-03b-01,delegation-gate prefers active_workflow (fix inversion),test-delegation-gate.test.cjs,Unit,P0
+FR-03,AC-03b,TC-03b-02,delegation-gate falls back to top-level,test-delegation-gate.test.cjs,Unit,P0
+FR-03,AC-03b,TC-03b-03,delegation-gate allows when no phase available,test-delegation-gate.test.cjs,Unit,P1
+FR-03,AC-03c,TC-03c-01,log-skill-usage prefers active_workflow.current_phase,test-log-skill-usage.test.cjs,Unit,P0
+FR-03,AC-03c,TC-03c-02,log-skill-usage falls back to top-level,test-log-skill-usage.test.cjs,Unit,P0
+FR-03,AC-03c,TC-03c-03,log-skill-usage falls back to 01-requirements default,test-log-skill-usage.test.cjs,Unit,P1
+FR-03,AC-03c,TC-03c-04,log-skill-usage prefers active_workflow over stale,test-log-skill-usage.test.cjs,Unit,P0
+FR-03,AC-03d,TC-03d-01,skill-validator prefers active_workflow.current_phase,test-skill-validator.test.cjs,Unit,P0
+FR-03,AC-03d,TC-03d-02,skill-validator falls back to top-level,test-skill-validator.test.cjs,Unit,P0
+FR-03,AC-03d,TC-03d-03,skill-validator falls back to 01-requirements default,test-skill-validator.test.cjs,Unit,P1
+FR-03,AC-03d,TC-03d-04,skill-validator uses active_workflow for divergent state,test-skill-validator.test.cjs,Unit,P0
+FR-03,AC-03e,TC-03e-01,gate-blocker fallback prefers active_workflow,test-gate-blocker-extended.test.cjs,Unit,P0
+FR-03,AC-03e,TC-03e-02,gate-blocker fallback uses top-level when no workflow,test-gate-blocker-extended.test.cjs,Unit,P0
+FR-03,AC-03e,TC-03e-03,gate-blocker fallback allows when no phase,test-gate-blocker-extended.test.cjs,Unit,P1
+FR-03,AC-03f,TC-03f-01,provider-utils prefers active_workflow.current_phase,test-provider-utils.test.cjs,Unit,P0
+FR-03,AC-03f,TC-03f-02,provider-utils falls back to top-level,test-provider-utils.test.cjs,Unit,P0
+FR-03,AC-03f,TC-03f-03,provider-utils falls back to unknown default,test-provider-utils.test.cjs,Unit,P1
+FR-04,AC-04a,TC-04a-01,tasks.md exists and is readable,test-state-sync-integration.test.cjs,Integration,P1
+FR-04,AC-04a,TC-04a-02,tasks.md empty - no crash,test-state-sync-integration.test.cjs,Integration,P2
+FR-04,AC-04b,TC-04b-01,All tasks in completed section marked [X],test-state-sync-integration.test.cjs,Integration,P0
+FR-04,AC-04b,TC-04b-02,Tasks with annotations preserved,test-state-sync-integration.test.cjs,Integration,P1
+FR-04,AC-04b,TC-04b-03,Already-checked tasks not double-checked,test-state-sync-integration.test.cjs,Integration,P1
+FR-04,AC-04b,TC-04b-04,Section header updated PENDING to COMPLETE,test-state-sync-integration.test.cjs,Integration,P1
+FR-04,AC-04b,TC-04b-05,Non-completed phase tasks remain [ ],test-state-sync-integration.test.cjs,Integration,P0
+FR-04,AC-04c,TC-04c-01,Progress table completed count increases,test-state-sync-integration.test.cjs,Integration,P1
+FR-04,AC-04c,TC-04c-02,Progress table total row recalculated,test-state-sync-integration.test.cjs,Integration,P1
+FR-04,AC-04c,TC-04c-03,Multiple phases completed - cumulative accuracy,test-state-sync-integration.test.cjs,Integration,P1
+FR-04,AC-04d,TC-04d-01,No tasks.md file - no error,test-state-sync-integration.test.cjs,Integration,P0
+FR-04,AC-04d,TC-04d-02,docs/isdlc/ directory missing - no error,test-state-sync-integration.test.cjs,Integration,P1
+FR-05,AC-05a,TC-05a-01,current_phase in sync after transition,test-state-sync-integration.test.cjs,Regression,P0
+FR-05,AC-05b,TC-05b-01,phases[completed].status set to completed,test-state-sync-integration.test.cjs,Regression,P0
+FR-05,AC-05c,TC-05c,(covered by TC-02a),test-state-sync-integration.test.cjs,Regression,P1
+FR-05,AC-05d,TC-05d-01,constitution-validator works without active_workflow,test-constitution-validator.test.cjs,Regression,P0
+FR-05,AC-05d,TC-05d-02,delegation-gate works without active_workflow,test-delegation-gate.test.cjs,Regression,P0
+FR-05,AC-05d,TC-05d-03,log-skill-usage works without active_workflow,test-log-skill-usage.test.cjs,Regression,P0
+FR-05,AC-05d,TC-05d-04,skill-validator works without active_workflow,test-skill-validator.test.cjs,Regression,P0
+FR-05,AC-05d,TC-05d-05,gate-blocker works without active_workflow,test-gate-blocker-extended.test.cjs,Regression,P0
+FR-05,AC-05d,TC-05d-06,provider-utils works without active_workflow,test-provider-utils.test.cjs,Regression,P0
+FR-06,AC-06a,TC-06a-01,constitution-validator writes to active_workflow-resolved phase,test-constitution-validator.test.cjs,Unit,P0
+FR-06,AC-06a,TC-06a-02,constitution-validator writes to top-level-resolved phase when no workflow,test-constitution-validator.test.cjs,Unit,P0
+FR-06,AC-06b,TC-06b-01,test-watcher writes test_iteration to correct phase,test-test-watcher.test.cjs,Unit,P1
+FR-06,AC-06b,TC-06b-02,test-watcher regression check (already correct),test-test-watcher.test.cjs,Regression,P1
+FR-06,AC-06c,TC-06c-01,menu-tracker writes interactive_elicitation to correct phase,test-menu-tracker.test.cjs,Unit,P1
+FR-06,AC-06c,TC-06c-02,menu-tracker regression check (already correct),test-menu-tracker.test.cjs,Regression,P1
+FR-06,AC-06d,TC-06d-01,gate-blocker writes gate_validation to correct phase,test-gate-blocker-extended.test.cjs,Unit,P0
+FR-06,AC-06d,TC-06d-02,gate-blocker fallback branch writes to correct phase,test-gate-blocker-extended.test.cjs,Unit,P0

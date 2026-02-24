@@ -1,0 +1,28 @@
+Requirement,AC/NFR,Description,Test Case,Test Name,Test File,Priority,Category
+FR-01,AC-01,BACKLOG.md created at projectRoot,TC-07,BACKLOG.md is created at project root during init,lib/installer.test.js,P0,Integration
+FR-01,AC-01,BACKLOG.md created at projectRoot,TC-08,BACKLOG.md is not empty,lib/installer.test.js,P1,Integration
+FR-01,AC-01,BACKLOG.md created at projectRoot,TC-10,BACKLOG.md created alongside other install artifacts,lib/installer.test.js,P1,Integration
+FR-01,AC-02,Contains ## Open header,TC-03,BACKLOG.md contains ## Open section header,lib/installer.test.js,P0,Content
+FR-01,AC-02,Contains ## Open header,TC-08,BACKLOG.md is not empty,lib/installer.test.js,P1,Integration
+FR-01,AC-03,Contains ## Completed header,TC-04,BACKLOG.md contains ## Completed section header,lib/installer.test.js,P0,Content
+FR-01,AC-03,Contains ## Completed header,TC-08,BACKLOG.md is not empty,lib/installer.test.js,P1,Integration
+FR-01,AC-04,Includes preamble,TC-01,BACKLOG.md contains title header,lib/installer.test.js,P0,Content
+FR-01,AC-04,Includes preamble,TC-02,BACKLOG.md contains preamble blockquote,lib/installer.test.js,P0,Content
+FR-01,AC-05,## Open before ## Completed,TC-06,## Open appears before ## Completed,lib/installer.test.js,P0,Content
+FR-02,AC-06,Skip if exists,TC-12,Existing BACKLOG.md is not overwritten,lib/installer.test.js,P0,Guard
+FR-02,AC-07,Log on skip,TC-13,Skip message is emitted when BACKLOG.md exists,lib/installer.test.js,P1,Guard
+FR-03,AC-08,Dry-run no write,TC-14,Dry-run does not create BACKLOG.md,lib/installer.test.js,P0,Guard
+FR-03,AC-09,Dry-run log emitted,TC-15,Dry-run still emits creation log message,lib/installer.test.js,P1,Guard
+FR-04,AC-10,Not in removal paths,TC-11,BACKLOG.md not tracked in installed-files.json manifest,lib/installer.test.js,P1,Integration
+FR-04,AC-10,Not in removal paths,TC-18,Uninstaller source has zero BACKLOG references,lib/uninstaller.test.js,P0,Negative
+FR-04,AC-11,Survives uninstall + purge,TC-16,BACKLOG.md survives standard uninstall,lib/uninstaller.test.js,P0,Negative
+FR-04,AC-11,Survives uninstall + purge,TC-17,BACKLOG.md survives purge-all uninstall,lib/uninstaller.test.js,P0,Negative
+FR-04,AC-12,No code reference in uninstaller,TC-18,Uninstaller source has zero BACKLOG references,lib/uninstaller.test.js,P0,Negative
+NFR-01,NFR-01,Format consistency,TC-01,BACKLOG.md contains title header,lib/installer.test.js,P0,Content
+NFR-01,NFR-01,Format consistency,TC-02,BACKLOG.md contains preamble blockquote,lib/installer.test.js,P0,Content
+NFR-01,NFR-01,Format consistency,TC-03,BACKLOG.md contains ## Open section header,lib/installer.test.js,P0,Content
+NFR-01,NFR-01,Format consistency,TC-04,BACKLOG.md contains ## Completed section header,lib/installer.test.js,P0,Content
+NFR-01,NFR-01,Format consistency,TC-05,BACKLOG.md ends with trailing newline,lib/installer.test.js,P1,Content
+NFR-01,NFR-01,Format consistency,TC-06,## Open appears before ## Completed,lib/installer.test.js,P0,Content
+NFR-01,NFR-01,Format consistency,TC-09,BACKLOG.md has no backlog items,lib/installer.test.js,P1,Content
+NFR-02,NFR-02,Placement consistency,TC-10,BACKLOG.md created alongside other install artifacts,lib/installer.test.js,P1,Integration

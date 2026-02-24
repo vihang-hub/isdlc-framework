@@ -1,0 +1,75 @@
+TC-ID,Test Name,AC-IDs,FR-IDs,Error Code,Test Type,Priority,Function Under Test,Status
+TC-SZ-001,Parses valid JSON metadata block,"AC-01,AC-03",FR-01,,Unit,P0,parseSizingFromImpactAnalysis,Designed
+TC-SZ-002,Uses last JSON block when multiple exist,AC-01,FR-01,,Unit,P1,parseSizingFromImpactAnalysis,Designed
+TC-SZ-003,Maps IA field names to SizingMetrics field names,AC-01,FR-01,,Unit,P0,parseSizingFromImpactAnalysis,Designed
+TC-SZ-004,Ignores extra fields in JSON block,AC-01,FR-01,,Unit,P2,parseSizingFromImpactAnalysis,Designed
+TC-SZ-005,Handles JSON block with string numbers,AC-01,FR-01,SZ-105,Unit,P1,parseSizingFromImpactAnalysis,Designed
+TC-SZ-006,JSON block with large valid values,AC-01,FR-01,,Unit,P2,parseSizingFromImpactAnalysis,Designed
+TC-SZ-007,Parses Executive Summary prose (all 5 fields),AC-01,FR-01,,Unit,P0,parseSizingFromImpactAnalysis,Designed
+TC-SZ-008,Fallback succeeds with minimum fields,AC-01,FR-01,,Unit,P1,parseSizingFromImpactAnalysis,Designed
+TC-SZ-009,Fallback is case-insensitive,AC-01,FR-01,,Unit,P2,parseSizingFromImpactAnalysis,Designed
+TC-SZ-010,Fallback handles Module singular form,AC-01,FR-01,,Unit,P2,parseSizingFromImpactAnalysis,Designed
+TC-SZ-011,Negative file_count defaults to 0,AC-01,FR-01,SZ-105,Unit,P1,parseSizingFromImpactAnalysis,Designed
+TC-SZ-012,Non-integer module_count defaults to 0,AC-01,FR-01,SZ-106,Unit,P1,parseSizingFromImpactAnalysis,Designed
+TC-SZ-013,Unrecognized risk_level defaults to medium,AC-01,FR-01,SZ-107,Unit,P1,parseSizingFromImpactAnalysis,Designed
+TC-SZ-014,Numeric blast_radius defaults to medium,AC-01,FR-01,SZ-108,Unit,P1,parseSizingFromImpactAnalysis,Designed
+TC-SZ-015,Negative coverage_gaps defaults to 0,AC-01,FR-01,SZ-109,Unit,P1,parseSizingFromImpactAnalysis,Designed
+TC-SZ-016,Empty string returns null,"AC-01,AC-03",FR-01,SZ-101,Unit,P0,parseSizingFromImpactAnalysis,Designed
+TC-SZ-017,Non-string input returns null,AC-01,FR-01,,Unit,P1,parseSizingFromImpactAnalysis,Designed
+TC-SZ-018,Malformed JSON falls through to fallback,AC-01,FR-01,SZ-103,Unit,P0,parseSizingFromImpactAnalysis,Designed
+TC-SZ-019,Both strategies fail returns null,AC-01,FR-01,SZ-104,Unit,P0,parseSizingFromImpactAnalysis,Designed
+TC-SZ-020,file_count at light_max boundary -> light,"AC-04,AC-07",FR-02,,Unit,P0,computeSizingRecommendation,Designed
+TC-SZ-021,file_count at light_max+1 -> standard,"AC-05,AC-07",FR-02,,Unit,P0,computeSizingRecommendation,Designed
+TC-SZ-022,file_count=0 -> light,AC-04,FR-02,,Unit,P1,computeSizingRecommendation,Designed
+TC-SZ-023,Custom thresholds respected (light_max=10),AC-07,FR-02,,Unit,P0,computeSizingRecommendation,Designed
+TC-SZ-024,file_count at epic_min boundary -> epic,AC-07,FR-02,,Unit,P0,computeSizingRecommendation,Designed
+TC-SZ-025,file_count at epic_min-1 -> standard,AC-05,FR-02,,Unit,P0,computeSizingRecommendation,Designed
+TC-SZ-026,file_count well above epic threshold -> epic,AC-07,FR-02,,Unit,P1,computeSizingRecommendation,Designed
+TC-SZ-027,Custom epic threshold respected,AC-07,FR-02,,Unit,P1,computeSizingRecommendation,Designed
+TC-SZ-028,High risk + low files -> epic,AC-04,FR-02,,Unit,P0,computeSizingRecommendation,Designed
+TC-SZ-029,High risk + medium files -> epic,AC-07,FR-02,,Unit,P1,computeSizingRecommendation,Designed
+TC-SZ-030,Medium risk + low files -> light,AC-04,FR-02,,Unit,P1,computeSizingRecommendation,Designed
+TC-SZ-031,Null metrics -> standard with rationale,"AC-03,AC-05",FR-01,,Unit,P0,computeSizingRecommendation,Designed
+TC-SZ-032,Undefined metrics -> standard,AC-03,FR-01,,Unit,P1,computeSizingRecommendation,Designed
+TC-SZ-033,Invalid light_max defaults to 5,AC-07,FR-02,SZ-202,Unit,P1,computeSizingRecommendation,Designed
+TC-SZ-034,Invalid epic_min defaults to 20,AC-07,FR-02,SZ-203,Unit,P1,computeSizingRecommendation,Designed
+TC-SZ-035,light_max >= epic_min resets both to defaults,AC-07,FR-02,SZ-204,Unit,P0,computeSizingRecommendation,Designed
+TC-SZ-036,Removes 03 and 04 from phases array,AC-15,"FR-02,FR-05",,Unit,P0,applySizingDecision,Designed
+TC-SZ-037,Removes skipped phases from phase_status,AC-16,FR-05,,Unit,P0,applySizingDecision,Designed
+TC-SZ-038,Removes skipped phases from top-level phases,AC-17,FR-05,,Unit,P0,applySizingDecision,Designed
+TC-SZ-039,Recalculates current_phase_index correctly,AC-18,FR-05,,Unit,P0,applySizingDecision,Designed
+TC-SZ-040,Light intensity writes correct sizing record,"AC-15,AC-24","FR-05,FR-07",,Unit,P0,applySizingDecision,Designed
+TC-SZ-041,Standard preserves all 9 phases,AC-05,FR-02,,Unit,P0,applySizingDecision,Designed
+TC-SZ-042,Standard writes correct sizing record,"AC-05,AC-24","FR-02,FR-07",,Unit,P0,applySizingDecision,Designed
+TC-SZ-043,Standard does not modify index or status,AC-05,FR-02,,Unit,P1,applySizingDecision,Designed
+TC-SZ-044,Epic sets effective_intensity to standard,"AC-06,AC-24","FR-02,FR-07",,Unit,P0,applySizingDecision,Designed
+TC-SZ-045,Epic does not modify phases array,AC-06,FR-02,,Unit,P0,applySizingDecision,Designed
+TC-SZ-046,Epic records correct metrics in sizing record,AC-24,FR-07,,Unit,P1,applySizingDecision,Designed
+TC-SZ-047,INV-01 too few phases -> rollback,AC-15,FR-05,SZ-301,Unit,P0,applySizingDecision,Designed
+TC-SZ-048,INV-02 index out of bounds -> rollback,AC-18,FR-05,SZ-302,Unit,P0,applySizingDecision,Designed
+TC-SZ-049,INV-03 orphan status entry -> rollback,AC-16,FR-05,SZ-303,Unit,P1,applySizingDecision,Designed
+TC-SZ-050,INV-04 next phase not pending -> rollback,AC-18,FR-05,SZ-304,Unit,P0,applySizingDecision,Designed
+TC-SZ-051,Invalid intensity string defaults to standard,,,"SZ-305",Unit,P1,applySizingDecision,Designed
+TC-SZ-052,Non-string intensity defaults to standard,,,SZ-305,Unit,P2,applySizingDecision,Designed
+TC-SZ-053,No active_workflow returns state unchanged,,,SZ-300,Unit,P0,applySizingDecision,Designed
+TC-SZ-054,Null state returns state unchanged,,,SZ-300,Unit,P1,applySizingDecision,Designed
+TC-SZ-055,Custom skip phases from config,AC-15,FR-05,,Unit,P1,applySizingDecision,Designed
+TC-SZ-056,Non-array light_skip_phases uses default,AC-15,FR-05,SZ-205,Unit,P1,applySizingDecision,Designed
+TC-SZ-057,Skip phase not in workflow is no-op,AC-15,FR-05,SZ-206,Unit,P2,applySizingDecision,Designed
+TC-SZ-058,forced_by_flag sets recommended_by to user,"AC-12,AC-24","FR-04,FR-07",,Unit,P0,applySizingDecision,Designed
+TC-SZ-059,Override fields recorded correctly,"AC-10,AC-11,AC-24","FR-03,FR-07",,Unit,P0,applySizingDecision,Designed
+TC-SZ-060,No override -> overridden false and null,AC-24,FR-07,,Unit,P1,applySizingDecision,Designed
+TC-SZ-061,Null metrics in sizingData -> unknown risk,AC-24,FR-07,,Unit,P1,applySizingDecision,Designed
+TC-SZ-062,INT-01 Light workflow end-to-end,"AC-01,AC-03,AC-04,AC-15,AC-18,AC-24","FR-01,FR-02,FR-05,FR-07",,Integration,P0,End-to-end,Designed
+TC-SZ-063,INT-02 Standard workflow end-to-end,"AC-01,AC-03,AC-05,AC-24","FR-01,FR-02,FR-07",,Integration,P0,End-to-end,Designed
+TC-SZ-064,INT-03 Epic workflow end-to-end (deferred),"AC-01,AC-06,AC-24","FR-01,FR-02,FR-07",,Integration,P0,End-to-end,Designed
+TC-SZ-065,INT-04 Parsing failure cascades to standard,AC-03,"FR-01,FR-02",,Integration,P0,End-to-end,Designed
+TC-SZ-066,INT-05 High risk overrides low file count,"AC-04,AC-07","FR-01,FR-02",,Integration,P0,End-to-end,Designed
+TC-SZ-067,INT-06 Custom thresholds change outcome,AC-07,"FR-01,FR-02",,Integration,P1,End-to-end,Designed
+TC-SZ-068,INT-07 Invariant failure cascades to standard,"AC-15,AC-24","FR-05,FR-07",,Integration,P0,End-to-end,Designed
+TC-SZ-069,INT-08 Determinism same input same output,AC-03,FR-01,,Integration,P0,End-to-end,Designed
+TC-SZ-070,SZ-100 Caller handles missing IA file,AC-01,FR-01,SZ-100,Error Path,P0,parseSizingFromImpactAnalysis,Designed
+TC-SZ-071,SZ-102 No JSON blocks proceeds to fallback,AC-01,FR-01,SZ-102,Error Path,P1,parseSizingFromImpactAnalysis,Designed
+TC-SZ-072,SZ-200 No sizing config (integration note),,FR-02,SZ-200,Error Path,P1,STEP 3e-sizing,Deferred
+TC-SZ-073,SZ-201 Sizing disabled (integration note),,FR-02,SZ-201,Error Path,P1,STEP 3e-sizing,Deferred
+TC-SZ-074,SZ-306 Double sizing overwrite behavior,,,SZ-306,Error Path,P1,applySizingDecision,Designed

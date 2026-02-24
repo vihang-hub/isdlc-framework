@@ -1,0 +1,29 @@
+%% Installer Flow -- BACKLOG.md Creation (REQ-0014)
+%% Shows the insertion point for BACKLOG.md in the install() function
+
+flowchart TD
+    A[install&#40;projectRoot, options&#41;] --> B[Step 1: Detect project type]
+    B --> C[Step 2: Check for monorepo]
+    C --> D[Step 3: Claude Code detection]
+    D --> E[Step 4: Copy framework files]
+    E --> F[Step 5: Setup .isdlc directory]
+    F --> G[Step 6: Setup docs]
+    G --> H[Create CLAUDE.md if missing]
+    H --> I{BACKLOG.md exists?}
+
+    I -->|Yes| J[logger.info: already exists -- skipping]
+    I -->|No| K{dryRun?}
+
+    K -->|Yes| L[logger.success: Created BACKLOG.md]
+    K -->|No| M[writeFile&#40;backlogPath, generateBacklogMd&#40;&#41;&#41;]
+    M --> N[logger.success: Created BACKLOG.md]
+
+    J --> O[Step 7: Generate state.json]
+    L --> O
+    N --> O
+    O --> P[Done!]
+
+    style I fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
+    style K fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
+    style M fill:#c8e6c9,stroke:#388e3c,stroke-width:2px
+    style J fill:#fff3e0,stroke:#f57c00,stroke-width:2px

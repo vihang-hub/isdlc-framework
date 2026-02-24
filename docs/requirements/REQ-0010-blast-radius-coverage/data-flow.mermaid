@@ -1,0 +1,163 @@
+%% Data Flow Diagram: blast-radius-validator.cjs
+%% Phase: 04-design
+%% Traces to: REQ-001, REQ-002, REQ-005, REQ-006, REQ-007
+
+%% ============================================================
+%% DIAGRAM 1: Hook Activation Flow (shouldActivate guard)
+%% ============================================================
+
+%% flowchart TD
+%%     A[pre-task-dispatcher receives Task tool call] --> B{shouldActivate}
+%%     B -->|active_workflow missing| C[SKIP - return false]
+%%     B -->|type !== feature| C
+%%     B -->|phase !== 06-implementation| C
+%%     B -->|all conditions TRUE| D[check ctx invoked]
+
+%% ============================================================
+%% DIAGRAM 2: Main Validation Data Flow
+%% ============================================================
+
+%% flowchart TD
+%%     subgraph Inputs
+%%         IA[impact-analysis.md<br/>docs/requirements/artifact_folder/]
+%%         GIT[git diff --name-only main...HEAD<br/>child_process.execSync]
+%%         BRC[blast-radius-coverage.md<br/>docs/requirements/artifact_folder/]
+%%         STATE[state.json<br/>active_workflow.artifact_folder]
+%%     end
+%%
+%%     subgraph Parser Layer
+%%         P1[parseImpactAnalysis<br/>regex: backtick paths + change types]
+%%         P2[parseBlastRadiusCoverage<br/>regex: deferred files + rationale]
+%%         P3[getModifiedFiles<br/>execSync + Set construction]
+%%     end
+%%
+%%     subgraph Comparison Layer
+%%         CMP[buildCoverageReport<br/>classify each affected file]
+%%     end
+%%
+%%     subgraph Output
+%%         ALLOW[decision: allow<br/>all files addressed]
+%%         BLOCK[decision: block<br/>unaddressed files listed]
+%%     end
+%%
+%%     STATE --> |artifact_folder| IA
+%%     STATE --> |artifact_folder| BRC
+%%     IA --> P1
+%%     GIT --> P3
+%%     BRC --> P2
+%%     P1 --> |affectedFiles array| CMP
+%%     P3 --> |modifiedFiles Set| CMP
+%%     P2 --> |deferredFiles Map| CMP
+%%     CMP --> |unaddressed.length === 0| ALLOW
+%%     CMP --> |unaddressed.length > 0| BLOCK
+
+%% ============================================================
+%% DIAGRAM 3: Detailed check(ctx) Sequence
+%% ============================================================
+
+%% sequenceDiagram
+%%     participant D as pre-task-dispatcher
+%%     participant H as blast-radius-validator
+%%     participant FS as File System
+%%     participant GIT as Git CLI
+%%
+%%     D->>H: check(ctx)
+%%     H->>H: Validate ctx.input, ctx.state
+%%     H->>H: Extract artifact_folder from state
+%%     H->>FS: existsSync(impact-analysis.md)
+%%     alt File missing
+%%         FS-->>H: false
+%%         H-->>D: { decision: allow } (E-DEGRADE-02)
+%%     else File exists
+%%         FS-->>H: true
+%%         H->>FS: readFileSync(impact-analysis.md)
+%%         FS-->>H: markdown content
+%%         H->>H: parseImpactAnalysis(content)
+%%         alt Parse error or no files
+%%             H-->>D: { decision: allow } (E-PARSE-01 or A-ALLOW-02)
+%%         else Files extracted
+%%             H->>GIT: execSync('git diff --name-only main...HEAD')
+%%             alt Git fails
+%%                 GIT-->>H: error thrown
+%%                 H-->>D: { decision: allow } (E-GIT-*)
+%%             else Git succeeds
+%%                 GIT-->>H: file list string
+%%                 H->>H: Build Set from git output
+%%                 H->>FS: existsSync(blast-radius-coverage.md)
+%%                 alt Coverage file exists
+%%                     H->>FS: readFileSync(blast-radius-coverage.md)
+%%                     FS-->>H: coverage content
+%%                     H->>H: parseBlastRadiusCoverage(content)
+%%                 else Coverage file missing
+%%                     H->>H: Use empty Map (no deferrals)
+%%                 end
+%%                 H->>H: buildCoverageReport(affected, modified, deferred)
+%%                 alt All addressed
+%%                     H-->>D: { decision: allow } (A-ALLOW-01)
+%%                 else Unaddressed files
+%%                     H->>H: formatBlockMessage(report)
+%%                     H-->>D: { decision: block, stopReason } (B-BLOCK-01)
+%%                 end
+%%             end
+%%         end
+%%     end
+
+%% ============================================================
+%% DIAGRAM 4: Artifact Lifecycle Flow
+%% ============================================================
+
+%% flowchart LR
+%%     subgraph Phase 02 - Impact Analysis
+%%         IA_AGENT[Impact Analysis<br/>Orchestrator Agent] --> IA_FILE[impact-analysis.md<br/>Affected files table]
+%%     end
+%%
+%%     subgraph Phase 06 - Implementation
+%%         DEV_READ[Software Developer<br/>reads impact-analysis.md] --> DEV_IMPL[Implements changes<br/>across affected files]
+%%         DEV_IMPL --> DEV_GEN[Generates<br/>blast-radius-coverage.md]
+%%         DEV_IMPL --> GIT_COMMITS[Git commits<br/>on feature branch]
+%%     end
+%%
+%%     subgraph GATE-06 Check
+%%         HOOK[blast-radius-validator<br/>hook in dispatcher] --> PARSE_IA[Parse impact-analysis.md<br/>Extract affected files]
+%%         HOOK --> RUN_GIT[Run git diff<br/>Get modified files]
+%%         HOOK --> PARSE_BRC[Parse blast-radius-coverage.md<br/>Get deferred files]
+%%         PARSE_IA --> COMPARE[Compare:<br/>affected vs modified+deferred]
+%%         RUN_GIT --> COMPARE
+%%         PARSE_BRC --> COMPARE
+%%         COMPARE --> DECISION{All addressed?}
+%%         DECISION -->|Yes| ALLOW[ALLOW<br/>Gate passes]
+%%         DECISION -->|No| BLOCK_GATE[BLOCK<br/>List unaddressed files]
+%%     end
+%%
+%%     IA_FILE --> HOOK
+%%     GIT_COMMITS --> RUN_GIT
+%%     DEV_GEN --> PARSE_BRC
+
+%% ============================================================
+%% DIAGRAM 5: Data Transformation Pipeline
+%% ============================================================
+%%
+%% Stage 1: Raw Markdown -> Structured Data
+%%   Input:  String (impact-analysis.md content, ~200 lines)
+%%   Transform: Line-by-line regex matching
+%%   Output: Array<{ filePath: string, changeType: string }> (5-20 entries typical)
+%%
+%% Stage 2: Git Command -> File Set
+%%   Input:  Shell command execution
+%%   Transform: Split newlines, trim, filter empty, construct Set
+%%   Output: Set<string> (5-50 entries typical)
+%%
+%% Stage 3: Raw Markdown -> Deferral Map
+%%   Input:  String (blast-radius-coverage.md content, ~50 lines)
+%%   Transform: Line-by-line regex matching, filter status=deferred
+%%   Output: Map<string, { status: string, notes: string }> (0-5 entries typical)
+%%
+%% Stage 4: Classification
+%%   Input:  affectedFiles (Array), modifiedFiles (Set), deferredFiles (Map)
+%%   Transform: For each affected file, check membership in Set then Map
+%%   Output: CoverageReport { total, covered[], deferred[], unaddressed[] }
+%%
+%% Stage 5: Decision
+%%   Input:  CoverageReport
+%%   Transform: Check unaddressed.length
+%%   Output: { decision: 'allow'|'block', stopReason?: string }

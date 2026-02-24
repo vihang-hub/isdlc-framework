@@ -1,0 +1,48 @@
+%% File Ownership Model -- BACKLOG.md (REQ-0014 ADR-0002)
+%% Shows how BACKLOG.md fits into the framework's file classification
+
+graph LR
+    subgraph "Framework Files (tracked in manifest)"
+        A1[.claude/agents/]
+        A2[.claude/skills/]
+        A3[.claude/hooks/]
+        A4[.claude/commands/]
+        A5[.claude/settings.json]
+        A6[.isdlc/config/]
+        A7[.isdlc/templates/]
+    end
+
+    subgraph "User Artifacts (preserved on uninstall)"
+        B1[CLAUDE.md]
+        B2["BACKLOG.md (NEW)"]
+        B3[.isdlc/state.json]
+        B4[docs/isdlc/constitution.md]
+        B5[.claude/settings.local.json]
+    end
+
+    C[isdlc init] -->|creates| A1
+    C -->|creates| A2
+    C -->|creates| A3
+    C -->|creates| A4
+    C -->|creates| A5
+    C -->|creates| A6
+    C -->|creates| A7
+    C -->|creates| B1
+    C -->|creates| B2
+    C -->|creates| B3
+    C -->|creates| B4
+
+    D[isdlc uninstall] -->|removes| A1
+    D -->|removes| A2
+    D -->|removes| A3
+    D -->|removes| A4
+    D -->|removes| A5
+    D -->|removes| A6
+    D -->|removes| A7
+    D -.->|preserves| B1
+    D -.->|preserves| B2
+    D -.->|preserves| B3
+    D -.->|preserves| B4
+    D -.->|preserves| B5
+
+    style B2 fill:#c8e6c9,stroke:#388e3c,stroke-width:3px

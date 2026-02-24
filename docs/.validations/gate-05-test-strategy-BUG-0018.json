@@ -1,0 +1,77 @@
+{
+  "gate": "GATE-05",
+  "phase": "05-test-strategy",
+  "workflow": "fix",
+  "artifact_folder": "BUG-0018-GH-2",
+  "validated_at": "2026-02-16T11:00:00Z",
+  "result": "PASS",
+  "checklist": {
+    "test_strategy_covers_all_types": {
+      "status": "pass",
+      "notes": "Content verification (primary), filesystem verification, cross-file consistency verification, execution verification (deferred to Phase 16). E2E/performance/security documented as N/A with rationale (markdown instruction fix, no executable code changes)."
+    },
+    "test_cases_exist_for_all_requirements": {
+      "status": "pass",
+      "notes": "26 test cases covering all 5 FRs (20 ACs) + 3 NFRs. FR-1: 4 tests, FR-2: 6 tests, FR-3: 3 tests, FR-4: 4 tests, FR-5: 3 tests, NFR-1: 2 tests, NFR-2: 2 tests, CROSS: 2 tests. 100% requirement coverage."
+    },
+    "traceability_matrix_complete": {
+      "status": "pass",
+      "notes": "traceability-matrix.csv has 26 rows mapping all 20 ACs across 5 FRs + 3 NFRs to test cases. No orphan tests, no uncovered requirements."
+    },
+    "coverage_targets_defined": {
+      "status": "pass",
+      "notes": "100% AC coverage, 100% FR/NFR coverage, >= 555 tests baseline per constitutional Article II. Traditional code coverage N/A (markdown fix)."
+    },
+    "test_data_strategy_documented": {
+      "status": "pass",
+      "notes": "test-data-plan.md defines source file paths, 16 expected content patterns (PAT-01 through PAT-16), 9 example BACKLOG.md format variants, and generation strategy (static patterns, no runtime data needed)."
+    },
+    "critical_paths_identified": {
+      "status": "pass",
+      "notes": "P0 critical: suffix stripping instructions (4 tests), format parsing (4 tests), cross-reference consistency (2 tests). P1 important: Jira preservation (3), backward compat (2), test coverage verification (3). P2 low: start action (3)."
+    }
+  },
+  "constitutional_compliance": {
+    "article_II": {
+      "status": "compliant",
+      "notes": "Test cases designed in Phase 05 before implementation in Phase 06. 26 test cases designed from 20 acceptance criteria covering all requirement types."
+    },
+    "article_VII": {
+      "status": "compliant",
+      "notes": "Traceability matrix complete: 5 FRs + 20 ACs + 3 NFRs -> 26 test cases. 100% requirement coverage verified by cross-checking AC list from requirements-spec.md against traceability-matrix.csv."
+    },
+    "article_IX": {
+      "status": "compliant",
+      "notes": "All GATE-05 checklist items pass. Required artifacts: test-strategy.md, test-cases/test-cases.md, traceability-matrix.csv, test-cases/test-data-plan.md."
+    },
+    "article_XI": {
+      "status": "not_applicable",
+      "notes": "Fix targets markdown agent instructions, not component interfaces. Cross-file consistency tests (TC-CROSS-01, TC-CROSS-02) serve as lightweight integration verification between isdlc.md Phase A format and orchestrator picker stripping."
+    }
+  },
+  "artifacts": [
+    "docs/requirements/BUG-0018-GH-2/test-strategy.md",
+    "docs/requirements/BUG-0018-GH-2/test-cases/test-cases.md",
+    "docs/requirements/BUG-0018-GH-2/traceability-matrix.csv",
+    "docs/requirements/BUG-0018-GH-2/test-cases/test-data-plan.md"
+  ],
+  "metrics": {
+    "total_test_cases": 26,
+    "new_test_file": "src/claude/hooks/tests/test-backlog-picker-content.test.cjs",
+    "ac_coverage_percent": 100,
+    "nfr_coverage_percent": 100,
+    "fr_coverage_percent": 100,
+    "priority_distribution": {
+      "P0": 10,
+      "P1": 12,
+      "P2": 4
+    },
+    "test_types": {
+      "content_verification": 20,
+      "filesystem_verification": 1,
+      "self_referential_verification": 1,
+      "execution_verification_deferred": 3,
+      "cross_file_verification": 1
+    }
+  }
+}

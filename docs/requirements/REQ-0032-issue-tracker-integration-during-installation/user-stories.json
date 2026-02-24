@@ -1,0 +1,93 @@
+[
+  {
+    "id": "US-001",
+    "title": "Select issue tracker during installation",
+    "story": "As a developer running isdlc init, I want to select my preferred issue tracker (GitHub Issues, Jira, or Manual) so that the framework is pre-configured for my workflow.",
+    "acceptance_criteria": [
+      "A select prompt appears during installation with three options",
+      "GitHub Issues is pre-selected when a GitHub remote is detected",
+      "Manual is pre-selected when no GitHub remote is detected",
+      "The selection is stored persistently for later use"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-001"]
+  },
+  {
+    "id": "US-002",
+    "title": "Validate GitHub CLI availability",
+    "story": "As a developer who selected GitHub Issues, I want the installer to check if the gh CLI is available so that I know whether issue fetching will work.",
+    "acceptance_criteria": [
+      "Installer checks for gh CLI when GitHub Issues is selected",
+      "Success message shown when gh is found",
+      "Warning message shown when gh is missing, with install link",
+      "Installation is not blocked by missing gh CLI"
+    ],
+    "priority": "Should Have",
+    "traces": ["FR-002"]
+  },
+  {
+    "id": "US-003",
+    "title": "Guided Jira MCP server setup",
+    "story": "As a developer who selected Jira, I want the installer to check if the Atlassian MCP server is configured and guide me through setup if needed so that Jira integration works from day one.",
+    "acceptance_criteria": [
+      "Installer checks for Atlassian MCP server in Claude Code",
+      "If found, confirms and proceeds",
+      "If not found, displays setup command with instructions",
+      "Prompts for confirmation after user has configured MCP",
+      "Asks for default Jira project key",
+      "Falls back to manual mode gracefully if user declines setup"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-003"]
+  },
+  {
+    "id": "US-004",
+    "title": "Persist tracker preference in CLAUDE.md",
+    "story": "As a developer, I want my issue tracker preference stored in CLAUDE.md so that all iSDLC commands can read it without additional configuration.",
+    "acceptance_criteria": [
+      "CLAUDE.md template includes an Issue Tracker Configuration section",
+      "Section contains issue_tracker type, jira_project_key, and github_repo fields",
+      "Installer interpolates selected values into the template",
+      "Existing CLAUDE.md files are not overwritten"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-004"]
+  },
+  {
+    "id": "US-005",
+    "title": "Smart routing for bare number inputs",
+    "story": "As a developer who has configured Jira, I want to type just '1234' in the add command and have it automatically resolve to 'PROJ-1234' so that I do not need to type the full ticket ID every time.",
+    "acceptance_criteria": [
+      "Bare numbers are resolved using the configured issue_tracker preference",
+      "Jira preference prepends the configured project key",
+      "GitHub preference prepends # to form a GitHub issue reference",
+      "Manual preference treats bare numbers as manual input",
+      "Existing explicit patterns (#N, PROJECT-N) still work regardless of preference"
+    ],
+    "priority": "Should Have",
+    "traces": ["FR-005"]
+  },
+  {
+    "id": "US-006",
+    "title": "Preserve tracker config during updates",
+    "story": "As a developer updating iSDLC, I want my issue tracker configuration preserved so that I do not need to reconfigure after every update.",
+    "acceptance_criteria": [
+      "The updater does not overwrite the Issue Tracker Configuration section",
+      "A warning is shown if the section is missing after an update"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-006"]
+  },
+  {
+    "id": "US-007",
+    "title": "Dry run shows tracker selection",
+    "story": "As a developer using --dry-run, I want to see what issue tracker would be configured without actually writing files.",
+    "acceptance_criteria": [
+      "Dry run shows the tracker prompt",
+      "Dry run summary includes the selected tracker mode",
+      "No files are written during dry run"
+    ],
+    "priority": "Should Have",
+    "traces": ["FR-007"]
+  }
+]

@@ -1,0 +1,401 @@
+{
+  "version": "1.0.0",
+  "feature": "REQ-0017: Fan-Out/Fan-In Parallelism",
+  "created": "2026-02-15",
+  "author": "System Designer (Agent 04)",
+  "description": "Validation rules for fan-out engine inputs, configuration, chunk agent results, and merged outputs.",
+
+  "configuration_validation": {
+    "description": "Validation rules for state.json fan_out section. All failures use graceful degradation (Article X).",
+    "rules": [
+      {
+        "id": "VR-CFG-001",
+        "field": "fan_out.enabled",
+        "type": "boolean",
+        "required": false,
+        "default": true,
+        "validation": "Must be boolean (true/false)",
+        "on_failure": "Default to true, log warning ERR-CFG-001"
+      },
+      {
+        "id": "VR-CFG-002",
+        "field": "fan_out.defaults.max_agents",
+        "type": "integer",
+        "required": false,
+        "default": 8,
+        "min": 1,
+        "max": 8,
+        "validation": "Integer in range [1, 8]",
+        "on_failure": "Default to 8, log warning ERR-CFG-002"
+      },
+      {
+        "id": "VR-CFG-003",
+        "field": "fan_out.defaults.timeout_per_chunk_ms",
+        "type": "integer",
+        "required": false,
+        "default": 600000,
+        "min": 1000,
+        "max": 3600000,
+        "validation": "Positive integer, minimum 1000ms, maximum 3600000ms (1 hour)",
+        "on_failure": "Default to 600000, log warning ERR-CFG-003"
+      },
+      {
+        "id": "VR-CFG-004",
+        "field": "fan_out.phase_overrides[phase].strategy",
+        "type": "string",
+        "required": false,
+        "default": "phase-specific",
+        "enum": ["round-robin", "group-by-directory"],
+        "validation": "Must be one of the enum values",
+        "on_failure": "Default to phase-specific strategy, log warning ERR-CFG-004"
+      },
+      {
+        "id": "VR-CFG-005",
+        "field": "fan_out.phase_overrides['16-quality-loop'].tests_per_agent",
+        "type": "integer",
+        "required": false,
+        "default": 250,
+        "min": 1,
+        "max": 10000,
+        "validation": "Positive integer",
+        "on_failure": "Default to 250, log warning ERR-CFG-005"
+      },
+      {
+        "id": "VR-CFG-006",
+        "field": "fan_out.phase_overrides['16-quality-loop'].min_tests_threshold",
+        "type": "integer",
+        "required": false,
+        "default": 250,
+        "min": 1,
+        "max": 10000,
+        "validation": "Positive integer",
+        "on_failure": "Default to 250, log warning ERR-CFG-005"
+      },
+      {
+        "id": "VR-CFG-007",
+        "field": "fan_out.phase_overrides['08-code-review'].files_per_agent",
+        "type": "integer",
+        "required": false,
+        "default": 7,
+        "min": 1,
+        "max": 100,
+        "validation": "Positive integer",
+        "on_failure": "Default to 7, log warning ERR-CFG-005"
+      },
+      {
+        "id": "VR-CFG-008",
+        "field": "fan_out.phase_overrides['08-code-review'].min_files_threshold",
+        "type": "integer",
+        "required": false,
+        "default": 5,
+        "min": 1,
+        "max": 100,
+        "validation": "Positive integer",
+        "on_failure": "Default to 5, log warning ERR-CFG-005"
+      },
+      {
+        "id": "VR-CFG-009",
+        "field": "fan_out.phase_overrides[phase].max_agents",
+        "type": "integer",
+        "required": false,
+        "default": 8,
+        "min": 1,
+        "max": 8,
+        "validation": "Integer in range [1, 8]",
+        "on_failure": "Default to 8, log warning ERR-CFG-002"
+      },
+      {
+        "id": "VR-CFG-010",
+        "field": "active_workflow.flags.no_fan_out",
+        "type": "boolean",
+        "required": false,
+        "default": false,
+        "validation": "Must be boolean if present",
+        "on_failure": "Treat as false (fan-out not disabled)"
+      }
+    ]
+  },
+
+  "chunk_splitter_input_validation": {
+    "description": "Validation rules for chunk splitter input. Errors trigger fallback to single-agent path.",
+    "rules": [
+      {
+        "id": "VR-CS-001",
+        "field": "items",
+        "type": "string[]",
+        "required": true,
+        "validation": "Non-empty array of strings",
+        "on_failure": "Error ERR-CS-001: skip fan-out, use single-agent path"
+      },
+      {
+        "id": "VR-CS-002",
+        "field": "items[*]",
+        "type": "string",
+        "validation": "Each item must be a non-empty string (file path)",
+        "on_failure": "Filter out invalid items, log warning. If no valid items remain, ERR-CS-001"
+      },
+      {
+        "id": "VR-CS-003",
+        "field": "items (uniqueness)",
+        "type": "constraint",
+        "validation": "No duplicate items in the array",
+        "on_failure": "Deduplicate, log warning ERR-CS-003 with count of duplicates removed"
+      },
+      {
+        "id": "VR-CS-004",
+        "field": "strategy",
+        "type": "string",
+        "required": true,
+        "enum": ["round-robin", "group-by-directory"],
+        "validation": "Must be one of the enum values",
+        "on_failure": "Error: invalid strategy. Use phase-specific default."
+      },
+      {
+        "id": "VR-CS-005",
+        "field": "max_chunks",
+        "type": "integer",
+        "required": false,
+        "default": 8,
+        "min": 1,
+        "max": 8,
+        "validation": "Integer in range [1, 8]",
+        "on_failure": "Default to 8"
+      },
+      {
+        "id": "VR-CS-006",
+        "field": "min_items_per_chunk",
+        "type": "integer",
+        "required": false,
+        "min": 1,
+        "validation": "Positive integer",
+        "on_failure": "Default to phase-specific minimum"
+      },
+      {
+        "id": "VR-CS-007",
+        "field": "items_per_agent",
+        "type": "integer",
+        "required": false,
+        "min": 1,
+        "validation": "Positive integer",
+        "on_failure": "Default to phase-specific value"
+      }
+    ]
+  },
+
+  "chunk_splitter_output_validation": {
+    "description": "Invariants that must hold on chunk splitter output.",
+    "rules": [
+      {
+        "id": "VR-CSO-001",
+        "invariant": "Sum of all chunk item_counts equals metadata.total_items",
+        "validation": "SUM(chunks[*].item_count) == metadata.total_items",
+        "on_violation": "Log data integrity warning ERR-MG-002"
+      },
+      {
+        "id": "VR-CSO-002",
+        "invariant": "No item appears in multiple chunks",
+        "validation": "UNION of all chunks[*].items has no duplicates",
+        "on_violation": "Log error, deduplicate across chunks"
+      },
+      {
+        "id": "VR-CSO-003",
+        "invariant": "chunk_count matches chunks array length",
+        "validation": "metadata.chunk_count == len(chunks)",
+        "on_violation": "Correct metadata to match actual array length"
+      },
+      {
+        "id": "VR-CSO-004",
+        "invariant": "chunk_count <= max_chunks",
+        "validation": "metadata.chunk_count <= input.max_chunks",
+        "on_violation": "Should not occur (algorithm guarantees this)"
+      },
+      {
+        "id": "VR-CSO-005",
+        "invariant": "All chunk indices are sequential 0..N-1",
+        "validation": "chunks[i].index == i for all i",
+        "on_violation": "Re-index chunks sequentially"
+      }
+    ]
+  },
+
+  "chunk_agent_result_validation": {
+    "description": "Validation rules for individual chunk agent results before merging.",
+    "rules": [
+      {
+        "id": "VR-CR-001",
+        "field": "chunk_index",
+        "type": "integer",
+        "required": true,
+        "validation": "Integer in range [0, N-1] where N is chunk_count",
+        "on_failure": "Assign based on Task call order, log warning ERR-MG-006"
+      },
+      {
+        "id": "VR-CR-002",
+        "field": "status",
+        "type": "string",
+        "required": true,
+        "enum": ["completed", "failed", "timed_out"],
+        "validation": "Must be one of the enum values",
+        "on_failure": "Default to 'failed', log warning ERR-MG-001"
+      },
+      {
+        "id": "VR-CR-003",
+        "field": "test_results (Phase 16)",
+        "type": "object",
+        "required": "when status == completed",
+        "validation": "Must contain pass_count, fail_count, skip_count, total as non-negative integers",
+        "on_failure": "Mark chunk as failed (ERR-MG-001), exclude from merge"
+      },
+      {
+        "id": "VR-CR-004",
+        "field": "test_results.total",
+        "type": "integer",
+        "validation": "pass_count + fail_count + skip_count == total",
+        "on_failure": "Log warning ERR-MG-002, use sum as total"
+      },
+      {
+        "id": "VR-CR-005",
+        "field": "findings (Phase 08)",
+        "type": "array",
+        "required": "when status == completed (Phase 08)",
+        "validation": "Array of finding objects, each with file, severity, category, description",
+        "on_failure": "If unparseable, mark chunk as failed (ERR-MG-001)"
+      },
+      {
+        "id": "VR-CR-006",
+        "field": "findings[*].severity",
+        "type": "string",
+        "enum": ["critical", "high", "medium", "low"],
+        "validation": "Must be one of the enum values",
+        "on_failure": "Default to 'medium', log warning"
+      },
+      {
+        "id": "VR-CR-007",
+        "field": "findings[*].category",
+        "type": "string",
+        "enum": ["security", "quality", "logic", "performance", "constitutional", "documentation"],
+        "validation": "Must be one of the enum values",
+        "on_failure": "Default to 'quality', log warning"
+      },
+      {
+        "id": "VR-CR-008",
+        "field": "findings[*].line_start, findings[*].line_end",
+        "type": "integer",
+        "validation": "line_start >= 1, line_end >= line_start",
+        "on_failure": "If invalid, set line_start = 1, line_end = line_start. Log warning."
+      },
+      {
+        "id": "VR-CR-009",
+        "field": "elapsed_ms",
+        "type": "integer",
+        "required": false,
+        "validation": "Non-negative integer",
+        "on_failure": "Default to 0"
+      },
+      {
+        "id": "VR-CR-010",
+        "field": "checks (Phase 16)",
+        "type": "object",
+        "required": false,
+        "validation": "Object with keys build, lint, type_check, tests, coverage; values PASS/FAIL/SKIP",
+        "on_failure": "Missing checks default to SKIP"
+      }
+    ]
+  },
+
+  "merged_result_validation": {
+    "description": "Invariants that must hold on the merged result.",
+    "rules": [
+      {
+        "id": "VR-MR-001",
+        "invariant": "Merged pass_count + fail_count + skip_count == merged total (Phase 16)",
+        "validation": "Arithmetic identity holds",
+        "on_violation": "Use sum as total, log warning ERR-MG-002"
+      },
+      {
+        "id": "VR-MR-002",
+        "invariant": "all_tests_passing is true IFF fail_count == 0 AND no failed chunks",
+        "validation": "Boolean logic check",
+        "on_violation": "Correct all_tests_passing to match condition"
+      },
+      {
+        "id": "VR-MR-003",
+        "invariant": "coverage_percent between 0 and 100",
+        "validation": "0 <= coverage_percent <= 100",
+        "on_violation": "Clamp to [0, 100], log warning"
+      },
+      {
+        "id": "VR-MR-004",
+        "invariant": "Every failure has source_chunk index",
+        "validation": "All items in failures[] have source_chunk field",
+        "on_violation": "Set source_chunk to -1 (unknown), log warning"
+      },
+      {
+        "id": "VR-MR-005",
+        "invariant": "fan_out_summary.chunk_count matches actual chunks processed",
+        "validation": "fan_out_summary.chunks.length == fan_out_summary.chunk_count",
+        "on_violation": "Correct chunk_count to match array length"
+      },
+      {
+        "id": "VR-MR-006",
+        "invariant": "No duplicate findings after deduplication (Phase 08)",
+        "validation": "No two findings in output match is_duplicate_finding predicate",
+        "on_violation": "Re-run deduplication, log error"
+      },
+      {
+        "id": "VR-MR-007",
+        "invariant": "Findings sorted by severity",
+        "validation": "findings[i].severity >= findings[i+1].severity (using critical > high > medium > low ordering)",
+        "on_violation": "Re-sort, log warning"
+      }
+    ]
+  },
+
+  "deduplication_validation": {
+    "description": "Validation rules for the finding deduplication algorithm (Phase 08).",
+    "rules": [
+      {
+        "id": "VR-DD-001",
+        "invariant": "Deduplication only removes true duplicates",
+        "validation": "Removed findings all satisfy is_duplicate_finding predicate against a retained finding",
+        "on_violation": "Log error, restore incorrectly removed findings"
+      },
+      {
+        "id": "VR-DD-002",
+        "invariant": "Retained finding has longer or equal description",
+        "validation": "For each dedup pair, retained.description.length >= removed.description.length",
+        "on_violation": "Swap retained/removed if needed"
+      },
+      {
+        "id": "VR-DD-003",
+        "invariant": "Tie-breaking is deterministic",
+        "validation": "When descriptions have equal length, the finding from the lower chunk_index is retained",
+        "on_violation": "Correct tie-breaking"
+      }
+    ]
+  },
+
+  "coverage_aggregation_validation": {
+    "description": "Validation rules for line-level coverage union (Phase 16).",
+    "rules": [
+      {
+        "id": "VR-COV-001",
+        "invariant": "Covered lines is the union across all chunks",
+        "validation": "For each source file: merged_covered = UNION(chunk_covered for all chunks)",
+        "on_violation": "Log error, recompute union"
+      },
+      {
+        "id": "VR-COV-002",
+        "invariant": "Total lines for a file is consistent across chunks",
+        "validation": "If chunk A and chunk B both report total_lines for the same file, they should match",
+        "on_violation": "Use MAX(total_lines), log warning ERR-MG-005"
+      },
+      {
+        "id": "VR-COV-003",
+        "invariant": "Covered lines does not exceed total lines",
+        "validation": "For each file: len(covered_lines) <= total_lines",
+        "on_violation": "Clamp covered to total, log warning"
+      }
+    ]
+  }
+}

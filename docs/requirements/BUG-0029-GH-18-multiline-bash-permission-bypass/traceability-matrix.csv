@@ -1,0 +1,39 @@
+Requirement,Acceptance Criteria,Test Case ID,Test Name,Priority,Current State,Test Type
+FR-001,AC-001-01,TC-MLB-01,05-software-developer.md no multiline Bash,P0,PASSING,regression guard
+FR-001,"AC-001-01,AC-001-03",TC-MLB-02,06-integration-tester.md no multiline Bash,P0,PASSING,regression guard
+FR-001,AC-001-01,TC-MLB-03,discover.md no multiline Bash,P0,PASSING,regression guard
+FR-001,"AC-001-01,AC-001-03,AC-001-04",TC-MLB-04,provider.md no multiline Bash,P0,PASSING,regression guard
+FR-001,AC-001-01,TC-MLB-05,isdlc.md no multiline Bash,P0,PASSING,regression guard
+FR-001,"AC-001-01,AC-001-04",TC-MLB-06,data-model-analyzer.md no multiline Bash,P0,PASSING,regression guard
+FR-001,"AC-001-01,AC-001-03",TC-MLB-07,skills-researcher.md no multiline Bash,P0,PASSING,regression guard
+FR-001,AC-001-01,TC-MLB-08,test-evaluator.md no multiline Bash,P0,PASSING,regression guard
+FR-001,"AC-001-01,AC-001-03",TC-MLB-09,architecture-analyzer.md no multiline Bash (TDD),P0,FAILING,TDD target
+FR-001,"AC-001-01,AC-001-04",TC-MLB-10,quick-scan-agent.md no multiline Bash (TDD),P0,FAILING,TDD target
+FR-002,AC-002-01,TC-MLB-11,CLAUDE.md exists,P0,PASSING,convention
+FR-002,AC-002-01,TC-MLB-12,CLAUDE.md convention heading exists,P0,PASSING,convention
+FR-002,AC-002-01,TC-MLB-13,CLAUDE.md explains glob limitation,P1,PASSING,convention
+FR-002,AC-002-03,TC-MLB-14,CLAUDE.md transformation examples,P1,PASSING,convention
+FR-002,AC-002-01,TC-MLB-15,CLAUDE.md bin/ escape hatch,P1,PASSING,convention
+FR-002,AC-002-02,TC-MLB-16,CLAUDE.md reference format,P1,PASSING,convention
+FR-004,AC-004-01,TC-MLB-17,CLAUDE.md.template exists,P0,PASSING,convention
+FR-004,AC-004-01,TC-MLB-18,CLAUDE.md.template convention heading,P0,PASSING,convention
+FR-004,AC-004-02,TC-MLB-19,CLAUDE.md.template glob limitation,P1,PASSING,convention
+FR-004,AC-004-02,TC-MLB-20,CLAUDE.md.template transformation examples,P1,PASSING,convention
+FR-001,AC-001-03,TC-MLB-21,Detect for-loop spread across lines,P0,PASSING,scanner verification
+FR-001,AC-001-01,TC-MLB-22,Detect commands separated by newlines,P0,PASSING,scanner verification
+FR-001,AC-001-04,TC-MLB-23,Detect comment-interleaved commands,P0,PASSING,scanner verification
+FR-001,AC-001-01,TC-MLB-24,Detect pipe chains split across lines,P0,PASSING,scanner verification
+FR-003,AC-003-01,TC-MLB-25,Detect multiline node -e,P0,PASSING,scanner verification
+FR-001,AC-001-01,TC-MLB-26,Detect sh code blocks,P1,PASSING,scanner verification
+FR-001,AC-001-03,TC-MLB-27,Detect backslash line-continuation,P0,PASSING,scanner verification
+FR-001,AC-001-04,TC-MLB-28,Detect multi-example with comments,P0,PASSING,scanner verification
+NFR-004,,TC-MLB-29,Does NOT flag JSON blocks,P1,PASSING,regression
+NFR-004,,TC-MLB-30,Does NOT flag TypeScript blocks,P1,PASSING,regression
+NFR-004,,TC-MLB-31,Does NOT flag YAML blocks,P1,PASSING,regression
+NFR-004,,TC-MLB-32,Does NOT flag plain code blocks,P1,PASSING,regression
+NFR-004,,TC-MLB-33,Does NOT flag JavaScript blocks,P1,PASSING,regression
+FR-001,AC-001-01,TC-MLB-34,Does NOT flag single-line Bash,P0,PASSING,regression
+FR-001,AC-001-01,TC-MLB-35,Does NOT flag Bash with blank padding,P1,PASSING,regression
+NFR-004,,TC-MLB-36,Does NOT flag markdown blocks,P1,PASSING,regression
+FR-001,,TC-MLB-37,Finds 10+ agent/command files to scan,P0,PASSING,sanity
+"FR-001,NFR-003",AC-001-01,TC-MLB-38,Zero multiline Bash codebase-wide (TDD),P0,FAILING,TDD target

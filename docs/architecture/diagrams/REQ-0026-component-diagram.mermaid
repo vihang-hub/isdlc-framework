@@ -1,0 +1,61 @@
+%% REQ-0026: Build Auto-Detection Component Diagram (C4 Level 2)
+%% Shows the 3-layer architecture: command, utility, orchestrator
+
+graph TB
+    subgraph "Command Layer"
+        BV["Build Verb Handler<br/>(isdlc.md steps 4a-4f)"]
+    end
+
+    subgraph "Utility Layer (three-verb-utils.cjs)"
+        VPC["validatePhasesCompleted()"]
+        CSP["computeStartPhase()"]
+        CS["checkStaleness()"]
+        RI["resolveItem() (existing)"]
+        RMJ["readMetaJson() (existing)"]
+        AP["ANALYSIS_PHASES (existing)"]
+        IP["IMPLEMENTATION_PHASES (new)"]
+    end
+
+    subgraph "Orchestrator Layer"
+        ORCH["00-sdlc-orchestrator.md<br/>init-and-phase-01 mode"]
+        RPF["resetPhasesForWorkflow()<br/>(common.cjs, unchanged)"]
+        WF["workflows.json<br/>(feature phases array)"]
+    end
+
+    subgraph "Data Layer"
+        META["meta.json<br/>(per-item analysis state)"]
+        STATE["state.json<br/>(active_workflow)"]
+        GIT["Git CLI<br/>(rev-parse, rev-list)"]
+    end
+
+    subgraph "Phase Execution"
+        PLC["Phase-Loop Controller<br/>(isdlc.md STEP 3)"]
+    end
+
+    BV --> RI
+    BV --> RMJ
+    BV --> VPC
+    BV --> CSP
+    BV --> CS
+    CSP --> VPC
+    CSP --> AP
+    CSP --> IP
+
+    BV -->|"START_PHASE + ARTIFACT_FOLDER"| ORCH
+    ORCH --> WF
+    ORCH --> RPF
+    RPF --> STATE
+    ORCH --> META
+
+    RMJ --> META
+    CS -.->|"currentHash from caller"| GIT
+    BV -->|"git rev-parse, rev-list"| GIT
+
+    ORCH -->|"sliced phases[]"| PLC
+
+    style VPC fill:#d4edda,stroke:#28a745
+    style CSP fill:#d4edda,stroke:#28a745
+    style CS fill:#d4edda,stroke:#28a745
+    style IP fill:#d4edda,stroke:#28a745
+    style BV fill:#cce5ff,stroke:#004085
+    style ORCH fill:#fff3cd,stroke:#856404

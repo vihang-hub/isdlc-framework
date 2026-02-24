@@ -1,0 +1,34 @@
+%% Sequence Diagram: Add Verb Flow
+%% Traces: FR-001, AC-001-01 through AC-001-07
+sequenceDiagram
+    participant U as Developer
+    participant C as Claude Code
+    participant CMD as isdlc.md<br/>(Add Handler)
+    participant FS as File System
+    participant BL as BACKLOG.md
+
+    U->>C: "add payment processing to the backlog"
+    C->>C: Intent detection: maps to /isdlc add
+
+    Note over C: Skill hook fires
+    C->>C: skill-delegation-enforcer: action=add, EXEMPT -> skip
+
+    C->>CMD: Load isdlc.md, action=add, args="payment processing"
+
+    CMD->>CMD: Generate slug: "payment-processing"
+    CMD->>FS: Read state.json.counters.next_req_id (peek only)
+    FS-->>CMD: next_req_id = 24
+
+    CMD->>FS: Check docs/requirements/payment-processing/ exists?
+    FS-->>CMD: Does not exist
+
+    CMD->>FS: Create docs/requirements/payment-processing/draft.md
+    CMD->>FS: Create docs/requirements/payment-processing/meta.json
+    Note over FS: meta.json: source=manual,<br/>analysis_status=raw,<br/>phases_completed=[]
+
+    CMD->>BL: Read BACKLOG.md
+    CMD->>BL: Append "- N.N [ ] Payment processing"
+
+    CMD->>U: "Added to backlog. Analyze now or later?"
+
+    Note over FS: state.json NOT modified (NFR-002)

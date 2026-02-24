@@ -1,0 +1,11 @@
+{
+  "description": "Phase A cannot pull Jira ticket content -- jira_get_issue MCP not implemented",
+  "source": "github",
+  "source_id": "GH-7",
+  "source_url": "https://github.com/isdlc/isdlc/issues/7",
+  "created_at": "2026-02-23T00:00:00.000Z",
+  "analysis_status": "raw",
+  "phases_completed": [],
+  "build_started_at": "2026-02-23T00:00:00.000Z",
+  "workflow_type": "fix"
+}

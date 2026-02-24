@@ -1,0 +1,64 @@
+%% C4 Level 2: Container Diagram - Hook I/O Optimization
+%% Shows the dispatcher process boundary and caching layer
+
+graph TB
+    subgraph "Claude Code Host Process"
+        CC[Claude Code]
+    end
+
+    subgraph "Dispatcher Process (single invocation)"
+        subgraph "Entry Layer"
+            D[Dispatcher<br/>pre-task / pre-skill / post-task / post-bash / post-write-edit]
+        end
+
+        subgraph "Shared Library - common.cjs"
+            RS[readStdin]
+            RSt[readState]
+            WS[writeState<br/>read-before-write preserved]
+
+            subgraph "Caching Layer (NEW - FR-001, FR-002)"
+                GPR[getProjectRoot<br/>_cachedProjectRoot]
+                LM[loadManifest<br/>_configCache.get manifest]
+                LIR[loadIterationRequirements<br/>_configCache.get requirements]
+                LWD[loadWorkflowDefinitions<br/>_configCache.get workflows]
+                CC_CACHE[_configCache Map<br/>key: root:name<br/>value: mtimeMs + data]
+            end
+        end
+
+        subgraph "Sub-Hooks (3-9 per dispatcher)"
+            SH1[Sub-Hook 1<br/>e.g. iteration-corridor]
+            SH2[Sub-Hook 2<br/>e.g. skill-validator]
+            SHN[Sub-Hook N<br/>e.g. gate-blocker]
+        end
+
+        subgraph "Context Object (ctx)"
+            CTX[ctx.input<br/>ctx.state<br/>ctx.manifest<br/>ctx.requirements<br/>ctx.workflows]
+        end
+    end
+
+    subgraph "Filesystem"
+        FS_STATE[.isdlc/state.json]
+        FS_MANIFEST[.claude/hooks/config/<br/>skills-manifest.json]
+        FS_ITER[.claude/hooks/config/<br/>iteration-requirements.json]
+        FS_WF[.isdlc/config/<br/>workflows.json]
+    end
+
+    CC -->|stdin JSON| RS
+    D --> RSt -->|1 read| FS_STATE
+    D --> LM -->|1 read + stat| FS_MANIFEST
+    D --> LIR -->|1 read + stat| FS_ITER
+    D --> LWD -->|1 read + stat| FS_WF
+    LM --> CC_CACHE
+    LIR --> CC_CACHE
+    LWD --> CC_CACHE
+    GPR -->|1 traversal| FS_STATE
+
+    D -->|builds| CTX
+    CTX -->|passed to| SH1
+    CTX -->|passed to| SH2
+    CTX -->|passed to| SHN
+
+    SH1 -->|uses ctx.requirements| CTX
+    SHN -->|uses ctx.manifest| CTX
+
+    D -->|1 write max| WS -->|read-before-write| FS_STATE

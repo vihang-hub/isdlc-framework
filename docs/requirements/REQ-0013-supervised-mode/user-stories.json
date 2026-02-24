@@ -1,0 +1,316 @@
+{
+  "feature": "REQ-0013-supervised-mode",
+  "version": "1.0.0",
+  "created": "2026-02-14",
+  "stories": [
+    {
+      "id": "US-001",
+      "epic": "Supervised Mode Configuration",
+      "persona": "Solo Developer",
+      "goal": "enable supervised mode for my workflow",
+      "benefit": "I can review phase outputs before the next phase consumes them",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-001-01",
+          "given": "I have set supervised_mode.enabled to true in state.json",
+          "when": "a workflow starts executing",
+          "then": "review gates activate for phases specified in review_phases"
+        },
+        {
+          "id": "AC-001-02",
+          "given": "I have set supervised_mode.enabled to false in state.json",
+          "when": "a workflow starts executing",
+          "then": "the framework behaves identically to current autonomous mode with no review gates"
+        },
+        {
+          "id": "AC-001-03",
+          "given": "supervised_mode block is missing from state.json entirely",
+          "when": "a workflow starts executing",
+          "then": "the framework behaves identically to current autonomous mode (fail-open)"
+        }
+      ],
+      "linked_requirements": ["REQ-013-FR-01", "NFR-013-01", "NFR-013-02"]
+    },
+    {
+      "id": "US-002",
+      "epic": "Supervised Mode Configuration",
+      "persona": "Domain Expert",
+      "goal": "enable supervised mode only for specific phases (e.g., architecture and design)",
+      "benefit": "I only review the phases where my domain knowledge adds the most value, without slowing down routine phases",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-002-01",
+          "given": "I have set review_phases to [\"03\", \"04\"] in supervised_mode config",
+          "when": "Phase 03 (architecture) completes",
+          "then": "a review gate is presented with Continue/Review/Redo options"
+        },
+        {
+          "id": "AC-002-02",
+          "given": "I have set review_phases to [\"03\", \"04\"] in supervised_mode config",
+          "when": "Phase 01 (requirements) completes",
+          "then": "no review gate is presented and the framework auto-advances to the next phase"
+        },
+        {
+          "id": "AC-002-03",
+          "given": "I have set review_phases to \"all\" in supervised_mode config",
+          "when": "any phase completes",
+          "then": "a review gate is presented after every phase"
+        },
+        {
+          "id": "AC-002-04",
+          "given": "review_phases contains an invalid phase number like \"99\"",
+          "when": "config is read",
+          "then": "the invalid entry is silently ignored and valid entries still activate their review gates"
+        }
+      ],
+      "linked_requirements": ["REQ-013-FR-01"]
+    },
+    {
+      "id": "US-003",
+      "epic": "Phase Summary",
+      "persona": "Solo Developer",
+      "goal": "see a structured summary of what a phase produced",
+      "benefit": "I can quickly understand what changed, what was decided, and what files were affected without reading every artifact",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-003-01",
+          "given": "supervised mode is enabled and a reviewed phase completes",
+          "when": "summary generation runs",
+          "then": ".isdlc/reviews/phase-{NN}-summary.md is created with phase name, duration, artifact list, key decisions, file diffs, and file links"
+        },
+        {
+          "id": "AC-003-02",
+          "given": "a phase produces no file changes",
+          "when": "summary generation runs",
+          "then": "summary is created with 'No file changes' noted and the artifact list is still populated from phase state"
+        },
+        {
+          "id": "AC-003-03",
+          "given": "the .isdlc/reviews/ directory does not exist",
+          "when": "summary generation runs",
+          "then": "the directory is created automatically"
+        },
+        {
+          "id": "AC-003-04",
+          "given": "a previous summary exists for the same phase (after redo)",
+          "when": "summary generation runs",
+          "then": "the previous summary is overwritten with the new one"
+        },
+        {
+          "id": "AC-003-05",
+          "given": "parallel_summary is set to false in config",
+          "when": "summary generation runs",
+          "then": "a minimal summary is created with phase name, status, and artifact list only (no diffs, no decision extraction)"
+        }
+      ],
+      "linked_requirements": ["REQ-013-FR-02", "NFR-013-03"]
+    },
+    {
+      "id": "US-004",
+      "epic": "Review Gate",
+      "persona": "Solo Developer",
+      "goal": "see a Continue/Review/Redo menu after a reviewed phase completes",
+      "benefit": "I can decide whether to proceed, pause for review, or redo the phase",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-004-01",
+          "given": "supervised mode is enabled and a reviewed phase completes",
+          "when": "the review gate fires",
+          "then": "a menu is presented with [C] Continue, [R] Review, and [D] Redo options"
+        },
+        {
+          "id": "AC-004-02",
+          "given": "the review gate menu is presented",
+          "when": "I select [C] Continue",
+          "then": "the next phase begins immediately with normal flow"
+        },
+        {
+          "id": "AC-004-03",
+          "given": "supervised mode is enabled but the completed phase is NOT in review_phases",
+          "when": "the phase completes",
+          "then": "no review gate is presented and auto-advance occurs"
+        }
+      ],
+      "linked_requirements": ["REQ-013-FR-03", "REQ-013-FR-07"]
+    },
+    {
+      "id": "US-005",
+      "epic": "Review Gate",
+      "persona": "Solo Developer",
+      "goal": "see the review gate even on the final phase of a workflow",
+      "benefit": "I can review final-phase output before the merge/finalize step",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-005-01",
+          "given": "supervised mode is enabled and the final phase in the workflow completes",
+          "when": "the review gate fires",
+          "then": "the Continue/Review/Redo menu is presented before proceeding to finalize/merge"
+        }
+      ],
+      "linked_requirements": ["REQ-013-FR-03", "REQ-013-FR-07"]
+    },
+    {
+      "id": "US-006",
+      "epic": "Review Pause",
+      "persona": "Domain Expert",
+      "goal": "pause the workflow to review and edit artifacts before the next phase",
+      "benefit": "I can correct agent assumptions using my domain knowledge before the next phase builds on them",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-006-01",
+          "given": "the review gate menu is presented",
+          "when": "I select [R] Review",
+          "then": "the framework pauses, displays the summary content, and shows instructions to say 'continue' when ready"
+        },
+        {
+          "id": "AC-006-02",
+          "given": "the framework is paused for review",
+          "when": "I edit an artifact file on disk",
+          "then": "the next phase will read the edited file (phases read from disk, not from cached agent output)"
+        },
+        {
+          "id": "AC-006-03",
+          "given": "the framework is paused for review",
+          "when": "I say 'continue'",
+          "then": "the framework advances to the next phase"
+        },
+        {
+          "id": "AC-006-04",
+          "given": "the framework is paused for review",
+          "when": "the pause begins",
+          "then": "active_workflow.supervised_review is written to state.json with status 'reviewing' and paused_at timestamp"
+        },
+        {
+          "id": "AC-006-05",
+          "given": "the framework is paused for review",
+          "when": "I say 'continue' and the framework resumes",
+          "then": "supervised_review is updated with status 'completed' and resumed_at timestamp"
+        }
+      ],
+      "linked_requirements": ["REQ-013-FR-04", "NFR-013-04"]
+    },
+    {
+      "id": "US-007",
+      "epic": "Redo Phase",
+      "persona": "Solo Developer",
+      "goal": "redo a phase with additional guidance when the output is not satisfactory",
+      "benefit": "I can course-correct without restarting the entire workflow",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-007-01",
+          "given": "the review gate menu is presented",
+          "when": "I select [D] Redo",
+          "then": "the framework prompts me for additional guidance text"
+        },
+        {
+          "id": "AC-007-02",
+          "given": "I provide redo guidance",
+          "when": "the phase is re-delegated",
+          "then": "the phase agent receives the original prompt plus a 'REDO GUIDANCE: {text}' block"
+        },
+        {
+          "id": "AC-007-03",
+          "given": "a redo phase re-run completes",
+          "when": "the summary is regenerated",
+          "then": "the new summary overwrites the previous one and the Continue/Review/Redo menu is presented again"
+        },
+        {
+          "id": "AC-007-04",
+          "given": "I have already done 3 redos for this phase",
+          "when": "the Continue/Review/Redo menu is presented",
+          "then": "the [D] Redo option is removed from the menu and only Continue and Review remain"
+        },
+        {
+          "id": "AC-007-05",
+          "given": "a phase is being re-run via redo",
+          "when": "redo starts",
+          "then": "phase status transitions from completed to in_progress"
+        },
+        {
+          "id": "AC-007-06",
+          "given": "a phase is being re-run via redo",
+          "when": "redo completes",
+          "then": "phase status transitions back to completed and redo_count is incremented"
+        }
+      ],
+      "linked_requirements": ["REQ-013-FR-05", "NFR-013-05"]
+    },
+    {
+      "id": "US-008",
+      "epic": "Infrastructure Integration",
+      "persona": "Solo Developer",
+      "goal": "have supervised mode work seamlessly with existing gate-blocker and phase-loop infrastructure",
+      "benefit": "the feature integrates naturally without breaking existing workflow behavior",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-008-01",
+          "given": "supervised_mode.enabled is true and the phase is in review_phases",
+          "when": "the gate-blocker evaluates a phase transition",
+          "then": "the gate-blocker allows phase completion but defers advancement to the review gate"
+        },
+        {
+          "id": "AC-008-02",
+          "given": "supervised_mode.enabled is false",
+          "when": "the gate-blocker evaluates a phase transition",
+          "then": "the gate-blocker behaves identically to current behavior (auto-advance)"
+        },
+        {
+          "id": "AC-008-03",
+          "given": "supervised_mode config is corrupt or malformed",
+          "when": "the gate-blocker reads the config",
+          "then": "the gate-blocker falls back to autonomous mode (fail-open per Article X)"
+        },
+        {
+          "id": "AC-008-04",
+          "given": "STEP 3e (post-phase state update) completes in the phase-loop controller",
+          "when": "supervised_mode.enabled is true",
+          "then": "STEP 3e-review executes before the next phase starts"
+        },
+        {
+          "id": "AC-008-05",
+          "given": "STEP 3e (post-phase state update) completes in the phase-loop controller",
+          "when": "supervised_mode.enabled is false or missing",
+          "then": "STEP 3e-review is skipped and the next iteration begins immediately"
+        }
+      ],
+      "linked_requirements": ["REQ-013-FR-06", "REQ-013-FR-07"]
+    },
+    {
+      "id": "US-009",
+      "epic": "Review History",
+      "persona": "Solo Developer",
+      "goal": "see a record of all review gate interactions in the workflow history",
+      "benefit": "I can audit what I reviewed, when I paused, and what redo guidance I provided for debugging and process improvement",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-009-01",
+          "given": "I select any review gate option (Continue, Review, or Redo)",
+          "when": "the action is taken",
+          "then": "an entry is appended to active_workflow.review_history with phase, action, and timestamp"
+        },
+        {
+          "id": "AC-009-02",
+          "given": "a workflow completes with review history",
+          "when": "the workflow is moved to workflow_history",
+          "then": "the review_history array is preserved in the workflow_history entry"
+        },
+        {
+          "id": "AC-009-03",
+          "given": "supervised_mode.enabled is false",
+          "when": "a workflow completes",
+          "then": "no review_history field exists in the workflow state"
+        }
+      ],
+      "linked_requirements": ["REQ-013-FR-08"]
+    }
+  ]
+}

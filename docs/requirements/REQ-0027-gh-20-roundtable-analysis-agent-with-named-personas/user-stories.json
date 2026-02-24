@@ -1,0 +1,204 @@
+{
+  "feature_id": "REQ-ROUNDTABLE-ANALYST",
+  "source": "GitHub Issue #20",
+  "version": "1.0.0",
+  "created": "2026-02-19",
+  "stories": [
+    {
+      "id": "US-001",
+      "epic": "Interactive Analysis",
+      "persona": "Framework User",
+      "goal": "have an interactive conversation with a named Business Analyst persona during requirements analysis",
+      "benefit": "my domain knowledge is captured in the requirements and no implicit assumptions go unchallenged",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-US-001-01",
+          "given": "I run `/isdlc analyze \"my-feature\"` and Phase 00 is complete",
+          "when": "Phase 01 begins",
+          "then": "Maya (Business Analyst) introduces herself and begins asking questions about business context"
+        },
+        {
+          "id": "AC-US-001-02",
+          "given": "Maya asks me about user needs",
+          "when": "I provide a response",
+          "then": "Maya reflects my answer back ('So the primary pain point is...') before moving to the next topic"
+        },
+        {
+          "id": "AC-US-001-03",
+          "given": "a step is complete",
+          "when": "I see the menu",
+          "then": "I can choose [C] to continue, [E] to elaborate, or type naturally"
+        }
+      ],
+      "linked_requirements": ["FR-001", "FR-002", "FR-003", "FR-007", "FR-011"]
+    },
+    {
+      "id": "US-002",
+      "epic": "Adaptive Depth",
+      "persona": "Framework User",
+      "goal": "the analysis to be brief and confirmation-oriented for simple items",
+      "benefit": "I don't spend 20 minutes analyzing a 2-file change",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-US-002-01",
+          "given": "quick-scan classified my item as 'small' scope",
+          "when": "Phase 01 begins",
+          "then": "Maya says 'This looks straightforward. I'll keep it brief' and presents draft summaries for confirmation instead of open-ended questions"
+        },
+        {
+          "id": "AC-US-002-02",
+          "given": "I am in brief mode",
+          "when": "I want more detail and say 'deep' or 'more detail'",
+          "then": "the agent switches to full discovery mode for the current and subsequent steps"
+        }
+      ],
+      "linked_requirements": ["FR-006", "NFR-006"]
+    },
+    {
+      "id": "US-003",
+      "epic": "Session Resumability",
+      "persona": "Framework User",
+      "goal": "resume analysis where I left off without redoing completed steps",
+      "benefit": "I can analyze in multiple sessions without losing progress",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-US-003-01",
+          "given": "I completed steps 01-01 through 01-05 yesterday",
+          "when": "I run `/isdlc analyze \"my-feature\"` today",
+          "then": "Maya says 'Welcome back. Last time we covered business context through quality assessment. Let's pick up with feature definition.'"
+        },
+        {
+          "id": "AC-US-003-02",
+          "given": "I completed all of Phase 01",
+          "when": "I resume",
+          "then": "Alex (Solutions Architect) introduces himself and starts Phase 02 impact analysis"
+        },
+        {
+          "id": "AC-US-003-03",
+          "given": "meta.json tracks my step progress",
+          "when": "I resume",
+          "then": "the context recovery takes under 5 seconds"
+        }
+      ],
+      "linked_requirements": ["FR-005", "FR-008", "FR-011", "NFR-003"]
+    },
+    {
+      "id": "US-004",
+      "epic": "Persona Transitions",
+      "persona": "Framework User",
+      "goal": "a clear handoff between the Business Analyst and Solutions Architect personas",
+      "benefit": "I understand the shift in focus and know who is guiding me next",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-US-004-01",
+          "given": "Maya completes Phase 01",
+          "when": "Phase 02 begins",
+          "then": "I see a handoff message: 'Maya has finished requirements discovery. Handing off to Alex Rivera (Solutions Architect)...'"
+        },
+        {
+          "id": "AC-US-004-02",
+          "given": "Alex starts Phase 02",
+          "when": "he introduces himself",
+          "then": "he briefly summarizes what Maya produced before diving into impact analysis"
+        }
+      ],
+      "linked_requirements": ["FR-008", "NFR-002"]
+    },
+    {
+      "id": "US-005",
+      "epic": "Architecture Analysis",
+      "persona": "Framework User",
+      "goal": "Alex (Solutions Architect) to present options with tradeoffs and ask about my risk appetite",
+      "benefit": "architectural decisions reflect my project's actual constraints rather than generic best practices",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-US-005-01",
+          "given": "Alex is analyzing architecture options",
+          "when": "he presents a decision",
+          "then": "he shows at least 2 options with pros/cons and asks which aligns better with my constraints"
+        },
+        {
+          "id": "AC-US-005-02",
+          "given": "I express a preference",
+          "when": "Alex processes it",
+          "then": "he records my choice as an ADR with rationale"
+        }
+      ],
+      "linked_requirements": ["FR-002", "FR-010"]
+    },
+    {
+      "id": "US-006",
+      "epic": "Design Analysis",
+      "persona": "Framework User",
+      "goal": "Jordan (System Designer) to show concrete code examples and interface definitions",
+      "benefit": "the design documents are implementable without ambiguity",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-US-006-01",
+          "given": "Jordan is designing module boundaries",
+          "when": "he presents a design",
+          "then": "it includes function signatures, data structures, and error handling patterns"
+        },
+        {
+          "id": "AC-US-006-02",
+          "given": "I approve a design",
+          "when": "the artifacts are written",
+          "then": "they contain the concrete examples discussed, not just abstract descriptions"
+        }
+      ],
+      "linked_requirements": ["FR-002", "FR-010", "FR-012"]
+    },
+    {
+      "id": "US-007",
+      "epic": "Backward Compatibility",
+      "persona": "Framework Maintainer",
+      "goal": "the analyze verb to fall back to standard phase agents if the roundtable agent is missing",
+      "benefit": "removing or renaming the roundtable agent does not break existing functionality",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-US-007-01",
+          "given": "`roundtable-analyst.md` does not exist",
+          "when": "I run `/isdlc analyze`",
+          "then": "the standard phase agents (quick-scan-agent, requirements-analyst, etc.) are used as before"
+        },
+        {
+          "id": "AC-US-007-02",
+          "given": "the roundtable agent produces artifacts",
+          "when": "I run `/isdlc build`",
+          "then": "the build auto-detection works identically to artifacts produced by standard agents"
+        }
+      ],
+      "linked_requirements": ["FR-009", "FR-010", "NFR-005"]
+    },
+    {
+      "id": "US-008",
+      "epic": "Extensibility",
+      "persona": "Framework Maintainer",
+      "goal": "add new analysis steps by dropping a .md file into the step directory",
+      "benefit": "extending the analysis workflow requires no changes to the core roundtable agent",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-US-008-01",
+          "given": "I create `09-compliance-check.md` in `analysis-steps/01-requirements/`",
+          "when": "the roundtable agent next runs Phase 01",
+          "then": "it discovers and executes the new step after step 08"
+        },
+        {
+          "id": "AC-US-008-02",
+          "given": "the new step file has valid frontmatter",
+          "when": "executed",
+          "then": "its persona, depth, and output directives are respected"
+        }
+      ],
+      "linked_requirements": ["FR-004", "FR-012", "NFR-004"]
+    }
+  ]
+}

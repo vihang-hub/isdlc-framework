@@ -1,0 +1,92 @@
+Requirement ID,Acceptance Criteria,Test Case ID,Test Description,Test Type,Priority,Status
+REQ-001,AC-001-01,TC-PIA-01,Single table with valid rows - parses file paths from impact-analysis.md,Unit,P0,Designed
+REQ-001,AC-001-01,TC-PIA-02,Multiple tables with deduplication - parses across FR sections,Unit,P0,Designed
+REQ-001,AC-001-01,TC-PIA-07,Header and separator rows ignored during parsing,Unit,P1,Designed
+REQ-001,AC-001-02,TC-INT-01,Full allow flow - git diff shows all affected files modified,Integration,P0,Designed
+REQ-001,AC-001-02,TC-INT-08,Git diff fails (not a git repo) - fail-open,Integration,P0,Designed
+REQ-001,AC-001-02,TC-ERR-05,No main branch - git diff fails - fail-open,Error,P1,Designed
+REQ-001,AC-001-03,TC-BCR-01,All files covered classification,Unit,P0,Designed
+REQ-001,AC-001-03,TC-BCR-02,All files unaddressed classification,Unit,P0,Designed
+REQ-001,AC-001-03,TC-BCR-03,Mix of covered/deferred/unaddressed classification,Unit,P0,Designed
+REQ-001,AC-001-03,TC-BCR-04,File in both git diff AND deferred - covered wins,Unit,P0,Designed
+REQ-001,AC-001-03,TC-PBC-01,Valid deferred entries extracted from coverage file,Unit,P0,Designed
+REQ-001,AC-001-04,TC-INT-02,Full block - unaddressed files trigger block decision,Integration,P0,Designed
+REQ-001,AC-001-04,TC-BCR-02,All files unaddressed - report shows all unaddressed,Unit,P0,Designed
+REQ-001,AC-001-04,TC-ERR-06,Empty git diff - all files unaddressed,Error,P0,Designed
+REQ-001,AC-001-05,TC-INT-01,Full allow - all files covered triggers allow decision,Integration,P0,Designed
+REQ-001,AC-001-05,TC-INT-03,Allow with mix of covered and deferred,Integration,P0,Designed
+REQ-001,AC-001-05,TC-BCR-01,All files covered - report confirms allow condition,Unit,P0,Designed
+REQ-001,AC-001-05,TC-ERR-10,Multiple files all addressed (mix covered+deferred),Error,P0,Designed
+REQ-001,AC-001-06,TC-DISP-01,shouldActivate true for feature workflow in Phase 06,Dispatcher,P0,Designed
+REQ-001,AC-001-06,TC-DISP-03,shouldActivate false for non-Phase-06,Dispatcher,P0,Designed
+REQ-002,AC-002-01,TC-INT-05,Allow when impact-analysis.md missing,Integration,P0,Designed
+REQ-002,AC-002-02,TC-INT-06,Allow when impact-analysis.md has no tables,Integration,P0,Designed
+REQ-002,AC-002-02,TC-PIA-08,Empty string input returns empty array,Unit,P0,Designed
+REQ-002,AC-002-02,TC-PIA-12,All NO CHANGE entries returns empty array,Unit,P0,Designed
+REQ-002,AC-002-02,TC-INT-10,Allow when all entries are NO CHANGE,Integration,P0,Designed
+REQ-002,AC-002-02,TC-ERR-07,parseImpactAnalysis returns empty array (no tables),Error,P0,Designed
+REQ-002,AC-002-03,TC-CG-03,No active_workflow in state - allow silently,Unit,P0,Designed
+REQ-002,AC-002-03,TC-CG-04,No artifact_folder in active_workflow,Unit,P0,Designed
+REQ-002,AC-002-03,TC-DISP-04,shouldActivate false for no active workflow,Dispatcher,P0,Designed
+REQ-002,AC-002-04,TC-PIA-09,Null input returns null (parse error),Unit,P0,Designed
+REQ-002,AC-002-04,TC-PIA-10,Undefined input returns null (parse error),Unit,P0,Designed
+REQ-002,AC-002-04,TC-PIA-11,Non-string input returns null (parse error),Unit,P1,Designed
+REQ-002,AC-002-04,TC-INT-07,Allow when parseImpactAnalysis returns null,Integration,P0,Designed
+REQ-003,AC-003-01,--,Checklist written to correct artifact folder path - validated by code review,CodeReview,P1,Design-only
+REQ-003,AC-003-02,TC-PBC-01,Valid deferred entries extracted from coverage table,Unit,P0,Designed
+REQ-003,AC-003-02,TC-PBC-03,Case-insensitive status matching in coverage table,Unit,P1,Designed
+REQ-003,AC-003-02,TC-PBC-07,Multiple deferred entries parsed correctly,Unit,P0,Designed
+REQ-003,AC-003-03,--,Notes column for covered files indicates change type - validated by code review,CodeReview,P1,Design-only
+REQ-003,AC-003-04,TC-PBC-02,Deferred with empty notes rejected,Unit,P0,Designed
+REQ-003,AC-003-04,TC-INT-04,Block when deferred lacks rationale,Integration,P0,Designed
+REQ-003,AC-003-04,TC-BCR-06,Deferred entry includes notes in output,Unit,P0,Designed
+REQ-003,AC-003-05,--,Checklist includes summary header with counts - validated by code review,CodeReview,P1,Design-only
+REQ-004,AC-004-01,--,Agent markdown update - validated by code review,CodeReview,P1,Design-only
+REQ-004,AC-004-02,--,Agent extracts affected files - validated by code review,CodeReview,P1,Design-only
+REQ-004,AC-004-03,--,Agent includes acknowledgement section - validated by code review,CodeReview,P1,Design-only
+REQ-004,AC-004-04,--,Agent generates blast-radius-coverage.md - validated by code review,CodeReview,P1,Design-only
+REQ-005,AC-005-01,TC-INT-01,Full allow flow validates blast-radius-coverage.md exists context,Integration,P0,Designed
+REQ-005,AC-005-02,TC-INT-02,Gate blocks when unaddressed files exist,Integration,P0,Designed
+REQ-005,AC-005-02,TC-INT-01,Gate allows when all files addressed,Integration,P0,Designed
+REQ-005,AC-005-03,TC-INT-05,Gate validation skipped when impact-analysis.md missing,Integration,P0,Designed
+REQ-005,AC-005-04,TC-FBM-01,Block message lists single unaddressed file,Unit,P0,Designed
+REQ-005,AC-005-04,TC-FBM-02,Block message lists multiple unaddressed files,Unit,P0,Designed
+REQ-005,AC-005-04,TC-FBM-03,Block message includes resolution guidance,Unit,P1,Designed
+REQ-005,AC-005-04,TC-INT-09,Block message lists all unaddressed files with change types,Integration,P0,Designed
+REQ-006,AC-006-01,TC-PIA-01,Single table row parsing with backtick-wrapped paths,Unit,P0,Designed
+REQ-006,AC-006-01,TC-PIA-07,Header/separator rows not matched by regex,Unit,P1,Designed
+REQ-006,AC-006-02,TC-PIA-02,Multiple tables with deduplication (first occurrence wins),Unit,P0,Designed
+REQ-006,AC-006-03,TC-PIA-03,Change type extraction (CREATE/MODIFY/DELETE),Unit,P0,Designed
+REQ-006,AC-006-04,TC-PIA-04,NO CHANGE entries excluded from results,Unit,P0,Designed
+REQ-006,AC-006-04,TC-PIA-12,All NO CHANGE entries results in empty array,Unit,P0,Designed
+REQ-006,AC-006-04,TC-INT-10,All NO CHANGE entries triggers allow,Integration,P0,Designed
+REQ-006,AC-006-05,TC-PIA-05,Rows without backticks silently skipped,Unit,P0,Designed
+REQ-006,AC-006-05,TC-PIA-06,Extra whitespace around delimiters handled,Unit,P1,Designed
+REQ-007,AC-007-01,TC-CON-01,Module exports check(ctx) function,Constraint,P0,Designed
+REQ-007,AC-007-01,TC-CON-02,Module exports all documented internal functions,Constraint,P0,Designed
+REQ-007,AC-007-01,TC-CG-01,check() handles missing ctx.input,Unit,P0,Designed
+REQ-007,AC-007-01,TC-CG-02,check() handles missing ctx.state,Unit,P0,Designed
+REQ-007,AC-007-02,TC-DISP-01,shouldActivate true for feature + Phase 06,Dispatcher,P0,Designed
+REQ-007,AC-007-03,TC-DISP-01,Hook registered in pre-task-dispatcher HOOKS array (verified by dispatcher activation),Dispatcher,P0,Designed
+REQ-007,AC-007-02,TC-DISP-02,shouldActivate false for fix workflow,Dispatcher,P0,Designed
+REQ-007,AC-007-02,TC-DISP-03,shouldActivate false for non-Phase-06,Dispatcher,P0,Designed
+REQ-007,AC-007-02,TC-DISP-04,shouldActivate false for no active workflow,Dispatcher,P0,Designed
+REQ-007,AC-007-04,TC-INT-08,Git diff failure returns allow (fail-open),Integration,P0,Designed
+REQ-007,AC-007-04,TC-ERR-01,File read error on impact-analysis.md (fail-open),Error,P0,Designed
+REQ-007,AC-007-04,TC-ERR-03,Top-level catch on uncaught exception (fail-open),Error,P0,Designed
+REQ-007,AC-007-04,TC-ERR-05,No main branch - git diff fails (fail-open),Error,P1,Designed
+NFR-001,,TC-NFR-01,parseImpactAnalysis performance with 100 rows < 50ms,Performance,P1,Designed
+NFR-001,,TC-NFR-02,Full hook execution within 2000ms budget,Performance,P2,Designed
+NFR-002,,TC-INT-08,Git diff failure triggers fail-open (allow),Integration,P0,Designed
+NFR-002,,TC-ERR-01,File read error triggers fail-open (allow),Error,P0,Designed
+NFR-002,,TC-ERR-03,Uncaught exception triggers fail-open (allow),Error,P0,Designed
+NFR-003,,TC-NFR-03,No existing test failures after hook addition,Regression,P0,Designed
+NFR-004,,TC-NFR-03,Test coverage >= 80% for new hook,Coverage,P0,Designed
+NFR-005,,TC-ERR-08,path.join handles artifact folder correctly,Error,P2,Designed
+CON-001,,TC-CON-01,Hook uses CJS module.exports,Constraint,P0,Designed
+CON-001,,TC-NFR-04,Hook file has .cjs extension,Constraint,P0,Designed
+CON-002,,TC-NFR-05,No external npm dependencies,Constraint,P0,Designed
+CON-003,,TC-SEC-02,stateModified always false,Security,P0,Designed
+CON-003,,TC-SEC-03,No new state.json fields written,Security,P0,Designed
+CON-005,,TC-DISP-02,shouldActivate false for fix workflow,Dispatcher,P0,Designed
+CON-005,,TC-DISP-01,shouldActivate true only for feature + Phase 06,Dispatcher,P0,Designed

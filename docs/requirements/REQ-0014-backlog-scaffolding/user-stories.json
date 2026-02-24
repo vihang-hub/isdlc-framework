@@ -1,0 +1,42 @@
+{
+  "feature": "REQ-0014-backlog-scaffolding",
+  "created": "2026-02-14",
+  "user_stories": [
+    {
+      "id": "US-01",
+      "title": "Create BACKLOG.md during init",
+      "as_a": "developer installing iSDLC into a new project",
+      "i_want": "a BACKLOG.md file to be created automatically at the project root with the correct section headers",
+      "so_that": "I have a ready-to-use backlog file that follows the framework's format convention without manual setup",
+      "acceptance_criteria": ["AC-01", "AC-02", "AC-03", "AC-04", "AC-05"],
+      "priority": "high"
+    },
+    {
+      "id": "US-02",
+      "title": "Preserve existing BACKLOG.md",
+      "as_a": "developer reinstalling or upgrading iSDLC in an existing project",
+      "i_want": "the installer to skip BACKLOG.md creation if the file already exists",
+      "so_that": "my existing backlog items are not overwritten during reinstall",
+      "acceptance_criteria": ["AC-06", "AC-07"],
+      "priority": "high"
+    },
+    {
+      "id": "US-03",
+      "title": "Dry-run does not create BACKLOG.md",
+      "as_a": "developer running a dry-run installation",
+      "i_want": "BACKLOG.md to not be written to disk during dry-run mode",
+      "so_that": "dry-run remains a preview-only operation with no side effects",
+      "acceptance_criteria": ["AC-08", "AC-09"],
+      "priority": "medium"
+    },
+    {
+      "id": "US-04",
+      "title": "Uninstaller preserves BACKLOG.md",
+      "as_a": "developer uninstalling iSDLC from a project",
+      "i_want": "BACKLOG.md to remain untouched after uninstall",
+      "so_that": "my backlog data is never lost when removing the framework",
+      "acceptance_criteria": ["AC-10", "AC-11", "AC-12"],
+      "priority": "critical"
+    }
+  ]
+}

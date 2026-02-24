@@ -1,0 +1,70 @@
+{
+  "gate": "GATE-08",
+  "phase": "08-code-review",
+  "workflow": "fix",
+  "artifact_folder": "BUG-0014-early-branch-creation",
+  "result": "PASS",
+  "validated_at": "2026-02-13T15:45:00.000Z",
+  "validator": "qa-engineer",
+  "checklist": {
+    "code_review_completed": true,
+    "no_critical_issues": true,
+    "static_analysis_passing": true,
+    "code_coverage_meets_thresholds": true,
+    "coding_standards_followed": true,
+    "performance_acceptable": true,
+    "security_review_complete": true,
+    "qa_signoff_obtained": true
+  },
+  "test_results": {
+    "esm_total": 561,
+    "esm_pass": 560,
+    "esm_fail": 1,
+    "esm_pre_existing_failures": ["TC-E09"],
+    "cjs_total": 1140,
+    "cjs_pass": 1140,
+    "cjs_fail": 0,
+    "bug_specific_total": 22,
+    "bug_specific_pass": 22,
+    "bug_specific_fail": 0,
+    "regressions": 0
+  },
+  "traceability": {
+    "total_acs": 18,
+    "acs_covered": 18,
+    "coverage_percentage": 100,
+    "total_tests": 22,
+    "tests_pass": 22
+  },
+  "findings": {
+    "critical": 0,
+    "major": 0,
+    "minor": 1,
+    "informational": 1,
+    "minor_details": [
+      "Upgrade workflow branch timing not updated (intentionally out of scope)"
+    ],
+    "informational_details": [
+      "generate-plan SKILL.md when_to_use has mildly redundant phrasing"
+    ]
+  },
+  "constitutional_compliance": {
+    "article_v": "compliant",
+    "article_vi": "compliant",
+    "article_vii": "compliant",
+    "article_viii": "compliant",
+    "article_ix": "compliant"
+  },
+  "file_sync": {
+    "orchestrator": "in_sync",
+    "isdlc_md": "in_sync",
+    "generate_plan": "in_sync"
+  },
+  "artifacts_produced": [
+    "code-review-report.md",
+    "quality-metrics.md",
+    "technical-debt.md",
+    "qa-sign-off.md",
+    "gate-08-code-review-BUG-0014.json"
+  ]
+}

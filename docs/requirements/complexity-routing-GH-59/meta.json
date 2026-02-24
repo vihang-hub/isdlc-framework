@@ -1,0 +1,25 @@
+{
+  "source": "github",
+  "source_id": "GH-59",
+  "slug": "complexity-routing-GH-59",
+  "created_at": "2026-02-19T22:10:00Z",
+  "analysis_status": "analyzed",
+  "phases_completed": ["00-quick-scan", "01-requirements", "02-impact-analysis", "03-architecture", "04-design"],
+  "codebase_hash": "0f5fde6",
+  "quick_scan": {
+    "completed_at": "2026-02-19T22:34:00Z",
+    "estimated_scope": "LARGE",
+    "estimated_affected_files": 28,
+    "confidence": "medium",
+    "recommended_tier": "standard",
+    "keywords_found": 14,
+    "key_modules": [
+      "quick-scan-agent",
+      "sdlc-orchestrator",
+      "three-verb-utils",
+      "meta.json schema",
+      "state.json validation",
+      "trivial-tier-execution"
+    ]
+  }
+}

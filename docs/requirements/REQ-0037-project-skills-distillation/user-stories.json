@@ -1,0 +1,77 @@
+[
+  {
+    "id": "US-001",
+    "title": "Agent receives distilled project knowledge every session",
+    "story": "As an iSDLC agent, I want distilled project architecture, conventions, domain, and test landscape injected into my context at session start, so that I can make informed decisions without re-discovering the same information.",
+    "acceptance_criteria": [
+      "AC-002-01: Four skill files produced on successful full discovery",
+      "AC-002-02: Skills written to .claude/skills/external/",
+      "AC-005-01: rebuildSessionCache() called after distillation",
+      "AC-005-02: Cache rebuild occurs after manifest write"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-002", "FR-005"]
+  },
+  {
+    "id": "US-002",
+    "title": "Developer re-runs discovery without losing manual skills",
+    "story": "As a developer, I want re-running discovery to update only discover-sourced project skills while leaving my manually added skills untouched, so that I don't lose custom skills I've configured.",
+    "acceptance_criteria": [
+      "AC-003-01: Discover-sourced entries for ran phases removed before re-distillation",
+      "AC-003-03: Non-discover source skills never modified or deleted",
+      "AC-003-04: Only successfully distilled skills present after re-run"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-003", "FR-004"]
+  },
+  {
+    "id": "US-003",
+    "title": "Incremental discovery preserves skills for skipped phases",
+    "story": "As a developer running incremental re-discovery, I want skills tied to skipped phases to remain intact, so that I don't lose valid knowledge just because I chose a lighter re-discovery mode.",
+    "acceptance_criteria": [
+      "AC-001-03: Distillation runs for each source phase that executed",
+      "AC-001-05: Skipped source phases leave their skills intact",
+      "AC-003-02: Skipped phase skills remain in manifest and on disk"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-001", "FR-003"]
+  },
+  {
+    "id": "US-004",
+    "title": "Partial discovery failure still produces available skills",
+    "story": "As a developer, I want the distillation step to produce whatever skills it can even when some source artifacts are missing, so that a single sub-agent failure doesn't wipe out all project skills.",
+    "acceptance_criteria": [
+      "AC-006-01: Unreadable manifest treated as empty",
+      "AC-006-02: Missing source artifact causes skip with warning",
+      "AC-006-03: Failed skill write doesn't block remaining skills",
+      "AC-006-06: No distillation failure blocks discovery workflow"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-006"]
+  },
+  {
+    "id": "US-005",
+    "title": "Context budget reduced by removing raw report injection",
+    "story": "As an iSDLC agent, I want the raw discovery reports removed from the session cache and replaced by distilled project skills, so that my context budget is used more efficiently with higher-quality, structured information.",
+    "acceptance_criteria": [
+      "AC-007-01: Section 9 removed from rebuildSessionCache()",
+      "AC-007-02: Raw reports no longer injected into session cache",
+      "AC-007-03: Section 7 serves as sole delivery mechanism for discovery knowledge"
+    ],
+    "priority": "Should Have",
+    "traces": ["FR-007"]
+  },
+  {
+    "id": "US-006",
+    "title": "Skills follow standard format with provenance",
+    "story": "As an agent consuming project skills, I want each skill to follow the standard markdown format with YAML frontmatter and include provenance information, so that I know the source and freshness of the knowledge.",
+    "acceptance_criteria": [
+      "AC-002-03: Standard .md format with YAML frontmatter",
+      "AC-002-04: Structured distilled content, not verbatim copies",
+      "AC-002-05: Provenance section with source artifacts and timestamp",
+      "AC-002-06: Each skill under 5,000 characters"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-002", "FR-008"]
+  }
+]

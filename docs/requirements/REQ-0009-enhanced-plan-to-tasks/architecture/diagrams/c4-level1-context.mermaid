@@ -1,0 +1,50 @@
+%% C4 Level 1: System Context Diagram
+%% Enhanced Plan-to-Tasks Pipeline
+%% Traces: FR-01 through FR-08
+
+graph TB
+    subgraph External
+        HumanDev["Human Developer<br/>(initiates workflows,<br/>reviews plans,<br/>passes --mechanical flag)"]
+    end
+
+    subgraph iSDLC["iSDLC Framework"]
+        Orch["Orchestrator<br/>(Agent 00)<br/>---<br/>Plan Generation (3b)<br/>Task Refinement (3c) [NEW]<br/>Phase Delegation (3d)"]
+
+        PhaseLoop["Phase-Loop Controller<br/>(isdlc.md)<br/>---<br/>Refinement trigger check [NEW]"]
+
+        ORCH012["ORCH-012 generate-plan<br/>(SKILL.md)<br/>---<br/>Enhanced format output [NEW]<br/>Traceability tags [NEW]<br/>Dependency annotations [NEW]"]
+
+        Agent05["Software Developer<br/>(Agent 05)<br/>---<br/>Standard mode (existing)<br/>Mechanical mode [NEW]"]
+
+        PlanHook["plan-surfacer.cjs<br/>(Hook)<br/>---<br/>Existence check (existing)<br/>Format validation [NEW]"]
+
+        Agents["Phase Agents 01-14<br/>(14 agents)<br/>---<br/>PLAN INTEGRATION<br/>PROTOCOL v2"]
+    end
+
+    subgraph Data["Data Layer"]
+        TasksMD["tasks.md (v2.0)<br/>---<br/>Checkboxes + annotations<br/>Dependency Graph section<br/>Traceability Matrix"]
+
+        ReqSpec["requirements-spec.md<br/>---<br/>REQ-NNN, AC-NNx IDs"]
+
+        DesignArtifacts["Design Artifacts<br/>---<br/>interface-spec.md<br/>module-designs/<br/>design-specification.md"]
+
+        StateJSON["state.json<br/>---<br/>active_workflow<br/>mechanical_mode flag"]
+
+        WorkflowsJSON["workflows.json<br/>---<br/>mechanical_mode option"]
+    end
+
+    HumanDev -->|"/isdlc feature [--mechanical]"| PhaseLoop
+    PhaseLoop -->|"delegates"| Orch
+    PhaseLoop -->|"delegates Phase 06"| Agent05
+    Orch -->|"invokes (3b)"| ORCH012
+    Orch -->|"invokes (3c)"| TasksMD
+    ORCH012 -->|"reads"| ReqSpec
+    ORCH012 -->|"writes"| TasksMD
+    Orch -->|"reads (3c)"| DesignArtifacts
+    Agent05 -->|"reads/writes"| TasksMD
+    Agent05 -->|"reads"| StateJSON
+    PlanHook -->|"reads"| TasksMD
+    PlanHook -->|"reads"| StateJSON
+    Agents -->|"read/write checkboxes"| TasksMD
+    PhaseLoop -->|"reads/writes"| StateJSON
+    Orch -->|"reads"| WorkflowsJSON

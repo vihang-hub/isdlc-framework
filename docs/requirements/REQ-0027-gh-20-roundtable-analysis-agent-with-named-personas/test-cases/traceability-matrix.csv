@@ -1,0 +1,78 @@
+Requirement,AC,Test Case,Test Type,Priority,Test File,Coverage
+FR-001,AC-001-01,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-001,AC-001-02,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-001,AC-001-03,TC-C01..C06,Unit,P0,test-step-file-validator.test.cjs,Automated
+FR-001,AC-001-04,TC-B01,Unit,P0,test-step-file-validator.test.cjs,Automated
+FR-002,AC-002-01,TC-G01,Manual Review,P1,e2e-tests.md,Manual
+FR-002,AC-002-02,TC-G02,Manual Review,P1,e2e-tests.md,Manual
+FR-002,AC-002-03,TC-G03,Manual Review,P1,e2e-tests.md,Manual
+FR-002,AC-002-04,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-002,AC-002-05,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-003,AC-003-01,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-003,AC-003-02,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-003,AC-003-03,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-003,AC-003-04,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-003,AC-003-05,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-003,AC-003-06,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-004,AC-004-01,TC-C01..C05,Unit,P0,test-step-file-validator.test.cjs,Automated
+FR-004,AC-004-02,TC-B01 TC-C06,Unit,P0,test-step-file-validator.test.cjs,Automated
+FR-004,AC-004-03,TC-B23 TC-C10,Unit,P1,test-step-file-validator.test.cjs,Automated
+FR-004,AC-004-04,TC-C07..C09,Unit,P1,test-step-file-validator.test.cjs,Automated
+FR-004,AC-004-05,TC-F01,E2E Manual,P1,e2e-tests.md,Manual
+FR-004,AC-004-06,TC-F02,E2E Manual,P1,e2e-tests.md,Manual
+FR-005,AC-005-01,TC-A14 TC-D01,Unit+Integration,P0,test-three-verb-utils-steps.test.cjs,Automated
+FR-005,AC-005-02,TC-D01 TC-D02,Integration,P0,test-three-verb-utils-steps.test.cjs,Automated
+FR-005,AC-005-03,TC-D02,Integration,P0,test-three-verb-utils-steps.test.cjs,Automated
+FR-005,AC-005-04,TC-A01 TC-A11,Unit,P0,test-three-verb-utils-steps.test.cjs,Automated
+FR-005,AC-005-05,TC-A14 TC-A18 TC-A19,Unit,P0,test-three-verb-utils-steps.test.cjs,Automated
+FR-006,AC-006-01,TC-F01,E2E Manual,P1,e2e-tests.md,Manual
+FR-006,AC-006-02,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-006,AC-006-03,TC-F02,E2E Manual,P1,e2e-tests.md,Manual
+FR-006,AC-006-04,TC-F01,E2E Manual,P1,e2e-tests.md,Manual
+FR-006,AC-006-05,TC-F01,E2E Manual,P1,e2e-tests.md,Manual
+FR-006,AC-006-06,TC-A02 TC-A04 TC-A15 TC-D03,Unit+Integration,P0,test-three-verb-utils-steps.test.cjs,Automated
+FR-006,AC-006-07,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-007,AC-007-01,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-007,AC-007-02,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-007,AC-007-03,TC-F03,E2E Manual,P2,e2e-tests.md,Manual
+FR-007,AC-007-04,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-007,AC-007-05,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-007,AC-007-06,TC-F04,E2E Manual,P2,e2e-tests.md,Manual
+FR-008,AC-008-01,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-008,AC-008-02,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-008,AC-008-03,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-008,AC-008-04,TC-E01 TC-G01..G03,E2E+Manual Review,P0,e2e-tests.md,Manual
+FR-009,AC-009-01,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-009,AC-009-02,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-009,AC-009-03,TC-D04 TC-D05,Integration,P0,test-three-verb-utils-steps.test.cjs,Automated
+FR-009,AC-009-04,TC-E03 TC-A12,E2E+Unit,P0,e2e-tests.md + test-three-verb-utils-steps.test.cjs,Mixed
+FR-010,AC-010-01,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-010,AC-010-02,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-010,AC-010-03,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-010,AC-010-04,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-010,AC-010-05,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-010,AC-010-06,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-011,AC-011-01,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+FR-011,AC-011-02,TC-E02,E2E Manual,P0,e2e-tests.md,Manual
+FR-011,AC-011-03,TC-E02,E2E Manual,P0,e2e-tests.md,Manual
+FR-012,AC-012-01,TC-B01..B18 TC-C06,Unit,P0,test-step-file-validator.test.cjs,Automated
+FR-012,AC-012-02,TC-B19..B22,Unit,P2,test-step-file-validator.test.cjs,Automated
+FR-012,AC-012-03,TC-B23 TC-B24 TC-C10,Unit,P1,test-step-file-validator.test.cjs,Automated
+FR-012,AC-012-04,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+NFR-001,AC-NFR-001-01,TC-E01,E2E Manual (timed),P1,e2e-tests.md,Manual
+NFR-001,AC-NFR-001-02,TC-E01,E2E Manual (timed),P1,e2e-tests.md,Manual
+NFR-002,AC-NFR-002-01,TC-G02,Manual Review,P1,e2e-tests.md,Manual
+NFR-002,AC-NFR-002-02,TC-G01..G03,Manual Review,P1,e2e-tests.md,Manual
+NFR-003,AC-NFR-003-01,TC-E02 TC-D02,E2E+Integration,P0,e2e-tests.md + test-three-verb-utils-steps.test.cjs,Mixed
+NFR-003,AC-NFR-003-02,TC-E02,E2E Manual,P0,e2e-tests.md,Manual
+NFR-003,AC-NFR-003-03,TC-E02,E2E Manual,P0,e2e-tests.md,Manual
+NFR-004,AC-NFR-004-01,TC-C06 TC-B01,Unit,P1,test-step-file-validator.test.cjs,Automated
+NFR-004,AC-NFR-004-02,TC-B08..B10,Unit,P0,test-step-file-validator.test.cjs,Automated
+NFR-004,AC-NFR-004-03,TC-E01,E2E Manual,P0,e2e-tests.md,Manual
+NFR-005,AC-NFR-005-01,TC-E03,E2E Manual,P0,e2e-tests.md,Manual
+NFR-005,AC-NFR-005-02,TC-A17 TC-D04 TC-D05,Unit+Integration,P0,test-three-verb-utils-steps.test.cjs,Automated
+NFR-005,AC-NFR-005-03,TC-A11 TC-A20 TC-D05,Unit+Integration,P0,test-three-verb-utils-steps.test.cjs,Automated
+NFR-005,AC-NFR-005-04,TC-A16,Unit,P0,test-three-verb-utils-steps.test.cjs,Automated
+NFR-006,AC-NFR-006-01,TC-G01,Manual Review,P1,e2e-tests.md,Manual
+NFR-006,AC-NFR-006-02,TC-G01..G03,Manual Review,P1,e2e-tests.md,Manual
+NFR-006,AC-NFR-006-03,TC-F01,E2E Manual,P1,e2e-tests.md,Manual

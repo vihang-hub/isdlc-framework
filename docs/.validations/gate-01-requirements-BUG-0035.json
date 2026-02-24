@@ -1,0 +1,65 @@
+{
+  "gate": "GATE-01",
+  "scope": "bug-report",
+  "phase": "01-requirements",
+  "artifact_folder": "BUG-0035-GH-81-82-83",
+  "bug_id": "BUG-0035",
+  "external_ids": ["GH-81", "GH-82", "GH-83"],
+  "external_urls": [
+    "https://github.com/vihangshah/isdlc/issues/81",
+    "https://github.com/vihangshah/isdlc/issues/82",
+    "https://github.com/vihangshah/isdlc/issues/83"
+  ],
+  "validated_at": "2026-02-23T18:25:00Z",
+  "status": "PASSED",
+  "checklist": {
+    "sufficiency_check": {
+      "expected_behavior_present": true,
+      "actual_behavior_present": true,
+      "reproduction_steps_present": true,
+      "follow_ups_needed": 0,
+      "incompleteness_warning": false
+    },
+    "bug_report": {
+      "bug_report_md_exists": true,
+      "has_expected_vs_actual": true,
+      "has_reproduction_steps": true,
+      "bug_id_assigned": "BUG-0035",
+      "external_link_captured": true
+    },
+    "requirements_spec": {
+      "requirements_spec_md_exists": true,
+      "has_fix_requirements": true,
+      "fix_requirement_count": 3,
+      "has_acceptance_criteria": true,
+      "acceptance_criteria_count": 15,
+      "given_when_then_format": true,
+      "has_constraints": true,
+      "has_assumptions": true
+    },
+    "stakeholder_approval": {
+      "user_selected_save": true
+    }
+  },
+  "constitutional_validation": {
+    "iterations": 1,
+    "max_iterations": 5,
+    "articles_checked": ["IV", "V", "VII", "IX"],
+    "violations_found": 0,
+    "status": "compliant"
+  },
+  "artifacts": {
+    "bug-report.md": "docs/requirements/BUG-0035-GH-81-82-83/bug-report.md",
+    "requirements-spec.md": "docs/requirements/BUG-0035-GH-81-82-83/requirements-spec.md"
+  },
+  "summary": {
+    "issues_covered": 3,
+    "fix_requirements": 3,
+    "constraints": 5,
+    "assumptions": 3,
+    "acceptance_criteria": 15,
+    "severity": "High",
+    "debate_rounds_used": 0,
+    "fan_out_chunks": 0
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "stories": [
+    {
+      "id": "US-001",
+      "epic": "Blast Radius Validation",
+      "persona": "Framework Developer",
+      "goal": "have the framework automatically validate that my implementation covers all files identified in the blast radius",
+      "benefit": "I cannot accidentally skip affected files and pass the implementation gate",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-US001-01",
+          "given": "impact-analysis.md lists 10 affected files",
+          "when": "I modified 8 and deferred 2 with rationale in blast-radius-coverage.md",
+          "then": "GATE-06 passes and the blast radius validator allows advancement"
+        },
+        {
+          "id": "AC-US001-02",
+          "given": "impact-analysis.md lists 10 affected files",
+          "when": "I modified 7 and left 3 unaddressed (no deferral rationale)",
+          "then": "GATE-06 blocks with a message listing the 3 unaddressed files and instructions to either modify them or add deferral rationale"
+        },
+        {
+          "id": "AC-US001-03",
+          "given": "no impact-analysis.md exists for this workflow",
+          "when": "I attempt to pass GATE-06",
+          "then": "the blast radius check is skipped entirely and does not block advancement"
+        }
+      ],
+      "linked_requirements": ["REQ-001", "REQ-002", "REQ-005"]
+    },
+    {
+      "id": "US-002",
+      "epic": "Blast Radius Validation",
+      "persona": "Framework Developer",
+      "goal": "have the implementation agent auto-generate a blast-radius-coverage.md checklist after I finish implementing",
+      "benefit": "I have a clear record of which affected files I covered and which I deferred with rationale",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-US002-01",
+          "given": "impact-analysis.md exists with affected files",
+          "when": "the software-developer agent completes implementation",
+          "then": "blast-radius-coverage.md is generated in the artifact folder with one row per affected file showing coverage status"
+        },
+        {
+          "id": "AC-US002-02",
+          "given": "a file was intentionally deferred",
+          "when": "I review blast-radius-coverage.md",
+          "then": "I see the deferral rationale in the Notes column explaining why the file was not modified"
+        },
+        {
+          "id": "AC-US002-03",
+          "given": "all affected files were modified in the implementation",
+          "when": "I review the checklist summary header",
+          "then": "it shows 100% coverage with all files marked as covered"
+        }
+      ],
+      "linked_requirements": ["REQ-003", "REQ-004"]
+    },
+    {
+      "id": "US-003",
+      "epic": "Blast Radius Validation",
+      "persona": "Framework Developer",
+      "goal": "have the implementation agent read and acknowledge the blast radius before starting work",
+      "benefit": "I have visibility into which files are expected to be modified and can plan my implementation accordingly",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-US003-01",
+          "given": "impact-analysis.md lists affected files for the current workflow",
+          "when": "the software-developer agent starts Phase 06",
+          "then": "it displays a Blast Radius Acknowledgement section in its implementation plan listing all affected files with expected change types"
+        },
+        {
+          "id": "AC-US003-02",
+          "given": "impact-analysis.md does not exist for the current workflow",
+          "when": "the software-developer agent starts Phase 06",
+          "then": "it proceeds normally without a blast radius acknowledgement section"
+        }
+      ],
+      "linked_requirements": ["REQ-004"]
+    },
+    {
+      "id": "US-004",
+      "epic": "Blast Radius Validation",
+      "persona": "Framework Developer",
+      "goal": "have the blast radius validation degrade gracefully when impact analysis artifacts are missing or malformed",
+      "benefit": "the hook never blocks my workflow due to its own internal errors",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-US004-01",
+          "given": "impact-analysis.md is malformed and cannot be parsed as valid markdown",
+          "when": "GATE-06 validation runs the blast radius hook",
+          "then": "the blast radius check is skipped with a warning logged to stderr and the hook returns allow"
+        },
+        {
+          "id": "AC-US004-02",
+          "given": "state.json has no active_workflow field",
+          "when": "the blast radius hook runs",
+          "then": "it exits silently without blocking, returning allow with no output"
+        },
+        {
+          "id": "AC-US004-03",
+          "given": "git diff command fails (e.g., not a git repository or branch does not exist)",
+          "when": "GATE-06 validation runs the blast radius hook",
+          "then": "the blast radius check is skipped with a warning logged to stderr and the hook returns allow"
+        }
+      ],
+      "linked_requirements": ["REQ-002", "REQ-007"]
+    }
+  ]
+}

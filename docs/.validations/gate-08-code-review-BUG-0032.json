@@ -1,0 +1,65 @@
+{
+  "gate": "GATE-08",
+  "phase": "08-code-review",
+  "workflow_id": "BUG-0032",
+  "artifact_folder": "BUG-0032-phase-a-cannot-pull-jira-ticket-content",
+  "status": "PASSED",
+  "timestamp": "2026-02-23T10:30:00.000Z",
+  "scope_mode": "FULL_SCOPE",
+  "checklist": {
+    "build_integrity_verified": true,
+    "code_review_completed": true,
+    "no_critical_issues_open": true,
+    "static_analysis_passing": true,
+    "code_coverage_meets_thresholds": true,
+    "coding_standards_followed": true,
+    "performance_acceptable": true,
+    "security_review_complete": true,
+    "qa_sign_off_obtained": true
+  },
+  "findings": {
+    "critical": 0,
+    "major": 0,
+    "minor": 0,
+    "informational": 2
+  },
+  "test_results": {
+    "bug_0032_tests": {
+      "total": 26,
+      "pass": 26,
+      "fail": 0
+    },
+    "full_suite": {
+      "total": 3134,
+      "pass": 3123,
+      "fail": 11,
+      "pre_existing_failures": 11,
+      "new_regressions": 0
+    }
+  },
+  "traceability": {
+    "acceptance_criteria_total": 14,
+    "acceptance_criteria_implemented": 14,
+    "acceptance_criteria_tested": 14,
+    "orphan_code": 0,
+    "orphan_requirements": 0
+  },
+  "constitutional_compliance": {
+    "article_v_simplicity": "COMPLIANT",
+    "article_vi_code_review": "COMPLIANT",
+    "article_vii_traceability": "COMPLIANT",
+    "article_viii_documentation": "COMPLIANT",
+    "article_ix_gate_integrity": "COMPLIANT"
+  },
+  "phase_timing": {
+    "debate_rounds_used": 0,
+    "fan_out_chunks": 0
+  },
+  "artifacts": [
+    "docs/quality/BUG-0032-phase-a-cannot-pull-jira-ticket-content/code-review-report.md",
+    "docs/quality/BUG-0032-phase-a-cannot-pull-jira-ticket-content/quality-metrics.md",
+    "docs/quality/BUG-0032-phase-a-cannot-pull-jira-ticket-content/static-analysis-report.md",
+    "docs/quality/BUG-0032-phase-a-cannot-pull-jira-ticket-content/technical-debt.md",
+    "docs/quality/BUG-0032-phase-a-cannot-pull-jira-ticket-content/qa-sign-off.md"
+  ]
+}

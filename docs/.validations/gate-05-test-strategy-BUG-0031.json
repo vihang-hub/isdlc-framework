@@ -1,0 +1,76 @@
+{
+  "gate": "GATE-05",
+  "phase": "05-test-strategy",
+  "workflow": "fix",
+  "artifact_folder": "BUG-0031-GH-65-gate-blocker-blocks-analyze-and-add",
+  "validated_at": "2026-02-22T12:00:00Z",
+  "result": "PASS",
+  "checklist": {
+    "test_strategy_covers_all_types": {
+      "status": "pass",
+      "notes": "Unit tests: 14 new test cases across 2 existing test files. Integration tests: not required (hooks tested in isolation via child processes; dispatcher integration already covered). E2E: not applicable (framework-level user interaction). Security: not applicable (no new attack surface). Performance: not applicable (negligible overhead)."
+    },
+    "test_cases_exist_for_all_requirements": {
+      "status": "pass",
+      "notes": "14 test cases covering all 4 FRs (FR-001: 7 TCs, FR-002: 7 TCs, FR-003: 6 TCs, FR-004: 4 TCs) and all 16 ACs. Every acceptance criterion from requirements-spec.md has at least one dedicated test case."
+    },
+    "traceability_matrix_complete": {
+      "status": "pass",
+      "notes": "Traceability matrix has 16 rows mapping every AC to specific test case IDs. All 4 FRs and all 16 ACs are covered. 100% requirement coverage."
+    },
+    "coverage_targets_defined": {
+      "status": "pass",
+      "notes": "100% AC coverage, 100% branch coverage of new code, >= 569 total tests (555 baseline + 14 new). Article II baseline preserved."
+    },
+    "test_data_strategy_documented": {
+      "status": "pass",
+      "notes": "Test data plan defines 8 input patterns (analyze, add, flagged analyze, advance, gate-check, build with gate, empty args) and 3 state patterns (gate-blocker active workflow, TEST_CORRIDOR, CONST_CORRIDOR). All data is inline -- no external dependencies."
+    },
+    "critical_paths_identified": {
+      "status": "pass",
+      "notes": "3 critical paths: (1) exempt action detection (analyze/add pass through), (2) non-exempt regression (advance/gate-check still blocked), (3) build verb NOT exempt (accidental over-exemption prevention)."
+    }
+  },
+  "constitutional_compliance": {
+    "article_II": {
+      "status": "compliant",
+      "notes": "14 test cases designed in Phase 05 before implementation in Phase 06. All tests specified with inputs, expected outputs, and rationale. Tests will fail pre-fix (RED phase) because EXEMPT_ACTIONS does not yet exist in the hook code."
+    },
+    "article_VII": {
+      "status": "compliant",
+      "notes": "Traceability matrix complete: 4 FRs + 16 ACs -> 14 test cases via 16 traceability mappings. 100% requirement coverage verified by cross-checking every AC against test case IDs. No orphan tests."
+    },
+    "article_IX": {
+      "status": "compliant",
+      "notes": "All GATE-05 checklist items pass. Required artifacts: test-strategy.md (includes test cases, traceability matrix, test data plan, coverage targets, risk assessment). Single consolidated document appropriate for targeted bug fix."
+    },
+    "article_XI": {
+      "status": "not_applicable",
+      "notes": "Integration testing not required -- hooks are tested as isolated child processes via runHook(). The pre-skill-dispatcher integration (hook chaining) is already tested by existing test suites. No new component interactions introduced."
+    }
+  },
+  "artifacts": [
+    "docs/requirements/BUG-0031-GH-65-gate-blocker-blocks-analyze-and-add/test-strategy.md"
+  ],
+  "metrics": {
+    "total_new_test_cases": 14,
+    "test_files_to_modify": [
+      "src/claude/hooks/tests/test-gate-blocker-extended.test.cjs",
+      "src/claude/hooks/tests/test-iteration-corridor.test.cjs"
+    ],
+    "ac_coverage_percent": 100,
+    "fr_coverage_percent": 100,
+    "priority_distribution": {
+      "P0": 10,
+      "P1": 4
+    },
+    "test_types": {
+      "positive_exempt": 8,
+      "negative_regression": 6
+    }
+  },
+  "phase_timing_report": {
+    "debate_rounds_used": 0,
+    "fan_out_chunks": 0
+  }
+}

@@ -1,0 +1,233 @@
+{
+  "gate": "GATE-03",
+  "phase": "03-architecture",
+  "feature": "REQ-0025",
+  "feature_name": "Performance Budget and Guardrail System",
+  "validated_at": "2026-02-19T06:00:00Z",
+  "status": "PASS",
+  "checklist": {
+    "architecture_documentation": {
+      "system_context_diagram_c4_l1": {
+        "status": "PASS",
+        "artifact": "docs/requirements/REQ-0022-performance-budget-guardrails/architecture-overview.md",
+        "details": "Section 3.1 System Context (C4 Level 1) - shows Developer, iSDLC Framework, state.json, config"
+      },
+      "container_diagram_c4_l2": {
+        "status": "PASS",
+        "artifact": "docs/requirements/REQ-0022-performance-budget-guardrails/architecture-overview.md",
+        "details": "Section 3.2 Container Diagram (C4 Level 2) - shows all internal components and data flows"
+      },
+      "architecture_pattern_documented": {
+        "status": "PASS",
+        "artifact": "docs/requirements/REQ-0022-performance-budget-guardrails/architecture-overview.md",
+        "details": "Section 1: Extend Existing Modular Monolith - no new patterns introduced (ADR-0017)"
+      },
+      "major_components_identified": {
+        "status": "PASS",
+        "details": "8 components: performance-budget.cjs (NEW), isdlc.md STEP 3c-prime/3d/3e/pre-STEP-4, common.cjs extension, workflow-completion-enforcer extension, 5 dispatchers, workflows.json config"
+      },
+      "component_responsibilities_defined": {
+        "status": "PASS",
+        "artifact": "docs/requirements/REQ-0022-performance-budget-guardrails/architecture-overview.md",
+        "details": "Section 3.3 Module Responsibilities table maps each component to FR coverage"
+      }
+    },
+    "technology_stack": {
+      "frontend_selected": {
+        "status": "N/A",
+        "details": "CLI tool, no frontend"
+      },
+      "backend_selected": {
+        "status": "PASS",
+        "details": "CommonJS module (performance-budget.cjs) following gate-requirements-injector.cjs pattern"
+      },
+      "database_selected": {
+        "status": "PASS",
+        "details": "JSON on filesystem (state.json, workflows.json) - extends existing data store"
+      },
+      "authentication_selected": {
+        "status": "N/A",
+        "details": "Local CLI tool, no authentication"
+      },
+      "cloud_hosting_selected": {
+        "status": "N/A",
+        "details": "Local CLI tool, no cloud hosting"
+      },
+      "evaluation_criteria_documented": {
+        "status": "PASS",
+        "artifact": "docs/common/tech-stack-decision.md",
+        "details": "Existing tech stack decision applies - this feature extends it, does not change it"
+      }
+    },
+    "database_design": {
+      "er_diagram_exists": {
+        "status": "PASS",
+        "artifact": "docs/requirements/REQ-0022-performance-budget-guardrails/database-design.md",
+        "details": "Section 2: Mermaid ER diagram showing TIMING, BUDGET_STATUS, REGRESSION_CHECK, PERFORMANCE_BUDGETS entities"
+      },
+      "schema_documented": {
+        "status": "PASS",
+        "artifact": "docs/requirements/REQ-0022-performance-budget-guardrails/database-design.md",
+        "details": "Section 3: Full schema with field types, defaults, sizes, backward compatibility notes"
+      },
+      "data_relationships_defined": {
+        "status": "PASS",
+        "details": "STATE_JSON -> PHASES -> TIMING; ACTIVE_WORKFLOW -> BUDGET_STATUS; WORKFLOW_HISTORY -> REGRESSION_CHECK"
+      },
+      "migration_strategy_documented": {
+        "status": "PASS",
+        "artifact": "docs/requirements/REQ-0022-performance-budget-guardrails/database-design.md",
+        "details": "Section 6: No migration needed - all changes are additive with null-check defaults"
+      },
+      "backup_strategy_defined": {
+        "status": "PASS",
+        "artifact": "docs/requirements/REQ-0022-performance-budget-guardrails/database-design.md",
+        "details": "Section 8: state.json is git-ignored and transient; workflows.json is version-controlled"
+      }
+    },
+    "security_architecture": {
+      "authentication_flow_designed": {
+        "status": "N/A",
+        "details": "Local CLI tool, no authentication"
+      },
+      "authorization_model_defined": {
+        "status": "N/A",
+        "details": "Single-user CLI tool, no authorization"
+      },
+      "encryption_strategy_documented": {
+        "status": "N/A",
+        "details": "No sensitive data - timing data is operational metadata, not PII"
+      },
+      "secret_management_defined": {
+        "status": "N/A",
+        "details": "No secrets involved in performance budget"
+      },
+      "security_reviewed": {
+        "status": "PASS",
+        "artifact": "docs/common/security-architecture.md",
+        "details": "No new security surfaces. Timing data is operational metadata. Fail-open design prevents denial-of-service from budget errors."
+      }
+    },
+    "infrastructure": {
+      "environment_strategy_defined": {
+        "status": "PASS",
+        "artifact": "docs/common/infrastructure-design.md",
+        "details": "Existing environment strategy applies - feature is local-only with no infrastructure changes"
+      },
+      "deployment_architecture_documented": {
+        "status": "PASS",
+        "details": "New files slot into existing hooks/lib/ structure. No new directories or services."
+      },
+      "scaling_strategy_documented": {
+        "status": "PASS",
+        "details": "NFR-003 footprint budget: max 2KB per workflow. 50-entry workflow_history limit with pruning."
+      },
+      "cost_estimate_provided": {
+        "status": "PASS",
+        "artifact": "docs/common/cost-estimate.md",
+        "details": "No additional infrastructure cost - entirely local computation"
+      }
+    },
+    "architecture_decision_records": {
+      "adr_architecture_pattern": {
+        "status": "PASS",
+        "artifact": "docs/architecture/adrs/ADR-0017-performance-budget-new-cjs-module.md",
+        "details": "ADR-0017: New CJS module vs extending common.cjs (Accepted)"
+      },
+      "adr_database_selection": {
+        "status": "PASS",
+        "details": "Extends existing state.json/workflows.json - no new data store needed"
+      },
+      "adr_authentication_approach": {
+        "status": "N/A",
+        "details": "No authentication needed for local CLI tool"
+      },
+      "all_adrs_have_status": {
+        "status": "PASS",
+        "details": "5 ADRs all Accepted: ADR-0017 (new module), ADR-0018 (dashboard function), ADR-0019 (agent timing report), ADR-0020 (dispatcher timing API), ADR-0021 (regression tracking split)"
+      }
+    },
+    "nfr_coverage": {
+      "performance_requirements": {
+        "status": "PASS",
+        "details": "NFR-001: All functions fail-open, budget checks never block workflow. NFR-002: ISO-8601 timestamps, Math.round for minutes."
+      },
+      "scalability_requirements": {
+        "status": "PASS",
+        "details": "NFR-003: Footprint budget verified - 140B/phase timing, 70B budget status, 180B regression = ~1370B total per workflow, well under 2KB limit."
+      },
+      "availability_requirements": {
+        "status": "PASS",
+        "details": "NFR-001: Every function wrapped in try/catch with safe defaults. Table in Section 8 maps all error scenarios to fail-open handling."
+      },
+      "security_requirements": {
+        "status": "PASS",
+        "details": "Article III: No security-sensitive data. No new auth surfaces. Timing data is operational metadata, not PII."
+      }
+    },
+    "constitutional_compliance": {
+      "article_iii_security": {
+        "status": "PASS",
+        "details": "No security-sensitive data introduced. No new authentication or authorization surfaces."
+      },
+      "article_iv_explicit": {
+        "status": "PASS",
+        "details": "All 5 ADRs documented with rationale. No NEEDS CLARIFICATION markers. Agent reporting convention explicitly defined."
+      },
+      "article_v_simplicity": {
+        "status": "PASS",
+        "details": "No new architectural patterns. Reuses existing hook/lib/dispatcher structure. Pure functions with fail-open wrappers."
+      },
+      "article_vii_traceability": {
+        "status": "PASS",
+        "details": "Traceability matrix in Section 13 maps every function, integration point, and data field to specific FR/AC."
+      },
+      "article_ix_quality_gate": {
+        "status": "PASS",
+        "details": "All required artifacts exist: architecture-overview.md, database-design.md, 5 ADRs, 2 sequence diagrams, gate validation."
+      },
+      "article_x_fail_safe": {
+        "status": "PASS",
+        "details": "Budget defaults to on_track. Missing config falls back to hardcoded defaults. Missing agent report defaults to 0. Regression skipped with insufficient data."
+      }
+    }
+  },
+  "artifacts_produced": [
+    "docs/requirements/REQ-0022-performance-budget-guardrails/architecture-overview.md",
+    "docs/requirements/REQ-0022-performance-budget-guardrails/database-design.md",
+    "docs/architecture/adrs/ADR-0017-performance-budget-new-cjs-module.md",
+    "docs/architecture/adrs/ADR-0018-dashboard-utility-function.md",
+    "docs/architecture/adrs/ADR-0019-agent-timing-report-convention.md",
+    "docs/architecture/adrs/ADR-0020-dispatcher-timing-api.md",
+    "docs/architecture/adrs/ADR-0021-regression-tracking-split.md",
+    "docs/architecture/diagrams/sequence-performance-budget-phase.mermaid",
+    "docs/architecture/diagrams/sequence-regression-tracking.mermaid"
+  ],
+  "artifacts_validated_from_prior_phase": [
+    "docs/requirements/REQ-0022-performance-budget-guardrails/requirements-spec.md",
+    "docs/requirements/REQ-0022-performance-budget-guardrails/nfr-matrix.md"
+  ],
+  "existing_architecture_reused": [
+    "docs/common/architecture-overview.md",
+    "docs/common/tech-stack-decision.md",
+    "docs/common/security-architecture.md",
+    "docs/common/infrastructure-design.md",
+    "docs/common/cost-estimate.md",
+    "docs/architecture/diagrams/c4-level1-context.mermaid",
+    "docs/architecture/diagrams/c4-level2-container.mermaid",
+    "docs/architecture/diagrams/deployment-diagram.mermaid",
+    "docs/architecture/diagrams/er-diagram.mermaid"
+  ],
+  "codebase_validation": {
+    "common_cjs_line_count": 3453,
+    "common_cjs_exports_count": "~86",
+    "collectPhaseSnapshots_line": 2291,
+    "dispatchers_count": 5,
+    "gate_requirements_injector_pattern_confirmed": true,
+    "workflow_completion_enforcer_integration_point_confirmed": true,
+    "isdlc_md_step_references_validated": true,
+    "workflows_json_no_performance_budgets_confirmed": true
+  },
+  "iteration_count": 1,
+  "constitutional_iterations": 1
+}

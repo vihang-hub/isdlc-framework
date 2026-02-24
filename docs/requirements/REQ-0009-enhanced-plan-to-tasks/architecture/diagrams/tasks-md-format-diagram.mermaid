@@ -1,0 +1,53 @@
+%% tasks.md v2.0 Format Structure Diagram
+%% Shows the anatomy of the enhanced format
+%% Traces: FR-06, AC-06a through AC-06g
+
+graph TB
+    subgraph Header["Document Header"]
+        H1["# Task Plan: feature REQ-NNNN-name"]
+        H2["Generated: ISO-8601"]
+        H3["Workflow: feature"]
+        H4["Format: v2.0"]
+        H5["Phases: N"]
+    end
+
+    subgraph HighLevel["High-Level Phase Sections (01-05, 07+)"]
+        P01["## Phase 01: Requirements -- COMPLETE"]
+        T01["- [X] T0001 Description | traces: FR-01"]
+        T02["- [X] T0002 Description | traces: FR-02"]
+    end
+
+    subgraph FileLevel["File-Level Phase Section (06) -- After Refinement"]
+        P06["## Phase 06: Implementation -- PENDING"]
+        T40["- [ ] T0040 Add traceability to ORCH-012 | traces: FR-02, AC-02a"]
+        T40a["  blocked_by: [T0039]"]
+        T40b["  blocks: [T0043]"]
+        T40c["  files: src/claude/skills/.../SKILL.md (MODIFY)"]
+        T41["- [ ] T0041 Implement enhanced format | traces: FR-06, AC-06a"]
+        T41a["  blocked_by: [T0039]"]
+        T41b["  files: src/claude/skills/.../SKILL.md (MODIFY)"]
+    end
+
+    subgraph DepGraph["## Dependency Graph"]
+        CP["### Critical Path<br/>T0039 -> T0040 -> T0043 -> T0047<br/>Length: 4"]
+        DT["### All Dependencies<br/>| Task | Blocked By | Blocks |<br/>| T0040 | T0039 | T0043 |"]
+    end
+
+    subgraph TraceMatrix["## Traceability Matrix"]
+        RC["### Requirement Coverage<br/>| FR-01 | 5 ACs | T0040, T0041 | 100% |"]
+        OT["### Orphan Tasks: None"]
+        UR["### Uncovered Requirements: None"]
+    end
+
+    subgraph Progress["## Progress Summary"]
+        PT["| Phase | Status | Tasks | Complete | Blocked |"]
+        PS["Progress: X / Y (Z%) | 0 blocked"]
+        TS["Traceability: 38/38 AC covered"]
+        DS["Dependencies: N edges, 0 cycles"]
+    end
+
+    Header --> HighLevel
+    HighLevel --> FileLevel
+    FileLevel --> DepGraph
+    DepGraph --> TraceMatrix
+    TraceMatrix --> Progress

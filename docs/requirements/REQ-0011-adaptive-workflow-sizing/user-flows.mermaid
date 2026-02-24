@@ -1,0 +1,116 @@
+%% User Flows -- REQ-0011: Adaptive Workflow Sizing
+%% Version: 1.0.0
+%% Phase: 04-design
+%% Traces to: FR-01, FR-03, FR-04
+
+%% ============================================================================
+%% Flow 1: Standard Sizing Flow (no flags)
+%% ============================================================================
+%% Trigger: Phase 02 (Impact Analysis) completes in a feature workflow
+%% Traces to: FR-01 (AC-01, AC-02, AC-03), FR-03 (AC-08, AC-09, AC-10, AC-11)
+
+flowchart TD
+    A[Phase 02 Impact Analysis completes] --> B{GATE-02 passes?}
+    B -->|No| Z1[Phase blocked -- escalation]
+    B -->|Yes| C[STEP 3e: Post-phase state update]
+    C --> D{phase_key = 02-impact-analysis<br>AND workflow_type = feature?}
+    D -->|No| E1[Skip to 3e-refine]
+    D -->|Yes| F{sizing already set<br>in state?}
+    F -->|Yes| E1
+    F -->|No| G{sizing.enabled in<br>workflows.json?}
+    G -->|No/Missing| H1[Write default standard record<br>Skip to 3e-refine]
+    G -->|Yes| I{flags.light = true?}
+
+    I -->|Yes| J[Call applySizingDecision<br>state, light, forced_by_flag: true]
+    J --> K[Display forced-light banner W-09]
+    K --> L[Update task list: mark skipped phases]
+    L --> M[Write state.json]
+    M --> E1
+
+    I -->|No| N[Read impact-analysis.md]
+    N --> O{File found?}
+    O -->|No| P[Default to standard<br>Display W-11 warning]
+    P --> M
+    O -->|Yes| Q[parseSizingFromImpactAnalysis content]
+    Q --> R{Returns null?}
+    R -->|Yes| P
+    R -->|No| S[Read thresholds from workflows.json]
+    S --> T[computeSizingRecommendation metrics, thresholds]
+    T --> U[Display recommendation banner<br>W-01, W-02, or W-03]
+    U --> V[Present menu W-04:<br>A Accept / O Override / S Show]
+
+    V --> W{User choice}
+    W -->|A Accept| X[Apply recommended intensity]
+    W -->|O Override| Y[Show intensity picker W-05]
+    W -->|S Show| AA[Display full analysis W-06]
+    AA --> V
+
+    Y --> AB{User picks}
+    AB -->|1 Light| AC[intensity = light]
+    AB -->|2 Standard| AD[intensity = standard]
+    AB -->|3 Epic| AE[intensity = epic]
+    AC --> AF[Display override confirmation W-12]
+    AD --> AF
+    AE --> AF
+    AF --> AG[Call applySizingDecision<br>with overridden: true]
+    AG --> AH[Display confirmation W-07 or W-08]
+    AH --> AI{effective_intensity = light?}
+    AI -->|Yes| L
+    AI -->|No| M
+
+    X --> AJ{intensity = epic?}
+    AJ -->|Yes| AK[Display epic deferral note<br>effective = standard]
+    AJ -->|No| AL[Apply directly]
+    AK --> AM[Call applySizingDecision]
+    AL --> AM
+    AM --> AH
+
+%% ============================================================================
+%% Flow 2: -light Flag Flow
+%% ============================================================================
+%% Trigger: User invokes /isdlc feature -light "description"
+%% Traces to: FR-04 (AC-12, AC-13, AC-14)
+
+flowchart TD
+    LA[User: /isdlc feature -light description] --> LB[Parse -light flag]
+    LB --> LC[Set flags.light = true]
+    LC --> LD[Pass to orchestrator init-and-phase-01]
+    LD --> LE[Orchestrator stores flags.light in<br>active_workflow.flags]
+    LE --> LF[Phase 00: Quick Scan executes]
+    LF --> LG[Phase 01: Requirements executes]
+    LG --> LH[Phase 02: Impact Analysis executes]
+    LH --> LI[STEP 3e-sizing triggers]
+    LI --> LJ{flags.light = true?}
+    LJ -->|Yes| LK[Skip IA parsing and menu]
+    LK --> LL[applySizingDecision state, light,<br>forced_by_flag: true]
+    LL --> LM[Display forced-light banner W-09]
+    LM --> LN[Mark skipped phase tasks as completed]
+    LN --> LO[Write state.json]
+    LO --> LP[Continue to Phase 05: Test Strategy]
+
+%% ============================================================================
+%% Flow 3: Epic Deferral Flow
+%% ============================================================================
+%% Trigger: computeSizingRecommendation returns epic
+%% Traces to: FR-02 (AC-06 -- future)
+
+flowchart TD
+    EA[computeSizingRecommendation<br>returns intensity: epic] --> EB[Display epic banner W-03]
+    EB --> EC[Menu: A Accept / O Override / S Show]
+    EC --> ED{User choice}
+    ED -->|A Accept| EE[applySizingDecision state, epic]
+    ED -->|O Override| EF[Override picker W-05]
+    EE --> EG[effective_intensity = standard<br>epic_deferred = true]
+    EG --> EH[Display epic deferral confirmation W-08]
+    EH --> EI[No phase modification<br>Full workflow proceeds]
+    EI --> EJ[Write state.json]
+    EJ --> EK[Continue to Phase 03: Architecture]
+    EF --> EL{Override to?}
+    EL -->|Light| EM[Apply light with overridden: true]
+    EL -->|Standard| EN[Apply standard with overridden: true]
+    EL -->|Epic| EO[Apply epic same as accept path]
+    EM --> EP[Phase modification + task update]
+    EN --> EQ[No phase modification]
+    EO --> EE
+    EP --> EJ
+    EQ --> EJ

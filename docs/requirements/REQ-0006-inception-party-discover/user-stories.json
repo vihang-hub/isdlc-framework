@@ -1,0 +1,87 @@
+{
+  "feature": "REQ-0006-inception-party-discover",
+  "version": "1.0.0",
+  "created": "2026-02-09",
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Multi-perspective discovery via parallel agents",
+      "as_a": "developer starting a new project",
+      "i_want": "multiple specialist perspectives during discovery",
+      "so_that": "I get a more thoroughly considered project plan than a single-agent sequential process would produce",
+      "priority": "P0",
+      "acceptance_criteria": ["AC-4", "AC-5", "AC-6", "AC-7", "AC-8", "AC-9", "AC-10", "AC-11", "AC-12", "AC-13", "AC-14", "AC-18", "AC-20"]
+    },
+    {
+      "id": "US-002",
+      "title": "Classic mode fallback",
+      "as_a": "developer who prefers speed over collaboration",
+      "i_want": "to select classic mode",
+      "so_that": "I get the familiar sequential discovery flow without the overhead of multi-agent coordination",
+      "priority": "P0",
+      "acceptance_criteria": ["AC-1", "AC-2", "AC-3", "AC-15"]
+    },
+    {
+      "id": "US-003",
+      "title": "Visibility into party activity",
+      "as_a": "developer in the inception party",
+      "i_want": "to see which personas are currently active and what they are discussing",
+      "so_that": "I understand what the team is doing on my behalf",
+      "priority": "P1",
+      "acceptance_criteria": ["AC-17", "AC-19"]
+    },
+    {
+      "id": "US-004",
+      "title": "Compatible handoff to SDLC workflows",
+      "as_a": "the iSDLC framework",
+      "i_want": "the discovery context envelope from party mode to be identical in schema to classic mode",
+      "so_that": "downstream /isdlc feature and /isdlc fix workflows work without modification",
+      "priority": "P0",
+      "acceptance_criteria": ["AC-16"]
+    }
+  ],
+  "personas": [
+    {
+      "name": "Nadia",
+      "title": "Product Analyst",
+      "phase": 1,
+      "communication_style": "Empathetic, user-focused, asks 'why' and 'for whom'",
+      "expertise": "User needs, market fit, MVP scope"
+    },
+    {
+      "name": "Oscar",
+      "title": "Domain Researcher",
+      "phase": 1,
+      "communication_style": "Thorough, evidence-based, cites industry standards",
+      "expertise": "Compliance, regulations, best practices"
+    },
+    {
+      "name": "Tessa",
+      "title": "Technical Scout",
+      "phase": 1,
+      "communication_style": "Pragmatic, trend-aware, evaluates feasibility",
+      "expertise": "Emerging tech, tooling ecosystem, DX"
+    },
+    {
+      "name": "Liam",
+      "title": "Solution Architect",
+      "phase": 2,
+      "communication_style": "Structured, trade-off focused, systems thinker",
+      "expertise": "Architecture patterns, scalability, integration"
+    },
+    {
+      "name": "Zara",
+      "title": "Security Advisor",
+      "phase": 2,
+      "communication_style": "Risk-aware, principle-driven, challenges assumptions",
+      "expertise": "Threat modeling, auth, data protection"
+    },
+    {
+      "name": "Felix",
+      "title": "DevOps Pragmatist",
+      "phase": 2,
+      "communication_style": "Opinionated, build-deploy focused, cost-conscious",
+      "expertise": "CI/CD, infrastructure, observability"
+    }
+  ]
+}

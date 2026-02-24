@@ -1,0 +1,52 @@
+Requirement,AC,Description,Test Type,Test IDs,Coverage
+FR-01,AC-01a,Each Phase 06 task specifies at least one target file path,Automated+Manual,"TC-FV-014,TC-FV-015,TC-FV-016,MV-02c",100%
+FR-01,AC-01b,Each file-level task indicates CREATE or MODIFY,Automated+Manual,"TC-FV-014,TC-FV-015,TC-FV-017,TC-FV-037,MV-02i",100%
+FR-01,AC-01c,Each file-level task specifies functions/exports/sections,Manual,MV-02j,100%
+FR-01,AC-01d,File paths use project-relative format,Automated+Manual,"TC-FV-035,TC-FV-036,MV-02h",100%
+FR-01,AC-01e,Non-implementation phases retain high-level format,Manual,"MV-01f,MV-01g",100%
+FR-02,AC-02a,Every task line includes traces annotation,Automated+Manual,"TC-FV-010,MV-01b,MV-02e",100%
+FR-02,AC-02b,Traceability summary section shows requirement coverage,Automated+Manual,"TC-FV-021,MV-01c",100%
+FR-02,AC-02c,Generate-plan reads requirements-spec.md for REQ/AC IDs,Manual,MV-01h,100%
+FR-02,AC-02d,Orphan detection: tasks without traces trigger warning,Automated+Manual,"TC-FV-031,MV-01d",100%
+FR-02,AC-02e,Gap detection: requirements without tasks trigger warning,Automated+Manual,"TC-FV-029,TC-FV-030,MV-01e",100%
+FR-03,AC-03a,Tasks can declare blocked_by annotations,Automated,"TC-FV-011,TC-FV-012,TC-FV-027,MV-02f",100%
+FR-03,AC-03b,Tasks can declare blocks annotations,Automated,"TC-FV-013,MV-02f",100%
+FR-03,AC-03c,Dependency graph validated for no cycles,Automated+Manual,"TC-FV-023,TC-FV-024,TC-FV-025,TC-FV-026,TC-PS-15,MV-02k",100%
+FR-03,AC-03d,Critical path section identifies longest chain,Automated+Manual,"TC-FV-019,MV-02l",100%
+FR-03,AC-03e,Cross-phase dependencies supported,Manual,MV-02m,100%
+FR-04,AC-04a,Refinement step invoked after GATE-04 passes,Manual,MV-02a,100%
+FR-04,AC-04b,Refinement reads design artifacts,Manual,MV-02b,100%
+FR-04,AC-04c,Refinement updates tasks.md replacing high-level with file-level tasks,Manual,MV-02c,100%
+FR-04,AC-04d,Refinement preserves Phase 01-05 tasks unchanged,Manual,MV-02d,100%
+FR-04,AC-04e,Refinement adds traceability tags from requirements cross-reference,Manual,MV-02e,100%
+FR-04,AC-04f,Refinement adds dependency annotations from design relationships,Manual,MV-02f,100%
+FR-04,AC-04g,Refinement produces task-refinement-log.md artifact,Manual,MV-02g,100%
+FR-05,AC-05a,--mechanical flag enables mechanical mode,Manual,MV-03a,100%
+FR-05,AC-05b,Agent 05 executes tasks in dependency order,Manual,MV-03b,100%
+FR-05,AC-05c,Agent 05 does not add/remove/reorder tasks without DEVIATION flag,Manual,MV-03c,100%
+FR-05,AC-05d,Each task completion immediately marked [X],Manual,MV-03d,100%
+FR-05,AC-05e,Blocked task gets [BLOCKED] annotation with reason,Automated+Manual,"TC-FV-018,TC-FV-038,TC-FV-039,MV-03e",100%
+FR-05,AC-05f,Mechanical mode OFF by default,Manual,MV-03f,100%
+FR-05,AC-05g,Fallback to standard mode when no file-level tasks,Automated+Manual,"TC-FV-033,TC-FV-034,MV-03g",100%
+FR-06,AC-06a,Checkbox format preserved (backward compatible),Automated,"TC-FV-005,TC-FV-006,TC-FV-007,TC-BC-002,TC-BC-003",100%
+FR-06,AC-06b,Traceability tags appear after pipe delimiter,Automated,"TC-FV-010",100%
+FR-06,AC-06c,Dependency annotations on sub-lines,Automated,"TC-FV-011,TC-FV-012,TC-FV-013",100%
+FR-06,AC-06d,File-level details on sub-lines,Automated,"TC-FV-014,TC-FV-015,TC-FV-016",100%
+FR-06,AC-06e,Dependency Graph section shows critical path,Automated+Manual,"TC-FV-019,TC-FV-020,MV-02l",100%
+FR-06,AC-06f,Traceability Matrix section shows coverage,Automated+Manual,"TC-FV-021,MV-01c",100%
+FR-06,AC-06g,Existing agents with [X]/[ ] patterns work unchanged,Automated,"TC-FV-040,TC-FV-041,TC-FV-042,TC-BC-001,TC-BC-003,TC-BC-005",100%
+FR-07,AC-07a,Agents that only read/update checkboxes are unaffected,Automated+Manual,"TC-BC-003,TC-BC-012,MV-04c",100%
+FR-07,AC-07b,Software-developer agent adds mechanical mode instructions,Manual,MV-04b,100%
+FR-07,AC-07c,Protocol documents new sub-line format,Manual,MV-04a,100%
+FR-07,AC-07d,Agents MUST NOT remove annotations when updating tasks,Manual,"MV-04a,MV-04d",100%
+FR-08,AC-08a,Hook blocks implementation phases when tasks.md missing,Automated,"TC-PS-01(existing),TC-BC-009,TC-PS-14",100%
+FR-08,AC-08b,Hook optionally validates file-level tasks for Phase 06,Automated,"TC-PS-11,TC-PS-12,TC-PS-13,TC-PS-16",100%
+FR-08,AC-08c,Validation failures are warnings not blocks,Automated,"TC-PS-12,TC-PS-13,TC-PS-15,TC-PS-17",100%
+NFR-01,--,Performance: refinement < 60s; hook < 100ms,Design+Manual,Design-level (15ms budget per analysis),100%
+NFR-02,--,All backward compatible,Automated+Manual,"TC-BC-001 through TC-BC-012,TC-PS-14,MV-06a,MV-06b",100%
+NFR-03,--,Documented in SKILL.md schema reference,Manual,MV-05a,100%
+NFR-04,--,Extensible pipe-delimited format,Automated,TC-FV-010 (pipe format extensible),100%
+C-01,--,No new workflow phases,Design,Design constraint verified in module-design-refinement-step.md,100%
+C-02,--,Single file authority (tasks.md),Design,All tests use single tasks.md fixture,100%
+C-03,--,Module system: hooks=CJS,Design,New test file uses .cjs extension,100%
+C-04,--,Test baseline 555+ preserved,Automated,49 new tests added (total 604+),100%

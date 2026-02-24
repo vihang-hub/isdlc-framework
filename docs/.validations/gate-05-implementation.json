@@ -1,0 +1,69 @@
+{
+  "gate": "GATE-05",
+  "phase": "06-implementation",
+  "requirement": "REQ-0023-three-verb-backlog-model",
+  "validated_at": "2026-02-18T15:00:00.000Z",
+  "status": "PASS",
+  "checklist": {
+    "all_features_implemented": {
+      "status": "PASS",
+      "details": "All 8 utility functions implemented per module-design.md. Hook enforcement updated. Intent detection redesigned. Orchestrator menu updated. Command surface in isdlc.md rewritten."
+    },
+    "unit_test_coverage_80_percent": {
+      "status": "PASS",
+      "details": "160 new tests added (126 three-verb-utils + 6 hook enforcement + 28 content verification). All pass. CJS suite: 1944/1945 (1 pre-existing). ESM suite: 630/632 (2 pre-existing)."
+    },
+    "all_tests_passing": {
+      "status": "PASS",
+      "details": "Zero regressions. All failures are pre-existing and confirmed by testing against main branch with git stash."
+    },
+    "code_follows_linting_style": {
+      "status": "PASS",
+      "details": "CJS module style with .cjs extension. JSDoc comments on all public functions. Consistent with existing common.cjs and provider-utils.cjs patterns."
+    },
+    "type_checking_passes": {
+      "status": "N/A",
+      "details": "Project uses JavaScript (not TypeScript). No type checking configured."
+    },
+    "implementation_matches_design": {
+      "status": "PASS",
+      "details": "All 8 functions match pseudocode in module-design.md. Error codes match error-taxonomy.md (28 codes). Validation rules match validation-rules.json (33 rules)."
+    },
+    "database_migrations_created": {
+      "status": "N/A",
+      "details": "No database in this project (file-based state.json)."
+    },
+    "code_documentation_complete": {
+      "status": "PASS",
+      "details": "JSDoc on all public functions. Module header with version. Implementation notes in docs/requirements/REQ-0023-three-verb-backlog-model/implementation-notes.md."
+    }
+  },
+  "constitutional_compliance": {
+    "article_i_specification_primacy": "PASS - Code implements specifications exactly as designed",
+    "article_ii_test_first": "PASS - Tests written before/alongside implementation, TDD workflow followed",
+    "article_iii_security_by_design": "PASS - Input validation on all public functions, path traversal prevention in slug generation",
+    "article_v_simplicity_first": "PASS - Single utility module, no over-engineering, reuses existing patterns",
+    "article_vi_code_review_required": "PASS - Code prepared for review with clear documentation",
+    "article_vii_artifact_traceability": "PASS - REQ-0023, AC-001 through AC-008 referenced in test comments and implementation notes",
+    "article_viii_documentation_currency": "PASS - Inline JSDoc, implementation-notes.md, updated CLAUDE.md",
+    "article_ix_quality_gate_integrity": "PASS - All required artifacts exist, gate checklist validated",
+    "article_x_fail_safe_defaults": "PASS - Read-time legacy migration, defensive null checks, fallback in resolveItem"
+  },
+  "pre_existing_failures": [
+    {
+      "test": "logs info when supervised_review is in reviewing status",
+      "file": "test-gate-blocker-extended.test.cjs",
+      "confirmed_pre_existing": true
+    },
+    {
+      "test": "TC-E09: README.md contains updated agent count",
+      "file": "prompt-format.test.js",
+      "confirmed_pre_existing": true
+    },
+    {
+      "test": "TC-13-01: Exactly 48 agent markdown files exist",
+      "file": "prompt-format.test.js",
+      "confirmed_pre_existing": true
+    }
+  ]
+}

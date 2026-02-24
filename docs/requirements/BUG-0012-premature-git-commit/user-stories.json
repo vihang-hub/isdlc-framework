@@ -1,0 +1,50 @@
+{
+  "bug_id": "BUG-0012",
+  "artifact_folder": "BUG-0012-premature-git-commit",
+  "created_at": "2026-02-13T07:00:00Z",
+  "stories": [
+    {
+      "id": "US-01",
+      "title": "Block premature commits via agent instruction",
+      "story": "As a framework developer, I want the software-developer agent to explicitly prohibit git commits during implementation so that unvalidated code is never committed to the feature branch.",
+      "acceptance_criteria": ["AC-01", "AC-02", "AC-03", "AC-04"],
+      "priority": "P1",
+      "functional_requirement": "FR-01"
+    },
+    {
+      "id": "US-02",
+      "title": "Block premature commits via quality-loop agent instruction",
+      "story": "As a framework developer, I want the quality-loop-engineer agent to explicitly prohibit git commits during the quality loop so that code is not committed before code review.",
+      "acceptance_criteria": ["AC-05", "AC-06"],
+      "priority": "P1",
+      "functional_requirement": "FR-02"
+    },
+    {
+      "id": "US-03",
+      "title": "Phase-aware commit blocking in branch-guard hook",
+      "story": "As a framework developer, I want the branch-guard hook to block commits on feature branches during early phases so that even if agents or Claude Code attempt to commit, the hook prevents unvalidated commits.",
+      "acceptance_criteria": ["AC-07", "AC-08", "AC-09", "AC-10", "AC-11", "AC-12", "AC-13", "AC-14"],
+      "priority": "P1",
+      "functional_requirement": "FR-03"
+    },
+    {
+      "id": "US-04",
+      "title": "Deterministic commit-allowed phase detection",
+      "story": "As a framework developer, I want the commit-allowed phase to be automatically determined from the workflow definition so that the hook works correctly for all workflow types without hardcoding.",
+      "acceptance_criteria": ["AC-15", "AC-16", "AC-17", "AC-18"],
+      "priority": "P2",
+      "functional_requirement": "FR-04"
+    },
+    {
+      "id": "US-05",
+      "title": "Helpful block message with alternatives",
+      "story": "As a developer using the framework, when my commit is blocked during an early phase, I want to see a clear explanation and suggested alternatives (like git stash) so that I understand why and how to save my work.",
+      "acceptance_criteria": ["AC-19", "AC-20"],
+      "priority": "P2",
+      "functional_requirement": "FR-05"
+    }
+  ],
+  "total_acceptance_criteria": 20,
+  "functional_requirements": 5,
+  "non_functional_requirements": 3
+}

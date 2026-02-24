@@ -1,0 +1,8 @@
+{
+  "source": "backlog-migration",
+  "source_id": "2.3",
+  "slug": "REQ-0021-t7-agent-prompt-boilerplate-extraction",
+  "created_at": "2026-02-16T23:45:00.000Z",
+  "phase_a_completed": true,
+  "codebase_hash": "de26cf7"
+}

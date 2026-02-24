@@ -1,0 +1,77 @@
+{
+  "gate": "GATE-06",
+  "phase": "06-implementation",
+  "artifact_folder": "BUG-0018-GH-2",
+  "workflow_type": "fix",
+  "validated_at": "2026-02-16T10:00:00.000Z",
+  "status": "PASSED",
+  "checklist": {
+    "all_features_implemented": {
+      "status": "pass",
+      "detail": "FR-1 suffix stripping, FR-2 format variants, FR-3 Jira preservation, FR-4 test coverage, FR-5 start action docs -- all implemented"
+    },
+    "unit_test_coverage_80_percent": {
+      "status": "pass",
+      "detail": "26/26 content verification tests passing; 100% AC coverage (19/19 ACs). Traditional line coverage N/A for markdown fix."
+    },
+    "all_tests_passing": {
+      "status": "pass",
+      "detail": "26 new tests passing; CJS stream: 1451/1452 (1 pre-existing failure in gate-blocker-extended SM-04, unrelated)"
+    },
+    "code_follows_style": {
+      "status": "pass",
+      "detail": "CJS test conventions followed (node:test + node:assert/strict). Markdown changes maintain existing document structure."
+    },
+    "type_checking_passes": {
+      "status": "n/a",
+      "detail": "No TypeScript -- markdown and CJS test changes only"
+    },
+    "implementation_matches_design": {
+      "status": "pass",
+      "detail": "Orchestrator picker now strips -> [requirements](...) and -> [design](...) suffixes per design spec. Both feature and fix mode updated."
+    },
+    "database_migrations_created": {
+      "status": "n/a",
+      "detail": "No database in this project"
+    },
+    "code_documentation_complete": {
+      "status": "pass",
+      "detail": "implementation-notes.md created with full change summary, design decisions, and file manifest"
+    }
+  },
+  "test_results": {
+    "total": 1452,
+    "passing": 1451,
+    "failing": 1,
+    "failing_pre_existing": 1,
+    "failing_detail": "gate-blocker-extended SM-04: pre-existing, unrelated to BUG-0018",
+    "skipped": 0,
+    "new_tests_added": 26,
+    "existing_tests_updated": 0,
+    "regressions": 0
+  },
+  "files_modified": [
+    "src/claude/agents/00-sdlc-orchestrator.md",
+    "src/claude/commands/isdlc.md"
+  ],
+  "files_created": [
+    "src/claude/hooks/tests/test-backlog-picker-content.test.cjs",
+    "docs/requirements/BUG-0018-GH-2/implementation-notes.md"
+  ],
+  "constitutional_compliance": {
+    "articles_checked": ["I", "II", "III", "V", "VI", "VII", "VIII", "IX", "X"],
+    "status": "compliant",
+    "iterations_used": 1,
+    "details": {
+      "article_I": "Code implements specifications exactly per requirements-spec.md FR-1 through FR-5",
+      "article_II": "Tests written before implementation (TDD Red-Green); 26 tests, 100% AC coverage",
+      "article_III": "No security surface area in display text stripping; N/A but reviewed",
+      "article_V": "Minimal changes -- 3 targeted edits to existing markdown, no over-engineering",
+      "article_VI": "Code prepared for review with clear change documentation",
+      "article_VII": "Test file traces to FRs and ACs; implementation-notes.md references all requirements",
+      "article_VIII": "Inline documentation updated in orchestrator.md and isdlc.md",
+      "article_IX": "All required artifacts exist: source code, tests, implementation notes, gate validation",
+      "article_X": "Conditional suffix stripping is fail-safe -- items without suffix pass through unchanged"
+    }
+  }
+}

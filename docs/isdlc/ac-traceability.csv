@@ -1,0 +1,90 @@
+AC_ID,Domain,Title,Priority,Source_File,Source_Lines,Test_File,Test_Status,Characterization_Test
+AC-WO-001,Workflow Orchestration,CLI Command Routing,Critical,lib/cli.js,168-231,lib/cli.test.js,COVERED,tests/characterization/workflow-orchestration.test.js
+AC-WO-002,Workflow Orchestration,CLI Argument Parsing,High,lib/cli.js,103-162,lib/cli.test.js,COVERED,tests/characterization/workflow-orchestration.test.js
+AC-WO-003,Workflow Orchestration,Provider Mode Validation,High,lib/cli.js,178-183,lib/cli.test.js,COVERED,tests/characterization/workflow-orchestration.test.js
+AC-WO-004,Workflow Orchestration,Background Update Check,Medium,lib/cli.js,"173,220-223",,UNCOVERED,tests/characterization/workflow-orchestration.test.js
+AC-WO-005,Workflow Orchestration,State File Phase Tracking,Critical,.isdlc/state.json,81-94,,PARTIAL,
+AC-WO-006,Workflow Orchestration,Workflow History Append-Only,High,.isdlc/state.json,"98-108",,UNCOVERED,
+AC-WO-007,Workflow Orchestration,Active Workflow State,Critical,src/claude/hooks/gate-blocker.js,412-448,src/claude/hooks/tests/test-gate-blocker-extended.test.cjs,COVERED,
+AC-WO-008,Workflow Orchestration,Workflow Phase Sequence Validation,Critical,src/claude/hooks/gate-blocker.js,428-439,src/claude/hooks/tests/test-gate-blocker-extended.test.cjs,COVERED,
+AC-WO-009,Workflow Orchestration,Setup Command Bypass,High,src/claude/hooks/gate-blocker.js,96-107,src/claude/hooks/tests/test-gate-blocker-extended.test.cjs,COVERED,
+AC-WO-010,Workflow Orchestration,Workflow Override Merging,High,src/claude/hooks/gate-blocker.js,"75-90,466-472",,UNCOVERED,
+AC-WO-011,Workflow Orchestration,Counter Management,Medium,.isdlc/state.json,76-79,,UNCOVERED,
+AC-WO-012,Workflow Orchestration,Complexity Assessment Storage,Medium,.isdlc/state.json,19-32,,UNCOVERED,
+AC-WO-013,Workflow Orchestration,Error Handling with Debug Mode,High,lib/cli.js,224-229,lib/cli.test.js,COVERED,
+AC-WO-014,Workflow Orchestration,Last Workflow Phase Detection,Critical,src/claude/hooks/gate-blocker.js,442-445,,UNCOVERED,
+AC-IL-001,Installation Lifecycle,Existing Installation Detection,Critical,lib/project-detector.js,172-202,lib/project-detector.test.js,COVERED,tests/characterization/installation-lifecycle.test.js
+AC-IL-002,Installation Lifecycle,Project Type Detection,High,lib/project-detector.js,13-118,lib/project-detector.test.js,COVERED,tests/characterization/installation-lifecycle.test.js
+AC-IL-003,Installation Lifecycle,Project Name Detection,High,lib/project-detector.js,125-165,lib/project-detector.test.js,COVERED,tests/characterization/installation-lifecycle.test.js
+AC-IL-004,Installation Lifecycle,Six-Step Installation Flow,Critical,lib/installer.js,34-518,lib/installer.test.js,COVERED,tests/characterization/installation-lifecycle.test.js
+AC-IL-005,Installation Lifecycle,Settings.json Deep Merge,High,lib/installer.js,"213-228",lib/utils/fs-helpers.test.js,COVERED,tests/characterization/installation-lifecycle.test.js
+AC-IL-006,Installation Lifecycle,Provider Mode Selection,High,lib/installer.js,137-153,,PARTIAL,
+AC-IL-007,Installation Lifecycle,Eight-Step Update Flow,Critical,lib/updater.js,227-543,lib/updater.test.js,COVERED,tests/characterization/installation-lifecycle.test.js
+AC-IL-008,Installation Lifecycle,User Artifact Preservation,Critical,lib/updater.js,274-281,lib/updater.test.js,COVERED,
+AC-IL-009,Installation Lifecycle,Obsolete File Cleanup,High,lib/updater.js,430-457,,UNCOVERED,tests/characterization/installation-lifecycle.test.js
+AC-IL-010,Installation Lifecycle,Version Comparison Guard,High,lib/updater.js,255-268,lib/updater.test.js,COVERED,
+AC-IL-011,Installation Lifecycle,Manifest-Based Uninstall,High,lib/uninstaller.js,87-114,lib/uninstaller.test.js,COVERED,
+AC-IL-012,Installation Lifecycle,Legacy Pattern-Based Uninstall,Medium,lib/uninstaller.js,416-451,,UNCOVERED,
+AC-IL-013,Installation Lifecycle,Doctor Health Validation,High,lib/doctor.js,18-204,lib/doctor.test.js,COVERED,tests/characterization/installation-lifecycle.test.js
+AC-IL-014,Installation Lifecycle,Dry-Run Mode,Medium,lib/installer.js,"175-177",,PARTIAL,
+AC-IL-015,Installation Lifecycle,Backup Creation,Medium,lib/updater.js,293-316,,UNCOVERED,
+AC-IL-016,Installation Lifecycle,Installation Manifest Generation,High,lib/installer.js,459-468,,PARTIAL,tests/characterization/installation-lifecycle.test.js
+AC-IL-017,Installation Lifecycle,Tech Stack Detection,Medium,lib/project-detector.js,209-270,lib/project-detector.test.js,COVERED,
+AC-IE-001,Iteration Enforcement,Gate Advancement Detection,Critical,src/claude/hooks/gate-blocker.js,112-161,src/claude/hooks/tests/test-gate-blocker-extended.test.cjs,COVERED,tests/characterization/iteration-enforcement.test.js
+AC-IE-002,Iteration Enforcement,Four-Check Gate Validation,Critical,src/claude/hooks/gate-blocker.js,477-566,src/claude/hooks/tests/test-gate-blocker-extended.test.cjs,COVERED,tests/characterization/iteration-enforcement.test.js
+AC-IE-003,Iteration Enforcement,Test Iteration State Tracking,Critical,src/claude/hooks/test-watcher.js,398-529,src/claude/hooks/tests/test-test-watcher.test.cjs,COVERED,tests/characterization/iteration-enforcement.test.js
+AC-IE-004,Iteration Enforcement,Test Command Pattern Recognition,High,src/claude/hooks/test-watcher.js,48-72,src/claude/hooks/tests/test-test-watcher.test.cjs,COVERED,tests/characterization/iteration-enforcement.test.js
+AC-IE-005,Iteration Enforcement,Test Result Parsing,High,src/claude/hooks/test-watcher.js,77-174,src/claude/hooks/tests/test-test-watcher.test.cjs,COVERED,tests/characterization/iteration-enforcement.test.js
+AC-IE-006,Iteration Enforcement,Circuit Breaker on Identical Failures,Critical,src/claude/hooks/test-watcher.js,480-498,src/claude/hooks/tests/test-test-watcher.test.cjs,PARTIAL,tests/characterization/iteration-enforcement.test.js
+AC-IE-007,Iteration Enforcement,Max Iteration Escalation,Critical,src/claude/hooks/test-watcher.js,500-510,src/claude/hooks/tests/test-test-watcher.test.cjs,COVERED,tests/characterization/iteration-enforcement.test.js
+AC-IE-008,Iteration Enforcement,TEST_CORRIDOR Enforcement,Critical,src/claude/hooks/iteration-corridor.js,"93-117,272-296",src/claude/hooks/tests/test-iteration-corridor.test.cjs,COVERED,tests/characterization/iteration-enforcement.test.js
+AC-IE-009,Iteration Enforcement,CONST_CORRIDOR Enforcement,High,src/claude/hooks/iteration-corridor.js,"125-158,299-324",src/claude/hooks/tests/test-iteration-corridor.test.cjs,COVERED,tests/characterization/iteration-enforcement.test.js
+AC-IE-010,Iteration Enforcement,Corridor State Determination,High,src/claude/hooks/iteration-corridor.js,93-158,src/claude/hooks/tests/test-iteration-corridor.test.cjs,COVERED,
+AC-IE-011,Iteration Enforcement,Interactive Elicitation Requirement,High,src/claude/hooks/gate-blocker.js,275-313,src/claude/hooks/tests/test-gate-blocker-extended.test.cjs,COVERED,
+AC-IE-012,Iteration Enforcement,Menu Interaction Tracking,High,src/claude/hooks/menu-tracker.js,26-116,src/claude/hooks/tests/test-menu-tracker.test.cjs,COVERED,tests/characterization/iteration-enforcement.test.js
+AC-IE-013,Iteration Enforcement,Save Selection Completes Elicitation,High,src/claude/hooks/menu-tracker.js,207-217,src/claude/hooks/tests/test-menu-tracker.test.cjs,COVERED,
+AC-IE-014,Iteration Enforcement,Agent Delegation Validation,High,src/claude/hooks/gate-blocker.js,319-362,src/claude/hooks/tests/test-gate-blocker-extended.test.cjs,COVERED,
+AC-IE-015,Iteration Enforcement,ATDD Skipped Test Detection,High,src/claude/hooks/test-watcher.js,243-290,,UNCOVERED,tests/characterization/iteration-enforcement.test.js
+AC-IE-016,Iteration Enforcement,Post-Gate Cloud Config Trigger,Medium,src/claude/hooks/gate-blocker.js,521-544,,UNCOVERED,
+AC-IE-017,Iteration Enforcement,Escalation Approval Gate,Medium,src/claude/hooks/gate-blocker.js,"202-215,249-259",,UNCOVERED,
+AC-IE-018,Iteration Enforcement,Constitutional Validation Init,Medium,src/claude/hooks/constitution-validator.js,171-191,src/claude/hooks/tests/test-constitution-validator.test.cjs,COVERED,
+AC-SO-001,Skill Observability,Task Tool Call Interception,Critical,src/claude/hooks/skill-validator.js,55-69,src/claude/hooks/tests/test-skill-validator.test.cjs,COVERED,tests/characterization/skill-observability.test.js
+AC-SO-002,Skill Observability,Agent Name Normalization,High,src/claude/hooks/lib/common.js,725-788,src/claude/hooks/tests/test-common.test.cjs,COVERED,tests/characterization/skill-observability.test.js
+AC-SO-003,Skill Observability,Never-Block Model,Critical,src/claude/hooks/skill-validator.js,158-193,src/claude/hooks/tests/test-skill-validator.test.cjs,COVERED,tests/characterization/skill-observability.test.js
+AC-SO-004,Skill Observability,Orchestrator Always Authorized,High,src/claude/hooks/skill-validator.js,139-142,src/claude/hooks/tests/test-skill-validator.test.cjs,COVERED,
+AC-SO-005,Skill Observability,Setup Agent Always Authorized,High,src/claude/hooks/skill-validator.js,145-148,src/claude/hooks/tests/test-skill-validator.test.cjs,COVERED,
+AC-SO-006,Skill Observability,PostToolUse Skill Usage Logging,High,src/claude/hooks/log-skill-usage.js,33-173,src/claude/hooks/tests/test-log-skill-usage.test.cjs,COVERED,tests/characterization/skill-observability.test.js
+AC-SO-007,Skill Observability,Cross-Phase Usage Categorization,High,src/claude/hooks/log-skill-usage.js,111-143,src/claude/hooks/tests/test-log-skill-usage.test.cjs,COVERED,tests/characterization/skill-observability.test.js
+AC-SO-008,Skill Observability,Manifest Loading with Fallback,Medium,src/claude/hooks/lib/common.js,659-692,src/claude/hooks/tests/test-common.test.cjs,COVERED,
+AC-SO-009,Skill Observability,External Manifest Recognition,Medium,src/claude/hooks/skill-validator.js,119-129,,UNCOVERED,tests/characterization/skill-observability.test.js
+AC-SO-010,Skill Observability,Fail-Open on All Errors,Medium,src/claude/hooks/skill-validator.js,195-199,src/claude/hooks/tests/test-skill-validator.test.cjs,COVERED,tests/characterization/skill-observability.test.js
+AC-PR-001,Provider Routing,Task-Only Interception,Critical,src/claude/hooks/model-provider-router.js,47-59,src/claude/hooks/tests/test-model-provider-router.test.cjs,COVERED,tests/characterization/provider-routing.test.js
+AC-PR-002,Provider Routing,Five-Level Provider Selection,Critical,src/claude/hooks/model-provider-router.js,76-77,src/claude/hooks/tests/test-provider-utils.test.cjs,COVERED,tests/characterization/provider-routing.test.js
+AC-PR-003,Provider Routing,Health Check and Fallback,Critical,src/claude/hooks/model-provider-router.js,79-98,,PARTIAL,tests/characterization/provider-routing.test.js
+AC-PR-004,Provider Routing,Provider Failure Blocking,High,src/claude/hooks/model-provider-router.js,83-98,src/claude/hooks/tests/test-model-provider-router.test.cjs,COVERED,
+AC-PR-005,Provider Routing,Environment Override Injection,High,src/claude/hooks/model-provider-router.js,102-136,,UNCOVERED,tests/characterization/provider-routing.test.js
+AC-PR-006,Provider Routing,Fallback Warning Emission,High,src/claude/hooks/model-provider-router.js,112-123,,UNCOVERED,
+AC-PR-007,Provider Routing,Minimal YAML Parser,High,src/claude/hooks/lib/provider-utils.js,29-100,src/claude/hooks/tests/test-provider-utils.test.cjs,COVERED,tests/characterization/provider-routing.test.js
+AC-PR-008,Provider Routing,Usage Tracking,Medium,src/claude/hooks/model-provider-router.js,105,,UNCOVERED,
+AC-PR-009,Provider Routing,Provider Router Fail-Open,Medium,src/claude/hooks/model-provider-router.js,140-149,src/claude/hooks/tests/test-model-provider-router.test.cjs,COVERED,tests/characterization/provider-routing.test.js
+AC-CM-001,Constitution Management,Phase Completion Interception,Critical,src/claude/hooks/constitution-validator.js,31-108,src/claude/hooks/tests/test-constitution-validator.test.cjs,COVERED,tests/characterization/constitution-management.test.js
+AC-CM-002,Constitution Management,Validation Status Check,Critical,src/claude/hooks/constitution-validator.js,113-166,src/claude/hooks/tests/test-constitution-validator.test.cjs,COVERED,tests/characterization/constitution-management.test.js
+AC-CM-003,Constitution Management,Validation Loop Message,High,src/claude/hooks/constitution-validator.js,279-312,src/claude/hooks/tests/test-constitution-validator.test.cjs,PARTIAL,tests/characterization/constitution-management.test.js
+AC-CM-004,Constitution Management,Article Description Mapping,High,src/claude/hooks/constitution-validator.js,196-210,,UNCOVERED,
+AC-CM-005,Constitution Management,Starter Constitution Generation,High,lib/installer.js,569-678,lib/installer.test.js,PARTIAL,tests/characterization/constitution-management.test.js
+AC-CM-006,Constitution Management,Constitution Path Resolution,High,src/claude/hooks/lib/common.js,201-236,src/claude/hooks/tests/test-common.test.cjs,COVERED,tests/characterization/constitution-management.test.js
+AC-CM-007,Constitution Management,Constitution Staleness Detection,Medium,lib/doctor.js,112-121,lib/doctor.test.js,COVERED,
+AC-CM-008,Constitution Management,Validation Tracking Init,Medium,src/claude/hooks/constitution-validator.js,171-191,src/claude/hooks/tests/test-constitution-validator.test.cjs,COVERED,
+AC-MD-001,Monorepo Detection,Workspace File Detection,Critical,lib/monorepo-handler.js,36-44,lib/monorepo-handler.test.js,COVERED,tests/characterization/monorepo-detection.test.js
+AC-MD-002,Monorepo Detection,Directory Structure Detection,High,lib/monorepo-handler.js,46-65,lib/monorepo-handler.test.js,COVERED,tests/characterization/monorepo-detection.test.js
+AC-MD-003,Monorepo Detection,Root-Level Project Detection,High,lib/monorepo-handler.js,"99-119,67-73",lib/monorepo-handler.test.js,COVERED,
+AC-MD-004,Monorepo Detection,Project Discovery,High,lib/monorepo-handler.js,126-168,lib/monorepo-handler.test.js,COVERED,tests/characterization/monorepo-detection.test.js
+AC-MD-005,Monorepo Detection,Config Generation,High,lib/monorepo-handler.js,217-239,lib/monorepo-handler.test.js,COVERED,
+AC-MD-006,Monorepo Detection,CWD-Based Project Resolution,Critical,src/claude/hooks/lib/common.js,92-134,src/claude/hooks/tests/test-common.test.cjs,COVERED,tests/characterization/monorepo-detection.test.js
+AC-MD-007,Monorepo Detection,Three-Level Project Resolution,Critical,src/claude/hooks/lib/common.js,143-167,src/claude/hooks/tests/test-common.test.cjs,COVERED,tests/characterization/monorepo-detection.test.js
+AC-MD-008,Monorepo Detection,Project-Scoped State Routing,High,src/claude/hooks/lib/common.js,176-188,src/claude/hooks/tests/test-common.test.cjs,COVERED,tests/characterization/monorepo-detection.test.js
+AC-MD-009,Monorepo Detection,Path Resolution Functions,High,src/claude/hooks/lib/common.js,195-494,src/claude/hooks/tests/test-common.test.cjs,COVERED,tests/characterization/monorepo-detection.test.js
+AC-MD-010,Monorepo Detection,Legacy Migration Detection,Medium,src/claude/hooks/lib/common.js,521-527,,UNCOVERED,
+AC-MD-011,Monorepo Detection,Per-Project State,High,lib/installer.js,420-452,lib/installer.test.js,PARTIAL,
+AC-MD-012,Monorepo Detection,Updater Monorepo Propagation,Medium,lib/updater.js,496-519,,UNCOVERED,tests/characterization/monorepo-detection.test.js
+AC-MD-013,Monorepo Detection,Scan Path Extraction,Medium,lib/monorepo-handler.js,175-190,lib/monorepo-handler.test.js,COVERED,

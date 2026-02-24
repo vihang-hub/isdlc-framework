@@ -1,0 +1,34 @@
+Requirement,AC,Description,Test Case(s),Priority,Test Group
+FR-01,AC-01.1,Feature intent detection,"T06, T07",P0/P1,Intent Detection -- Feature
+FR-01,AC-01.2,Fix intent detection,"T08, T09",P0,Intent Detection -- Fix
+FR-01,AC-01.3,Upgrade intent detection,"T10, T11",P0/P1,Intent Detection -- Upgrade
+FR-01,AC-01.4,Test run intent detection,"T12, T13",P0/P1,Intent Detection -- Test Run
+FR-01,AC-01.5,Test generate intent detection,"T14, T15",P0/P1,Intent Detection -- Test Generate
+FR-01,AC-01.6,Discovery intent detection,"T16, T17",P0/P1,Intent Detection -- Discovery
+FR-02,AC-02.1,Consent inform step,"T18",P0,Consent Protocol
+FR-02,AC-02.2,No jargon in consent,"T19",P0,Consent Protocol
+FR-02,AC-02.3,Confirmation handling,"T20",P0,Consent Protocol
+FR-02,AC-02.4,Decline handling,"T21",P0,Consent Protocol
+FR-02,AC-02.5,Consent brevity,"T22",P1,Consent Protocol
+FR-03,AC-03.1,Feature maps to /isdlc feature,"T25",P0,Mapping Table
+FR-03,AC-03.2,Fix maps to /isdlc fix,"T26",P0,Mapping Table
+FR-03,AC-03.3,Upgrade maps to /isdlc upgrade,"T27",P0,Mapping Table
+FR-03,AC-03.4,Test run maps to /isdlc test run,"T28",P0,Mapping Table
+FR-03,AC-03.5,Test generate maps to /isdlc test generate,"T29",P0,Mapping Table
+FR-03,AC-03.6,Discovery maps to /discover,"T30",P0,Mapping Table
+FR-03,AC-03.7,Slash command passthrough preserved,"T31",P0,Mapping Table
+FR-04,AC-04.1,Ambiguous intent clarification,"T32",P0,Edge Cases
+FR-04,AC-04.2,Non-dev passthrough,"T33",P0,Edge Cases
+FR-04,AC-04.3,Active workflow protection,"T34",P0,Edge Cases
+FR-04,AC-04.4,Refactoring as feature,"T35",P1,Edge Cases
+FR-04,AC-04.5,Non-dev requests excluded,"T36",P1,Edge Cases
+FR-05,AC-05.1,No slash command suggestions,"T24, T40",P0,Invisible Framework
+FR-05,AC-05.2,User-friendly consent language,"T23, T39",P0/P1,Invisible Framework
+FR-05,AC-05.3,User-terms descriptions,"T23, T39",P0/P1,Invisible Framework
+FR-05,AC-05.4,Progress updates visible,"T37",P1,Invisible Framework
+FR-05,AC-05.5,Explainable on request,"T38",P2,Invisible Framework
+NFR-01,,Reliability -- distinct intent categories,"T49",P1,NFR Validation
+NFR-02,,Backward compatibility -- unchanged sections,"T44, T45, T46",P0/P1,Regression
+NFR-03,,Maintainability -- consolidated mapping,"T47, T48",P0/P2,NFR Validation
+NFR-04,,Template consistency,"T41, T42, T43",P0/P1,Template Integration
+STRUCTURAL,,Section existence prerequisites,"T01, T02, T03, T04, T05",P0,Section Structure

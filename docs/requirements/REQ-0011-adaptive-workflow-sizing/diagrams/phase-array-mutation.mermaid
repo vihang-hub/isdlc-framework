@@ -1,0 +1,37 @@
+%% Phase Array Mutation -- Before and After Light Sizing
+%% Traces to: AC-04, AC-15, AC-16, AC-17, AC-18
+
+graph LR
+    subgraph Before["Before Sizing (Standard Feature)"]
+        direction TB
+        B00["00-quick-scan<br/>COMPLETED"]
+        B01["01-requirements<br/>COMPLETED"]
+        B02["02-impact-analysis<br/>COMPLETED"]
+        B03["03-architecture<br/>PENDING"]
+        B04["04-design<br/>PENDING"]
+        B05["05-test-strategy<br/>PENDING"]
+        B06["06-implementation<br/>PENDING"]
+        B16["16-quality-loop<br/>PENDING"]
+        B08["08-code-review<br/>PENDING"]
+
+        B00 --> B01 --> B02 --> B03 --> B04 --> B05 --> B06 --> B16 --> B08
+    end
+
+    subgraph After["After Light Sizing Applied"]
+        direction TB
+        A00["00-quick-scan<br/>COMPLETED"]
+        A01["01-requirements<br/>COMPLETED"]
+        A02["02-impact-analysis<br/>COMPLETED"]
+        A05["05-test-strategy<br/>PENDING<br/>(index 3)"]
+        A06["06-implementation<br/>PENDING"]
+        A16["16-quality-loop<br/>PENDING"]
+        A08["08-code-review<br/>PENDING"]
+
+        A00 --> A01 --> A02 --> A05 --> A06 --> A16 --> A08
+    end
+
+    Before -->|"applySizingDecision()<br/>removes 03, 04<br/>reindexes"| After
+
+    style B03 fill:#ffcdd2,stroke:#b71c1c
+    style B04 fill:#ffcdd2,stroke:#b71c1c
+    style A05 fill:#c8e6c9,stroke:#1b5e20

@@ -1,0 +1,257 @@
+{
+  "feature_id": "REQ-0022",
+  "feature_name": "Custom Skill Management",
+  "created": "2026-02-18",
+  "stories": [
+    {
+      "id": "US-001",
+      "epic": "Skill Acquisition",
+      "persona": "Framework User",
+      "goal": "add a domain-specific skill file to the framework",
+      "benefit": "the framework understands my tech stack conventions during workflow execution",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-001-01",
+          "given": "I have a valid .md skill file with name and description in YAML frontmatter",
+          "when": "I run '/isdlc skill add <path>' or say 'add a skill'",
+          "then": "the file is copied to the external skills directory and a success message is shown with the skill name"
+        },
+        {
+          "id": "AC-001-02",
+          "given": "I provide a path to a file that does not exist",
+          "when": "I run '/isdlc skill add <path>'",
+          "then": "an error message is displayed showing the path that was checked"
+        },
+        {
+          "id": "AC-001-03",
+          "given": "I provide a .md file missing the required 'name' field in frontmatter",
+          "when": "I run '/isdlc skill add <path>'",
+          "then": "a validation error is displayed listing the missing fields and showing an example of correct format"
+        },
+        {
+          "id": "AC-001-04",
+          "given": "a skill with the same filename already exists in the external skills directory",
+          "when": "I run '/isdlc skill add <path>'",
+          "then": "I am prompted to overwrite or cancel before any file is modified"
+        }
+      ],
+      "linked_requirements": ["FR-001"]
+    },
+    {
+      "id": "US-002",
+      "epic": "Smart Binding",
+      "persona": "Framework User",
+      "goal": "receive intelligent suggestions for which agents and phases my skill should bind to",
+      "benefit": "I do not need to understand the full phase model to configure my skill correctly",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-002-01",
+          "given": "I add a skill file whose body contains keywords like 'test', 'coverage', 'assertion'",
+          "when": "the smart suggestion engine analyzes the skill",
+          "then": "it suggests binding to test-related phases (05-test-strategy, 06-implementation) with high confidence"
+        },
+        {
+          "id": "AC-002-02",
+          "given": "I add a skill file with no recognizable phase-indicative keywords",
+          "when": "the smart suggestion engine analyzes the skill",
+          "then": "it defaults to suggesting 06-implementation with low confidence and explains why"
+        },
+        {
+          "id": "AC-002-03",
+          "given": "I add a skill file with a frontmatter 'owner' field matching a known agent name",
+          "when": "the smart suggestion engine analyzes the skill",
+          "then": "it includes that agent's phase in the suggestions with high confidence"
+        }
+      ],
+      "linked_requirements": ["FR-002"]
+    },
+    {
+      "id": "US-003",
+      "epic": "Skill Wiring",
+      "persona": "Framework User",
+      "goal": "configure which agents and phases my skill is injected into through a guided interactive session",
+      "benefit": "I have full control over where my skill is used without editing config files manually",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-003-01",
+          "given": "I am in the wiring session after adding a skill",
+          "when": "I see the agent/phase selection list",
+          "then": "agents are grouped by workflow category (Requirements, Architecture, Testing, Implementation, Quality, DevOps) and smart suggestions are pre-checked"
+        },
+        {
+          "id": "AC-003-02",
+          "given": "I have selected agents/phases and a delivery type",
+          "when": "I reach the confirmation step",
+          "then": "I see a summary showing skill name, selected phases, and delivery type with [S] Save / [A] Adjust / [X] Cancel options"
+        },
+        {
+          "id": "AC-003-03",
+          "given": "I select [S] Save in the confirmation step",
+          "when": "the wiring session completes",
+          "then": "the skill is registered in external-skills-manifest.json with the correct bindings schema"
+        },
+        {
+          "id": "AC-003-04",
+          "given": "I select [X] Cancel in the confirmation step",
+          "when": "the wiring session ends",
+          "then": "no changes are made to the manifest and I am returned to the normal conversation"
+        }
+      ],
+      "linked_requirements": ["FR-003", "FR-004"]
+    },
+    {
+      "id": "US-004",
+      "epic": "Runtime Injection",
+      "persona": "Framework User",
+      "goal": "have my registered skills automatically injected into agent prompts during workflow execution",
+      "benefit": "agents understand my domain conventions without me needing to repeat instructions every time",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-004-01",
+          "given": "I have a skill bound to 06-implementation with delivery type 'context'",
+          "when": "the phase-loop controller delegates to the software-developer agent during a feature workflow",
+          "then": "the skill's .md content is appended to the agent's Task prompt wrapped in an EXTERNAL SKILL CONTEXT block"
+        },
+        {
+          "id": "AC-004-02",
+          "given": "I have a skill bound to 06-implementation with delivery type 'instruction'",
+          "when": "the phase-loop controller delegates to the software-developer agent",
+          "then": "the skill's .md content is injected as explicit instructions the agent must follow"
+        },
+        {
+          "id": "AC-004-03",
+          "given": "I have a skill bound to 06-implementation with delivery type 'reference'",
+          "when": "the phase-loop controller delegates to the software-developer agent",
+          "then": "a reference line is appended telling the agent the skill name and file path to read if relevant"
+        },
+        {
+          "id": "AC-004-04",
+          "given": "the skill .md file is missing from the external skills directory",
+          "when": "injection is attempted during workflow execution",
+          "then": "a warning is logged, that skill is skipped, and the workflow continues without interruption"
+        },
+        {
+          "id": "AC-004-05",
+          "given": "the external-skills-manifest.json is malformed or unreadable",
+          "when": "injection is attempted during workflow execution",
+          "then": "a warning is logged and the workflow continues with no skill injection (fail-open)"
+        },
+        {
+          "id": "AC-004-06",
+          "given": "a skill file exceeds 10000 characters",
+          "when": "injection is attempted with delivery type 'context' or 'instruction'",
+          "then": "the content is truncated with a [TRUNCATED] notice and a reference to the full file path"
+        }
+      ],
+      "linked_requirements": ["FR-005"]
+    },
+    {
+      "id": "US-005",
+      "epic": "Skill Management",
+      "persona": "Framework User",
+      "goal": "list all registered external skills and their current bindings",
+      "benefit": "I can see which skills are active and how they are configured at a glance",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-005-01",
+          "given": "I have 3 skills registered in the manifest",
+          "when": "I run '/isdlc skill list'",
+          "then": "all 3 skills are displayed with their name, bound phases, delivery type, and injection mode"
+        },
+        {
+          "id": "AC-005-02",
+          "given": "no external skills are registered",
+          "when": "I run '/isdlc skill list'",
+          "then": "a message is displayed saying no skills are registered with a hint to use '/isdlc skill add'"
+        }
+      ],
+      "linked_requirements": ["FR-006"]
+    },
+    {
+      "id": "US-006",
+      "epic": "Skill Management",
+      "persona": "Framework User",
+      "goal": "remove a registered external skill",
+      "benefit": "I can clean up skills I no longer need without manually editing config files",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-006-01",
+          "given": "I have a skill named 'nestjs-conventions' registered",
+          "when": "I run '/isdlc skill remove nestjs-conventions' and select [K] Keep file",
+          "then": "the skill is removed from the manifest but the .md file remains in the external skills directory"
+        },
+        {
+          "id": "AC-006-02",
+          "given": "I have a skill named 'nestjs-conventions' registered",
+          "when": "I run '/isdlc skill remove nestjs-conventions' and select [D] Delete file",
+          "then": "the skill is removed from the manifest and the .md file is deleted from the external skills directory"
+        },
+        {
+          "id": "AC-006-03",
+          "given": "I attempt to remove a skill that is not registered",
+          "when": "I run '/isdlc skill remove unknown-skill'",
+          "then": "an error is displayed with a suggestion to run '/isdlc skill list'"
+        }
+      ],
+      "linked_requirements": ["FR-007"]
+    },
+    {
+      "id": "US-007",
+      "epic": "Natural Language",
+      "persona": "Framework User",
+      "goal": "manage skills using natural language instead of memorizing commands",
+      "benefit": "the framework feels conversational and I do not need to look up command syntax",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-007-01",
+          "given": "I say 'add a skill' or 'register skill' in conversation",
+          "when": "the framework detects skill management intent",
+          "then": "it asks for the skill file path and proceeds to the skill add flow"
+        },
+        {
+          "id": "AC-007-02",
+          "given": "I say 'wire nestjs to implementation' in conversation",
+          "when": "the framework detects re-wiring intent",
+          "then": "it launches the wiring session for the 'nestjs' skill with implementation phase pre-selected"
+        },
+        {
+          "id": "AC-007-03",
+          "given": "I say 'list skills' or 'show my skills' in conversation",
+          "when": "the framework detects listing intent",
+          "then": "it displays the skill list (same as '/isdlc skill list')"
+        }
+      ],
+      "linked_requirements": ["FR-008"]
+    },
+    {
+      "id": "US-008",
+      "epic": "Skill Wiring",
+      "persona": "Framework User",
+      "goal": "re-wire an existing skill to different agents or phases",
+      "benefit": "I can adjust my configuration as my project evolves without removing and re-adding the skill",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-008-01",
+          "given": "I have a skill 'nestjs-conventions' bound to 06-implementation",
+          "when": "I run '/isdlc skill wire nestjs-conventions'",
+          "then": "the wiring session opens with 06-implementation pre-checked and I can add or remove bindings"
+        },
+        {
+          "id": "AC-008-02",
+          "given": "I modify bindings in a re-wiring session and select [S] Save",
+          "when": "the session completes",
+          "then": "the manifest entry for that skill is updated in-place (not duplicated)"
+        }
+      ],
+      "linked_requirements": ["FR-009"]
+    }
+  ]
+}

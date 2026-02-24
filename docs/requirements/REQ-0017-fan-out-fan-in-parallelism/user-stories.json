@@ -1,0 +1,289 @@
+{
+  "feature": "REQ-0017: Fan-Out/Fan-In Parallelism",
+  "version": "1.0.0",
+  "created": "2026-02-15",
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Parallel test execution in Quality Loop",
+      "persona": "Framework developer",
+      "story": "As a framework developer working on a project with 1000+ tests, I want Phase 16 to split my test suite across multiple parallel agents so that test execution completes faster without me changing my workflow.",
+      "priority": "P0",
+      "acceptance_criteria": [
+        {
+          "id": "AC-005-01",
+          "given": "A test suite of T tests where T >= 250",
+          "when": "Phase 16 Quality Loop begins Track A execution",
+          "then": "The test suite is split into N chunks (N = ceil(T/250), max 8) and each chunk is assigned to a parallel agent"
+        },
+        {
+          "id": "AC-005-02",
+          "given": "N chunk agents running in parallel",
+          "when": "Each agent completes its test chunk",
+          "then": "Each agent reports pass count, fail count, skip count, coverage data, and execution time"
+        },
+        {
+          "id": "AC-005-03",
+          "given": "All chunk agents have completed",
+          "when": "The Quality Loop agent merges results",
+          "then": "The merged report matches the existing Quality Loop report format and passes gate validation"
+        },
+        {
+          "id": "AC-005-04",
+          "given": "One or more chunk agents report test failures",
+          "when": "Results are merged",
+          "then": "All failures bubble up to the overall result (no failures are hidden)"
+        },
+        {
+          "id": "AC-005-07",
+          "given": "A test suite with fewer than 250 tests",
+          "when": "Phase 16 Quality Loop begins",
+          "then": "Fan-out is skipped transparently and the existing single-agent path is used"
+        }
+      ],
+      "functional_requirements": ["FR-001", "FR-002", "FR-003", "FR-004", "FR-005"],
+      "nfr_references": ["NFR-001", "NFR-002", "NFR-003"]
+    },
+    {
+      "id": "US-002",
+      "title": "Parallel code review for large changesets",
+      "persona": "Framework developer",
+      "story": "As a framework developer with a large changeset (20+ files), I want Phase 08 to split the changed files across multiple reviewer agents so that the code review report is comprehensive and assembled quickly.",
+      "priority": "P0",
+      "acceptance_criteria": [
+        {
+          "id": "AC-006-01",
+          "given": "A changeset of F files where F >= 5",
+          "when": "Phase 08 Code Review begins",
+          "then": "The files are split into N chunks using group-by-directory strategy (N = ceil(F/7), max 8)"
+        },
+        {
+          "id": "AC-006-02",
+          "given": "N chunk reviewer agents running in parallel",
+          "when": "Each agent completes its file review",
+          "then": "Each agent has reviewed for logic correctness, security, code quality, constitutional compliance, and test coverage"
+        },
+        {
+          "id": "AC-006-04",
+          "given": "All chunk reviewers have completed",
+          "when": "The Code Review agent merges findings",
+          "then": "The merged code-review-report.md passes existing Phase 08 gate validation"
+        },
+        {
+          "id": "AC-006-05",
+          "given": "Multiple chunk agents find the same issue in overlapping file regions",
+          "when": "Results are merged",
+          "then": "Duplicate findings are detected and removed (same file + overlapping line range + same category)"
+        },
+        {
+          "id": "AC-006-06",
+          "given": "A changeset with fewer than 5 files",
+          "when": "Phase 08 Code Review begins",
+          "then": "Fan-out is skipped transparently and the existing single-agent review is used"
+        }
+      ],
+      "functional_requirements": ["FR-001", "FR-002", "FR-003", "FR-004", "FR-006"],
+      "nfr_references": ["NFR-001", "NFR-002", "NFR-003"]
+    },
+    {
+      "id": "US-003",
+      "title": "Reusable fan-out/fan-in engine",
+      "persona": "Framework maintainer",
+      "story": "As a framework maintainer, I want the fan-out/fan-in logic to be a shared, reusable module so that future phases can adopt parallelism without duplicating infrastructure code.",
+      "priority": "P0",
+      "acceptance_criteria": [
+        {
+          "id": "AC-001-01",
+          "given": "A list of W work items and a target of N agents",
+          "when": "The chunk splitter is invoked",
+          "then": "It produces N lists of approximately W/N items each with remainder distributed round-robin"
+        },
+        {
+          "id": "AC-001-02",
+          "given": "N chunk definitions and agent prompts",
+          "when": "The parallel Task spawner is invoked",
+          "then": "N Task calls are launched simultaneously in a single response"
+        },
+        {
+          "id": "AC-001-03",
+          "given": "N agent task results (potentially in any order)",
+          "when": "The result merger is invoked",
+          "then": "A single unified result is produced combining all N outputs"
+        },
+        {
+          "id": "AC-001-04",
+          "given": "The fan-out engine code",
+          "when": "Examining the module location",
+          "then": "It is implemented as a reusable module under src/claude/ (not embedded in a phase-specific agent)"
+        },
+        {
+          "id": "AC-001-05",
+          "given": "1 of N agents fails during execution",
+          "when": "The engine collects results",
+          "then": "The remaining N-1 results are collected and the failure is reported as a degraded result"
+        }
+      ],
+      "functional_requirements": ["FR-001", "FR-002", "FR-003", "FR-004"],
+      "nfr_references": ["NFR-001", "NFR-002"]
+    },
+    {
+      "id": "US-004",
+      "title": "Chunk splitting strategies",
+      "persona": "Framework maintainer",
+      "story": "As a framework maintainer, I want configurable chunk splitting strategies so that different phase consumers can split work in the most appropriate way for their domain.",
+      "priority": "P1",
+      "acceptance_criteria": [
+        {
+          "id": "AC-002-01",
+          "given": "A list of 1000 items and N=4",
+          "when": "Round-robin splitting is used",
+          "then": "Four chunks of 250 items each are produced"
+        },
+        {
+          "id": "AC-002-02",
+          "given": "A list of files in multiple directories",
+          "when": "Group-by-directory splitting is used",
+          "then": "Files in the same directory are kept together in the same chunk"
+        },
+        {
+          "id": "AC-002-03",
+          "given": "A request for 12 chunks",
+          "when": "The maximum chunk count is 8",
+          "then": "Only 8 chunks are produced (capped at maximum)"
+        },
+        {
+          "id": "AC-002-04",
+          "given": "20 items and a minimum of 10 items per chunk",
+          "when": "Splitting is requested with N=4",
+          "then": "Only 2 chunks are produced (minimum items-per-chunk enforced)"
+        },
+        {
+          "id": "AC-002-05",
+          "given": "Any chunk produced by the splitter",
+          "when": "Examining chunk metadata",
+          "then": "Each chunk includes: chunk index, item count, and estimated relative weight"
+        }
+      ],
+      "functional_requirements": ["FR-002"],
+      "nfr_references": ["NFR-001"]
+    },
+    {
+      "id": "US-005",
+      "title": "Result deduplication and prioritization",
+      "persona": "Framework developer",
+      "story": "As a framework developer, I want the merged review report to have deduplicated, priority-sorted findings so that I can focus on the most important issues without reading redundant entries.",
+      "priority": "P1",
+      "acceptance_criteria": [
+        {
+          "id": "AC-004-02",
+          "given": "N review finding sets from parallel agents",
+          "when": "The merger combines them",
+          "then": "Findings are sorted by severity: critical > high > medium > low"
+        },
+        {
+          "id": "AC-004-03",
+          "given": "Two agents report the same issue on the same file and line range",
+          "when": "Deduplication runs",
+          "then": "Only one copy is retained (the more detailed one if descriptions differ)"
+        },
+        {
+          "id": "AC-004-04",
+          "given": "A merged result",
+          "when": "Examining any finding",
+          "then": "The source chunk index is preserved for traceability"
+        },
+        {
+          "id": "AC-006-07",
+          "given": "An API contract change affecting files in multiple chunks",
+          "when": "Results are merged",
+          "then": "A separate cross-cutting concerns section flags the cross-file impact"
+        }
+      ],
+      "functional_requirements": ["FR-004", "FR-006"],
+      "nfr_references": ["NFR-002"]
+    },
+    {
+      "id": "US-006",
+      "title": "Fan-out configuration and overrides",
+      "persona": "Framework maintainer",
+      "story": "As a framework maintainer, I want to configure fan-out parameters (thresholds, max agents, strategies) so that I can tune parallelism for different project sizes and hardware constraints.",
+      "priority": "P1",
+      "acceptance_criteria": [
+        {
+          "id": "AC-007-01",
+          "given": "A project with custom fan-out settings in state.json",
+          "when": "Phase 16 or Phase 08 begins",
+          "then": "The custom settings (tests per agent, files per agent, max agents) are used instead of defaults"
+        },
+        {
+          "id": "AC-007-02",
+          "given": "A workflow with fan-out overrides in workflows.json agent_modifiers",
+          "when": "The workflow starts",
+          "then": "The workflow-level overrides take precedence over state.json defaults"
+        },
+        {
+          "id": "AC-007-03",
+          "given": "A workflow started with --no-fan-out flag",
+          "when": "Phase 16 or Phase 08 would normally fan out",
+          "then": "Fan-out is disabled and single-agent execution is used instead"
+        },
+        {
+          "id": "AC-007-04",
+          "given": "Fan-out configuration is changed in state.json",
+          "when": "A workflow is already in progress",
+          "then": "The change takes effect on the next workflow start, not mid-workflow"
+        }
+      ],
+      "functional_requirements": ["FR-007"],
+      "nfr_references": ["NFR-003"]
+    },
+    {
+      "id": "US-007",
+      "title": "Fan-out observability and logging",
+      "persona": "Framework maintainer",
+      "story": "As a framework maintainer, I want fan-out execution to be fully observable in skill_usage_log and gate reports so that I can diagnose performance issues and verify correct behavior.",
+      "priority": "P1",
+      "acceptance_criteria": [
+        {
+          "id": "AC-004-05",
+          "given": "A fan-out execution completes",
+          "when": "Examining the merged result summary",
+          "then": "The summary includes: total items processed, total agents used, wall-clock time, per-agent execution time, and any failures/timeouts"
+        },
+        {
+          "id": "AC-NFR-004-01",
+          "given": "A fan-out execution occurs",
+          "when": "Examining skill_usage_log in state.json",
+          "then": "The log entry includes chunk count, items per chunk, execution times, and merge outcome"
+        },
+        {
+          "id": "AC-NFR-004-02",
+          "given": "Phase 16 or Phase 08 used fan-out",
+          "when": "Examining the gate validation report",
+          "then": "A Parallelism Summary section is present with agent count, chunk sizes, and timing data"
+        }
+      ],
+      "functional_requirements": ["FR-004"],
+      "nfr_references": ["NFR-004"]
+    }
+  ],
+  "traceability": {
+    "total_stories": 7,
+    "total_acceptance_criteria": 33,
+    "fr_coverage": {
+      "FR-001": ["US-003"],
+      "FR-002": ["US-003", "US-004"],
+      "FR-003": ["US-003"],
+      "FR-004": ["US-003", "US-005", "US-007"],
+      "FR-005": ["US-001"],
+      "FR-006": ["US-002", "US-005"],
+      "FR-007": ["US-006"]
+    },
+    "nfr_coverage": {
+      "NFR-001": ["US-001", "US-002", "US-003", "US-004"],
+      "NFR-002": ["US-001", "US-002", "US-003", "US-005"],
+      "NFR-003": ["US-001", "US-002", "US-006"],
+      "NFR-004": ["US-007"]
+    }
+  }
+}

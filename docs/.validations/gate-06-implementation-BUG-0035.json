@@ -1,0 +1,62 @@
+{
+  "gate": "GATE-06",
+  "phase": "06-implementation",
+  "workflow": "fix",
+  "artifact_folder": "BUG-0035-GH-81-82-83",
+  "timestamp": "2026-02-23T19:10:00.000Z",
+  "status": "PASSED",
+  "checklist": {
+    "all_features_implemented": {
+      "status": "pass",
+      "detail": "FR-01 (string-schema resolution), FR-02 (dual-path), FR-03 (fixture alignment) all implemented"
+    },
+    "unit_test_coverage": {
+      "status": "pass",
+      "detail": "27/27 BUG-0035 tests pass, 40/40 skill-injection tests pass"
+    },
+    "all_tests_passing": {
+      "status": "pass",
+      "detail": "2530/2536 hooks pass; 6 pre-existing failures in delegation-gate, gate-blocker-extended, workflow-completion-enforcer (unrelated)"
+    },
+    "code_follows_standards": {
+      "status": "pass",
+      "detail": "CJS module, fail-open pattern, JSDoc comments, no new dependencies"
+    },
+    "implementation_matches_design": {
+      "status": "pass",
+      "detail": "Dual-schema detection, reverse path_lookup index, skill_id frontmatter extraction, .claude/ precedence"
+    },
+    "code_documentation": {
+      "status": "pass",
+      "detail": "Updated JSDoc on getAgentSkillIndex(), implementation-notes.md written"
+    },
+    "constraints_satisfied": {
+      "CON-01_manifest_unchanged": true,
+      "CON-02_fail_open_preserved": true,
+      "CON-03_signature_unchanged": true,
+      "CON-04_cjs_module": true,
+      "CON-05_no_git_commit": true
+    }
+  },
+  "test_results": {
+    "test_bug_0035": { "total": 27, "pass": 27, "fail": 0 },
+    "skill_injection": { "total": 40, "pass": 40, "fail": 0 },
+    "full_hooks_suite": { "total": 2536, "pass": 2530, "fail": 6, "pre_existing": 6 }
+  },
+  "files_modified": [
+    "src/claude/hooks/lib/common.cjs",
+    "src/claude/hooks/tests/skill-injection.test.cjs"
+  ],
+  "files_created": [
+    "docs/requirements/BUG-0035-GH-81-82-83/implementation-notes.md"
+  ],
+  "iterations": {
+    "total": 3,
+    "max": 10,
+    "outcome": "success"
+  },
+  "phase_timing": {
+    "debate_rounds_used": 0,
+    "fan_out_chunks": 0
+  }
+}

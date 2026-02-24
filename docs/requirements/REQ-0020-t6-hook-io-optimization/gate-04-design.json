@@ -1,0 +1,123 @@
+{
+  "gate": "GATE-03",
+  "phase": "04-design",
+  "feature": "REQ-0020",
+  "feature_name": "T6 Hook I/O Optimization",
+  "validated_at": "2026-02-16T21:05:00Z",
+  "status": "PASS",
+
+  "checklist": {
+    "interface_specification_complete": {
+      "status": "N/A",
+      "justification": "Internal refactoring of CommonJS hooks. No new APIs, CLIs, or external interfaces. Module design document serves as internal function interface specification with exact before/after signatures.",
+      "artifact": "docs/requirements/REQ-0020-t6-hook-io-optimization/module-design.md"
+    },
+    "all_modules_designed": {
+      "status": "PASS",
+      "details": "3 modules designed: common.cjs caching layer (FR-001/FR-002), state-write-validator consolidation (FR-003), gate-blocker passthrough (FR-004). FR-005 verified as already implemented.",
+      "artifact": "docs/requirements/REQ-0020-t6-hook-io-optimization/module-design.md"
+    },
+    "ui_wireframes_exist": {
+      "status": "N/A",
+      "justification": "No UI components. Pure backend hook optimization."
+    },
+    "user_flows_documented": {
+      "status": "N/A",
+      "justification": "No user-facing flows. Data flow diagram provided in module-design.md Section 6 showing before/after I/O patterns."
+    },
+    "error_taxonomy_complete": {
+      "status": "PASS",
+      "details": "30 error conditions documented across 5 categories: cache errors (CACHE-001..007), root cache (ROOT-001..003), disk state (DISK-001..004), version lock (V7-NULL..NOVERSION), phase protection (V8-NULL..NOAW), content source (V1V3-WRITE..EMPTY), context passthrough (CTX-001..003). All follow fail-open pattern.",
+      "artifact": "docs/requirements/REQ-0020-t6-hook-io-optimization/error-taxonomy.md"
+    },
+    "validation_rules_defined": {
+      "status": "PASS",
+      "details": "26 validation rules across 7 categories: cache key (CK-001..003), cache entry (CE-001..003), project root (PR-001..003), disk state (DS-001..004), manifest passthrough (MP-001..002), batch write (BW-001..003), mtime comparison (MT-001..002).",
+      "artifact": "docs/requirements/REQ-0020-t6-hook-io-optimization/validation-rules.json"
+    },
+    "designs_cover_all_requirements": {
+      "status": "PASS",
+      "details": "FR-001 (config caching): Section 2.3-2.6. FR-002 (getProjectRoot caching): Section 2.2. FR-003 (state read consolidation): Section 3. FR-004 (context passthrough): Section 4. FR-005 (batch write verification): Section 5. All 19 ACs traced in Section 8.",
+      "artifact": "docs/requirements/REQ-0020-t6-hook-io-optimization/module-design.md"
+    },
+    "interface_contracts_reviewed": {
+      "status": "PASS",
+      "details": "Function signature changes documented: checkVersionLock (+diskState param), checkPhaseFieldProtection (+diskState param), checkAgentDelegationRequirement (+manifest param). All existing signatures preserved with optional new parameters. No breaking changes.",
+      "artifact": "docs/requirements/REQ-0020-t6-hook-io-optimization/component-spec.md"
+    }
+  },
+
+  "constitutional_validation": {
+    "iteration": 1,
+    "max_iterations": 5,
+    "articles_checked": [
+      {
+        "article": "I",
+        "name": "Specification Primacy",
+        "status": "PASS",
+        "evidence": "Traceability matrix in module-design.md Section 8 maps every design element to FR/AC/ADR/file:line"
+      },
+      {
+        "article": "IV",
+        "name": "Explicit Over Implicit",
+        "status": "PASS",
+        "evidence": "All cache behavior, null handling, fallback patterns, and error conditions documented explicitly. No NEEDS CLARIFICATION markers."
+      },
+      {
+        "article": "V",
+        "name": "Simplicity First",
+        "status": "PASS",
+        "evidence": "Module-level let/Map for caching. No external libraries. _loadConfigWithCache is ~25 lines. diskState is a simple parameter addition."
+      },
+      {
+        "article": "VII",
+        "name": "Artifact Traceability",
+        "status": "PASS",
+        "evidence": "Module design Section 8, error taxonomy Section 6, validation rules all contain FR/AC references. Every design element traces to a requirement."
+      },
+      {
+        "article": "IX",
+        "name": "Quality Gate Integrity",
+        "status": "PASS",
+        "evidence": "All applicable GATE-03 items pass. N/A items justified (no API/UI/user flows for internal refactoring)."
+      }
+    ],
+    "violations_found": 0,
+    "compliant": true
+  },
+
+  "artifacts_produced": [
+    {
+      "path": "docs/requirements/REQ-0020-t6-hook-io-optimization/module-design.md",
+      "description": "Complete module design with before/after code, data flow diagrams, and traceability matrix",
+      "size_lines": 450
+    },
+    {
+      "path": "docs/requirements/REQ-0020-t6-hook-io-optimization/error-taxonomy.md",
+      "description": "Error taxonomy covering all cache, disk read, and passthrough error conditions",
+      "size_lines": 135
+    },
+    {
+      "path": "docs/requirements/REQ-0020-t6-hook-io-optimization/validation-rules.json",
+      "description": "26 validation rules across 7 categories",
+      "size_lines": 160
+    },
+    {
+      "path": "docs/requirements/REQ-0020-t6-hook-io-optimization/component-spec.md",
+      "description": "Component specifications for cache helper, project root cache, diskState pattern, manifest passthrough",
+      "size_lines": 170
+    }
+  ],
+
+  "implementation_notes": {
+    "implementation_order": "FR-002 -> FR-001 -> FR-003 -> FR-004 -> FR-005 (verification)",
+    "files_to_modify": [
+      "src/claude/hooks/lib/common.cjs",
+      "src/claude/hooks/state-write-validator.cjs",
+      "src/claude/hooks/gate-blocker.cjs"
+    ],
+    "estimated_loc_change": "+90 / -57 (net +33)",
+    "breaking_changes": "None. All function signatures maintain backward compatibility.",
+    "test_impact": "Existing 1300+ tests should pass without modification. New tests needed for cache behavior."
+  }
+}

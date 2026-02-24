@@ -1,0 +1,36 @@
+Requirement,AC,Test Case,Test Type,Priority
+FR-001,AC-001-01,TC-R33-01.1: isdlc.md contains SKILL INJECTION STEP A header,positive,P0
+FR-001,AC-001-01,TC-R33-01.2: STEP A references getAgentSkillIndex function,positive,P0
+FR-001,AC-001-01,TC-R33-01.3: STEP A references formatSkillIndexBlock function,positive,P0
+FR-001,AC-001-01 AC-004-04,TC-R33-01.4: STEP A contains node -e Bash command for skill lookup,positive,P0
+FR-002,AC-002-01,TC-R33-02.1: isdlc.md contains SKILL INJECTION STEP B header,positive,P0
+FR-002,AC-002-01,TC-R33-02.2: STEP B references external-skills-manifest.json,positive,P0
+FR-002,AC-002-05 AC-002-06 AC-002-07,TC-R33-02.3: STEP B specifies delivery type formatting rules,positive,P1
+FR-002,AC-002-04 NFR-006,TC-R33-02.4: STEP B specifies 10000-char truncation rule,positive,P1
+FR-003,AC-003-01 AC-003-02,TC-R33-03.1: isdlc.md contains SKILL INJECTION STEP C header,positive,P0
+FR-003,AC-003-02 AC-003-03,TC-R33-03.2: STEP C references built_in_skills_block variable,positive,P0
+FR-003,AC-003-02 AC-003-04,TC-R33-03.3: STEP C references external_skills_blocks variable,positive,P0
+FR-004,AC-004-01,TC-R33-04.1: SKILL INJECTION STEP A appears as imperative instruction before template,positive,P0
+FR-004,AC-004-02,TC-R33-04.2: SKILL INJECTION STEP B appears as imperative instruction before template,positive,P0
+FR-004,AC-004-01 AC-004-02,TC-R33-04.3: Template contains short reference placeholders instead of long curly-brace blocks,negative,P0
+FR-003,AC-003-02,TC-R33-05.1: STEP A appears before STEP B,positive,P0
+FR-003,AC-003-02,TC-R33-05.2: STEP B appears before STEP C,positive,P0
+FR-003 FR-004,,TC-R33-05.3: All skill injection steps appear after WORKFLOW MODIFIERS,positive,P1
+FR-003 FR-004,,TC-R33-05.4: Skill injection appears after discovery context,positive,P1
+FR-003,AC-003-02,TC-R33-05.5: GATE REQUIREMENTS INJECTION appears after skill references in template,positive,P1
+FR-001 FR-006,AC-001-02 AC-001-03 AC-006-01 AC-006-04,TC-R33-06.1: STEP A includes fail-open handling for Bash failure,positive,P0
+FR-002 FR-006,AC-002-02 AC-006-02,TC-R33-06.2: STEP B header declares fail-open semantics,positive,P0
+FR-002 FR-006,AC-002-03 AC-006-03,TC-R33-06.3: STEP B includes file-not-found handling for individual skills,positive,P0
+FR-005,AC-005-02 AC-005-03,TC-R33-07.1: STEP B specifies monorepo manifest path,positive,P1
+FR-005,AC-005-01,TC-R33-07.2: STEP B specifies single-project manifest path,positive,P1
+FR-003,AC-003-05,TC-R33-06.1 + TC-R33-03.2 + TC-R33-03.3 (composite): Both empty = no skill content,positive,P1
+CON-006,,TC-R33-08.1: GATE REQUIREMENTS INJECTION block still present and intact,negative,P0
+CON-006,,TC-R33-08.2: BUDGET DEGRADATION INJECTION block still present and intact,negative,P0
+CON-006,,TC-R33-08.3: Validate GATE instruction still present at end of template,negative,P1
+FR-004,,TC-R33-09.1: TC-09.1 asserts SKILL INJECTION STEP A (not old SKILL INDEX BLOCK),positive,P0
+FR-004,,TC-R33-09.2: TC-09.4 test exists for external skill injection,positive,P0
+FR-004,,TC-R33-09.3: TC-09.5 test exists for fail-open language,positive,P1
+FR-004,,TC-R33-09.4: TC-09.6 test exists for assembly step,positive,P1
+NFR-001 NFR-004,AC-004-04,TC-R33-10.1: STEP A uses process.stdout.write for clean output,positive,P2
+NFR-004,,TC-R33-10.2: STEP A references common.cjs path correctly,positive,P2
+NFR-004,,TC-R33-10.3: STEP B specifies binding filter criteria,positive,P2

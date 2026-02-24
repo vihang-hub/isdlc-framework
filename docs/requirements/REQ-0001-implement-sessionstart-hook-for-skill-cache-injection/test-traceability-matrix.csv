@@ -1,0 +1,89 @@
+Requirement,AC,Test Case,Test Type,Priority,Test File,Description
+FR-001,AC-001-01,TC-BUILD-01,positive,P0,test-session-cache-builder.test.cjs,Produces valid cache file with all sections
+FR-001,AC-001-01,TC-BUILD-06,positive,P1,test-session-cache-builder.test.cjs,Constitution section contains raw file content
+FR-001,AC-001-01,TC-BUILD-07,positive,P1,test-session-cache-builder.test.cjs,Workflow config section contains raw JSON
+FR-001,AC-001-01,TC-BUILD-09,positive,P1,test-session-cache-builder.test.cjs,Skill index section contains per-agent blocks
+FR-001,AC-001-01,TC-BUILD-11,positive,P1,test-session-cache-builder.test.cjs,Roundtable context includes persona files
+FR-001,AC-001-01,TC-BUILD-12,positive,P1,test-session-cache-builder.test.cjs,Roundtable context includes topic files
+FR-001,AC-001-02,TC-BUILD-02,positive,P0,test-session-cache-builder.test.cjs,Cache file contains all 8 section delimiters
+FR-001,AC-001-02,TC-BUILD-08,positive,P1,test-session-cache-builder.test.cjs,Skills manifest section excludes path_lookup/skill_paths
+FR-001,AC-001-03,TC-BUILD-03,positive,P0,test-session-cache-builder.test.cjs,Cache header contains timestamp + source count + hash
+FR-001,AC-001-04,TC-BUILD-04,positive,P0,test-session-cache-builder.test.cjs,Missing source files produce SKIPPED markers
+FR-001,AC-001-04,TC-BUILD-10,negative,P1,test-session-cache-builder.test.cjs,All source files missing produces minimal valid cache
+FR-001,AC-001-04,TC-BUILD-15,negative,P2,test-session-cache-builder.test.cjs,External skills section with missing manifest
+FR-001,AC-001-05,TC-BUILD-13,negative,P1,test-session-cache-builder.test.cjs,Size budget warning emitted when cache exceeds 128K
+FR-001,--,TC-BUILD-05,negative,P0,test-session-cache-builder.test.cjs,Missing .isdlc/ directory throws CACHE-001
+FR-001,--,TC-BUILD-14,positive,P2,test-session-cache-builder.test.cjs,Idempotent -- two calls produce identical output
+FR-002,AC-002-01,TC-HOOK-01,positive,P0,test-inject-session-cache.test.cjs,Outputs cache file content to stdout when cache exists
+FR-002,AC-002-02,TC-HOOK-02,negative,P0,test-inject-session-cache.test.cjs,Produces no output when cache file missing
+FR-002,AC-002-03,TC-HOOK-03,negative,P0,test-inject-session-cache.test.cjs,Produces no output when cache file unreadable
+FR-002,AC-002-04,TC-REG-02,positive,P0,test-session-cache-builder.test.cjs,Matchers use startup/resume pattern NOT compact
+FR-002,AC-002-05,TC-HOOK-06,positive,P1,test-inject-session-cache.test.cjs,Completes within 5000ms timeout
+FR-002,--,TC-HOOK-04,positive,P2,test-inject-session-cache.test.cjs,Outputs empty string for empty cache file
+FR-002,--,TC-HOOK-05,positive,P1,test-inject-session-cache.test.cjs,Falls back to process.cwd() when CLAUDE_PROJECT_DIR unset
+FR-002,--,TC-HOOK-07,positive,P1,test-inject-session-cache.test.cjs,Hook is self-contained (no common.cjs dependency)
+FR-002,--,TC-HOOK-08,positive,P1,test-inject-session-cache.test.cjs,Never writes to stderr
+FR-003,AC-003-01,TC-REG-01,positive,P0,test-session-cache-builder.test.cjs,settings.json contains SessionStart entries
+FR-003,AC-003-02,TC-REG-02,positive,P0,test-session-cache-builder.test.cjs,Matchers use startup/resume pattern NOT compact
+FR-003,AC-003-03,TC-REG-03,positive,P1,test-session-cache-builder.test.cjs,Timeout is 5000ms
+FR-004,AC-004-01,TC-CLI-01,positive,P0,test-rebuild-cache-cli.test.cjs,Reports success with path size hash
+FR-004,AC-004-02,TC-CLI-02,negative,P0,test-rebuild-cache-cli.test.cjs,Reports failure when run outside iSDLC project
+FR-004,AC-004-03,TC-CLI-01,positive,P0,test-rebuild-cache-cli.test.cjs,CLI prints cache file path and size
+FR-004,AC-004-03,TC-CLI-05,positive,P2,test-rebuild-cache-cli.test.cjs,Reports skipped sections
+FR-004,--,TC-CLI-03,positive,P2,test-rebuild-cache-cli.test.cjs,Supports --verbose flag
+FR-004,--,TC-CLI-04,positive,P1,test-rebuild-cache-cli.test.cjs,Uses createRequire to bridge ESM/CJS boundary
+FR-004,--,TC-CLI-06,positive,P3,test-rebuild-cache-cli.test.cjs,Supports -v shorthand for verbose
+FR-004,--,TC-CLI-07,negative,P2,test-rebuild-cache-cli.test.cjs,Exit code 1 when common.cjs not loadable
+FR-005,AC-005-01,TC-CONS-01,positive,P0,test-session-cache-integration.test.cjs,CONSTITUTION section extractable from cache
+FR-005,AC-005-02,TC-CONS-02,positive,P0,test-session-cache-integration.test.cjs,WORKFLOW_CONFIG section extractable
+FR-005,AC-005-03,TC-CONS-03,positive,P1,test-session-cache-integration.test.cjs,ITERATION_REQUIREMENTS section extractable
+FR-005,AC-005-04,TC-CONS-04,positive,P0,test-session-cache-integration.test.cjs,SKILL_INDEX section agent block extractable
+FR-005,AC-005-05,TC-CONS-05,positive,P1,test-session-cache-integration.test.cjs,EXTERNAL_SKILLS section extractable
+FR-005,AC-005-06,TC-CONS-06,negative,P0,test-session-cache-integration.test.cjs,Fail-open: missing section returns null
+FR-005,AC-005-06,TC-CONS-07,negative,P1,test-session-cache-integration.test.cjs,Fail-open: SKIPPED section returns null
+FR-006,AC-006-01,TC-RT-01,positive,P0,test-session-cache-integration.test.cjs,ROUNDTABLE_CONTEXT persona extraction
+FR-006,AC-006-02,TC-RT-02,positive,P0,test-session-cache-integration.test.cjs,ROUNDTABLE_CONTEXT topic extraction
+FR-006,AC-006-03,TC-RT-03,negative,P0,test-session-cache-integration.test.cjs,Fail-open: missing ROUNDTABLE_CONTEXT section
+FR-006,AC-006-04,TC-RT-04,positive,P1,test-session-cache-integration.test.cjs,Multiple personas and topics extractable independently
+FR-007,AC-007-01,TC-TRIG-01,positive,P1,test-session-cache-integration.test.cjs,Cache rebuilt after /discover
+FR-007,AC-007-02,TC-TRIG-02,positive,P1,test-session-cache-integration.test.cjs,Cache rebuilt after skill add
+FR-007,AC-007-03,TC-TRIG-03,positive,P1,test-session-cache-integration.test.cjs,Cache rebuilt after skill remove
+FR-007,AC-007-04,TC-TRIG-04,positive,P2,test-session-cache-integration.test.cjs,Cache rebuilt after skill wire
+FR-007,AC-007-05,TC-TRIG-05,positive,P1,test-session-cache-integration.test.cjs,Cache rebuilt after isdlc init
+FR-007,AC-007-05,TC-INT-10,positive,P1,test-session-cache-integration.test.cjs,installer.js calls rebuildSessionCache after init
+FR-007,AC-007-05,TC-INT-11,negative,P1,test-session-cache-integration.test.cjs,Cache rebuild failure does not block installation
+FR-007,AC-007-06,TC-TRIG-06,positive,P2,test-session-cache-integration.test.cjs,Cache rebuilt after isdlc update
+FR-007,AC-007-06,TC-INT-12,positive,P2,test-session-cache-integration.test.cjs,Cache rebuilt after isdlc update
+FR-008,AC-008-01,TC-MAN-01,positive,P0,test-session-cache-builder.test.cjs,skills-manifest.json has no path_lookup key
+FR-008,AC-008-02,TC-MAN-02,positive,P0,test-session-cache-builder.test.cjs,skills-manifest.json has no skill_paths key
+FR-008,AC-008-03,TC-MAN-03,positive,P0,test-session-cache-builder.test.cjs,Existing hooks still function after manifest cleanup
+FR-008,AC-008-03,TC-INT-13,positive,P0,test-session-cache-integration.test.cjs,skill-validator.cjs works without path_lookup
+FR-008,AC-008-03,TC-INT-14,positive,P1,test-session-cache-integration.test.cjs,log-skill-usage.cjs works without path_lookup
+FR-008,AC-008-03,TC-INT-15,positive,P0,test-session-cache-integration.test.cjs,getAgentSkillIndex + rebuildSessionCache e2e without path_lookup
+FR-008,--,TC-SKILL-04,positive,P0,test-session-cache-builder.test.cjs,getAgentSkillIndex does NOT use path_lookup field
+FR-009,AC-009-01,TC-SRC-01,positive,P1,test-session-cache-builder.test.cjs,Source field discover included in manifest entry
+FR-009,AC-009-02,TC-SRC-04,positive,P2,test-session-cache-builder.test.cjs,Source field skills.sh included
+FR-009,AC-009-03,TC-SRC-02,positive,P1,test-session-cache-builder.test.cjs,Source field user included in manifest entry
+FR-009,AC-009-04,TC-SRC-03,negative,P1,test-session-cache-builder.test.cjs,Missing source field treated as unknown
+FR-009,--,TC-INT-16,positive,P1,test-session-cache-integration.test.cjs,Source field persists through cache build cycle
+FR-009,--,TC-INT-17,positive,P1,test-session-cache-integration.test.cjs,Mixed source/no-source entries handled correctly
+FR-009,--,TC-INT-18,negative,P2,test-session-cache-integration.test.cjs,Empty external manifest produces skipped section
+NFR-003,--,TC-HOOK-06,positive,P1,test-inject-session-cache.test.cjs,Hook execution time < 5000ms
+NFR-004,--,PERF-BUILD,positive,P2,test-session-cache-builder.test.cjs,Cache build time < 10s
+NFR-005,--,TC-HOOK-02,negative,P0,test-inject-session-cache.test.cjs,Fail-open: cache missing
+NFR-005,--,TC-HOOK-03,negative,P0,test-inject-session-cache.test.cjs,Fail-open: cache unreadable
+NFR-005,--,TC-CONS-06,negative,P0,test-session-cache-integration.test.cjs,Fail-open: missing section returns null
+NFR-005,--,TC-RT-03,negative,P0,test-session-cache-integration.test.cjs,Fail-open: missing ROUNDTABLE_CONTEXT
+NFR-005,--,TC-E2E-04,positive,P0,test-session-cache-e2e.test.cjs,Complete workflow without cache
+NFR-005,--,TC-E2E-05,positive,P1,test-session-cache-e2e.test.cjs,Cache deleted mid-lifecycle
+NFR-006,--,TC-BUILD-03,positive,P0,test-session-cache-builder.test.cjs,Cache header hash for staleness detection
+NFR-006,--,TC-MTIME-03,positive,P1,test-session-cache-builder.test.cjs,Hash deterministic for same file state
+NFR-006,--,TC-MTIME-04,positive,P1,test-session-cache-builder.test.cjs,Hash changes when file mtime changes
+NFR-007,--,TC-BUILD-02,positive,P0,test-session-cache-builder.test.cjs,Section delimiters parseable
+NFR-008,--,TC-HOOK-07,positive,P1,test-inject-session-cache.test.cjs,Hook uses .cjs + CommonJS
+NFR-009,--,TC-BUILD-13,negative,P1,test-session-cache-builder.test.cjs,Size budget warning when > 128K
+NFR-010,--,TC-E2E-04,positive,P0,test-session-cache-e2e.test.cjs,Backward compat: workflow without cache
+NFR-010,--,TC-CONS-06,negative,P0,test-session-cache-integration.test.cjs,Fail-open for each consumer
+SECURITY,--,TC-SEC-01,negative,P1,test-session-cache-builder.test.cjs,Path traversal in skill paths blocked
+SECURITY,--,TC-SEC-02,negative,P1,test-session-cache-builder.test.cjs,Cache output has no secrets
+SECURITY,--,TC-INDEX-12,negative,P1,test-session-cache-builder.test.cjs,Skill path index no escape from project root

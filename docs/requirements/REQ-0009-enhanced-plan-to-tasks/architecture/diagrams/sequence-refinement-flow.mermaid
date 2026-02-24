@@ -1,0 +1,44 @@
+%% Sequence Diagram: Task Refinement Flow
+%% Post-GATE-04, Pre-Phase 06
+%% Traces: FR-04, AC-04a through AC-04g
+
+sequenceDiagram
+    participant PL as Phase-Loop Controller<br/>(isdlc.md)
+    participant Orch as Orchestrator<br/>(Agent 00)
+    participant State as state.json
+    participant Tasks as tasks.md
+    participant Design as Design Artifacts
+    participant Reqs as requirements-spec.md
+    participant Log as task-refinement-log.md
+
+    Note over PL: GATE-04 passes for design phase
+
+    PL->>State: Read active_workflow
+    State-->>PL: current_phase=04-design (completed)
+
+    PL->>PL: Check: design just completed?<br/>AND workflow has 06-implementation?
+    Note over PL: YES -- trigger refinement
+
+    PL->>Orch: Invoke Section 3c: Task Refinement
+
+    Orch->>Tasks: Read current tasks.md
+    Tasks-->>Orch: High-level Phase 06 tasks
+
+    Orch->>Design: Read interface-spec.md
+    Design-->>Orch: API contracts, file targets
+
+    Orch->>Design: Read module-designs/
+    Design-->>Orch: Module -> file mappings
+
+    Orch->>Reqs: Read requirements-spec.md
+    Reqs-->>Orch: REQ-NNN -> AC-NNx mapping
+
+    Note over Orch: Refinement Algorithm:<br/>1. Map modules to files<br/>2. Generate file-level tasks<br/>3. Add traces, dependencies<br/>4. Validate acyclicity<br/>5. Compute critical path
+
+    Orch->>Tasks: Write updated tasks.md<br/>(Phase 06: file-level tasks,<br/>Dep Graph, Trace Matrix)
+    Orch->>Log: Write task-refinement-log.md
+
+    Orch-->>PL: Refinement complete
+
+    PL->>State: Update: advance to next phase
+    PL->>PL: Continue to STEP 3d:<br/>Delegate next phase agent

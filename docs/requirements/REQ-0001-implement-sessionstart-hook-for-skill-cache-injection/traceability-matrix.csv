@@ -1,0 +1,30 @@
+Requirement ID,User Story ID,Epic,Priority,Status
+FR-001,US-001,Cache Infrastructure,Must Have,Draft
+FR-001,US-002,Cache Infrastructure,Must Have,Draft
+FR-001,US-003,Cache Infrastructure,Must Have,Draft
+FR-002,US-004,Cache Infrastructure,Must Have,Draft
+FR-002,US-005,Cache Infrastructure,Must Have,Draft
+FR-003,US-006,Cache Infrastructure,Must Have,Draft
+FR-004,US-007,Cache Infrastructure,Must Have,Draft
+FR-005,US-008,Consumer Changes,Must Have,Draft
+FR-005,US-009,Consumer Changes,Must Have,Draft
+FR-005,US-010,Consumer Changes,Must Have,Draft
+FR-005,US-011,Consumer Changes,Must Have,Draft
+FR-005,US-012,Consumer Changes,Must Have,Draft
+FR-006,US-013,Consumer Changes,Must Have,Draft
+FR-006,US-014,Consumer Changes,Must Have,Draft
+FR-007,US-015,Cache Lifecycle,Must Have,Draft
+FR-007,US-016,Cache Lifecycle,Must Have,Draft
+FR-007,US-017,Cache Lifecycle,Must Have,Draft
+FR-008,US-018,Manifest Cleanup,Should Have,Draft
+FR-009,US-019,Manifest Cleanup,Should Have,Draft
+NFR-001-01,,Performance,Must Have,Draft
+NFR-001-02,,Performance,Must Have,Draft
+NFR-001-03,,Performance,Must Have,Draft
+NFR-001-04,,Performance,Should Have,Draft
+NFR-001-05,,Reliability,Must Have,Draft
+NFR-001-06,,Reliability,Should Have,Draft
+NFR-001-07,,Maintainability,Must Have,Draft
+NFR-001-08,,Compatibility,Must Have,Draft
+NFR-001-09,,Resource Constraint,Must Have,Draft
+NFR-001-10,,Compatibility,Must Have,Draft

@@ -1,0 +1,34 @@
+%% Sequence Diagram -- BACKLOG.md Creation During Install (REQ-0014)
+
+sequenceDiagram
+    participant CLI as bin/isdlc.js init
+    participant Installer as lib/installer.js install()
+    participant FS as fs-helpers
+    participant Logger as logger
+
+    Note over CLI,Logger: ... Steps 1-6 complete ...
+
+    CLI->>Installer: install(projectRoot, options)
+
+    Note over Installer: CLAUDE.md creation block (existing)
+
+    Installer->>FS: exists(projectRoot + '/BACKLOG.md')
+
+    alt BACKLOG.md exists
+        FS-->>Installer: true
+        Installer->>Logger: info('BACKLOG.md already exists -- skipping')
+    else BACKLOG.md does not exist
+        FS-->>Installer: false
+
+        alt dryRun is true
+            Installer->>Logger: success('Created BACKLOG.md')
+            Note over Installer: No file written (dry-run)
+        else dryRun is false
+            Installer->>Installer: generateBacklogMd()
+            Installer->>FS: writeFile(backlogPath, content)
+            FS-->>Installer: ok
+            Installer->>Logger: success('Created BACKLOG.md')
+        end
+    end
+
+    Note over Installer: Step 7: Generate state.json

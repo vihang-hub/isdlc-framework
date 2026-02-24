@@ -1,0 +1,131 @@
+{
+  "stories": [
+    {
+      "id": "US-001",
+      "epic": "Gate Requirements Pre-Injection",
+      "persona": "Phase Agent",
+      "goal": "receive a GATE REQUIREMENTS block in my delegation prompt that lists all iteration requirements, constitutional articles, and required artifacts for my phase",
+      "benefit": "I can plan my work to satisfy all gate criteria on the first attempt, avoiding wasted retry iterations",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-001-01",
+          "given": "I am a phase agent being delegated to for phase '06-implementation'",
+          "when": "the phase-loop controller constructs my delegation prompt",
+          "then": "the prompt includes a GATE REQUIREMENTS block with test_iteration enabled (max_iterations: 10, circuit_breaker: 3, coverage: 80%), constitutional_validation enabled with article titles, and artifact paths"
+        },
+        {
+          "id": "AC-001-02",
+          "given": "I am a phase agent being delegated to for phase '01-requirements'",
+          "when": "the phase-loop controller constructs my delegation prompt",
+          "then": "the prompt includes a GATE REQUIREMENTS block with test_iteration disabled, constitutional_validation enabled with articles [I, IV, VII, IX, XII] resolved to titles, and artifact path for requirements-spec.md"
+        },
+        {
+          "id": "AC-001-03",
+          "given": "I am a phase agent and the configuration files are missing or corrupt",
+          "when": "the phase-loop controller attempts to generate the GATE REQUIREMENTS block",
+          "then": "the delegation prompt is delivered without the GATE REQUIREMENTS block (fail-open), and my workflow proceeds normally"
+        }
+      ],
+      "linked_requirements": ["REQ-0024-FR-01", "REQ-0024-FR-02", "REQ-0024-FR-03", "REQ-0024-FR-05", "REQ-0024-NFR-01"]
+    },
+    {
+      "id": "US-002",
+      "epic": "Gate Requirements Pre-Injection",
+      "persona": "Phase Agent",
+      "goal": "see resolved artifact paths (with template variables substituted) in the GATE REQUIREMENTS block",
+      "benefit": "I know the exact file paths I must create, without guessing or looking up template variable values",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-002-01",
+          "given": "the artifact path template is 'docs/requirements/{artifact_folder}/requirements-spec.md' and the artifact folder is 'REQ-0024-gate-requirements-pre-injection'",
+          "when": "the utility resolves template variables",
+          "then": "the GATE REQUIREMENTS block shows 'docs/requirements/REQ-0024-gate-requirements-pre-injection/requirements-spec.md'"
+        },
+        {
+          "id": "AC-002-02",
+          "given": "an artifact path contains no template variables",
+          "when": "the utility resolves template variables",
+          "then": "the path appears unchanged in the output"
+        }
+      ],
+      "linked_requirements": ["REQ-0024-FR-02", "REQ-0024-FR-05"]
+    },
+    {
+      "id": "US-003",
+      "epic": "Gate Requirements Pre-Injection",
+      "persona": "Phase Agent",
+      "goal": "see constitutional article titles (not just Roman numeral IDs) in the GATE REQUIREMENTS block",
+      "benefit": "I understand which constitutional principles I must uphold without having to look up article IDs in constitution.md",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-003-01",
+          "given": "my phase requires constitutional articles ['I', 'IV', 'VII']",
+          "when": "the utility maps article IDs to titles",
+          "then": "the GATE REQUIREMENTS block shows 'Article I: Specification Primacy', 'Article IV: Explicit Over Implicit', 'Article VII: Artifact Traceability'"
+        },
+        {
+          "id": "AC-003-02",
+          "given": "constitution.md is missing or unreadable",
+          "when": "the utility attempts to map article IDs",
+          "then": "the GATE REQUIREMENTS block shows raw IDs (e.g., 'Article I', 'Article IV') as a graceful fallback"
+        }
+      ],
+      "linked_requirements": ["REQ-0024-FR-03", "REQ-0024-FR-05"]
+    },
+    {
+      "id": "US-004",
+      "epic": "Gate Requirements Pre-Injection",
+      "persona": "Phase Agent",
+      "goal": "see workflow-specific overrides (e.g., ATDD flags, scope modifiers) in the GATE REQUIREMENTS block when they apply to my phase",
+      "benefit": "I know about conditional requirements and workflow-specific expectations before I start work",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-004-01",
+          "given": "the workflow type is 'feature' and the phase is '01-requirements'",
+          "when": "the utility reads workflows.json agent_modifiers",
+          "then": "the GATE REQUIREMENTS block includes Workflow Overrides with scope: 'feature', artifact_prefix: 'REQ'"
+        },
+        {
+          "id": "AC-004-02",
+          "given": "workflows.json is missing or the workflow type has no agent_modifiers for my phase",
+          "when": "the utility attempts to read overrides",
+          "then": "the GATE REQUIREMENTS block omits the Workflow Overrides section (fail-open)"
+        }
+      ],
+      "linked_requirements": ["REQ-0024-FR-04"]
+    },
+    {
+      "id": "US-005",
+      "epic": "Gate Requirements Pre-Injection",
+      "persona": "Phase-Loop Controller",
+      "goal": "call a utility function during STEP 3d that generates the GATE REQUIREMENTS block and append it to the delegation prompt",
+      "benefit": "gate criteria injection is automated and consistent across all phase delegations without manual prompt construction",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-005-01",
+          "given": "STEP 3d is constructing a delegation prompt for any phase",
+          "when": "the controller calls the gate requirements utility with the phase key, artifact folder, and workflow type",
+          "then": "the utility returns a formatted GATE REQUIREMENTS text block"
+        },
+        {
+          "id": "AC-005-02",
+          "given": "the utility returns an empty string (any error scenario)",
+          "when": "the controller appends the result to the delegation prompt",
+          "then": "the delegation prompt is unchanged from its current format (no empty block, no extra whitespace injected)"
+        },
+        {
+          "id": "AC-005-03",
+          "given": "the GATE REQUIREMENTS block is appended to the delegation prompt",
+          "when": "the prompt is examined",
+          "then": "the block appears after existing injection blocks (workflow modifiers, discovery context, skill index, external skills) and before the final 'Validate GATE-NN on completion' line"
+        }
+      ],
+      "linked_requirements": ["REQ-0024-FR-06", "REQ-0024-NFR-04"]
+    }
+  ]
+}

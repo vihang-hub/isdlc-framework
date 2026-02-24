@@ -1,0 +1,54 @@
+{
+  "bug_id": "BUG-0019",
+  "external_id": "GH-1",
+  "user_stories": [
+    {
+      "id": "US-01",
+      "title": "Blast radius block triggers re-implementation",
+      "story": "As the SDLC framework, when blast-radius-validator blocks because files are unaddressed, I want to return to the implementation phase and implement changes for the missing files, so that the blast radius is fully covered without relaxing validation criteria.",
+      "acceptance_criteria": ["AC-01.1", "AC-01.2", "AC-01.3", "AC-01.4"],
+      "priority": "P0"
+    },
+    {
+      "id": "US-02",
+      "title": "Task plan cross-reference on blast radius block",
+      "story": "As the phase-loop controller, when processing a blast radius block, I want to cross-reference unaddressed files against docs/isdlc/tasks.md, so that I can identify which specific tasks were skipped and include them in the re-delegation prompt.",
+      "acceptance_criteria": ["AC-02.1", "AC-02.2", "AC-02.3", "AC-02.4"],
+      "priority": "P0"
+    },
+    {
+      "id": "US-03",
+      "title": "Blast radius retry loop with limit",
+      "story": "As the phase-loop controller, after re-delegating to implementation for unaddressed blast radius files, I want to retry the gate validation to verify coverage, with a maximum of 3 retries before escalating, so that infinite loops are prevented.",
+      "acceptance_criteria": ["AC-03.1", "AC-03.2", "AC-03.3", "AC-03.4"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-04",
+      "title": "Explicit deferral via requirements spec only",
+      "story": "As the blast radius validator, I want to accept file deferrals only when they are documented in the requirements spec's Deferred Files section, so that auto-generated deferrals by the orchestrator cannot bypass blast radius validation.",
+      "acceptance_criteria": ["AC-04.1", "AC-04.2", "AC-04.3", "AC-04.4"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-05",
+      "title": "STEP 3f blast-radius-specific block handling",
+      "story": "As the isdlc.md phase-loop controller, when STEP 3f encounters a blast-radius-validator block, I want to extract the unaddressed file list, match it to tasks.md, and re-delegate to implementation, so that the blast radius is addressed through implementation rather than deferral.",
+      "acceptance_criteria": ["AC-05.1", "AC-05.2", "AC-05.3", "AC-05.4", "AC-05.5"],
+      "priority": "P0"
+    }
+  ],
+  "traceability": {
+    "total_stories": 5,
+    "total_acceptance_criteria": 19,
+    "p0_stories": 3,
+    "p1_stories": 2,
+    "coverage": {
+      "FR-01": ["US-01"],
+      "FR-02": ["US-02"],
+      "FR-03": ["US-03"],
+      "FR-04": ["US-04"],
+      "FR-05": ["US-05"]
+    }
+  }
+}

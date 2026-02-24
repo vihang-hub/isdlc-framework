@@ -1,0 +1,80 @@
+%% C4 Level 2: Container Diagram
+%% Fan-Out/Fan-In Engine Components (REQ-0017)
+
+graph TB
+    subgraph "Phase Loop Controller (isdlc.md)"
+        FlagParser["--no-fan-out<br/>Flag Parser"]
+        PhaseDelegate["Phase Delegation<br/>(STEP 3d)"]
+    end
+
+    subgraph "State Management"
+        StateJSON[".isdlc/state.json"]
+        FanOutConfig["fan_out section<br/>(enabled, defaults,<br/>phase_overrides)"]
+        WorkflowFlags["active_workflow.flags<br/>(no_fan_out)"]
+    end
+
+    subgraph "Fan-Out Engine Protocol (QL-012)"
+        ChunkSplitter["Chunk Splitter<br/><br/>Input: items[], strategy<br/>Output: chunks[]<br/><br/>Strategies:<br/>- round-robin<br/>- group-by-directory"]
+        ParallelSpawner["Parallel Spawner<br/><br/>Input: chunks[], prompt template<br/>Output: N Task tool calls<br/>(single response)"]
+        ResultMerger["Result Merger<br/><br/>Input: N results (any order)<br/>Output: unified result<br/><br/>- Aggregate counts<br/>- Union coverage<br/>- Deduplicate findings<br/>- Priority sort"]
+    end
+
+    subgraph "Phase 16: Quality Loop"
+        QL["quality-loop-engineer"]
+        TrackA["Track A<br/>(Fan-Out Orchestrator)"]
+        TrackB["Track B<br/>(Single Agent - unchanged)"]
+        ChunkA0["Chunk Agent 0<br/>(tests[0..k])"]
+        ChunkA1["Chunk Agent 1<br/>(tests[k..2k])"]
+        ChunkAN["Chunk Agent N-1<br/>(tests[(N-1)k..T])"]
+        MergedA["Merged Track A Result"]
+    end
+
+    subgraph "Phase 08: Code Review"
+        QA["qa-engineer"]
+        ChunkR0["Reviewer 0<br/>(dir A, B files)"]
+        ChunkR1["Reviewer 1<br/>(dir C, D files)"]
+        ChunkRN["Reviewer N-1<br/>(dir Y, Z files)"]
+        MergedR["Merged Review Report"]
+    end
+
+    subgraph "Gate Validation (unchanged)"
+        GateBlocker["gate-blocker.cjs"]
+        IterReq["iteration-requirements.json"]
+    end
+
+    FlagParser -->|"stores"| WorkflowFlags
+    PhaseDelegate -->|"delegates"| QL
+    PhaseDelegate -->|"delegates"| QA
+
+    QL -->|"reads config"| FanOutConfig
+    QL -->|"reads flag"| WorkflowFlags
+    QL -->|"spawns"| TrackA
+    QL -->|"spawns"| TrackB
+
+    TrackA -->|"split"| ChunkSplitter
+    ChunkSplitter -->|"N chunks"| ParallelSpawner
+    ParallelSpawner -->|"Task call"| ChunkA0
+    ParallelSpawner -->|"Task call"| ChunkA1
+    ParallelSpawner -->|"Task call"| ChunkAN
+    ChunkA0 -->|"result"| ResultMerger
+    ChunkA1 -->|"result"| ResultMerger
+    ChunkAN -->|"result"| ResultMerger
+    ResultMerger --> MergedA
+
+    QA -->|"reads config"| FanOutConfig
+    QA -->|"reads flag"| WorkflowFlags
+    QA -->|"split"| ChunkSplitter
+    ChunkSplitter -->|"N chunks"| ParallelSpawner
+    ParallelSpawner -->|"Task call"| ChunkR0
+    ParallelSpawner -->|"Task call"| ChunkR1
+    ParallelSpawner -->|"Task call"| ChunkRN
+    ChunkR0 -->|"findings"| ResultMerger
+    ChunkR1 -->|"findings"| ResultMerger
+    ChunkRN -->|"findings"| ResultMerger
+    ResultMerger --> MergedR
+
+    MergedA -->|"same schema"| GateBlocker
+    MergedR -->|"same format"| GateBlocker
+    GateBlocker -->|"reads criteria"| IterReq
+    StateJSON --- FanOutConfig
+    StateJSON --- WorkflowFlags

@@ -1,0 +1,56 @@
+%% Sequence Diagram: Skill Add Flow
+%% REQ-0022: Custom Skill Management
+%% Shows the full flow from user adding a skill through wiring to manifest registration
+
+sequenceDiagram
+    participant U as Developer
+    participant CMD as isdlc.md
+    participant CJS as common.cjs
+    participant FS as Filesystem
+    participant SM as skill-manager Agent
+    participant MAN as external-skills-manifest.json
+
+    U->>CMD: skill add /path/to/nestjs-conventions.md
+    CMD->>CJS: validateSkillFrontmatter(filePath)
+    CJS->>FS: Read file content
+    FS-->>CJS: File content
+    CJS->>CJS: Parse YAML frontmatter
+    CJS->>CJS: Validate required fields (name, description)
+
+    alt Validation fails
+        CJS-->>CMD: { valid: false, errors: [...] }
+        CMD-->>U: Display validation errors with examples
+    else Validation succeeds
+        CJS-->>CMD: { valid: true, parsed: { name, description, ... } }
+        CMD->>CJS: resolveExternalSkillsPath()
+        CJS-->>CMD: Target directory path
+        CMD->>FS: Copy .md file to external skills directory
+        FS-->>CMD: File copied
+
+        CMD->>CJS: analyzeSkillContent(content)
+        CJS->>CJS: Scan for phase-indicative keywords
+        CJS-->>CMD: { keywords, suggestedPhases, confidence }
+
+        CMD->>CJS: suggestBindings(analysis)
+        CJS-->>CMD: { agents, phases, delivery_type, confidence }
+
+        CMD->>SM: Delegate wiring session with suggestions
+        SM->>U: Display suggested bindings
+        SM->>U: Present agent/phase selection (grouped)
+        U->>SM: Select agents, phases, delivery type
+        SM->>U: Confirmation summary [S/A/X]
+        U->>SM: [S] Save
+        SM-->>CMD: Confirmed bindings object
+
+        CMD->>CJS: loadExternalManifest()
+        CJS->>FS: Read manifest (or null if not exists)
+        FS-->>CJS: Manifest JSON or null
+        CJS-->>CMD: Manifest object (or create new)
+
+        CMD->>CMD: Add/update skill entry in manifest
+        CMD->>CJS: writeExternalManifest(manifest)
+        CJS->>FS: Write JSON atomically
+        FS-->>CJS: Written
+
+        CMD-->>U: "Skill 'nestjs-conventions' registered with bindings"
+    end

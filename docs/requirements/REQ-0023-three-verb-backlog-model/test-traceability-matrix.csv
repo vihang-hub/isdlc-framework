@@ -1,0 +1,103 @@
+Requirement,AC,Test Case,Test Type,Priority,Test File,Description
+FR-001,AC-001-01,TC-SLUG-01,positive,P1,test-three-verb-utils.test.cjs,Basic description to slug
+FR-001,AC-001-01,TC-SLUG-02,positive,P1,test-three-verb-utils.test.cjs,Uppercase conversion
+FR-001,AC-001-01,TC-SLUG-03,positive,P1,test-three-verb-utils.test.cjs,Special characters stripped
+FR-001,AC-001-01,TC-SLUG-04,positive,P1,test-three-verb-utils.test.cjs,Multiple spaces collapsed
+FR-001,AC-001-01,TC-SLUG-05,positive,P1,test-three-verb-utils.test.cjs,Leading/trailing hyphens trimmed
+FR-001,AC-001-01,TC-SLUG-06,boundary,P1,test-three-verb-utils.test.cjs,Max 50 characters truncation
+FR-001,AC-001-01,TC-SLUG-07,boundary,P1,test-three-verb-utils.test.cjs,Exactly 50 characters
+FR-001,AC-001-01,TC-SLUG-08,negative,P1,test-three-verb-utils.test.cjs,Empty string defaults to untitled
+FR-001,AC-001-01,TC-SLUG-09,negative,P1,test-three-verb-utils.test.cjs,Whitespace-only defaults to untitled
+FR-001,AC-001-01,TC-SLUG-10,negative,P1,test-three-verb-utils.test.cjs,All special chars defaults to untitled
+FR-001,AC-001-01,TC-SLUG-11,negative,P2,test-three-verb-utils.test.cjs,Path traversal attempt sanitized
+FR-001,AC-001-01,TC-SLUG-12,positive,P1,test-three-verb-utils.test.cjs,Consecutive hyphens collapsed
+FR-001,AC-001-02,TC-META-W01,positive,P0,test-three-verb-utils.test.cjs,v2 schema written correctly
+FR-001,AC-001-03,TC-SRC-01,positive,P1,test-three-verb-utils.test.cjs,GitHub issue #N
+FR-001,AC-001-03,TC-SRC-02,positive,P1,test-three-verb-utils.test.cjs,GitHub issue #1
+FR-001,AC-001-03,TC-SRC-03,positive,P1,test-three-verb-utils.test.cjs,Jira ticket PROJECT-N
+FR-001,AC-001-03,TC-SRC-04,positive,P1,test-three-verb-utils.test.cjs,Jira with long project key
+FR-001,AC-001-03,TC-SRC-05,positive,P1,test-three-verb-utils.test.cjs,Manual description
+FR-001,AC-001-03,TC-SRC-06,negative,P2,test-three-verb-utils.test.cjs,Hash without digits not GitHub
+FR-001,AC-001-04,TC-ATB-01,positive,P0,test-three-verb-utils.test.cjs,Append to existing Open section
+FR-001,AC-001-04,TC-ATB-02,positive,P0,test-three-verb-utils.test.cjs,Create BACKLOG.md if missing
+FR-001,AC-001-04,TC-ATB-03,positive,P0,test-three-verb-utils.test.cjs,Append with raw marker
+FR-001,AC-001-04,TC-ATB-04,positive,P1,test-three-verb-utils.test.cjs,Open section at end of file
+FR-001,AC-001-04,TC-ATB-05,positive,P1,test-three-verb-utils.test.cjs,Preserves existing items
+FR-001,AC-001-04,TC-ATB-06,positive,P2,test-three-verb-utils.test.cjs,CRLF line endings
+FR-001,AC-001-05,TC-INT-11,positive,P0,test-three-verb-utils.test.cjs,Add does NOT write state.json
+FR-001,AC-001-06,TC-INT-11,positive,P0,test-three-verb-utils.test.cjs,Add does NOT create workflow
+FR-001,AC-001-07,TC-INT-04,negative,P0,test-three-verb-utils.test.cjs,Add with existing slug collision
+FR-002,AC-002-01,TC-INT-06,positive,P1,test-three-verb-utils.test.cjs,Analyze completes all phases
+FR-002,AC-002-02,TC-STATUS-02,positive,P0,test-three-verb-utils.test.cjs,One phase = partial
+FR-002,AC-002-03,TC-STATUS-04,positive,P0,test-three-verb-utils.test.cjs,All five phases = analyzed
+FR-002,AC-002-03,TC-INT-06,positive,P1,test-three-verb-utils.test.cjs,Analyze completes -> marker [A]
+FR-002,AC-002-04,TC-INT-05,positive,P1,test-three-verb-utils.test.cjs,Analyze resume from partial
+FR-002,AC-002-05,TC-INT-12,positive,P0,test-three-verb-utils.test.cjs,Analyze does NOT create workflow
+FR-002,AC-002-06,TC-INT-12,positive,P0,test-three-verb-utils.test.cjs,Analyze does not require active workflow
+FR-002,AC-002-07,TC-INT-06,positive,P1,test-three-verb-utils.test.cjs,Artifacts written to docs/requirements/slug/
+FR-002,AC-002-08,TC-INT-07,positive,P1,test-three-verb-utils.test.cjs,Analyze with implicit add
+FR-002,AC-002-09,TC-ERR-10,positive,P2,test-three-verb-utils.test.cjs,Codebase hash mismatch warning
+FR-003,AC-003-01,TC-ERR-16,negative,P0,test-three-verb-utils.test.cjs,Constitution missing blocks build
+FR-003,AC-003-02,TC-ERR-18,negative,P0,test-three-verb-utils.test.cjs,Branch creation fails
+FR-003,AC-003-03,TC-INT-06,positive,P1,test-three-verb-utils.test.cjs,Counter increment after workflow init
+FR-003,AC-003-04,TC-ERR-14,negative,P0,test-three-verb-utils.test.cjs,Item not found reference input
+FR-003,AC-003-04,TC-ERR-19,negative,P1,test-three-verb-utils.test.cjs,Item not found description input
+FR-003,AC-003-05,TC-ERR-15,negative,P0,test-three-verb-utils.test.cjs,Active workflow exists blocks build
+FR-003,AC-003-06,TC-INTENT-03,positive,P2,Manual Review,Build maps to feature workflow
+FR-003,AC-003-07,TC-ERR-19,positive,P2,test-three-verb-utils.test.cjs,Bug keywords trigger fix workflow
+FR-004,AC-004-01,TC-INTENT-01,positive,P2,Manual Review,Add intent row in CLAUDE.md
+FR-004,AC-004-02,TC-INTENT-01,positive,P2,Manual Review,Add signal words correct
+FR-004,AC-004-03,TC-INTENT-02,positive,P2,Manual Review,Analyze signal words correct
+FR-004,AC-004-04,TC-INTENT-03,positive,P2,Manual Review,Build signal words correct
+FR-004,AC-004-05,TC-INTENT-04,positive,P2,Manual Review,Fix intent unchanged
+FR-004,AC-004-06,TC-INTENT-05,positive,P2,Manual Review,Template mirrors changes
+FR-004,AC-004-07,TC-INTENT-06,positive,P2,Manual Review,Other intents unchanged
+FR-004,AC-004-08,TC-INTENT-07,positive,P2,Manual Review,Disambiguation rule documented
+FR-005,AC-005-01,TC-CMD-01,positive,P2,Manual Review,Zero Phase A in isdlc.md
+FR-005,AC-005-01,TC-CMD-02,positive,P2,Manual Review,Zero Phase B in isdlc.md
+FR-005,AC-005-02,TC-CMD-03,positive,P2,Manual Review,/isdlc add documented
+FR-005,AC-005-03,TC-CMD-04,positive,P2,Manual Review,/isdlc analyze new semantics
+FR-005,AC-005-04,TC-CMD-05,positive,P2,Manual Review,/isdlc build documented
+FR-005,AC-005-05,TC-CMD-06,positive,P2,Manual Review,/isdlc start removed
+FR-005,AC-005-06,TC-CMD-07,positive,P2,Manual Review,Action routing updated
+FR-005,AC-005-07,TC-CMD-08,positive,P2,Manual Review,meta.json refs use analysis_status
+FR-005,AC-005-08,TC-CMD-09,positive,P2,Manual Review,QUICK REFERENCE table updated
+FR-006,AC-006-01,TC-ORCH-01,positive,P2,Manual Review,Zero BACKLOG PICKER in orchestrator
+FR-006,AC-006-02,TC-ORCH-02,positive,P2,Manual Review,SCENARIO 3 has Add/Analyze/Build/Fix
+FR-006,AC-006-03,TC-ORCH-03,positive,P2,Manual Review,COMMANDS includes new verbs
+FR-006,AC-006-04,TC-ORCH-04,positive,P2,Manual Review,/isdlc fix remains
+FR-006,AC-006-05,TC-ORCH-05,positive,P2,Manual Review,Jira metadata parsing removed
+FR-007,AC-007-01,TC-MARKER-01,positive,P0,test-three-verb-utils.test.cjs,Raw status -> space marker
+FR-007,AC-007-01,TC-ATB-03,positive,P0,test-three-verb-utils.test.cjs,Append with raw marker
+FR-007,AC-007-02,TC-MARKER-02,positive,P0,test-three-verb-utils.test.cjs,Partial status -> tilde marker
+FR-007,AC-007-02,TC-UBM-01,positive,P0,test-three-verb-utils.test.cjs,Update raw to partial
+FR-007,AC-007-03,TC-MARKER-03,positive,P0,test-three-verb-utils.test.cjs,Analyzed status -> A marker
+FR-007,AC-007-03,TC-UBM-02,positive,P0,test-three-verb-utils.test.cjs,Update partial to analyzed
+FR-007,AC-007-04,TC-UBM-03,positive,P0,test-three-verb-utils.test.cjs,Update analyzed to completed
+FR-007,AC-007-05,TC-REGEX-01,positive,P0,test-three-verb-utils.test.cjs,Existing [ ] items parse correctly
+FR-007,AC-007-05,TC-REGEX-04,positive,P0,test-three-verb-utils.test.cjs,Existing [x] items parse correctly
+FR-007,AC-007-06,TC-REGEX-02,positive,P0,test-three-verb-utils.test.cjs,[~] marker parsed correctly
+FR-007,AC-007-06,TC-REGEX-03,positive,P0,test-three-verb-utils.test.cjs,[A] marker parsed correctly
+FR-008,AC-008-01,TC-SDE-01,positive,P0,test-skill-delegation-enforcer.test.cjs,add action exempt from delegation
+FR-008,AC-008-01,TC-SDE-02,positive,P0,test-skill-delegation-enforcer.test.cjs,add with flags still exempt
+FR-008,AC-008-01,TC-DG-01,positive,P0,test-delegation-gate.test.cjs,Pending delegation for add auto-clears
+FR-008,AC-008-01,TC-DG-03,positive,P0,test-delegation-gate.test.cjs,ADD uppercase auto-clears
+FR-008,AC-008-02,TC-SDE-03,negative,P0,test-skill-delegation-enforcer.test.cjs,build action requires delegation
+FR-008,AC-008-02,TC-DG-02,negative,P0,test-delegation-gate.test.cjs,build NOT auto-cleared
+FR-008,AC-008-03,TC-HOOK-01,positive,P2,Manual Review,Zero Phase A in hook files
+FR-008,AC-008-03,TC-HOOK-02,positive,P2,Manual Review,Zero Phase B in hook files
+FR-008,AC-008-04,TC-HOOK-03,positive,P0,Manual Review (npm run test:hooks),All existing hook tests pass
+FR-009,AC-009-01,TC-META-R01,positive,P0,test-three-verb-utils.test.cjs,v2 schema read as-is
+FR-009,AC-009-01,TC-META-W01,positive,P0,test-three-verb-utils.test.cjs,v2 schema written correctly
+FR-009,AC-009-02,TC-META-W02,positive,P0,test-three-verb-utils.test.cjs,phase_a_completed stripped on write
+FR-009,AC-009-03,TC-META-R02,positive,P0,test-three-verb-utils.test.cjs,v1 phase_a_completed true -> analyzed
+FR-009,AC-009-04,TC-META-R03,positive,P0,test-three-verb-utils.test.cjs,v1 phase_a_completed false -> raw
+FR-009,AC-009-04,TC-META-R04,positive,P0,test-three-verb-utils.test.cjs,v1 missing phase_a_completed -> raw
+FR-009,AC-009-05,TC-META-W03,positive,P0,test-three-verb-utils.test.cjs,analysis_status derived from phases_completed
+NFR-001,N/A,TC-HOOK-03,positive,P0,Manual Review,All existing tests pass (regression)
+NFR-002,N/A,TC-INT-11,positive,P0,test-three-verb-utils.test.cjs,Add does not write state.json
+NFR-002,N/A,TC-INT-12,positive,P0,test-three-verb-utils.test.cjs,Analyze does not create workflow
+NFR-005,N/A,TC-UBM-06,positive,P2,test-three-verb-utils.test.cjs,CRLF line endings handled
+NFR-005,N/A,TC-META-W06,positive,P2,test-three-verb-utils.test.cjs,meta.json LF only
+NFR-005,N/A,TC-ATB-06,positive,P2,test-three-verb-utils.test.cjs,CRLF BACKLOG append
+NFR-005,N/A,TC-INT-14,positive,P2,test-three-verb-utils.test.cjs,CRLF add and update flow

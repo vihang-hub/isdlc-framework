@@ -1,0 +1,86 @@
+%% Sequence Diagram: Phase 05 Debate Loop Flow
+%% REQ-0016: Shows the orchestrator managing the Creator/Critic/Refiner
+%% debate loop for test strategy with convergence and escalation paths
+
+sequenceDiagram
+    participant PLC as Phase-Loop Controller
+    participant ORCH as SDLC Orchestrator
+    participant CREATOR as Creator<br/>(test-design-engineer)
+    participant CRITIC as Critic<br/>(test-strategy-critic)
+    participant REFINER as Refiner<br/>(test-strategy-refiner)
+    participant FS as Filesystem
+
+    PLC->>ORCH: Delegate Phase 05 (feature context)
+
+    Note over ORCH: Step 1: Resolve debate mode
+    ORCH->>ORCH: resolveDebateMode() = true
+
+    Note over ORCH: Step 2: Lookup DEBATE_ROUTING["05-test-strategy"]
+    ORCH->>ORCH: Found: Creator=04-test-design-engineer.md,<br/>Critic=04-test-strategy-critic.md,<br/>Refiner=04-test-strategy-refiner.md
+
+    Note over ORCH: Step 3: Initialize debate_state (round=1, max=3)
+
+    loop Round N (max 3)
+        Note over ORCH,CREATOR: Step 4a: Creator produces artifacts
+
+        ORCH->>CREATOR: Task(DEBATE_CONTEXT {round: N}, requirements, design)
+
+        alt Round 1
+            CREATOR->>FS: Write test-strategy.md (Round 1 Draft)
+            CREATOR->>FS: Write test-cases/
+            CREATOR->>FS: Write traceability-matrix.csv
+            CREATOR->>FS: Write test-data-plan.md
+        else Round > 1
+            CREATOR->>FS: Read Refiner's updated artifacts
+            CREATOR->>FS: Write updated artifacts (Round N Draft)
+        end
+
+        CREATOR-->>ORCH: Creator complete
+
+        Note over ORCH,CRITIC: Step 4b: Critic reviews artifacts
+
+        ORCH->>CRITIC: Task(DEBATE_CONTEXT {round: N}, Phase 05 artifacts)
+
+        CRITIC->>FS: Read test-strategy.md
+        CRITIC->>FS: Read test-cases/
+        CRITIC->>FS: Read traceability-matrix.csv
+        CRITIC->>FS: Read test-data-plan.md
+        CRITIC->>FS: Read requirements-spec.md
+
+        Note over CRITIC: Apply TC-01..TC-08 mandatory checks
+        Note over CRITIC: Apply constitutional compliance checks
+
+        CRITIC->>FS: Write round-N-critique.md
+        CRITIC-->>ORCH: Critique complete (B=X, W=Y)
+
+        alt BLOCKING == 0 (Convergence)
+            Note over ORCH: Debate converged!
+            ORCH->>FS: Write debate-summary.md
+        else BLOCKING > 0 AND round < max_rounds
+            Note over ORCH,REFINER: Step 4c: Refiner addresses findings
+
+            ORCH->>REFINER: Task(DEBATE_CONTEXT {round: N}, artifacts, critique)
+
+            REFINER->>FS: Read round-N-critique.md
+            REFINER->>FS: Read all Phase 05 artifacts
+
+            Note over REFINER: Address BLOCKING findings (mandatory)
+            Note over REFINER: Address WARNING findings (best effort)
+
+            REFINER->>FS: Update test-strategy.md (findings addressed)
+            REFINER->>FS: Update test-cases/ (findings addressed)
+            REFINER->>FS: Update traceability-matrix.csv
+            REFINER->>FS: Update test-data-plan.md
+            REFINER->>FS: Append change log
+
+            REFINER-->>ORCH: Refinement complete
+        else BLOCKING > 0 AND round == max_rounds
+            Note over ORCH: Max rounds reached -- escalate to human
+            ORCH->>FS: Write debate-summary.md (escalation)
+        end
+    end
+
+    Note over ORCH: Step 5: Update state, proceed to GATE-05
+
+    ORCH->>FS: Update state.json (debate_state)
+    ORCH-->>PLC: Phase 05 complete

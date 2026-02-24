@@ -1,0 +1,133 @@
+{
+  "bug_id": "BUG-0004",
+  "title": "state.json bloat — unbounded growth of historical data",
+  "severity": "medium",
+  "impact": "Fills agent context with 45KB+ of irrelevant data; slows hook read/write cycles",
+  "root_causes": [
+    {
+      "id": "RC-01",
+      "field": "skill_usage_log",
+      "mechanism": "log-skill-usage.cjs appends ~330 bytes per Task call with no pruning",
+      "growth_rate": "+330 bytes per agent delegation",
+      "current_size_bytes": 21333,
+      "current_size_pct": 33.0,
+      "fix_ref": "FIX-001"
+    },
+    {
+      "id": "RC-02",
+      "field": "history",
+      "mechanism": "Orchestrator and agents append verbose action strings (up to 1KB each) with no cap",
+      "growth_rate": "+500 bytes avg per action",
+      "current_size_bytes": 17371,
+      "current_size_pct": 26.9,
+      "fix_ref": "FIX-003"
+    },
+    {
+      "id": "RC-03",
+      "field": "phases",
+      "mechanism": "Phase data (iteration_requirements, constitutional_validation, history sub-arrays) accumulates across workflows and is never pruned",
+      "growth_rate": "+3000-5000 bytes per workflow",
+      "current_size_bytes": 16877,
+      "current_size_pct": 26.1,
+      "fix_ref": "FIX-002 + FIX-004"
+    },
+    {
+      "id": "RC-04",
+      "field": "workflow_history",
+      "mechanism": "Completed/cancelled workflows logged with full descriptions and git_branch objects, never capped",
+      "growth_rate": "+500 bytes per workflow",
+      "current_size_bytes": 2303,
+      "current_size_pct": 3.6,
+      "fix_ref": "FIX-003"
+    }
+  ],
+  "writer_map": {
+    "hooks_that_write": [
+      "log-skill-usage.cjs -> skill_usage_log[]",
+      "test-watcher.cjs -> phases[].iteration_requirements.test_iteration",
+      "menu-tracker.cjs -> phases[].iteration_requirements.interactive_elicitation",
+      "gate-blocker.cjs -> phases[].gate_validation, pending_escalations[], pending_triggers[]",
+      "constitution-validator.cjs -> phases[].constitutional_validation, pending_escalations[]",
+      "iteration-corridor.cjs -> pending_escalations[]",
+      "skill-delegation-enforcer.cjs -> pending_delegation",
+      "delegation-gate.cjs -> pending_delegation (clear)"
+    ],
+    "agents_that_write": [
+      "orchestrator -> active_workflow, workflow_history[], current_phase, phases[].status, counters, history[], active_agent",
+      "phase agents -> phases[].status, phases[].artifacts, phases[].constitutional_validation",
+      "discover orchestrator -> project.*, discovery_context"
+    ],
+    "cli_that_writes": [
+      "installer.js -> initial state template",
+      "updater.js -> framework_version, history[]"
+    ]
+  },
+  "reader_map": {
+    "hooks_reading_skill_usage_log": [
+      "gate-blocker.cjs (line 373: delegation check for current phase)",
+      "delegation-gate.cjs (line 40-56: scan for delegation after timestamp)"
+    ],
+    "hooks_reading_phases": [
+      "gate-blocker.cjs (iteration_requirements, constitutional_validation)",
+      "iteration-corridor.cjs (test_iteration, constitutional_validation)",
+      "constitution-validator.cjs (constitutional_validation)",
+      "test-watcher.cjs (iteration_requirements.test_iteration)",
+      "menu-tracker.cjs (iteration_requirements.interactive_elicitation)",
+      "state-write-validator.cjs (all sub-fields, read-only validation)",
+      "phase-loop-controller.cjs (status only)",
+      "constitutional-iteration-validator.cjs (constitutional_validation)"
+    ],
+    "hooks_reading_history": [],
+    "hooks_reading_workflow_history": []
+  },
+  "fixes": [
+    {
+      "id": "FIX-001",
+      "description": "Prune skill_usage_log on workflow completion (keep last 20 entries)",
+      "target_file": "src/claude/hooks/lib/common.cjs",
+      "function_name": "pruneSkillUsageLog",
+      "estimated_savings_bytes": 15000
+    },
+    {
+      "id": "FIX-002",
+      "description": "Prune verbose phase sub-objects on workflow completion",
+      "target_file": "src/claude/hooks/lib/common.cjs",
+      "function_name": "pruneCompletedPhases",
+      "estimated_savings_bytes": 12000,
+      "fields_stripped": [
+        "iteration_requirements",
+        "constitutional_validation",
+        "gate_validation",
+        "testing_environment",
+        "verification_summary",
+        "atdd_validation"
+      ]
+    },
+    {
+      "id": "FIX-003",
+      "description": "Compact history entries with 200-char cap and 50-entry FIFO",
+      "target_file": "src/claude/hooks/lib/common.cjs",
+      "function_names": ["pruneHistory", "pruneWorkflowHistory"],
+      "estimated_savings_bytes": 14000,
+      "caps": {
+        "history_max_entries": 50,
+        "history_max_action_length": 200,
+        "workflow_history_max_entries": 50,
+        "workflow_history_max_desc_length": 200
+      }
+    },
+    {
+      "id": "FIX-004",
+      "description": "Reset phases when initializing a new workflow",
+      "target_files": [
+        "src/claude/hooks/lib/common.cjs",
+        "src/claude/agents/00-sdlc-orchestrator.md"
+      ],
+      "function_name": "resetPhasesForWorkflow",
+      "estimated_savings_bytes": 10000
+    }
+  ],
+  "projected_steady_state_bytes": 18000,
+  "current_total_bytes": 64646,
+  "projected_reduction_pct": 72
+}

@@ -1,0 +1,22 @@
+Requirement,AC_ID,AC_Description,Test_ID,Test_Description,Priority,TDD_Status,Test_File
+FR-01,AC-01,"If delegation.targetPhase === active_workflow.current_phase, return allow",T13,"Same-phase delegation allowed when status pending",P0,RED,phase-loop-controller.test.cjs
+FR-01,AC-01,"If delegation.targetPhase === active_workflow.current_phase, return allow",T14,"Same-phase delegation allowed when status not set",P0,RED,phase-loop-controller.test.cjs
+FR-01,AC-01,"If delegation.targetPhase === active_workflow.current_phase, return allow",T15,"Same-phase delegation allowed with explicit sub-agent name",P0,RED,phase-loop-controller.test.cjs
+FR-01,AC-01,"If delegation.targetPhase === active_workflow.current_phase, return allow",T16,"Same-phase delegation allowed regardless of status value",P1,RED,phase-loop-controller.test.cjs
+FR-01,AC-02,"Bypass checked AFTER active workflow exists",T13,"State includes active_workflow before bypass fires",P0,RED,phase-loop-controller.test.cjs
+FR-01,AC-02,"Bypass checked AFTER active workflow exists",T14,"State includes active_workflow before bypass fires",P0,RED,phase-loop-controller.test.cjs
+FR-01,AC-03,"Bypass checked AFTER currentPhase is non-null",T13,"State includes non-null currentPhase before bypass fires",P0,RED,phase-loop-controller.test.cjs
+FR-01,AC-03,"Bypass checked AFTER currentPhase is non-null",T14,"State includes non-null currentPhase before bypass fires",P0,RED,phase-loop-controller.test.cjs
+FR-01,AC-04,"Same-phase bypass logs debug message",T15,"Verifies allow decision on same-phase delegation",P0,RED,phase-loop-controller.test.cjs
+FR-02,AC-05,"Cross-phase delegations use existing status check",T17,"Cross-phase delegation blocked when pending",P0,GREEN,phase-loop-controller.test.cjs
+FR-02,AC-05,"Cross-phase delegations use existing status check",T18,"Cross-phase delegation allowed when in_progress",P1,GREEN,phase-loop-controller.test.cjs
+FR-02,AC-05,"Cross-phase delegations use existing status check",T19,"Cross-phase delegation allowed when completed",P1,GREEN,phase-loop-controller.test.cjs
+FR-02,AC-06,"Cross-phase to pending MUST be blocked",T17,"Cross-phase delegation blocked when target pending",P0,GREEN,phase-loop-controller.test.cjs
+FR-02,AC-07,"Cross-phase to in_progress or completed MUST be allowed",T18,"Cross-phase allowed when target in_progress",P1,GREEN,phase-loop-controller.test.cjs
+FR-02,AC-07,"Cross-phase to in_progress or completed MUST be allowed",T19,"Cross-phase allowed when target completed",P1,GREEN,phase-loop-controller.test.cjs
+FR-03,AC-08,"Null targetPhase must NOT trigger bypass",T20,"Non-delegation Task call (null targetPhase)",P1,GREEN,phase-loop-controller.test.cjs
+FR-03,AC-09,"Null current_phase must NOT trigger bypass",T21,"Null current_phase in active_workflow",P1,GREEN,phase-loop-controller.test.cjs
+FR-03,AC-09,"Null current_phase must NOT trigger bypass",T22,"Undefined current_phase in active_workflow",P2,GREEN,phase-loop-controller.test.cjs
+FR-03,AC-10,"Both null must NOT trigger bypass",T22,"Missing current_phase field (undefined === undefined avoided)",P2,GREEN,phase-loop-controller.test.cjs
+FR-04,AC-11,"Same-phase bypass logged via logHookEvent with event type same-phase-bypass",T23,"Hook activity log contains same-phase-bypass entry",P2,RED,phase-loop-controller.test.cjs
+FR-04,AC-12,"Log entry includes phase name and agent name and decision allow",T23,"Hook activity log entry has correct fields",P2,RED,phase-loop-controller.test.cjs

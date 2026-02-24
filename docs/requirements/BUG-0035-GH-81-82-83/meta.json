@@ -1,0 +1,10 @@
+{
+  "description": "Fix getAgentSkillIndex() schema mismatch (#81), skill path resolution (#82), and test fixture alignment (#83)",
+  "source": "manual",
+  "created_at": "2026-02-23T18:00:00.000Z",
+  "analysis_status": "raw",
+  "phases_completed": [],
+  "build_started_at": "2026-02-23T18:00:00.000Z",
+  "workflow_type": "fix",
+  "external_ids": ["GH-81", "GH-82", "GH-83"]
+}

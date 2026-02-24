@@ -1,0 +1,92 @@
+{
+  "gate": "GATE-05",
+  "phase": "05-test-strategy",
+  "workflow": "fix",
+  "artifact_folder": "BUG-0032-phase-a-cannot-pull-jira-ticket-content",
+  "validated_at": "2026-02-23",
+  "validated_by": "test-design-engineer",
+  "status": "PASS",
+  "checklist": {
+    "test_strategy_covers_all_types": {
+      "status": "PASS",
+      "detail": "Spec Validation (13 tests), Regression (8 tests), Structural Parity (4 tests) = 25 total. Performance and security N/A for spec-only fix. E2E N/A (MCP calls not testable in CI)."
+    },
+    "test_cases_exist_for_all_requirements": {
+      "status": "PASS",
+      "detail": "All 4 FRs (FR-001 through FR-004) with all 15 ACs covered. CON-003 backward compatibility covered by 8 regression tests."
+    },
+    "traceability_matrix_complete": {
+      "status": "PASS",
+      "detail": "100% requirement coverage: 15 ACs mapped to 25 test cases. 26 rows in traceability matrix (AC-004-02 shares coverage with SV-01). No orphan requirements."
+    },
+    "coverage_targets_defined": {
+      "status": "PASS",
+      "detail": "100% AC coverage, 100% regression coverage for detectSource() and generateSlug(), structural parity between GitHub and Jira code paths."
+    },
+    "test_data_strategy_documented": {
+      "status": "PASS",
+      "detail": "test-data-plan.md documents boundary values (12 entries), invalid inputs (6 entries), max-size inputs (3 entries), and 8 spec pattern definitions."
+    },
+    "critical_paths_identified": {
+      "status": "PASS",
+      "detail": "4 critical paths: add handler Jira fetch, analyze handler Group 1 Jira fetch, MCP unavailable graceful degradation, --link URL parsing."
+    },
+    "require_failing_test_first": {
+      "status": "PASS",
+      "detail": "10 of 25 tests FAIL pre-fix (all spec validation tests that check for getJiraIssue/getAccessibleAtlassianResources patterns). 16 pass (regression + partial spec matches). Fix workflow test-first requirement satisfied."
+    }
+  },
+  "constitutional_compliance": {
+    "article_II": {
+      "status": "COMPLIANT",
+      "detail": "25 test cases designed in Phase 05 before implementation. 10 tests fail pre-fix, confirming test-first workflow. Test scaffold written to src/claude/hooks/tests/test-bug-0032-jira-spec.test.cjs."
+    },
+    "article_VII": {
+      "status": "COMPLIANT",
+      "detail": "Traceability matrix maps all 15 ACs to test cases. 100% coverage confirmed by cross-checking every AC in requirements-spec.md against matrix."
+    },
+    "article_IX": {
+      "status": "COMPLIANT",
+      "detail": "All required artifacts present: test-strategy.md, test-cases.md, test-data-plan.md, traceability-matrix.csv, test scaffold .cjs, gate validation JSON."
+    },
+    "article_XI": {
+      "status": "NOT_APPLICABLE",
+      "detail": "No integration test applicable. This is a specification-only fix to a markdown file. MCP integration cannot be tested in CI (requires live Claude session with Atlassian MCP)."
+    }
+  },
+  "artifacts": [
+    "docs/quality/BUG-0032-phase-a-cannot-pull-jira-ticket-content/test-strategy.md",
+    "docs/quality/BUG-0032-phase-a-cannot-pull-jira-ticket-content/test-cases.md",
+    "docs/quality/BUG-0032-phase-a-cannot-pull-jira-ticket-content/test-data-plan.md",
+    "docs/quality/BUG-0032-phase-a-cannot-pull-jira-ticket-content/traceability-matrix.csv",
+    "src/claude/hooks/tests/test-bug-0032-jira-spec.test.cjs",
+    "docs/.validations/gate-05-test-strategy-BUG-0032.json"
+  ],
+  "metrics": {
+    "total_requirements": 4,
+    "total_acceptance_criteria": 15,
+    "total_constraints": 3,
+    "total_test_cases": 25,
+    "test_categories": {
+      "spec_validation": 13,
+      "regression": 8,
+      "structural_parity": 4
+    },
+    "test_file": "src/claude/hooks/tests/test-bug-0032-jira-spec.test.cjs",
+    "requirement_coverage_percent": 100,
+    "pre_fix_passing": 16,
+    "pre_fix_failing": 10
+  },
+  "constitutional_iteration": {
+    "iteration_count": 1,
+    "max_iterations": 5,
+    "violations_found_initial": 0,
+    "violations_fixed": 0,
+    "violations_remaining": 0,
+    "fix_log": []
+  },
+  "phase_timing_report": {
+    "debate_rounds_used": 0,
+    "fan_out_chunks": 0
+  }
+}

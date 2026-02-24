@@ -1,0 +1,48 @@
+%% Sequence Diagram: Phase Execution with Timing and Budget Check
+%% Traces: FR-001, FR-003, FR-004, FR-005 (REQ-0025)
+
+sequenceDiagram
+    participant Dev as Developer
+    participant PLC as isdlc.md (Phase-Loop Controller)
+    participant State as state.json
+    participant Config as workflows.json
+    participant Agent as Phase Agent
+
+    Dev->>PLC: start phase
+
+    Note over PLC: STEP 3c-prime
+    PLC->>State: Write timing.started_at = ISO-8601
+    PLC->>State: Set timing.retries (0 or increment)
+
+    Note over PLC: STEP 3d (Delegation)
+    PLC->>State: Read budget_status
+    State-->>PLC: budget_status (on_track | approaching | exceeded)
+
+    alt budget exceeded or approaching
+        PLC->>Config: Read performance_budgets[intensity]
+        Config-->>PLC: budget tier limits
+        PLC->>PLC: buildDegradationDirective()
+        PLC->>Agent: Delegate + BUDGET_DEGRADATION directive
+    else budget on_track or missing
+        PLC->>Agent: Delegate (no degradation)
+    end
+
+    Agent->>Agent: Execute phase work
+    Agent-->>PLC: Result + PHASE_TIMING_REPORT
+
+    Note over PLC: STEP 3e (Post-Phase)
+    PLC->>State: Write timing.completed_at
+    PLC->>PLC: Compute wall_clock_minutes
+    PLC->>PLC: Parse PHASE_TIMING_REPORT (debate_rounds, fan_out)
+    PLC->>State: Write timing fields
+
+    PLC->>Config: Read performance_budgets[intensity]
+    Config-->>PLC: budget tier
+    PLC->>PLC: computeBudgetStatus(elapsed, max_total)
+    PLC->>State: Write budget_status
+
+    alt budget exceeded
+        PLC-->>Dev: BUDGET_WARNING (stderr)
+    else budget approaching
+        PLC-->>Dev: BUDGET_APPROACHING (stderr)
+    end

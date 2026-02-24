@@ -1,0 +1,49 @@
+{
+  "stories": [
+    {
+      "id": "US-01",
+      "title": "Commit after branch merge without false block",
+      "as_a": "developer using iSDLC",
+      "i_want": "to commit to main after a workflow branch has been merged and deleted",
+      "so_that": "the branch-guard does not falsely block my commit during the finalize window",
+      "acceptance_criteria": ["AC-01", "AC-03"],
+      "priority": "high"
+    },
+    {
+      "id": "US-02",
+      "title": "Block commits when branch still exists",
+      "as_a": "developer using iSDLC",
+      "i_want": "the branch-guard to still block commits to main when a workflow branch actually exists",
+      "so_that": "I don't accidentally commit to main instead of the feature branch",
+      "acceptance_criteria": ["AC-02"],
+      "priority": "high"
+    },
+    {
+      "id": "US-03",
+      "title": "Read state.json via node -e without block",
+      "as_a": "developer or hook",
+      "i_want": "to read state.json fields using node -e inline scripts",
+      "so_that": "diagnostic and read-only state queries are not blocked by the state-file-guard",
+      "acceptance_criteria": ["AC-05", "AC-07"],
+      "priority": "high"
+    },
+    {
+      "id": "US-04",
+      "title": "Block write operations via node -e",
+      "as_a": "framework maintainer",
+      "i_want": "node -e commands that write to state.json to still be blocked",
+      "so_that": "state.json integrity is protected from bash-level writes",
+      "acceptance_criteria": ["AC-06", "AC-08"],
+      "priority": "high"
+    },
+    {
+      "id": "US-05",
+      "title": "Consistent treatment of all inline script languages",
+      "as_a": "developer",
+      "i_want": "python -c, ruby -e, and perl -e to also have script body inspection",
+      "so_that": "read-only commands in any scripting language are not falsely blocked",
+      "acceptance_criteria": ["AC-10", "AC-11"],
+      "priority": "medium"
+    }
+  ]
+}

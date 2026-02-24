@@ -1,0 +1,190 @@
+{
+  "metadata": {
+    "feature": "GH-60 + GH-61 (Build Consumption: Init Split & Smart Staleness)",
+    "artifact_folder": "gh-60-61-build-consumption-init-split-smart-staleness",
+    "phase": "01-requirements",
+    "status": "draft",
+    "created": "2026-02-20"
+  },
+  "stories": [
+    {
+      "id": "US-001",
+      "epic": "Build Init Decoupling",
+      "persona": "Framework Developer",
+      "goal": "build a pre-analyzed feature without re-executing Phase 01",
+      "benefit": "I save 2-5 minutes per build and avoid redundant requirements capture on items that are already fully analyzed",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-US-001-01",
+          "given": "I have a backlog item with analysis_status 'analyzed' (phases 00-04 complete)",
+          "when": "I run `/isdlc build \"item-name\"`",
+          "then": "the orchestrator initializes the workflow via MODE: init-only and the Phase-Loop Controller starts execution from Phase 05 (test-strategy), skipping phases 00-04 entirely"
+        },
+        {
+          "id": "AC-US-001-02",
+          "given": "I have a backlog item with analysis_status 'raw' (no prior analysis)",
+          "when": "I run `/isdlc build \"item-name\"`",
+          "then": "the orchestrator initializes via MODE: init-only and the Phase-Loop Controller starts execution from Phase 01 (requirements), running all phases sequentially"
+        },
+        {
+          "id": "AC-US-001-03",
+          "given": "the orchestrator completes MODE: init-only",
+          "when": "the Phase-Loop Controller reads the init result",
+          "then": "it receives `next_phase_index: 0` and the full (or sliced) phases array, and creates task list entries for ALL phases to execute"
+        }
+      ],
+      "linked_requirements": ["FR-001", "FR-002", "FR-007"]
+    },
+    {
+      "id": "US-002",
+      "epic": "Build Init Decoupling",
+      "persona": "Framework Developer",
+      "goal": "have the workflow branch and state initialized correctly before any phase runs",
+      "benefit": "the Phase-Loop Controller can handle all phases uniformly, including Phase 01, without special-case initialization logic",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-US-002-01",
+          "given": "I initiate a feature build",
+          "when": "MODE: init-only completes",
+          "then": "state.json has active_workflow set with correct type, description, phases array, current_phase, current_phase_index = 0, and all phases in 'pending' status"
+        },
+        {
+          "id": "AC-US-002-02",
+          "given": "the workflow definition has `requires_branch: true`",
+          "when": "MODE: init-only completes",
+          "then": "a git branch named `feature/{artifact_folder}` has been created from main before the init result is returned"
+        },
+        {
+          "id": "AC-US-002-03",
+          "given": "an ARTIFACT_FOLDER parameter is provided",
+          "when": "MODE: init-only processes it",
+          "then": "the existing folder is used without incrementing the counter, matching current init-and-phase-01 behavior"
+        }
+      ],
+      "linked_requirements": ["FR-001"]
+    },
+    {
+      "id": "US-003",
+      "epic": "Build Init Decoupling",
+      "persona": "Framework Maintainer",
+      "goal": "have a single execution path for all phase delegations",
+      "benefit": "I no longer need to maintain two code paths (init-bundled Phase 01 and Phase-Loop Controller phases 02+), reducing complexity and bug surface",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-US-003-01",
+          "given": "I trace the execution flow for a full feature workflow",
+          "when": "I review the Phase-Loop Controller code in isdlc.md",
+          "then": "all phases from 01 through 08 are handled by the same STEP 3 loop with no special-case branching for Phase 01"
+        },
+        {
+          "id": "AC-US-003-02",
+          "given": "I review MODE: init-only in the orchestrator",
+          "when": "I check its behavior",
+          "then": "it performs only initialization (state.json, branch, counters, meta.json) with zero agent delegations"
+        }
+      ],
+      "linked_requirements": ["FR-002", "NFR-005"]
+    },
+    {
+      "id": "US-004",
+      "epic": "Build Init Decoupling",
+      "persona": "Framework Developer",
+      "goal": "continue using MODE: init-and-phase-01 if my tooling depends on it",
+      "benefit": "I am not forced to update immediately; the old mode works during the deprecation period",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-US-004-01",
+          "given": "I invoke the orchestrator with MODE: init-and-phase-01",
+          "when": "the orchestrator processes the request",
+          "then": "it executes the full existing behavior (init + phase execution + gate + plan) with no functional changes"
+        },
+        {
+          "id": "AC-US-004-02",
+          "given": "I invoke the orchestrator with MODE: init-and-phase-01",
+          "when": "the orchestrator processes the request",
+          "then": "a deprecation notice is emitted (non-blocking) directing me to use MODE: init-only"
+        }
+      ],
+      "linked_requirements": ["FR-003", "NFR-001"]
+    },
+    {
+      "id": "US-005",
+      "epic": "Smart Staleness Detection",
+      "persona": "Framework Developer",
+      "goal": "build a pre-analyzed feature without seeing staleness warnings when only unrelated files have changed",
+      "benefit": "I am not interrupted by false-positive staleness menus during parallel development workflows",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-US-005-01",
+          "given": "my codebase hash differs from the analysis hash BUT none of the changed files overlap with the item's blast radius (from impact-analysis.md)",
+          "when": "the build handler runs step 4b (staleness check)",
+          "then": "no staleness warning is shown and the build proceeds silently"
+        },
+        {
+          "id": "AC-US-005-02",
+          "given": "my codebase hash differs and 2 changed files overlap with the blast radius",
+          "when": "the build handler runs step 4b",
+          "then": "an informational note is displayed listing the 2 overlapping files, but no blocking menu appears"
+        },
+        {
+          "id": "AC-US-005-03",
+          "given": "my codebase hash differs and 5 changed files overlap with the blast radius",
+          "when": "the build handler runs step 4b",
+          "then": "a warning menu is displayed with [P] Proceed / [Q] Re-scan / [A] Re-analyze options, listing the specific overlapping files"
+        }
+      ],
+      "linked_requirements": ["FR-004", "FR-005", "NFR-002", "NFR-004"]
+    },
+    {
+      "id": "US-006",
+      "epic": "Smart Staleness Detection",
+      "persona": "Framework Developer",
+      "goal": "see exactly which files are causing a staleness concern",
+      "benefit": "I can make an informed decision about whether to proceed, re-scan, or re-analyze based on which specific files changed",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-US-006-01",
+          "given": "the staleness check finds 4+ overlapping files between changed files and blast radius",
+          "when": "the warning menu is displayed",
+          "then": "the menu lists each overlapping file path so I can assess whether the changes impact my feature"
+        },
+        {
+          "id": "AC-US-006-02",
+          "given": "the staleness check finds 1-3 overlapping files",
+          "when": "the informational note is displayed",
+          "then": "the note lists each overlapping file path for my reference"
+        }
+      ],
+      "linked_requirements": ["FR-004", "FR-006"]
+    },
+    {
+      "id": "US-007",
+      "epic": "Smart Staleness Detection",
+      "persona": "Framework Developer",
+      "goal": "get the same staleness behavior as before when impact-analysis.md is missing",
+      "benefit": "partial analysis workflows (where Phase 02 was skipped) still get staleness protection via the existing hash-based fallback",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-US-007-01",
+          "given": "a build item has completed Phase 01 but not Phase 02 (no impact-analysis.md exists)",
+          "when": "the staleness check runs and hashes differ",
+          "then": "the existing hash-based staleness warning menu is displayed (same behavior as current system)"
+        },
+        {
+          "id": "AC-US-007-02",
+          "given": "git diff --name-only fails with an error",
+          "when": "the staleness check runs",
+          "then": "the system falls back to naive hash comparison and logs a warning; the build is not blocked by the error"
+        }
+      ],
+      "linked_requirements": ["FR-004", "FR-006", "NFR-003"]
+    }
+  ]
+}

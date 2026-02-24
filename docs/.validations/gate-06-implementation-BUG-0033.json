@@ -1,0 +1,55 @@
+{
+  "gate": "GATE-06",
+  "phase": "06-implementation",
+  "workflow": "fix",
+  "artifact_folder": "BUG-0033-backlog-completion-marking-not-wired-into-finalize",
+  "timestamp": "2026-02-23T00:00:00Z",
+  "result": "PASSED",
+  "checklist": {
+    "all_features_implemented": true,
+    "unit_test_coverage_80_percent": true,
+    "all_tests_passing": true,
+    "code_follows_standards": true,
+    "implementation_matches_design": true,
+    "code_documentation_complete": true
+  },
+  "test_results": {
+    "total": 27,
+    "passing": 27,
+    "failing": 0,
+    "test_file": "src/claude/hooks/tests/test-bug-0033-backlog-finalize-spec.test.cjs",
+    "test_command": "node --test src/claude/hooks/tests/test-bug-0033-backlog-finalize-spec.test.cjs",
+    "regression_suite": {
+      "total": 2482,
+      "passing": 2475,
+      "failing": 7,
+      "pre_existing_failures": 7,
+      "new_regressions": 0
+    }
+  },
+  "files_modified": [
+    "src/claude/agents/00-sdlc-orchestrator.md",
+    "src/claude/commands/isdlc.md"
+  ],
+  "files_created": [
+    "docs/quality/BUG-0033-backlog-completion-marking-not-wired-into-finalize/implementation-notes.md"
+  ],
+  "iterations": {
+    "total": 2,
+    "max": 10
+  },
+  "constitutional_compliance": {
+    "article_I": "PASS",
+    "article_II": "PASS",
+    "article_III": "PASS",
+    "article_V": "PASS",
+    "article_VII": "PASS",
+    "article_VIII": "PASS",
+    "article_IX": "PASS",
+    "article_X": "PASS"
+  },
+  "phase_timing_report": {
+    "debate_rounds_used": 0,
+    "fan_out_chunks": 0
+  }
+}

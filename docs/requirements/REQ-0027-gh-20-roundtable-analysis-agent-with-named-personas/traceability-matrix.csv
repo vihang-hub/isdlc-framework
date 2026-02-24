@@ -1,0 +1,25 @@
+Requirement ID,User Story ID,Epic,Priority,Status
+FR-001,US-001;US-007,Interactive Analysis;Backward Compatibility,Must Have,Draft
+FR-002,US-001;US-005;US-006,Interactive Analysis;Architecture Analysis;Design Analysis,Must Have,Draft
+FR-003,US-001;US-004,Interactive Analysis;Persona Transitions,Must Have,Draft
+FR-004,US-001;US-008,Interactive Analysis;Extensibility,Must Have,Draft
+FR-005,US-003,Session Resumability,Must Have,Draft
+FR-006,US-002,Adaptive Depth,Must Have,Draft
+FR-007,US-001;US-002,Interactive Analysis;Adaptive Depth,Must Have,Draft
+FR-008,US-004,Persona Transitions,Must Have,Draft
+FR-009,US-007,Backward Compatibility,Must Have,Draft
+FR-010,US-005;US-006;US-007,Architecture Analysis;Design Analysis;Backward Compatibility,Must Have,Draft
+FR-011,US-003,Session Resumability,Should Have,Draft
+FR-012,US-006;US-008,Design Analysis;Extensibility,Should Have,Draft
+NFR-001,US-001;US-003,Interactive Analysis;Session Resumability,Should Have,Draft
+NFR-002,US-004,Persona Transitions,Must Have,Draft
+NFR-003,US-003,Session Resumability,Must Have,Draft
+NFR-004,US-008,Extensibility,Should Have,Draft
+NFR-005,US-007,Backward Compatibility,Must Have,Draft
+NFR-006,US-001;US-002,Interactive Analysis;Adaptive Depth,Should Have,Draft
+CON-001,--,Constraints,Must Have,Draft
+CON-002,US-007,Constraints,Must Have,Draft
+CON-003,--,Constraints,Must Have,Draft
+CON-004,--,Constraints,Must Have,Draft
+CON-005,US-008,Constraints,Must Have,Draft
+CON-006,--,Constraints,Must Have,Draft

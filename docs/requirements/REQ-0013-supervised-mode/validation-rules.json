@@ -1,0 +1,191 @@
+{
+  "version": "1.0.0",
+  "feature": "REQ-0013-supervised-mode",
+  "description": "Validation rules for supervised mode configuration and state",
+
+  "schemas": {
+    "supervised_mode_config": {
+      "description": "Top-level supervised_mode block in state.json",
+      "location": "state.json -> supervised_mode",
+      "type": "object",
+      "required": false,
+      "fail_open_default": { "enabled": false, "review_phases": "all", "parallel_summary": true, "auto_advance_timeout": null },
+      "fields": {
+        "enabled": {
+          "type": "boolean",
+          "required": false,
+          "default": false,
+          "validation": "Must be exactly true to enable. Any other value treated as false.",
+          "fail_open": true,
+          "traces": ["AC-01a", "AC-01b", "AC-01c"]
+        },
+        "review_phases": {
+          "type": ["string", "array"],
+          "required": false,
+          "default": "all",
+          "validation": {
+            "string_case": "Must be exactly 'all'",
+            "array_case": "Each element must be a string matching /^\\d{2}$/. Invalid entries silently filtered. Empty array after filtering defaults to 'all'.",
+            "other_type": "Treated as 'all'"
+          },
+          "valid_phase_numbers": ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16"],
+          "fail_open": true,
+          "traces": ["AC-01d", "AC-01e", "AC-01f"]
+        },
+        "parallel_summary": {
+          "type": "boolean",
+          "required": false,
+          "default": true,
+          "validation": "Must be boolean. Non-boolean treated as true.",
+          "fail_open": true,
+          "traces": ["AC-01g", "AC-01h"]
+        },
+        "auto_advance_timeout": {
+          "type": ["number", "null"],
+          "required": false,
+          "default": null,
+          "validation": "Reserved for future use. Always treated as null in v1.",
+          "fail_open": true,
+          "traces": ["CON-013-05"]
+        }
+      }
+    },
+
+    "supervised_review_state": {
+      "description": "Transient review state in active_workflow.supervised_review",
+      "location": "state.json -> active_workflow.supervised_review",
+      "type": "object",
+      "required": false,
+      "fields": {
+        "phase": {
+          "type": "string",
+          "required": true,
+          "validation": "Must be a valid phase key (e.g., '03-architecture'). Format: NN-name.",
+          "traces": ["AC-04b"]
+        },
+        "status": {
+          "type": "string",
+          "required": true,
+          "enum": ["gate_presented", "reviewing", "completed", "redo_pending"],
+          "validation": "Must be one of the enum values. Unknown values trigger session recovery cleanup.",
+          "traces": ["AC-04b", "AC-04e", "AC-05e"]
+        },
+        "paused_at": {
+          "type": ["string", "null"],
+          "required": false,
+          "default": null,
+          "validation": "ISO-8601 timestamp string or null. Set when status transitions to 'reviewing'.",
+          "traces": ["AC-04b"]
+        },
+        "resumed_at": {
+          "type": ["string", "null"],
+          "required": false,
+          "default": null,
+          "validation": "ISO-8601 timestamp string or null. Set when user says 'continue' after review.",
+          "traces": ["AC-04e"]
+        },
+        "redo_count": {
+          "type": "number",
+          "required": false,
+          "default": 0,
+          "validation": "Non-negative integer. Values >= 3 disable redo option. Corrupt values (NaN, negative) treated as >= 3.",
+          "max": 3,
+          "traces": ["AC-05d", "AC-05f"]
+        },
+        "redo_guidance_history": {
+          "type": "array",
+          "required": false,
+          "default": [],
+          "items_type": "string",
+          "validation": "Array of guidance text strings. Non-array values re-initialized as [].",
+          "traces": ["AC-05b"]
+        }
+      }
+    },
+
+    "review_history_entry": {
+      "description": "Individual entry in active_workflow.review_history array",
+      "location": "state.json -> active_workflow.review_history[]",
+      "type": "object",
+      "variants": {
+        "continue": {
+          "required_fields": ["phase", "action", "timestamp"],
+          "field_values": { "action": "continue" },
+          "traces": ["AC-08a"]
+        },
+        "review": {
+          "required_fields": ["phase", "action", "timestamp"],
+          "optional_fields": ["paused_at", "resumed_at"],
+          "field_values": { "action": "review" },
+          "traces": ["AC-08a"]
+        },
+        "redo": {
+          "required_fields": ["phase", "action", "timestamp"],
+          "optional_fields": ["redo_count", "guidance"],
+          "field_values": { "action": "redo" },
+          "traces": ["AC-08a"]
+        }
+      },
+      "fields": {
+        "phase": {
+          "type": "string",
+          "validation": "Valid phase key"
+        },
+        "action": {
+          "type": "string",
+          "enum": ["continue", "review", "redo"]
+        },
+        "timestamp": {
+          "type": "string",
+          "validation": "ISO-8601 format"
+        },
+        "paused_at": {
+          "type": "string",
+          "validation": "ISO-8601 format (review action only)"
+        },
+        "resumed_at": {
+          "type": "string",
+          "validation": "ISO-8601 format (review action only)"
+        },
+        "redo_count": {
+          "type": "number",
+          "validation": "Non-negative integer (redo action only)"
+        },
+        "guidance": {
+          "type": "string",
+          "validation": "User-provided guidance text (redo action only)"
+        }
+      }
+    }
+  },
+
+  "cli_flags": {
+    "--supervised": {
+      "type": "boolean_flag",
+      "applies_to": ["feature", "fix"],
+      "description": "Enable supervised mode with review gates between phases",
+      "effect": "Sets supervised_mode.enabled = true in state.json during init",
+      "traces": ["AC-01a", "FR-01"]
+    }
+  },
+
+  "file_system_rules": {
+    "summary_directory": {
+      "path": ".isdlc/reviews/",
+      "creation": "Auto-created by generatePhaseSummary() using fs.mkdirSync({ recursive: true })",
+      "traces": ["AC-02c"]
+    },
+    "summary_file": {
+      "path_pattern": ".isdlc/reviews/phase-{NN}-summary.md",
+      "overwrite": true,
+      "traces": ["AC-02d"]
+    }
+  },
+
+  "circuit_breaker": {
+    "redo_max_per_phase": 3,
+    "enforcement": "Menu excludes [D] Redo option when redo_count >= 3",
+    "corrupt_value_handling": "NaN, negative, or > 3 all treated as >= 3",
+    "traces": ["NFR-013-05", "AC-05d"]
+  }
+}

@@ -1,0 +1,24 @@
+Requirement,AC,Test Case ID,Test Name,Priority,Test Type,Test File,Status
+FR-01,AC-01a,TC-01a,STEP 3a-prime sets phases[key].status to in_progress,P0,Prompt Content,isdlc-step3-ordering.test.cjs,Designed
+FR-01,AC-01b,TC-01b,STEP 3a-prime sets phases[key].started timestamp (if null),P1,Prompt Content,isdlc-step3-ordering.test.cjs,Designed
+FR-01,AC-01c,TC-01c,STEP 3a-prime sets active_workflow.current_phase,P0,Prompt Content,isdlc-step3-ordering.test.cjs,Designed
+FR-01,AC-01d,TC-01d,STEP 3a-prime sets active_workflow.phase_status[key],P0,Prompt Content,isdlc-step3-ordering.test.cjs,Designed
+FR-01,AC-01e,TC-01e,STEP 3a-prime sets top-level current_phase,P1,Prompt Content,isdlc-step3-ordering.test.cjs,Designed
+FR-01,AC-01f,TC-01f,STEP 3a-prime sets top-level active_agent,P1,Prompt Content,isdlc-step3-ordering.test.cjs,Designed
+FR-01,AC-01g,TC-01-EXIST,STEP 3a-prime exists between STEP 3c and STEP 3d,P0,Prompt Content,isdlc-step3-ordering.test.cjs,Designed
+FR-01,AC-01g,TC-01g,STEP 3a-prime writes state.json before Task delegation,P0,Prompt Content,isdlc-step3-ordering.test.cjs,Designed
+FR-02,AC-02a,TC-02a,STEP 3e step 6 does NOT set phases[new_phase].status,P0,Prompt Content,isdlc-step3-ordering.test.cjs,Designed
+FR-02,AC-02b,TC-02b,STEP 3e step 6 does NOT set phase_status[new_phase],P0,Prompt Content,isdlc-step3-ordering.test.cjs,Designed
+FR-02,AC-02c,TC-02c,STEP 3e step 6 does NOT set active_workflow.current_phase,P1,Prompt Content,isdlc-step3-ordering.test.cjs,Designed
+FR-02,AC-02d,TC-02d,STEP 3e step 6 does NOT set top-level current_phase/active_agent,P1,Prompt Content,isdlc-step3-ordering.test.cjs,Designed
+FR-02,AC-02e,TC-02e,STEP 3e STILL increments current_phase_index,P0,Prompt Content,isdlc-step3-ordering.test.cjs,Designed
+FR-02,AC-02f,TC-02f,STEP 3e steps 1-5 and 7-8 remain unchanged,P1,Prompt Content,isdlc-step3-ordering.test.cjs,Designed
+FR-03,AC-03a,TC-03a,Pre-delegation write activates the phase (prompt),P0,Prompt Content,isdlc-step3-ordering.test.cjs,Designed
+FR-03,AC-03b,TC-03b,Post-phase write deactivates the phase (prompt),P0,Prompt Content,isdlc-step3-ordering.test.cjs,Designed
+FR-03,AC-03c,TC-03c,No field double-written for SAME key in both steps,P1,Prompt Content,isdlc-step3-ordering.test.cjs,Designed
+FR-03,AC-03d,TC-03d,phase-loop-controller.cjs allows after pre-delegation write,P0,Hook Behavior,phase-loop-controller.test.cjs (T3 existing),Existing
+FR-04,AC-04a,TC-04a,Runtime copy matches source,P0,Prompt Content,isdlc-step3-ordering.test.cjs,Designed
+NFR-01,TC-NFR01-vis,TC-NFR01-vis,No external behavior change (same spinners and progression),P2,Regression,npm run test:all,Phase 16
+NFR-02,TC-NFR02,TC-NFR02,Existing hook tests pass (regression),P0,Regression,npm run test:hooks,Phase 16
+NFR-03,TC-NFR01,TC-NFR01,No new hooks or files created,P1,Constraint,Manual check,Phase 16
+NFR-04,TC-NFR04,TC-NFR04,Backward compatibility with BUG-0005,P1,Prompt Content,isdlc-step3-ordering.test.cjs,Designed

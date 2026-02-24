@@ -1,0 +1,57 @@
+{
+  "bug_id": "BUG-0011",
+  "title": "Subagent Phase State Overwrite",
+  "stories": [
+    {
+      "id": "US-01",
+      "title": "Prevent phase index regression",
+      "as_a": "Phase-Loop Controller",
+      "i_want": "the state-write-validator to block writes that regress current_phase_index",
+      "so_that": "my STEP 3c-prime and STEP 3e state advances are not overwritten by subagent writes",
+      "acceptance_criteria": ["AC-01a", "AC-01b", "AC-01c", "AC-01d", "AC-01e", "AC-01f"],
+      "priority": "P0"
+    },
+    {
+      "id": "US-02",
+      "title": "Prevent phase_status regression",
+      "as_a": "Phase-Loop Controller",
+      "i_want": "the state-write-validator to block writes that regress phase_status entries",
+      "so_that": "completed and in-progress phases cannot be reverted to pending by subagent writes",
+      "acceptance_criteria": ["AC-02a", "AC-02b", "AC-02c", "AC-02d", "AC-02e", "AC-02f", "AC-02g"],
+      "priority": "P0"
+    },
+    {
+      "id": "US-03",
+      "title": "Fail-open on edge cases",
+      "as_a": "framework user",
+      "i_want": "the V8 rule to fail-open on all error conditions",
+      "so_that": "a bug in the protection logic never blocks my normal workflow",
+      "acceptance_criteria": ["AC-03a", "AC-03b", "AC-03c", "AC-03d", "AC-03e"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-04",
+      "title": "V8 scoped to Write events only",
+      "as_a": "hook system",
+      "i_want": "V8 to only run on Write events, not Edit events",
+      "so_that": "in-place edits via writeState() are not affected",
+      "acceptance_criteria": ["AC-04a", "AC-04b"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-05",
+      "title": "V8 execution order",
+      "as_a": "hook system",
+      "i_want": "V8 to run after V7 but before V1-V3",
+      "so_that": "version checks happen first, then field protection, then content validation",
+      "acceptance_criteria": ["AC-05a", "AC-05b", "AC-05c"],
+      "priority": "P1"
+    }
+  ],
+  "total_stories": 5,
+  "total_acceptance_criteria": 20,
+  "priority_breakdown": {
+    "P0": 2,
+    "P1": 3
+  }
+}

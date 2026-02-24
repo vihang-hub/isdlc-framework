@@ -1,0 +1,98 @@
+{
+  "gate": "GATE-06",
+  "phase": "06-implementation",
+  "workflow_type": "fix",
+  "artifact_id": "BUG-0029",
+  "artifact_folder": "BUG-0029-GH-18-multiline-bash-permission-bypass",
+  "validated_at": "2026-02-20T19:30:00Z",
+  "status": "passed",
+  "checklist": {
+    "all_features_implemented": {
+      "status": "passed",
+      "details": "FR-001 (10 files rewritten: 8 original + 2 remaining), FR-002 (CLAUDE.md convention), FR-003 (no extraction needed), FR-004 (template updated)"
+    },
+    "unit_test_coverage_80pct": {
+      "status": "passed",
+      "details": "38/38 tests pass; 100% coverage of all 10 affected files, convention sections, negative detection, regression guards, and codebase-wide sweep"
+    },
+    "all_tests_passing": {
+      "status": "passed",
+      "details": "38 pass, 0 fail across 7 test suites; codebase-wide sweep confirms zero multiline Bash blocks in any agent/command file"
+    },
+    "code_follows_standards": {
+      "status": "passed",
+      "details": "All changes are markdown documentation edits following Single-Line Bash Convention"
+    },
+    "implementation_matches_design": {
+      "status": "passed",
+      "details": "Implemented exactly per bug fix scope: architecture-analyzer.md (join find args to single line) and quick-scan-agent.md (split into 4 separate single-line blocks)"
+    },
+    "code_documentation_complete": {
+      "status": "passed",
+      "details": "Implementation notes updated to reflect all 10 files; Single-Line Bash Convention documented in CLAUDE.md and template"
+    }
+  },
+  "test_results": {
+    "test_file": "src/claude/hooks/tests/multiline-bash-validation.test.cjs",
+    "test_command": "node --test src/claude/hooks/tests/multiline-bash-validation.test.cjs",
+    "total": 38,
+    "pass": 38,
+    "fail": 0,
+    "suites": 7,
+    "tdd_workflow": {
+      "red_phase": "3 tests failed (architecture-analyzer.md, quick-scan-agent.md, codebase-wide sweep)",
+      "green_phase": "38/38 tests pass after applying fixes to both files",
+      "iterations_to_green": 1
+    }
+  },
+  "files_changed": [
+    {
+      "file": "src/claude/agents/discover/architecture-analyzer.md",
+      "action": "MODIFY",
+      "description": "Joined 10-line backslash-continuation find command into single line; moved comment to markdown prose"
+    },
+    {
+      "file": "src/claude/agents/quick-scan/quick-scan-agent.md",
+      "action": "MODIFY",
+      "description": "Split 6-line multi-command block (2 glob + 2 grep + 2 comments) into 4 separate single-line code blocks with prose headings"
+    },
+    {
+      "file": "docs/requirements/BUG-0029-GH-18-multiline-bash-permission-bypass/implementation-notes.md",
+      "action": "MODIFY",
+      "description": "Updated to reflect all 10 files fixed and 38 tests passing"
+    }
+  ],
+  "iterations": {
+    "current": 1,
+    "max": 10,
+    "history": [
+      {
+        "iteration": 1,
+        "action": "Applied fixes to architecture-analyzer.md and quick-scan-agent.md",
+        "test_command": "node --test src/claude/hooks/tests/multiline-bash-validation.test.cjs",
+        "result": "PASSED",
+        "failures": 0,
+        "errors": []
+      }
+    ],
+    "status": "success"
+  },
+  "constitutional_validation": {
+    "articles_checked": ["I", "II", "III", "V", "VII", "VIII", "IX", "X"],
+    "all_compliant": true,
+    "details": {
+      "article_I": "Implemented exactly per bug fix scope specification (2 files, exact blocks identified)",
+      "article_II": "TDD followed: Red (3 failures confirmed) then Green (38/38 pass after fix)",
+      "article_III": "No security-sensitive changes; markdown documentation edits only",
+      "article_V": "Simplest possible fix: single-line join and block splitting",
+      "article_VII": "BUG-0029-GH-18 referenced in test file header, implementation notes, and gate validation",
+      "article_VIII": "Implementation notes updated to reflect all 10 files and 38 tests",
+      "article_IX": "All required artifacts exist: source fixes, passing tests, implementation notes, gate validation",
+      "article_X": "Preserved defensive find exclusion patterns; no new failure modes introduced"
+    }
+  },
+  "phase_timing_report": {
+    "debate_rounds_used": 0,
+    "fan_out_chunks": 0
+  }
+}

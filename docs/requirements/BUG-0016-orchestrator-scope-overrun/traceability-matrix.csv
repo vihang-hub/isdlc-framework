@@ -1,0 +1,22 @@
+Requirement,Acceptance Criteria,Test ID,Test Description,Priority,Group,Status
+FR-01,AC-01.1,T05,init-and-phase-01 scope limited to Phase 01,P0,2 (MODE param),Designed
+FR-01,AC-01.2,T06,init-and-phase-01 returns structured JSON after GATE-01,P1,2 (MODE param),Designed
+FR-01,AC-01.3,T07,single-phase mode limits to one phase,P1,2 (MODE param),Designed
+FR-01,AC-01.4,T08,finalize mode runs only merge logic,P1,2 (MODE param),Designed
+FR-01,AC-01.5,T09,No-MODE backward compatibility,P0,2 (MODE param),Designed
+FR-02,AC-02.1,T01,MODE enforcement block exists before Section 1,P0,1 (Top Stop),Designed
+FR-02,AC-02.2,T02,MODE enforcement uses CRITICAL-level language,P0,1 (Top Stop),Designed
+FR-02,AC-02.3,T03,MODE enforcement references JSON return format,P1,1 (Top Stop),Designed
+FR-02,AC-02.4,T04,MODE enforcement says DO NOT delegate to Phase 02,P0,1 (Top Stop),Designed
+FR-03,AC-03.1,T10,Section 4a contains a mode-aware guard,P0,3 (Sec 4a guard),Designed
+FR-03,AC-03.1,T14,Section 4 advancement algorithm contains a mode check,P1,4 (Sec 4 algo),Designed
+FR-03,AC-03.2,T11,Mode guard blocks transition after Phase 01 in init-and-phase-01,P0,3 (Sec 4a guard),Designed
+FR-03,AC-03.3,T12,Mode guard blocks transition in single-phase mode,P1,3 (Sec 4a guard),Designed
+FR-03,AC-03.4,T13,Mode guard prevents transitions in finalize mode,P1,3 (Sec 4a guard),Designed
+FR-04,AC-04.1,T15,init-and-phase-01 return format documented,P1,5 (Return fmt),Designed
+FR-04,AC-04.2,T16,single-phase return format documented,P2,5 (Return fmt),Designed
+FR-04,AC-04.3,T17,finalize return format documented,P2,5 (Return fmt),Designed
+NFR-01,-,T09,No-MODE backward compatibility (shared with AC-01.5),P0,2 (MODE param),Designed
+NFR-01,-,T18,Full-workflow mode regression guard,P0,6 (Regression),Designed
+NFR-02,-,T19,MODE enforcement positioned before phase delegation logic,P0,6 (Position),Designed
+NFR-03,-,T20,Stop conditions use imperative language,P1,6 (Language),Designed

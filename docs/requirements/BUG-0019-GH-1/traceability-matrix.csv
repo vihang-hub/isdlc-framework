@@ -1,0 +1,67 @@
+Requirement,Acceptance Criteria,Test Case ID,Test Category,Priority,Status
+FR-01,AC-01.1 - Controller re-delegates to implementation agent with file list,TC-INT-01,Integration,P0,Designed
+FR-01,AC-01.1 - Controller re-delegates to implementation agent with file list,TC-MD-04,Markdown Validation,P0,Designed
+FR-01,AC-01.2 - MUST NOT modify impact-analysis.md,TC-MD-07,Markdown Validation,P0,Designed
+FR-01,AC-01.2 - MUST NOT modify impact-analysis.md,TC-INT-04,Integration,P0,Designed
+FR-01,AC-01.2 - MUST NOT modify impact-analysis.md,TC-MD-11,Markdown Validation,P1,Designed
+FR-01,AC-01.3 - MUST NOT modify state.json blast radius metadata,TC-MD-07,Markdown Validation,P0,Designed
+FR-01,AC-01.3 - MUST NOT modify state.json blast radius metadata,TC-INT-04,Integration,P0,Designed
+FR-01,AC-01.3 - MUST NOT modify state.json blast radius metadata,TC-MD-10,Markdown Validation,P1,Designed
+FR-01,AC-01.4 - Includes specific unaddressed file paths in re-delegation prompt,TC-PARSE-01,Unit,P0,Designed
+FR-01,AC-01.4 - Includes specific unaddressed file paths in re-delegation prompt,TC-PARSE-02,Unit,P0,Designed
+FR-01,AC-01.4 - Includes specific unaddressed file paths in re-delegation prompt,TC-PARSE-03,Unit,P1,Designed
+FR-01,AC-01.4 - Includes specific unaddressed file paths in re-delegation prompt,TC-INT-02,Integration,P0,Designed
+FR-01,AC-01.4 - Includes specific unaddressed file paths in re-delegation prompt,TC-MD-02,Markdown Validation,P0,Designed
+FR-02,AC-02.1 - Controller reads docs/isdlc/tasks.md on blast radius block,TC-TASK-05,Unit,P1,Designed
+FR-02,AC-02.1 - Controller reads docs/isdlc/tasks.md on blast radius block,TC-TASK-06,Unit,P1,Designed
+FR-02,AC-02.1 - Controller reads docs/isdlc/tasks.md on blast radius block,TC-MD-03,Markdown Validation,P0,Designed
+FR-02,AC-02.1 - Controller reads docs/isdlc/tasks.md on blast radius block,TC-INT-11,Integration,P1,Designed
+FR-02,AC-02.2 - Matches unaddressed files to tasks in tasks.md,TC-TASK-01,Unit,P0,Designed
+FR-02,AC-02.2 - Matches unaddressed files to tasks in tasks.md,TC-TASK-02,Unit,P0,Designed
+FR-02,AC-02.2 - Matches unaddressed files to tasks in tasks.md,TC-TASK-03,Unit,P1,Designed
+FR-02,AC-02.3 - Matched tasks included in re-delegation prompt,TC-INT-03,Integration,P0,Designed
+FR-02,AC-02.3 - Matched tasks included in re-delegation prompt,TC-TASK-02,Unit,P0,Designed
+FR-02,AC-02.4 - Logs discrepancy when file unaddressed but task marked done,TC-TASK-04,Unit,P1,Designed
+FR-03,AC-03.1 - After re-delegation completes controller re-runs gate validation,TC-MD-05,Markdown Validation,P0,Designed
+FR-03,AC-03.1 - After re-delegation completes controller re-runs gate validation,TC-INT-05,Integration,P0,Designed
+FR-03,AC-03.2 - Retry loop has maximum of 3 iterations,TC-RETRY-03,Unit,P0,Designed
+FR-03,AC-03.2 - Retry loop has maximum of 3 iterations,TC-RETRY-04,Unit,P1,Designed
+FR-03,AC-03.2 - Retry loop has maximum of 3 iterations,TC-MD-05,Markdown Validation,P0,Designed
+FR-03,AC-03.3 - If retry limit exceeded escalates to human with summary,TC-INT-06,Integration,P0,Designed
+FR-03,AC-03.3 - If retry limit exceeded escalates to human with summary,TC-MD-06,Markdown Validation,P1,Designed
+FR-03,AC-03.4 - Each retry iteration logged in state.json,TC-RETRY-01,Unit,P0,Designed
+FR-03,AC-03.4 - Each retry iteration logged in state.json,TC-RETRY-02,Unit,P0,Designed
+FR-03,AC-03.4 - Each retry iteration logged in state.json,TC-RETRY-05,Unit,P1,Designed
+FR-03,AC-03.4 - Each retry iteration logged in state.json,TC-INT-05,Integration,P0,Designed
+FR-04,AC-04.1 - Deferred only if requirements-spec.md has Deferred Files section,TC-DEF-01,Unit,P0,Designed
+FR-04,AC-04.1 - Deferred only if requirements-spec.md has Deferred Files section,TC-DEF-03,Unit,P1,Designed
+FR-04,AC-04.1 - Deferred only if requirements-spec.md has Deferred Files section,TC-MD-08,Markdown Validation,P1,Designed
+FR-04,AC-04.2 - Validator accepts files listed in deferred section,TC-DEF-01,Unit,P0,Designed
+FR-04,AC-04.2 - Validator accepts files listed in deferred section,TC-INT-07,Integration,P1,Designed
+FR-04,AC-04.3 - Auto-generated deferrals NOT valid,TC-DEF-02,Unit,P0,Designed
+FR-04,AC-04.3 - Auto-generated deferrals NOT valid,TC-INT-08,Integration,P1,Designed
+FR-04,AC-04.4 - Validator checks deferred section in requirements spec,TC-DEF-04,Unit,P2,Designed
+FR-04,AC-04.4 - Validator checks deferred section in requirements spec,TC-MD-08,Markdown Validation,P1,Designed
+FR-05,AC-05.1 - STEP 3f detects blast-radius-validator as blocking hook,TC-MD-01,Markdown Validation,P0,Designed
+FR-05,AC-05.1 - STEP 3f detects blast-radius-validator as blocking hook,TC-INT-09,Integration,P0,Designed
+FR-05,AC-05.2 - Extracts unaddressed file list from stop reason,TC-PARSE-01,Unit,P0,Designed
+FR-05,AC-05.2 - Extracts unaddressed file list from stop reason,TC-PARSE-02,Unit,P0,Designed
+FR-05,AC-05.2 - Extracts unaddressed file list from stop reason,TC-PARSE-04,Unit,P1,Designed
+FR-05,AC-05.2 - Extracts unaddressed file list from stop reason,TC-PARSE-05,Unit,P1,Designed
+FR-05,AC-05.2 - Extracts unaddressed file list from stop reason,TC-MD-02,Markdown Validation,P0,Designed
+FR-05,AC-05.3 - Reads tasks.md and matches unaddressed files to task entries,TC-TASK-01,Unit,P0,Designed
+FR-05,AC-05.3 - Reads tasks.md and matches unaddressed files to task entries,TC-TASK-02,Unit,P0,Designed
+FR-05,AC-05.3 - Reads tasks.md and matches unaddressed files to task entries,TC-MD-03,Markdown Validation,P0,Designed
+FR-05,AC-05.4 - Re-delegates to implementation agent with matched task list,TC-INT-01,Integration,P0,Designed
+FR-05,AC-05.4 - Re-delegates to implementation agent with matched task list,TC-INT-02,Integration,P0,Designed
+FR-05,AC-05.4 - Re-delegates to implementation agent with matched task list,TC-INT-03,Integration,P0,Designed
+FR-05,AC-05.4 - Re-delegates to implementation agent with matched task list,TC-MD-04,Markdown Validation,P0,Designed
+FR-05,AC-05.5 - After re-implementation loops back to STEP 3d for re-run,TC-MD-05,Markdown Validation,P0,Designed
+FR-05,AC-05.5 - After re-implementation loops back to STEP 3d for re-run,TC-INT-05,Integration,P0,Designed
+NFR-01,No regression in blast radius validation,TC-REG-02,Regression,P0,Designed
+NFR-01,No regression in blast radius validation,TC-REG-03,Regression,P0,Designed
+NFR-02,Backward compatibility for non-blast-radius blocks,TC-REG-01,Regression,P0,Designed
+NFR-02,Backward compatibility for non-blast-radius blocks,TC-MD-09,Markdown Validation,P0,Designed
+NFR-02,Backward compatibility for non-blast-radius blocks,TC-INT-09,Integration,P0,Designed
+NFR-03,Logging and observability for retry iterations,TC-RETRY-05,Unit,P1,Designed
+NFR-03,Logging and observability for retry iterations,TC-INT-05,Integration,P0,Designed

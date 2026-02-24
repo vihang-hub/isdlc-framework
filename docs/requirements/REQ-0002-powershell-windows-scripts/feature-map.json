@@ -1,0 +1,143 @@
+{
+  "feature_id": "REQ-0002",
+  "feature_name": "powershell-windows-scripts",
+  "blast_radius": "low-medium",
+  "analyzed_at": "2026-02-08T12:40:00Z",
+
+  "files_created": [
+    {
+      "path": "install.ps1",
+      "estimated_lines": "800-1000",
+      "based_on": "install.sh",
+      "requirements": ["REQ-001", "REQ-004", "REQ-005", "REQ-006"]
+    },
+    {
+      "path": "uninstall.ps1",
+      "estimated_lines": "500-600",
+      "based_on": "uninstall.sh",
+      "requirements": ["REQ-002", "REQ-004", "REQ-006"]
+    },
+    {
+      "path": "update.ps1",
+      "estimated_lines": "350-450",
+      "based_on": "update.sh",
+      "requirements": ["REQ-003", "REQ-004", "REQ-006"]
+    }
+  ],
+
+  "files_modified": [
+    {
+      "path": "README.md",
+      "change_type": "documentation",
+      "change_description": "Add Windows installation section with PowerShell instructions",
+      "lines_affected": 5,
+      "risk": "none"
+    },
+    {
+      "path": "framework-info.md",
+      "change_type": "documentation",
+      "change_description": "Add PowerShell script references alongside bash",
+      "lines_affected": 5,
+      "risk": "none"
+    },
+    {
+      "path": "docs/MONOREPO-GUIDE.md",
+      "change_type": "documentation",
+      "change_description": "Add Windows monorepo install instructions",
+      "lines_affected": 5,
+      "risk": "none"
+    },
+    {
+      "path": "src/claude/agents/discover-orchestrator.md",
+      "change_type": "documentation",
+      "change_description": "Add install.ps1 alternative reference",
+      "lines_affected": 1,
+      "risk": "none"
+    },
+    {
+      "path": "src/claude/skills/discover/project-detection/SKILL.md",
+      "change_type": "documentation",
+      "change_description": "Add install.ps1 reference to prerequisites",
+      "lines_affected": 1,
+      "risk": "none"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "change_type": "ci-cd",
+      "change_description": "Add powershell-install job testing on windows-latest",
+      "lines_affected": 30,
+      "risk": "low"
+    },
+    {
+      "path": "lib/installer.js",
+      "change_type": "code",
+      "change_description": "Copy .ps1 scripts to .isdlc/scripts/ during Node.js install",
+      "lines_affected": 5,
+      "risk": "low"
+    }
+  ],
+
+  "files_unchanged": [
+    "install.sh",
+    "uninstall.sh",
+    "update.sh",
+    "lib/updater.js",
+    "lib/uninstaller.js",
+    "src/claude/hooks/*.cjs",
+    "src/claude/agents/*.md (except discover-orchestrator)",
+    "lib/*.test.js",
+    "src/claude/hooks/tests/*.test.cjs"
+  ],
+
+  "risk_zones": [
+    {
+      "area": "JSON deep merge (Merge-JsonDeep function)",
+      "risk_level": "high",
+      "description": "PowerShell PSCustomObject merge differs from jq behavior; must handle nested objects, arrays, nulls",
+      "mitigation": "Side-by-side comparison tests; test roundtrip preservation of user keys"
+    },
+    {
+      "area": "Path normalization in JSON output",
+      "risk_level": "high",
+      "description": "Windows backslashes must be converted to forward slashes in all JSON writes",
+      "mitigation": "ConvertTo-ForwardSlashPath helper applied to every path before JSON serialization"
+    },
+    {
+      "area": "Installation manifest generation",
+      "risk_level": "medium",
+      "description": "Get-ChildItem returns different path format than find; must normalize to match bash output",
+      "mitigation": "Path normalization + comparison test against bash-generated manifest"
+    },
+    {
+      "area": "Line endings in generated files",
+      "risk_level": "medium",
+      "description": "Set-Content writes CRLF; cross-platform JSON/YAML should use LF",
+      "mitigation": "Use [System.IO.File]::WriteAllText() with explicit LF"
+    }
+  ],
+
+  "entry_points": [
+    {
+      "name": "install.ps1 main flow",
+      "description": "Primary entry point; establishes patterns for other scripts",
+      "reference": "install.sh (sections 1-6)",
+      "secondary_reference": "lib/installer.js"
+    },
+    {
+      "name": "Shared helper functions",
+      "description": "Common functions used by all 3 scripts (output, JSON merge, paths)",
+      "reference": "Inline in each script or dot-sourced common module",
+      "secondary_reference": null
+    }
+  ],
+
+  "implementation_order": [
+    "1. Shared helper functions (Write-Banner, Merge-JsonDeep, ConvertTo-ForwardSlashPath)",
+    "2. install.ps1 (most complex, establishes patterns)",
+    "3. uninstall.ps1 (reuses helpers, simpler flow)",
+    "4. update.ps1 (reuses helpers + manifest diff)",
+    "5. CI/CD (.github/workflows/ci.yml)",
+    "6. Documentation (README.md, framework-info.md, MONOREPO-GUIDE.md)",
+    "7. Node.js installer update (lib/installer.js - copy .ps1 to scripts/)"
+  ]
+}

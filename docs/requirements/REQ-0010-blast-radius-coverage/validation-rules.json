@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "blast-radius-validator validation rules",
+  "version": "1.0.0",
+  "date": "2026-02-12",
+  "traces_to": ["REQ-006", "AC-006-01", "AC-006-02", "AC-006-03", "AC-006-04", "AC-006-05"],
+
+  "parsing_rules": {
+    "impact_analysis_table_row": {
+      "description": "Regex pattern to match markdown table rows with backtick-wrapped file paths and change types",
+      "pattern": "^\\|\\s*`([^`]+)`\\s*\\|\\s*(CREATE|MODIFY|DELETE|NO CHANGE)\\s*\\|",
+      "captures": {
+        "group_1": "filePath (content between backticks)",
+        "group_2": "changeType (CREATE, MODIFY, DELETE, or NO CHANGE)"
+      },
+      "flags": "none (single-line match per line)",
+      "traces_to": "AC-006-01"
+    },
+
+    "coverage_table_row": {
+      "description": "Regex pattern to match blast-radius-coverage.md table rows",
+      "pattern": "^\\|\\s*`([^`]+)`\\s*\\|\\s*\\w[\\w\\s]*\\|\\s*(covered|deferred|unaddressed)\\s*\\|\\s*(.*?)\\s*\\|$",
+      "captures": {
+        "group_1": "filePath",
+        "group_2": "coverageStatus (covered, deferred, unaddressed)",
+        "group_3": "notes (free text)"
+      },
+      "flags": "i (case-insensitive for status)",
+      "traces_to": "REQ-003 AC-003-02"
+    }
+  },
+
+  "input_validation": {
+    "ctx_object": {
+      "required_fields": ["input", "state"],
+      "validation": "If either field is missing or falsy, return allow (fail-open)",
+      "traces_to": "REQ-007 AC-007-01"
+    },
+
+    "active_workflow": {
+      "required_fields": ["type", "current_phase", "artifact_folder"],
+      "type_constraint": "must equal 'feature'",
+      "phase_constraint": "must equal '06-implementation'",
+      "validation": "Missing or non-matching fields -> skip hook (allow)",
+      "traces_to": ["REQ-007 AC-007-02", "CON-005", "AC-001-06"]
+    },
+
+    "impact_analysis_content": {
+      "type": "string",
+      "min_length": 1,
+      "validation": "null or non-string -> return null from parser (parse error)",
+      "traces_to": "AC-002-04"
+    },
+
+    "file_path_format": {
+      "description": "File paths extracted from backticks in markdown tables",
+      "pattern": "[^`]+",
+      "constraints": [
+        "Must not be empty after trim",
+        "Forward slashes used (matching git diff output)",
+        "Relative to project root (no leading /)"
+      ],
+      "traces_to": "AC-006-05"
+    }
+  },
+
+  "business_rules": {
+    "no_change_exclusion": {
+      "description": "Files with Change Type 'NO CHANGE' are excluded from coverage validation",
+      "rule": "changeType === 'NO CHANGE' -> skip (do not add to affected files list)",
+      "traces_to": "AC-006-04"
+    },
+
+    "deduplication": {
+      "description": "Same file appearing in multiple requirement sections is counted once",
+      "rule": "Use Map keyed by filePath; first occurrence wins",
+      "traces_to": "AC-006-02"
+    },
+
+    "deferral_requires_rationale": {
+      "description": "A deferred file must have a non-empty Notes column",
+      "rule": "status === 'deferred' AND notes.trim().length > 0",
+      "consequence": "Deferred without rationale is treated as unaddressed",
+      "traces_to": "AC-003-04"
+    },
+
+    "coverage_classification": {
+      "description": "Each affected file is classified into exactly one category",
+      "priority_order": [
+        "1. covered: file appears in git diff output",
+        "2. deferred: file has valid deferral in blast-radius-coverage.md",
+        "3. unaddressed: neither covered nor deferred"
+      ],
+      "note": "If a file is both in git diff AND deferred, it is classified as 'covered'",
+      "traces_to": "AC-001-03"
+    },
+
+    "block_condition": {
+      "description": "Hook blocks when any affected file is unaddressed",
+      "rule": "report.unaddressed.length > 0 -> decision: 'block'",
+      "traces_to": "AC-001-04"
+    },
+
+    "allow_condition": {
+      "description": "Hook allows when all affected files are covered or deferred",
+      "rule": "report.unaddressed.length === 0 -> decision: 'allow'",
+      "traces_to": "AC-001-05"
+    }
+  },
+
+  "git_diff_validation": {
+    "command": "git diff --name-only main...HEAD",
+    "options": {
+      "cwd": "projectRoot",
+      "encoding": "utf8",
+      "timeout": 5000
+    },
+    "output_parsing": {
+      "delimiter": "newline",
+      "trim": true,
+      "filter_empty": true,
+      "result_type": "Set<string>"
+    },
+    "error_handling": "Any execSync error -> return null (fail-open)",
+    "traces_to": ["REQ-001 AC-001-02", "ADR-0003", "NFR-001"]
+  },
+
+  "performance_constraints": {
+    "total_budget_ms": 2000,
+    "git_timeout_ms": 5000,
+    "expected_total_ms": 250,
+    "traces_to": "NFR-001"
+  },
+
+  "edge_cases": [
+    {
+      "id": "EC-01",
+      "description": "impact-analysis.md has tables but all entries are NO CHANGE",
+      "expected": "Empty affected files list -> allow",
+      "traces_to": "AC-006-04"
+    },
+    {
+      "id": "EC-02",
+      "description": "impact-analysis.md has malformed rows (no backticks)",
+      "expected": "Rows skipped silently; if all rows malformed -> empty list -> allow",
+      "traces_to": "AC-006-05"
+    },
+    {
+      "id": "EC-03",
+      "description": "Git diff returns empty (no files changed on branch)",
+      "expected": "All affected files classified as unaddressed (unless deferred) -> block",
+      "traces_to": "AC-001-04"
+    },
+    {
+      "id": "EC-04",
+      "description": "blast-radius-coverage.md exists but has no deferred entries",
+      "expected": "Empty deferral map; only git diff determines coverage",
+      "traces_to": "AC-001-03"
+    },
+    {
+      "id": "EC-05",
+      "description": "Deferred file has empty Notes column",
+      "expected": "Not counted as valid deferral -> treated as unaddressed",
+      "traces_to": "AC-003-04"
+    },
+    {
+      "id": "EC-06",
+      "description": "File in git diff but not in impact-analysis.md",
+      "expected": "Ignored (only impact-analysis files are tracked)",
+      "traces_to": "REQ-001"
+    },
+    {
+      "id": "EC-07",
+      "description": "artifact_folder contains special characters",
+      "expected": "path.join handles correctly; no sanitization needed (trusted input from state.json)",
+      "traces_to": "NFR-005"
+    },
+    {
+      "id": "EC-08",
+      "description": "impact-analysis.md is very large (>1MB)",
+      "expected": "readFileSync handles; regex parsing is O(n) per line; within performance budget",
+      "traces_to": "NFR-001"
+    }
+  ]
+}

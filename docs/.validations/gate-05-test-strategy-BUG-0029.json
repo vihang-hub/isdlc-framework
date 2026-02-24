@@ -1,0 +1,78 @@
+{
+  "gate": "GATE-05",
+  "phase": "05-test-strategy",
+  "workflow": "fix",
+  "artifact_folder": "BUG-0029-GH-18-multiline-bash-permission-bypass",
+  "validated_at": "2026-02-20T20:00:00Z",
+  "status": "PASS",
+  "scope_update": "Reduced from 28 multiline blocks in 8 files to 2 blocks in 2 files after Phase 02 revalidation (26 blocks resolved in 49 interim commits)",
+  "checklist": {
+    "test_strategy_covers_unit_integration_e2e_security_performance": {
+      "status": "PASS",
+      "details": "Strategy covers unit tests (38 content validation tests). Integration, E2E, security, and performance documented as N/A with rationale -- this is a prompt-content fix (rewriting .md files), not a runtime code change."
+    },
+    "test_cases_exist_for_all_requirements": {
+      "status": "PASS",
+      "details": "12 ACs across 4 FRs all have dedicated test cases. FR-001: 4 ACs covered by TC-MLB-01 to TC-MLB-10 (per-file) + TC-MLB-21 to TC-MLB-28 (scanner) + TC-MLB-37/38 (sweep). FR-002: 3 ACs covered by TC-MLB-11 to TC-MLB-16. FR-003: 3 ACs covered by TC-MLB-25 (conditional -- no script extraction needed). FR-004: 2 ACs covered by TC-MLB-17 to TC-MLB-20. NFRs covered by TC-MLB-29 to TC-MLB-36 + TC-MLB-38."
+    },
+    "traceability_matrix_complete_100_percent": {
+      "status": "PASS",
+      "details": "12/12 ACs mapped to 38 test cases (TC-MLB-01 through TC-MLB-38). Zero orphan ACs, zero orphan tests. 4 NFRs also covered."
+    },
+    "coverage_targets_defined": {
+      "status": "PASS",
+      "details": "100% requirement coverage (all 12 ACs). 100% file coverage (all 10 affected files + CLAUDE.md + template + codebase-wide sweep). 100% pattern type coverage (all 8 multiline pattern types including line-continuation and multi-example)."
+    },
+    "test_data_strategy_documented": {
+      "status": "PASS",
+      "details": "test-data-plan.md defines production files (12 real .md files), synthetic test data (20 test strings covering boundary values, invalid inputs, maximum-size inputs), and data generation strategy."
+    },
+    "critical_paths_identified": {
+      "status": "PASS",
+      "details": "Critical paths: (1) 2 TDD target files that currently FAIL (architecture-analyzer.md, quick-scan-agent.md), (2) codebase-wide sweep for comprehensive regression protection, (3) convention section presence in CLAUDE.md and template."
+    },
+    "tdd_enforcement": {
+      "status": "PASS",
+      "details": "3 tests currently FAIL (TC-MLB-09, TC-MLB-10, TC-MLB-38) confirming TDD RED state. Phase 06 must fix the 2 affected files to turn these GREEN. 35 tests currently PASS (regression guards + convention checks + scanner verification)."
+    }
+  },
+  "constitutional_compliance": {
+    "article_II": {
+      "status": "COMPLIANT",
+      "details": "Test cases designed and implemented in Phase 05 before implementation (Phase 06). 38 test cases in multiline-bash-validation.test.cjs. 3 tests FAIL (TDD RED state), proving test-first development. Tests written before fix code."
+    },
+    "article_VII": {
+      "status": "COMPLIANT",
+      "details": "Traceability matrix maps all 12 ACs across 4 FRs to 38 test cases with 100% coverage. No orphan requirements or tests. AC-001-02 (functional regression) covered by Phase 16 gate check."
+    },
+    "article_IX": {
+      "status": "COMPLIANT",
+      "details": "GATE-05 validated with all 7 checklist items passing. All required artifacts produced: test-strategy.md, test-cases.md, traceability-matrix.csv, test-data-plan.md, multiline-bash-validation.test.cjs."
+    },
+    "article_XI": {
+      "status": "COMPLIANT",
+      "details": "Integration testing documented as N/A for this fix -- changes are to static Markdown content, not component interfaces. No module interactions affected. Codebase-wide sweep test provides broader coverage than targeted tests alone."
+    }
+  },
+  "artifacts": [
+    "docs/requirements/BUG-0029-GH-18-multiline-bash-permission-bypass/test-strategy.md",
+    "docs/requirements/BUG-0029-GH-18-multiline-bash-permission-bypass/test-cases.md",
+    "docs/requirements/BUG-0029-GH-18-multiline-bash-permission-bypass/traceability-matrix.csv",
+    "docs/requirements/BUG-0029-GH-18-multiline-bash-permission-bypass/test-data-plan.md",
+    "src/claude/hooks/tests/multiline-bash-validation.test.cjs"
+  ],
+  "metrics": {
+    "total_frs": 4,
+    "total_acs": 12,
+    "acs_covered": 12,
+    "coverage_percent": 100,
+    "total_test_count": 38,
+    "tests_passing": 35,
+    "tests_failing_tdd": 3,
+    "affected_files_scanned": 10,
+    "codebase_wide_files_scanned": "65+",
+    "pattern_types_covered": 8,
+    "debate_rounds_used": 0,
+    "fan_out_chunks": 0
+  }
+}

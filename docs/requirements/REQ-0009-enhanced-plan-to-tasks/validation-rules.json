@@ -1,0 +1,229 @@
+{
+  "version": "1.0.0",
+  "description": "Validation rules for the enhanced plan-to-tasks pipeline (REQ-0009)",
+  "traces": ["FR-01", "FR-02", "FR-03", "FR-06", "FR-08", "NFR-02"],
+
+  "tasks_md_format": {
+    "description": "Validation rules for the tasks.md v2.0 format",
+    "rules": [
+      {
+        "id": "VR-FMT-001",
+        "field": "header.format",
+        "rule": "Must contain 'Format: v2.0' line in header block",
+        "type": "required_for_v2",
+        "failure_action": "treat_as_v1",
+        "traces": ["FR-06", "AC-06a"]
+      },
+      {
+        "id": "VR-FMT-002",
+        "field": "header.generated",
+        "rule": "Must contain ISO-8601 timestamp",
+        "type": "required",
+        "regex": "^Generated:\\s*\\d{4}-\\d{2}-\\d{2}T",
+        "traces": ["FR-06"]
+      },
+      {
+        "id": "VR-FMT-003",
+        "field": "task_line.checkbox",
+        "rule": "Must start with '- [ ]', '- [X]', or '- [BLOCKED]'",
+        "type": "required",
+        "regex": "^- \\[([ X]|BLOCKED)\\]",
+        "traces": ["FR-06", "AC-06a"]
+      },
+      {
+        "id": "VR-FMT-004",
+        "field": "task_line.id",
+        "rule": "Task ID must follow checkbox: 'T' followed by 4 digits",
+        "type": "required",
+        "regex": "^- \\[.+\\] T\\d{4}",
+        "traces": ["FR-06"]
+      },
+      {
+        "id": "VR-FMT-005",
+        "field": "task_line.traces",
+        "rule": "Traceability annotation after pipe: '| traces: FR-NN, AC-NNx'",
+        "type": "recommended",
+        "regex": "\\| traces:\\s*[A-Z]+-\\d+",
+        "failure_action": "warn_orphan_task",
+        "traces": ["FR-02", "AC-02a"]
+      },
+      {
+        "id": "VR-FMT-006",
+        "field": "sub_line.blocked_by",
+        "rule": "Dependency sub-line: 2-space indent, 'blocked_by: [TNNNN, ...]'",
+        "type": "optional",
+        "regex": "^\\s{2}blocked_by:\\s*\\[T\\d{4}",
+        "traces": ["FR-03", "AC-03a"]
+      },
+      {
+        "id": "VR-FMT-007",
+        "field": "sub_line.blocks",
+        "rule": "Dependency sub-line: 2-space indent, 'blocks: [TNNNN, ...]'",
+        "type": "optional",
+        "regex": "^\\s{2}blocks:\\s*\\[T\\d{4}",
+        "traces": ["FR-03", "AC-03b"]
+      },
+      {
+        "id": "VR-FMT-008",
+        "field": "sub_line.files",
+        "rule": "File annotation: 2-space indent, 'files: path (CREATE|MODIFY)'",
+        "type": "required_for_phase06_v2",
+        "regex": "^\\s{2}files:\\s*.+\\s*\\((CREATE|MODIFY)\\)",
+        "traces": ["FR-01", "AC-01a", "AC-01b"]
+      },
+      {
+        "id": "VR-FMT-009",
+        "field": "sub_line.reason",
+        "rule": "Block reason: 2-space indent, 'reason: text'",
+        "type": "required_when_blocked",
+        "regex": "^\\s{2}reason:\\s*.+",
+        "traces": ["FR-05", "AC-05e"]
+      },
+      {
+        "id": "VR-FMT-010",
+        "field": "section.dependency_graph",
+        "rule": "Dependency Graph section must exist if any task has blocked_by/blocks",
+        "type": "recommended",
+        "traces": ["FR-03", "AC-03d", "AC-06e"]
+      },
+      {
+        "id": "VR-FMT-011",
+        "field": "section.traceability_matrix",
+        "rule": "Traceability Matrix section must exist if any task has traces",
+        "type": "recommended",
+        "traces": ["FR-02", "AC-02b", "AC-06f"]
+      },
+      {
+        "id": "VR-FMT-012",
+        "field": "section.progress_summary",
+        "rule": "Progress Summary section must exist with accurate counts",
+        "type": "required",
+        "traces": ["FR-06"]
+      }
+    ]
+  },
+
+  "dependency_graph": {
+    "description": "Validation rules for the dependency graph",
+    "rules": [
+      {
+        "id": "VR-DEP-001",
+        "rule": "Dependency graph must be acyclic (DAG)",
+        "type": "required",
+        "failure_action": "break_weakest_edge",
+        "traces": ["FR-03", "AC-03c"]
+      },
+      {
+        "id": "VR-DEP-002",
+        "rule": "All task IDs in blocked_by/blocks must reference existing tasks",
+        "type": "required",
+        "failure_action": "ignore_invalid_reference",
+        "traces": ["FR-03", "AC-03a"]
+      },
+      {
+        "id": "VR-DEP-003",
+        "rule": "blocked_by and blocks must be consistent (if A blocked_by B, then B blocks A)",
+        "type": "recommended",
+        "failure_action": "warn",
+        "traces": ["FR-03"]
+      },
+      {
+        "id": "VR-DEP-004",
+        "rule": "Critical path must be identified if dependency graph has >1 task",
+        "type": "recommended",
+        "traces": ["FR-03", "AC-03d"]
+      }
+    ]
+  },
+
+  "traceability": {
+    "description": "Validation rules for requirement traceability",
+    "rules": [
+      {
+        "id": "VR-TRACE-001",
+        "rule": "Every FR-NN should have at least one task with traces annotation",
+        "type": "recommended",
+        "threshold": "80%",
+        "failure_action": "warn_uncovered_requirement",
+        "traces": ["FR-02", "AC-02e"]
+      },
+      {
+        "id": "VR-TRACE-002",
+        "rule": "Every task should have at least one traces annotation",
+        "type": "recommended",
+        "failure_action": "warn_orphan_task",
+        "traces": ["FR-02", "AC-02d"]
+      },
+      {
+        "id": "VR-TRACE-003",
+        "rule": "Traces annotation values must reference valid FR-NN or AC-NNx identifiers",
+        "type": "recommended",
+        "failure_action": "warn",
+        "traces": ["FR-02"]
+      }
+    ]
+  },
+
+  "mechanical_mode": {
+    "description": "Validation rules for mechanical execution mode",
+    "rules": [
+      {
+        "id": "VR-MECH-001",
+        "rule": "Phase 06 tasks must have files: sub-lines for mechanical mode to activate",
+        "type": "required_for_mechanical",
+        "failure_action": "fallback_to_standard",
+        "traces": ["FR-05", "AC-05g"]
+      },
+      {
+        "id": "VR-MECH-002",
+        "rule": "File paths in files: sub-lines must be project-relative",
+        "type": "required",
+        "regex": "^[a-zA-Z]",
+        "traces": ["FR-01", "AC-01d"]
+      },
+      {
+        "id": "VR-MECH-003",
+        "rule": "File actions must be CREATE or MODIFY",
+        "type": "required",
+        "regex": "\\((CREATE|MODIFY)\\)",
+        "traces": ["FR-01", "AC-01b"]
+      },
+      {
+        "id": "VR-MECH-004",
+        "rule": "BLOCKED tasks must have a reason: sub-line",
+        "type": "required",
+        "traces": ["FR-05", "AC-05e"]
+      }
+    ]
+  },
+
+  "backward_compatibility": {
+    "description": "Rules ensuring v1.0 format continues to work",
+    "rules": [
+      {
+        "id": "VR-COMPAT-001",
+        "rule": "v1.0 tasks.md (no Format: v2.0 header) must be accepted without warnings",
+        "type": "required",
+        "traces": ["NFR-02", "AC-06g"]
+      },
+      {
+        "id": "VR-COMPAT-002",
+        "rule": "Checkbox pattern '- [ ]' / '- [X]' must work unchanged",
+        "type": "required",
+        "traces": ["NFR-02", "AC-06a"]
+      },
+      {
+        "id": "VR-COMPAT-003",
+        "rule": "Phase header pattern '## Phase NN:' must work unchanged",
+        "type": "required",
+        "traces": ["NFR-02"]
+      },
+      {
+        "id": "VR-COMPAT-004",
+        "rule": "Missing annotations must not cause errors in any consumer",
+        "type": "required",
+        "traces": ["NFR-02", "AC-06g"]
+      }
+    ]
+  }
+}

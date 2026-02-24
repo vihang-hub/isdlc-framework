@@ -1,0 +1,24 @@
+Requirement,AC,Test ID,Test Name,Test File,Priority,Status
+FIX-001,AC-01,TC-CV-D01,Delegation with known phase agent subagent_type bypasses completion check,test-constitution-validator.test.cjs,P0,Designed
+FIX-001,AC-02,TC-CV-D02,Delegation with agent name in prompt bypasses completion check,test-constitution-validator.test.cjs,P0,Designed
+FIX-001,AC-03,TC-CV-D03,Delegation with phase pattern in prompt bypasses completion check,test-constitution-validator.test.cjs,P0,Designed
+FIX-001,AC-04,TC-CV-D04,Genuine completion still detected after delegation guard added,test-constitution-validator.test.cjs,P0,Designed
+FIX-001,AC-05,TC-CV-D05,Setup command bypass remains unchanged after delegation guard,test-constitution-validator.test.cjs,P1,Designed
+FIX-002,AC-06,TC-IC-D01,Delegation bypasses TEST_CORRIDOR advance keyword check,test-iteration-corridor.test.cjs,P0,Designed
+FIX-002,AC-06,TC-IC-D02,Delegation bypasses CONST_CORRIDOR advance keyword check,test-iteration-corridor.test.cjs,P0,Designed
+FIX-002,AC-06,TC-IC-D03,GATE-NN in delegation prompt no longer triggers /gate/i false positive,test-iteration-corridor.test.cjs,P0,Designed
+FIX-002,AC-07,TC-IC-D04,Genuine advance keywords still blocked in TEST_CORRIDOR,test-iteration-corridor.test.cjs,P0,Designed
+FIX-002,AC-08,TC-IC-D05,Genuine advance keywords still blocked in CONST_CORRIDOR,test-iteration-corridor.test.cjs,P0,Designed
+FIX-002,AC-06,TC-IC-D06,Delegation with description field also bypasses corridor,test-iteration-corridor.test.cjs,P1,Designed
+FIX-003,AC-09,TC-GB-D01,Delegation bypasses gate advancement check (orchestrator subagent),test-gate-blocker-extended.test.cjs,P0,Designed
+FIX-003,AC-09,TC-GB-D02,Delegation bypasses gate check for non-orchestrator subagent,test-gate-blocker-extended.test.cjs,P0,Designed
+FIX-003,AC-10,TC-GB-D03,Genuine gate advancement by orchestrator still detected,test-gate-blocker-extended.test.cjs,P0,Designed
+FIX-003,AC-11,TC-GB-D04,Orchestrator subagent_type check still functional,test-gate-blocker-extended.test.cjs,P1,Designed
+FIX-003,AC-09,TC-GB-D05,Delegation with phase pattern in prompt bypasses gate check,test-gate-blocker-extended.test.cjs,P1,Designed
+FIX-003,AC-09,TC-GB-D06,Delegation with agent name in description bypasses gate check,test-gate-blocker-extended.test.cjs,P1,Designed
+FIX-004,AC-12,REGRESSION,All 19 existing constitution-validator tests pass,test-constitution-validator.test.cjs,P0,Existing
+FIX-004,AC-13,REGRESSION,All 24 existing iteration-corridor tests pass,test-iteration-corridor.test.cjs,P0,Existing
+FIX-004,AC-14,REGRESSION,All 26 existing gate-blocker tests pass,test-gate-blocker-extended.test.cjs,P0,Existing
+FIX-004,AC-15,CODE-REVIEW,detectPhaseDelegation() in common.cjs is NOT modified,git diff (Phase 08),P0,Constraint
+FIX-004,AC-16,CODE-REVIEW,pre-task-dispatcher execution order is NOT modified,git diff (Phase 08),P0,Constraint
+FIX-004,AC-17,CODE-REVIEW,phase-loop-controller and phase-sequence-guard are NOT modified,git diff (Phase 08),P0,Constraint

@@ -1,0 +1,678 @@
+# Interface Specification: Custom Skill Management (REQ-0022)
+# Phase: 04-design
+# Version: 1.0
+# Created: 2026-02-18
+# Traces to: FR-001 through FR-009, NFR-001 through NFR-006
+# Architecture: ADR-0008, ADR-0009, ADR-0010, ADR-0011
+
+---
+
+# =============================================================================
+# 1. UTILITY FUNCTIONS — common.cjs (ADR-0009)
+#
+# Six new exported functions added to src/claude/hooks/lib/common.cjs.
+# All functions are synchronous, CommonJS, and follow existing patterns.
+# Placed after loadExternalManifest() (~line 697), before State Management section.
+# =============================================================================
+
+functions:
+
+  # ---------------------------------------------------------------------------
+  # 1.1 validateSkillFrontmatter
+  # Traces: FR-001, Security 6.1
+  # ---------------------------------------------------------------------------
+  validateSkillFrontmatter:
+    description: >
+      Parse and validate a skill .md file's YAML frontmatter. Checks file
+      existence, .md extension, frontmatter presence, and required fields
+      (name, description). Returns a structured result with parsed data or
+      validation errors. Does NOT throw — returns error object on failure.
+    signature: "validateSkillFrontmatter(filePath)"
+    parameters:
+      filePath:
+        type: string
+        required: true
+        description: "Absolute path to the .md skill file"
+    returns:
+      type: object
+      shape:
+        valid:
+          type: boolean
+          description: "true if all validation checks passed"
+        errors:
+          type: "string[]"
+          description: "Array of human-readable error messages (empty if valid)"
+        parsed:
+          type: "object | null"
+          description: "Parsed frontmatter fields if valid, null otherwise"
+          shape:
+            name:
+              type: string
+              description: "Skill name from frontmatter"
+            description:
+              type: string
+              description: "Skill description from frontmatter"
+            owner:
+              type: "string | undefined"
+              description: "Optional suggested agent"
+            when_to_use:
+              type: "string | undefined"
+              description: "Optional usage guidance"
+            dependencies:
+              type: "string | string[] | undefined"
+              description: "Optional related skills"
+            skill_id:
+              type: "string | undefined"
+              description: "Optional custom identifier"
+        body:
+          type: "string | null"
+          description: "Markdown body content (after frontmatter) if valid, null otherwise"
+    validation_checks:
+      - id: V-001
+        check: "fs.existsSync(filePath)"
+        error: "File not found: {filePath}"
+      - id: V-002
+        check: "filePath.endsWith('.md')"
+        error: "Only .md files are supported. Got: {ext}"
+      - id: V-003
+        check: "content matches /^---\\n[\\s\\S]*?\\n---/"
+        error: "No YAML frontmatter found. Expected file to start with '---'"
+      - id: V-004
+        check: "parsed.name is non-empty string"
+        error: "Missing required frontmatter field: name"
+      - id: V-005
+        check: "parsed.description is non-empty string"
+        error: "Missing required frontmatter field: description"
+      - id: V-006
+        check: "parsed.name matches /^[a-z0-9][a-z0-9-]*[a-z0-9]$/"
+        error: "Skill name must be lowercase alphanumeric with hyphens, 2+ chars (e.g., 'nestjs-conventions')"
+    error_handling: "Never throws. Returns { valid: false, errors: [...], parsed: null, body: null }"
+    example:
+      input: "/path/to/nestjs-conventions.md"
+      output_success: |
+        {
+          valid: true,
+          errors: [],
+          parsed: { name: "nestjs-conventions", description: "NestJS patterns" },
+          body: "# NestJS Conventions\n..."
+        }
+      output_failure: |
+        {
+          valid: false,
+          errors: ["Missing required frontmatter field: description"],
+          parsed: null,
+          body: null
+        }
+
+  # ---------------------------------------------------------------------------
+  # 1.2 analyzeSkillContent
+  # Traces: FR-002
+  # ---------------------------------------------------------------------------
+  analyzeSkillContent:
+    description: >
+      Scan a skill file's body content for phase-indicative keywords.
+      Returns keyword matches and suggested phases based on content analysis.
+      Pure function — no side effects.
+    signature: "analyzeSkillContent(content)"
+    parameters:
+      content:
+        type: string
+        required: true
+        description: "Skill file body content (markdown after frontmatter)"
+    returns:
+      type: object
+      shape:
+        keywords:
+          type: "string[]"
+          description: "Matched keywords found in content"
+        suggestedPhases:
+          type: "string[]"
+          description: "Phase keys suggested based on keyword matches"
+        confidence:
+          type: string
+          enum: ["high", "medium", "low"]
+          description: >
+            high = 3+ keyword matches in same category;
+            medium = 1-2 keyword matches;
+            low = no keyword matches (fallback to 06-implementation)
+    keyword_map:
+      testing:
+        keywords: ["test", "testing", "coverage", "assertion", "mock", "stub", "jest", "mocha"]
+        phases: ["05-test-strategy", "06-implementation"]
+      architecture:
+        keywords: ["architecture", "design pattern", "module", "component", "system design", "microservice"]
+        phases: ["03-architecture", "04-design"]
+      devops:
+        keywords: ["deploy", "CI/CD", "pipeline", "docker", "kubernetes", "infrastructure"]
+        phases: ["10-cicd", "11-local-testing"]
+      security:
+        keywords: ["security", "auth", "authentication", "encryption", "OWASP", "vulnerability"]
+        phases: ["09-validation"]
+      implementation:
+        keywords: ["implement", "code", "function", "class", "API", "endpoint", "controller", "service"]
+        phases: ["06-implementation"]
+      requirements:
+        keywords: ["requirements", "user story", "acceptance criteria", "specification"]
+        phases: ["01-requirements"]
+      review:
+        keywords: ["review", "quality", "lint", "code review", "static analysis"]
+        phases: ["08-code-review"]
+    default_fallback:
+      phases: ["06-implementation"]
+      confidence: "low"
+    error_handling: "Never throws. Returns default fallback on empty/null content."
+
+  # ---------------------------------------------------------------------------
+  # 1.3 suggestBindings
+  # Traces: FR-002
+  # ---------------------------------------------------------------------------
+  suggestBindings:
+    description: >
+      Produce binding suggestions from content analysis and optional
+      frontmatter hints (owner field). Maps suggested phases to their
+      corresponding agents using PHASE_AGENT_MAP. Pure function.
+    signature: "suggestBindings(analysis, frontmatterHints)"
+    parameters:
+      analysis:
+        type: object
+        required: true
+        description: "Output from analyzeSkillContent()"
+        shape:
+          keywords: "string[]"
+          suggestedPhases: "string[]"
+          confidence: "string"
+      frontmatterHints:
+        type: "object | null"
+        required: false
+        description: "Optional parsed frontmatter with owner/when_to_use hints"
+    returns:
+      type: object
+      shape:
+        agents:
+          type: "string[]"
+          description: "Suggested agent names (from PHASE_AGENT_MAP)"
+        phases:
+          type: "string[]"
+          description: "Suggested phase keys"
+        delivery_type:
+          type: string
+          enum: ["context", "instruction", "reference"]
+          description: >
+            Default suggestion: "context".
+            If frontmatter contains "MUST", "standard", "convention" keywords -> "instruction".
+            If content > 5000 chars -> "reference".
+        confidence:
+          type: string
+          enum: ["high", "medium", "low"]
+          description: "Inherited from analysis, upgraded if frontmatter.owner matches"
+    phase_to_agent_map:
+      # Uses the PHASE_AGENT_MAP from isdlc.md STEP 3d
+      "01-requirements": "requirements-analyst"
+      "03-architecture": "solution-architect"
+      "04-design": "system-designer"
+      "05-test-strategy": "test-design-engineer"
+      "06-implementation": "software-developer"
+      "07-testing": "integration-tester"
+      "08-code-review": "qa-engineer"
+      "09-validation": "security-compliance-auditor"
+      "10-cicd": "cicd-engineer"
+      "11-local-testing": "environment-builder"
+      "16-quality-loop": "quality-loop-engineer"
+    error_handling: "Never throws. Returns minimal default on malformed input."
+
+  # ---------------------------------------------------------------------------
+  # 1.4 writeExternalManifest
+  # Traces: FR-004
+  # ---------------------------------------------------------------------------
+  writeExternalManifest:
+    description: >
+      Write the external skills manifest JSON to the correct filesystem path.
+      Handles both single-project and monorepo modes. Creates parent
+      directories if they do not exist. Validates JSON after write.
+      This is the ONLY function in this group with side effects (file I/O).
+    signature: "writeExternalManifest(manifest, projectId)"
+    parameters:
+      manifest:
+        type: object
+        required: true
+        description: "Complete manifest object to write (with version and skills array)"
+      projectId:
+        type: "string | undefined"
+        required: false
+        description: "Optional project ID for monorepo mode"
+    returns:
+      type: object
+      shape:
+        success:
+          type: boolean
+          description: "true if write and validation succeeded"
+        error:
+          type: "string | null"
+          description: "Error message if write failed, null on success"
+        path:
+          type: string
+          description: "Absolute path where manifest was written"
+    behavior:
+      - "Resolves path via resolveExternalManifestPath(projectId)"
+      - "Creates parent directories with fs.mkdirSync(dir, { recursive: true })"
+      - "Writes JSON with 2-space indentation + trailing newline"
+      - "Re-reads and JSON.parse() the written file to validate"
+      - "Returns error object on any failure (never throws)"
+    path_traversal_prevention:
+      - "Does NOT validate individual skill entries (caller's responsibility)"
+      - "Path is resolved via resolveExternalManifestPath() which is safe"
+    error_handling: "Never throws. Returns { success: false, error: message, path } on failure."
+
+  # ---------------------------------------------------------------------------
+  # 1.5 formatSkillInjectionBlock
+  # Traces: FR-005
+  # ---------------------------------------------------------------------------
+  formatSkillInjectionBlock:
+    description: >
+      Format skill content into a delivery-type-specific injection block
+      for inclusion in an agent's Task prompt. Pure function.
+    signature: "formatSkillInjectionBlock(name, content, deliveryType)"
+    parameters:
+      name:
+        type: string
+        required: true
+        description: "Skill name (for the block header)"
+      content:
+        type: string
+        required: true
+        description: "Skill body content (markdown)"
+      deliveryType:
+        type: string
+        required: true
+        enum: ["context", "instruction", "reference"]
+        description: "How the content should be formatted"
+    returns:
+      type: string
+      description: "Formatted injection block string"
+    formats:
+      context: |
+        EXTERNAL SKILL CONTEXT: {name}
+        ---
+        {content}
+        ---
+      instruction: |
+        EXTERNAL SKILL INSTRUCTION ({name}): You MUST follow these guidelines:
+        {content}
+      reference: |
+        EXTERNAL SKILL AVAILABLE: {name} -- Read from {path} if relevant to your current task
+    notes:
+      - "Reference delivery does NOT include content — only the file path"
+      - "For reference type, the path parameter must be passed separately"
+      - "Content is NOT truncated here — caller handles truncation before calling"
+    overload_for_reference:
+      description: "When deliveryType is 'reference', content is ignored and filePath is used"
+      alternate_signature: "formatSkillInjectionBlock(name, filePath, 'reference')"
+    error_handling: "Returns empty string on unknown deliveryType. Never throws."
+
+  # ---------------------------------------------------------------------------
+  # 1.6 removeSkillFromManifest
+  # Traces: FR-007
+  # ---------------------------------------------------------------------------
+  removeSkillFromManifest:
+    description: >
+      Remove a skill entry from the manifest by name. Returns the updated
+      manifest and whether the skill was found. Does NOT write to disk
+      (caller uses writeExternalManifest for that). Pure function on the
+      manifest object.
+    signature: "removeSkillFromManifest(skillName, manifest)"
+    parameters:
+      skillName:
+        type: string
+        required: true
+        description: "Name of the skill to remove (case-sensitive match)"
+      manifest:
+        type: object
+        required: true
+        description: "Current manifest object (with version and skills array)"
+    returns:
+      type: object
+      shape:
+        removed:
+          type: boolean
+          description: "true if skill was found and removed"
+        manifest:
+          type: object
+          description: "Updated manifest object (skills array filtered)"
+    error_handling: "Never throws. Returns { removed: false, manifest } if skill not found."
+
+# =============================================================================
+# 2. COMMAND ACTIONS — isdlc.md
+#
+# Four new action branches added to the isdlc.md command dispatcher.
+# Traces: FR-001 (add), FR-003/FR-009 (wire), FR-006 (list), FR-007 (remove)
+# =============================================================================
+
+command_actions:
+
+  skill_add:
+    trigger: "/isdlc skill add <path>"
+    description: "Register an external skill file"
+    parameters:
+      path:
+        type: string
+        required: true
+        description: "Filesystem path to .md skill file"
+    flow:
+      - step: 1
+        action: "Parse <path> from user input"
+        function: null
+      - step: 2
+        action: "Validate the skill file"
+        function: "validateSkillFrontmatter(path)"
+        on_error: "Display validation errors, abort"
+      - step: 3
+        action: "Check for duplicates in manifest"
+        function: "loadExternalManifest()"
+        on_duplicate: "Prompt user: overwrite or cancel"
+      - step: 4
+        action: "Copy file to external skills directory"
+        function: "fs.copyFileSync(path, resolveExternalSkillsPath() + '/' + filename)"
+        note: "Create directory if not exists"
+      - step: 5
+        action: "Analyze content for binding suggestions"
+        function: "analyzeSkillContent(body)"
+      - step: 6
+        action: "Generate binding suggestions"
+        function: "suggestBindings(analysis, frontmatter)"
+      - step: 7
+        action: "Delegate to skill-manager agent for wiring session"
+        function: "Task tool -> skill-manager with suggestions"
+      - step: 8
+        action: "Write manifest with bindings from wiring session"
+        function: "writeExternalManifest(updatedManifest)"
+      - step: 9
+        action: "Confirm to user with skill name and bindings summary"
+    output: "Confirmation message with skill name, bound phases, delivery type"
+
+  skill_wire:
+    trigger: "/isdlc skill wire <name>"
+    description: "Open interactive wiring session for a registered skill"
+    parameters:
+      name:
+        type: string
+        required: true
+        description: "Name of the skill to wire/re-wire"
+    flow:
+      - step: 1
+        action: "Load manifest"
+        function: "loadExternalManifest()"
+      - step: 2
+        action: "Look up skill by name"
+        on_not_found: "Display error with suggestion to run skill list"
+      - step: 3
+        action: "Delegate to skill-manager agent with existing bindings"
+        function: "Task tool -> skill-manager with current bindings"
+      - step: 4
+        action: "Update manifest with new bindings"
+        function: "writeExternalManifest(updatedManifest)"
+      - step: 5
+        action: "Confirm updated bindings to user"
+
+  skill_list:
+    trigger: "/isdlc skill list"
+    description: "List all registered external skills with bindings"
+    flow:
+      - step: 1
+        action: "Load manifest"
+        function: "loadExternalManifest()"
+      - step: 2
+        action: "If null or empty skills array, display 'no skills' message"
+      - step: 3
+        action: "Format each skill entry with phases, delivery type, injection mode"
+    output_format: |
+      External Skills ({count} registered):
+
+        1. {name}
+           Phases: {phases joined by comma}
+           Delivery: {delivery_type} | Mode: {injection_mode}
+    empty_output: "No external skills registered. Use '/isdlc skill add <path>' to add one."
+
+  skill_remove:
+    trigger: "/isdlc skill remove <name>"
+    description: "Unregister an external skill"
+    parameters:
+      name:
+        type: string
+        required: true
+        description: "Name of the skill to remove"
+    flow:
+      - step: 1
+        action: "Load manifest"
+        function: "loadExternalManifest()"
+      - step: 2
+        action: "Look up skill by name"
+        on_not_found: "Display error with suggestion to run skill list"
+      - step: 3
+        action: "Prompt user: [K] Keep file [D] Delete file [C] Cancel"
+      - step: 4_K
+        action: "Remove from manifest, preserve .md file"
+        function: "removeSkillFromManifest(name, manifest) then writeExternalManifest()"
+      - step: 4_D
+        action: "Remove from manifest, delete .md file"
+        function: "removeSkillFromManifest() + fs.unlinkSync(filePath)"
+      - step: 4_C
+        action: "Abort, no changes"
+      - step: 5
+        action: "Confirm removal to user"
+
+# =============================================================================
+# 3. RUNTIME INJECTION — isdlc.md STEP 3d (ADR-0008)
+#
+# New code block inserted between prompt construction and Task tool invocation.
+# Traces: FR-005, NFR-001, NFR-003, NFR-005
+# =============================================================================
+
+runtime_injection:
+  location: "isdlc.md STEP 3d, after constructing delegation prompt, before Task tool"
+  insertion_point: "Between the prompt template and the 'Use Task tool' invocation"
+  pseudocode: |
+    TRY:
+      manifest = loadExternalManifest()
+      IF manifest is null OR manifest.skills is empty OR not Array:
+        SKIP (no-op, no injection)
+
+      injectionBlocks = []
+      FOR EACH skill IN manifest.skills:
+        IF skill.bindings is undefined:
+          SKIP (backward compat — NFR-005)
+        IF skill.bindings.injection_mode !== "always":
+          SKIP (future-proof for new modes)
+        IF current_phase NOT IN skill.bindings.phases
+           AND current_agent NOT IN skill.bindings.agents:
+          SKIP (no match)
+
+        filePath = resolveExternalSkillsPath() + "/" + skill.file
+        TRY:
+          content = Read file at filePath
+        CATCH:
+          Log warning: "Skill file not found: {filePath}. Skipping."
+          CONTINUE
+
+        IF content.length > 10000:
+          content = content.substring(0, 10000)
+            + "\n[TRUNCATED -- full content at " + filePath + "]"
+          deliveryType = "reference"
+        ELSE:
+          deliveryType = skill.bindings.delivery_type
+
+        block = formatSkillInjectionBlock(skill.name, content, deliveryType)
+        injectionBlocks.push(block)
+
+      IF injectionBlocks.length > 0:
+        Append "\n\n" + injectionBlocks.join("\n\n") to delegation prompt
+    CATCH (any):
+      Log warning: "External skill injection failed: {error}. Continuing without."
+      (Continue with unmodified delegation prompt)
+  guarantees:
+    - "Outer try/catch ensures entire injection is fail-open"
+    - "Inner try/catch per skill ensures one bad skill does not block others"
+    - "Entries without bindings silently skipped (backward compat)"
+    - "10,000 char cap prevents context window bloat"
+    - "Performance: sequential file reads, max 50 skills, <100ms total"
+
+# =============================================================================
+# 4. SKILL-MANAGER AGENT INTERFACE (ADR-0010)
+#
+# Delegation interface between isdlc.md and the skill-manager agent.
+# Traces: FR-003, FR-009
+# =============================================================================
+
+skill_manager_delegation:
+  agent_file: "src/claude/agents/skill-manager.md"
+  invoked_by: "isdlc.md skill add (after step 6) and skill wire (step 3)"
+  delegation_prompt_template: |
+    Execute interactive wiring session for external skill "{skill_name}".
+
+    SKILL DETAILS:
+    - Name: {skill_name}
+    - Description: {skill_description}
+    - File: {skill_filename}
+
+    SUGGESTED BINDINGS:
+    - Phases: {suggested_phases}
+    - Agents: {suggested_agents}
+    - Delivery type: {suggested_delivery_type}
+    - Confidence: {confidence}
+
+    EXISTING BINDINGS (for re-wire):
+    {existing_bindings_json or "None (new skill)"}
+
+    AVAILABLE PHASES (grouped by category):
+    Requirements & Analysis: 01-requirements, 02-impact-analysis, 02-tracing
+    Architecture & Design: 03-architecture, 04-design
+    Testing: 05-test-strategy, 07-testing
+    Implementation: 06-implementation
+    Quality & Security: 08-code-review, 09-validation, 16-quality-loop
+    DevOps: 10-cicd, 11-local-testing
+
+    Guide the user through binding selection and return the final bindings object.
+  expected_return: |
+    The agent returns the bindings object in a structured format:
+    {
+      "agents": ["agent-name-1", "agent-name-2"],
+      "phases": ["phase-key-1", "phase-key-2"],
+      "injection_mode": "always",
+      "delivery_type": "context|instruction|reference"
+    }
+
+# =============================================================================
+# 5. INTENT DETECTION — CLAUDE.md
+#
+# New row added to the intent detection table.
+# Traces: FR-008
+# =============================================================================
+
+intent_detection:
+  table_row:
+    intent: "Skill mgmt"
+    signal_words: "add a skill, register skill, new skill, wire skill, bind skill, list skills, show skills, what skills, remove skill, delete skill, unregister skill"
+    command: "/isdlc skill {subcommand}"
+  subcommand_routing:
+    - patterns: ["add a skill", "register skill", "new skill"]
+      command: "/isdlc skill add"
+      prompt_user_for: "path"
+    - patterns: ["wire skill", "bind skill", "use X skill during Y phase"]
+      command: "/isdlc skill wire"
+      prompt_user_for: "name"
+    - patterns: ["list skills", "show skills", "what skills"]
+      command: "/isdlc skill list"
+    - patterns: ["remove skill", "delete skill", "unregister skill"]
+      command: "/isdlc skill remove"
+      prompt_user_for: "name"
+
+# =============================================================================
+# 6. MANIFEST SCHEMA — external-skills-manifest.json (ADR-0011)
+#
+# JSON schema for the external skills manifest file.
+# Traces: FR-004, NFR-002, NFR-005
+# =============================================================================
+
+manifest_schema:
+  file: "docs/isdlc/external-skills-manifest.json"
+  monorepo_file: "docs/isdlc/projects/{id}/external-skills-manifest.json"
+  created_on: "First skill add (not pre-existing)"
+  schema:
+    type: object
+    required: ["version", "skills"]
+    properties:
+      version:
+        type: string
+        pattern: "^\\d+\\.\\d+\\.\\d+$"
+        description: "Semver schema version"
+        initial_value: "1.0.0"
+      skills:
+        type: array
+        maxItems: 50
+        items:
+          type: object
+          required: ["name", "description", "file", "added_at"]
+          properties:
+            name:
+              type: string
+              pattern: "^[a-z0-9][a-z0-9-]*[a-z0-9]$"
+              minLength: 2
+              maxLength: 100
+              description: "Unique skill identifier"
+            description:
+              type: string
+              minLength: 1
+              maxLength: 500
+              description: "Human-readable description"
+            file:
+              type: string
+              pattern: "^[a-z0-9][a-z0-9.-]*\\.md$"
+              description: "Filename only (no path separators)"
+            added_at:
+              type: string
+              format: "date-time"
+              description: "ISO 8601 registration timestamp"
+            bindings:
+              type: object
+              required: ["agents", "phases", "injection_mode", "delivery_type"]
+              description: "Optional for backward compat (NFR-005)"
+              properties:
+                agents:
+                  type: array
+                  items:
+                    type: string
+                  description: "Agent names from PHASE_AGENT_MAP"
+                phases:
+                  type: array
+                  items:
+                    type: string
+                  description: "Phase keys from workflow definitions"
+                injection_mode:
+                  type: string
+                  enum: ["always"]
+                  description: "When to inject (only 'always' in v1)"
+                delivery_type:
+                  type: string
+                  enum: ["context", "instruction", "reference"]
+                  description: "How content is presented to agent"
+
+# =============================================================================
+# 7. SKILLS-MANIFEST REGISTRATION
+#
+# New agent entry in skills-manifest.json.
+# Traces: Agent registry completeness
+# =============================================================================
+
+skills_manifest_entry:
+  file: "src/claude/hooks/config/skills-manifest.json"
+  location: "ownership section, after last agent"
+  entry:
+    key: "skill-manager"
+    value:
+      agent_id: "EXT"
+      phase: "skill-management"
+      skill_count: 0
+      skills: []
+  rationale: >
+    The skill-manager agent does not own any framework skills. It is a
+    utility agent for configuration, not a phase agent. The agent_id "EXT"
+    indicates it is outside the standard phase numbering.

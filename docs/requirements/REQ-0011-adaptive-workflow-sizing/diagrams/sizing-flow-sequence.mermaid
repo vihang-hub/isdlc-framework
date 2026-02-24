@@ -1,0 +1,68 @@
+%% Sizing Decision Flow -- Standard Path (FR-01, FR-03)
+%% Traces to: AC-01, AC-02, AC-08, AC-09, AC-10, AC-11
+
+sequenceDiagram
+    participant User
+    participant PLC as Phase-Loop Controller<br/>(isdlc.md)
+    participant IA as impact-analysis.md
+    participant WF as workflows.json
+    participant CJS as common.cjs
+    participant State as state.json
+
+    Note over PLC: Phase 02 (Impact Analysis) completes<br/>GATE-02 passes
+
+    PLC->>PLC: STEP 3e: post-phase state update<br/>Set 02-impact-analysis = completed
+    PLC->>State: Write phase completion
+
+    PLC->>PLC: STEP 3e-sizing: trigger check
+    Note over PLC: phase_key === '02-impact-analysis'?<br/>workflow_type === 'feature'?<br/>sizing not already set?
+
+    alt Trigger conditions met
+        PLC->>State: Read active_workflow.flags.light
+        State-->>PLC: flags.light = false
+
+        PLC->>IA: Read docs/requirements/{folder}/impact-analysis.md
+        IA-->>PLC: markdown content
+
+        PLC->>CJS: parseSizingFromImpactAnalysis(content)
+        CJS-->>PLC: { file_count: 3, module_count: 1,<br/>risk_score: "low", coupling: "low" }
+
+        PLC->>WF: Read feature.sizing.thresholds
+        WF-->>PLC: { light_max_files: 5, epic_min_files: 20 }
+
+        PLC->>CJS: computeSizingRecommendation(metrics, thresholds)
+        CJS-->>PLC: { intensity: "light", rationale: "..." }
+
+        PLC->>User: Display sizing recommendation banner
+        Note over User,PLC: Intensity: LIGHT<br/>Files: 3, Modules: 1, Risk: low<br/>Rationale: Small scope, low risk
+
+        PLC->>User: [A] Accept / [O] Override / [S] Show analysis
+
+        alt User accepts
+            User-->>PLC: [A] Accept
+            PLC->>CJS: applySizingDecision(state, "light", sizingData)
+            CJS->>CJS: Filter phases array<br/>Remove phase_status entries<br/>Remove phases entries<br/>Recalculate current_phase_index<br/>Set sizing object
+            CJS->>CJS: Validate invariants
+            CJS-->>PLC: state (mutated)
+        else User overrides
+            User-->>PLC: [O] Override
+            PLC->>User: Choose intensity: light / standard / epic
+            User-->>PLC: standard
+            PLC->>CJS: applySizingDecision(state, "standard",<br/>{ overridden: true, overridden_to: "standard" })
+            CJS-->>PLC: state (no phase modification)
+        else User shows analysis
+            User-->>PLC: [S] Show analysis
+            PLC->>User: Display full impact analysis
+            PLC->>User: [A] Accept / [O] Override
+            User-->>PLC: [A] Accept
+            PLC->>CJS: applySizingDecision(state, "light", sizingData)
+            CJS-->>PLC: state (mutated)
+        end
+
+        PLC->>State: Write state.json (single atomic write)
+        PLC->>PLC: Update task list (mark skipped phases)
+    end
+
+    PLC->>PLC: STEP 3e-refine (skipped for light -- no Phase 04)
+    PLC->>PLC: STEP 3f: mark task completed, continue loop
+    Note over PLC: Next phase: 05-test-strategy

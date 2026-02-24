@@ -1,0 +1,49 @@
+Requirement,AC,Test Case,Test Description,Priority,Type,File Under Test,Automated
+REQ-001,AC-1,TC-001,engines.node reads ">=20.0.0",P0,Config Verification,package.json,Yes
+REQ-001,AC-1,TC-002,package.json does NOT contain ">=18.0.0",P0,Negative Verification,package.json,Yes
+REQ-001,AC-1,TC-003,package.json is valid JSON,P1,Structural Validation,package.json,Yes
+REQ-001,AC-1,TC-004,package-lock.json engines.node reads ">=20.0.0",P1,Config Verification,package-lock.json,Yes
+REQ-001,AC-1,TC-005,package-lock.json does NOT contain ">=18.0.0",P1,Negative Verification,package-lock.json,Yes
+REQ-001,AC-2,--,npm install on Node 18 produces engines warning,P0,Manual Verification,package.json,No (Node 18 removed from CI)
+REQ-001,AC-3,TC-006,npm install succeeds on Node 20+,P0,Runtime Validation,package.json,Yes
+REQ-002,AC-4,TC-007,ci.yml test matrix is [20 22 24],P0,Config Verification,.github/workflows/ci.yml,Yes
+REQ-002,AC-4,TC-008,ci.yml test matrix does NOT contain 18,P0,Negative Verification,.github/workflows/ci.yml,Yes
+REQ-002,AC-4,TC-014,ci.yml is valid YAML,P1,Structural Validation,.github/workflows/ci.yml,Yes
+REQ-002,AC-5,TC-009,ci.yml lint job uses node-version 22,P0,Config Verification,.github/workflows/ci.yml,Yes
+REQ-002,AC-6,TC-010,ci.yml integration job uses node-version 22,P0,Config Verification,.github/workflows/ci.yml,Yes
+REQ-002,AC-7,TC-011,ci.yml matrix yields 3 OS x 3 Node = 9 combos,P1,Structural Verification,.github/workflows/ci.yml,Yes
+REQ-002,AC-8,TC-012,ci.yml bash-install has no node-version,P1,Negative Verification,.github/workflows/ci.yml,Yes
+REQ-002,AC-9,TC-013,ci.yml powershell-install has no node-version,P1,Negative Verification,.github/workflows/ci.yml,Yes
+REQ-003,AC-10,TC-015,publish.yml test matrix is [20 22 24],P0,Config Verification,.github/workflows/publish.yml,Yes
+REQ-003,AC-10,TC-016,publish.yml test matrix does NOT contain 18,P0,Negative Verification,.github/workflows/publish.yml,Yes
+REQ-003,AC-10,TC-019,publish.yml is valid YAML,P1,Structural Validation,.github/workflows/publish.yml,Yes
+REQ-003,AC-11,TC-017,publish.yml publish-npm uses node-version 22,P0,Config Verification,.github/workflows/publish.yml,Yes
+REQ-003,AC-12,TC-018,publish.yml publish-github uses node-version 22,P0,Config Verification,.github/workflows/publish.yml,Yes
+REQ-004,AC-13,TC-020,Article XII req 4 references "Node 20 22 24",P0,Config Verification,docs/isdlc/constitution.md,Yes
+REQ-004,AC-13,TC-021,Article XII does NOT reference "Node 18",P0,Negative Verification,docs/isdlc/constitution.md,Yes
+REQ-004,AC-14,TC-022,Constitution version is 1.2.0,P0,Config Verification,docs/isdlc/constitution.md,Yes
+REQ-004,AC-14,TC-023,Amendment log has v1.2.0 entry,P0,Config Verification,docs/isdlc/constitution.md,Yes
+REQ-004,AC-14,TC-024,Amendment log mentions Article XII and ADR-0008,P1,Content Verification,docs/isdlc/constitution.md,Yes
+REQ-004,AC-15,TC-025,No articles other than Article XII modified,P1,Scope Verification,docs/isdlc/constitution.md,Yes
+REQ-005,AC-16,TC-026,README prerequisites shows "20+",P0,Config Verification,README.md,Yes
+REQ-005,AC-16,TC-027,README does NOT reference "18+" for Node,P0,Negative Verification,README.md,Yes
+REQ-005,AC-17,TC-028,README system requirements shows "Node.js 20+",P0,Config Verification,README.md,Yes
+REQ-006,AC-18,TC-029,state.json runtime reads "node-20+",P1,Config Verification,.isdlc/state.json,Yes
+REQ-006,AC-18,TC-030,state.json does NOT contain "node-18+",P1,Negative Verification,.isdlc/state.json,Yes
+REQ-007,AC-19,TC-031,No deprecated Node 18 APIs in codebase,P1,Static Analysis,(codebase scan),Yes
+REQ-007,AC-20,TC-032,node:test framework works on current Node,P0,Regression,src/claude/hooks/tests/*.test.cjs,Yes
+REQ-007,AC-21,TC-033,All ESM tests pass,P0,Regression,lib/*.test.js,Yes
+REQ-007,AC-21,TC-034,All CJS tests pass,P0,Regression,src/claude/hooks/tests/*.test.cjs,Yes
+REQ-007,AC-21,TC-035,Full test suite passes end-to-end,P0,Regression,(all test streams),Yes
+NFR-004,--,TC-036,Discovery report shows ">= 20.0.0",P2,Config Verification,docs/project-discovery-report.md,Yes
+NFR-004,--,TC-037,Discovery report shows "20 22 24 in CI",P2,Config Verification,docs/project-discovery-report.md,Yes
+NFR-004,--,TC-038,Test-strategy template shows "{20+}",P2,Config Verification,src/isdlc/templates/testing/test-strategy.md,Yes
+Cross,AC-1,TC-039,No "node.*18" in package.json,P0,Completeness,package.json,Yes
+Cross,AC-1,TC-040,No ">=18.0.0" in package-lock.json,P1,Completeness,package-lock.json,Yes
+Cross,AC-4,TC-041,No "node.*18" in ci.yml,P0,Completeness,.github/workflows/ci.yml,Yes
+Cross,AC-10,TC-042,No "node.*18" in publish.yml,P0,Completeness,.github/workflows/publish.yml,Yes
+Cross,AC-13,TC-043,No "Node 18" in constitution Art XII,P0,Completeness,docs/isdlc/constitution.md,Yes
+Cross,AC-16,TC-044,No "18+" in README version context,P0,Completeness,README.md,Yes
+Cross,AC-18,TC-045,No "node-18+" in state.json,P1,Completeness,.isdlc/state.json,Yes
+Cross,NFR-004,TC-046,No stale "18" in discovery report,P2,Completeness,docs/project-discovery-report.md,Yes
+Cross,NFR-004,TC-047,No stale "{18+}" in test-strategy template,P2,Completeness,src/isdlc/templates/testing/test-strategy.md,Yes

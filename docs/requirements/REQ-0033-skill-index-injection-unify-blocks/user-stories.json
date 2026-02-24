@@ -1,0 +1,151 @@
+{
+  "metadata": {
+    "requirement_id": "REQ-0033",
+    "artifact_folder": "REQ-0033-skill-index-injection-unify-blocks",
+    "version": "1.0.0",
+    "created": "2026-02-23",
+    "source_issues": ["#84", "#85"],
+    "total_stories": 6,
+    "total_acceptance_criteria": 14
+  },
+  "stories": [
+    {
+      "id": "US-001",
+      "epic": "Skill Index Injection",
+      "persona": "Phase Agent (Delegated LLM)",
+      "goal": "receive an AVAILABLE SKILLS block listing my owned built-in skills",
+      "benefit": "consult relevant skills on-demand during my phase work",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-001-01",
+          "given": "I am a phase agent with owned skills in skills-manifest.json",
+          "when": "I am delegated via Task tool",
+          "then": "my delegation prompt contains an AVAILABLE SKILLS block with skill IDs, names, descriptions, and file paths"
+        },
+        {
+          "id": "AC-001-02",
+          "given": "I am a phase agent with no owned skills",
+          "when": "I am delegated",
+          "then": "no AVAILABLE SKILLS block appears in my prompt"
+        }
+      ],
+      "linked_requirements": ["FR-001", "FR-004"]
+    },
+    {
+      "id": "US-002",
+      "epic": "External Skill Injection",
+      "persona": "Phase Agent (Delegated LLM)",
+      "goal": "receive external skill content injected into my delegation prompt",
+      "benefit": "project-specific skills influence my work without manual intervention",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-002-01",
+          "given": "external skills are registered and match my phase/agent bindings",
+          "when": "I am delegated",
+          "then": "the external skill content appears in my delegation prompt in the appropriate format (context/instruction/reference)"
+        },
+        {
+          "id": "AC-002-02",
+          "given": "no external skills are registered",
+          "when": "I am delegated",
+          "then": "no external skill blocks appear and delegation is unaffected"
+        }
+      ],
+      "linked_requirements": ["FR-002", "FR-003"]
+    },
+    {
+      "id": "US-003",
+      "epic": "Skill Index Injection",
+      "persona": "Phase-Loop Controller (LLM Executor)",
+      "goal": "have clear, imperative instructions for skill injection in STEP 3d",
+      "benefit": "execute them unambiguously during delegation prompt construction",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-003-01",
+          "given": "I am processing STEP 3d",
+          "when": "I reach the skill injection instructions",
+          "then": "they are numbered imperative steps (not ambiguous curly-brace comments) that I can execute sequentially"
+        },
+        {
+          "id": "AC-003-02",
+          "given": "any step in the injection process fails",
+          "when": "I encounter the error",
+          "then": "the fail-open instruction tells me to continue with the prompt as-is"
+        }
+      ],
+      "linked_requirements": ["FR-004", "FR-006"]
+    },
+    {
+      "id": "US-004",
+      "epic": "Unified Skill Presentation",
+      "persona": "Phase Agent (Delegated LLM)",
+      "goal": "see both built-in and external skills in a coherent structure in my delegation prompt",
+      "benefit": "have a single, clear view of all skills available to me",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-004-01",
+          "given": "both built-in and external skills apply to me",
+          "when": "I read my delegation prompt",
+          "then": "built-in skills appear first as a reference list, followed by external skill blocks, with no duplication or conflicting formats"
+        },
+        {
+          "id": "AC-004-02",
+          "given": "only one source of skills applies",
+          "when": "I read my prompt",
+          "then": "only that source's content appears"
+        }
+      ],
+      "linked_requirements": ["FR-003"]
+    },
+    {
+      "id": "US-005",
+      "epic": "External Skill Injection",
+      "persona": "Framework Developer (Human)",
+      "goal": "have external skills I register via /isdlc skill add automatically injected into relevant phase agents",
+      "benefit": "my project-specific skills take effect without manual prompt editing",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-005-01",
+          "given": "I have registered an external skill with bindings for phase 06-implementation and agent software-developer",
+          "when": "the software-developer agent is delegated for Phase 06",
+          "then": "my external skill content is included in the delegation prompt"
+        },
+        {
+          "id": "AC-005-02",
+          "given": "I have registered an external skill but the external-skills-manifest.json is missing or corrupt",
+          "when": "any agent is delegated",
+          "then": "the delegation succeeds without my skill (fail-open)"
+        }
+      ],
+      "linked_requirements": ["FR-002", "FR-005", "FR-006"]
+    },
+    {
+      "id": "US-006",
+      "epic": "Monorepo Support",
+      "persona": "Framework Developer (Human)",
+      "goal": "have external skills resolved from the correct project-scoped paths in monorepo mode",
+      "benefit": "skills registered for one project do not leak into another project's agents",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-006-01",
+          "given": "I am in monorepo mode with project 'frontend'",
+          "when": "the Phase-Loop Controller resolves external skills",
+          "then": "it reads from docs/isdlc/projects/frontend/external-skills-manifest.json and .isdlc/projects/frontend/skills/external/"
+        },
+        {
+          "id": "AC-006-02",
+          "given": "the project-specific manifest does not exist",
+          "when": "external skills are resolved",
+          "then": "injection is silently skipped"
+        }
+      ],
+      "linked_requirements": ["FR-005"]
+    }
+  ]
+}

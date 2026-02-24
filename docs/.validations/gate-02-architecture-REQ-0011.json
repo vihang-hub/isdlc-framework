@@ -1,0 +1,96 @@
+{
+  "gate": "GATE-02",
+  "phase": "03-architecture",
+  "requirement_id": "REQ-0011",
+  "feature": "Adaptive Workflow Sizing",
+  "validated_at": "2026-02-12T00:00:00Z",
+  "status": "PASS",
+  "constitutional_compliance": {
+    "iteration_count": 1,
+    "max_iterations": 5,
+    "articles_validated": [
+      { "article": "III", "name": "Security by Design", "status": "PASS", "evidence": "security-architecture.md: STRIDE threat model, input validation, state integrity" },
+      { "article": "IV", "name": "Explicit Over Implicit", "status": "PASS", "evidence": "4 ADRs with rationale, no NEEDS_CLARIFICATION markers" },
+      { "article": "V", "name": "Simplicity First", "status": "PASS", "evidence": "3 pure functions in existing module, 1 markdown step, no new files or deps" },
+      { "article": "VII", "name": "Artifact Traceability", "status": "PASS", "evidence": "architecture-overview.md section 12 traceability matrix, ADR traces" },
+      { "article": "IX", "name": "Quality Gate Integrity", "status": "PASS", "evidence": "Phase removal before agent encounter, gate-blocker validates modified array" },
+      { "article": "X", "name": "Fail-Safe Defaults", "status": "PASS", "evidence": "Default standard on failure, invariant checks, missing config handling" }
+    ]
+  },
+  "checklist": {
+    "architecture_documentation": {
+      "pattern_documented": true,
+      "components_identified": true,
+      "responsibilities_defined": true,
+      "data_flow_documented": true,
+      "sequence_diagrams": true
+    },
+    "technology_stack": {
+      "note": "No new technology selections needed -- extends existing Node.js/CommonJS stack",
+      "no_new_dependencies": true
+    },
+    "state_schema_design": {
+      "schema_extension_documented": true,
+      "phase_array_mutation_documented": true,
+      "configuration_schema_documented": true,
+      "migration_strategy": "none_needed",
+      "backward_compatibility": true
+    },
+    "security_architecture": {
+      "threat_model": true,
+      "input_validation": true,
+      "state_integrity": true,
+      "authorization_model": true,
+      "fail_safe_defaults": true
+    },
+    "adrs": {
+      "ADR-0001": { "title": "Sizing insertion point", "status": "Accepted" },
+      "ADR-0002": { "title": "Sizing functions in common.cjs", "status": "Accepted" },
+      "ADR-0003": { "title": "Impact analysis JSON metadata parsing", "status": "Accepted" },
+      "ADR-0004": { "title": "no_phase_skipping semantic clarification", "status": "Accepted" }
+    },
+    "nfr_coverage": {
+      "NFR-01_performance": true,
+      "NFR-02_backward_compatibility": true,
+      "NFR-03_no_new_dependencies": true,
+      "NFR-04_constitutional_compliance": true
+    },
+    "diagrams": {
+      "sizing_flow_sequence": "diagrams/sizing-flow-sequence.mermaid",
+      "light_flag_sequence": "diagrams/light-flag-sequence.mermaid",
+      "component_interaction": "diagrams/component-interaction.mermaid",
+      "phase_array_mutation": "diagrams/phase-array-mutation.mermaid",
+      "data_flow": "diagrams/data-flow.mermaid"
+    }
+  },
+  "artifacts": [
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/architecture-overview.md",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/database-design.md",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/security-architecture.md",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/adrs/ADR-0001-sizing-insertion-point.md",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/adrs/ADR-0002-sizing-functions-in-common-cjs.md",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/adrs/ADR-0003-impact-analysis-json-metadata-parsing.md",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/adrs/ADR-0004-no-phase-skipping-semantic.md",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/diagrams/sizing-flow-sequence.mermaid",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/diagrams/light-flag-sequence.mermaid",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/diagrams/component-interaction.mermaid",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/diagrams/phase-array-mutation.mermaid",
+    "docs/requirements/REQ-0011-adaptive-workflow-sizing/diagrams/data-flow.mermaid"
+  ],
+  "handoff_notes": {
+    "for_system_designer": [
+      "Function signatures for parseSizingFromImpactAnalysis, computeSizingRecommendation, applySizingDecision are defined in architecture-overview.md section 4.1",
+      "STEP 3e-sizing markdown specification is drafted in architecture-overview.md section 4.4 -- needs detailed pseudo-code in design phase",
+      "workflows.json schema extension defined in database-design.md section 4",
+      "State schema for sizing object defined in database-design.md section 2",
+      "Phase array mutation algorithm defined in architecture-overview.md section 5.1 -- needs detailed implementation spec",
+      "Gate-blocker guard clause needed for removed phases (from impact analysis Risk Zone 2)",
+      "Workflow-completion-enforcer needs defensive guard for variable-length phase arrays"
+    ],
+    "high_risk_areas": [
+      "Phase array mutation + index recalculation (architecture-overview.md section 5)",
+      "Gate-blocker behavior with modified phases (impact-analysis.md Risk Zone 2)",
+      "Impact analysis output format stability (ADR-0003)"
+    ]
+  }
+}

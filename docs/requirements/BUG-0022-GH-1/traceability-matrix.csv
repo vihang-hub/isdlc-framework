@@ -1,0 +1,43 @@
+Requirement,AC,Test Case,Test Type,Priority,Description
+FR-01,AC-01,TC-01,positive,P0,test-generate includes 16-quality-loop
+FR-01,AC-01,TC-02,negative,P0,test-generate does NOT include 11-local-testing
+FR-01,AC-01,TC-03,negative,P0,test-generate does NOT include 07-testing
+FR-01,AC-01,TC-04,positive,P1,test-generate has correct phase count (4)
+FR-01,AC-01,TC-05,positive,P0,test-generate phases in correct order
+FR-01,AC-01,TC-06,positive,P1,16-quality-loop follows 06-implementation
+FR-01,AC-01,TC-08,positive,P1,agent_modifiers updated (no 11-local-testing)
+FR-01,AC-01,TC-09,positive,P0,isdlc.md test generate phase list updated
+FR-01,AC-01,TC-10,negative,P0,isdlc.md no legacy phases in test-generate
+FR-01,AC-01,TC-11,positive,P1,isdlc.md summary table updated
+FR-01,AC-01,TC-12,positive,P0,isdlc.md and workflows.json consistent
+FR-01,AC-01,TC-13,positive,P2,isdlc.md step descriptions updated
+FR-01,AC-02,TC-14,positive,P0,Agent includes build integrity check section
+FR-01,AC-02,TC-15,positive,P0,Agent includes language-aware build command detection table
+FR-01,AC-02,TC-16,positive,P0,Agent includes pom.xml / Maven detection
+FR-01,AC-02,TC-17,positive,P0,Agent includes package.json / npm detection
+FR-01,AC-02,TC-18,positive,P1,Agent includes Cargo.toml / Rust detection
+FR-01,AC-02,TC-19,positive,P1,Agent includes go.mod / Go detection
+FR-01,AC-02,TC-29,positive,P1,SKILL.md includes language-aware build detection
+FR-01,AC-02,TC-36,positive,P2,QA engineer references build command detection
+FR-01,AC-06,TC-27,positive,P1,Agent specifies graceful degradation for unknown build systems
+FR-01,AC-06,TC-32,positive,P2,SKILL.md references graceful degradation
+FR-01,AC-07,TC-39,positive,P1,No false negatives when build is healthy
+FR-02,AC-03,TC-20,positive,P0,Agent includes auto-fix loop with max 3 iterations
+FR-02,AC-03,TC-21,positive,P0,Agent classifies errors as mechanical vs logical
+FR-02,AC-03,TC-22,positive,P0,Agent defines mechanical error categories
+FR-02,AC-03,TC-30,positive,P1,SKILL.md includes mechanical error auto-fix
+FR-02,AC-03,TC-31,positive,P1,SKILL.md includes error classification
+FR-03,AC-04,TC-23,positive,P0,Agent defines logical error categories
+FR-03,AC-04,TC-24,positive,P0,Agent specifies honest failure reporting (no QA APPROVED)
+FR-03,AC-04,TC-25,positive,P0,Agent specifies failure report content requirements
+FR-03,AC-04,TC-26,positive,P1,Agent specifies workflow status FAILED on logical errors
+FR-04,AC-05,TC-07,positive,P1,test-generate gate_mode remains strict
+FR-04,AC-05,TC-28,negative,P0,Agent does not declare QA APPROVED on broken build
+FR-04,AC-05,TC-33,positive,P0,QA engineer includes build integrity in GATE-08
+FR-04,AC-05,TC-34,positive,P0,QA engineer blocks QA APPROVED on broken build
+FR-04,AC-05,TC-35,positive,P2,QA engineer build check is safety net
+NFR-02,--,TC-15,positive,P0,Build command detection uses lookup table (extensible design)
+NFR-03,AC-06,TC-27,positive,P1,Graceful degradation on unknown build system
+NFR-03,AC-06,TC-32,positive,P2,SKILL.md graceful degradation
+--,--,TC-37,positive,P1,Regression: feature workflow still uses 16-quality-loop
+--,--,TC-38,positive,P1,Regression: fix workflow still uses 16-quality-loop

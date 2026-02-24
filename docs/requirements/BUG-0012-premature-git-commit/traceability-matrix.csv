@@ -1,0 +1,32 @@
+Requirement,AC,Test ID,Test Description,Priority,Test Type,Status
+FR-01,AC-01,T27,software-developer agent contains no-commit instruction,P0,content,pending
+FR-01,AC-02,T27,software-developer no-commit instruction in prominent position,P0,content,pending
+FR-01,AC-03,T28,software-developer explains WHY commits prohibited,P1,content,pending
+FR-01,AC-04,T29,software-developer mentions orchestrator manages git,P1,content,pending
+FR-02,AC-05,T30,quality-loop-engineer contains no-commit instruction,P1,content,pending
+FR-02,AC-06,T31,quality-loop-engineer explains code review not yet run,P1,content,pending
+FR-03,AC-07,T15,Hook reads current_phase -- blocks during 06-implementation,P0,unit,pending
+FR-03,AC-07,T16,Hook reads current_phase -- blocks during 16-quality-loop,P0,unit,pending
+FR-03,AC-07,T17,Hook reads current_phase -- blocks during 05-test-strategy,P0,unit,pending
+FR-03,AC-08,T18,Hook reads phases array -- allows during last phase,P0,unit,pending
+FR-03,AC-08,T25,Hook reads phases array -- allows last phase in non-standard workflow,P2,unit,pending
+FR-03,AC-09,T15,Commit blocked on feature branch during non-final phase,P0,unit,pending
+FR-03,AC-09,T16,Commit blocked on bugfix branch during non-final phase,P0,unit,pending
+FR-03,AC-09,T17,Commit blocked during test-strategy phase,P0,unit,pending
+FR-03,AC-10,T18,Commit allowed during final phase 08-code-review,P0,unit,pending
+FR-03,AC-10,T25,Commit allowed during final phase for non-standard workflow,P2,unit,pending
+FR-03,AC-11,T19,Commit allowed when no active_workflow,P1,unit,pending
+FR-03,AC-12,T20,Commit allowed on non-workflow branch (hotfix/urgent),P1,unit,pending
+FR-03,AC-13,T24,Block message includes phase name,P1,unit,pending
+FR-03,AC-14,T21,Fail-open when current_phase missing,P1,unit,pending
+FR-03,AC-14,T22,Fail-open when phases array missing,P1,unit,pending
+FR-04,AC-15,T18,Last phase in phases array determines commit-allowed,P0,unit,pending
+FR-04,AC-15,T25,Last phase determined dynamically for non-standard workflows,P2,unit,pending
+FR-04,AC-16,T18,Commits allowed during last phase,P0,unit,pending
+FR-04,AC-17,T26,Orchestrator git ops unaffected (main/master still blocked),P0,unit,pending
+FR-04,AC-18,T23,git add without commit allowed during blocked phases,P1,unit,pending
+FR-05,AC-19,T24,Block message suggests git stash,P1,unit,pending
+FR-05,AC-20,T24,Block message explains orchestrator handles commits,P1,unit,pending
+NFR-02,AC-14,T21,Fail-open on missing current_phase,P1,unit,pending
+NFR-02,AC-14,T22,Fail-open on missing phases array,P1,unit,pending
+NFR-03,,T26,Regression -- main/master blocking preserved,P0,unit,pending

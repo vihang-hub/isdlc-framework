@@ -1,0 +1,31 @@
+FR_ID,AC_ID,User_Story_ID,Confidence,Source
+FR-001,AC-001-01,US-001,High,Draft requirement + codebase analysis
+FR-001,AC-001-02,US-001,High,Draft requirement + git remote detection pattern
+FR-001,AC-001-03,US-001,High,Inferred from AC-001-02 inverse
+FR-001,AC-001-04,US-001,High,Draft requirement
+FR-001,AC-001-05,US-001,High,Existing --force pattern in installer
+FR-002,AC-002-01,US-002,High,Codebase analysis (existing execSync pattern)
+FR-002,AC-002-02,US-002,High,Existing logging pattern
+FR-002,AC-002-03,US-002,High,Draft requirement + Article X fail-open
+FR-002,AC-002-04,US-002,High,Inferred from fail-open design
+FR-003,AC-003-01,US-003,High,Draft requirement + MCP Prerequisite Check pattern
+FR-003,AC-003-02,US-003,High,Existing logging pattern
+FR-003,AC-003-03,US-003,High,Draft requirement (existing MCP setup command)
+FR-003,AC-003-04,US-003,High,Draft requirement + error path analysis
+FR-003,AC-003-05,US-003,Medium,Inferred from Jira workflow (needs project key)
+FR-003,AC-003-06,US-003,High,Article X fail-safe requirement
+FR-004,AC-004-01,US-004,High,Draft requirement
+FR-004,AC-004-02,US-004,High,Draft requirement + codebase analysis
+FR-004,AC-004-03,US-004,High,Draft requirement
+FR-004,AC-004-04,US-004,Medium,Inferred from existing CLAUDE.md skip behavior
+FR-004,AC-004-05,US-004,High,Draft requirement (machine-readable format)
+FR-005,AC-005-01,US-005,Medium,Inferred from draft + UX improvement
+FR-005,AC-005-02,US-005,Medium,Inferred from Jira project key concept
+FR-005,AC-005-03,US-005,Medium,Inferred from GitHub convention
+FR-005,AC-005-04,US-005,High,Backward compatibility requirement
+FR-005,AC-005-05,US-005,Medium,Codebase analysis (detectSource signature)
+FR-005,AC-005-06,US-005,High,Backward compatibility requirement
+FR-006,AC-006-01,US-006,High,Existing updater preservation pattern
+FR-006,AC-006-02,US-006,Medium,Inferred from updater behavior
+FR-007,AC-007-01,US-007,High,Existing dry-run pattern in installer
+FR-007,AC-007-02,US-007,High,Existing dry-run pattern

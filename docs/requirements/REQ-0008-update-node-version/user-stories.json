@@ -1,0 +1,41 @@
+{
+  "feature": "REQ-0008-update-node-version",
+  "user_stories": [
+    {
+      "id": "US-001",
+      "title": "Drop EOL Node 18 support",
+      "as_a": "framework maintainer",
+      "i_want": "to stop supporting Node 18 which reached EOL in April 2025",
+      "so_that": "we don't give users a false sense of security by testing against an unsupported runtime",
+      "acceptance_criteria": ["AC-1", "AC-4", "AC-10", "AC-13", "AC-16"],
+      "priority": "P0"
+    },
+    {
+      "id": "US-002",
+      "title": "Add Node 24 LTS to test matrix",
+      "as_a": "framework user running Node 24 LTS",
+      "i_want": "the framework to be tested against Node 24",
+      "so_that": "I can confidently use the framework on the current Active LTS",
+      "acceptance_criteria": ["AC-4", "AC-7", "AC-10", "AC-21"],
+      "priority": "P0"
+    },
+    {
+      "id": "US-003",
+      "title": "Consistent version references",
+      "as_a": "framework contributor",
+      "i_want": "all Node version references to be consistent across the project",
+      "so_that": "there is no confusion about which Node versions are supported",
+      "acceptance_criteria": ["AC-1", "AC-13", "AC-16", "AC-18"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-004",
+      "title": "API compatibility validation",
+      "as_a": "framework maintainer",
+      "i_want": "to verify no Node 18-specific APIs are used in the codebase",
+      "so_that": "dropping Node 18 does not introduce runtime errors",
+      "acceptance_criteria": ["AC-19", "AC-20", "AC-21"],
+      "priority": "P1"
+    }
+  ]
+}

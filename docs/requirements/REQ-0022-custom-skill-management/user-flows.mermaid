@@ -1,0 +1,189 @@
+%% User Flow Diagrams: Custom Skill Management (REQ-0022)
+%% Phase: 04-design
+%% Traces: FR-001 through FR-009
+
+%% =============================================================================
+%% FLOW 1: Skill Add (FR-001, FR-002, FR-003)
+%% =============================================================================
+
+%% graph TD
+%%     A[User: "add a skill" or /isdlc skill add path] --> B{Intent Detection}
+%%     B -->|NL| C[CLAUDE.md detects skill mgmt intent]
+%%     B -->|CLI| D[isdlc.md receives skill add]
+%%     C --> D
+%%     D --> E[Read skill .md file]
+%%     E --> F{File exists?}
+%%     F -->|No| G["Error: File not found: {path}"]
+%%     F -->|Yes| H{Valid .md extension?}
+%%     H -->|No| I["Error: Only .md files supported"]
+%%     H -->|Yes| J{Valid frontmatter?}
+%%     J -->|No| K["Error: list all missing fields"]
+%%     J -->|Yes| L[Load manifest]
+%%     L --> M{Skill name duplicate?}
+%%     M -->|Yes| N["Overwrite? Y/N"]
+%%     N -->|N| O[Abort]
+%%     N -->|Y| P[Continue]
+%%     M -->|No| P
+%%     P --> Q[Copy .md to external skills dir]
+%%     Q --> R[Analyze content keywords]
+%%     R --> S[Generate binding suggestions]
+%%     S --> T[Delegate to skill-manager agent]
+%%     T --> U[Wiring Session -- see Flow 3]
+%%     U --> V{User saved?}
+%%     V -->|Cancel| O
+%%     V -->|Save| W[Write manifest with bindings]
+%%     W --> X["Confirm: Skill registered"]
+
+%% =============================================================================
+%% FLOW 2: Skill Wire / Re-wire (FR-003, FR-009)
+%% =============================================================================
+
+%% graph TD
+%%     A2[User: "wire skill X" or /isdlc skill wire name] --> B2[isdlc.md receives skill wire]
+%%     B2 --> C2[Load manifest]
+%%     C2 --> D2{Skill found by name?}
+%%     D2 -->|No| E2["Error: not found. Run skill list."]
+%%     D2 -->|Yes| F2[Load existing bindings]
+%%     F2 --> G2[Delegate to skill-manager agent]
+%%     G2 --> H2[Wiring Session with pre-filled bindings]
+%%     H2 --> I2{User saved?}
+%%     I2 -->|Cancel| J2[No changes]
+%%     I2 -->|Save| K2[Update manifest with new bindings]
+%%     K2 --> L2["Confirm: Bindings updated"]
+
+%% =============================================================================
+%% FLOW 3: Interactive Wiring Session (FR-003)
+%% =============================================================================
+
+%% graph TD
+%%     A3[Skill-manager agent receives delegation] --> B3[Display skill context]
+%%     B3 --> C3[Show suggested/existing bindings]
+%%     C3 --> D3[Present phase list grouped by category]
+%%     D3 --> E3[User selects phases/agents]
+%%     E3 --> F3[Present delivery type options]
+%%     F3 --> G3[User selects C/I/R]
+%%     G3 --> H3[Display confirmation summary]
+%%     H3 --> I3{S / A / X?}
+%%     I3 -->|S Save| J3[Return bindings object]
+%%     I3 -->|A Adjust| D3
+%%     I3 -->|X Cancel| K3[Return cancellation]
+
+%% =============================================================================
+%% FLOW 4: Skill List (FR-006)
+%% =============================================================================
+
+%% graph TD
+%%     A4[User: "list skills" or /isdlc skill list] --> B4[Load manifest]
+%%     B4 --> C4{Manifest exists and has skills?}
+%%     C4 -->|No| D4["No external skills registered."]
+%%     C4 -->|Yes| E4[Format each skill entry]
+%%     E4 --> F4["Display: name, phases, delivery, mode"]
+
+%% =============================================================================
+%% FLOW 5: Skill Remove (FR-007)
+%% =============================================================================
+
+%% graph TD
+%%     A5[User: "remove skill X" or /isdlc skill remove name] --> B5[Load manifest]
+%%     B5 --> C5{Skill found?}
+%%     C5 -->|No| D5["Error: not found. Run skill list."]
+%%     C5 -->|Yes| E5["Prompt: K/D/C"]
+%%     E5 -->|K Keep file| F5[Remove from manifest]
+%%     E5 -->|D Delete file| G5[Remove from manifest + delete .md]
+%%     E5 -->|C Cancel| H5[No changes]
+%%     F5 --> I5[Write manifest]
+%%     G5 --> I5
+%%     I5 --> J5["Confirm: Skill removed"]
+
+%% =============================================================================
+%% FLOW 6: Runtime Injection (FR-005)
+%% =============================================================================
+
+%% graph TD
+%%     A6[STEP 3d: Phase delegation begins] --> B6[Load external manifest]
+%%     B6 --> C6{Manifest exists?}
+%%     C6 -->|No| D6[Skip injection -- no-op]
+%%     C6 -->|Yes| E6{Skills array empty?}
+%%     E6 -->|Yes| D6
+%%     E6 -->|No| F6[For each skill in manifest]
+%%     F6 --> G6{Has bindings?}
+%%     G6 -->|No| H6[Skip -- backward compat]
+%%     G6 -->|Yes| I6{injection_mode == always?}
+%%     I6 -->|No| H6
+%%     I6 -->|Yes| J6{Phase or agent matches?}
+%%     J6 -->|No| H6
+%%     J6 -->|Yes| K6[Read skill .md file]
+%%     K6 --> L6{File found?}
+%%     L6 -->|No| M6[Log warning, skip skill]
+%%     L6 -->|Yes| N6{Content > 10000 chars?}
+%%     N6 -->|Yes| O6[Truncate + switch to reference]
+%%     N6 -->|No| P6[Format injection block]
+%%     O6 --> P6
+%%     P6 --> Q6[Add to injection blocks]
+%%     Q6 --> F6
+%%     H6 --> F6
+%%     Q6 --> R6[Append all blocks to delegation prompt]
+%%     R6 --> S6[Continue to Task tool invocation]
+%%     D6 --> S6
+
+%% =============================================================================
+%% FLOW 7: Error Recovery (NFR-003)
+%% =============================================================================
+
+%% graph TD
+%%     A7[Any injection error] --> B7{Level?}
+%%     B7 -->|Manifest parse error| C7[Skip all injection]
+%%     B7 -->|Single skill file missing| D7[Skip that skill, continue others]
+%%     B7 -->|Single skill read error| D7
+%%     B7 -->|Format error| D7
+%%     B7 -->|Unexpected outer error| C7
+%%     C7 --> E7[Log warning]
+%%     D7 --> E7
+%%     E7 --> F7[Continue with prompt -- workflow never blocked]
+
+%% =============================================================================
+%% SEQUENCE DIAGRAM: Complete skill add + injection lifecycle
+%% =============================================================================
+
+sequenceDiagram
+    participant U as User
+    participant C as CLAUDE.md
+    participant I as isdlc.md
+    participant CM as common.cjs
+    participant SM as skill-manager
+    participant M as Manifest JSON
+    participant SF as Skill .md File
+    participant PA as Phase Agent
+
+    Note over U,PA: === SKILL REGISTRATION ===
+
+    U->>C: "add a NestJS skill at ./nestjs.md"
+    C->>I: /isdlc skill add ./nestjs.md
+    I->>SF: Read ./nestjs.md
+    SF-->>I: File content
+    I->>I: Validate frontmatter (name, description)
+    I->>I: Check .md extension, name format
+    I->>M: loadExternalManifest()
+    M-->>I: null (first time) or existing manifest
+    I->>SF: Copy to .claude/skills/external/nestjs-conventions.md
+    I->>I: Analyze content keywords
+    I->>I: Generate binding suggestions
+    I->>SM: Task: Wiring session (suggestions)
+    SM->>U: "Select phases and delivery type"
+    U->>SM: "06-implementation, 03-architecture, context"
+    SM->>U: "Confirm? [S] Save [A] Adjust [X] Cancel"
+    U->>SM: S
+    SM-->>I: Bindings: {phases, agents, delivery_type}
+    I->>M: writeExternalManifest(updated)
+    I->>U: "Skill 'nestjs-conventions' registered"
+
+    Note over U,PA: === RUNTIME INJECTION (later, during workflow) ===
+
+    I->>M: loadExternalManifest()
+    M-->>I: Manifest with skills array
+    I->>I: Filter: phase=03-architecture matches
+    I->>SF: Read nestjs-conventions.md
+    SF-->>I: Skill content
+    I->>I: formatSkillInjectionBlock("nestjs-conventions", content, "context")
+    I->>PA: Task: Delegation prompt + EXTERNAL SKILL CONTEXT block
+    PA->>PA: Execute phase with skill context

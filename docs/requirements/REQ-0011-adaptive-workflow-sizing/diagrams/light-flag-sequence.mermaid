@@ -1,0 +1,46 @@
+%% -light Flag Flow (FR-04)
+%% Traces to: AC-12, AC-13, AC-14
+
+sequenceDiagram
+    participant User
+    participant CMD as isdlc.md<br/>(Command Parser)
+    participant ORC as Orchestrator<br/>(00-sdlc-orchestrator)
+    participant PLC as Phase-Loop Controller
+    participant CJS as common.cjs
+    participant State as state.json
+
+    User->>CMD: /isdlc feature -light "small change"
+
+    CMD->>CMD: Parse arguments<br/>Extract: -light flag, description
+    CMD->>CMD: flags.light = true
+
+    CMD->>ORC: Task: init-and-phase-01<br/>ACTION: feature<br/>FLAGS: { light: true }
+
+    ORC->>State: Initialize active_workflow<br/>type: "feature"<br/>flags: { light: true }<br/>phases: [00, 01, 02, 03, 04, 05, 06, 16, 08]
+    Note over ORC: Full phases array initialized<br/>(-light does NOT modify at init time)
+
+    ORC->>ORC: Run Phase 00 (Quick Scan)
+    ORC->>ORC: Run Phase 01 (Requirements)
+    ORC-->>CMD: { status: "phase_01_complete",<br/>phases: [...], flags: { light: true } }
+
+    CMD->>PLC: Start phase loop
+
+    Note over PLC: Phase 02 (Impact Analysis) executes<br/>IA still runs for blast radius coverage (AC-13)
+
+    PLC->>PLC: STEP 3e: 02-impact-analysis completed
+    PLC->>PLC: STEP 3e-sizing: trigger check = true
+
+    PLC->>State: Read active_workflow.flags.light
+    State-->>PLC: flags.light = true
+
+    Note over PLC: -light flag detected<br/>Skip UX menu entirely (AC-12)
+
+    PLC->>CJS: applySizingDecision(state, "light",<br/>{ forced_by_flag: true, recommended_by: "user" })
+    CJS->>CJS: Remove 03-architecture, 04-design<br/>Recalculate index<br/>Set sizing.forced_by_flag = true
+    CJS-->>PLC: state (mutated)
+
+    PLC->>State: Write state.json
+    PLC->>User: "Light workflow forced via -light flag.<br/>Skipping Phase 03 (Architecture) and Phase 04 (Design)."
+
+    PLC->>PLC: Update task list (mark skipped phases)
+    PLC->>PLC: Continue loop -> 05-test-strategy

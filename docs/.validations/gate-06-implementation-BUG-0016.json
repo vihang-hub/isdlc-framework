@@ -1,0 +1,59 @@
+{
+  "gate": "GATE-06",
+  "phase": "06-implementation",
+  "artifact_folder": "BUG-0016-orchestrator-scope-overrun",
+  "validated_at": "2026-02-14T16:30:00.000Z",
+  "status": "PASSED",
+  "checklist": {
+    "all_features_implemented": true,
+    "unit_test_coverage_80pct": true,
+    "all_tests_passing": true,
+    "code_follows_style_standards": true,
+    "implementation_matches_design": true,
+    "code_documentation_complete": true
+  },
+  "test_results": {
+    "new_tests": {
+      "file": "lib/orchestrator-scope-overrun.test.js",
+      "total": 20,
+      "passing": 20,
+      "failing": 0,
+      "test_ids": "T01-T20"
+    },
+    "esm_suite": {
+      "total": 581,
+      "passing": 579,
+      "failing": 2,
+      "pre_existing_failures": ["TC-E09 (README agent count)", "BUG-0014 T12 (step extraction)"]
+    },
+    "cjs_suite": {
+      "total": 1280,
+      "passing": 1280,
+      "failing": 0,
+      "regressions": 0
+    }
+  },
+  "files_changed": [
+    {
+      "path": "src/claude/agents/00-sdlc-orchestrator.md",
+      "action": "modified",
+      "description": "Added MODE ENFORCEMENT block, mode-aware guard in 4a, step 7.5"
+    },
+    {
+      "path": "lib/orchestrator-scope-overrun.test.js",
+      "action": "created",
+      "description": "20 structural prompt validation tests (T01-T20)"
+    }
+  ],
+  "constitutional_compliance": {
+    "articles_checked": ["I", "II", "V", "VII", "VIII", "IX", "X"],
+    "all_compliant": true,
+    "iterations_used": 1,
+    "max_iterations": 5
+  },
+  "tdd_workflow": {
+    "red_phase": "11 tests failed (T01-T04, T10-T14, T19-T20), 9 passed (existing content validated)",
+    "green_phase": "All 20 tests passed after applying 3 fixes",
+    "iterations": 1
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "feature_id": "REQ-0012",
+  "feature_name": "Invisible Framework",
+  "created": "2026-02-13",
+  "user_stories": [
+    {
+      "id": "US-01",
+      "title": "Natural language feature request",
+      "as_a": "developer using Claude Code with iSDLC installed",
+      "i_want_to": "say 'add a login page' or 'I want to build search' in natural language",
+      "so_that": "a feature workflow starts automatically without me knowing any slash commands",
+      "acceptance_criteria": ["AC-01.1", "AC-02.1", "AC-02.3", "AC-03.1", "AC-05.1", "AC-05.2", "AC-05.3"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-02",
+      "title": "Natural language bug report",
+      "as_a": "developer using Claude Code with iSDLC installed",
+      "i_want_to": "say 'this button is broken' or 'the API returns 500' in natural language",
+      "so_that": "a fix workflow starts automatically without me knowing any slash commands",
+      "acceptance_criteria": ["AC-01.2", "AC-02.1", "AC-02.3", "AC-03.2", "AC-05.1", "AC-05.2", "AC-05.3"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-03",
+      "title": "Natural language upgrade request",
+      "as_a": "developer using Claude Code with iSDLC installed",
+      "i_want_to": "say 'upgrade React to v19' or 'update the lodash dependency' in natural language",
+      "so_that": "an upgrade workflow starts automatically without me knowing any slash commands",
+      "acceptance_criteria": ["AC-01.3", "AC-02.1", "AC-02.3", "AC-03.3", "AC-05.1"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-04",
+      "title": "Natural language test execution",
+      "as_a": "developer using Claude Code with iSDLC installed",
+      "i_want_to": "say 'run the tests' or 'check if tests pass' in natural language",
+      "so_that": "the test suite runs through the framework without me knowing any slash commands",
+      "acceptance_criteria": ["AC-01.4", "AC-03.4"],
+      "priority": "P2"
+    },
+    {
+      "id": "US-05",
+      "title": "Natural language test generation",
+      "as_a": "developer using Claude Code with iSDLC installed",
+      "i_want_to": "say 'write tests for the auth module' or 'add unit tests' in natural language",
+      "so_that": "a test generation workflow starts without me knowing any slash commands",
+      "acceptance_criteria": ["AC-01.5", "AC-03.5"],
+      "priority": "P2"
+    },
+    {
+      "id": "US-06",
+      "title": "Consent before invocation",
+      "as_a": "developer using Claude Code with iSDLC installed",
+      "i_want_to": "be informed what workflow was detected and asked for confirmation before it starts",
+      "so_that": "I maintain control and am never surprised by an automated workflow I did not expect",
+      "acceptance_criteria": ["AC-02.1", "AC-02.2", "AC-02.3", "AC-02.4", "AC-02.5"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-07",
+      "title": "Normal conversation without interruption",
+      "as_a": "developer using Claude Code with iSDLC installed",
+      "i_want_to": "ask questions, explore code, and have conversations without triggering workflow detection",
+      "so_that": "the framework does not interfere with non-development activities",
+      "acceptance_criteria": ["AC-04.2", "AC-04.5"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-08",
+      "title": "Ambiguous intent handling",
+      "as_a": "developer using Claude Code with iSDLC installed",
+      "i_want_to": "get a brief clarifying question when my intent is ambiguous",
+      "so_that": "the right workflow is selected and I do not waste time on the wrong one",
+      "acceptance_criteria": ["AC-04.1"],
+      "priority": "P2"
+    },
+    {
+      "id": "US-09",
+      "title": "Active workflow protection",
+      "as_a": "developer using Claude Code with iSDLC installed",
+      "i_want_to": "be prevented from accidentally starting a new workflow when one is already in progress",
+      "so_that": "I do not lose work or create conflicting state",
+      "acceptance_criteria": ["AC-04.3"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-10",
+      "title": "Power user backward compatibility",
+      "as_a": "power user who knows the iSDLC slash commands",
+      "i_want_to": "type `/isdlc feature \"...\"` and have it execute immediately",
+      "so_that": "my existing workflow is not disrupted by the invisible framework change",
+      "acceptance_criteria": ["AC-03.7"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-11",
+      "title": "Framework discoverability on request",
+      "as_a": "curious developer",
+      "i_want_to": "ask about slash commands or the framework and get an explanation",
+      "so_that": "the framework is not secretive -- just invisible by default",
+      "acceptance_criteria": ["AC-05.5"],
+      "priority": "P3"
+    }
+  ],
+  "traceability": {
+    "total_acceptance_criteria": 27,
+    "covered_by_stories": 27,
+    "orphaned_criteria": []
+  }
+}

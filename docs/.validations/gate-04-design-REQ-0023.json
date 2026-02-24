@@ -1,0 +1,72 @@
+{
+  "gate": "GATE-04",
+  "phase": "04-design",
+  "requirement_id": "REQ-0023",
+  "feature": "Three-verb backlog model (add/analyze/build) -- unify backlog management around three natural verbs, eliminate Phase A/B naming, redesign command surface and intent detection (GH #19)",
+  "validated_at": "2026-02-18T21:30:00Z",
+  "status": "PASSED",
+  "checklist": {
+    "interface_specification_complete": {
+      "status": "PASSED",
+      "evidence": "Complete interface specs in module-design.md. 8 utility function interfaces (readMetaJson, writeMetaJson, generateSlug, resolveItem, updateBacklogMarker, appendToBacklog, deriveAnalysisStatus, deriveBacklogMarker) with full pseudocode, inputs, outputs, error handling, and validation rules. 3 action handler specifications (add, analyze, build) with step-by-step markdown specs ready for isdlc.md insertion. EXEMPT_ACTIONS hook constant specified."
+    },
+    "all_modules_designed": {
+      "status": "PASSED",
+      "evidence": "4 modules designed: M1 Command Surface (isdlc.md: sections to remove, sections to add, action routing update, QUICK REFERENCE update, 2.9 elimination checklist), M2 Intent Detection (CLAUDE.md + template: new 9-row table, disambiguation rule, edge case updates), M3 Orchestrator (00-sdlc-orchestrator.md: BACKLOG PICKER removal, SCENARIO 3 8-option menu, COMMANDS YOU SUPPORT update), M4 Hook Enforcement (skill-delegation-enforcer.cjs + delegation-gate.cjs: single-line EXEMPT_ACTIONS change, comment updates, 6 new test cases)."
+    },
+    "ui_wireframes": {
+      "status": "N/A",
+      "evidence": "CLI command surface redesign with no graphical UI. Text-based interfaces (intent detection table, SCENARIO 3 menu) fully specified in module-design.md Sections 3 and 4."
+    },
+    "user_flows_documented": {
+      "status": "PASSED",
+      "evidence": "4 data flow diagrams in module-design.md Section 6: Add flow (8-step), Analyze flow (full 5-phase loop), Build flow (10-step with orchestrator delegation), Resumable Analysis flow (cross-session). Analysis status state machine in architecture-overview.md Section 4.1."
+    },
+    "error_taxonomy_complete": {
+      "status": "PASSED",
+      "evidence": "28 error codes across 7 categories in error-taxonomy.md. Categories: Add (6 errors), Analyze (7 errors), Build (6 errors), Resolve (4 errors), Meta (4 errors), Backlog (4 errors), Hook (3 errors). Each has severity (FATAL/WARNING/INFO/SILENT), condition, user message, recovery action, and AC trace."
+    },
+    "validation_rules_defined": {
+      "status": "PASSED",
+      "evidence": "33 validation rules across 8 categories in validation-rules.json. Categories: slug (4 rules), meta.json schema (8 rules), legacy migration (4 rules), backlog markers (4 rules), item resolution (6 rules), action verbs (4 rules), source detection (3 rules), analysis phases (3 rules), line endings (2 rules). Each has ID, field, pattern, on_failure."
+    },
+    "designs_cover_all_requirements": {
+      "status": "PASSED",
+      "evidence": "All 9 FRs traced in module-design.md with reference counts: FR-001(8), FR-002(10), FR-003(9), FR-004(8), FR-005(10), FR-006(7), FR-007(9), FR-008(9), FR-009(10). All 4 ADRs (0012-0015) referenced 25 times total. 47 AC references across design artifacts. Full traceability matrix in module-design.md Section 11."
+    },
+    "interface_contracts_reviewed": {
+      "status": "PASSED",
+      "evidence": "component-spec.md defines interfaces for 9 components with type signatures, error handling, validation rules applied, and dependency graph. All contracts verified against ADR-0012 (inline vs orchestrated), ADR-0013 (read-time migration), ADR-0014 (marker system), ADR-0015 (resolution chain)."
+    }
+  },
+  "constitutional_compliance": {
+    "article_I": {
+      "status": "COMPLIANT",
+      "evidence": "Designs implement ADR-0012 through ADR-0015 exactly. readMetaJson() follows ADR-0013 migration rules. EXEMPT_ACTIONS follows ADR-0012 inline/orchestrated split. Markers follow ADR-0014 four-state system. Resolution follows ADR-0015 priority chain."
+    },
+    "article_IV": {
+      "status": "COMPLIANT",
+      "evidence": "All disambiguation rules explicit. Error recovery paths documented. No [NEEDS CLARIFICATION] markers. Section elimination checklist enumerates all patterns to remove."
+    },
+    "article_V": {
+      "status": "COMPLIANT",
+      "evidence": "No new files created. No new architectural patterns. Read-time migration (no batch scripts). Single-character markers in existing format. Sequential priority chain (no scoring)."
+    },
+    "article_VII": {
+      "status": "COMPLIANT",
+      "evidence": "Traceability matrix in module-design.md Section 11. Error-to-requirement table in error-taxonomy.md. Validation rule traces in validation-rules.json."
+    },
+    "article_IX": {
+      "status": "COMPLIANT",
+      "evidence": "All 8 GATE-04 checklist items pass. All required design artifacts exist and are complete."
+    }
+  },
+  "artifacts": [
+    "docs/requirements/REQ-0023-three-verb-backlog-model/module-design.md",
+    "docs/requirements/REQ-0023-three-verb-backlog-model/component-spec.md",
+    "docs/requirements/REQ-0023-three-verb-backlog-model/error-taxonomy.md",
+    "docs/requirements/REQ-0023-three-verb-backlog-model/validation-rules.json"
+  ],
+  "iteration_count": 1,
+  "max_iterations": 5
+}

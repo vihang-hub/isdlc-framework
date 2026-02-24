@@ -1,0 +1,52 @@
+{
+  "version": "1.0.0",
+  "feature_id": "REQ-0007",
+  "feature_name": "Deep Discovery",
+  "user_stories": [
+    {
+      "id": "US-001",
+      "title": "Discover an Existing Project with Security Audit",
+      "as_a": "developer with an existing codebase",
+      "i_want_to": "run /discover and get security findings alongside architecture analysis",
+      "so_that": "I know my security posture before starting feature development",
+      "acceptance_criteria": ["AC-7", "AC-8", "AC-11", "AC-12", "AC-13", "AC-25", "AC-41"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-002",
+      "title": "Deep Discovery with Full Debate",
+      "as_a": "tech lead for an existing project",
+      "i_want_to": "run /discover --deep full to get comprehensive cross-validated analysis",
+      "so_that": "I have high confidence in the discovery findings before defining the constitution",
+      "acceptance_criteria": ["AC-3", "AC-18", "AC-19", "AC-20", "AC-21", "AC-22", "AC-23", "AC-24", "AC-30", "AC-31", "AC-32", "AC-33"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-003",
+      "title": "New Project with Deep Discovery",
+      "as_a": "developer starting a new project",
+      "i_want_to": "run /discover --new and automatically get the party mode experience",
+      "so_that": "I get multi-perspective input without choosing between classic and party",
+      "acceptance_criteria": ["AC-6", "AC-34", "AC-35", "AC-36", "AC-49", "AC-52"],
+      "priority": "P1"
+    },
+    {
+      "id": "US-004",
+      "title": "Review Debate Transcripts",
+      "as_a": "developer reviewing discovery output",
+      "i_want_to": "toggle between synthesis and full transcript views",
+      "so_that": "I can drill into specific debate points when needed",
+      "acceptance_criteria": ["AC-41", "AC-42", "AC-43", "AC-44"],
+      "priority": "P2"
+    },
+    {
+      "id": "US-005",
+      "title": "Discover with Technical Debt Awareness",
+      "as_a": "developer inheriting a codebase",
+      "i_want_to": "see technical debt findings alongside functional analysis",
+      "so_that": "I can prioritize remediation alongside new feature development",
+      "acceptance_criteria": ["AC-14", "AC-15", "AC-16", "AC-26", "AC-46"],
+      "priority": "P1"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "bug_id": "BUG-0017",
+  "title": "Batch C Hook Bugs",
+  "stories": [
+    {
+      "id": "US-1",
+      "bug_ref": "0.9",
+      "title": "Accurate artifact error reporting",
+      "story": "As a phase agent encountering a gate block, I want the error message to list ALL valid artifact variants that would satisfy the requirement, so that I know exactly which file(s) I can create to resolve the block.",
+      "acceptance_criteria": ["AC-1.1", "AC-1.2", "AC-1.3", "AC-1.4", "AC-1.5", "AC-1.6"],
+      "priority": "P0"
+    },
+    {
+      "id": "US-2",
+      "bug_ref": "0.10",
+      "title": "Version lock enforcement for unversioned writes",
+      "story": "As the state integrity system, I want to block unversioned state writes when the disk state is versioned, so that the version lock cannot be bypassed by omitting the state_version field.",
+      "acceptance_criteria": ["AC-2.1", "AC-2.2", "AC-2.3", "AC-2.4", "AC-2.5", "AC-2.6", "AC-2.7"],
+      "priority": "P0"
+    },
+    {
+      "id": "US-3",
+      "bug_ref": "0.10",
+      "title": "Backward-compatible migration handling",
+      "story": "As a project migrating from unversioned to versioned state, I want the state-write-validator to allow unversioned writes when the disk is also unversioned, so that migration is not blocked.",
+      "acceptance_criteria": ["AC-2.2", "AC-2.3"],
+      "priority": "P0"
+    }
+  ],
+  "total_stories": 3,
+  "total_acceptance_criteria": 13,
+  "functional_requirements": 6,
+  "non_functional_requirements": 4
+}

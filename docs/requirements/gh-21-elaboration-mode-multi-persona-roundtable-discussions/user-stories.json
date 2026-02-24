@@ -1,0 +1,209 @@
+{
+  "feature_id": "REQ-GH21-ELABORATION-MODE",
+  "source": "GitHub Issue #21",
+  "source_id": "GH-21",
+  "stories": [
+    {
+      "id": "US-001",
+      "epic": "Elaboration Mode",
+      "persona": "Framework User (Developer)",
+      "goal": "enter elaboration mode at any analysis step boundary to bring all three personas into a focused discussion",
+      "benefit": "complex topics get multi-perspective analysis instead of single-persona depth-only treatment",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-001-01",
+          "given": "I am at a step boundary menu after completing any analysis step",
+          "when": "I select [E] Elaboration Mode",
+          "then": "the system activates elaboration mode and introduces all three personas (Maya, Alex, Jordan) with the current step's topic as the discussion focus"
+        },
+        {
+          "id": "AC-001-02",
+          "given": "elaboration mode has been activated",
+          "when": "the introduction completes",
+          "then": "the lead persona (phase owner) frames the discussion by summarizing what was covered in the just-completed step"
+        },
+        {
+          "id": "AC-001-03",
+          "given": "I am at a phase boundary menu after the final step of a phase",
+          "when": "I select [E]",
+          "then": "the system activates elaboration mode for the overall phase topic, allowing all personas to discuss phase-level findings before advancing"
+        }
+      ],
+      "linked_requirements": ["FR-001", "FR-002"]
+    },
+    {
+      "id": "US-002",
+      "epic": "Elaboration Mode",
+      "persona": "Framework User (Developer)",
+      "goal": "participate as an equal in the elaboration discussion and address specific personas by name",
+      "benefit": "I can direct the discussion toward my specific concerns and get targeted answers from the most relevant persona",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-002-01",
+          "given": "elaboration mode is active with all three personas",
+          "when": "I type a question addressing a specific persona (e.g., 'Alex, what about scalability?')",
+          "then": "the addressed persona responds first with their perspective, and other personas may follow up"
+        },
+        {
+          "id": "AC-002-02",
+          "given": "elaboration mode is active",
+          "when": "I type a question to the group (e.g., 'What do you all think about offline mode?')",
+          "then": "each persona responds in turn with their distinct perspective on the topic"
+        },
+        {
+          "id": "AC-002-03",
+          "given": "elaboration mode is active and I have not participated for 3 consecutive persona exchanges",
+          "when": "the third exchange completes without my input",
+          "then": "the lead persona prompts me: 'Any thoughts on this, or should we wrap up?'"
+        }
+      ],
+      "linked_requirements": ["FR-003", "FR-004"]
+    },
+    {
+      "id": "US-003",
+      "epic": "Elaboration Mode",
+      "persona": "Framework User (Developer)",
+      "goal": "hear personas build on and challenge each other's points during elaboration",
+      "benefit": "cross-cutting concerns are surfaced naturally through persona interaction, producing richer analysis than sequential single-persona passes",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-003-01",
+          "given": "elaboration mode is active and Alex makes a point about architecture",
+          "when": "Jordan responds",
+          "then": "Jordan references Alex's point explicitly (e.g., 'Building on Alex's point about module boundaries...') and extends it with design-level specifics"
+        },
+        {
+          "id": "AC-003-02",
+          "given": "elaboration mode is active and two personas disagree on an approach",
+          "when": "the disagreement is expressed",
+          "then": "the lead persona summarizes the tradeoff and asks me to weigh in or arbitrate"
+        }
+      ],
+      "linked_requirements": ["FR-005", "FR-010"]
+    },
+    {
+      "id": "US-004",
+      "epic": "Elaboration Mode",
+      "persona": "Framework User (Developer)",
+      "goal": "exit elaboration mode and return to the step workflow with insights captured in artifacts",
+      "benefit": "the elaboration discussion is not just conversation -- its insights are persisted in the analysis artifacts for downstream use",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-004-01",
+          "given": "elaboration mode is active",
+          "when": "I type 'done' or 'exit' or 'wrap up' or 'back'",
+          "then": "the system synthesizes key insights from the discussion, displays a structured summary, and updates relevant artifacts"
+        },
+        {
+          "id": "AC-004-02",
+          "given": "synthesis has completed after elaboration",
+          "when": "the results are displayed",
+          "then": "I can see which artifacts were updated and what was added: 'Updated requirements-spec.md section 3: added alternative user journey paths identified by Alex and Jordan'"
+        },
+        {
+          "id": "AC-004-03",
+          "given": "elaboration has ended and artifacts are updated",
+          "when": "the step menu is re-presented",
+          "then": "I am at the same step position as before elaboration (not advanced), and [E] is still available for another round if desired"
+        }
+      ],
+      "linked_requirements": ["FR-006", "FR-008"]
+    },
+    {
+      "id": "US-005",
+      "epic": "Elaboration Mode",
+      "persona": "Framework User (Developer)",
+      "goal": "have elaboration discussions bounded by a turn limit so they do not become unbounded",
+      "benefit": "I get thorough multi-perspective analysis without rabbit holes that consume excessive time or context window",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-005-01",
+          "given": "elaboration mode is active and the discussion reaches turn 8 of the 10-turn limit",
+          "when": "a persona speaks on turn 8",
+          "then": "the lead persona signals 'We are nearing the end of our discussion time. Any final points?'"
+        },
+        {
+          "id": "AC-005-02",
+          "given": "elaboration mode is active and the discussion reaches turn 10",
+          "when": "the turn limit is hit",
+          "then": "the system announces 'We have had a thorough discussion. Let me synthesize the key points.' and automatically initiates synthesis"
+        }
+      ],
+      "linked_requirements": ["FR-007"]
+    },
+    {
+      "id": "US-006",
+      "epic": "Elaboration Mode",
+      "persona": "Framework User (Developer)",
+      "goal": "have elaboration discussions stay focused on the current step's topic",
+      "benefit": "I get targeted multi-perspective analysis on the topic at hand rather than unfocused conversation",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-006-01",
+          "given": "elaboration mode is active for step 01-03 (User Experience & Journeys)",
+          "when": "a persona drifts to an unrelated topic like database schema",
+          "then": "the lead persona redirects: '{Name} raises an interesting point about {topic}, but let us stay focused on user journeys. We can explore that during Phase 02 or 04.'"
+        },
+        {
+          "id": "AC-006-02",
+          "given": "elaboration mode activates",
+          "when": "the lead persona frames the discussion",
+          "then": "they state a specific focus question derived from the current step's output: 'Let us discuss: {specific_question}'"
+        }
+      ],
+      "linked_requirements": ["FR-004"]
+    },
+    {
+      "id": "US-007",
+      "epic": "Elaboration Mode",
+      "persona": "Framework User (Developer)",
+      "goal": "resume an analysis session after elaboration occurred in a previous session without losing elaboration insights",
+      "benefit": "elaboration work is preserved across sessions, and I can continue analysis without re-doing the discussion",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-007-01",
+          "given": "I elaborated on step 01-03 in a previous session and the elaboration record is in meta.json",
+          "when": "I resume the analysis session",
+          "then": "the roundtable agent acknowledges the previous elaboration in the context recovery message and the artifacts reflect the elaboration insights"
+        },
+        {
+          "id": "AC-007-02",
+          "given": "I completed step 01-03 with elaboration and am resuming",
+          "when": "the session starts",
+          "then": "the agent continues from step 01-04 (or the step menu for 01-03 if not advanced) without re-running elaboration"
+        }
+      ],
+      "linked_requirements": ["FR-009", "NFR-005"]
+    },
+    {
+      "id": "US-008",
+      "epic": "Elaboration Mode",
+      "persona": "Framework Maintainer",
+      "goal": "maintain elaboration mode without modifying step files",
+      "benefit": "I can add, remove, or modify step files independently of elaboration logic, keeping the two concerns cleanly separated",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-008-01",
+          "given": "I add a new step file (e.g., 09-compliance-check.md) to analysis-steps/01-requirements/",
+          "when": "the user selects [E] after that new step completes",
+          "then": "elaboration mode activates with the new step's topic -- no changes to the elaboration handler are needed"
+        },
+        {
+          "id": "AC-008-02",
+          "given": "I modify a step file's title or depth",
+          "when": "the user selects [E] after that step",
+          "then": "elaboration mode uses the updated step title and topic -- the elaboration handler derives topic from step output, not step file content"
+        }
+      ],
+      "linked_requirements": ["FR-001", "FR-004", "NFR-007"]
+    }
+  ]
+}

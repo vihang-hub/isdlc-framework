@@ -1,0 +1,59 @@
+%% Sequence Diagram: Phase 16 Quality Loop with Fan-Out
+%% Shows Track A test fan-out flow
+
+sequenceDiagram
+    participant PLC as Phase Loop Controller
+    participant QL as Quality Loop Engineer
+    participant TA as Track A (Sub-Agent)
+    participant TB as Track B (Sub-Agent)
+    participant C0 as Chunk Agent 0
+    participant C1 as Chunk Agent 1
+    participant CN as Chunk Agent N-1
+    participant SJ as state.json
+    participant GB as Gate Blocker
+
+    PLC->>QL: Task: Execute Phase 16
+
+    QL->>SJ: Read fan_out config + flags
+    SJ-->>QL: { enabled: true, no_fan_out: false, tests_per_agent: 250 }
+
+    Note over QL: Spawn Track A + Track B in parallel (existing dual-track)
+
+    par Track A and Track B run concurrently
+        QL->>TA: Task: Run Track A (testing)
+        Note over TA: Count test files (T)
+        alt T >= 250 (fan-out active)
+            Note over TA: Chunk Splitter: T tests -> N chunks (round-robin)
+            par N chunk agents run concurrently
+                TA->>C0: Task: Run tests[0..k], build, lint, type-check
+                TA->>C1: Task: Run tests[k..2k], build, lint, type-check
+                TA->>CN: Task: Run tests[(N-1)k..T], build, lint, type-check
+            end
+            C0-->>TA: { chunk_index: 0, pass: 210, fail: 0, coverage: {...} }
+            C1-->>TA: { chunk_index: 1, pass: 208, fail: 2, coverage: {...} }
+            CN-->>TA: { chunk_index: N-1, pass: 210, fail: 0, coverage: {...} }
+            Note over TA: Result Merger: aggregate counts, union coverage
+            TA-->>QL: Merged Track A result (same schema as single-agent)
+        else T < 250 (single-agent path)
+            Note over TA: Run all tests as single agent (unchanged behavior)
+            TA-->>QL: Track A result
+        end
+
+        QL->>TB: Task: Run Track B (QA)
+        Note over TB: SAST + Audit + Code Review (unchanged)
+        TB-->>QL: Track B result
+    end
+
+    Note over QL: Merge Track A + Track B results
+    Note over QL: Add Parallelism Summary (if fan-out used)
+    Note over QL: Write quality-report.md
+
+    QL->>SJ: Write test_results (same schema + optional fan_out metadata)
+
+    alt Both tracks pass
+        QL->>GB: GATE-16 validation
+        GB-->>QL: PASS
+        QL-->>PLC: Phase 16 complete
+    else Either track fails
+        Note over QL: Iteration loop: fix failures, re-run both tracks
+    end

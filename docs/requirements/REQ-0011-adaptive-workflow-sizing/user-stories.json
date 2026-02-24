@@ -1,0 +1,230 @@
+{
+  "version": "1.0.0",
+  "requirement_id": "REQ-0011",
+  "title": "Adaptive Workflow Sizing",
+  "created": "2026-02-12",
+  "stories": [
+    {
+      "id": "US-01",
+      "title": "Sizing recommendation after Impact Analysis",
+      "as_a": "framework user invoking /isdlc feature",
+      "i_want": "the framework to analyze Impact Analysis results and recommend a workflow intensity (light, standard, or epic)",
+      "so_that": "I spend proportional effort on features based on their actual scope and risk",
+      "priority": "P0",
+      "traces_to": ["FR-01", "FR-03"],
+      "acceptance_criteria": [
+        {
+          "id": "AC-01",
+          "given": "Impact Analysis (Phase 02) has completed and GATE-02 passed",
+          "when": "the sizing logic runs",
+          "then": "it reads impact-analysis.md and extracts: file count, module count, risk score, coupling assessment, test coverage gaps"
+        },
+        {
+          "id": "AC-02",
+          "given": "GATE-02 has passed",
+          "when": "the phase-loop controller advances",
+          "then": "sizing runs AFTER GATE-02 and BEFORE Phase 03 delegation"
+        },
+        {
+          "id": "AC-03",
+          "given": "the same Impact Analysis inputs",
+          "when": "sizing runs multiple times",
+          "then": "the recommendation is identical (deterministic)"
+        },
+        {
+          "id": "AC-08",
+          "given": "sizing has analyzed Impact Analysis outputs",
+          "when": "the recommendation is presented to the user",
+          "then": "it includes: intensity name, file count, module count, risk level, and a human-readable rationale"
+        },
+        {
+          "id": "AC-09",
+          "given": "a sizing recommendation is displayed",
+          "when": "the user sees the menu",
+          "then": "they can choose: [A] Accept recommendation, [O] Override (choose intensity), [S] Show full analysis"
+        }
+      ]
+    },
+    {
+      "id": "US-02",
+      "title": "Light workflow for small features",
+      "as_a": "framework user working on a small change (1-5 files)",
+      "i_want": "the workflow to skip Architecture (Phase 03) and Design (Phase 04)",
+      "so_that": "I don't spend 1-2 hours producing 16+ artifacts for trivial changes",
+      "priority": "P0",
+      "traces_to": ["FR-02", "FR-05"],
+      "acceptance_criteria": [
+        {
+          "id": "AC-04",
+          "given": "sizing determines light intensity (<=5 files, low risk)",
+          "when": "the user accepts the recommendation",
+          "then": "phases 03-architecture and 04-design are removed from active_workflow.phases"
+        },
+        {
+          "id": "AC-15",
+          "given": "light intensity is applied",
+          "when": "the phase array is modified",
+          "then": "03-architecture and 04-design are removed from active_workflow.phases"
+        },
+        {
+          "id": "AC-16",
+          "given": "light intensity is applied",
+          "when": "the phase status is updated",
+          "then": "active_workflow.phase_status entries for skipped phases are removed"
+        },
+        {
+          "id": "AC-17",
+          "given": "light intensity is applied",
+          "when": "state.json phases object is updated",
+          "then": "phase entries for 03-architecture and 04-design are pruned"
+        },
+        {
+          "id": "AC-18",
+          "given": "light intensity removes two phases",
+          "when": "the current_phase_index is recalculated",
+          "then": "it points to 05-test-strategy as the next phase"
+        }
+      ]
+    },
+    {
+      "id": "US-03",
+      "title": "Standard workflow unchanged for medium features",
+      "as_a": "framework user working on a medium feature (6-20 files)",
+      "i_want": "the full 9-phase workflow to run as before",
+      "so_that": "medium features still get architecture and design review",
+      "priority": "P0",
+      "traces_to": ["FR-02"],
+      "acceptance_criteria": [
+        {
+          "id": "AC-05",
+          "given": "sizing determines standard intensity (6-20 files)",
+          "when": "the user accepts the recommendation",
+          "then": "all 9 current feature phases are preserved unchanged"
+        }
+      ]
+    },
+    {
+      "id": "US-04",
+      "title": "Override sizing recommendation",
+      "as_a": "framework user who disagrees with the sizing recommendation",
+      "i_want": "to override the recommendation and choose a different intensity",
+      "so_that": "I retain control over the workflow process",
+      "priority": "P0",
+      "traces_to": ["FR-03"],
+      "acceptance_criteria": [
+        {
+          "id": "AC-10",
+          "given": "the user selects [O] Override from the sizing menu",
+          "when": "the override menu is displayed",
+          "then": "they can choose from: light, standard, epic"
+        },
+        {
+          "id": "AC-11",
+          "given": "a sizing decision is made (accept or override)",
+          "when": "the decision is recorded",
+          "then": "active_workflow.sizing in state.json contains the full decision record"
+        }
+      ]
+    },
+    {
+      "id": "US-05",
+      "title": "Force lightweight with -light flag",
+      "as_a": "experienced framework user who knows a feature is small",
+      "i_want": "to use /isdlc feature -light 'description' to skip the sizing prompt",
+      "so_that": "I can fast-track trivially small features without waiting for Impact Analysis to recommend light",
+      "priority": "P1",
+      "traces_to": ["FR-04"],
+      "acceptance_criteria": [
+        {
+          "id": "AC-12",
+          "given": "the user runs /isdlc feature -light 'description'",
+          "when": "the workflow initializes",
+          "then": "the sizing recommendation is bypassed and light intensity is forced"
+        },
+        {
+          "id": "AC-13",
+          "given": "-light flag is used",
+          "when": "Impact Analysis runs",
+          "then": "it still executes (for blast radius coverage) but the sizing prompt is skipped"
+        },
+        {
+          "id": "AC-14",
+          "given": "the flag design",
+          "when": "reviewing available flags",
+          "then": "-light is the ONLY new flag — no -epic or -standard flags exist"
+        }
+      ]
+    },
+    {
+      "id": "US-06",
+      "title": "Sizing state tracking and observability",
+      "as_a": "framework developer reviewing workflow history",
+      "i_want": "sizing decisions recorded in state.json and persisted to workflow_history",
+      "so_that": "I can audit which intensity was used, whether it was overridden, and correlate with outcomes",
+      "priority": "P1",
+      "traces_to": ["FR-07"],
+      "acceptance_criteria": [
+        {
+          "id": "AC-24",
+          "given": "a sizing decision is made",
+          "when": "the decision is written to state.json",
+          "then": "active_workflow.sizing contains: { intensity, file_count, module_count, risk_score, coupling, coverage_gaps, recommended_by, overridden, overridden_to, decided_at }"
+        },
+        {
+          "id": "AC-25",
+          "given": "a workflow completes or is cancelled",
+          "when": "it is moved to workflow_history",
+          "then": "the sizing data is preserved in the history entry"
+        }
+      ]
+    },
+    {
+      "id": "US-07",
+      "title": "Configurable sizing thresholds",
+      "as_a": "framework operator customizing sizing for my project",
+      "i_want": "the file count thresholds for light/standard/epic to be configurable",
+      "so_that": "projects with different complexity profiles can tune sizing",
+      "priority": "P1",
+      "traces_to": ["FR-02"],
+      "acceptance_criteria": [
+        {
+          "id": "AC-07",
+          "given": "sizing thresholds are defined in workflows.json",
+          "when": "Impact Analysis outputs are evaluated",
+          "then": "the configured thresholds are used (default: light <= 5 files, standard 6-20, epic > 20)"
+        }
+      ]
+    },
+    {
+      "id": "US-08",
+      "title": "Epic recommendation (future — no execution)",
+      "as_a": "framework user working on a massive feature (20+ files)",
+      "i_want": "the framework to recommend epic decomposition",
+      "so_that": "I am informed that the feature should be broken into sub-features",
+      "priority": "P2",
+      "traces_to": ["FR-06"],
+      "status": "future",
+      "acceptance_criteria": [
+        {
+          "id": "AC-06",
+          "given": "sizing determines epic intensity (20+ files or high risk)",
+          "when": "the recommendation is presented",
+          "then": "the user is informed that epic decomposition is recommended (execution deferred to future work)"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_stories": 8,
+    "total_acceptance_criteria": 25,
+    "priority_breakdown": {
+      "P0": 4,
+      "P1": 3,
+      "P2": 1
+    },
+    "scope": {
+      "in_scope": ["US-01", "US-02", "US-03", "US-04", "US-05", "US-06", "US-07"],
+      "future": ["US-08"]
+    }
+  }
+}

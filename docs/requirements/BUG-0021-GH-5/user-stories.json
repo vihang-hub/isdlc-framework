@@ -1,0 +1,70 @@
+{
+  "bug_id": "BUG-0021",
+  "external_id": "GH-5",
+  "external_url": "https://github.com/vihangshah/isdlc/issues/5",
+  "user_stories": [
+    {
+      "id": "US-01",
+      "title": "Developer runs /isdlc analyze without blocking",
+      "as_a": "developer using iSDLC",
+      "i_want": "/isdlc analyze to run without triggering delegation-gate blocks",
+      "so_that": "I can use Phase A analysis without manual state.json intervention",
+      "acceptance_criteria": ["AC-01", "AC-02", "AC-03", "AC-05"]
+    },
+    {
+      "id": "US-02",
+      "title": "Developer runs /isdlc feature with normal enforcement",
+      "as_a": "developer using iSDLC",
+      "i_want": "/isdlc feature, /isdlc fix, and other workflow commands to continue requiring orchestrator delegation",
+      "so_that": "the delegation safety net remains active for workflow commands",
+      "acceptance_criteria": ["AC-04", "AC-07"]
+    },
+    {
+      "id": "US-03",
+      "title": "Future inline commands can be exempted",
+      "as_a": "framework maintainer",
+      "i_want": "a simple, extensible exempt actions list",
+      "so_that": "I can add future inline-only subcommands without modifying enforcement logic",
+      "acceptance_criteria": ["AC-01"]
+    }
+  ],
+  "functional_requirements": [
+    {
+      "id": "FR-01",
+      "title": "Add exempt actions list to skill-delegation-enforcer.cjs",
+      "acceptance_criteria": ["AC-01", "AC-03"]
+    },
+    {
+      "id": "FR-02",
+      "title": "Parse action from args string",
+      "acceptance_criteria": ["AC-02", "AC-06"]
+    },
+    {
+      "id": "FR-03",
+      "title": "Defense-in-depth in delegation-gate.cjs",
+      "acceptance_criteria": ["AC-05"]
+    },
+    {
+      "id": "FR-04",
+      "title": "Sync runtime hooks to .claude/",
+      "acceptance_criteria": ["AC-08"]
+    }
+  ],
+  "non_functional_requirements": [
+    {
+      "id": "NFR-01",
+      "title": "Backward compatibility",
+      "acceptance_criteria": ["AC-04"]
+    },
+    {
+      "id": "NFR-02",
+      "title": "Zero regression",
+      "acceptance_criteria": ["AC-07"]
+    },
+    {
+      "id": "NFR-03",
+      "title": "Extensibility",
+      "acceptance_criteria": ["AC-01"]
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+%% Sequence Diagram: Mechanical Execution Mode
+%% Agent 05 in Phase 06
+%% Traces: FR-05, AC-05a through AC-05g
+
+sequenceDiagram
+    participant PL as Phase-Loop Controller
+    participant Agent05 as Software Developer<br/>(Agent 05)
+    participant State as state.json
+    participant Tasks as tasks.md
+    participant FS as File System
+    participant Tests as Test Runner
+
+    PL->>Agent05: Delegate Phase 06<br/>WORKFLOW MODIFIERS: { mechanical_mode: true }
+
+    Agent05->>State: Read active_workflow.mechanical_mode
+    State-->>Agent05: mechanical_mode: true
+
+    Agent05->>Tasks: Read tasks.md Phase 06 section
+    Tasks-->>Agent05: Phase 06 tasks
+
+    Agent05->>Agent05: Check: any task has 'files:' sub-line?
+
+    alt No file-level tasks
+        Agent05->>Agent05: WARNING: No file-level tasks found
+        Agent05->>Agent05: Fallback to standard mode (AC-05g)
+    else File-level tasks exist
+        Agent05->>Agent05: Parse dependency graph<br/>(blocked_by/blocks annotations)
+        Agent05->>Agent05: Topological sort -> execution order
+
+        loop For each task in dependency order
+            Agent05->>Tasks: Read task T00XX details
+            Tasks-->>Agent05: files, traces, description
+
+            Agent05->>Agent05: Check: all blocked_by tasks [X]?
+
+            alt Blocked tasks not complete
+                Agent05->>Agent05: Skip task (retry later)
+            else All blockers complete
+                Agent05->>FS: Create/modify specified files
+                Agent05->>Tests: Write test (TDD Red)
+                Agent05->>FS: Implement code (TDD Green)
+                Agent05->>Tests: Run tests
+
+                alt Tests pass
+                    Agent05->>Tasks: Mark task [X]
+                else Tests fail after iterations
+                    Agent05->>Tasks: Mark task [BLOCKED]<br/>reason: {failure description}
+                end
+            end
+        end
+
+        Agent05->>Tasks: Update Progress Summary
+    end
+
+    Agent05-->>PL: Phase 06 complete<br/>(X completed, Y blocked)

@@ -1,0 +1,349 @@
+{
+  "feature": "REQ-0022",
+  "phase": "04-design",
+  "version": "1.0",
+  "created": "2026-02-18",
+  "description": "Validation rules for custom skill management — file validation, manifest validation, path security, and binding constraints",
+
+  "skill_file_validation": {
+    "description": "Rules for validating external skill .md files (validateSkillFrontmatter)",
+    "traces": ["FR-001", "NFR-006", "Security 6.1"],
+    "rules": [
+      {
+        "id": "SV-001",
+        "field": "filePath",
+        "rule": "File must exist on the filesystem",
+        "required": true,
+        "type": "file_existence",
+        "check": "fs.existsSync(filePath)",
+        "on_failure": "Return SKL-E001: File not found: {filePath}",
+        "error_code": "SKL-E001"
+      },
+      {
+        "id": "SV-002",
+        "field": "filePath",
+        "rule": "File must have .md extension",
+        "required": true,
+        "type": "string_pattern",
+        "pattern": "\\.md$",
+        "on_failure": "Return SKL-E002: Only .md files are supported",
+        "error_code": "SKL-E002"
+      },
+      {
+        "id": "SV-003",
+        "field": "file_content",
+        "rule": "File must start with YAML frontmatter block (--- delimiters)",
+        "required": true,
+        "type": "regex",
+        "pattern": "^---\\n[\\s\\S]*?\\n---",
+        "on_failure": "Return SKL-E003: No YAML frontmatter found",
+        "error_code": "SKL-E003"
+      },
+      {
+        "id": "SV-004",
+        "field": "frontmatter.name",
+        "rule": "name field must be a non-empty string after trimming",
+        "required": true,
+        "type": "non_empty_string",
+        "on_failure": "Return SKL-E004: Missing required frontmatter field: name",
+        "error_code": "SKL-E004"
+      },
+      {
+        "id": "SV-005",
+        "field": "frontmatter.description",
+        "rule": "description field must be a non-empty string after trimming",
+        "required": true,
+        "type": "non_empty_string",
+        "on_failure": "Return SKL-E005: Missing required frontmatter field: description",
+        "error_code": "SKL-E005"
+      },
+      {
+        "id": "SV-006",
+        "field": "frontmatter.name",
+        "rule": "name must be lowercase alphanumeric with hyphens, minimum 2 characters",
+        "required": true,
+        "type": "regex",
+        "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+        "min_length": 2,
+        "max_length": 100,
+        "on_failure": "Return SKL-E006: Skill name must be lowercase alphanumeric with hyphens",
+        "error_code": "SKL-E006",
+        "examples": {
+          "valid": ["nestjs-conventions", "my-skill", "a1"],
+          "invalid": ["NestJS", "my_skill", "-bad", "bad-", "a", "my skill", "my/skill"]
+        }
+      }
+    ]
+  },
+
+  "path_security_validation": {
+    "description": "Rules for preventing path traversal in skill file references",
+    "traces": ["Security T1", "Security 6.3"],
+    "rules": [
+      {
+        "id": "PS-001",
+        "field": "skill.file (in manifest)",
+        "rule": "Filename must not contain forward slash",
+        "required": true,
+        "type": "forbidden_chars",
+        "forbidden": ["/"],
+        "on_failure": "Return SKL-E007: Skill filename must not contain path separators",
+        "error_code": "SKL-E007"
+      },
+      {
+        "id": "PS-002",
+        "field": "skill.file (in manifest)",
+        "rule": "Filename must not contain backslash",
+        "required": true,
+        "type": "forbidden_chars",
+        "forbidden": ["\\"],
+        "on_failure": "Return SKL-E007",
+        "error_code": "SKL-E007"
+      },
+      {
+        "id": "PS-003",
+        "field": "skill.file (in manifest)",
+        "rule": "Filename must not contain '..' sequence",
+        "required": true,
+        "type": "forbidden_substring",
+        "forbidden": [".."],
+        "on_failure": "Return SKL-E007",
+        "error_code": "SKL-E007"
+      },
+      {
+        "id": "PS-004",
+        "field": "skill.file (in manifest)",
+        "rule": "Filename must end with .md",
+        "required": true,
+        "type": "string_pattern",
+        "pattern": "\\.md$",
+        "on_failure": "Reject file entry",
+        "error_code": "SKL-E007"
+      }
+    ]
+  },
+
+  "manifest_validation": {
+    "description": "Rules for validating external-skills-manifest.json structure",
+    "traces": ["FR-004", "NFR-002", "NFR-005", "ADR-0011"],
+    "rules": [
+      {
+        "id": "MV-001",
+        "field": "manifest (root)",
+        "rule": "Must be valid JSON",
+        "required": true,
+        "type": "json_parse",
+        "on_failure": "Return null from loadExternalManifest (fail-open)"
+      },
+      {
+        "id": "MV-002",
+        "field": "manifest.version",
+        "rule": "Must be a string in semver format",
+        "required": true,
+        "type": "string_pattern",
+        "pattern": "^\\d+\\.\\d+\\.\\d+$",
+        "on_failure": "Log warning, use manifest anyway (lenient)"
+      },
+      {
+        "id": "MV-003",
+        "field": "manifest.skills",
+        "rule": "Must be an array",
+        "required": true,
+        "type": "array",
+        "on_failure": "Skip injection (SKL-W002)"
+      },
+      {
+        "id": "MV-004",
+        "field": "manifest.skills.length",
+        "rule": "Maximum 50 entries",
+        "required": false,
+        "type": "max_value",
+        "max": 50,
+        "on_failure": "Reject skill add with message: Maximum 50 skills supported",
+        "traces": ["NFR-002"]
+      },
+      {
+        "id": "MV-005",
+        "field": "manifest.skills[].name",
+        "rule": "Must be unique within the skills array",
+        "required": true,
+        "type": "unique",
+        "on_failure": "On add: prompt overwrite. On read: first entry wins."
+      }
+    ]
+  },
+
+  "bindings_validation": {
+    "description": "Rules for validating skill binding configuration",
+    "traces": ["FR-003", "FR-004", "ADR-0011"],
+    "rules": [
+      {
+        "id": "BV-001",
+        "field": "bindings",
+        "rule": "Bindings object is optional on skill entries (backward compat)",
+        "required": false,
+        "type": "object",
+        "on_missing": "Skip this skill during injection (SKL-W003)",
+        "traces": ["NFR-005"]
+      },
+      {
+        "id": "BV-002",
+        "field": "bindings.agents",
+        "rule": "Must be an array of strings (agent names)",
+        "required": true,
+        "type": "string_array",
+        "valid_values": [
+          "requirements-analyst",
+          "impact-analysis-orchestrator",
+          "tracing-orchestrator",
+          "solution-architect",
+          "system-designer",
+          "test-design-engineer",
+          "software-developer",
+          "integration-tester",
+          "qa-engineer",
+          "security-compliance-auditor",
+          "cicd-engineer",
+          "environment-builder",
+          "quality-loop-engineer"
+        ],
+        "on_failure": "Warning: unrecognized agent name (still saved, lenient)"
+      },
+      {
+        "id": "BV-003",
+        "field": "bindings.phases",
+        "rule": "Must be an array of strings (phase keys)",
+        "required": true,
+        "type": "string_array",
+        "valid_values": [
+          "01-requirements",
+          "02-impact-analysis",
+          "02-tracing",
+          "03-architecture",
+          "04-design",
+          "05-test-strategy",
+          "06-implementation",
+          "07-testing",
+          "08-code-review",
+          "09-validation",
+          "10-cicd",
+          "11-local-testing",
+          "16-quality-loop"
+        ],
+        "on_failure": "Warning: unrecognized phase key (still saved, lenient)"
+      },
+      {
+        "id": "BV-004",
+        "field": "bindings.injection_mode",
+        "rule": "Must be 'always' (only supported value in v1)",
+        "required": true,
+        "type": "enum",
+        "valid_values": ["always"],
+        "on_failure": "Default to 'always'"
+      },
+      {
+        "id": "BV-005",
+        "field": "bindings.delivery_type",
+        "rule": "Must be one of: context, instruction, reference",
+        "required": true,
+        "type": "enum",
+        "valid_values": ["context", "instruction", "reference"],
+        "on_failure": "Default to 'context'"
+      },
+      {
+        "id": "BV-006",
+        "field": "bindings.phases OR bindings.agents",
+        "rule": "At least one phase or one agent must be specified",
+        "required": true,
+        "type": "non_empty_union",
+        "on_failure": "Return SKL-E021: No phases selected"
+      }
+    ]
+  },
+
+  "runtime_injection_validation": {
+    "description": "Rules for validating skill content during runtime injection",
+    "traces": ["FR-005", "NFR-001", "NFR-003"],
+    "rules": [
+      {
+        "id": "RV-001",
+        "field": "skill_content.length",
+        "rule": "Content must not exceed 10,000 characters for inline delivery",
+        "required": false,
+        "type": "max_length",
+        "max": 10000,
+        "on_exceed": "Truncate content, append '[TRUNCATED]' notice, switch to reference delivery (SKL-W006)",
+        "traces": ["Security T3", "ASM-002"]
+      },
+      {
+        "id": "RV-002",
+        "field": "injection timing",
+        "rule": "Total injection time must not exceed 100ms",
+        "required": false,
+        "type": "performance",
+        "max_ms": 100,
+        "on_exceed": "Warning logged but injection continues (soft limit)",
+        "traces": ["NFR-001"]
+      },
+      {
+        "id": "RV-003",
+        "field": "matched_skills_count",
+        "rule": "No hard limit on matched skills, but typical is 1-3",
+        "required": false,
+        "type": "info_only",
+        "notes": "Bounded by total skills (max 50) and phase matching filter"
+      }
+    ]
+  },
+
+  "skill_entry_validation": {
+    "description": "Rules for individual skill entries in the manifest",
+    "traces": ["FR-004", "ADR-0011"],
+    "rules": [
+      {
+        "id": "SE-001",
+        "field": "skill.name",
+        "rule": "Required, string, unique, 2-100 chars, matches name pattern",
+        "required": true,
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+        "min_length": 2,
+        "max_length": 100
+      },
+      {
+        "id": "SE-002",
+        "field": "skill.description",
+        "rule": "Required, string, 1-500 chars",
+        "required": true,
+        "type": "string",
+        "min_length": 1,
+        "max_length": 500
+      },
+      {
+        "id": "SE-003",
+        "field": "skill.file",
+        "rule": "Required, string, ends with .md, no path separators",
+        "required": true,
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9.-]*\\.md$",
+        "cross_ref": ["PS-001", "PS-002", "PS-003", "PS-004"]
+      },
+      {
+        "id": "SE-004",
+        "field": "skill.added_at",
+        "rule": "Required, ISO 8601 date-time string",
+        "required": true,
+        "type": "datetime",
+        "format": "ISO 8601"
+      },
+      {
+        "id": "SE-005",
+        "field": "skill.bindings",
+        "rule": "Optional object (backward compat). When present, must follow BV-001 through BV-006.",
+        "required": false,
+        "type": "object",
+        "cross_ref": ["BV-001", "BV-002", "BV-003", "BV-004", "BV-005", "BV-006"]
+      }
+    ]
+  }
+}

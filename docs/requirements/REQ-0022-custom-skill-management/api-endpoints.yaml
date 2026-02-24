@@ -1,0 +1,160 @@
+# API Endpoints (CLI Commands): Custom Skill Management (REQ-0022)
+# Phase: 04-design
+# Version: 1.0
+# Created: 2026-02-18
+#
+# Since iSDLC is a CLI tool (not a REST API), "endpoints" are CLI commands.
+# This file documents the command interface contract.
+
+---
+
+commands:
+
+  # ---------------------------------------------------------------------------
+  # /isdlc skill add <path>
+  # ---------------------------------------------------------------------------
+  skill_add:
+    command: "/isdlc skill add <path>"
+    aliases:
+      - natural_language: "add a skill"
+      - natural_language: "register skill"
+      - natural_language: "new skill"
+    description: "Register an external skill file and configure its bindings"
+    traces: ["FR-001", "FR-002", "FR-003"]
+    parameters:
+      path:
+        type: string
+        required: true
+        description: "Filesystem path to the .md skill file"
+        examples: ["./nestjs-conventions.md", "/Users/me/skills/company-standards.md"]
+    preconditions:
+      - "File exists at <path>"
+      - "File is .md format with valid YAML frontmatter"
+      - "Frontmatter contains name and description fields"
+    postconditions:
+      - "Skill .md file copied to external skills directory"
+      - "Skill entry added to external-skills-manifest.json with bindings"
+      - "User received confirmation with skill name and bound phases"
+    error_conditions:
+      - code: SKL-E001
+        condition: "File not found"
+      - code: SKL-E002
+        condition: "Not a .md file"
+      - code: SKL-E003
+        condition: "No frontmatter"
+      - code: SKL-E004
+        condition: "Missing name"
+      - code: SKL-E005
+        condition: "Missing description"
+      - code: SKL-E006
+        condition: "Invalid name format"
+      - code: SKL-E010
+        condition: "Duplicate skill name"
+    side_effects:
+      - "Creates external skills directory if not exists"
+      - "Copies .md file to external skills directory"
+      - "Creates or updates external-skills-manifest.json"
+      - "Spawns interactive wiring session (skill-manager agent)"
+
+  # ---------------------------------------------------------------------------
+  # /isdlc skill wire <name>
+  # ---------------------------------------------------------------------------
+  skill_wire:
+    command: "/isdlc skill wire <name>"
+    aliases:
+      - natural_language: "wire skill"
+      - natural_language: "bind skill"
+      - natural_language: "use X skill during Y phase"
+    description: "Open interactive wiring session to configure or reconfigure skill bindings"
+    traces: ["FR-003", "FR-009"]
+    parameters:
+      name:
+        type: string
+        required: true
+        description: "Name of the registered skill to wire/re-wire"
+        examples: ["nestjs-conventions", "company-coding-standards"]
+    preconditions:
+      - "Skill with <name> exists in external-skills-manifest.json"
+    postconditions:
+      - "Skill bindings updated in external-skills-manifest.json"
+      - "User received confirmation with updated bindings"
+    error_conditions:
+      - code: SKL-E011
+        condition: "Skill not found in manifest"
+      - code: SKL-E020
+        condition: "Wiring session cancelled"
+    side_effects:
+      - "Updates external-skills-manifest.json"
+      - "Spawns interactive wiring session (skill-manager agent)"
+
+  # ---------------------------------------------------------------------------
+  # /isdlc skill list
+  # ---------------------------------------------------------------------------
+  skill_list:
+    command: "/isdlc skill list"
+    aliases:
+      - natural_language: "list skills"
+      - natural_language: "show skills"
+      - natural_language: "what skills"
+    description: "List all registered external skills with their bindings"
+    traces: ["FR-006"]
+    parameters: {}
+    preconditions: []
+    postconditions:
+      - "User sees formatted list of all registered skills"
+      - "OR user sees 'no skills registered' message if manifest is empty/missing"
+    error_conditions: []
+    side_effects: []
+
+  # ---------------------------------------------------------------------------
+  # /isdlc skill remove <name>
+  # ---------------------------------------------------------------------------
+  skill_remove:
+    command: "/isdlc skill remove <name>"
+    aliases:
+      - natural_language: "remove skill"
+      - natural_language: "delete skill"
+      - natural_language: "unregister skill"
+    description: "Unregister an external skill from the manifest, optionally delete the file"
+    traces: ["FR-007"]
+    parameters:
+      name:
+        type: string
+        required: true
+        description: "Name of the registered skill to remove"
+    preconditions:
+      - "Skill with <name> exists in external-skills-manifest.json"
+    postconditions:
+      - "Skill entry removed from external-skills-manifest.json"
+      - "Skill .md file kept or deleted (user choice)"
+      - "User received confirmation"
+    error_conditions:
+      - code: SKL-E011
+        condition: "Skill not found in manifest"
+    side_effects:
+      - "Updates external-skills-manifest.json"
+      - "Optionally deletes .md file from external skills directory"
+
+---
+
+# Runtime injection is not a command but an automatic behavior
+# documented here for completeness
+
+runtime_behavior:
+
+  skill_injection:
+    location: "isdlc.md STEP 3d"
+    trigger: "Every phase delegation during workflow execution"
+    description: "Automatically inject matched external skill content into agent delegation prompts"
+    traces: ["FR-005", "NFR-001", "NFR-003", "NFR-005", "ADR-0008"]
+    behavior:
+      activation: "Always active (checks manifest on every delegation)"
+      no_op_conditions:
+        - "Manifest does not exist"
+        - "Manifest skills array is empty"
+        - "No skills match current phase/agent"
+      injection_conditions:
+        - "Skill bindings.injection_mode is 'always'"
+        - "Current phase_key is in skill.bindings.phases OR current agent is in skill.bindings.agents"
+      fail_open: true
+      max_latency_ms: 100

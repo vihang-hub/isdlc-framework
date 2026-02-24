@@ -1,0 +1,38 @@
+%% REQ-0026: Sequence Diagram - Fully Analyzed Item (Happy Path)
+%% Traces: FR-001, FR-002, FR-004, FR-005, FR-006
+
+sequenceDiagram
+    participant U as User
+    participant BV as Build Verb (isdlc.md)
+    participant TVU as three-verb-utils.cjs
+    participant Git as Git CLI
+    participant O as Orchestrator
+    participant PLC as Phase-Loop Controller
+
+    U->>BV: /isdlc build "payment-processing"
+    BV->>TVU: resolveItem("payment-processing")
+    TVU-->>BV: { slugDir, slug }
+    BV->>TVU: readMetaJson(slugDir)
+    TVU-->>BV: { analysis_status: "analyzed", phases_completed: [00..04], codebase_hash: "abc1234" }
+
+    BV->>TVU: validatePhasesCompleted([00..04])
+    TVU-->>BV: { valid: [00..04], warnings: [] }
+    BV->>TVU: computeStartPhase(meta, featurePhases)
+    TVU-->>BV: { status: "analyzed", startPhase: "05-test-strategy", completedPhases: [00..04], remainingPhases: [05,06,16,08] }
+
+    BV->>Git: git rev-parse --short HEAD
+    Git-->>BV: "abc1234"
+    BV->>TVU: checkStaleness(meta, "abc1234")
+    TVU-->>BV: { stale: false }
+
+    BV->>U: BUILD SUMMARY banner (5 done, 4 to execute)
+    U-->>BV: [Y] Confirm
+
+    BV->>O: MODE: init-and-phase-01, START_PHASE: "05-test-strategy", ARTIFACT_FOLDER: "payment-processing"
+    O->>O: Slice phases from 05-test-strategy onward
+    O->>O: resetPhasesForWorkflow(state, [05,06,16,08])
+    O->>O: Create branch, run first sliced phase (05)
+    O-->>BV: { status: "passed", phases: [05,06,16,08], next_phase_index: 1 }
+
+    BV->>PLC: Drive remaining phases [06, 16, 08]
+    PLC-->>BV: Workflow complete

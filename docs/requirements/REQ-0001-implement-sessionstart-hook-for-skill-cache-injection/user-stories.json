@@ -1,0 +1,463 @@
+{
+  "feature_id": "REQ-0001",
+  "feature_name": "Unified SessionStart Cache",
+  "source": "GH-91",
+  "created": "2026-02-23",
+  "stories": [
+    {
+      "id": "US-001",
+      "epic": "Cache Infrastructure",
+      "persona": "Framework Maintainer",
+      "goal": "have a function that assembles all static framework content into a single cache file",
+      "benefit": "the cache can be rebuilt programmatically from any trigger point",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-001-01",
+          "given": "the framework is installed with a valid .isdlc/ directory",
+          "when": "rebuildSessionCache() is called",
+          "then": "it reads all static source files (constitution, workflows.json, iteration-requirements.json, artifact-paths.json, skills-manifest.json, external-skills-manifest.json, skill SKILL.md files, persona agent files, topic files) and assembles them into .isdlc/session-cache.md"
+        },
+        {
+          "id": "AC-001-02",
+          "given": "rebuildSessionCache() is assembling the cache",
+          "when": "it writes the output file",
+          "then": "the file contains clearly delimited sections: CONSTITUTION, WORKFLOW CONFIG, ITERATION REQUIREMENTS, ARTIFACT PATHS, SKILL INDEX BY AGENT, EXTERNAL SKILLS (all-phase and phase-specific), and ROUNDTABLE CONTEXT (persona files and topic files)"
+        }
+      ],
+      "linked_requirements": ["FR-001"]
+    },
+    {
+      "id": "US-002",
+      "epic": "Cache Infrastructure",
+      "persona": "Framework Maintainer",
+      "goal": "have a source hash in the cache header for stale detection",
+      "benefit": "consumers can detect when the cache is outdated relative to the source files",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-002-01",
+          "given": "rebuildSessionCache() is assembling the cache",
+          "when": "it writes the output file",
+          "then": "a header comment is included with generation timestamp, source file count, and a source hash computed from input file mtimes"
+        }
+      ],
+      "linked_requirements": ["FR-001"]
+    },
+    {
+      "id": "US-003",
+      "epic": "Cache Infrastructure",
+      "persona": "Framework Developer",
+      "goal": "have the cache builder skip missing source files gracefully",
+      "benefit": "the cache works in partial installations or before discovery is run",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-003-01",
+          "given": "one or more source files are missing (e.g., no external-skills-manifest.json, no persona files)",
+          "when": "rebuildSessionCache() runs",
+          "then": "it skips the missing section(s) gracefully and still produces a valid cache file containing the available sections"
+        }
+      ],
+      "linked_requirements": ["FR-001"]
+    },
+    {
+      "id": "US-004",
+      "epic": "Cache Infrastructure",
+      "persona": "Framework Developer",
+      "goal": "have the session cache injected into the LLM context automatically at session start",
+      "benefit": "all static framework content is available in memory without any file reads during the workflow",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-004-01",
+          "given": ".isdlc/session-cache.md exists and is readable",
+          "when": "the SessionStart hook fires (on session startup or resume)",
+          "then": "the hook reads the file and outputs its full content to stdout"
+        },
+        {
+          "id": "AC-004-02",
+          "given": "the hook runs",
+          "when": "execution time is measured",
+          "then": "the hook completes within the configured timeout (5000ms)"
+        }
+      ],
+      "linked_requirements": ["FR-002"]
+    },
+    {
+      "id": "US-005",
+      "epic": "Cache Infrastructure",
+      "persona": "Framework Developer",
+      "goal": "have the SessionStart hook fail silently when the cache is missing",
+      "benefit": "workflows are never blocked by a missing or corrupt cache file",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-005-01",
+          "given": ".isdlc/session-cache.md does NOT exist",
+          "when": "the SessionStart hook fires",
+          "then": "the hook produces no output, no error, and exits with code 0"
+        },
+        {
+          "id": "AC-005-02",
+          "given": ".isdlc/session-cache.md exists but is unreadable (permissions error)",
+          "when": "the SessionStart hook fires",
+          "then": "the hook produces no output, no error on stdout, and exits with code 0"
+        }
+      ],
+      "linked_requirements": ["FR-002"]
+    },
+    {
+      "id": "US-006",
+      "epic": "Cache Infrastructure",
+      "persona": "Framework Maintainer",
+      "goal": "have the SessionStart hook registered in settings.json with correct matchers",
+      "benefit": "Claude Code automatically invokes the hook at session startup and resume",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-006-01",
+          "given": "src/claude/settings.json is inspected",
+          "when": "the SessionStart hook section is located",
+          "then": "it contains an entry for inject-session-cache.cjs with a command path of 'node $CLAUDE_PROJECT_DIR/.claude/hooks/inject-session-cache.cjs'"
+        },
+        {
+          "id": "AC-006-02",
+          "given": "the hook registration",
+          "when": "the matcher configuration is inspected",
+          "then": "it uses startup/resume matchers (NOT compact matcher) per bug #15174 avoidance"
+        },
+        {
+          "id": "AC-006-03",
+          "given": "the hook registration",
+          "when": "the timeout value is inspected",
+          "then": "it is set to 5000ms"
+        }
+      ],
+      "linked_requirements": ["FR-003"]
+    },
+    {
+      "id": "US-007",
+      "epic": "Cache Infrastructure",
+      "persona": "Framework Maintainer",
+      "goal": "manually rebuild the session cache via a CLI command",
+      "benefit": "I can regenerate the cache outside of workflow triggers when debugging or after manual config changes",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-007-01",
+          "given": "the developer runs 'node bin/rebuild-cache.js' from the project root",
+          "when": "the script executes",
+          "then": "it calls rebuildSessionCache() and reports success or failure to stdout"
+        },
+        {
+          "id": "AC-007-02",
+          "given": "the developer runs the script outside a valid iSDLC project (no .isdlc/ directory)",
+          "when": "the script executes",
+          "then": "it prints an error message and exits with a non-zero exit code"
+        },
+        {
+          "id": "AC-007-03",
+          "given": "the developer runs the script",
+          "when": "rebuildSessionCache() completes",
+          "then": "the script prints the cache file path and size"
+        }
+      ],
+      "linked_requirements": ["FR-004"]
+    },
+    {
+      "id": "US-008",
+      "epic": "Consumer Changes",
+      "persona": "Framework Developer",
+      "goal": "have the phase-loop controller read the constitution from session context",
+      "benefit": "zero per-phase disk reads for constitution content",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-008-01",
+          "given": "session context contains the CONSTITUTION section from the cache",
+          "when": "the phase-loop controller needs the constitution for delegation",
+          "then": "it references the constitution from session context (zero per-phase disk reads)"
+        },
+        {
+          "id": "AC-008-02",
+          "given": "session context does NOT contain the CONSTITUTION section",
+          "when": "the phase-loop controller needs the constitution",
+          "then": "it falls back to reading constitution.md from disk"
+        }
+      ],
+      "linked_requirements": ["FR-005"]
+    },
+    {
+      "id": "US-009",
+      "epic": "Consumer Changes",
+      "persona": "Framework Developer",
+      "goal": "have the phase-loop controller read workflow config from session context",
+      "benefit": "zero per-phase disk reads for workflow definitions",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-009-01",
+          "given": "session context contains the WORKFLOW CONFIG section from the cache",
+          "when": "the phase-loop controller needs workflow definitions",
+          "then": "it references the workflow config from session context"
+        },
+        {
+          "id": "AC-009-02",
+          "given": "session context does NOT contain the WORKFLOW CONFIG section",
+          "when": "the phase-loop controller needs workflow definitions",
+          "then": "it falls back to reading workflows.json from disk"
+        }
+      ],
+      "linked_requirements": ["FR-005"]
+    },
+    {
+      "id": "US-010",
+      "epic": "Consumer Changes",
+      "persona": "Framework Developer",
+      "goal": "have the phase-loop controller read iteration requirements from session context",
+      "benefit": "zero per-phase disk reads for iteration configuration",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-010-01",
+          "given": "session context contains the ITERATION REQUIREMENTS section from the cache",
+          "when": "the phase-loop controller needs iteration requirements",
+          "then": "it references the iteration requirements from session context"
+        },
+        {
+          "id": "AC-010-02",
+          "given": "session context does NOT contain the ITERATION REQUIREMENTS section",
+          "when": "the phase-loop controller needs iteration requirements",
+          "then": "it falls back to reading iteration-requirements.json from disk"
+        }
+      ],
+      "linked_requirements": ["FR-005"]
+    },
+    {
+      "id": "US-011",
+      "epic": "Consumer Changes",
+      "persona": "Framework Developer",
+      "goal": "have the phase-loop controller read the pre-built skill index from session context",
+      "benefit": "zero per-phase SKILL.md file reads for skill index construction",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-011-01",
+          "given": "session context contains the SKILL INDEX BY AGENT section from the cache",
+          "when": "the phase-loop controller needs the skill index for the current phase agent",
+          "then": "it references the skill index from session context"
+        },
+        {
+          "id": "AC-011-02",
+          "given": "session context does NOT contain the SKILL INDEX BY AGENT section",
+          "when": "the phase-loop controller needs the skill index",
+          "then": "it falls back to reading SKILL.md files from disk and building the index at runtime"
+        }
+      ],
+      "linked_requirements": ["FR-005"]
+    },
+    {
+      "id": "US-012",
+      "epic": "Consumer Changes",
+      "persona": "Framework Developer",
+      "goal": "have the phase-loop controller read external skills from session context",
+      "benefit": "zero per-phase disk reads for external skill content",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-012-01",
+          "given": "session context contains the EXTERNAL SKILLS sections from the cache",
+          "when": "the phase-loop controller needs external skills for the current phase",
+          "then": "it includes all-phase skills and any phase-specific skills matching the current phase_key from session context"
+        },
+        {
+          "id": "AC-012-02",
+          "given": "session context does NOT contain the EXTERNAL SKILLS section",
+          "when": "the phase-loop controller needs external skills",
+          "then": "it falls back to reading the external skills manifest and skill files from disk"
+        }
+      ],
+      "linked_requirements": ["FR-005"]
+    },
+    {
+      "id": "US-013",
+      "epic": "Consumer Changes",
+      "persona": "Framework Developer",
+      "goal": "have the roundtable dispatch read persona content from session context",
+      "benefit": "roundtable cold-start is dramatically faster since personas are already in memory",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-013-01",
+          "given": "session context contains the ROUNDTABLE CONTEXT section with persona file content",
+          "when": "the roundtable dispatch needs persona definitions",
+          "then": "it references persona content from session context (zero disk reads)"
+        },
+        {
+          "id": "AC-013-02",
+          "given": "session context does NOT contain the ROUNDTABLE CONTEXT section",
+          "when": "the roundtable dispatch needs persona content",
+          "then": "it falls back to reading persona files from disk"
+        }
+      ],
+      "linked_requirements": ["FR-006"]
+    },
+    {
+      "id": "US-014",
+      "epic": "Consumer Changes",
+      "persona": "Framework Developer",
+      "goal": "have the roundtable dispatch read topic content from session context",
+      "benefit": "roundtable topic loading is instant since topics are already in memory",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-014-01",
+          "given": "session context contains the ROUNDTABLE CONTEXT section with topic file content",
+          "when": "the roundtable dispatch needs analysis topic definitions",
+          "then": "it references topic content from session context (zero disk reads)"
+        },
+        {
+          "id": "AC-014-02",
+          "given": "session context does NOT contain the ROUNDTABLE CONTEXT section",
+          "when": "the roundtable dispatch needs topic content",
+          "then": "it falls back to reading topic files from disk"
+        }
+      ],
+      "linked_requirements": ["FR-006"]
+    },
+    {
+      "id": "US-015",
+      "epic": "Cache Lifecycle",
+      "persona": "Framework Developer",
+      "goal": "have the cache automatically rebuilt when I run /discover",
+      "benefit": "the cache reflects the latest discovered project context without manual intervention",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-015-01",
+          "given": "the user completes /discover",
+          "when": "discovery finishes successfully",
+          "then": "rebuildSessionCache() is called to regenerate the cache with updated content"
+        }
+      ],
+      "linked_requirements": ["FR-007"]
+    },
+    {
+      "id": "US-016",
+      "epic": "Cache Lifecycle",
+      "persona": "Framework Maintainer",
+      "goal": "have the cache automatically rebuilt when I add, remove, or wire skills",
+      "benefit": "skill changes are immediately reflected in the next session without manual cache rebuilds",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-016-01",
+          "given": "the user runs /isdlc skill add",
+          "when": "the skill is successfully registered",
+          "then": "rebuildSessionCache() is called to include the new skill in the cache"
+        },
+        {
+          "id": "AC-016-02",
+          "given": "the user runs /isdlc skill remove",
+          "when": "the skill is successfully removed",
+          "then": "rebuildSessionCache() is called to exclude the removed skill from the cache"
+        },
+        {
+          "id": "AC-016-03",
+          "given": "the user runs /isdlc skill wire",
+          "when": "the skill bindings are updated",
+          "then": "rebuildSessionCache() is called to reflect the new phase bindings in the cache"
+        }
+      ],
+      "linked_requirements": ["FR-007"]
+    },
+    {
+      "id": "US-017",
+      "epic": "Cache Lifecycle",
+      "persona": "Framework Developer",
+      "goal": "have the cache built automatically on framework install and update",
+      "benefit": "the cache is available from the first session after installation without manual steps",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-017-01",
+          "given": "the user runs 'isdlc init'",
+          "when": "initialization completes",
+          "then": "rebuildSessionCache() is called to build the initial cache"
+        },
+        {
+          "id": "AC-017-02",
+          "given": "the user runs 'isdlc update'",
+          "when": "the update completes",
+          "then": "rebuildSessionCache() is called to rebuild the cache with updated framework content"
+        }
+      ],
+      "linked_requirements": ["FR-007"]
+    },
+    {
+      "id": "US-018",
+      "epic": "Manifest Cleanup",
+      "persona": "Framework Maintainer",
+      "goal": "remove the unused path_lookup and skill_paths fields from skills-manifest.json",
+      "benefit": "the manifest is cleaner and does not contain dead configuration that confuses future maintainers",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-018-01",
+          "given": "skills-manifest.json is inspected after this change",
+          "when": "the path_lookup key is searched for",
+          "then": "it is not present in the file"
+        },
+        {
+          "id": "AC-018-02",
+          "given": "skills-manifest.json is inspected after this change",
+          "when": "the skill_paths key is searched for",
+          "then": "it is not present in the file"
+        },
+        {
+          "id": "AC-018-03",
+          "given": "the path_lookup and skill_paths fields are removed",
+          "when": "all existing hooks and validators that reference skills-manifest.json are executed",
+          "then": "they continue to function correctly (no runtime errors from missing fields)"
+        }
+      ],
+      "linked_requirements": ["FR-008"]
+    },
+    {
+      "id": "US-019",
+      "epic": "Manifest Cleanup",
+      "persona": "Framework Maintainer",
+      "goal": "track the origin of each external skill via a source field in the manifest",
+      "benefit": "I can distinguish between skills discovered by /discover, added by skills.sh, or registered manually",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-019-01",
+          "given": "an external skill is registered via /discover",
+          "when": "the manifest entry is written",
+          "then": "it includes 'source': 'discover'"
+        },
+        {
+          "id": "AC-019-02",
+          "given": "an external skill is registered via skills.sh",
+          "when": "the manifest entry is written",
+          "then": "it includes 'source': 'skills.sh'"
+        },
+        {
+          "id": "AC-019-03",
+          "given": "an external skill is registered manually by the user",
+          "when": "the manifest entry is written",
+          "then": "it includes 'source': 'user'"
+        },
+        {
+          "id": "AC-019-04",
+          "given": "existing manifest entries without a source field",
+          "when": "rebuildSessionCache() processes them",
+          "then": "it treats the missing source as 'unknown' and does not fail"
+        }
+      ],
+      "linked_requirements": ["FR-009"]
+    }
+  ]
+}

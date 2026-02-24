@@ -1,0 +1,97 @@
+{
+  "gate": "GATE-03",
+  "phase": "03-architecture",
+  "feature": "REQ-0013-supervised-mode",
+  "validated_at": "2026-02-14T11:00:00Z",
+  "status": "passed",
+  "checklist": {
+    "architecture_documentation": {
+      "system_context_diagram": true,
+      "container_diagram": true,
+      "architecture_pattern_documented": true,
+      "all_major_components_identified": true,
+      "component_responsibilities_defined": true
+    },
+    "technology_stack": {
+      "note": "No new technology selections -- extends existing stack (Node.js CJS hooks, markdown commands)",
+      "evaluation_criteria_documented": true
+    },
+    "data_design": {
+      "state_schema_documented": true,
+      "data_relationships_defined": true,
+      "field_types_and_defaults_specified": true,
+      "session_recovery_strategy": true
+    },
+    "security_architecture": {
+      "fail_open_defaults_designed": true,
+      "input_validation_specified": true,
+      "circuit_breaker_designed": true,
+      "backward_compatibility_verified": true
+    },
+    "architecture_decision_records": {
+      "ADR_0001_review_gate_placement": "accepted",
+      "ADR_0002_inline_summary_generation": "accepted",
+      "ADR_0003_state_driven_configuration": "accepted",
+      "ADR_0004_redo_via_reentry": "accepted",
+      "ADR_0005_session_recovery": "accepted"
+    },
+    "nfr_coverage": {
+      "NFR_013_01_backward_compatibility": true,
+      "NFR_013_02_fail_open": true,
+      "NFR_013_03_summary_performance": true,
+      "NFR_013_04_state_integrity": true,
+      "NFR_013_05_circuit_breaker": true,
+      "NFR_013_06_no_new_dependencies": true
+    },
+    "constitutional_compliance": {
+      "article_III_security_by_design": true,
+      "article_IV_explicit_over_implicit": true,
+      "article_V_simplicity_first": true,
+      "article_VII_artifact_traceability": true,
+      "article_IX_quality_gate_integrity": true,
+      "article_X_fail_safe_defaults": true
+    }
+  },
+  "artifacts_produced": [
+    "docs/requirements/REQ-0013-supervised-mode/architecture-overview.md"
+  ],
+  "adrs_produced": [
+    "ADR-0001: Insert Review Gate as STEP 3e-review in Phase-Loop Controller",
+    "ADR-0002: Inline Summary Generation (Not Background Agent)",
+    "ADR-0003: State-Driven Configuration via supervised_mode Block",
+    "ADR-0004: Redo via Re-entering STEP 3d-3e-3e-review Sequence",
+    "ADR-0005: Session Recovery via Existing SCENARIO 4 Detection"
+  ],
+  "risks": [
+    {
+      "id": "RISK-001",
+      "description": "isdlc.md complexity increase",
+      "likelihood": "high",
+      "impact": "medium",
+      "mitigation": "Clear step numbering, conditional isolation"
+    },
+    {
+      "id": "RISK-002",
+      "description": "Redo loop state corruption",
+      "likelihood": "low",
+      "impact": "high",
+      "mitigation": "Circuit breaker (max 3), optimistic locking"
+    },
+    {
+      "id": "RISK-003",
+      "description": "Session recovery edge cases",
+      "likelihood": "medium",
+      "impact": "medium",
+      "mitigation": "Leverage existing SCENARIO 4"
+    }
+  ],
+  "handoff_notes": {
+    "for_system_designer": "Architecture is a single-document design (architecture-overview.md) with 5 inline ADRs. Key design inputs for Phase 04: (1) STEP 3e-review pseudocode in Section 6.1, (2) state schema in Section 4, (3) 4 common.cjs function signatures in Section 3.2, (4) implementation order in Section 11.",
+    "key_constraints": [
+      "No new agents, hooks, phases, or npm dependencies (NFR-06)",
+      "All new code in existing files (CON-013-01 through CON-013-06)",
+      "Hook files remain .cjs; command/agent files remain .md",
+      "Summary files go to .isdlc/reviews/, not docs/"
+    ]
+  }
+}

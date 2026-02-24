@@ -1,0 +1,36 @@
+Requirement ID,Acceptance Criterion,Test Case(s),Priority,Status
+REQ-0024-FR-01,AC-01-01,TC-U01,Must Have,Designed
+REQ-0024-FR-01,AC-01-02,"TC-U01,TC-T01",Must Have,Designed
+REQ-0024-FR-01,AC-01-03,"TC-U01,TC-C01",Must Have,Designed
+REQ-0024-FR-01,AC-01-04,TC-U02,Must Have,Designed
+REQ-0024-FR-01,AC-01-05,TC-U03,Must Have,Designed
+REQ-0024-FR-01,AC-01-06,"TC-U04,TC-U13",Must Have,Designed
+REQ-0024-FR-01,AC-01-07,"TC-U05,TC-C04",Must Have,Designed
+REQ-0024-FR-02,AC-02-01,TC-T01,Must Have,Designed
+REQ-0024-FR-02,AC-02-02,TC-T02,Must Have,Designed
+REQ-0024-FR-02,AC-02-03,TC-T03,Must Have,Designed
+REQ-0024-FR-03,AC-03-01,TC-C01,Must Have,Designed
+REQ-0024-FR-03,AC-03-02,TC-C02,Must Have,Designed
+REQ-0024-FR-03,AC-03-03,TC-C03,Must Have,Designed
+REQ-0024-FR-03,AC-03-04,TC-C04,Must Have,Designed
+REQ-0024-FR-04,AC-04-01,TC-W01,Should Have,Designed
+REQ-0024-FR-04,AC-04-02,TC-W02,Should Have,Designed
+REQ-0024-FR-04,AC-04-03,"TC-W03,TC-U06,TC-U09",Should Have,Designed
+REQ-0024-FR-04,AC-04-04,"TC-W04,TC-U10",Should Have,Designed
+REQ-0024-FR-04,AC-04-05,"TC-W05,TC-U11",Should Have,Designed
+REQ-0024-FR-05,AC-05-01,"TC-F03,TC-U01",Must Have,Designed
+REQ-0024-FR-05,AC-05-02,TC-F04,Must Have,Designed
+REQ-0024-FR-05,AC-05-03,"TC-C02,TC-I01",Must Have,Designed
+REQ-0024-FR-05,AC-05-04,"TC-T01,TC-I01",Must Have,Designed
+REQ-0024-FR-05,AC-05-05,"TC-U07,TC-I02",Must Have,Designed
+REQ-0024-FR-05,AC-05-06,TC-U08,Must Have,Designed
+REQ-0024-FR-06,AC-06-01,TC-I01,Must Have,Designed
+REQ-0024-FR-06,AC-06-02,"TC-U03,TC-U02",Must Have,Designed
+REQ-0024-FR-06,AC-06-03,TC-I01,Must Have,Designed
+REQ-0024-FR-06,AC-06-04,(design verification),Must Have,Designed
+REQ-0024-FR-06,AC-06-05,(design verification),Must Have,Designed
+REQ-0024-NFR-01,Fail-open on any error,"TC-U02,TC-U03,TC-U04,TC-U05,TC-U06,TC-U08,TC-U12,TC-U13,TC-U14,TC-E01-TC-E12",Must Have,Designed
+REQ-0024-NFR-02,Sub-100ms execution,TC-P01,Should Have,Designed
+REQ-0024-NFR-03,Source path preferred,TC-U15,Must Have,Designed
+REQ-0024-NFR-04,Backward compatibility,"TC-U02,TC-U03",Must Have,Designed
+REQ-0024-NFR-05,CJS module pattern,(static analysis at implementation),Must Have,Designed
