@@ -318,8 +318,13 @@ $Timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 # Remove development files from framework clone
 Remove-Item (Join-Path $ScriptDir ".git") -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $ScriptDir ".gitignore") -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $ScriptDir ".npmignore") -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $ScriptDir "CHANGELOG.md") -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $ScriptDir "NEXT-SESSION.md") -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $ScriptDir "CLAUDE.md") -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $ScriptDir "BACKLOG.md") -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $ScriptDir "framework-info.md") -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $ScriptDir "setup-remotes.sh") -Force -ErrorAction SilentlyContinue
 
 # Development session logs
 $sessionDocs = Join-Path $ScriptDir "docs"
@@ -330,6 +335,31 @@ if (Test-Path $sessionDocs) {
         Remove-Item $archiveDir -Recurse -Force -ErrorAction SilentlyContinue
     }
 }
+
+# Dogfooding docs (analysis artifacts, constitution, etc.)
+foreach ($dir in @("requirements", "isdlc", "architecture", "design", "common", "testing", ".validations")) {
+    $dirPath = Join-Path $sessionDocs $dir
+    if (Test-Path $dirPath) {
+        Remove-Item $dirPath -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+Remove-Item (Join-Path $sessionDocs "agent-skill-mapping.md") -Force -ErrorAction SilentlyContinue
+Get-ChildItem $sessionDocs -Filter "BUG-*" -Directory -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+
+# Test files (not distributed to end users)
+Remove-Item (Join-Path $ScriptDir "tests") -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $ScriptDir "src" "claude" "hooks" "tests") -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $ScriptDir "coverage") -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $ScriptDir ".validations") -Recurse -Force -ErrorAction SilentlyContinue
+Get-ChildItem (Join-Path $ScriptDir "lib") -Filter "*.test.js" -Recurse -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+Get-ChildItem (Join-Path $ScriptDir "lib") -Filter "*.test.cjs" -Recurse -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+$testHelpers = Join-Path $ScriptDir "lib" "utils" "test-helpers.js"
+if (Test-Path $testHelpers) { Remove-Item $testHelpers -Force -ErrorAction SilentlyContinue }
+
+# Development tooling
+Remove-Item (Join-Path $ScriptDir "src" "claude" "agents-backup") -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $ScriptDir "scripts") -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $ScriptDir ".github") -Recurse -Force -ErrorAction SilentlyContinue
 
 # OS artifacts
 Get-ChildItem $ScriptDir -Filter ".DS_Store" -Recurse -Force -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue

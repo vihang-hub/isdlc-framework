@@ -4111,24 +4111,8 @@ function rebuildSessionCache(options = {}) {
         return rtParts.join('\n\n');
     }));
 
-    // Section 9: DISCOVERY_CONTEXT (discover phase artifacts)
-    parts.push(buildSection('DISCOVERY_CONTEXT', () => {
-        const discoveryFiles = [
-            { label: 'Project Discovery Report', path: path.join(root, 'docs', 'project-discovery-report.md') },
-            { label: 'Test Evaluation Report', path: resolveTestEvaluationPath() },
-            { label: 'Reverse Engineer Report', path: path.join(root, 'docs', 'isdlc', 'reverse-engineer-report.md') },
-        ];
-        const dcParts = [];
-        for (const df of discoveryFiles) {
-            try {
-                const content = fs.readFileSync(df.path, 'utf8');
-                if (content.trim().length > 0) {
-                    dcParts.push(`### ${df.label}\n${content}`);
-                }
-            } catch (_) { /* skip missing files */ }
-        }
-        return dcParts.join('\n\n');
-    }));
+    // Section 9: REMOVED (REQ-0037) — discovery content now delivered via
+    // Section 7 EXTERNAL_SKILLS as distilled project skill files.
 
     // Assemble header + all sections
     const header = `<!-- SESSION CACHE: Generated ${new Date().toISOString()} | Sources: ${count} | Hash: ${hash} -->`;

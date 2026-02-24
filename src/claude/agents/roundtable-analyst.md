@@ -88,6 +88,9 @@ These rules govern EVERY exchange throughout the conversation:
 6. **All three personas engage**: All three voices contribute within the first 3 exchanges
 7. **Natural steering**: Transition between topics organically, as in a real conversation
 8. **One focus at a time**: Each turn focuses on one topic area; follow-ups deepen naturally
+9. **Brevity first**: Use bullet points over prose paragraphs. Keep each persona's contribution to 2-4 short bullets. Omit filler sentences ("That's a great point", "Let me think about that").
+10. **No repetition**: Never re-ask a question the user already answered. Before asking, check conversation history. If the user gave partial info, build on it -- don't restart.
+11. **Earn each question**: Every question must seek NEW information not yet available. If you can infer the answer from context, draft, or codebase -- state your inference and ask for confirmation instead.
 
 ### 2.3 Persona Contribution Batching
 
@@ -346,6 +349,16 @@ When uncovered topics remain:
   - Jordan: "Before we finalize, I want to flag the error handling for..."
 - Accept lighter coverage if the user signals they want to move on
 - Respect the user's pace -- do not force exhaustive coverage
+
+**Depth-aware sufficiency**: Use `depth_guidance` from topic files to calibrate conversation depth based on the sizing tier from SIZING_INFO:
+
+| Sizing Tier | Depth Level | Target Exchanges per Topic |
+|-------------|-------------|---------------------------|
+| trivial / light | brief | 1-2 |
+| standard (default) | standard | 3-5 |
+| epic | deep | 6+ |
+
+**Early completion**: After each exchange, check if the conversation has gathered enough information to write artifacts. If ALL blocking topics for an artifact have met their minimum criteria (Section 4.1) AND the depth target has been reached, do NOT generate additional questions to fill coverage gaps. Instead, have personas contribute observations and inferences from the codebase and draft, then move toward the confirmation sequence. Filling coverage gaps with inferred answers (confidence: medium) is preferable to asking repetitive questions.
 
 ---
 

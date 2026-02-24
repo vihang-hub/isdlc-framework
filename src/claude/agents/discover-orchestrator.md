@@ -161,14 +161,15 @@ When the user selects [2] Re-discover (incremental), run a lighter version of th
 
 **What runs:**
 1. Phase 1 parallel analysis (D1, D2, D5, D6) — re-scan codebase for changes
-2. Phase 1b characterization tests — regenerate from updated AC
-3. Phase 1c artifact integration — update traceability matrix
-4. Phase 2 discovery report — regenerate with updated findings
-5. Phase 5 finalize — update state.json with new metrics
+2. Project skills distillation — re-distill PROJ-001 through PROJ-004 from updated analysis
+3. Phase 1b characterization tests — regenerate from updated AC
+4. Phase 1c artifact integration — update traceability matrix
+5. Phase 2 discovery report — regenerate with updated findings
+6. Phase 5 finalize — update state.json with new metrics
 
 **What is SKIPPED:**
 - Phase 3 constitution generation (keep existing constitution)
-- Phase 4 skills & testing setup (keep existing skills)
+- Phase 4 skills & testing setup (keep existing external skills from skills.sh)
 - Phase 7 cloud configuration
 - Walkthrough phase (skip — user has already reviewed)
 
@@ -176,11 +177,19 @@ When the user selects [2] Re-discover (incremental), run a lighter version of th
 ```
 INCREMENTAL DISCOVERY                                [In Progress]
 ├─ ◐ Re-analyze codebase (D1, D2, D5, D6)            (running)
+├─ □ Distill project skills                           (pending)
 ├─ □ Update characterization tests                    (pending)
 ├─ □ Update traceability matrix                       (pending)
 ├─ □ Regenerate discovery report                      (pending)
 └─ □ Update state.json                                (pending)
 ```
+
+After Phase 1 parallel analysis completes, run the **Project Skills Distillation** step
+(same as Step 2a in the EXISTING PROJECT FLOW). The distillation step re-distills all
+four project skills (PROJ-001 through PROJ-004) using updated analysis output. It follows
+the same clean-slate-per-source-phase pattern: for each source phase that ran, remove old
+discover-sourced skills for that phase, then distill fresh ones. See Step 2a in the
+EXISTING PROJECT FLOW section for the full execution sequence (Steps D.1 through D.7).
 
 After completion, display a **DIFF SUMMARY** showing what changed since last discovery:
 
@@ -201,10 +210,11 @@ After completion, display a **DIFF SUMMARY** showing what changed since last dis
     ✓ docs/project-discovery-report.md
     ✓ docs/isdlc/ac-traceability.csv
     ✓ tests/characterization/ (regenerated)
+    ✓ Project skills re-distilled (PROJ-001..PROJ-004)
 
   Unchanged:
     ● docs/isdlc/constitution.md (kept)
-    ● Skills (kept)
+    ● External skills from skills.sh (kept)
 
 ═══════════════════════════════════════════════════════════════
 ```
@@ -1512,6 +1522,287 @@ PHASE 1: Project Analysis                            [Complete ✓]
     → 3 high-risk untested paths, 2 flaky tests
 ```
 
+### Step 2a: Project Skills Distillation (REQ-0037)
+
+After all Phase 1 analysis agents complete, distill their output into project skill files.
+This step runs inline (not as a sub-agent) and follows a fail-open pattern -- any failure
+logs a warning and continues without blocking the discovery workflow.
+
+**Show progress:**
+```
+PROJECT SKILLS DISTILLATION                          [In Progress]
+├─ ◐ Distilling project skills from analysis         (running)
+├─ □ Writing skill files                              (pending)
+├─ □ Updating manifest                                (pending)
+└─ □ Rebuilding session cache                         (pending)
+```
+
+**Execution steps:**
+
+#### Step D.1: Read existing manifest
+
+Read `docs/isdlc/external-skills-manifest.json`. If the file does not exist or cannot be
+parsed, proceed with an empty manifest (`{ "skills": [] }`). Do not fail.
+
+#### Step D.2: Clean-slate per source phase
+
+For each source phase that ran in this discovery (D1, D2, D6), identify the skills
+mapped to that phase and remove them before re-distilling:
+
+| Source Phase | Skills to Clean | Skill Files |
+|-------------|----------------|-------------|
+| D1 (architecture-analyzer) | PROJ-001, PROJ-002 | `project-architecture.md`, `project-conventions.md` |
+| D2 (test-evaluator) | PROJ-004 | `project-test-landscape.md` |
+| D6 (feature-mapper) | PROJ-003 | `project-domain.md` |
+
+For each skill mapped to a phase that ran:
+1. Remove the manifest entry where `source === "discover"` and `name` matches the skill name
+2. Delete the skill file from `.claude/skills/external/` if it exists
+3. On any deletion failure: log warning, continue
+
+#### Step D.3: Distill each skill
+
+For each skill, read its source artifacts and produce a distilled skill file. Each skill
+file MUST use YAML frontmatter and follow the structural template below. Enforce a
+**5,000 character maximum** per skill file. Include a Provenance section at the end.
+
+If a source artifact cannot be read, skip that skill with a warning and continue to the next.
+
+**PROJ-001: project-architecture.md** (Source: D1)
+
+Read these artifacts:
+- `docs/project-discovery-report.md` (Architecture and Tech Stack sections)
+- `docs/architecture/architecture-overview.md` (if it exists)
+
+Produce a skill file using this template:
+
+```markdown
+---
+name: project-architecture
+description: Distilled project architecture -- components, boundaries, data flow, key patterns
+skill_id: PROJ-001
+owner: discover-orchestrator
+collaborators: []
+project: <project-name from state.json>
+version: 1.0.0
+when_to_use: When making architectural decisions, assessing impact, or designing modules
+dependencies: []
+---
+
+# Project Architecture
+
+## Components
+- <Component name>: <single-line responsibility>
+  (repeat for each major component/module)
+
+## Data Flow
+- <Source> -> <Processing> -> <Destination>
+  (repeat for each major data path)
+
+## Integration Points
+| Integration | Type | Protocol | Notes |
+|-------------|------|----------|-------|
+| <name> | <internal/external> | <HTTP/file/etc> | <key detail> |
+
+## Architectural Patterns
+- <Pattern>: <where and how it's used>
+
+## Provenance
+- **Source**: docs/project-discovery-report.md, docs/architecture/architecture-overview.md
+- **Distilled**: <current ISO timestamp>
+- **Discovery run**: <full|incremental>
+```
+
+Summarize the source artifacts into the template sections. Be concise -- prioritize
+the most important components, data flows, and patterns. Keep under 5,000 characters total.
+
+**PROJ-002: project-conventions.md** (Source: D1)
+
+Read: `docs/project-discovery-report.md` (Patterns and Conventions sections)
+
+```markdown
+---
+name: project-conventions
+description: Distilled project conventions -- naming, error handling, file organization, patterns
+skill_id: PROJ-002
+owner: discover-orchestrator
+collaborators: []
+project: <project-name from state.json>
+version: 1.0.0
+when_to_use: When writing new code, reviewing code, or making style decisions
+dependencies: []
+---
+
+# Project Conventions
+
+## Naming Conventions
+- Files: <pattern>
+- Functions/methods: <pattern>
+- Variables: <pattern>
+- Constants: <pattern>
+
+## Error Handling Patterns
+- <Pattern description and where it's used>
+
+## File Organization
+- <Directory structure conventions>
+
+## Framework Usage
+- <Framework-specific patterns and conventions>
+
+## Provenance
+- **Source**: docs/project-discovery-report.md (patterns/conventions section)
+- **Distilled**: <current ISO timestamp>
+- **Discovery run**: <full|incremental>
+```
+
+**PROJ-003: project-domain.md** (Source: D6)
+
+Read: D6 feature mapping output (the feature-mapper agent's result, including
+reverse-engineered acceptance criteria if available)
+
+```markdown
+---
+name: project-domain
+description: Distilled project domain -- terminology, business rules, feature catalog
+skill_id: PROJ-003
+owner: discover-orchestrator
+collaborators: []
+project: <project-name from state.json>
+version: 1.0.0
+when_to_use: When understanding business context, writing requirements, or naming domain concepts
+dependencies: []
+---
+
+# Project Domain
+
+## Domain Terminology
+| Term | Definition |
+|------|-----------|
+| <term> | <definition> |
+
+## Business Rules
+- <Rule description>
+
+## Feature Catalog
+| Feature | Domain | Description |
+|---------|--------|-------------|
+| <name> | <domain> | <brief description> |
+
+## Provenance
+- **Source**: D6 feature mapping output, reverse-engineered acceptance criteria
+- **Distilled**: <current ISO timestamp>
+- **Discovery run**: <full|incremental>
+```
+
+**PROJ-004: project-test-landscape.md** (Source: D2)
+
+Read: `docs/isdlc/test-evaluation-report.md`
+
+```markdown
+---
+name: project-test-landscape
+description: Distilled test landscape -- framework, coverage, gaps, patterns, fragile areas
+skill_id: PROJ-004
+owner: discover-orchestrator
+collaborators: []
+project: <project-name from state.json>
+version: 1.0.0
+when_to_use: When writing tests, evaluating coverage, or assessing test strategy
+dependencies: []
+---
+
+# Project Test Landscape
+
+## Test Framework and Config
+- Runner: <test runner>
+- Assertion: <assertion library>
+- Config: <config file locations>
+
+## Coverage Summary
+| Type | Count | Coverage | Notes |
+|------|-------|----------|-------|
+| Unit | <n> | <pct>% | <notes> |
+| Integration | <n> | <pct>% | <notes> |
+| E2E | <n> | <pct>% | <notes> |
+
+## Known Gaps
+- <Gap description and risk level>
+
+## Fragile Areas
+- <Area and why it's fragile>
+
+## Test Patterns
+- <Pattern description>
+
+## Provenance
+- **Source**: docs/isdlc/test-evaluation-report.md
+- **Distilled**: <current ISO timestamp>
+- **Discovery run**: <full|incremental>
+```
+
+#### Step D.4: Write skill files
+
+Write each distilled skill file to `.claude/skills/external/`:
+- `.claude/skills/external/project-architecture.md`
+- `.claude/skills/external/project-conventions.md`
+- `.claude/skills/external/project-domain.md`
+- `.claude/skills/external/project-test-landscape.md`
+
+Create the `.claude/skills/external/` directory if it does not exist.
+On any write failure: log warning, skip that skill, continue.
+
+#### Step D.5: Update manifest
+
+For each skill file that was successfully written, add an entry to the manifest:
+
+```json
+{
+  "name": "<skill-name>",
+  "file": "<skill-filename>.md",
+  "source": "discover",
+  "bindings": {
+    "phases": ["all"],
+    "agents": ["all"],
+    "injection_mode": "always",
+    "delivery_type": "context"
+  }
+}
+```
+
+Write the updated manifest to `docs/isdlc/external-skills-manifest.json`.
+On write failure: log warning, continue.
+
+#### Step D.6: Rebuild session cache
+
+Run the cache rebuild:
+
+```bash
+node bin/rebuild-cache.js
+```
+
+This ensures the distilled skills are immediately available in the session cache
+via Section 7 (EXTERNAL_SKILLS). On failure: log warning, continue.
+
+#### Step D.7: Log distillation summary
+
+Display the distillation results:
+
+```
+PROJECT SKILLS DISTILLATION                          [Complete ✓]
+├─ ✓ project-architecture.md (PROJ-001)               from D1
+├─ ✓ project-conventions.md (PROJ-002)                from D1
+├─ ✓ project-domain.md (PROJ-003)                     from D6
+├─ ✓ project-test-landscape.md (PROJ-004)             from D2
+├─ ✓ Manifest updated (4 skills)
+└─ ✓ Session cache rebuilt
+```
+
+If any skills were skipped, show them with a warning:
+```
+├─ ⚠ project-domain.md (PROJ-003)                    SKIPPED: D6 output not found
+```
+
 ### Step 2b: Execute PHASE 1b - Characterization Tests (Sequential)
 
 **Skip this step if D6 returned no `ac_generated` field.**
@@ -1829,6 +2120,37 @@ PHASE 4: Skills & Testing Setup                      [In Progress]
 │   → Installed: anthropics/react, anthropics/typescript
 └─ ◐ Fill testing gaps (if any)                        (evaluating)
 ```
+
+### Step 5a: Project Skills Distillation (New Projects, REQ-0037)
+
+For new projects, distillation is **conditional** on artifact existence. New projects
+may not have D1/D2/D6 output in the same locations as existing projects. Run distillation
+only for skills whose source artifacts actually exist.
+
+**Conditional checks:**
+- PROJ-001 (architecture): distill only if `docs/project-discovery-report.md` OR `docs/architecture/architecture-overview.md` exists
+- PROJ-002 (conventions): distill only if `docs/project-discovery-report.md` exists and contains a Patterns/Conventions section
+- PROJ-003 (domain): distill only if D6 was run and produced output (check D6 return result or docs for feature mapping)
+- PROJ-004 (test-landscape): distill only if `docs/isdlc/test-evaluation-report.md` exists
+
+For each skill where the condition is met, follow the same distillation sequence as
+Step 2a in the EXISTING PROJECT FLOW (Steps D.1 through D.7). For skills where the
+source artifact does not exist, skip silently -- new projects may not have all
+analysis output yet.
+
+**Show progress (if any skills are distilled):**
+```
+PROJECT SKILLS DISTILLATION                          [Complete ✓]
+├─ ✓ project-architecture.md (PROJ-001)               from D8 output
+├─ ⚠ project-conventions.md (PROJ-002)                SKIPPED: no conventions data yet
+├─ ⚠ project-domain.md (PROJ-003)                     SKIPPED: D6 not run for new projects
+├─ ⚠ project-test-landscape.md (PROJ-004)             SKIPPED: no test evaluation yet
+├─ ✓ Manifest updated (1 skill)
+└─ ✓ Session cache rebuilt
+```
+
+If no source artifacts exist (typical for brand-new projects with no code), skip this
+step entirely with a note: "Project skills distillation skipped -- no analysis artifacts available yet."
 
 ### Step 6: Execute PHASE 4b - Fill Testing Gaps (Optional)
 
