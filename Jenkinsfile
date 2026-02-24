@@ -1,24 +1,30 @@
 @Library('Pipeline-Helper@trunk')
 
+properties([
+    parameters([
+        string(name: 'TAG', defaultValue: '', description: 'Git tag to release, e.g. v0.1.0-alpha', trim: true)
+    ])
+])
+
 node('linux && release') {
-    def tagName = ''
+    def tagName = params.TAG
     def packageVersion = ''
     def isPreRelease = false
 
     try {
-        stage('Checkout') {
-            checkout scm
-            tagName = sh(script: "git describe --tags --exact-match 2>/dev/null || echo ''", returnStdout: true).trim()
-            if (!tagName) {
-                def branch = env.GIT_BRANCH ?: env.BRANCH_NAME ?: ''
-                if (branch.contains('tags/')) {
-                    tagName = branch.replaceAll('.*/tags/', '')
-                }
-            }
-            if (!tagName || !tagName.startsWith('v')) {
-                error("Not a version tag push. tag=${tagName}. Aborting.")
+        stage('Validate Tag') {
+            if (!tagName || !tagName.matches(/^v\d+\.\d+\.\d+.*/)) {
+                error("TAG parameter must match v<semver> (e.g. v0.1.0-alpha). Got: '${tagName}'")
             }
             echo "Building for tag: ${tagName}"
+        }
+
+        stage('Checkout') {
+            checkout([
+                $class: 'GitSCM',
+                branches: [[name: "refs/tags/${tagName}"]],
+                userRemoteConfigs: scm.userRemoteConfigs
+            ])
         }
 
         stage('Install Dependencies') {
@@ -62,13 +68,20 @@ EOF
         stage('Create Gitea Release') {
             withCredentials([string(credentialsId: 'GITEA_RELEASE_TOKEN', variable: 'GITEA_TOKEN')]) {
                 def releaseName = isPreRelease ? "v${packageVersion} (Pre-release)" : "v${packageVersion}"
-                // Use basic auth (-u user:token) to pass through the Apache proxy
+                // Token header auth; if Apache proxy blocks it, fall back to basic auth
+                def apiUrl = 'https://dev.enactor.co.uk/gitea/api/v1/repos/DevOpsInfra/isdlc-framework/releases'
+                def payload = """{"tag_name":"${tagName}","name":"${releaseName}","body":"## @enactor/isdlc ${tagName}","draft":false,"prerelease":${isPreRelease}}"""
                 sh """
                     curl -sf -X POST \
                       -H 'Content-Type: application/json' \
                       -H "Authorization: token \${GITEA_TOKEN}" \
-                      -d '{"tag_name":"${tagName}","name":"${releaseName}","body":"## @enactor/isdlc ${tagName}","draft":false,"prerelease":${isPreRelease}}' \
-                      'https://dev.enactor.co.uk/gitea/api/v1/repos/DevOpsInfra/isdlc-framework/releases'
+                      -d '${payload}' \
+                      '${apiUrl}' \
+                    || curl -sf -X POST \
+                      -H 'Content-Type: application/json' \
+                      -u "jenkins.builduser:\${GITEA_TOKEN}" \
+                      -d '${payload}' \
+                      '${apiUrl}'
                 """
             }
         }

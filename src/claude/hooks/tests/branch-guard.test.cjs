@@ -33,6 +33,8 @@ function setupGitRepo(tmpDir, branchName) {
     // Create initial commit on main
     fs.writeFileSync(path.join(tmpDir, 'README.md'), '# Test');
     execSync('git add . && git commit -m "init"', { cwd: tmpDir, stdio: 'pipe' });
+    // Ensure default branch is named 'main' (git <2.28 defaults to 'master')
+    execSync('git branch -M main', { cwd: tmpDir, stdio: 'pipe' });
     if (branchName && branchName !== 'main') {
         execSync(`git checkout -b ${branchName}`, { cwd: tmpDir, stdio: 'pipe' });
     }

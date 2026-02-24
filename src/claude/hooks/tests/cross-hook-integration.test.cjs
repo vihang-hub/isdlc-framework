@@ -87,6 +87,8 @@ function setupGitRepo(tmpDir, branchName) {
     execSync('git config user.name "Test"', { cwd: tmpDir, stdio: 'pipe' });
     fs.writeFileSync(path.join(tmpDir, 'README.md'), '# Test');
     execSync('git add . && git commit -m "init"', { cwd: tmpDir, stdio: 'pipe' });
+    // Ensure default branch is named 'main' (git <2.28 defaults to 'master')
+    execSync('git branch -M main', { cwd: tmpDir, stdio: 'pipe' });
     if (branchName && branchName !== 'main') {
         execSync(`git checkout -b ${branchName}`, { cwd: tmpDir, stdio: 'pipe' });
     }
@@ -440,11 +442,13 @@ describe('Settings.json hook path validation', () => {
                         // Extract the file path from "node $CLAUDE_PROJECT_DIR/.claude/hooks/foo.cjs"
                         const match = hook.command.match(/\$CLAUDE_PROJECT_DIR\/(.+)/);
                         if (match) {
+                            // In source repo, .claude/ maps to src/claude/ (installed path vs source path)
+                            const sourcePath = match[1].replace(/^\.claude\//, 'src/claude/');
                             hookPaths.push({
                                 event: eventType,
                                 matcher: matcher.matcher || 'global',
                                 relativePath: match[1],
-                                fullPath: path.join(REPO_ROOT, match[1])
+                                fullPath: path.join(REPO_ROOT, sourcePath)
                             });
                         }
                     }
