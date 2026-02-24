@@ -46,12 +46,42 @@ fi
 # Framework development notes
 rm -f "$SCRIPT_DIR/CHANGELOG.md" 2>/dev/null || true
 rm -f "$SCRIPT_DIR/NEXT-SESSION.md" 2>/dev/null || true
+rm -f "$SCRIPT_DIR/CLAUDE.md" 2>/dev/null || true
+rm -f "$SCRIPT_DIR/BACKLOG.md" 2>/dev/null || true
+rm -f "$SCRIPT_DIR/framework-info.md" 2>/dev/null || true
+rm -f "$SCRIPT_DIR/setup-remotes.sh" 2>/dev/null || true
+rm -f "$SCRIPT_DIR/.npmignore" 2>/dev/null || true
 
 # Development session logs
 rm -f "$SCRIPT_DIR/docs/SESSION-"*.md 2>/dev/null || true
 
 # Archive of old documentation
 rm -rf "$SCRIPT_DIR/docs/archive" 2>/dev/null || true
+
+# Dogfooding docs (analysis artifacts, constitution, etc.)
+rm -rf "$SCRIPT_DIR/docs/requirements" 2>/dev/null || true
+rm -rf "$SCRIPT_DIR/docs/isdlc" 2>/dev/null || true
+rm -rf "$SCRIPT_DIR/docs/architecture" 2>/dev/null || true
+rm -rf "$SCRIPT_DIR/docs/design" 2>/dev/null || true
+rm -rf "$SCRIPT_DIR/docs/common" 2>/dev/null || true
+rm -rf "$SCRIPT_DIR/docs/testing" 2>/dev/null || true
+rm -rf "$SCRIPT_DIR/docs/.validations" 2>/dev/null || true
+rm -f "$SCRIPT_DIR/docs/agent-skill-mapping.md" 2>/dev/null || true
+rm -rf "$SCRIPT_DIR/docs/BUG-"* 2>/dev/null || true
+
+# Test files (not distributed to end users)
+rm -rf "$SCRIPT_DIR/tests" 2>/dev/null || true
+rm -rf "$SCRIPT_DIR/src/claude/hooks/tests" 2>/dev/null || true
+rm -rf "$SCRIPT_DIR/coverage" 2>/dev/null || true
+rm -rf "$SCRIPT_DIR/.validations" 2>/dev/null || true
+find "$SCRIPT_DIR/lib" -name "*.test.js" -delete 2>/dev/null || true
+find "$SCRIPT_DIR/lib" -name "*.test.cjs" -delete 2>/dev/null || true
+rm -f "$SCRIPT_DIR/lib/utils/test-helpers.js" 2>/dev/null || true
+
+# Development tooling
+rm -rf "$SCRIPT_DIR/src/claude/agents-backup" 2>/dev/null || true
+rm -rf "$SCRIPT_DIR/scripts" 2>/dev/null || true
+rm -rf "$SCRIPT_DIR/.github" 2>/dev/null || true
 
 # OS artifacts
 find "$SCRIPT_DIR" -name ".DS_Store" -delete 2>/dev/null || true

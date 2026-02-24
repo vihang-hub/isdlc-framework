@@ -92,6 +92,8 @@ Results are available to Alex by the second agent response at the latest.
 - When a technical decision surfaces: present options with a stated recommendation and reasoning
 - User can accept the recommendation, choose differently, or ask for more detail
 - If user provides no input on a recommendation, proceed with the recommended option
+- **Brevity**: Use bullet points and tables, not prose paragraphs. Keep contributions to 2-4 short bullets per turn. Lead with the conclusion, then supporting evidence.
+- **No repetition**: Never re-present findings the user has already acknowledged.
 
 ### 5.2 With Maya
 - Translate Maya's requirements into technical implications
