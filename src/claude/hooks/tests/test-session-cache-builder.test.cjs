@@ -897,8 +897,8 @@ describe('External Manifest Source Field (FR-009)', () => {
         }
     });
 
-    // TC-SRC-03
-    it('TC-SRC-03: missing source field treated as "unknown"', () => {
+    // TC-SRC-03 (updated for REQ-0038: loadExternalManifest now defaults missing source to "user")
+    it('TC-SRC-03: missing source field defaults to "user" via loadExternalManifest', () => {
         const tmpDir = createFullTestProject();
         process.env.CLAUDE_PROJECT_DIR = tmpDir;
         fs.mkdirSync(path.join(tmpDir, '.claude', 'skills', 'external'), { recursive: true });
@@ -908,7 +908,7 @@ describe('External Manifest Source Field (FR-009)', () => {
         try {
             common.rebuildSessionCache({ projectRoot: tmpDir });
             const content = fs.readFileSync(path.join(tmpDir, '.isdlc', 'session-cache.md'), 'utf8');
-            assert.ok(content.includes('Source: unknown'));
+            assert.ok(content.includes('Source: user'), 'Missing source should default to "user" per REQ-0038');
         } finally {
             cleanup(tmpDir);
         }

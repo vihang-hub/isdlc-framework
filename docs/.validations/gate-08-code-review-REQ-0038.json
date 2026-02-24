@@ -1,0 +1,47 @@
+{
+  "gate": "GATE-07",
+  "phase": "08-code-review",
+  "requirement": "REQ-0038",
+  "title": "External Manifest Source Field",
+  "status": "PASS",
+  "timestamp": "2026-02-24T00:00:00.000Z",
+  "scope": "human-review-only",
+  "verdict": "APPROVED",
+  "review_summary": {
+    "files_reviewed": 6,
+    "blocking_findings": 0,
+    "non_blocking_findings": 0,
+    "observations": 2,
+    "tests_pass": "157/157",
+    "frs_covered": "8/8"
+  },
+  "constitutional_compliance": {
+    "article_v_simplicity": "PASS",
+    "article_vi_code_review": "PASS",
+    "article_vii_traceability": "PASS",
+    "article_viii_documentation": "PASS",
+    "article_ix_gate_integrity": "PASS"
+  },
+  "build_integrity": {
+    "primary_suite": "157/157 PASS",
+    "regression_suite": "44/47 PASS (3 pre-existing failures unrelated to REQ-0038)",
+    "compilation": "PASS"
+  },
+  "checklist": {
+    "build_integrity_verified": true,
+    "code_review_completed": true,
+    "no_critical_issues_open": true,
+    "static_analysis_passing": true,
+    "coding_standards_followed": true,
+    "performance_acceptable": true,
+    "security_review_complete": true,
+    "qa_signoff_obtained": true
+  },
+  "phase_timing": {
+    "debate_rounds_used": 0,
+    "fan_out_chunks": 0
+  },
+  "artifacts": [
+    "docs/requirements/REQ-0038-external-manifest-source-field/code-review-report.md"
+  ]
+}

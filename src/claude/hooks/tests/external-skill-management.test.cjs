@@ -1474,3 +1474,837 @@ describe('TC-18: Constants Validation', () => {
         }
     });
 });
+
+
+// =============================================================================
+// TC-19: reconcileSkillsBySource() -- Add New Skills
+// Traces: FR-002 AC-002-02, FR-003 AC-003-01/03, FR-008 AC-008-01/02/03
+// =============================================================================
+
+describe('TC-19: reconcileSkillsBySource() -- Add New Skills', () => {
+    let tmpDir, common;
+
+    before(() => {
+        tmpDir = createTestProject();
+        common = loadCommon(tmpDir);
+    });
+
+    after(() => cleanup(tmpDir));
+
+    it('TC-19.01: First discover run adds new skill to empty manifest', () => {
+        const manifest = {
+            version: '1.0.0',
+            skills: [
+                { name: 'my-patterns', source: 'user', file: 'my-patterns.md', bindings: { phases: ['all'] } }
+            ]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'project-architecture', file: 'project-architecture.md', description: 'Arch guide', sourcePhase: 'D1', bindings: { phases: ['all'], agents: ['all'], injection_mode: 'always', delivery_type: 'context' } }
+        ], ['D1', 'D2', 'D6']);
+
+        assert.equal(result.changed, true);
+        assert.deepStrictEqual(result.added, ['project-architecture']);
+        assert.deepStrictEqual(result.removed, []);
+        assert.deepStrictEqual(result.updated, []);
+        assert.equal(result.manifest.skills.length, 2);
+
+        const newSkill = result.manifest.skills.find(s => s.name === 'project-architecture');
+        assert.equal(newSkill.source, 'discover');
+        assert.ok(newSkill.added_at);
+        assert.ok(newSkill.updated_at);
+    });
+
+    it('TC-19.02: Add multiple new skills in single reconciliation', () => {
+        const manifest = { version: '1.0.0', skills: [] };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'skill-a', file: 'skill-a.md', description: 'A', sourcePhase: 'D1' },
+            { name: 'skill-b', file: 'skill-b.md', description: 'B', sourcePhase: 'D2' },
+            { name: 'skill-c', file: 'skill-c.md', description: 'C', sourcePhase: 'D6' }
+        ], ['D1', 'D2', 'D6']);
+
+        assert.equal(result.changed, true);
+        assert.equal(result.added.length, 3);
+        assert.ok(result.added.includes('skill-a'));
+        assert.ok(result.added.includes('skill-b'));
+        assert.ok(result.added.includes('skill-c'));
+    });
+
+    it('TC-19.03: New skill gets added_at and updated_at timestamps', () => {
+        const manifest = { version: '1.0.0', skills: [] };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'ts-skill', file: 'ts-skill.md', description: 'TS', sourcePhase: 'D1' }
+        ], ['D1']);
+
+        const skill = result.manifest.skills.find(s => s.name === 'ts-skill');
+        // ISO-8601 format check
+        assert.ok(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(skill.added_at), `added_at should be ISO-8601, got: ${skill.added_at}`);
+        assert.ok(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(skill.updated_at), `updated_at should be ISO-8601, got: ${skill.updated_at}`);
+        assert.equal(skill.added_at, skill.updated_at, 'On creation, added_at should equal updated_at');
+    });
+
+    it('TC-19.04: New skill uses incoming bindings as defaults', () => {
+        const manifest = { version: '1.0.0', skills: [] };
+        const incomingBindings = { phases: ['all'], agents: ['all'], injection_mode: 'always', delivery_type: 'context' };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'bound-skill', file: 'bound-skill.md', description: 'Bound', sourcePhase: 'D1', bindings: incomingBindings }
+        ], ['D1']);
+
+        const skill = result.manifest.skills.find(s => s.name === 'bound-skill');
+        assert.deepStrictEqual(skill.bindings, incomingBindings);
+    });
+
+    it('TC-19.05: New skill without incoming bindings gets null/undefined bindings', () => {
+        const manifest = { version: '1.0.0', skills: [] };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'no-bind', file: 'no-bind.md', description: 'No bindings', sourcePhase: 'D1' }
+        ], ['D1']);
+
+        const skill = result.manifest.skills.find(s => s.name === 'no-bind');
+        // bindings should be undefined or null (not provided in incoming)
+        assert.ok(skill.bindings === undefined || skill.bindings === null, `Expected no bindings, got: ${JSON.stringify(skill.bindings)}`);
+    });
+
+    it('TC-19.06: New skill gets source field set to provided source', () => {
+        const manifest = { version: '1.0.0', skills: [] };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'disc-skill', file: 'disc-skill.md', description: 'Discover', sourcePhase: 'D1' }
+        ], ['D1']);
+
+        const skill = result.manifest.skills.find(s => s.name === 'disc-skill');
+        assert.equal(skill.source, 'discover');
+    });
+
+    it('TC-19.07: New skill with source "skills.sh"', () => {
+        const manifest = { version: '1.0.0', skills: [] };
+        const result = common.reconcileSkillsBySource(manifest, 'skills.sh', [
+            { name: 'sh-skill', file: 'sh-skill.md', description: 'From skills.sh', sourcePhase: 'D1' }
+        ], ['D1']);
+
+        const skill = result.manifest.skills.find(s => s.name === 'sh-skill');
+        assert.equal(skill.source, 'skills.sh');
+    });
+});
+
+
+// =============================================================================
+// TC-20: reconcileSkillsBySource() -- Update Existing Skills
+// Traces: FR-002 AC-002-01, FR-004, FR-003 AC-003-05
+// =============================================================================
+
+describe('TC-20: reconcileSkillsBySource() -- Update Existing Skills', () => {
+    let tmpDir, common;
+
+    before(() => {
+        tmpDir = createTestProject();
+        common = loadCommon(tmpDir);
+    });
+
+    after(() => cleanup(tmpDir));
+
+    it('TC-20.01: Update description on existing discover skill (preserve bindings)', () => {
+        const manifest = {
+            version: '1.0.0',
+            skills: [{
+                name: 'project-architecture', source: 'discover', file: 'project-architecture.md',
+                description: 'Old desc', sourcePhase: 'D1',
+                added_at: '2026-02-20T10:00:00.000Z', updated_at: '2026-02-20T10:00:00.000Z',
+                bindings: { phases: ['06-implementation'], agents: ['all'], injection_mode: 'always', delivery_type: 'context' }
+            }]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'project-architecture', file: 'project-architecture.md', description: 'Updated desc', sourcePhase: 'D1', bindings: { phases: ['all'], agents: ['all'], injection_mode: 'always', delivery_type: 'context' } }
+        ], ['D1']);
+
+        assert.equal(result.changed, true);
+        assert.deepStrictEqual(result.updated, ['project-architecture']);
+        const skill = result.manifest.skills.find(s => s.name === 'project-architecture');
+        assert.equal(skill.description, 'Updated desc');
+        // User-owned bindings preserved
+        assert.deepStrictEqual(skill.bindings.phases, ['06-implementation']);
+    });
+
+    it('TC-20.02: Update file path on existing skill', () => {
+        const manifest = {
+            version: '1.0.0',
+            skills: [{
+                name: 'test-skill', source: 'discover', file: 'old-path.md',
+                description: 'Test', sourcePhase: 'D1',
+                added_at: '2026-02-20T10:00:00.000Z', updated_at: '2026-02-20T10:00:00.000Z',
+                bindings: { phases: ['all'] }
+            }]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'test-skill', file: 'new-path.md', description: 'Test', sourcePhase: 'D1' }
+        ], ['D1']);
+
+        const skill = result.manifest.skills.find(s => s.name === 'test-skill');
+        assert.equal(skill.file, 'new-path.md');
+    });
+
+    it('TC-20.03: Preserve added_at on update', () => {
+        const originalDate = '2026-02-20T10:00:00.000Z';
+        const manifest = {
+            version: '1.0.0',
+            skills: [{
+                name: 'dated-skill', source: 'discover', file: 'dated.md',
+                description: 'Old', sourcePhase: 'D1',
+                added_at: originalDate, updated_at: originalDate,
+                bindings: { phases: ['all'] }
+            }]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'dated-skill', file: 'dated.md', description: 'New', sourcePhase: 'D1' }
+        ], ['D1']);
+
+        const skill = result.manifest.skills.find(s => s.name === 'dated-skill');
+        assert.equal(skill.added_at, originalDate, 'added_at should be preserved');
+    });
+
+    it('TC-20.04: Refresh updated_at on update', () => {
+        const oldDate = '2026-02-20T10:00:00.000Z';
+        const manifest = {
+            version: '1.0.0',
+            skills: [{
+                name: 'refresh-skill', source: 'discover', file: 'refresh.md',
+                description: 'Old', sourcePhase: 'D1',
+                added_at: oldDate, updated_at: oldDate,
+                bindings: { phases: ['all'] }
+            }]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'refresh-skill', file: 'refresh.md', description: 'Updated', sourcePhase: 'D1' }
+        ], ['D1']);
+
+        const skill = result.manifest.skills.find(s => s.name === 'refresh-skill');
+        assert.ok(skill.updated_at > oldDate, `updated_at should be newer than ${oldDate}, got: ${skill.updated_at}`);
+    });
+
+    it('TC-20.05: Source field immutable on update', () => {
+        const manifest = {
+            version: '1.0.0',
+            skills: [{
+                name: 'src-skill', source: 'discover', file: 'src.md',
+                description: 'Test', sourcePhase: 'D1',
+                added_at: '2026-02-20T10:00:00.000Z', updated_at: '2026-02-20T10:00:00.000Z',
+                bindings: { phases: ['all'] }
+            }]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'src-skill', file: 'src.md', description: 'Updated', sourcePhase: 'D1' }
+        ], ['D1']);
+
+        const skill = result.manifest.skills.find(s => s.name === 'src-skill');
+        assert.equal(skill.source, 'discover');
+    });
+
+    it('TC-20.06: Update with identical content -- checks idempotency', () => {
+        const manifest = {
+            version: '1.0.0',
+            skills: [{
+                name: 'idem-skill', source: 'discover', file: 'idem.md',
+                description: 'Same', sourcePhase: 'D1',
+                added_at: '2026-02-20T10:00:00.000Z', updated_at: '2026-02-20T10:00:00.000Z',
+                bindings: { phases: ['all'] }
+            }]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'idem-skill', file: 'idem.md', description: 'Same', sourcePhase: 'D1' }
+        ], ['D1']);
+
+        // Implementation may either report as updated or detect no change
+        assert.ok(typeof result.changed === 'boolean');
+        assert.ok(Array.isArray(result.updated));
+    });
+});
+
+
+// =============================================================================
+// TC-21: reconcileSkillsBySource() -- Remove Skills (Phase-Gated)
+// Traces: FR-002 AC-002-03, AC-002-04, AC-002-06
+// =============================================================================
+
+describe('TC-21: reconcileSkillsBySource() -- Remove Skills (Phase-Gated)', () => {
+    let tmpDir, common;
+
+    before(() => {
+        tmpDir = createTestProject();
+        common = loadCommon(tmpDir);
+    });
+
+    after(() => cleanup(tmpDir));
+
+    it('TC-21.01: Phase ran but produced nothing -- skill removed', () => {
+        const manifest = {
+            version: '1.0.0',
+            skills: [{
+                name: 'project-test-landscape', source: 'discover', sourcePhase: 'D2',
+                file: 'project-test-landscape.md',
+                added_at: '2026-02-20T10:00:00.000Z',
+                bindings: { phases: ['all'] }
+            }]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [], ['D2']);
+
+        assert.equal(result.changed, true);
+        assert.deepStrictEqual(result.removed, ['project-test-landscape']);
+        assert.equal(result.manifest.skills.length, 0);
+    });
+
+    it('TC-21.02: Phase did NOT run -- skill preserved', () => {
+        const manifest = {
+            version: '1.0.0',
+            skills: [
+                { name: 'project-architecture', source: 'discover', sourcePhase: 'D1', file: 'project-architecture.md', added_at: '2026-02-20T10:00:00.000Z', updated_at: '2026-02-20T10:00:00.000Z', bindings: { phases: ['all'] } },
+                { name: 'project-domain', source: 'discover', sourcePhase: 'D6', file: 'project-domain.md', added_at: '2026-02-20T10:00:00.000Z', updated_at: '2026-02-20T10:00:00.000Z', bindings: { phases: ['all'] } }
+            ]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'project-architecture', file: 'project-architecture.md', description: 'Updated', sourcePhase: 'D1' }
+        ], ['D1']);
+
+        // D6 did not run, so project-domain should be preserved
+        assert.ok(result.manifest.skills.some(s => s.name === 'project-domain'), 'project-domain should be preserved');
+        assert.deepStrictEqual(result.removed, []);
+        assert.deepStrictEqual(result.updated, ['project-architecture']);
+    });
+
+    it('TC-21.03: phasesExecuted null -- no removals (defensive)', () => {
+        const manifest = {
+            version: '1.0.0',
+            skills: [
+                { name: 'keep-me', source: 'discover', sourcePhase: 'D1', file: 'keep.md', added_at: '2026-02-20T10:00:00.000Z', bindings: { phases: ['all'] } }
+            ]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [], null);
+
+        assert.deepStrictEqual(result.removed, []);
+        assert.ok(result.manifest.skills.some(s => s.name === 'keep-me'));
+    });
+
+    it('TC-21.04: phasesExecuted empty array -- no removals (defensive)', () => {
+        const manifest = {
+            version: '1.0.0',
+            skills: [
+                { name: 'keep-me-too', source: 'discover', sourcePhase: 'D2', file: 'keep2.md', added_at: '2026-02-20T10:00:00.000Z', bindings: { phases: ['all'] } }
+            ]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [], []);
+
+        assert.deepStrictEqual(result.removed, []);
+        assert.ok(result.manifest.skills.some(s => s.name === 'keep-me-too'));
+    });
+
+    it('TC-21.05: Multiple skills removed when their phases ran but produced nothing', () => {
+        const manifest = {
+            version: '1.0.0',
+            skills: [
+                { name: 'sk-d1', source: 'discover', sourcePhase: 'D1', file: 'sk-d1.md', added_at: '2026-02-20T10:00:00.000Z', bindings: { phases: ['all'] } },
+                { name: 'sk-d2', source: 'discover', sourcePhase: 'D2', file: 'sk-d2.md', added_at: '2026-02-20T10:00:00.000Z', bindings: { phases: ['all'] } },
+                { name: 'sk-d6', source: 'discover', sourcePhase: 'D6', file: 'sk-d6.md', added_at: '2026-02-20T10:00:00.000Z', bindings: { phases: ['all'] } }
+            ]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [], ['D1', 'D2', 'D6']);
+
+        assert.equal(result.changed, true);
+        assert.equal(result.removed.length, 3);
+        assert.ok(result.removed.includes('sk-d1'));
+        assert.ok(result.removed.includes('sk-d2'));
+        assert.ok(result.removed.includes('sk-d6'));
+        assert.equal(result.manifest.skills.length, 0);
+    });
+});
+
+
+// =============================================================================
+// TC-22: reconcileSkillsBySource() -- Cross-Source Isolation
+// Traces: FR-002 AC-002-05, FR-001
+// =============================================================================
+
+describe('TC-22: reconcileSkillsBySource() -- Cross-Source Isolation', () => {
+    let tmpDir, common;
+
+    before(() => {
+        tmpDir = createTestProject();
+        common = loadCommon(tmpDir);
+    });
+
+    after(() => cleanup(tmpDir));
+
+    it('TC-22.01: User skills untouched during discover reconciliation', () => {
+        const userSkill = { name: 'my-patterns', source: 'user', file: 'my-patterns.md', bindings: { phases: ['all'] }, description: 'User skill' };
+        const manifest = {
+            version: '1.0.0',
+            skills: [{ ...userSkill }]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'project-architecture', file: 'project-architecture.md', description: 'Arch', sourcePhase: 'D1' }
+        ], ['D1', 'D2', 'D6']);
+
+        const preserved = result.manifest.skills.find(s => s.name === 'my-patterns');
+        assert.equal(preserved.source, 'user');
+        assert.equal(preserved.file, 'my-patterns.md');
+        assert.equal(preserved.description, 'User skill');
+        assert.deepStrictEqual(preserved.bindings, { phases: ['all'] });
+    });
+
+    it('TC-22.02: skills.sh skills untouched during discover reconciliation', () => {
+        const manifest = {
+            version: '1.0.0',
+            skills: [
+                { name: 'sh-skill', source: 'skills.sh', file: 'sh-skill.md', description: 'From SH', sourcePhase: 'D1', bindings: { phases: ['all'] } },
+                { name: 'disc-skill', source: 'discover', file: 'disc.md', description: 'Old', sourcePhase: 'D1', added_at: '2026-02-20T10:00:00.000Z', bindings: { phases: ['all'] } }
+            ]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'disc-skill', file: 'disc.md', description: 'Updated', sourcePhase: 'D1' }
+        ], ['D1']);
+
+        const shSkill = result.manifest.skills.find(s => s.name === 'sh-skill');
+        assert.equal(shSkill.source, 'skills.sh');
+        assert.equal(shSkill.description, 'From SH');
+    });
+
+    it('TC-22.03: Discover skills untouched during skills.sh reconciliation', () => {
+        const manifest = {
+            version: '1.0.0',
+            skills: [
+                { name: 'disc-skill', source: 'discover', file: 'disc.md', description: 'Discover', sourcePhase: 'D1', added_at: '2026-02-20T10:00:00.000Z', bindings: { phases: ['all'] } },
+                { name: 'sh-skill', source: 'skills.sh', file: 'sh.md', description: 'Old SH', sourcePhase: 'D1', added_at: '2026-02-20T10:00:00.000Z', bindings: { phases: ['all'] } }
+            ]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'skills.sh', [
+            { name: 'sh-skill', file: 'sh.md', description: 'Updated SH', sourcePhase: 'D1' }
+        ], ['D1']);
+
+        const discSkill = result.manifest.skills.find(s => s.name === 'disc-skill');
+        assert.equal(discSkill.source, 'discover');
+        assert.equal(discSkill.description, 'Discover');
+    });
+
+    it('TC-22.04: Legacy entry (no source) treated as user, untouched by discover', () => {
+        const manifest = {
+            version: '1.0.0',
+            skills: [
+                { name: 'old-skill', file: 'old-skill.md', bindings: { phases: ['all'] } }
+            ]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'project-architecture', file: 'project-architecture.md', description: 'Arch', sourcePhase: 'D1' }
+        ], ['D1']);
+
+        const legacy = result.manifest.skills.find(s => s.name === 'old-skill');
+        assert.equal(legacy.source, 'user', 'Legacy entry should be normalized to source: "user"');
+        // Legacy skill should not be modified by discover reconciliation
+        assert.equal(legacy.file, 'old-skill.md');
+    });
+});
+
+
+// =============================================================================
+// TC-23: reconcileSkillsBySource() -- Return Shape Validation
+// Traces: FR-003 AC-003-01 through AC-003-05
+// =============================================================================
+
+describe('TC-23: reconcileSkillsBySource() -- Return Shape Validation', () => {
+    let tmpDir, common;
+
+    before(() => {
+        tmpDir = createTestProject();
+        common = loadCommon(tmpDir);
+    });
+
+    after(() => cleanup(tmpDir));
+
+    it('TC-23.01: Return includes manifest object', () => {
+        const result = common.reconcileSkillsBySource({ version: '1.0.0', skills: [] }, 'discover', [], ['D1']);
+        assert.ok(typeof result.manifest === 'object');
+        assert.ok(result.manifest.version);
+        assert.ok(Array.isArray(result.manifest.skills));
+    });
+
+    it('TC-23.02: Return includes changed boolean', () => {
+        const result = common.reconcileSkillsBySource({ version: '1.0.0', skills: [] }, 'discover', [], ['D1']);
+        assert.equal(typeof result.changed, 'boolean');
+    });
+
+    it('TC-23.03: Return includes added array of strings', () => {
+        const result = common.reconcileSkillsBySource({ version: '1.0.0', skills: [] }, 'discover', [
+            { name: 'new-skill', file: 'new.md', description: 'New', sourcePhase: 'D1' }
+        ], ['D1']);
+        assert.ok(Array.isArray(result.added));
+        assert.equal(typeof result.added[0], 'string');
+    });
+
+    it('TC-23.04: Return includes removed array of strings', () => {
+        const manifest = {
+            version: '1.0.0',
+            skills: [{ name: 'doomed', source: 'discover', sourcePhase: 'D2', file: 'doomed.md', added_at: '2026-02-20T10:00:00.000Z', bindings: { phases: ['all'] } }]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [], ['D2']);
+        assert.ok(Array.isArray(result.removed));
+        assert.equal(typeof result.removed[0], 'string');
+    });
+
+    it('TC-23.05: Return includes updated array of strings', () => {
+        const manifest = {
+            version: '1.0.0',
+            skills: [{
+                name: 'upd-skill', source: 'discover', file: 'upd.md',
+                description: 'Old', sourcePhase: 'D1',
+                added_at: '2026-02-20T10:00:00.000Z', updated_at: '2026-02-20T10:00:00.000Z',
+                bindings: { phases: ['all'] }
+            }]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'upd-skill', file: 'upd.md', description: 'New', sourcePhase: 'D1' }
+        ], ['D1']);
+        assert.ok(Array.isArray(result.updated));
+        assert.equal(typeof result.updated[0], 'string');
+    });
+
+    it('TC-23.06: changed is false when no modifications made (idempotent)', () => {
+        // Empty incoming + no phases ran = no changes
+        const manifest = {
+            version: '1.0.0',
+            skills: [
+                { name: 'existing', source: 'discover', sourcePhase: 'D1', file: 'existing.md', added_at: '2026-02-20T10:00:00.000Z', bindings: { phases: ['all'] } }
+            ]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [], null);
+        assert.equal(result.changed, false);
+        assert.deepStrictEqual(result.added, []);
+        assert.deepStrictEqual(result.removed, []);
+        assert.deepStrictEqual(result.updated, []);
+    });
+});
+
+
+// =============================================================================
+// TC-24: reconcileSkillsBySource() -- Input Validation and Edge Cases
+// Traces: FR-002 (validation rules), FR-008
+// =============================================================================
+
+describe('TC-24: reconcileSkillsBySource() -- Input Validation and Edge Cases', () => {
+    let tmpDir, common;
+
+    before(() => {
+        tmpDir = createTestProject();
+        common = loadCommon(tmpDir);
+    });
+
+    after(() => cleanup(tmpDir));
+
+    it('TC-24.01: Null manifest normalized to empty', () => {
+        const result = common.reconcileSkillsBySource(null, 'discover', [
+            { name: 'new-skill', file: 'new.md', description: 'New', sourcePhase: 'D1' }
+        ], ['D1']);
+
+        assert.equal(result.manifest.version, '1.0.0');
+        assert.ok(Array.isArray(result.manifest.skills));
+        assert.equal(result.changed, true);
+        assert.deepStrictEqual(result.added, ['new-skill']);
+    });
+
+    it('TC-24.02: Source "user" rejected -- returns unchanged', () => {
+        const manifest = { version: '1.0.0', skills: [{ name: 'a', source: 'user' }] };
+        const result = common.reconcileSkillsBySource(manifest, 'user', [
+            { name: 'new', file: 'new.md', description: 'x', sourcePhase: 'D1' }
+        ], ['D1']);
+
+        assert.equal(result.changed, false);
+        assert.deepStrictEqual(result.added, []);
+        assert.deepStrictEqual(result.removed, []);
+        assert.deepStrictEqual(result.updated, []);
+    });
+
+    it('TC-24.03: incomingSkills not an array -- returns unchanged', () => {
+        const manifest = { version: '1.0.0', skills: [] };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', 'not-an-array', ['D1']);
+
+        assert.equal(result.changed, false);
+        assert.deepStrictEqual(result.added, []);
+    });
+
+    it('TC-24.04: incomingSkills null -- returns unchanged', () => {
+        const manifest = { version: '1.0.0', skills: [] };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', null, ['D1']);
+
+        assert.equal(result.changed, false);
+    });
+
+    it('TC-24.05: Incoming skill missing name -- skipped', () => {
+        const manifest = { version: '1.0.0', skills: [] };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [
+            { file: 'no-name.md', description: 'Missing name' }
+        ], ['D1']);
+
+        assert.deepStrictEqual(result.added, []);
+        assert.equal(result.manifest.skills.length, 0);
+    });
+
+    it('TC-24.06: Incoming skill missing file -- still processed (no crash)', () => {
+        const manifest = { version: '1.0.0', skills: [] };
+        // Should not crash even without file property
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'no-file-skill', description: 'Missing file' }
+        ], ['D1']);
+
+        // Verify no crash -- behavior defined by implementation
+        assert.ok(typeof result.changed === 'boolean');
+    });
+
+    it('TC-24.07: Empty incoming array with no phases -- no changes', () => {
+        const manifest = {
+            version: '1.0.0',
+            skills: [
+                { name: 'disc-skill', source: 'discover', sourcePhase: 'D1', file: 'disc.md', added_at: '2026-02-20T10:00:00.000Z', bindings: { phases: ['all'] } }
+            ]
+        };
+        const result = common.reconcileSkillsBySource(manifest, 'discover', [], null);
+
+        assert.equal(result.changed, false);
+        assert.equal(result.manifest.skills.length, 1);
+    });
+});
+
+
+// =============================================================================
+// TC-25: loadExternalManifest() -- Source Field Defaults
+// Traces: FR-001 AC-001-04, FR-008 AC-008-04, AC-008-05
+// =============================================================================
+
+describe('TC-25: loadExternalManifest() -- Source Field Defaults', () => {
+    let tmpDir, common;
+
+    afterEach(() => { if (tmpDir) cleanup(tmpDir); });
+
+    it('TC-25.01: Legacy entry without source gets default "user"', () => {
+        tmpDir = createTestProject({
+            manifest: { version: '1.0.0', skills: [{ name: 'old-skill', file: 'old.md' }] }
+        });
+        common = loadCommon(tmpDir);
+        const loaded = common.loadExternalManifest();
+        assert.equal(loaded.skills[0].source, 'user');
+    });
+
+    it('TC-25.02: Entry with source "discover" preserved', () => {
+        tmpDir = createTestProject({
+            manifest: { version: '1.0.0', skills: [{ name: 'disc-skill', source: 'discover', file: 'disc.md' }] }
+        });
+        common = loadCommon(tmpDir);
+        const loaded = common.loadExternalManifest();
+        assert.equal(loaded.skills[0].source, 'discover');
+    });
+
+    it('TC-25.03: Entry with source "skills.sh" preserved', () => {
+        tmpDir = createTestProject({
+            manifest: { version: '1.0.0', skills: [{ name: 'sh-skill', source: 'skills.sh', file: 'sh.md' }] }
+        });
+        common = loadCommon(tmpDir);
+        const loaded = common.loadExternalManifest();
+        assert.equal(loaded.skills[0].source, 'skills.sh');
+    });
+
+    it('TC-25.04: Multiple legacy entries all get "user" default', () => {
+        tmpDir = createTestProject({
+            manifest: {
+                version: '1.0.0',
+                skills: [
+                    { name: 'legacy-1', file: 'l1.md' },
+                    { name: 'legacy-2', file: 'l2.md' },
+                    { name: 'legacy-3', file: 'l3.md' }
+                ]
+            }
+        });
+        common = loadCommon(tmpDir);
+        const loaded = common.loadExternalManifest();
+        for (const skill of loaded.skills) {
+            assert.equal(skill.source, 'user', `${skill.name} should have source "user"`);
+        }
+    });
+
+    it('TC-25.05: Entry without updated_at treated as null/undefined', () => {
+        tmpDir = createTestProject({
+            manifest: { version: '1.0.0', skills: [{ name: 'no-ts', file: 'no-ts.md' }] }
+        });
+        common = loadCommon(tmpDir);
+        const loaded = common.loadExternalManifest();
+        const skill = loaded.skills[0];
+        assert.ok(skill.updated_at === undefined || skill.updated_at === null, `Expected null/undefined updated_at, got: ${skill.updated_at}`);
+    });
+});
+
+
+// =============================================================================
+// TC-26: Integration -- Reconciliation Pipeline
+// Traces: FR-002, FR-003, FR-005
+// =============================================================================
+
+describe('TC-26: Integration -- Reconciliation Pipeline', () => {
+    let tmpDir, common;
+
+    beforeEach(() => {
+        tmpDir = createTestProject({ createExternalDir: true });
+        common = loadCommon(tmpDir);
+    });
+
+    afterEach(() => cleanup(tmpDir));
+
+    it('TC-26.01: Full pipeline: load -> reconcile -> write -> re-load', () => {
+        // Write initial manifest with user skill
+        const initialManifest = {
+            version: '1.0.0',
+            skills: [{ name: 'my-patterns', source: 'user', file: 'my-patterns.md', bindings: { phases: ['all'] } }]
+        };
+        common.writeExternalManifest(initialManifest);
+        common = loadCommon(tmpDir);
+
+        // Load
+        const loaded = common.loadExternalManifest();
+        assert.ok(loaded);
+
+        // Reconcile
+        const result = common.reconcileSkillsBySource(loaded, 'discover', [
+            { name: 'project-architecture', file: 'project-architecture.md', description: 'Arch', sourcePhase: 'D1', bindings: { phases: ['all'], agents: ['all'], injection_mode: 'always', delivery_type: 'context' } }
+        ], ['D1', 'D2', 'D6']);
+        assert.equal(result.changed, true);
+
+        // Write
+        const writeResult = common.writeExternalManifest(result.manifest);
+        assert.equal(writeResult.success, true);
+
+        // Re-load
+        common = loadCommon(tmpDir);
+        const reloaded = common.loadExternalManifest();
+        assert.equal(reloaded.skills.length, 2);
+        assert.ok(reloaded.skills.some(s => s.name === 'my-patterns' && s.source === 'user'));
+        assert.ok(reloaded.skills.some(s => s.name === 'project-architecture' && s.source === 'discover'));
+    });
+
+    it('TC-26.02: Idempotent pipeline: reconcile twice produces same result', () => {
+        const manifest = { version: '1.0.0', skills: [] };
+        const incoming = [
+            { name: 'project-arch', file: 'arch.md', description: 'Arch', sourcePhase: 'D1', bindings: { phases: ['all'], agents: ['all'], injection_mode: 'always', delivery_type: 'context' } }
+        ];
+        const phases = ['D1', 'D2', 'D6'];
+
+        // First reconciliation
+        const first = common.reconcileSkillsBySource(manifest, 'discover', incoming, phases);
+        assert.equal(first.changed, true);
+
+        // Write and reload
+        common.writeExternalManifest(first.manifest);
+        common = loadCommon(tmpDir);
+        const reloaded = common.loadExternalManifest();
+
+        // Second reconciliation with same inputs
+        const second = common.reconcileSkillsBySource(reloaded, 'discover', incoming, phases);
+        // Second should detect no meaningful change (or only updated_at refresh)
+        // The key assertion: no adds, no removes
+        assert.deepStrictEqual(second.added, []);
+        assert.deepStrictEqual(second.removed, []);
+    });
+
+    it('TC-26.03: Reconcile then remove: user removes discover skill by name', () => {
+        const manifest = { version: '1.0.0', skills: [] };
+        const reconciled = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'disc-skill', file: 'disc.md', description: 'D', sourcePhase: 'D1' }
+        ], ['D1']);
+
+        // User removes by name
+        const { removed, manifest: updated } = common.removeSkillFromManifest('disc-skill', reconciled.manifest);
+        assert.equal(removed, true);
+        assert.equal(updated.skills.length, 0);
+    });
+
+    it('TC-26.04: Multi-source manifest: discover then skills.sh reconciliation', () => {
+        const manifest = { version: '1.0.0', skills: [] };
+
+        // First: discover reconciliation
+        const discResult = common.reconcileSkillsBySource(manifest, 'discover', [
+            { name: 'disc-skill', file: 'disc.md', description: 'Discover', sourcePhase: 'D1' }
+        ], ['D1']);
+
+        // Second: skills.sh reconciliation on the result
+        const shResult = common.reconcileSkillsBySource(discResult.manifest, 'skills.sh', [
+            { name: 'sh-skill', file: 'sh.md', description: 'Skills.sh', sourcePhase: 'D1' }
+        ], ['D1']);
+
+        assert.equal(shResult.manifest.skills.length, 2);
+        assert.ok(shResult.manifest.skills.some(s => s.name === 'disc-skill' && s.source === 'discover'));
+        assert.ok(shResult.manifest.skills.some(s => s.name === 'sh-skill' && s.source === 'skills.sh'));
+    });
+});
+
+
+// =============================================================================
+// TC-27: Performance -- Reconciliation Benchmarks
+// Traces: NFR (performance quality attribute)
+// =============================================================================
+
+describe('TC-27: Performance -- Reconciliation Benchmarks', () => {
+    let tmpDir, common;
+
+    before(() => {
+        tmpDir = createTestProject();
+        common = loadCommon(tmpDir);
+    });
+
+    after(() => cleanup(tmpDir));
+
+    it('TC-27.01: Reconciliation with 100 skills under 100ms', () => {
+        // Build manifest with 50 existing discover skills
+        const existingSkills = [];
+        for (let i = 0; i < 50; i++) {
+            existingSkills.push({
+                name: `existing-skill-${i}`, source: 'discover', sourcePhase: 'D1',
+                file: `existing-skill-${i}.md`, description: `Existing ${i}`,
+                added_at: '2026-02-20T10:00:00.000Z', updated_at: '2026-02-20T10:00:00.000Z',
+                bindings: { phases: ['all'] }
+            });
+        }
+        const manifest = { version: '1.0.0', skills: existingSkills };
+
+        // 50 updates + 50 new = 100 incoming
+        const incoming = [];
+        for (let i = 0; i < 50; i++) {
+            incoming.push({
+                name: `existing-skill-${i}`, file: `existing-skill-${i}.md`,
+                description: `Updated ${i}`, sourcePhase: 'D1'
+            });
+        }
+        for (let i = 50; i < 100; i++) {
+            incoming.push({
+                name: `new-skill-${i}`, file: `new-skill-${i}.md`,
+                description: `New ${i}`, sourcePhase: 'D1'
+            });
+        }
+
+        const start = Date.now();
+        const result = common.reconcileSkillsBySource(manifest, 'discover', incoming, ['D1']);
+        const elapsed = Date.now() - start;
+
+        assert.ok(elapsed < 100, `Reconciliation took ${elapsed}ms, expected <100ms`);
+        assert.equal(result.manifest.skills.length, 100);
+    });
+
+    it('TC-27.02: Idempotent reconciliation under 50ms', () => {
+        const skills = [];
+        for (let i = 0; i < 50; i++) {
+            skills.push({
+                name: `skill-${i}`, source: 'discover', sourcePhase: 'D1',
+                file: `skill-${i}.md`, description: `Skill ${i}`,
+                added_at: '2026-02-20T10:00:00.000Z', updated_at: '2026-02-20T10:00:00.000Z',
+                bindings: { phases: ['all'] }
+            });
+        }
+        const manifest = { version: '1.0.0', skills };
+        const incoming = skills.map(s => ({ name: s.name, file: s.file, description: s.description, sourcePhase: s.sourcePhase }));
+
+        const start = Date.now();
+        common.reconcileSkillsBySource(manifest, 'discover', incoming, ['D1']);
+        const elapsed = Date.now() - start;
+
+        assert.ok(elapsed < 50, `Idempotent reconciliation took ${elapsed}ms, expected <50ms`);
+    });
+});

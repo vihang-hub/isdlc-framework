@@ -1,0 +1,44 @@
+{
+  "gate": "GATE-05",
+  "phase": "05-test-strategy",
+  "requirement": "REQ-0038",
+  "name": "External Manifest Source Field",
+  "validated_at": "2026-02-24T23:30:00.000Z",
+  "status": "PASSED",
+  "checklist": {
+    "test_strategy_covers_unit_integration_performance": true,
+    "test_cases_exist_for_all_requirements": true,
+    "traceability_matrix_complete": true,
+    "coverage_targets_defined": true,
+    "test_data_strategy_documented": true,
+    "critical_paths_identified": true
+  },
+  "metrics": {
+    "total_FRs": 8,
+    "total_ACs": 35,
+    "ACs_with_automated_tests": 33,
+    "ACs_documented_not_testable": 2,
+    "traceability_coverage_percent": 100,
+    "total_test_cases": 46,
+    "test_types": {
+      "unit": 40,
+      "integration": 4,
+      "performance": 2,
+      "e2e": 0
+    },
+    "positive_tests": 40,
+    "negative_tests": 6
+  },
+  "constitutional_validation": {
+    "articles_checked": ["II", "VII", "IX", "XI"],
+    "all_compliant": true,
+    "iterations": 1,
+    "violations_found": 0
+  },
+  "artifacts": [
+    "docs/requirements/REQ-0038-external-manifest-source-field/test-strategy.md",
+    "docs/requirements/REQ-0038-external-manifest-source-field/test-cases.md",
+    "docs/requirements/REQ-0038-external-manifest-source-field/test-traceability-matrix.csv",
+    "docs/requirements/REQ-0038-external-manifest-source-field/test-data-plan.md"
+  ]
+}

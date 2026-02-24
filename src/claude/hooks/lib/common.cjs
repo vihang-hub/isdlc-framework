@@ -708,7 +708,16 @@ function loadExternalManifest(projectId) {
     }
 
     try {
-        return JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        // Apply source defaults at read time (FR-001 AC-001-04, REQ-0038)
+        if (manifest && Array.isArray(manifest.skills)) {
+            for (const skill of manifest.skills) {
+                if (!skill.source) {
+                    skill.source = 'user';
+                }
+            }
+        }
+        return manifest;
     } catch (e) {
         return null;
     }
@@ -1033,6 +1042,130 @@ function removeSkillFromManifest(skillName, manifest) {
     return {
         removed: filtered.length < initialLength,
         manifest: { ...manifest, skills: filtered }
+    };
+}
+
+/**
+ * Reconcile incoming skills into the manifest for a given source.
+ * Pure function -- operates on manifest in memory, does not write to disk.
+ *
+ * Traces: FR-002, FR-003, FR-004 (REQ-0038)
+ *
+ * @param {object|null} manifest - Current manifest from loadExternalManifest()
+ * @param {string} source - Source identifier: "discover" or "skills.sh"
+ * @param {Array<{name: string, file: string, description: string, sourcePhase: string, bindings?: object}>} incomingSkills
+ * @param {Array<string>|null} phasesExecuted - Source phases that ran (e.g., ["D1", "D2"])
+ * @returns {{manifest: object, changed: boolean, added: string[], removed: string[], updated: string[]}}
+ */
+function reconcileSkillsBySource(manifest, source, incomingSkills, phasesExecuted) {
+    const noChange = (m) => ({ manifest: m, changed: false, added: [], removed: [], updated: [] });
+
+    // Validate source -- only "discover" and "skills.sh" allowed (ERR-REC-001)
+    if (source !== 'discover' && source !== 'skills.sh') {
+        return noChange(manifest || { version: '1.0.0', skills: [] });
+    }
+
+    // Validate incomingSkills (ERR-REC-002)
+    if (!Array.isArray(incomingSkills)) {
+        return noChange(manifest || { version: '1.0.0', skills: [] });
+    }
+
+    // Normalize manifest (null -> empty)
+    if (!manifest || !manifest.skills) {
+        manifest = { version: '1.0.0', skills: [] };
+    }
+
+    // Normalize source on all existing entries (missing source -> "user")
+    const skills = manifest.skills.map(s => {
+        if (!s.source) {
+            return { ...s, source: 'user' };
+        }
+        return s;
+    });
+
+    // Partition existing skills: sameSource vs otherSource
+    const sameSource = [];
+    const otherSource = [];
+    for (const skill of skills) {
+        if (skill.source === source) {
+            sameSource.push(skill);
+        } else {
+            otherSource.push(skill);
+        }
+    }
+
+    // Build a map of incoming skills by name (skip entries without name -- ERR-REC-003)
+    const incomingMap = new Map();
+    for (const incoming of incomingSkills) {
+        if (incoming && incoming.name) {
+            incomingMap.set(incoming.name, incoming);
+        }
+    }
+
+    // Normalize phasesExecuted
+    const hasPhases = Array.isArray(phasesExecuted) && phasesExecuted.length > 0;
+    const phasesSet = hasPhases ? new Set(phasesExecuted) : null;
+
+    const added = [];
+    const removed = [];
+    const updated = [];
+    const surviving = [];
+    const now = new Date().toISOString();
+
+    // Process existing same-source entries
+    for (const existing of sameSource) {
+        const incoming = incomingMap.get(existing.name);
+        if (incoming) {
+            // Match found -- update source-owned fields, preserve user-owned fields
+            const updatedSkill = {
+                ...existing,
+                file: incoming.file !== undefined ? incoming.file : existing.file,
+                description: incoming.description !== undefined ? incoming.description : existing.description,
+                sourcePhase: incoming.sourcePhase !== undefined ? incoming.sourcePhase : existing.sourcePhase,
+                updated_at: now
+                // bindings preserved from existing (user-owned)
+                // added_at preserved from existing (set once)
+                // source preserved from existing (immutable)
+            };
+            surviving.push(updatedSkill);
+            updated.push(existing.name);
+            // Remove from incomingMap so we know what's new later
+            incomingMap.delete(existing.name);
+        } else if (phasesSet && phasesSet.has(existing.sourcePhase)) {
+            // Phase ran but produced nothing for this skill -- remove
+            removed.push(existing.name);
+        } else {
+            // Phase didn't run or no phases specified -- preserve untouched
+            surviving.push(existing);
+        }
+    }
+
+    // Add new entries (remaining in incomingMap after matching)
+    for (const [name, incoming] of incomingMap) {
+        const newEntry = {
+            name: incoming.name,
+            file: incoming.file,
+            source: source,
+            description: incoming.description,
+            sourcePhase: incoming.sourcePhase,
+            added_at: now,
+            updated_at: now,
+            bindings: incoming.bindings
+        };
+        surviving.push(newEntry);
+        added.push(name);
+    }
+
+    // Merge: otherSource + surviving sameSource (includes updates and new)
+    const mergedSkills = [...otherSource, ...surviving];
+    const changed = added.length > 0 || removed.length > 0 || updated.length > 0;
+
+    return {
+        manifest: { ...manifest, skills: mergedSkills },
+        changed,
+        added,
+        removed,
+        updated
     };
 }
 
@@ -4172,6 +4305,7 @@ module.exports = {
     writeExternalManifest,
     formatSkillInjectionBlock,
     removeSkillFromManifest,
+    reconcileSkillsBySource,
     // State management (monorepo-aware)
     readStateValue,
     readState,
