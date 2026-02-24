@@ -1563,7 +1563,7 @@ Use the **Phase-Loop Controller** protocol. This runs phases one at a time in th
 
 Read `agent_modifiers` for this phase from `.isdlc/state.json` → `active_workflow.type`, then look up the workflow in `workflows.json` → `workflows[type].agent_modifiers[phase_key]`. If modifiers exist, include them as `WORKFLOW MODIFIERS: {json}` in the prompt.
 
-**Discovery context** (all phases): Check if session context contains `<!-- SECTION: DISCOVERY_CONTEXT -->`. If found, extract the full section content and include it as a `DISCOVERY CONTEXT` block in the delegation prompt. If not found (cache absent or section missing), fall back to reading `.isdlc/state.json` → `discovery_context` — if it exists, include as a `DISCOVERY CONTEXT` block regardless of age. Otherwise omit.
+**Discovery context** (all phases): Check if session context contains `<!-- SECTION: DISCOVERY_CONTEXT -->`. If found, extract the full section content and include it as a `DISCOVERY CONTEXT` block in the delegation prompt. If not found (cache absent or section missing), omit the block entirely. Project knowledge is delivered via AVAILABLE SKILLS and the SessionStart cache — the legacy `state.json → discovery_context` fallback has been removed (discovery_context is retained in state.json as audit-only metadata for provenance tracking).
 
 **Skill injection** (before constructing the Task tool prompt below, execute these steps to build skill context):
 
@@ -1616,7 +1616,7 @@ Read `agent_modifiers` for this phase from `.isdlc/state.json` → `active_workf
 8. Join all formatted skill blocks with double newlines (`\n\n`) as `{external_skills_blocks}`.
 
 **SKILL INJECTION STEP C — Assemble into delegation prompt**:
-- If `{built_in_skills_block}` is non-empty: include it in the delegation prompt after DISCOVERY CONTEXT (or after WORKFLOW MODIFIERS if no discovery context).
+- If `{built_in_skills_block}` is non-empty: include it in the delegation prompt after WORKFLOW MODIFIERS (or after DISCOVERY CONTEXT if present from SessionStart cache).
 - If `{external_skills_blocks}` is non-empty: include it after `{built_in_skills_block}`, separated by a blank line.
 - If both are empty: include nothing — no skill-related content in the prompt.
 
@@ -1791,7 +1791,7 @@ Use Task tool → {agent_name} with:
    Artifact folder: {artifact_folder}
    Phase key: {phase_key}
    {WORKFLOW MODIFIERS: {json} — if applicable}
-   {DISCOVERY CONTEXT: ... — if phase 02 or 03}
+   {DISCOVERY CONTEXT: ... — if present in SessionStart cache}
    {built_in_skills_block — from SKILL INJECTION STEP A above, omit if empty}
    {external_skills_blocks — from SKILL INJECTION STEP B above, omit if empty}
    {GATE REQUIREMENTS INJECTION (REQ-0024, REQ-0001 FR-005) — Inject gate pass criteria so the agent knows what hooks will check before it starts. This block is fail-open — if anything fails, continue with the unmodified prompt.

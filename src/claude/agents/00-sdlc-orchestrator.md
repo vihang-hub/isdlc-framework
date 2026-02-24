@@ -877,28 +877,18 @@ Delegate work to specialized agents using the Task tool.
 
 Example delegation pattern:
 
-### DISCOVERY CONTEXT INJECTION (Phases 01, 02, 03)
+### DISCOVERY CONTEXT DELIVERY (Phases 01, 02, 03)
 
-For Phases 01, 02, and 03, include DISCOVERY CONTEXT in the delegation prompt using this 4-tier fallback:
+For Phases 01, 02, and 03, project discovery knowledge is delivered via **AVAILABLE SKILLS** and the **SessionStart cache** (`<!-- SECTION: DISCOVERY_CONTEXT -->`). The orchestrator does NOT read `discovery_context` from state.json for injection -- that envelope is retained as audit-only metadata for provenance tracking.
 
-1. **Fresh envelope** (`discovery_context` exists, `completed_at` < 24h): Inject structured fields (tech_stack, coverage_summary, architecture_summary, re_artifacts). Header: `DISCOVERY CONTEXT (from structured envelope, {hours} hours ago):`
-2. **Stale envelope** (`completed_at` > 24h): Same fields but warn user and mark `STALE` in header
-3. **Legacy boolean** (`project.discovery_completed == true`, no envelope): Read `docs/project-discovery-report.md` + constitution. Include RE artifacts if `docs/requirements/reverse-engineered/index.md` exists.
-4. **No discovery**: Omit block entirely.
+**Delivery mechanism:**
+1. **SessionStart cache** (primary): If session context contains `<!-- SECTION: DISCOVERY_CONTEXT -->`, extract the full section and include it as a `DISCOVERY CONTEXT` block in the delegation prompt.
+2. **Project skills** (supplementary): Built-in and external skills injected via SKILL INJECTION STEPS A/B/C provide project-specific knowledge (tech stack, patterns, conventions).
+3. **No discovery context available**: Omit the block entirely. Phase agents handle the absence gracefully (fail-open).
 
-**Envelope fields to inject:**
-```
-Tech Stack: {tech_stack.primary_language} / {tech_stack.runtime} / {tech_stack.frameworks}
-Test Runner: {tech_stack.test_runner}
-Test Coverage: {coverage_summary.unit_test_pct}% unit, {coverage_summary.total_tests} tests
-Meets Constitution: {coverage_summary.meets_constitution}
-Architecture: {architecture_summary}
-AC: {re_artifacts.ac_count} AC across {re_artifacts.domains} domains
-Constitution: {constitution_path}
-Discovery Report: {discovery_report_path}
-```
+**Note:** The `discovery_context` field in state.json is written by the discover orchestrator for audit purposes (recording when discovery was last run, what was found). It is NOT read by this orchestrator for context injection.
 
-**Phase-specific additions:**
+**Phase-specific additions (included only when DISCOVERY CONTEXT block is present):**
 - Phase 02 adds: `Test Evaluation: docs/isdlc/test-evaluation-report.md` + `"IMPORTANT: Use discovery as your baseline. Extend existing architecture — do not redesign from scratch."`
 - Phase 03 adds: `"IMPORTANT: Use discovery as your baseline. New designs must follow existing patterns (API structure, naming conventions, error handling). Justify deviations."`
 
@@ -906,10 +896,10 @@ Discovery Report: {discovery_report_path}
 
 | Phase Key | Agent | Inputs | Task |
 |-----------|-------|--------|------|
-| `01-requirements` | `requirements-analyst` | Project brief, stakeholder info, DISCOVERY CONTEXT (above), CONVERSATIONAL PROTOCOL (below) | Capture and document project requirements |
-| `02-architecture` / `02-impact-analysis` | `solution-architect` / `impact-analysis-orchestrator` | requirements-spec.md, NFR matrix, DISCOVERY CONTEXT | Design system architecture, select tech stack, design database schema |
+| `01-requirements` | `requirements-analyst` | Project brief, stakeholder info, DISCOVERY CONTEXT (from SessionStart cache, if available), CONVERSATIONAL PROTOCOL (below) | Capture and document project requirements |
+| `02-architecture` / `02-impact-analysis` | `solution-architect` / `impact-analysis-orchestrator` | requirements-spec.md, NFR matrix, DISCOVERY CONTEXT (from SessionStart cache, if available) | Design system architecture, select tech stack, design database schema |
 | `02-tracing` | `tracing-orchestrator` | Bug description, error messages, repro steps | Trace bug root cause, affected code paths, fix recommendations |
-| `03-design` | `system-designer` | Architecture overview, database design, DISCOVERY CONTEXT | Create interface specifications and detailed module designs |
+| `03-design` | `system-designer` | Architecture overview, database design, DISCOVERY CONTEXT (from SessionStart cache, if available) | Create interface specifications and detailed module designs |
 | `04-test-strategy` | `test-design-engineer` | Requirements spec, design specs | Create comprehensive test strategy and design test cases |
 | `05-implementation` | `software-developer` | Interface specs, module designs, test strategy | Implement features using TDD with ≥80% unit test coverage |
 | `06-testing` | `integration-tester` | Source code, test cases | Execute integration tests, E2E tests, validate system integration |
@@ -952,7 +942,7 @@ IF DEBATE_CONTEXT is NOT present:
 ## Conversational Opening (both modes, Round 1 only)
 
 1. READ the feature description from the Task prompt
-2. READ discovery_context from state.json (if available and < 24h old)
+2. USE project knowledge from AVAILABLE SKILLS and DISCOVERY CONTEXT (if provided in the delegation prompt via SessionStart cache)
 
 IF feature description is rich (> 50 words or references a BACKLOG.md item):
   - Reflect: "Here's what I understand from your description: {summary}"

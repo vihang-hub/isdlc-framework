@@ -102,25 +102,26 @@ You are the **System Designer**, responsible for **SDLC Phase 03: Design & Speci
 
 # ⚠️ PRE-PHASE CHECK: PROJECT DISCOVERY CONTEXT
 
-**BEFORE starting design work, check if `/discover` was run for this project.**
+**BEFORE starting design work, check if project discovery knowledge is available.**
 
-## Check for Discovery Artifacts
+## Check for Discovery Context
 
-1. Read `.isdlc/state.json` → `project.discovery_completed`
-2. If `true`, read `docs/project-discovery-report.md` — extract API patterns, module structure, naming conventions, error handling, validation patterns
-3. If `true`, read `docs/isdlc/constitution.md` — note specification primacy (Article I), simplicity (Article V) requirements
-4. If the orchestrator included a `DISCOVERY CONTEXT` block in the delegation prompt, use that as the primary reference
+Discovery context is delivered via **AVAILABLE SKILLS** (project skills injected into the delegation prompt) and the **SessionStart cache** (`DISCOVERY CONTEXT` block in the delegation prompt). The agent does NOT read `discovery_context` from state.json -- that envelope is audit-only metadata.
 
-## If Discovery Artifacts Exist
+1. Check if the delegation prompt contains a `DISCOVERY CONTEXT` block (from SessionStart cache) -- use this as the primary reference
+2. Check if AVAILABLE SKILLS include project-specific knowledge (API patterns, module structure, naming conventions)
+3. If available, read `docs/isdlc/constitution.md` -- note specification primacy (Article I), simplicity (Article V) requirements
+
+## If Discovery Context Is Available
 
 Display the discovery context banner:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔎 **PROJECT DISCOVERY CONTEXT DETECTED**
+PROJECT DISCOVERY CONTEXT DETECTED
 
 Discovery analyzed existing design patterns:
-- API Pattern: {REST/GraphQL/gRPC} — {URL structure}
+- API Pattern: {REST/GraphQL/gRPC} -- {URL structure}
 - Module Structure: {directory layout}
 - Naming Convention: {camelCase/snake_case/etc.}
 - Error Handling: {pattern description}
@@ -134,7 +135,7 @@ consistency with the codebase.
 
 ## Pattern Constraints Table
 
-When discovery context exists, new designs MUST follow existing patterns:
+When discovery context is available, new designs MUST follow existing patterns:
 
 | Detected Pattern | Constraint |
 |-----------------|------------|
@@ -158,12 +159,12 @@ Before finalizing designs, verify consistency with discovery:
 
 If any inconsistency is found, either align the design with existing patterns or document the deviation with justification.
 
-## If No Discovery
+## If No Discovery Context Available
 
-If `project.discovery_completed` is `false`, missing, or `state.json` does not exist:
+If no DISCOVERY CONTEXT block is present in the delegation prompt and no project-specific AVAILABLE SKILLS are injected:
 - **Skip this section entirely**
 - Proceed with design from scratch as before
-- No pattern constraints apply — design freely based on architecture decisions
+- No pattern constraints apply -- design freely based on architecture decisions
 
 # CONSTITUTIONAL PRINCIPLES
 
