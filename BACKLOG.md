@@ -177,10 +177,7 @@
 
 - #89 [x] ~~Update external skills manifest schema with source field for unified skill management~~ -> [requirements](docs/requirements/REQ-0038-external-manifest-source-field/) **Completed: 2026-02-24**
 
-- #90 [ ] Replace 24h staleness discovery context injection with project skills
-  - **Problem**: Line 1706 of isdlc.md injects discovery context only into phases 02-03 with 24h expiry. Arbitrary, limited, and redundant once project skills exist.
-  - **Fix**: Remove discovery context injection block. Project skills delivered via SessionStart cache to all phases with no expiry.
-  - **Depends on**: #88, #89, #84, #91
+- #90 [x] ~~Replace 24h staleness discovery context injection with project skills~~ -> [requirements](docs/requirements/REQ-0039-replace-staleness-discovery-context-injection/) **Completed: 2026-02-24**
 
 ### Framework Features
 
@@ -233,51 +230,8 @@
 - #46 [ ] Analytics manager (integrated with feedback collector/roadmap)
 - #47 [ ] User auth and profile management
 - #48 [ ] Marketing integration for SMBs
-- #49 [ ] GitHub Issues adapter — second backlog provider alongside Jira, using `gh` CLI instead of Atlassian MCP
-  - **Problem**: The backlog adapter pattern (REQ-0008) is currently Jira-only. For GitHub-hosted projects, developers already have `gh` CLI authenticated and don't want to configure Atlassian MCP just for issue tracking. GitHub Issues is the natural home for bugs and features in open-source projects.
-  - **Design**: Same pluggable adapter pattern as Jira — BACKLOG.md remains the curated working set, GitHub Issues is the external source. Provider detected from metadata sub-bullet key (`**GitHub:**` vs `**Jira:**`).
-  - **UX** (invisible framework — all via natural language):
-    | User says | Agent does |
-    |-----------|-----------|
-    | "Add #42 to the backlog" | `gh issue view 42 --json title,body,labels` → appends to BACKLOG.md with `**GitHub:** #42` |
-    | "Refresh the backlog" | `gh issue list --label isdlc-bug,isdlc-feature --json` → updates BACKLOG.md items |
-    | "Let's work on #42" | Kicks off fix/feature workflow with issue body as input |
-    | *(workflow completes)* | Merge commit includes `Fixes #42` → GitHub auto-closes, BACKLOG.md updated |
-    | *(workflow cancelled)* | `gh issue comment 42 --body "Workflow cancelled at Phase {N}"` |
-  - **Setup UX — user-confirmed auto-detection** (not silent — always present options and get confirmation):
-    1. **Install time** (`npx isdlc`): Detect GitHub remote from `.git/config` + check `gh auth status`. If both present, show:
-       ```
-       GitHub detected: vihang-hub/isdlc-framework
-       gh CLI: authenticated ✓
-
-       Enable GitHub Issues integration?
-       [Y] Yes — sync bugs/features to GitHub Issues
-       [N] No  — use BACKLOG.md only (can enable later)
-       ```
-       If user confirms: auto-create labels (`isdlc-bug`, `isdlc-feature`, `severity-critical`, `severity-high`, `severity-medium`, `severity-low`), add `.github/ISSUE_TEMPLATE/bug_report.yml` and `feature_request.yml`, set `github_issues.enabled: true` in state.json.
-    2. **Discover time** (`/discover`): If not enabled at install, re-detect and present the same confirmation during project analysis. Constitution generation can include an article about issue tracking policy.
-    3. **First workflow** (lazy): If not enabled at install or discover, detect on first `/isdlc fix` or `/isdlc feature` and offer: "This project is on GitHub. Want me to create an Issue for this and track it there? [Y/n]"
-    - **All 3 detection points require explicit user confirmation** — never silently enable. User can also enable later with `"enable github issues"` (natural language intent detection in CLAUDE.md).
-  - **What syncs where**:
-    - **GitHub → BACKLOG.md**: issue title, body, labels, linked PR URLs (on add and refresh)
-    - **BACKLOG.md → GitHub**: status only — `gh issue close --reason completed` on workflow completion
-    - **Issue body → framework**: pulled as requirements phase input (replaces Confluence context for GitHub projects)
-  - **Auto-close via commit message**: Finalize step adds `Fixes #N` to the merge commit message. GitHub auto-closes the Issue — zero extra API calls.
-  - **Label auto-creation** (idempotent, on first enable):
-    - `isdlc-bug`, `isdlc-feature` — workflow type
-    - `severity-critical`, `severity-high`, `severity-medium`, `severity-low` — priority mapping
-    - Skip if labels already exist
-  - **Issue templates** (optional, on first enable):
-    - `.github/ISSUE_TEMPLATE/bug_report.yml` — structured bug template matching iSDLC fields (severity, files affected, repro steps)
-    - `.github/ISSUE_TEMPLATE/feature_request.yml` — feature template with description, acceptance criteria
-    - External contributors file Issues in the right format → iSDLC can parse them
-  - **Milestone mapping** (optional): batch grouping → GitHub milestones (e.g., "Batch A — Gate Bypass Fixes")
-  - **Coexistence**: Both Jira and GitHub adapters can be active simultaneously. Provider detected from `**Jira:**` vs `**GitHub:**` metadata sub-bullet in BACKLOG.md. Mixed backlogs supported.
-  - **Files to change**: `CLAUDE.md.template` (add GitHub operations to intent table), `00-sdlc-orchestrator.md` (backlog picker: detect `**GitHub:**` metadata, route to `gh` CLI; finalize: `gh issue close` + `Fixes #N` in commit), `01-requirements-analyst.md` (issue body as context, replacing Confluence), `isdlc.md` (command spec updates), hooks/tests (extend VR-003 for `#N` format), installer (`lib/installer.js` or `install.sh` — GitHub detection + confirmation prompt + label creation)
-  - **Prerequisites**: `gh` CLI installed and authenticated (`gh auth status`). No MCP server needed.
-  - **Advantages over Jira adapter**: no MCP auth headaches (Atlassian re-auth bug), `gh` already installed for most GitHub users, auto-close via commit message (zero API calls), richer label/milestone system, external contributor intake via templates
-  - **Builds on**: REQ-0008 (Jira adapter pattern), REQ-0012 (invisible framework — natural language intent detection)
-  - **Complexity**: Medium — same adapter pattern as Jira but simpler (gh CLI vs MCP). ~6 files to modify, ~1 new test file. Most work is in orchestrator + installer.
+- ~~#49 [x] GitHub Issues adapter — closed as redundant. Core gh CLI integration already covers linking, fetching, searching, closing, and creating issues (REQ-0034, BUG-0032). Formal adapter abstraction unnecessary.~~
+  - **Completed:** 2026-02-24
 
 ### Workflow Quality
 
@@ -400,6 +354,7 @@
 ## Completed
 
 ### 2026-02-24
+- [x] REQ-0039 (#90): Replace 24h staleness discovery context injection with project skills — removed legacy state.json fallback from isdlc.md STEP 3d, updated discover-orchestrator.md to mark discovery_context as audit-only metadata, rewrote phase agent PRE-PHASE CHECK sections (01, 02, 03) to use delegation prompt/AVAILABLE SKILLS instead of state.json reading, updated orchestrator discovery context injection to SessionStart cache-only. 3178 tests passing, zero regressions. 7 files changed *(merged d0db4fe)*.
 - [x] REQ-0038 (#89): Update external skills manifest schema with source field for unified skill management — added `reconcileSkillsBySource()` to common.cjs for source-aware skill reconciliation during discover workflow. Added source field defaulting in `loadExternalManifest()`. Updated discover-orchestrator.md and skills-researcher.md with reconciliation integration. 46 new tests, 157 total passing, zero regressions. 20 files changed, 2759 insertions, 61 deletions *(merged b4b0db4)*.
 - [x] REQ-0037 (#88): Implement project skills distillation in discover orchestrator — added Section 9 "Project Skills Distillation" to discover-orchestrator.md that distills discovery artifacts into 4 reusable project skills (project-architecture, project-conventions, project-domain, project-test-landscape). Wired distillation into all 3 discovery flows (new, existing, reverse-engineer). Removed deprecated buildSessionCacheSkills() from common.cjs. Updated persona agents and roundtable-analyst with distillation handoff instructions. 3 new tests, zero regressions. 9 files changed, 417 insertions, 65 deletions *(merged 9ef92eb)*.
 
