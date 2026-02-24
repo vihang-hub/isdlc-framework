@@ -145,43 +145,38 @@ Update the external skills directory with:
 - Configuration if needed
 - README with usage
 
-### Step 5.5: Register External Skills in Manifest
+### Step 5.5: Register External Skills in Manifest (REQ-0038)
 
-After installing skills, create or update the external skills manifest:
+After installing skills, use `reconcileSkillsBySource()` from `common.cjs` to merge
+installed skills into the external skills manifest. This ensures source-aware
+reconciliation that preserves user-owned fields (bindings, added_at) across re-runs.
 
 **Path:**
 - Single-project: `docs/isdlc/external-skills-manifest.json`
 - Monorepo: `docs/isdlc/projects/{project-id}/external-skills-manifest.json`
 
-For each installed skill, register it in the manifest:
+Build the `incomingSkills` array from the skills successfully installed:
 
-```json
-{
-  "version": "1.0.0",
-  "project_id": "{project-id or null}",
-  "updated_at": "{timestamp}",
-  "skills": {
-    "anthropics/nestjs": {
-      "name": "anthropics/nestjs",
-      "source": "skills.sh",
-      "version": "1.2.0",
-      "path": "{external_skills_path}/nestjs.md",
-      "installed_at": "{timestamp}",
-      "available_to": "all"
-    },
-    "playwright-patterns": {
-      "name": "playwright-patterns",
-      "source": "web-research",
-      "version": "generated",
-      "path": "{external_skills_path}/playwright-patterns.md",
-      "installed_at": "{timestamp}",
-      "available_to": "all"
-    }
-  }
+```javascript
+const incomingSkills = [
+  { name: "anthropics/nestjs", file: "nestjs.md", description: "NestJS patterns",
+    sourcePhase: "D4",
+    bindings: { phases: ["all"], agents: ["all"], injection_mode: "always", delivery_type: "context" } },
+  // ... one entry per installed skill
+];
+
+const manifest = loadExternalManifest(projectId);
+const result = reconcileSkillsBySource(manifest, "skills.sh", incomingSkills, phasesExecuted);
+// result: { manifest, changed, added[], removed[], updated[] }
+
+if (result.changed) {
+  writeExternalManifest(result.manifest, projectId);
+  // Rebuild session cache
+  node bin/rebuild-cache.js
 }
 ```
 
-If the manifest already exists, merge new skills into the existing `skills` object (overwrite entries with the same key).
+Use `result.added`, `result.removed`, and `result.updated` for the installation summary.
 
 ### Step 6: Handle Gaps
 

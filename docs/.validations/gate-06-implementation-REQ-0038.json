@@ -1,0 +1,70 @@
+{
+  "gate": "GATE-06",
+  "phase": "06-implementation",
+  "requirement": "REQ-0038",
+  "title": "External Manifest Source Field",
+  "timestamp": "2026-02-24T23:00:00Z",
+  "status": "PASSED",
+  "checklist": {
+    "all_features_implemented": true,
+    "unit_test_coverage_80_pct": true,
+    "all_tests_passing": true,
+    "code_follows_linting_style": true,
+    "implementation_matches_design": true,
+    "code_documentation_complete": true
+  },
+  "test_results": {
+    "total_tests": 157,
+    "passing": 157,
+    "failing": 0,
+    "new_tests_added": 46,
+    "test_groups_added": 9,
+    "framework": "node:test",
+    "module_system": "CJS",
+    "iterations_to_green": 1,
+    "parallel_execution": {
+      "enabled": false,
+      "reason": "Single test file, sequential execution sufficient"
+    }
+  },
+  "files_changed": [
+    {
+      "path": "src/claude/hooks/lib/common.cjs",
+      "action": "modified",
+      "changes": "Added reconcileSkillsBySource() function (~85 lines), modified loadExternalManifest() for source defaults (~5 lines), added export"
+    },
+    {
+      "path": "src/claude/hooks/tests/external-skill-management.test.cjs",
+      "action": "modified",
+      "changes": "Added 46 tests in 9 groups (TC-19 through TC-27)"
+    },
+    {
+      "path": "src/claude/agents/discover-orchestrator.md",
+      "action": "modified",
+      "changes": "Updated Steps D.2, D.5, D.6 and re-run section to use reconcileSkillsBySource()"
+    },
+    {
+      "path": "src/claude/agents/discover/skills-researcher.md",
+      "action": "modified",
+      "changes": "Updated Step 5.5 to use reconcileSkillsBySource() with source 'skills.sh'"
+    },
+    {
+      "path": "docs/requirements/REQ-0038-external-manifest-source-field/implementation-notes.md",
+      "action": "created",
+      "changes": "Implementation notes documenting decisions and traceability"
+    }
+  ],
+  "constitutional_compliance": {
+    "article_I_spec_primacy": "PASS - Implementation matches interface-spec.md and module-design.md exactly",
+    "article_II_test_first": "PASS - Tests written before implementation (TDD Red-Green), 46 new tests",
+    "article_III_security": "PASS - Input validation on all parameters, defensive defaults, no throws",
+    "article_V_simplicity": "PASS - Pure function design, ~85 lines, no over-engineering",
+    "article_VII_traceability": "PASS - FR-001 through FR-008 traced to implementation and tests",
+    "article_IX_gate_integrity": "PASS - All gate checklist items satisfied",
+    "article_X_fail_safe": "PASS - Invalid source returns unchanged, null manifest normalized, missing name skipped"
+  },
+  "phase_timing": {
+    "debate_rounds_used": 0,
+    "fan_out_chunks": 0
+  }
+}

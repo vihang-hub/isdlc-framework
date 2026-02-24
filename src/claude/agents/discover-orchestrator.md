@@ -187,9 +187,10 @@ INCREMENTAL DISCOVERY                                [In Progress]
 After Phase 1 parallel analysis completes, run the **Project Skills Distillation** step
 (same as Step 2a in the EXISTING PROJECT FLOW). The distillation step re-distills all
 four project skills (PROJ-001 through PROJ-004) using updated analysis output. It follows
-the same clean-slate-per-source-phase pattern: for each source phase that ran, remove old
-discover-sourced skills for that phase, then distill fresh ones. See Step 2a in the
-EXISTING PROJECT FLOW section for the full execution sequence (Steps D.1 through D.7).
+source-aware reconciliation via `reconcileSkillsBySource()`: for each source phase that ran,
+reconcile discover-sourced skills (add new, update existing, remove stale) while preserving
+user-owned fields like bindings. See Step 2a in the EXISTING PROJECT FLOW section for
+the full execution sequence (Steps D.1 through D.7).
 
 After completion, display a **DIFF SUMMARY** showing what changed since last discovery:
 
@@ -1544,21 +1545,21 @@ PROJECT SKILLS DISTILLATION                          [In Progress]
 Read `docs/isdlc/external-skills-manifest.json`. If the file does not exist or cannot be
 parsed, proceed with an empty manifest (`{ "skills": [] }`). Do not fail.
 
-#### Step D.2: Clean-slate per source phase
+#### Step D.2: Track phases executed
 
-For each source phase that ran in this discovery (D1, D2, D6), identify the skills
-mapped to that phase and remove them before re-distilling:
+Record which source phases ran in this discovery (D1, D2, D6). This list is passed
+to `reconcileSkillsBySource()` in Step D.5 to determine which existing skills are
+eligible for removal. The source-phase-to-skill mapping is:
 
-| Source Phase | Skills to Clean | Skill Files |
-|-------------|----------------|-------------|
+| Source Phase | Skills | Skill Files |
+|-------------|--------|-------------|
 | D1 (architecture-analyzer) | PROJ-001, PROJ-002 | `project-architecture.md`, `project-conventions.md` |
 | D2 (test-evaluator) | PROJ-004 | `project-test-landscape.md` |
 | D6 (feature-mapper) | PROJ-003 | `project-domain.md` |
 
-For each skill mapped to a phase that ran:
-1. Remove the manifest entry where `source === "discover"` and `name` matches the skill name
-2. Delete the skill file from `.claude/skills/external/` if it exists
-3. On any deletion failure: log warning, continue
+Build the `phasesExecuted` array (e.g., `["D1", "D2", "D6"]`) from the phases that
+actually ran. If a phase was skipped or failed, omit it from the array -- its skills
+will be preserved untouched by the reconciliation.
 
 #### Step D.3: Distill each skill
 
@@ -1752,30 +1753,39 @@ Write each distilled skill file to `.claude/skills/external/`:
 Create the `.claude/skills/external/` directory if it does not exist.
 On any write failure: log warning, skip that skill, continue.
 
-#### Step D.5: Update manifest
+#### Step D.5: Reconcile manifest (REQ-0038)
 
-For each skill file that was successfully written, add an entry to the manifest:
+Use `reconcileSkillsBySource()` from `common.cjs` to merge distilled skills into the
+manifest. This replaces the old delete-and-recreate approach with source-aware reconciliation
+that preserves user-owned fields (bindings, added_at) across re-runs.
 
-```json
-{
-  "name": "<skill-name>",
-  "file": "<skill-filename>.md",
-  "source": "discover",
-  "bindings": {
-    "phases": ["all"],
-    "agents": ["all"],
-    "injection_mode": "always",
-    "delivery_type": "context"
-  }
-}
+Build the `incomingSkills` array from the skills successfully distilled in Step D.3/D.4:
+
+```javascript
+const incomingSkills = [
+  { name: "project-architecture", file: "project-architecture.md", description: "...", sourcePhase: "D1",
+    bindings: { phases: ["all"], agents: ["all"], injection_mode: "always", delivery_type: "context" } },
+  // ... one entry per distilled skill
+];
+
+const result = reconcileSkillsBySource(manifest, "discover", incomingSkills, phasesExecuted);
+// result: { manifest, changed, added[], removed[], updated[] }
 ```
 
-Write the updated manifest to `docs/isdlc/external-skills-manifest.json`.
+If `result.changed` is `true`, write the updated manifest:
+```
+writeExternalManifest(result.manifest)
+```
+
+Use `result.added`, `result.removed`, and `result.updated` arrays for the distillation
+summary display in Step D.7.
+
 On write failure: log warning, continue.
 
-#### Step D.6: Rebuild session cache
+#### Step D.6: Rebuild session cache (conditional)
 
-Run the cache rebuild:
+Only rebuild the cache if `result.changed` is `true` (from Step D.5 reconciliation).
+If no changes were made, skip the cache rebuild to avoid unnecessary work.
 
 ```bash
 node bin/rebuild-cache.js
