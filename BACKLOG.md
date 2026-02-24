@@ -177,16 +177,7 @@
   - **Problem**: `loadManifest()` performs no schema validation. Corrupt/mismatched manifests fail silently. The #81 schema mismatch went undetected.
   - **Fix**: Add `validateManifestSchema()` with warnings on schema issues. Fail-open preserved.
 
-- #88 [ ] Implement project skills distillation step in discover orchestrator
-  - **Problem**: Discovery produces detailed reports but they're treated as documents on a shelf. Only phases 02-03 get discovery context injected, with a 24h expiry. Analyze gets nothing. Later phases are blind to project context.
-  - **Design**: New discover step distills 4 project skills from discovery artifacts:
-    - `project-architecture` (all agents) — component boundaries, data flow, patterns
-    - `project-conventions` (all agents) — naming, error handling, framework usage
-    - `project-domain` (all agents) — terminology, business rules, feature catalog
-    - `project-test-landscape` (testing agents) — coverage gaps, patterns, fragile areas
-  - Skills written to `.claude/skills/external/` with `source: "discover"` in manifest. Each < 5,000 chars, idempotent on re-run.
-  - Triggers `rebuildSkillCache()` after distillation for SessionStart injection (#91)
-  - **Depends on**: #81, #82, #84, #89, #91
+- #88 [x] ~~Implement project skills distillation step in discover orchestrator~~ -> [requirements](docs/requirements/REQ-0037-project-skills-distillation/) **Completed: 2026-02-24**
 
 - #89 [ ] Update external skills manifest schema with source field for unified skill management
   - **Design**: Add `source` field to manifest entries: `"discover"` (project skills), `"skills.sh"` (tech-stack skills), `"user"` (manually added). Discover overwrites only its own entries on re-run. User skills never touched. All skills live in `.claude/skills/external/`.
@@ -414,6 +405,9 @@
   - **Complexity**: Low-medium
 
 ## Completed
+
+### 2026-02-24
+- [x] REQ-0037 (#88): Implement project skills distillation in discover orchestrator — added Section 9 "Project Skills Distillation" to discover-orchestrator.md that distills discovery artifacts into 4 reusable project skills (project-architecture, project-conventions, project-domain, project-test-landscape). Wired distillation into all 3 discovery flows (new, existing, reverse-engineer). Removed deprecated buildSessionCacheSkills() from common.cjs. Updated persona agents and roundtable-analyst with distillation handoff instructions. 3 new tests, zero regressions. 9 files changed, 417 insertions, 65 deletions *(merged 9ef92eb)*.
 
 ### 2026-02-23
 - [x] REQ-0001 (#91): Implement SessionStart hook for skill cache injection — new `inject-session-cache.cjs` SessionStart hook reads pre-assembled `.isdlc/skill-cache.md` once at session start, outputs to stdout for LLM context injection. Eliminates ~200+ static file reads per workflow. New `bin/rebuild-cache.js` CLI, `rebuildSkillCache()`/`getProjectSkills()`/`buildCacheContent()` APIs in common.cjs, wired into discover and skill management commands. Updated installer.js and updater.js for hook registration. 43 new tests, 3277 total, zero regressions. 34 files changed, 2538 insertions, 591 deletions *(merged 5e0bb0b)*.
