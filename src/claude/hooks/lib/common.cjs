@@ -4144,11 +4144,31 @@ function rebuildSessionCache(options = {}) {
         return fs.readFileSync(path.join(root, '.claude', 'hooks', 'config', 'artifact-paths.json'), 'utf8');
     }));
 
-    // Section 5: SKILLS_MANIFEST
+    // Section 5: SKILLS_MANIFEST (REQ-0040: TOON encoding with fail-open fallback)
     parts.push(buildSection('SKILLS_MANIFEST', () => {
         const manifestPath = path.join(root, 'src', 'claude', 'hooks', 'config', 'skills-manifest.json');
         const raw = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-        return JSON.stringify(raw, null, 2);
+        const jsonContent = JSON.stringify(raw, null, 2);
+
+        // Attempt TOON encoding if data is a uniform array (ADR-0040-02, ADR-0040-03)
+        try {
+            const toonEncoder = require('./toon-encoder.cjs');
+            if (toonEncoder.isUniformArray(raw)) {
+                const toonContent = toonEncoder.encode(raw);
+                // Log encoding stats to stderr (REQ-0040 FR-001)
+                const jsonTokens = jsonContent.length;
+                const toonTokens = toonContent.length;
+                const reduction = ((1 - toonTokens / jsonTokens) * 100).toFixed(1);
+                if (verbose) {
+                    process.stderr.write(`TOON encoding: ${jsonTokens} -> ${toonTokens} chars (${reduction}% reduction)\n`);
+                }
+                return '[TOON]\n' + toonContent;
+            }
+        } catch (_) {
+            // Fail-open: any error falls through to JSON (ADR-0040-03, Article X)
+        }
+
+        return jsonContent;
     }));
 
     // Section 6: SKILL_INDEX (per-agent blocks)
