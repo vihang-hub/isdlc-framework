@@ -148,36 +148,7 @@
 
 ### Skills Management
 
-- #81 [x] Fix `getAgentSkillIndex()` schema mismatch — function expects objects but manifest has strings
-  - **Completed:** 2026-02-23
-
-- #82 [x] Fix skill path resolution — hardcoded `src/claude/skills/` fails in installed projects
-  - **Completed:** 2026-02-23
-
-- #83 [x] Fix skill injection tests — mock schema differs from production manifest
-  - **Completed:** 2026-02-23
-
-- #84 [x] Wire SKILL INDEX BLOCK injection in isdlc.md phase delegation
-  - **Problem**: STEP 3d line 1715 documents skill index injection but it's never executed. Agents are delegated to without knowing what skills they have.
-  - **Fix**: Ensure instruction is clear enough for LLM to execute; verify against fixed `getAgentSkillIndex()`
-  - **Depends on**: #81, #82
-  - **Completed:** 2026-02-23
-
-- #85 [x] Unify built-in and external skill injection into coherent two-tier system
-  - **Problem**: Two separate injection mechanisms — built-in via skill index (broken), external via STEP 3d manifest filtering (working). No unified view.
-  - **Design**: Two-tier model — built-in skills as reference list (agent reads on-demand), external/project skills pre-loaded via SessionStart cache (always in context). Both appear in delegation prompt without conflict.
-  - **Depends on**: #81, #82, #84, #91
-  - **Completed:** 2026-02-23
-
-- #86 [x] ~~Clean up unused manifest entries — `path_lookup` and `skill_paths`~~ **Completed: 2026-02-23** *(absorbed into #91)*
-
-- #87 [x] ~~Add manifest schema validation on load~~ **Completed: 2026-02-23** *(implemented as part of #91 — `loadSchema()`, `validateSchema()`, `_validateObject()` in common.cjs)*
-
-- #88 [x] ~~Implement project skills distillation step in discover orchestrator~~ -> [requirements](docs/requirements/REQ-0037-project-skills-distillation/) **Completed: 2026-02-24**
-
-- #89 [x] ~~Update external skills manifest schema with source field for unified skill management~~ -> [requirements](docs/requirements/REQ-0038-external-manifest-source-field/) **Completed: 2026-02-24**
-
-- #90 [x] ~~Replace 24h staleness discovery context injection with project skills~~ -> [requirements](docs/requirements/REQ-0039-replace-staleness-discovery-context-injection/) **Completed: 2026-02-24**
+*All items #81-#91 completed — see Completed section below.*
 
 ### Framework Features
 
@@ -352,6 +323,11 @@
   - **Complexity**: Low-medium
 
 ## Completed
+
+### 2026-02-25
+- [x] Project skills delivery_type changed from `context` to `instruction` — project skills from `/discover` now injected with "You MUST follow these guidelines" directive instead of passive background context. 1-line change in `discover-orchestrator.md` *(commit d9fb449)*.
+- [x] CLAUDE.md consent message fix — replaced formulaic "Looks like you want to..." template with natural conversational guidance. Consent messages no longer parrot back the user's intent or describe internal workflow stages.
+- [x] GH-91 scope expanded to "Unified SessionStart cache" — absorbed #84, #86, #89. Verified all acceptance criteria already met. Closed #91, #86, #89 on GitHub.
 
 ### 2026-02-24
 - [x] REQ-0039 (#90): Replace 24h staleness discovery context injection with project skills — removed legacy state.json fallback from isdlc.md STEP 3d, updated discover-orchestrator.md to mark discovery_context as audit-only metadata, rewrote phase agent PRE-PHASE CHECK sections (01, 02, 03) to use delegation prompt/AVAILABLE SKILLS instead of state.json reading, updated orchestrator discovery context injection to SessionStart cache-only. 3178 tests passing, zero regressions. 7 files changed *(merged d0db4fe)*.
