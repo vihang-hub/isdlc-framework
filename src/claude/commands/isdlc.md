@@ -1576,7 +1576,7 @@ Read `agent_modifiers` for this phase from `.isdlc/state.json` → `active_workf
    If not found (cache absent or section missing):
      a. FALLBACK: Run this single-line Bash command (replace `{agent_name}` with the resolved agent name from the table above):
         ```
-        node -e "const c = require('./src/claude/hooks/lib/common.cjs'); const r = c.getAgentSkillIndex('{agent_name}'); process.stdout.write(c.formatSkillIndexBlock(r));"
+        node -e 'const c = require("./src/claude/hooks/lib/common.cjs"); const r = c.getAgentSkillIndex("{agent_name}"); process.stdout.write(c.formatSkillIndexBlock(r));'
         ```
      b. If the Bash tool call succeeds and produces non-empty stdout: save the output as `{built_in_skills_block}`.
      c. If the Bash tool call fails or produces empty output: set `{built_in_skills_block}` to empty string.
@@ -1851,6 +1851,36 @@ Use Task tool → {agent_name} with:
    Do NOT emit SUGGESTED NEXT STEPS or prompt the user to continue — the Phase-Loop Controller manages phase transitions. Simply return your result.
    Validate GATE-{NN} on completion."
 ```
+
+**3d-relay.** INTERACTIVE PHASE RELAY — If the current phase has `interactive_elicitation.enabled: true` in iteration-requirements.json (currently: `01-requirements`), the phase agent is conversational and will RETURN when it needs user input. Enter a relay-and-resume loop:
+
+WHILE the phase agent has NOT signaled completion:
+  i.   **Output the agent's text VERBATIM as your response.**
+       Copy-paste it. Do NOT summarize it into tables.
+       Do NOT paraphrase it. Do NOT add headings like "Requirements Analyst:" above it.
+       Do NOT re-present the agent's tables or menus in your own formatting.
+       The agent's output IS the user-facing content — just emit it directly.
+  ii.  **Let the user respond naturally.**
+       Do NOT use AskUserQuestion. Do NOT present multiple-choice options.
+       Do NOT create menus like "Looks good, continue / Needs adjustment".
+       The agent presents its own menus — the user responds with their choice.
+  iii. Resume the phase agent (using the `resume` parameter with the agent's ID),
+       passing ONLY the user's exact response as the prompt.
+       Do NOT add your own instructions, commentary, or analysis.
+  iv.  On return, check if the agent signaled completion
+       (output ends with "REQUIREMENTS_COMPLETE"). If yes, exit loop.
+
+**Completion signal**: The requirements-analyst signals completion by including "REQUIREMENTS_COMPLETE" as the last line of its final output.
+
+**Orchestrator boundary**: During the relay loop, you are INVISIBLE. You are a relay. You do not:
+- Summarize the agent's output ("The analyst is asking about...")
+- Add your own tables or formatting
+- Present AskUserQuestion menus
+- Add commentary between the agent's output and the user's response
+- Interpret what the agent said
+The phase agent owns the entire user-facing experience. Your only job is: emit agent output → wait for user text → resume agent.
+
+**Non-interactive phases**: If the phase does NOT have `interactive_elicitation.enabled: true`, skip this step entirely — the agent returns its final result in one shot and you proceed directly to step 3e.
 
 **3e.** POST-PHASE STATE UPDATE — After the phase agent returns successfully:
 1. Read `.isdlc/state.json`

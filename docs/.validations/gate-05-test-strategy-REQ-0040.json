@@ -1,0 +1,64 @@
+{
+  "gate": "GATE-05",
+  "phase": "05-test-strategy",
+  "requirement": "REQ-0040",
+  "name": "TOON Format Integration",
+  "validated_at": "2026-02-25T22:30:00.000Z",
+  "status": "PASSED",
+  "checklist": {
+    "test_strategy_covers_unit_integration_performance": true,
+    "test_cases_exist_for_all_requirements": true,
+    "traceability_matrix_complete": true,
+    "coverage_targets_defined": true,
+    "test_data_strategy_documented": true,
+    "critical_paths_identified": true
+  },
+  "metrics": {
+    "total_FRs": 5,
+    "total_FRs_in_scope": 4,
+    "total_FRs_deferred": 1,
+    "total_ACs": 19,
+    "total_ACs_in_scope": 13,
+    "total_ACs_deferred": 6,
+    "ACs_with_automated_tests": 12,
+    "ACs_documented_manual_validation": 1,
+    "traceability_coverage_percent": 100,
+    "total_test_cases": 47,
+    "test_types": {
+      "unit": 44,
+      "integration": 3,
+      "performance": 0,
+      "e2e": 0
+    },
+    "positive_tests": 32,
+    "negative_tests": 15,
+    "negative_test_ratio_percent": 32,
+    "test_baseline_before": 555,
+    "test_baseline_after": 602,
+    "net_new_tests": 47
+  },
+  "constitutional_validation": {
+    "articles_checked": ["II", "VII", "IX", "XI"],
+    "all_compliant": true,
+    "iterations": 1,
+    "violations_found": 0,
+    "details": {
+      "article_II": "All 47 test cases designed before implementation (Phase 05 before Phase 06)",
+      "article_VII": "100% traceability: 13/13 in-scope ACs covered; 6 ACs deferred per ADRs",
+      "article_IX": "All required artifacts produced; GATE-05 checklist passes",
+      "article_XI": "Integration tests validate real toon-encoder + common.cjs interaction via rebuildSessionCache"
+    }
+  },
+  "deferred_scope": {
+    "FR-003": "All 4 ACs deferred per ADR-0040-04 (no injection point exists)",
+    "FR-002_AC-002-01": "Deferred per ADR-0040-02 (SKILL_INDEX already compact text)",
+    "FR-002_AC-002-03": "Deferred per ADR-0040-02 (deeply nested, non-tabular)"
+  },
+  "module_design_discrepancy": {
+    "description": "Module design Section 4.3 claims 35 tests but Section 4.2 specifies 44 distinct test cases (7+21+11+5=44). This test strategy uses the correct count of 44.",
+    "impact": "Test baseline target adjusted from 593 to 602"
+  },
+  "artifacts": [
+    "docs/requirements/REQ-0040-toon-format-integration/test-strategy.md"
+  ]
+}
