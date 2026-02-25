@@ -1,0 +1,49 @@
+{
+  "gate": "GATE-06",
+  "requirement": "REQ-0039",
+  "title": "Replace 24h staleness discovery context injection with project skills",
+  "timestamp": "2026-02-24T12:00:00Z",
+  "status": "PASS",
+  "checklist": {
+    "all_features_implemented": {
+      "status": "PASS",
+      "details": "All 6 FRs implemented: FR-001 (isdlc.md injection block removed), FR-002 (delegation template updated), FR-003 (discover-orchestrator audit-only), FR-004 (phase agents 00/01/02/03 updated), FR-005 (fail-open preserved), FR-006 (discover.md updated)"
+    },
+    "tests_passing": {
+      "status": "PASS",
+      "details": "Hook tests: 2664 passing, 9 pre-existing failures unrelated to this change. TC-04a (isdlc.md sync) fixed by syncing runtime copies."
+    },
+    "implementation_matches_design": {
+      "status": "PASS",
+      "details": "Changes match impact analysis and requirements spec exactly. No out-of-scope files modified."
+    },
+    "code_documentation_complete": {
+      "status": "PASS",
+      "details": "implementation-notes.md created documenting all changes, rationale, and backward compatibility."
+    },
+    "backward_compatibility": {
+      "status": "PASS",
+      "details": "Fail-open preserved in all agents. SessionStart cache mechanism untouched. discovery_context envelope still written by discover for audit. No hooks modified."
+    }
+  },
+  "files_modified": [
+    "src/claude/commands/isdlc.md",
+    "src/claude/agents/discover-orchestrator.md",
+    "src/claude/agents/00-sdlc-orchestrator.md",
+    "src/claude/agents/01-requirements-analyst.md",
+    "src/claude/agents/02-solution-architect.md",
+    "src/claude/agents/03-system-designer.md",
+    "src/claude/commands/discover.md",
+    ".claude/commands/isdlc.md",
+    ".claude/agents/00-sdlc-orchestrator.md",
+    ".claude/agents/01-requirements-analyst.md",
+    ".claude/agents/02-solution-architect.md",
+    ".claude/agents/03-system-designer.md",
+    ".claude/agents/discover-orchestrator.md",
+    ".claude/commands/discover.md"
+  ],
+  "artifacts_produced": [
+    "docs/requirements/REQ-0039-replace-staleness-discovery-context-injection/implementation-notes.md",
+    "docs/.validations/gate-06-implementation-REQ-0039.json"
+  ]
+}

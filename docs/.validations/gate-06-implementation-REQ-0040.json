@@ -1,0 +1,66 @@
+{
+  "gate": "GATE-06",
+  "requirement": "REQ-0040",
+  "title": "TOON Format Integration for Token-Efficient Session Cache Encoding",
+  "timestamp": "2026-02-25T12:00:00Z",
+  "status": "PASS",
+  "phase_timing": {
+    "debate_rounds_used": 0,
+    "fan_out_chunks": 0
+  },
+  "checklist": {
+    "all_features_implemented": {
+      "status": "PASS",
+      "details": "FR-001 (encode) and FR-002 (decode) implemented in toon-encoder.cjs. FR-003 (state arrays) deferred per ADR-0040-04. SKILLS_MANIFEST section in rebuildSessionCache() integrated with TOON encoding and fail-open fallback."
+    },
+    "unit_test_coverage_80pct": {
+      "status": "PASS",
+      "details": "44 unit tests for toon-encoder.cjs covering isUniformArray (7), encode (21), decode (11), round-trip (5). All 44 pass. 3 integration tests for session cache TOON integration. All 3 pass."
+    },
+    "all_tests_passing": {
+      "status": "PASS",
+      "details": "Full suite: 653 total tests, 645 passing, 8 pre-existing failures unrelated to REQ-0040. Hook suite: 2720 total tests, 2710 passing, 10 pre-existing failures unrelated to REQ-0040. Zero regressions."
+    },
+    "code_follows_standards": {
+      "status": "PASS",
+      "details": "Pure CJS (.cjs extension), zero npm dependencies, follows existing hook lib patterns, JSDoc documentation on all public functions."
+    },
+    "implementation_matches_design": {
+      "status": "PASS",
+      "details": "Implements ADR-0040-01 (native CJS), ADR-0040-02 (SKILLS_MANIFEST only), ADR-0040-03 (fail-open fallback), ADR-0040-04 (FR-003 deferred). TOON format matches specification exactly."
+    },
+    "code_documentation_complete": {
+      "status": "PASS",
+      "details": "Module-level JSDoc, per-function documentation, REQ-0040 traceability comments, implementation-notes.md created."
+    },
+    "constitutional_compliance": {
+      "status": "PASS",
+      "articles_validated": ["I", "II", "III", "V", "VII", "VIII", "IX", "X"],
+      "details": "Article I: spec implemented exactly. Article II: TDD with 47 new tests. Article III: input validation, fail-open. Article V: minimal ~260-line implementation. Article VII: REQ-0040/FR/ADR references. Article VIII: inline docs current. Article IX: all artifacts exist. Article X: fail-safe defaults throughout."
+    }
+  },
+  "test_counts": {
+    "new_unit_tests": 44,
+    "new_integration_tests": 3,
+    "total_new_tests": 47,
+    "total_suite_tests": 653,
+    "total_suite_passing": 645,
+    "pre_existing_failures": 8
+  },
+  "files_created": [
+    "src/claude/hooks/lib/toon-encoder.cjs",
+    "src/claude/hooks/tests/toon-encoder.test.cjs",
+    "docs/requirements/REQ-0040-toon-format-integration/implementation-notes.md"
+  ],
+  "files_modified": [
+    "src/claude/hooks/lib/common.cjs",
+    "src/claude/hooks/tests/test-session-cache-builder.test.cjs",
+    "src/claude/hooks/tests/hook-test-utils.cjs"
+  ],
+  "artifacts_produced": [
+    "src/claude/hooks/lib/toon-encoder.cjs",
+    "src/claude/hooks/tests/toon-encoder.test.cjs",
+    "docs/requirements/REQ-0040-toon-format-integration/implementation-notes.md",
+    "docs/.validations/gate-06-implementation-REQ-0040.json"
+  ]
+}

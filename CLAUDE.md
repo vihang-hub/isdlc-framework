@@ -239,6 +239,8 @@ All fenced Bash/sh code blocks in agent and command markdown files MUST contain 
 | Pipe chains split across lines | Join into a single `cmd1 \| cmd2 \| cmd3` line |
 | Multiline `node -e "..."` | `node -e "compact single-line JS"` or extract to `bin/script.js` |
 
+**`node -e` shell safety:** Never use `node -e` to read or parse files — use the Read tool instead. If `node -e` is unavoidable, use **single quotes** for the JS body (`node -e '...'`), not double quotes. The `!` operator in JS (e.g., `!x.includes(...)`) triggers zsh history expansion inside double quotes, producing `\!` which is a SyntaxError. Single quotes prevent all shell interpolation.
+
 **Escape hatch:** If a command cannot be reasonably expressed as a single line, extract it to a script file in `bin/` and call it with `node bin/script-name.js` or `bash bin/script-name.sh`. The single-line call matches permission glob patterns.
 
 Agent files reference this convention with:

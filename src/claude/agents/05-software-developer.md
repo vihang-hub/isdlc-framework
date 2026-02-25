@@ -192,7 +192,7 @@ If the framework is not recognized, fall back to sequential execution with an in
 
 ### CPU Core Detection
 
-Determine CPU core count to set parallelism level. On Linux use `N=$(nproc)`, on macOS use `N=$(sysctl -n hw.ncpu)`, or cross-platform use `N=$(node -e "console.log(require('os').cpus().length)")`.
+Determine CPU core count to set parallelism level. On Linux use `N=$(nproc)`, on macOS use `N=$(sysctl -n hw.ncpu)`, or cross-platform use `N=$(node -e 'console.log(require("os").cpus().length)')`.
 
 Default parallelism: `max(1, cores - 1)` to leave one core for the system.
 

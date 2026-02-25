@@ -1,0 +1,181 @@
+{
+  "metadata": {
+    "requirement_id": "REQ-0040",
+    "feature": "TOON Format Integration",
+    "created": "2026-02-25",
+    "status": "draft",
+    "total_stories": 5,
+    "total_acceptance_criteria": 17
+  },
+  "stories": [
+    {
+      "id": "US-001",
+      "epic": "TOON SDK Integration",
+      "persona": "Framework Developer",
+      "goal": "integrate the TOON SDK with a CJS-compatible wrapper",
+      "benefit": "all hook files can encode and decode TOON data via require()",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-001-01",
+          "given": "the TOON SDK is installed as an npm dependency",
+          "when": "a CJS hook file calls require('./lib/toon-encoder.cjs')",
+          "then": "it receives encode and decode functions without error"
+        },
+        {
+          "id": "AC-001-02",
+          "given": "tabular data (array of objects with uniform keys)",
+          "when": "encode(data) is called",
+          "then": "it returns a valid TOON string with headers on the first row and data on subsequent rows"
+        },
+        {
+          "id": "AC-001-03",
+          "given": "a valid TOON string",
+          "when": "decode(toonString) is called",
+          "then": "it returns the original array of objects with correct types"
+        },
+        {
+          "id": "AC-001-04",
+          "given": "the wrapper is loaded on Node 20, 22, and 24",
+          "when": "any function is called",
+          "then": "it executes without module resolution errors"
+        }
+      ],
+      "linked_requirements": ["REQ-001", "NFR-005", "NFR-006"]
+    },
+    {
+      "id": "US-002",
+      "epic": "Session Cache Optimization",
+      "persona": "Framework Developer",
+      "goal": "encode session cache sections (SKILL_INDEX, SKILLS_MANIFEST, ITERATION_REQUIREMENTS, WORKFLOW_CONFIG) as TOON",
+      "benefit": "agent context token consumption is reduced by at least 30%",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-002-01",
+          "given": "inject-session-cache.cjs builds the session cache",
+          "when": "the SKILL_INDEX section is generated",
+          "then": "it is encoded as TOON (header row + 240 data rows) instead of JSON"
+        },
+        {
+          "id": "AC-002-02",
+          "given": "inject-session-cache.cjs builds the session cache",
+          "when": "the SKILLS_MANIFEST section is generated",
+          "then": "skill_lookup (243 entries) and ownership (41 entries) are encoded as TOON tables"
+        },
+        {
+          "id": "AC-002-03",
+          "given": "inject-session-cache.cjs builds the session cache",
+          "when": "ITERATION_REQUIREMENTS and WORKFLOW_CONFIG sections are generated",
+          "then": "tabular portions are encoded as TOON"
+        },
+        {
+          "id": "AC-002-04",
+          "given": "the TOON-encoded session cache is produced",
+          "when": "its token count is measured",
+          "then": "it is at least 30% smaller than the JSON-encoded equivalent"
+        }
+      ],
+      "linked_requirements": ["REQ-002", "NFR-001"]
+    },
+    {
+      "id": "US-003",
+      "epic": "State Data Optimization",
+      "persona": "Framework Developer",
+      "goal": "encode state.json arrays as TOON when injecting into agent context",
+      "benefit": "large arrays like workflow_history consume 40%+ fewer tokens",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-003-01",
+          "given": "state.json contains a workflow_history array",
+          "when": "it is injected into agent context",
+          "then": "it is encoded as TOON"
+        },
+        {
+          "id": "AC-003-02",
+          "given": "state.json contains history and skill_usage_log arrays",
+          "when": "they are injected into agent context",
+          "then": "they are encoded as TOON"
+        },
+        {
+          "id": "AC-003-03",
+          "given": "TOON encoding is applied to state array injection",
+          "when": "the original state.json file is inspected",
+          "then": "it remains valid JSON (TOON is read-time only, not storage)"
+        },
+        {
+          "id": "AC-003-04",
+          "given": "the TOON-encoded state arrays",
+          "when": "their token count is measured against JSON equivalents",
+          "then": "the reduction is at least 40%"
+        }
+      ],
+      "linked_requirements": ["REQ-003", "NFR-002", "NFR-008"]
+    },
+    {
+      "id": "US-004",
+      "epic": "Reliability and Fallback",
+      "persona": "iSDLC End User",
+      "goal": "have TOON decoding failures silently fall back to JSON",
+      "benefit": "agent workflows are never broken by an encoding issue",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-004-01",
+          "given": "a malformed TOON string is passed to decode()",
+          "when": "decoding fails",
+          "then": "the wrapper attempts JSON.parse() on the original data"
+        },
+        {
+          "id": "AC-004-02",
+          "given": "a TOON decode failure occurs",
+          "when": "the fallback activates",
+          "then": "a warning is logged to stderr (not an error thrown)"
+        },
+        {
+          "id": "AC-004-03",
+          "given": "a session cache section fails TOON encoding",
+          "when": "inject-session-cache.cjs processes it",
+          "then": "that section falls back to JSON while other sections remain TOON-encoded"
+        },
+        {
+          "id": "AC-004-04",
+          "given": "any TOON failure in any hook",
+          "when": "the hook completes",
+          "then": "it exits 0 (fail-open per Article X)"
+        }
+      ],
+      "linked_requirements": ["REQ-004", "NFR-004"]
+    },
+    {
+      "id": "US-005",
+      "epic": "Session Cache Optimization",
+      "persona": "Framework Developer",
+      "goal": "have rebuild-cache.js produce TOON-encoded cache sections",
+      "benefit": "manually rebuilt caches are consistent with hook-generated caches",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-005-01",
+          "given": "a developer runs node bin/rebuild-cache.js",
+          "when": "the cache is rebuilt",
+          "then": "SKILL_INDEX, SKILLS_MANIFEST, ITERATION_REQUIREMENTS, and WORKFLOW_CONFIG sections are TOON-encoded"
+        },
+        {
+          "id": "AC-005-02",
+          "given": "rebuild-cache.js and inject-session-cache.cjs both generate a cache from the same input data",
+          "when": "their outputs are compared",
+          "then": "the TOON-encoded sections are identical"
+        },
+        {
+          "id": "AC-005-03",
+          "given": "rebuild-cache.js encounters a TOON encoding failure",
+          "when": "it falls back to JSON",
+          "then": "the cache is still produced successfully"
+        }
+      ],
+      "linked_requirements": ["REQ-005", "REQ-002"]
+    }
+  ]
+}

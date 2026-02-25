@@ -263,7 +263,7 @@ function prepareHook(hookPath) {
     }
 
     // Copy lib files if not already done
-    const libFiles = ['common.cjs', 'provider-utils.cjs', 'three-verb-utils.cjs'];
+    const libFiles = ['common.cjs', 'provider-utils.cjs', 'three-verb-utils.cjs', 'toon-encoder.cjs'];
     for (const libFile of libFiles) {
         const src = path.join(HOOKS_SRC_DIR, 'lib', libFile);
         const dest = path.join(libDir, libFile);
@@ -387,7 +387,7 @@ function prepareDispatcher(dispatcherFilename) {
     }
 
     // Copy lib files
-    const libFiles = ['common.cjs', 'provider-utils.cjs', 'three-verb-utils.cjs'];
+    const libFiles = ['common.cjs', 'provider-utils.cjs', 'three-verb-utils.cjs', 'toon-encoder.cjs'];
     for (const libFile of libFiles) {
         const src = path.join(HOOKS_SRC_DIR, 'lib', libFile);
         const dest = path.join(libDir, libFile);
