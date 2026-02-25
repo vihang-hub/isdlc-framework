@@ -2246,9 +2246,13 @@ state update, check if adaptive workflow sizing should run.
 
 **3f.** On return, check the result status:
 - `"passed"` or successful completion → Mark task as `completed` **with strikethrough**: update both `status` to `completed` AND `subject` to `~~[N] {base subject}~~` (wrap the original `[N] subject` in `~~`). Then **clean up sub-agent tasks**: call `TaskList`, and for every task whose `subject` does NOT start with `[` or `~~[` (i.e., it is NOT a main workflow phase task), call `TaskUpdate` with `status: "deleted"` to remove it from the display. Continue to next phase.
-- `"blocked_by_hook"` → Check which hook caused the block (see **3f-blast-radius** below for blast-radius-validator blocks, otherwise use the generic path):
-  - **Generic hook block (non-blast-radius)**: Display blocker banner (same format as 3c), use `AskUserQuestion` for Retry/Skip/Cancel
-  - **Blast-radius-validator block**: Follow the specialized handling in **3f-blast-radius** below
+- `"blocked_by_hook"` → Identify the block type from the message and dispatch:
+  1. Contains `"BLAST RADIUS COVERAGE INCOMPLETE"` → Follow **3f-blast-radius** below (unchanged)
+  2. Contains `"GATE BLOCKED"` → Follow **3f-gate-blocker** below
+  3. Contains `"PHASE COMPLETION BLOCKED"` OR `"CONSTITUTIONAL VALIDATION INCOMPLETE"` → Follow **3f-constitutional** below
+  4. Contains `"ITERATION CORRIDOR"` → Follow **3f-iteration-corridor** below
+  5. Contains `"TEST ADEQUACY REQUIRED"` → Follow **3f-test-adequacy** below
+  6. Otherwise → Generic fallback: display blocker banner (same format as 3c), use `AskUserQuestion` for Retry/Skip/Cancel
 - Any other error → Display error, use `AskUserQuestion` for Retry/Skip/Cancel
 
 **3f-blast-radius.** BLAST RADIUS BLOCK HANDLING (Traces to: BUG-0019, FR-01 through FR-05)
@@ -2292,6 +2296,144 @@ When the `blocked_by_hook` status comes from `blast-radius-validator` (the block
    ```
 
 **IMPORTANT**: The `impact-analysis.md` file is READ-ONLY after Phase 02. The phase-loop controller and all agents MUST NOT modify it to circumvent blast radius validation. The only valid way to exclude a file from blast radius enforcement is to list it in the `## Deferred Files` section of `requirements-spec.md` with justification.
+
+**3f-retry-protocol.** HOOK BLOCK RETRY PROTOCOL (shared by 3f-gate-blocker, 3f-constitutional, 3f-iteration-corridor, 3f-test-adequacy)
+
+This protocol manages retry counters for hook block re-delegations. Each handler below follows this pattern:
+
+1. Read `hook_block_retries` object from `state.json` → `active_workflow` (create if missing, default `{}`)
+2. Key format: `hook_block_retries["{hook-type}:{phase_key}"]` — value is an integer counter
+3. Increment the counter on each re-delegation attempt
+4. Check against the max retries for the handler (see table below)
+5. On max exceeded: escalate to user with `AskUserQuestion`:
+   ```
+   HOOK BLOCK: Retry limit ({max}) exceeded for {hook-type} on phase {phase_key}.
+   {paste last block message}
+
+   Options:
+   [R] Retry — Re-delegate one more time
+   [S] Skip — Continue without resolving
+   [C] Cancel workflow
+   ```
+6. After re-delegation returns: loop back to STEP 3d (re-run phase delegation, which re-triggers hooks on completion)
+
+| Handler | Max retries | Rationale |
+|---------|-------------|-----------|
+| 3f-gate-blocker | 3 | Sub-checks have their own iteration limits internally |
+| 3f-constitutional | 3 | CV max_iterations is 5 in config, but orchestrator-level retries should be fewer |
+| 3f-iteration-corridor | 3 | Same rationale as constitutional |
+| 3f-test-adequacy | 2 | Precondition block — if test gen fails twice, escalate |
+
+**3f-gate-blocker.** GATE BLOCKER RE-DELEGATION
+
+When the block message contains `"GATE BLOCKED"`:
+
+1. Parse blocking requirements from the message. The gate-blocker emits lines in this format:
+   ```
+   Blocking requirements: req1, req2
+   - req1: reason
+   - req2: reason
+   ```
+2. Check retry counter (`gate-blocker:{phase_key}`) per **3f-retry-protocol**. If >= 3, escalate.
+3. Re-delegate to the SAME phase agent (resolve from the PHASE→AGENT table in step 3d) with this prompt:
+
+```
+GATE REQUIREMENTS NOT MET — Retry {N} of 3
+
+The gate-blocker hook blocked phase advancement:
+{paste full block message}
+
+You MUST resolve the blocking requirements before the phase can advance:
+- If test_iteration is blocking: run the test suite, fix failures, iterate until all pass
+- If constitutional_validation is blocking: read docs/isdlc/constitution.md, validate artifacts against required articles, update state.json constitutional_validation
+- If interactive_elicitation is blocking: complete the required menu interactions
+- If artifact_presence is blocking: create the missing artifact files listed above
+
+After completing the required work, signal phase completion.
+```
+
+4. On return, loop back to STEP 3d per the retry protocol.
+
+**3f-constitutional.** CONSTITUTIONAL VALIDATION RE-DELEGATION
+
+When the block message contains `"PHASE COMPLETION BLOCKED: Constitutional validation required"` OR `"CONSTITUTIONAL VALIDATION INCOMPLETE"`:
+
+1. Check retry counter (`constitutional:{phase_key}`) per **3f-retry-protocol**. If >= 3, escalate.
+2. Re-delegate to the SAME phase agent with this prompt:
+
+```
+CONSTITUTIONAL VALIDATION REQUIRED — Retry {N} of 3
+
+A constitutional validation hook blocked phase advancement:
+{paste full block message}
+
+You MUST complete constitutional validation:
+1. Read the constitution at docs/isdlc/constitution.md
+2. For each required article, check your phase artifacts for compliance
+3. Fix any violations found in the artifacts
+4. Update state.json phases["{phase_key}"].constitutional_validation:
+   { "status": "compliant", "completed": true, "articles_checked": [...], "iterations_used": N }
+5. Then signal phase completion
+
+Required state: completed=true, iterations_used>=1, status=compliant|escalated, articles_checked non-empty.
+```
+
+3. On return, loop back to STEP 3d per the retry protocol.
+
+**3f-iteration-corridor.** ITERATION CORRIDOR RE-DELEGATION
+
+When the block message contains `"ITERATION CORRIDOR"`:
+
+1. Detect corridor type from the message:
+   - Contains `"Tests are failing"` → TEST corridor
+   - Contains `"Constitutional validation"` → CONST corridor
+2. Check retry counter (`iteration-corridor:{phase_key}`) per **3f-retry-protocol**. If >= 3, escalate.
+3. Re-delegate to the SAME phase agent with the appropriate prompt:
+
+For TEST corridor:
+```
+ITERATION CORRIDOR: TESTS FAILING — Retry {N} of 3
+
+{paste full block message}
+
+You MUST fix the failing tests before advancing:
+1. Read the test failure output
+2. Fix the code causing failures
+3. Re-run the test suite
+4. Iterate until all tests pass
+```
+
+For CONST corridor:
+```
+ITERATION CORRIDOR: CONSTITUTIONAL VALIDATION PENDING — Retry {N} of 3
+
+{paste full block message}
+
+You MUST complete constitutional validation before advancing.
+Read docs/isdlc/constitution.md, validate artifacts, update state.json.
+```
+
+4. On return, loop back to STEP 3d per the retry protocol.
+
+**3f-test-adequacy.** TEST ADEQUACY RE-DELEGATION
+
+When the block message contains `"TEST ADEQUACY REQUIRED"`:
+
+1. Check retry counter (`test-adequacy:{phase_key}`) per **3f-retry-protocol**. If >= 2, escalate.
+2. Re-delegate to the SAME phase agent with this prompt:
+
+```
+TEST ADEQUACY REQUIRED — Retry {N} of 2
+
+{paste full block message}
+
+You MUST establish adequate test coverage before proceeding:
+1. Write unit tests for the affected code
+2. Achieve the minimum coverage threshold shown above
+3. Run the test suite to verify coverage
+```
+
+3. On return, loop back to STEP 3d per the retry protocol.
 
 #### STEP 3-dashboard: COMPLETION DASHBOARD (REQ-0022)
 
