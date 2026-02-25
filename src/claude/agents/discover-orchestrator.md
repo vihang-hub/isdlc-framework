@@ -1764,7 +1764,7 @@ Build the `incomingSkills` array from the skills successfully distilled in Step 
 ```javascript
 const incomingSkills = [
   { name: "project-architecture", file: "project-architecture.md", description: "...", sourcePhase: "D1",
-    bindings: { phases: ["all"], agents: ["all"], injection_mode: "always", delivery_type: "context" } },
+    bindings: { phases: ["all"], agents: ["all"], injection_mode: "always", delivery_type: "instruction" } },
   // ... one entry per distilled skill
 ];
 
