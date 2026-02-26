@@ -1,0 +1,55 @@
+Requirement,AC,Test_Case,Test_Type,Priority,Description
+FR-001,AC-001-01,TC-FSI-01,positive,P0,Banner appears once at section level
+FR-001,AC-001-02,TC-FSI-02,positive,P0,Agent headings preserved in SKILL_INDEX
+FR-001,AC-001-03,TC-FSI-03,positive,P1,Banner deduplication saves at least 2000 chars
+FR-002,AC-002-01,TC-FSI-04,positive,P0,Single-line skill entry format
+FR-002,AC-002-01,TC-FSI-08,negative,P1,Empty skill index returns empty string
+FR-002,AC-002-01,TC-FSI-09,negative,P2,Non-array input returns empty string
+FR-002,AC-002-02,TC-FSI-05,positive,P0,Base path in section header
+FR-002,AC-002-03,TC-FSI-06,positive,P0,All skill entries preserved in compact format
+FR-002,AC-002-03,TC-FSI-10,positive,P1,Path shortening extracts last two segments
+FR-002,AC-002-04,TC-FSI-07,positive,P1,Combined FR-001 + FR-002 achieves 50% reduction
+FR-003,AC-003-01,TC-TPC-01,positive,P0,Stripped sections absent from output
+FR-003,AC-003-01,TC-TPC-05,negative,P1,Null input returns empty string
+FR-003,AC-003-01,TC-TPC-06,negative,P1,Empty string input returns empty string
+FR-003,AC-003-01,TC-TPC-07,negative,P2,Non-string input returns empty string
+FR-003,AC-003-01,TC-TPC-08,negative,P2,No section headings returns frontmatter-stripped content
+FR-003,AC-003-02,TC-TPC-02,positive,P0,Kept sections present in output
+FR-003,AC-003-03,TC-TPC-03,positive,P0,Persona heading delimiter preserved
+FR-003,AC-003-04,TC-TPC-04,positive,P1,YAML frontmatter stripped from persona
+FR-004,AC-004-01,TC-TPC-09,positive,P0,Self-Validation present as single merged checklist
+FR-004,AC-004-02,TC-TPC-10,positive,P0,All validation criteria preserved in merged checklist
+FR-004,AC-004-03,TC-TPC-11,positive,P1,Validation criteria remain within persona block
+FR-004,AC-004-04,TC-TPC-12,positive,P1,Per-persona reduction at least 50%
+FR-005,AC-005-01,TC-TTC-01,positive,P0,Topic frontmatter stripped
+FR-005,AC-005-01,TC-TTC-06,negative,P1,Null/empty topic input returns empty string
+FR-005,AC-005-01,TC-TTC-07,negative,P2,Non-string topic input returns empty string
+FR-005,AC-005-01,TC-TTC-08,negative,P2,Topic content with no frontmatter returns unchanged
+FR-005,AC-005-02,TC-TTC-02,positive,P0,depth_guidance and source_step_files absent
+FR-005,AC-005-03,TC-TTC-03,positive,P0,Analytical Knowledge and Validation Criteria preserved
+FR-005,AC-005-04,TC-TTC-04,positive,P0,Topic heading delimiter preserved
+FR-005,AC-005-05,TC-TTC-05,positive,P1,ROUNDTABLE_CONTEXT total reduction at least 40%
+FR-006,AC-006-01,TC-CDC-01,positive,P0,Tables preserved verbatim
+FR-006,AC-006-01,TC-CDC-07,negative,P1,Null/empty discovery input returns empty string
+FR-006,AC-006-01,TC-CDC-08,negative,P2,Non-string discovery input returns empty string
+FR-006,AC-006-02,TC-CDC-02,positive,P0,Headings preserved verbatim
+FR-006,AC-006-03,TC-CDC-03,positive,P0,List items preserved
+FR-006,AC-006-04,TC-CDC-04,positive,P0,Prose paragraphs removed
+FR-006,AC-006-04,TC-CDC-06,positive,P2,Consecutive blank lines collapsed
+FR-006,AC-006-04,TC-CDC-09,negative,P2,Content with no tables/lists strips all prose
+FR-006,AC-006-05,TC-CDC-05,positive,P1,DISCOVERY_CONTEXT reduction at least 40%
+FR-007,AC-007-01,TC-FO-01,positive,P0,tightenPersonaContent returns original on error
+FR-007,AC-007-01,TC-FO-02,positive,P0,tightenTopicContent returns original on error
+FR-007,AC-007-01,TC-FO-03,positive,P0,condenseDiscoveryContent returns original on error
+FR-007,AC-007-02,TC-FO-04,positive,P0,One section failure does not affect other sections
+FR-007,AC-007-03,TC-FO-05,positive,P1,Verbose mode logs fallback warning
+FR-008,AC-008-01,TC-REP-01,positive,P1,Per-section reduction reported in verbose mode
+FR-008,AC-008-01,TC-REP-04,negative,P2,Non-verbose mode does not output reduction stats
+FR-008,AC-008-02,TC-REP-02,positive,P1,Total reduction summary in verbose mode
+FR-008,AC-008-03,TC-REP-03,positive,P1,Reduction stats written to stderr not stdout
+BWC,AC-001-02;AC-003-03;AC-005-04,TC-BWC-01,positive,P0,Section delimiters preserved in full cache
+BWC,AC-003-03,TC-BWC-02,positive,P0,Orchestrator persona extraction works on tightened cache
+BWC,AC-005-04,TC-BWC-03,positive,P0,Orchestrator topic extraction works on tightened cache
+BWC,AC-002-03,TC-BWC-04,positive,P0,Skill ID and path extractable from compact format
+BWC,AC-001-02,TC-BWC-05,positive,P1,Section start/end delimiters balanced
+BWC,AC-007-02,TC-BWC-06,positive,P1,Cross-section independence under failure

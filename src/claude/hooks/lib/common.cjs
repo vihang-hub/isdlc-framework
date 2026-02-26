@@ -1626,12 +1626,20 @@ function formatSkillIndexBlock(skillIndex) {
         return '';
     }
 
+    // REQ-0042 FR-001/FR-002: Compact single-line format, no per-block banner.
+    // Banner + base path are emitted once at the section level by rebuildSessionCache().
+    // Path shortening: extract last two segments before /SKILL.md
     const lines = [];
-    lines.push('AVAILABLE SKILLS (consult when relevant using Read tool):');
-
     for (const entry of skillIndex) {
-        lines.push(`  ${entry.id}: ${entry.name} — ${entry.description}`);
-        lines.push(`    → ${entry.path}`);
+        let shortPath = entry.path;
+        // Extract last two path segments before /SKILL.md
+        // e.g. src/claude/skills/development/code-implementation/SKILL.md -> development/code-implementation
+        const pathParts = entry.path.replace(/\\/g, '/').split('/');
+        const skillMdIdx = pathParts.indexOf('SKILL.md');
+        if (skillMdIdx >= 2) {
+            shortPath = pathParts[skillMdIdx - 2] + '/' + pathParts[skillMdIdx - 1];
+        }
+        lines.push(`  ${entry.id}: ${entry.name} | ${entry.description} | ${shortPath}`);
     }
 
     return lines.join('\n');
@@ -4069,6 +4077,232 @@ function _collectSourceMtimes(projectRoot) {
     return { sources, hash, count: sources.length };
 }
 
+// =============================================================================
+// REQ-0042: Markdown Tightening Functions
+// =============================================================================
+
+/**
+ * Tighten persona file content by stripping non-essential sections and
+ * compacting the Self-Validation Protocol (section 7).
+ *
+ * Keeps sections: 1 (Identity), 2 (Principles), 3 (Voice Integrity Rules),
+ *   5 (Interaction Style), 7 (Self-Validation -- compacted)
+ * Strips sections: 4 (Analytical Approach), 6 (Artifact Responsibilities),
+ *   8 (Artifact Folder Convention), 9 (Meta.json Protocol), 10 (Constraints)
+ *
+ * Fail-open: returns rawContent unchanged on any error.
+ *
+ * @param {*} rawContent - Raw persona file content
+ * @returns {string} Tightened content, empty string for null/undefined/non-string
+ * Traces to: FR-003 (AC-003-01 through AC-003-04), FR-004 (AC-004-01 through AC-004-04)
+ */
+function tightenPersonaContent(rawContent) {
+    // Return empty string for null/undefined/non-string input
+    if (rawContent == null || typeof rawContent !== 'string') return '';
+    if (rawContent.trim().length === 0) return '';
+
+    try {
+        let content = rawContent;
+
+        // Strip YAML frontmatter (between first --- and second --- at start of file)
+        const fmMatch = content.match(/^---\n[\s\S]*?\n---\n?/);
+        if (fmMatch) {
+            content = content.slice(fmMatch[0].length);
+        }
+
+        // Split content by ## heading markers
+        // We split on lines that start with "## " to get sections
+        const sections = content.split(/^(?=## )/m);
+
+        // Sections to keep (by number prefix): 1, 2, 3, 5, 7
+        const keepNumbers = new Set([1, 2, 3, 5, 7]);
+        // Sections to strip: 4, 6, 8, 9, 10
+        const stripNumbers = new Set([4, 6, 8, 9, 10]);
+
+        const keptSections = [];
+
+        for (const section of sections) {
+            // Check if this section starts with a numbered heading like "## N. "
+            const headingMatch = section.match(/^## (\d+)\./);
+            if (!headingMatch) {
+                // Pre-heading content (e.g., the title "# Maya Chen -- Business Analyst")
+                // Keep it if non-empty
+                if (section.trim().length > 0) {
+                    keptSections.push(section);
+                }
+                continue;
+            }
+
+            const sectionNum = parseInt(headingMatch[1], 10);
+
+            if (stripNumbers.has(sectionNum)) {
+                // Strip this section entirely
+                continue;
+            }
+
+            if (sectionNum === 7) {
+                // Compact section 7 (Self-Validation Protocol):
+                // Merge "Before writing" and "Before finalization" checklists into one
+                const compacted = _compactSelfValidation(section);
+                keptSections.push(compacted);
+                continue;
+            }
+
+            if (keepNumbers.has(sectionNum)) {
+                keptSections.push(section);
+            }
+            // Sections with numbers not in either set are kept by default (fail-open)
+        }
+
+        return keptSections.join('').trim() + '\n';
+    } catch (_err) {
+        // Fail-open: return original content on any error
+        return rawContent;
+    }
+}
+
+/**
+ * Compact the Self-Validation Protocol section (section 7).
+ * Merges "Before writing" and "Before finalization" checklists into a
+ * single unified checklist under the section heading.
+ *
+ * @param {string} sectionContent - Section 7 content starting with "## 7."
+ * @returns {string} Compacted section
+ */
+function _compactSelfValidation(sectionContent) {
+    // Extract the heading line
+    const lines = sectionContent.split('\n');
+    const headingLine = lines[0]; // "## 7. Self-Validation Protocol"
+
+    // Collect all list items (lines starting with "- ")
+    const allItems = [];
+    const seen = new Set();
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('- ')) {
+            if (!seen.has(trimmed)) {
+                seen.add(trimmed);
+                allItems.push(trimmed);
+            }
+        }
+    }
+
+    return headingLine + '\n\n' + allItems.join('\n') + '\n\n';
+}
+
+/**
+ * Tighten topic file content by stripping YAML frontmatter.
+ * Preserves all body content (Analytical Knowledge, Validation Criteria,
+ * Artifact Instructions).
+ *
+ * Fail-open: returns rawContent unchanged on any error.
+ * Returns rawContent unchanged if no frontmatter found.
+ *
+ * @param {*} rawContent - Raw topic file content
+ * @returns {string} Tightened content, empty string for null/undefined/non-string
+ * Traces to: FR-005 (AC-005-01 through AC-005-04)
+ */
+function tightenTopicContent(rawContent) {
+    // Return empty string for null/undefined/non-string input
+    if (rawContent == null || typeof rawContent !== 'string') return '';
+    if (rawContent.trim().length === 0) return '';
+
+    try {
+        // Strip YAML frontmatter (between first --- and second --- at start of file)
+        const fmMatch = rawContent.match(/^---\n[\s\S]*?\n---\n?/);
+        if (!fmMatch) {
+            // No frontmatter found -- return unchanged
+            return rawContent;
+        }
+
+        const content = rawContent.slice(fmMatch[0].length);
+        // If stripping frontmatter leaves nothing meaningful, return the raw
+        if (content.trim().length === 0) return rawContent;
+        return content;
+    } catch (_err) {
+        // Fail-open: return original content on any error
+        return rawContent;
+    }
+}
+
+/**
+ * Condense discovery content by stripping prose paragraphs while
+ * preserving headings, tables, lists, and structure.
+ *
+ * Keeps: headings (#), table rows (|), list items (- , * , N. ),
+ *        blank lines (collapsed to single)
+ * Strips: all other lines (prose paragraphs)
+ *
+ * Fail-open: returns rawContent unchanged on any error.
+ *
+ * @param {*} rawContent - Raw discovery report content
+ * @returns {string} Condensed content, empty string for null/undefined/non-string
+ * Traces to: FR-006 (AC-006-01 through AC-006-05)
+ */
+function condenseDiscoveryContent(rawContent) {
+    // Return empty string for null/undefined/non-string input
+    if (rawContent == null || typeof rawContent !== 'string') return '';
+    if (rawContent.trim().length === 0) return '';
+
+    try {
+        const lines = rawContent.split('\n');
+        const kept = [];
+        let prevBlank = false;
+
+        for (const line of lines) {
+            const trimmed = line.trim();
+
+            // Blank line -- keep but collapse consecutive
+            if (trimmed.length === 0) {
+                if (!prevBlank) {
+                    kept.push('');
+                    prevBlank = true;
+                }
+                continue;
+            }
+
+            // Heading lines
+            if (trimmed.startsWith('#')) {
+                kept.push(line);
+                prevBlank = false;
+                continue;
+            }
+
+            // Table rows
+            if (trimmed.startsWith('|')) {
+                kept.push(line);
+                prevBlank = false;
+                continue;
+            }
+
+            // Unordered list items
+            if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+                kept.push(line);
+                prevBlank = false;
+                continue;
+            }
+
+            // Numbered list items
+            if (/^\d+\. /.test(trimmed)) {
+                kept.push(line);
+                prevBlank = false;
+                continue;
+            }
+
+            // All other lines (prose) are stripped -- mark as blank for collapse
+            if (!prevBlank) {
+                kept.push('');
+                prevBlank = true;
+            }
+        }
+
+        return kept.join('\n');
+    } catch (_err) {
+        // Fail-open: return original content on any error
+        return rawContent;
+    }
+}
+
 /**
  * Rebuild the session cache file (.isdlc/session-cache.md).
  * Reads all static framework content and assembles it into a single
@@ -4180,21 +4414,45 @@ function rebuildSessionCache(options = {}) {
     }));
 
     // Section 6: SKILL_INDEX (per-agent blocks)
+    // REQ-0042 FR-001/FR-002: Single banner + base path at section level,
+    // compact single-line entries per skill (no per-block banner)
+    let skillIndexBeforeChars = 0;
+    let skillIndexAfterChars = 0;
     parts.push(buildSection('SKILL_INDEX', () => {
         const manifest = loadManifest();
         if (!manifest || !manifest.ownership) return '';
 
-        const blocks = [];
+        // Measure before size (verbose format) for reduction reporting
+        const verboseBlocks = [];
+        const compactBlocks = [];
         for (const [agentName, agentEntry] of Object.entries(manifest.ownership)) {
             if (!agentEntry.skills || agentEntry.skills.length === 0) continue;
-            const skillIndex = getAgentSkillIndex(agentName);
-            if (skillIndex.length === 0) continue;
-            const block = formatSkillIndexBlock(skillIndex);
+            const skillIdx = getAgentSkillIndex(agentName);
+            if (skillIdx.length === 0) continue;
+
+            // Build verbose version for size comparison
+            const verboseLines = ['AVAILABLE SKILLS (consult when relevant using Read tool):'];
+            for (const entry of skillIdx) {
+                verboseLines.push(`  ${entry.id}: ${entry.name} \u2014 ${entry.description}`);
+                verboseLines.push(`    \u2192 ${entry.path}`);
+            }
+            verboseBlocks.push(`## Agent: ${agentName}\n${verboseLines.join('\n')}`);
+
+            // Build compact version
+            const block = formatSkillIndexBlock(skillIdx);
             if (block) {
-                blocks.push(`## Agent: ${agentName}\n${block}`);
+                compactBlocks.push(`## Agent: ${agentName}\n${block}`);
             }
         }
-        return blocks.join('\n\n');
+
+        skillIndexBeforeChars = verboseBlocks.join('\n\n').length;
+
+        // REQ-0042: Single banner header + base path at section level
+        const sectionHeader = 'AVAILABLE SKILLS (consult when relevant using Read tool):\nBase path: src/claude/skills/{category}/{name}/SKILL.md';
+        const result = sectionHeader + '\n\n' + compactBlocks.join('\n\n');
+        skillIndexAfterChars = result.length;
+
+        return result;
     }));
 
     // Section 7: EXTERNAL_SKILLS
@@ -4230,17 +4488,23 @@ function rebuildSessionCache(options = {}) {
     }));
 
     // Section 8: ROUNDTABLE_CONTEXT (persona + topic files)
+    // REQ-0042 FR-003/FR-004/FR-005: Apply tightenPersonaContent() and tightenTopicContent()
+    let rtBeforeChars = 0;
+    let rtAfterChars = 0;
     parts.push(buildSection('ROUNDTABLE_CONTEXT', () => {
         const rtParts = [];
+        const rtVerboseParts = [];
 
         // Persona files
         const personaDir = path.join(root, 'src', 'claude', 'agents');
         const personaFiles = ['persona-business-analyst.md', 'persona-solutions-architect.md', 'persona-system-designer.md'];
         for (const pf of personaFiles) {
             try {
-                const content = fs.readFileSync(path.join(personaDir, pf), 'utf8');
+                const rawContent = fs.readFileSync(path.join(personaDir, pf), 'utf8');
                 const name = pf.replace('persona-', '').replace('.md', '')
                     .split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                rtVerboseParts.push(`### Persona: ${name}\n${rawContent}`);
+                const content = tightenPersonaContent(rawContent);
                 rtParts.push(`### Persona: ${name}\n${content}`);
             } catch (_) {
                 // Skip missing persona files
@@ -4259,8 +4523,10 @@ function rebuildSessionCache(options = {}) {
                         const topicFiles = fs.readdirSync(catPath).filter(f => f.endsWith('.md')).sort();
                         for (const tf of topicFiles) {
                             try {
-                                const content = fs.readFileSync(path.join(catPath, tf), 'utf8');
+                                const rawContent = fs.readFileSync(path.join(catPath, tf), 'utf8');
                                 const topicId = tf.replace('.md', '');
+                                rtVerboseParts.push(`### Topic: ${topicId}\n${rawContent}`);
+                                const content = tightenTopicContent(rawContent);
                                 rtParts.push(`### Topic: ${topicId}\n${content}`);
                             } catch (_) { /* skip */ }
                         }
@@ -4269,7 +4535,11 @@ function rebuildSessionCache(options = {}) {
             } catch (_) { /* skip */ }
         }
 
-        return rtParts.join('\n\n');
+        rtBeforeChars = rtVerboseParts.join('\n\n').length;
+        const result = rtParts.join('\n\n');
+        rtAfterChars = result.length;
+
+        return result;
     }));
 
     // Section 9: REMOVED (REQ-0037) — discovery content now delivered via
@@ -4296,6 +4566,21 @@ function rebuildSessionCache(options = {}) {
         if (totalJsonChars > 0) {
             const totalReduction = ((1 - totalToonChars / totalJsonChars) * 100).toFixed(1);
             process.stderr.write(`TOON total: ${totalJsonChars} -> ${totalToonChars} chars (${totalReduction}% reduction across JSON sections)\n`);
+        }
+        // REQ-0042 FR-008: Verbose markdown tightening reduction reporting
+        if (skillIndexBeforeChars > 0) {
+            const siPct = ((1 - skillIndexAfterChars / skillIndexBeforeChars) * 100).toFixed(1);
+            process.stderr.write(`TIGHTEN SKILL_INDEX: ${skillIndexBeforeChars} -> ${skillIndexAfterChars} chars (${siPct}% reduction)\n`);
+        }
+        if (rtBeforeChars > 0) {
+            const rtPct = ((1 - rtAfterChars / rtBeforeChars) * 100).toFixed(1);
+            process.stderr.write(`TIGHTEN ROUNDTABLE_CONTEXT: ${rtBeforeChars} -> ${rtAfterChars} chars (${rtPct}% reduction)\n`);
+        }
+        const tightenBefore = skillIndexBeforeChars + rtBeforeChars;
+        const tightenAfter = skillIndexAfterChars + rtAfterChars;
+        if (tightenBefore > 0) {
+            const totalPct = ((1 - tightenAfter / tightenBefore) * 100).toFixed(1);
+            process.stderr.write(`TIGHTEN total: ${tightenBefore} -> ${tightenAfter} chars (${totalPct}% reduction across markdown sections)\n`);
         }
     }
 
@@ -4425,4 +4710,8 @@ if (process.env.NODE_ENV === 'test' || process.env.ISDLC_TEST_MODE === '1') {
     module.exports._loadConfigWithCache = _loadConfigWithCache;
     module.exports._buildSkillPathIndex = _buildSkillPathIndex;
     module.exports._collectSourceMtimes = _collectSourceMtimes;
+    // REQ-0042: Markdown tightening functions
+    module.exports._tightenPersonaContent = tightenPersonaContent;
+    module.exports._tightenTopicContent = tightenTopicContent;
+    module.exports._condenseDiscoveryContent = condenseDiscoveryContent;
 }

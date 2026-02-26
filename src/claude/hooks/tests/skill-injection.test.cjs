@@ -376,7 +376,7 @@ describe('TC-02: formatSkillIndexBlock() — Output Formatting', () => {
         assert.equal(result, '', 'Empty array should produce empty string');
     });
 
-    // TC-02.2: Single entry formats correctly
+    // TC-02.2: Single entry formats correctly (REQ-0042: compact format, no per-block banner)
     it('TC-02.2: single entry formats with header and skill info', () => {
         const entries = [{
             id: 'DEV-001',
@@ -386,11 +386,11 @@ describe('TC-02: formatSkillIndexBlock() — Output Formatting', () => {
         }];
         const result = common.formatSkillIndexBlock(entries);
 
-        assert.ok(result.includes('AVAILABLE SKILLS'), 'Should contain AVAILABLE SKILLS header');
+        // REQ-0042: Banner moved to section level; per-block output uses compact pipe format
         assert.ok(result.includes('DEV-001'), 'Should contain skill ID');
         assert.ok(result.includes('code-implementation'), 'Should contain skill name');
         assert.ok(result.includes('Write production code'), 'Should contain description');
-        assert.ok(result.includes('SKILL.md'), 'Should contain path reference');
+        assert.ok(result.includes('development/code-implementation'), 'Should contain shortened path');
     });
 
     // TC-02.3: Multiple entries all present
@@ -410,16 +410,15 @@ describe('TC-02: formatSkillIndexBlock() — Output Formatting', () => {
         assert.ok(result.includes('Gamma desc'), 'Should contain third description');
     });
 
-    // TC-02.4: Header includes usage instruction
+    // TC-02.4: Per-block output is compact (REQ-0042: banner at section level, not per-block)
     it('TC-02.4: header includes usage instruction about Read tool', () => {
-        const entries = [{ id: 'X-001', name: 'test', description: 'Test', path: 'x/SKILL.md' }];
+        const entries = [{ id: 'X-001', name: 'test', description: 'Test', path: 'src/claude/skills/cat/test/SKILL.md' }];
         const result = common.formatSkillIndexBlock(entries);
 
-        // Header should mention consulting with Read tool
-        assert.ok(
-            result.toLowerCase().includes('consult') || result.toLowerCase().includes('read'),
-            'Header should mention consulting skills or using Read tool'
-        );
+        // REQ-0042: Banner moved to section level in rebuildSessionCache().
+        // Per-block output uses compact pipe-separated format.
+        assert.ok(result.includes('X-001'), 'Should contain skill ID');
+        assert.ok(result.includes('|'), 'Should use pipe separator format');
     });
 
     // TC-02.5: Output stays within 30-line budget for 14 entries (NFR-01)
@@ -553,16 +552,17 @@ describe('TC-04: Integration — End-to-End Flow', () => {
         cleanupTestProject(tmpDir);
     });
 
-    // TC-04.1: Full pipeline from agent name to formatted block
+    // TC-04.1: Full pipeline from agent name to formatted block (REQ-0042: compact format)
     it('TC-04.1: agent name to formatted block produces valid output', () => {
         const skillIndex = common.getAgentSkillIndex('test-agent-alpha');
         const block = common.formatSkillIndexBlock(skillIndex);
 
         assert.ok(typeof block === 'string', 'Block should be a string');
         assert.ok(block.length > 0, 'Block should be non-empty for agent with skills');
-        assert.ok(block.includes('AVAILABLE SKILLS'), 'Block should have header');
+        // REQ-0042: Banner moved to section level; per-block uses compact pipe format
         assert.ok(block.includes('TEST-001'), 'Block should contain skill IDs');
         assert.ok(block.includes('Execute the first test skill'), 'Block should contain descriptions');
+        assert.ok(block.includes('|'), 'Block should use pipe-separated compact format');
     });
 
     // TC-04.2: Unknown agent produces empty block

@@ -25,7 +25,7 @@ function tightenPersonaContent(rawContent: string): string
 
 | Type | Description |
 |------|-------------|
-| string | Tightened persona content. On error, returns `rawContent` unchanged. |
+| string | Aggressively tightened persona content (sections 4,6,8,9,10 stripped, section 7 compacted, frontmatter stripped). On error, returns `rawContent` unchanged. |
 
 ### Validation Rules
 
@@ -48,6 +48,11 @@ description: "Maya Chen..."
 - **Name**: Maya Chen
 ...
 
+## 4. Analytical Approach
+### 4.1 Problem Discovery
+- What business problem does this solve?
+...
+
 ## 6. Artifact Responsibilities
 ### 6.1 requirements-spec.md
 ...
@@ -65,7 +70,7 @@ description: "Maya Chen..."
 - **Name**: Maya Chen
 ...
 ```
-(Sections 6, 8, 9, 10 removed. Frontmatter removed.)
+(Sections 4, 6, 8, 9, 10 removed. Frontmatter removed. Section 7 compacted.)
 
 ### Error Behavior
 
@@ -165,13 +170,16 @@ function condenseDiscoveryContent(rawContent: string): string
 
 | Type | Description |
 |------|-------------|
-| string | Condensed content with tables preserved and prose trimmed. On error, returns `rawContent` unchanged. |
+| string | Structured-only content (headings, tables, lists preserved; all prose stripped). On error, returns `rawContent` unchanged. |
 
 ### Validation Rules
 
 - If `rawContent` is falsy or not a string: return empty string
-- If no table rows found (no lines starting with `|`): return rawContent unchanged (nothing to preserve/trim)
 - Headings (lines starting with `#`) are always preserved
+- Table rows (lines starting with `|`) are always preserved
+- List items (lines starting with `- `, `* `, or numbered `N. `) are always preserved
+- Blank lines are preserved (but consecutive blanks collapsed to one)
+- All other lines (prose) are stripped
 
 ### Examples
 
@@ -189,9 +197,14 @@ consists of 24 production JavaScript files (8,235 lines), 315 markdown definitio
 |-------|------------|---------|-------|
 | CLI Entry | bin/isdlc.js | ESM command router | 6 commands |
 ...
+
+## 3. Key Concerns
+
+- Broken ESM test suite needs npm ci
+- Hook runtime system is well-tested
 ```
 
-**Output** (abbreviated):
+**Output**:
 ```markdown
 ## 1. Executive Summary
 
@@ -201,8 +214,13 @@ consists of 24 production JavaScript files (8,235 lines), 315 markdown definitio
 |-------|------------|---------|-------|
 | CLI Entry | bin/isdlc.js | ESM command router | 6 commands |
 ...
+
+## 3. Key Concerns
+
+- Broken ESM test suite needs npm ci
+- Hook runtime system is well-tested
 ```
-(Prose paragraph under Executive Summary removed as it restates table content.)
+(Prose paragraph under Executive Summary stripped. Tables and list items preserved.)
 
 ### Error Behavior
 
@@ -210,7 +228,6 @@ consists of 24 production JavaScript files (8,235 lines), 315 markdown definitio
 |-----------------|----------|
 | rawContent is null/undefined | Return empty string |
 | rawContent is not a string | Return empty string |
-| No tables found | Return rawContent unchanged |
 | Any unexpected error | Return rawContent unchanged (try/catch) |
 
 ---
@@ -233,21 +250,27 @@ function formatSkillIndexBlock(skillIndex: Array<{id, name, description, path}>)
 
 | Type | Description |
 |------|-------------|
-| string | Skill entries in single-line format, one per line. No banner header. Empty string for empty array. |
+| string | Skill entries in compact single-line format with shortened paths, one per line. No banner header. Empty string for empty array. |
 
 ### Output Format Change
 
 **Before** (current):
 ```
 AVAILABLE SKILLS (consult when relevant using Read tool):
-  DEV-001: code-implementation — Description text
-    → src/claude/skills/development/code-implementation/SKILL.md
+  DEV-001: code-implementation -- Description text
+    -> src/claude/skills/development/code-implementation/SKILL.md
 ```
 
 **After** (new):
 ```
-  DEV-001: code-implementation | Description text | src/claude/skills/development/code-implementation/SKILL.md
+  DEV-001: code-implementation | Description text | development/code-implementation
 ```
+
+### Path Shortening Logic
+
+Extract the two path segments before `/SKILL.md`:
+- Input: `src/claude/skills/development/code-implementation/SKILL.md`
+- Output: `development/code-implementation`
 
 ### Validation Rules (unchanged)
 
@@ -261,25 +284,15 @@ AVAILABLE SKILLS (consult when relevant using Read tool):
 
 ## 5. rebuildSessionCache() -- SKILL_INDEX Section Modification
 
-### Current Behavior (line 4182)
-
-```javascript
-// Section 6: SKILL_INDEX (per-agent blocks)
-parts.push(buildSection('SKILL_INDEX', () => {
-    // ... builds per-agent blocks with formatSkillIndexBlock()
-    blocks.push(`## Agent: ${agentName}\n${block}`);
-    return blocks.join('\n\n');
-}));
-```
-
 ### New Behavior
 
 ```javascript
 // Section 6: SKILL_INDEX (per-agent blocks, tightened)
 parts.push(buildSection('SKILL_INDEX', () => {
-    // Single banner at section level
-    const header = 'AVAILABLE SKILLS (consult when relevant using Read tool):';
-    // ... builds per-agent blocks (formatSkillIndexBlock no longer emits banner)
+    // Single banner + base path at section level
+    const header = 'AVAILABLE SKILLS (consult when relevant using Read tool):\n' +
+                   'Base path: src/claude/skills/{category}/{name}/SKILL.md';
+    // ... builds per-agent blocks (formatSkillIndexBlock emits compact lines, no banner)
     blocks.push(`## Agent: ${agentName}\n${block}`);
     return header + '\n\n' + blocks.join('\n\n');
 }));
@@ -294,10 +307,10 @@ parts.push(buildSection('SKILL_INDEX', () => {
 Written to `process.stderr` when `verbose === true`:
 
 ```
-TIGHTEN SKILL_INDEX: 39866 -> 25000 chars (37.3% reduction)
-TIGHTEN ROUNDTABLE_CONTEXT: 47092 -> 36000 chars (23.5% reduction)
-TIGHTEN DISCOVERY_CONTEXT: 22814 -> 17000 chars (25.5% reduction)
-TIGHTEN total: 109772 -> 78000 chars (28.9% reduction across markdown sections)
+TIGHTEN SKILL_INDEX: 39866 -> 19933 chars (50.0% reduction)
+TIGHTEN ROUNDTABLE_CONTEXT: 47092 -> 27255 chars (42.1% reduction)
+TIGHTEN DISCOVERY_CONTEXT: 22814 -> 13688 chars (40.0% reduction)
+TIGHTEN total: 109772 -> 60876 chars (44.6% reduction across markdown sections)
 ```
 
 ### Integration

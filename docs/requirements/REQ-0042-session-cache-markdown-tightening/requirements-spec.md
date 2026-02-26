@@ -20,12 +20,12 @@ The session cache consumes ~44% of the context window after `/clear`. Three mark
 | DISCOVERY_CONTEXT | 22,814 | 12.8% |
 | **Total markdown** | **109,772** | **61.8%** |
 
-REQ-0041 addresses JSON sections via TOON encoding (~9.4% reduction). This item targets the remaining markdown, aiming for a combined 25-30% total cache reduction.
+REQ-0041 attempted to reduce the JSON sections via TOON encoding (~9.4% character reduction), but in practice the savings did not translate to real context window reduction -- the LLM tokenizer appears to expand the compact TOON format back to a similar token count. Therefore, the full 25-30% cache reduction target must be achieved by this item alone through markdown tightening.
 
 ### Success Metrics
 
-- Combined cache reduction of 25-30% (with REQ-0041)
-- REQ-0042 contribution: 15-20% reduction (~27K-36K chars saved)
+- Total cache reduction of 25-30% from REQ-0042 alone (~44K-53K chars saved)
+- Per-section reduction targets: SKILL_INDEX 50%+, ROUNDTABLE_CONTEXT 40%+, DISCOVERY_CONTEXT 40%+
 - Zero information loss: every distinct fact present in verbose version is present in tightened version
 - No degradation in agent performance (validated through usage observation)
 
@@ -34,10 +34,15 @@ REQ-0041 addresses JSON sections via TOON encoding (~9.4% reduction). This item 
 - Context window budget is constrained; every character consumed by the cache reduces space available for the user's actual conversation
 - Longer caches slow down first-token latency and increase cost per conversation turn
 - The session cache is injected into every conversation, making efficiency gains multiply across all usage
+- REQ-0041 TOON encoding did not produce measurable context window savings in practice, making markdown tightening the sole viable approach
 
 ### Cost of Inaction
 
-Without tightening, the session cache will continue to consume ~44% of the context window, leaving less room for conversation history and artifacts as the framework grows.
+Without tightening, the session cache will continue to consume ~44% of the context window, leaving less room for conversation history and artifacts as the framework grows. REQ-0041 has demonstrated that character-level compression alone is insufficient -- structural removal of redundant content is required.
+
+### Dependency Note
+
+REQ-0041 (TOON encoder) should still land first as it is already implemented, but the combined savings target is no longer assumed. REQ-0042 is self-sufficient for the 25-30% reduction goal.
 
 ## 2. Stakeholders and Personas
 
@@ -102,7 +107,7 @@ Without tightening, the session cache will continue to consume ~44% of the conte
 - `buildSection(name, contentFn)` wraps each section with `<!-- SECTION: ... -->` delimiters
 - `formatSkillIndexBlock()` (line 1624) formats per-agent skill blocks
 - `inject-session-cache.cjs` is the injection hook -- reads and outputs the cache file, self-contained
-- REQ-0041 added TOON encoding for JSON sections via `buildJsonSection()` helper
+- REQ-0041 added TOON encoding for JSON sections via `buildJsonSection()` helper (character savings confirmed but token-level savings unproven)
 
 ### Integration Points
 
@@ -126,7 +131,7 @@ Without tightening, the session cache will continue to consume ~44% of the conte
 | Attribute | Priority | Threshold |
 |-----------|----------|-----------|
 | Information Completeness | Critical | Every distinct fact in verbose version present in tightened version |
-| Cache Size Reduction | High | 15-20% reduction from REQ-0042 alone (27K-36K chars) |
+| Cache Size Reduction | Critical | 25-30% reduction from REQ-0042 alone (44K-53K chars) |
 | Fail-Open Safety | High | Any tightening error falls through to verbose content |
 | Parse Compatibility | High | All downstream consumers (orchestrator, agents) parse tightened output correctly |
 | Performance | Medium | No measurable increase in `rebuildSessionCache()` execution time |
@@ -138,9 +143,10 @@ Without tightening, the session cache will continue to consume ~44% of the conte
 |------|-----------|--------|------------|
 | R-001: Persona voice degradation from over-trimming | Medium | High | Keep Identity, Principles, Voice Integrity, Interaction Style intact; only strip sections confirmed redundant with roundtable lead's system prompt |
 | R-002: Orchestrator extraction breaks on changed heading format | Low | Critical | Preserve `### Persona:` and `### Topic:` delimiters exactly; add regression test for extraction pattern |
-| R-003: Agent fails to find skill by path after format change | Medium | High | Ensure skill ID and path remain present in tightened SKILL_INDEX format; add test for parsability |
-| R-004: Discovery context loses critical project knowledge | Low | Medium | Preserve all table data and key metrics; only condense prose restatements |
-| R-005: Combined reduction falls short of 25-30% target | Medium | Medium | Track per-section savings during implementation; adjust tightening aggressiveness if needed |
+| R-003: Agent fails to find skill by path after format change | Medium | High | Ensure skill ID and shortened path remain present in tightened SKILL_INDEX format; add test for parsability |
+| R-004: Discovery context loses critical project knowledge | Low | Medium | Preserve all table data and key metrics; strip only prose paragraphs |
+| R-005: Reduction falls short of 25-30% target | Medium | High | Track per-section savings during implementation; each section has an aggressive target to ensure combined 25-30% is achievable |
+| R-006: Aggressive tightening degrades agent behavior | Medium | High | Validate through real usage; tightening functions can be individually adjusted or disabled via fail-open pattern without code changes |
 
 ## 6. Functional Requirements
 
@@ -154,89 +160,82 @@ Tighten the SKILL_INDEX section by moving the "AVAILABLE SKILLS (consult when re
 - **AC-001-02**: Each agent block retains its `## Agent: {name}` heading followed by skill entries
 - **AC-001-03**: The tightened SKILL_INDEX section is smaller than the verbose version by at least 2,000 chars
 
-### FR-002: SKILL_INDEX Single-Line Skill Format
+### FR-002: SKILL_INDEX Compact Skill Format
 
 **Confidence**: High
 
-Convert the two-line-per-skill format (ID+description line, path line) into a single-line format with pipe separator.
+Convert the two-line-per-skill format (ID+description line, path line) into a single-line format with pipe separator. Shorten the path by establishing a base path convention in the section header, emitting only the relative `{category}/{name}` portion per skill.
 
-- **AC-002-01**: Each skill entry is a single line in the format: `{ID}: {name} | {description} | {path}`
-- **AC-002-02**: All skill entries (ID, name, description, path) from the verbose format are present in the single-line format
-- **AC-002-03**: The combined effect of FR-001 and FR-002 reduces the SKILL_INDEX section by at least 30% (at least 12,000 chars saved)
+- **AC-002-01**: Each skill entry is a single line in the format: `{ID}: {name} | {description} | {category}/{name}`
+- **AC-002-02**: The section header includes the base path: `Base: src/claude/skills/{category}/{name}/SKILL.md`
+- **AC-002-03**: All skill entries (ID, name, description) from the verbose format are present; the full path is reconstructable from base + relative
+- **AC-002-04**: The combined effect of FR-001 and FR-002 reduces the SKILL_INDEX section by at least 50% (at least 20,000 chars saved)
 
-### FR-003: ROUNDTABLE_CONTEXT Persona Tightening
+### FR-003: ROUNDTABLE_CONTEXT Persona Section Stripping
 
 **Confidence**: High
 
-Strip persona file sections that are redundant with the roundtable lead's system prompt during cache assembly. Sections to strip: 6 (Artifact Responsibilities), 8 (Artifact Folder Convention), 9 (Meta.json Protocol), 10 (Constraints).
+Strip persona file sections that are redundant with the roundtable lead's system prompt during cache assembly. Sections to strip: 4 (Analytical Approach -- covered by topic files), 6 (Artifact Responsibilities), 8 (Artifact Folder Convention), 9 (Meta.json Protocol), 10 (Constraints).
 
-- **AC-003-01**: Tightened persona content does NOT contain sections titled "Artifact Responsibilities", "Artifact Folder Convention", "Meta.json Protocol (Agent Teams Mode)", or "Constraints"
+- **AC-003-01**: Tightened persona content does NOT contain sections titled "Analytical Approach", "Artifact Responsibilities", "Artifact Folder Convention", "Meta.json Protocol (Agent Teams Mode)", or "Constraints"
 - **AC-003-02**: Tightened persona content DOES contain sections titled "Identity", "Principles", "Voice Integrity Rules", "Interaction Style"
 - **AC-003-03**: The `### Persona:` heading delimiter is preserved for orchestrator extraction
 - **AC-003-04**: YAML frontmatter is stripped from persona content (the roundtable lead does not need it)
 
-### FR-004: ROUNDTABLE_CONTEXT Analytical Approach Trimming
-
-**Confidence**: Medium
-
-Trim section 4 (Analytical Approach) in each persona file to key questions only -- approximately 3-4 bullet points per subsection instead of the current 6-8.
-
-- **AC-004-01**: Section 4 (Analytical Approach) is present but reduced in length
-- **AC-004-02**: Each subsection retains at least 3 bullet points covering the highest-value analytical questions
-- **AC-004-03**: No subsection heading is removed -- only bullet points within subsections are trimmed
-- **AC-004-04**: The combined effect of FR-003 and FR-004 reduces per-persona content by at least 35% (roughly 1,800-2,000 chars per persona)
-
-### FR-005: ROUNDTABLE_CONTEXT Self-Validation Compaction
+### FR-004: ROUNDTABLE_CONTEXT Self-Validation Compaction
 
 **Confidence**: High
 
 Compact section 7 (Self-Validation Protocol) by merging the "before writing" and "before finalization" checklists into a single condensed checklist per persona.
 
-- **AC-005-01**: Self-Validation content is present as a single merged checklist (not two separate sections)
-- **AC-005-02**: All validation criteria from both original checklists are represented (possibly in more concise wording)
-- **AC-005-03**: The roundtable lead can still reference validation criteria by persona (the content remains within each persona's block)
+- **AC-004-01**: Self-Validation content is present as a single merged checklist (not two separate sections)
+- **AC-004-02**: All validation criteria from both original checklists are represented (possibly in more concise wording)
+- **AC-004-03**: The roundtable lead can still reference validation criteria by persona (the content remains within each persona's block)
+- **AC-004-04**: The combined effect of FR-003 and FR-004 reduces per-persona content by at least 50% (roughly 2,500-3,000 chars per persona, ~7,500-9,000 total across 3 personas)
 
-### FR-006: ROUNDTABLE_CONTEXT Topic File Tightening
+### FR-005: ROUNDTABLE_CONTEXT Topic File Tightening
 
-**Confidence**: Medium
+**Confidence**: High
 
 Strip YAML frontmatter and depth_guidance/source_step_files metadata from topic files during cache assembly, retaining only the Analytical Knowledge, Validation Criteria, and Artifact Instructions sections.
 
-- **AC-006-01**: Topic content in the cache does NOT contain YAML frontmatter blocks
-- **AC-006-02**: Topic content in the cache does NOT contain `depth_guidance` or `source_step_files` metadata
-- **AC-006-03**: Topic content DOES retain "Analytical Knowledge", "Validation Criteria", and "Artifact Instructions" sections
-- **AC-006-04**: The `### Topic:` heading delimiter is preserved for orchestrator extraction
+- **AC-005-01**: Topic content in the cache does NOT contain YAML frontmatter blocks
+- **AC-005-02**: Topic content in the cache does NOT contain `depth_guidance` or `source_step_files` metadata
+- **AC-005-03**: Topic content DOES retain "Analytical Knowledge", "Validation Criteria", and "Artifact Instructions" sections
+- **AC-005-04**: The `### Topic:` heading delimiter is preserved for orchestrator extraction
+- **AC-005-05**: The combined effect of FR-003 through FR-005 reduces the ROUNDTABLE_CONTEXT section by at least 40% (at least 19,000 chars saved)
 
-### FR-007: DISCOVERY_CONTEXT Prose Condensation
+### FR-006: DISCOVERY_CONTEXT Aggressive Prose Stripping
 
-**Confidence**: Medium
+**Confidence**: High
 
-Condense verbose prose in the DISCOVERY_CONTEXT section during cache assembly. Preserve all table data and key metrics. Remove prose paragraphs that restate information already present in tables.
+Strip all prose paragraphs from the DISCOVERY_CONTEXT section during cache assembly. Preserve all table data, all headings, and all list items. The resulting section contains only structured content (headings, tables, lists) with no narrative prose.
 
-- **AC-007-01**: All tables (architecture overview, tech stack, test health dashboard) are preserved verbatim
-- **AC-007-02**: Prose paragraphs that restate table content are removed or condensed to a single summary sentence
-- **AC-007-03**: Section headers are preserved for navigability
-- **AC-007-04**: The DISCOVERY_CONTEXT section is reduced by at least 20% (at least 4,500 chars saved)
+- **AC-006-01**: All tables (architecture overview, tech stack, test health dashboard, and any other markdown tables) are preserved verbatim
+- **AC-006-02**: All headings (lines starting with `#`) are preserved verbatim
+- **AC-006-03**: All list items (lines starting with `- ` or `* ` or numbered) are preserved
+- **AC-006-04**: Prose paragraphs (blocks of text that are not headings, tables, or list items) are removed
+- **AC-006-05**: The DISCOVERY_CONTEXT section is reduced by at least 40% (at least 9,000 chars saved)
 
-### FR-008: Fail-Open Tightening Safety
+### FR-007: Fail-Open Tightening Safety
 
 **Confidence**: High
 
 Each tightening function must fail open: if any transformation error occurs, the original verbose content is used instead. No section should ever be empty or corrupted due to a tightening failure.
 
-- **AC-008-01**: Each tightening function is wrapped in try/catch that returns the original content on any error
-- **AC-008-02**: A failed tightening does not prevent other sections from being tightened
-- **AC-008-03**: Verbose mode (`--verbose`) logs a warning when a tightening function falls back to verbose content
+- **AC-007-01**: Each tightening function is wrapped in try/catch that returns the original content on any error
+- **AC-007-02**: A failed tightening does not prevent other sections from being tightened
+- **AC-007-03**: Verbose mode (`--verbose`) logs a warning when a tightening function falls back to verbose content
 
-### FR-009: Reduction Reporting
+### FR-008: Reduction Reporting
 
 **Confidence**: High
 
 Report per-section character savings when `rebuildSessionCache()` is called with verbose mode, similar to the existing TOON reduction reporting.
 
-- **AC-009-01**: Verbose mode outputs per-section reduction: `TIGHTEN {section}: {before} -> {after} chars ({pct}% reduction)`
-- **AC-009-02**: Verbose mode outputs total markdown reduction summary across all tightened sections
-- **AC-009-03**: Reduction statistics are written to stderr (same pattern as TOON reporting)
+- **AC-008-01**: Verbose mode outputs per-section reduction: `TIGHTEN {section}: {before} -> {after} chars ({pct}% reduction)`
+- **AC-008-02**: Verbose mode outputs total markdown reduction summary across all tightened sections
+- **AC-008-03**: Reduction statistics are written to stderr (same pattern as TOON reporting)
 
 ## 7. Out of Scope
 
@@ -248,20 +247,20 @@ Report per-section character savings when `rebuildSessionCache()` is called with
 | CONSTITUTION section tightening | Not identified as a high-value target (15K chars, lower % of total) | None |
 | EXTERNAL_SKILLS section tightening | Currently empty/skipped in most installations | None |
 | Automated fact-preservation testing | Prose content cannot be mechanically verified; validated through usage observation | None |
+| Reversing or modifying REQ-0041 TOON encoding | Out of scope; TOON encoding is harmless even if savings are not realized | REQ-0041 |
 
 ## 8. MoSCoW Prioritization
 
 | FR | Title | Priority | Rationale |
 |----|-------|----------|-----------|
 | FR-001 | SKILL_INDEX Banner Deduplication | Must Have | Highest char savings per effort; straightforward transformation |
-| FR-002 | SKILL_INDEX Single-Line Skill Format | Must Have | Pairs with FR-001 for 30%+ section reduction |
-| FR-003 | ROUNDTABLE_CONTEXT Persona Tightening | Must Have | Strips confirmed-redundant sections; clear savings |
-| FR-004 | ROUNDTABLE_CONTEXT Analytical Approach Trimming | Should Have | Meaningful savings but requires judgment on which bullets to keep |
-| FR-005 | ROUNDTABLE_CONTEXT Self-Validation Compaction | Should Have | Moderate savings; preserves validation capability |
-| FR-006 | ROUNDTABLE_CONTEXT Topic File Tightening | Should Have | Strips metadata not used at runtime; moderate savings |
-| FR-007 | DISCOVERY_CONTEXT Prose Condensation | Should Have | Lower absolute savings but completes the three-section scope |
-| FR-008 | Fail-Open Tightening Safety | Must Have | Non-negotiable safety constraint |
-| FR-009 | Reduction Reporting | Could Have | Developer convenience; follows existing TOON reporting pattern |
+| FR-002 | SKILL_INDEX Compact Skill Format | Must Have | Pairs with FR-001 for 50%+ section reduction; path shortening adds ~9.6K savings |
+| FR-003 | ROUNDTABLE_CONTEXT Persona Section Stripping | Must Have | Strips redundant sections including Analytical Approach (covered by topic files) |
+| FR-004 | ROUNDTABLE_CONTEXT Self-Validation Compaction | Must Have | Completes persona tightening; needed to hit 40%+ section target |
+| FR-005 | ROUNDTABLE_CONTEXT Topic File Tightening | Must Have | Strips metadata not used at runtime; needed to hit 40%+ section target |
+| FR-006 | DISCOVERY_CONTEXT Aggressive Prose Stripping | Must Have | Aggressive approach needed since REQ-0042 carries the full reduction burden |
+| FR-007 | Fail-Open Tightening Safety | Must Have | Non-negotiable safety constraint |
+| FR-008 | Reduction Reporting | Should Have | Developer convenience; essential for verifying 25-30% target is met |
 
 ## Pending Sections
 

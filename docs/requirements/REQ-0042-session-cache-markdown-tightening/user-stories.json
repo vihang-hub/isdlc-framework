@@ -1,12 +1,14 @@
 [
   {
     "id": "US-001",
-    "title": "Tighter skill index for faster agent parsing",
-    "story": "As an LLM agent, I want the SKILL_INDEX section to use a compact single-line format with one instruction banner so that I spend less of my context window on structural overhead and more on the actual conversation.",
+    "title": "Compact skill index with path shortening",
+    "story": "As an LLM agent, I want the SKILL_INDEX section to use a compact single-line format with one instruction banner and shortened paths so that I spend less of my context window on structural overhead and more on the actual conversation.",
     "acceptance_criteria": [
       "Instruction banner appears exactly once at the top of SKILL_INDEX",
-      "Each skill is a single line with ID, name, description, and path",
-      "All skill information from the verbose format is preserved"
+      "Base path convention documented in header, each skill uses shortened relative path",
+      "Each skill is a single line with ID, name, description, and relative path",
+      "All skill information from the verbose format is preserved or reconstructable",
+      "SKILL_INDEX section reduced by at least 50%"
     ],
     "priority": "Must Have",
     "traces": ["FR-001", "FR-002"]
@@ -17,12 +19,13 @@
     "story": "As the SDLC orchestrator, I want the ROUNDTABLE_CONTEXT persona content to contain only voice-critical sections so that the session cache is smaller without losing the persona information needed for roundtable analysis dispatch.",
     "acceptance_criteria": [
       "Persona content retains Identity, Principles, Voice Integrity, Interaction Style",
-      "Sections redundant with roundtable lead system prompt are stripped",
+      "Sections redundant with roundtable lead system prompt are stripped (including Analytical Approach)",
       "Persona heading delimiters are preserved for extraction",
-      "Self-validation is compacted into a single checklist"
+      "Self-validation is compacted into a single checklist",
+      "Per-persona content reduced by at least 50%"
     ],
     "priority": "Must Have",
-    "traces": ["FR-003", "FR-004", "FR-005"]
+    "traces": ["FR-003", "FR-004"]
   },
   {
     "id": "US-003",
@@ -32,22 +35,24 @@
       "Topic content has no YAML frontmatter",
       "Topic content has no depth_guidance or source_step_files",
       "Analytical Knowledge, Validation Criteria, and Artifact Instructions are preserved",
-      "Topic heading delimiters are preserved for extraction"
+      "Topic heading delimiters are preserved for extraction",
+      "Combined ROUNDTABLE_CONTEXT reduction of at least 40%"
     ],
-    "priority": "Should Have",
-    "traces": ["FR-006"]
+    "priority": "Must Have",
+    "traces": ["FR-005"]
   },
   {
     "id": "US-004",
-    "title": "Condensed discovery context",
-    "story": "As an LLM agent, I want the DISCOVERY_CONTEXT section to preserve all tables and key metrics while removing redundant prose so that I get the same project knowledge in fewer tokens.",
+    "title": "Aggressively condensed discovery context",
+    "story": "As an LLM agent, I want the DISCOVERY_CONTEXT section to preserve all tables, headings, and lists while stripping all narrative prose so that I get the same structured project knowledge in significantly fewer tokens.",
     "acceptance_criteria": [
       "All tables (architecture, tech stack, test health) are preserved verbatim",
-      "Prose that restates table content is removed or condensed",
-      "Section is reduced by at least 20%"
+      "All headings and list items are preserved",
+      "Prose paragraphs are stripped entirely",
+      "Section is reduced by at least 40%"
     ],
-    "priority": "Should Have",
-    "traces": ["FR-007"]
+    "priority": "Must Have",
+    "traces": ["FR-006"]
   },
   {
     "id": "US-005",
@@ -59,18 +64,18 @@
       "Verbose mode logs a warning on fallback"
     ],
     "priority": "Must Have",
-    "traces": ["FR-008"]
+    "traces": ["FR-007"]
   },
   {
     "id": "US-006",
     "title": "Reduction reporting in verbose mode",
-    "story": "As a framework developer, I want to see per-section character savings when rebuilding the cache in verbose mode so that I can verify the tightening is achieving the target reduction.",
+    "story": "As a framework developer, I want to see per-section character savings when rebuilding the cache in verbose mode so that I can verify the tightening is achieving the 25-30% target reduction.",
     "acceptance_criteria": [
       "Verbose mode shows per-section before/after/reduction stats",
       "Verbose mode shows total markdown reduction summary",
       "Stats are written to stderr"
     ],
-    "priority": "Could Have",
-    "traces": ["FR-009"]
+    "priority": "Should Have",
+    "traces": ["FR-008"]
   }
 ]

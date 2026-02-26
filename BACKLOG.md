@@ -160,7 +160,7 @@
   - **Not pursuing** (per ADR-0040-02): SKILL_INDEX (already compact text), ITERATION_REQUIREMENTS/WORKFLOW_CONFIG (deeply nested, non-tabular — TOON ineffective)
   - **Superseded by REQ-0041**: ADR-0040-02 conclusion was wrong — full TOON spec supports nested objects via indentation, not just tabular arrays. REQ-0041 upgrades the encoder to handle all JSON sections.
 - [x] ~~Upgrade TOON encoder to full spec compliance — implement nested objects, key-value pairs, inline primitive arrays, mixed arrays; apply to all JSON cache sections for ~33% JSON reduction (~9.4% total cache)~~ -> [requirements](docs/requirements/REQ-0041-toon-full-spec-session-cache-reduction/) **Completed: 2026-02-26** *(merged 1c0af90)*
-- [ ] Session cache markdown tightening — condense verbose markdown sections (ROUNDTABLE_CONTEXT 47K, SKILL_INDEX 40K, DISCOVERY_CONTEXT 23K) without losing information; depends on ~~REQ-0041~~ (done) -> [requirements](docs/requirements/REQ-0042-session-cache-markdown-tightening/)
+- [A] Session cache markdown tightening — condense verbose markdown sections (ROUNDTABLE_CONTEXT 47K, SKILL_INDEX 40K, DISCOVERY_CONTEXT 23K) without losing information; depends on ~~REQ-0041~~ (done) -> [requirements](docs/requirements/REQ-0042-session-cache-markdown-tightening/)
 - #34 [ ] Improve search capabilities to help Claude be more effective
 - #35 [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
 - #27 [ ] /isdlc validate command — on-demand artifact quality check (constitutional + completeness) without running a full workflow

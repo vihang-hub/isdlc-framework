@@ -13,9 +13,10 @@
 |------|-------------|-------------------|----------|-----------------|
 | TIGHT-001 | Persona tightening failed | `tightenPersonaContent()` throws during section parsing | Warning | Return original rawContent unchanged (fail-open) |
 | TIGHT-002 | Topic tightening failed | `tightenTopicContent()` throws during frontmatter stripping | Warning | Return original rawContent unchanged (fail-open) |
-| TIGHT-003 | Discovery condensation failed | `condenseDiscoveryContent()` throws during block analysis | Warning | Return original rawContent unchanged (fail-open) |
+| TIGHT-003 | Discovery condensation failed | `condenseDiscoveryContent()` throws during line classification | Warning | Return original rawContent unchanged (fail-open) |
 | TIGHT-004 | Invalid input type | Any tightening function receives non-string input | Info | Return empty string |
 | TIGHT-005 | Skill index format error | `formatSkillIndexBlock()` receives malformed skill entries | Warning | Return empty string (existing behavior) |
+| TIGHT-006 | Path shortening failed | Skill path does not match expected pattern for shortening | Info | Use full path as fallback |
 
 ## Error Propagation Strategy
 
@@ -32,8 +33,8 @@ This is consistent with the framework's fail-open philosophy (ADR-0027, Article 
 
 | Level | Condition | Behavior |
 |-------|-----------|----------|
-| Full optimization | All tightening functions succeed | Cache contains tightened SKILL_INDEX, ROUNDTABLE_CONTEXT, and DISCOVERY_CONTEXT |
-| Partial optimization | One or more tighteners fail | Failed sections use verbose content; successful sections use tightened content |
+| Full optimization | All tightening functions succeed | Cache contains aggressively tightened SKILL_INDEX, ROUNDTABLE_CONTEXT, and DISCOVERY_CONTEXT (~29% total reduction) |
+| Partial optimization | One or more tighteners fail | Failed sections use verbose content; successful sections use tightened content (partial reduction) |
 | No optimization | All tighteners fail | Cache is identical to pre-REQ-0042 behavior (full verbose content) |
 | Cache rebuild failure | `rebuildSessionCache()` throws | Existing error handling in `bin/rebuild-cache.js` reports failure |
 
