@@ -1,0 +1,76 @@
+[
+  {
+    "id": "US-001",
+    "title": "Tighter skill index for faster agent parsing",
+    "story": "As an LLM agent, I want the SKILL_INDEX section to use a compact single-line format with one instruction banner so that I spend less of my context window on structural overhead and more on the actual conversation.",
+    "acceptance_criteria": [
+      "Instruction banner appears exactly once at the top of SKILL_INDEX",
+      "Each skill is a single line with ID, name, description, and path",
+      "All skill information from the verbose format is preserved"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-001", "FR-002"]
+  },
+  {
+    "id": "US-002",
+    "title": "Lean persona content in session cache",
+    "story": "As the SDLC orchestrator, I want the ROUNDTABLE_CONTEXT persona content to contain only voice-critical sections so that the session cache is smaller without losing the persona information needed for roundtable analysis dispatch.",
+    "acceptance_criteria": [
+      "Persona content retains Identity, Principles, Voice Integrity, Interaction Style",
+      "Sections redundant with roundtable lead system prompt are stripped",
+      "Persona heading delimiters are preserved for extraction",
+      "Self-validation is compacted into a single checklist"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-003", "FR-004", "FR-005"]
+  },
+  {
+    "id": "US-003",
+    "title": "Lean topic content in session cache",
+    "story": "As the SDLC orchestrator, I want topic file metadata (YAML frontmatter, depth guidance, source step files) stripped from the cached content so that only the analytical knowledge and validation criteria consume context budget.",
+    "acceptance_criteria": [
+      "Topic content has no YAML frontmatter",
+      "Topic content has no depth_guidance or source_step_files",
+      "Analytical Knowledge, Validation Criteria, and Artifact Instructions are preserved",
+      "Topic heading delimiters are preserved for extraction"
+    ],
+    "priority": "Should Have",
+    "traces": ["FR-006"]
+  },
+  {
+    "id": "US-004",
+    "title": "Condensed discovery context",
+    "story": "As an LLM agent, I want the DISCOVERY_CONTEXT section to preserve all tables and key metrics while removing redundant prose so that I get the same project knowledge in fewer tokens.",
+    "acceptance_criteria": [
+      "All tables (architecture, tech stack, test health) are preserved verbatim",
+      "Prose that restates table content is removed or condensed",
+      "Section is reduced by at least 20%"
+    ],
+    "priority": "Should Have",
+    "traces": ["FR-007"]
+  },
+  {
+    "id": "US-005",
+    "title": "Safe tightening with fail-open fallback",
+    "story": "As a framework developer, I want each tightening function to fail open to verbose content so that a bug in tightening never breaks the session cache or causes empty sections.",
+    "acceptance_criteria": [
+      "Each tightening function returns original content on any error",
+      "A failed tightening does not prevent other sections from being tightened",
+      "Verbose mode logs a warning on fallback"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-008"]
+  },
+  {
+    "id": "US-006",
+    "title": "Reduction reporting in verbose mode",
+    "story": "As a framework developer, I want to see per-section character savings when rebuilding the cache in verbose mode so that I can verify the tightening is achieving the target reduction.",
+    "acceptance_criteria": [
+      "Verbose mode shows per-section before/after/reduction stats",
+      "Verbose mode shows total markdown reduction summary",
+      "Stats are written to stderr"
+    ],
+    "priority": "Could Have",
+    "traces": ["FR-009"]
+  }
+]

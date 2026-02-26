@@ -1,0 +1,32 @@
+FR_ID,AC_ID,User_Story_ID,Confidence,Source
+FR-001,AC-001-01,US-001,High,User-confirmed
+FR-001,AC-001-02,US-001,High,User-confirmed
+FR-001,AC-001-03,US-001,High,Inferred from codebase analysis
+FR-002,AC-002-01,US-001,High,User-confirmed
+FR-002,AC-002-02,US-001,High,User-confirmed
+FR-002,AC-002-03,US-001,High,Inferred from codebase analysis
+FR-003,AC-003-01,US-002,High,User-confirmed
+FR-003,AC-003-02,US-002,High,User-confirmed
+FR-003,AC-003-03,US-002,High,Inferred from codebase analysis
+FR-003,AC-003-04,US-002,High,Inferred from codebase analysis
+FR-004,AC-004-01,US-002,Medium,Inferred from codebase analysis
+FR-004,AC-004-02,US-002,Medium,Inferred from codebase analysis
+FR-004,AC-004-03,US-002,Medium,Inferred from codebase analysis
+FR-004,AC-004-04,US-002,Medium,Inferred from codebase analysis
+FR-005,AC-005-01,US-002,High,User-confirmed
+FR-005,AC-005-02,US-002,High,User-confirmed
+FR-005,AC-005-03,US-002,High,User-confirmed
+FR-006,AC-006-01,US-003,Medium,Inferred from codebase analysis
+FR-006,AC-006-02,US-003,Medium,Inferred from codebase analysis
+FR-006,AC-006-03,US-003,Medium,Inferred from codebase analysis
+FR-006,AC-006-04,US-003,Medium,Inferred from codebase analysis
+FR-007,AC-007-01,US-004,Medium,Inferred from codebase analysis
+FR-007,AC-007-02,US-004,Medium,Inferred from codebase analysis
+FR-007,AC-007-03,US-004,Medium,Inferred from codebase analysis
+FR-007,AC-007-04,US-004,Medium,Inferred from codebase analysis
+FR-008,AC-008-01,US-005,High,User-confirmed
+FR-008,AC-008-02,US-005,High,User-confirmed
+FR-008,AC-008-03,US-005,High,User-confirmed
+FR-009,AC-009-01,US-006,High,Inferred from codebase analysis
+FR-009,AC-009-02,US-006,High,Inferred from codebase analysis
+FR-009,AC-009-03,US-006,High,Inferred from codebase analysis

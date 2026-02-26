@@ -1,0 +1,101 @@
+Requirement,AC,Test Case,Test Type,Priority,Description
+FR-001,AC-001-01,TC-EV-09,positive,Must Have,Flat object encoding without braces
+FR-001,AC-001-02,TC-EV-10,positive,Must Have,Nested object with 2-space indentation
+FR-001,AC-001-03,TC-EV-01,positive,Must Have,Null encoded as "null"
+FR-001,AC-001-03,TC-EV-02,positive,Must Have,Undefined encoded as "null"
+FR-001,AC-001-03,TC-EV-03,positive,Must Have,Boolean true encoded as "true"
+FR-001,AC-001-03,TC-EV-04,positive,Must Have,Boolean false encoded as "false"
+FR-001,AC-001-03,TC-EV-05,positive,Must Have,Integer encoded as numeric string
+FR-001,AC-001-03,TC-EV-06,positive,Must Have,Float encoded as numeric string
+FR-001,AC-001-03,TC-EV-11,positive,Must Have,Object with mixed value types
+FR-001,AC-001-04,TC-EV-12,positive,Must Have,Deeply nested object (7 levels)
+FR-001,AC-001-04,TC-EV-16,positive,Must Have,Object with mixed nested and primitive values
+FR-001,,TC-EV-13,boundary,Must Have,Empty object encoding
+FR-001,,TC-EV-14,boundary,Must Have,Single-key object encoding
+FR-001,,TC-EV-15,positive,Must Have,Object with many (20) keys
+FR-001,,TC-EV-42,positive,Must Have,Indent option adds leading spaces
+FR-001,,TC-EV-43,positive,Must Have,Default options produce zero indentation
+FR-002,AC-002-01,TC-EV-17,positive,Must Have,Keys emitted without quotes
+FR-002,AC-002-02,TC-EV-18,positive,Must Have,Simple string values bare (no quotes)
+FR-002,AC-002-02,TC-EV-07,positive,Must Have,Simple string encoded bare
+FR-002,AC-002-03,TC-EV-08,positive,Must Have,String with special chars quoted
+FR-002,AC-002-03,TC-EV-19,positive,Must Have,String with comma is quoted
+FR-002,AC-002-03,TC-EV-20,positive,Must Have,String with newline quoted and escaped
+FR-002,AC-002-03,TC-EV-21,positive,Must Have,String with backslash quoted and escaped
+FR-002,AC-002-03,TC-EV-22,boundary,Must Have,Empty string values quoted
+FR-003,AC-003-01,TC-EV-23,positive,Must Have,String array inline format
+FR-003,AC-003-01,TC-IPA-01,positive,Must Have,isPrimitiveArray true for string array
+FR-003,AC-003-02,TC-EV-24,positive,Must Have,Number array inline format
+FR-003,AC-003-02,TC-IPA-02,positive,Must Have,isPrimitiveArray true for number array
+FR-003,AC-003-03,TC-EV-25,positive,Must Have,Mixed primitive array inline format
+FR-003,AC-003-03,TC-IPA-03,positive,Must Have,isPrimitiveArray true for mixed primitives
+FR-003,AC-003-03,TC-EV-29,positive,Must Have,Boolean array inline format
+FR-003,AC-003-04,TC-EV-26,boundary,Must Have,Empty array inline format
+FR-003,AC-003-05,TC-EV-28,positive,Must Have,Inline array elements with commas are quoted
+FR-003,,TC-EV-27,boundary,Must Have,Single-element primitive array
+FR-003,,TC-IPA-06,negative,Must Have,isPrimitiveArray false for non-array
+FR-004,AC-004-01,TC-EV-30,positive,Should Have,Non-uniform objects in list form
+FR-004,AC-004-01,TC-IPA-04,negative,Should Have,isPrimitiveArray false for object array
+FR-004,AC-004-02,TC-EV-31,positive,Should Have,Mixed types in list form
+FR-004,AC-004-03,TC-EV-32,positive,Should Have,Nested objects within list items
+FR-004,,TC-EV-33,positive,Should Have,Array of arrays in list form
+FR-004,,TC-EV-34,boundary,Should Have,Empty list-form array
+FR-004,,TC-IPA-05,negative,Should Have,isPrimitiveArray false for nested arrays
+FR-005,AC-005-01,TC-EV-35,positive,Should Have,Uniform array delegates to encode()
+FR-005,AC-005-02,TC-EV-36,positive,Should Have,isUniformArray check before list form
+FR-005,,TC-EV-37,negative,Should Have,Non-uniform array does NOT use tabular
+FR-006,AC-006-01,TC-EV-38,positive,Should Have,Strips _comment at top level
+FR-006,AC-006-02,TC-EV-39,positive,Should Have,Strips _comment recursively
+FR-006,AC-006-03,TC-EV-40,positive,Should Have,No stripping when stripKeys empty
+FR-006,AC-006-03,TC-EV-41,positive,Should Have,No stripping when stripKeys not provided
+FR-007,AC-007-01,TC-CI-01,positive,Must Have,SKILLS_MANIFEST section TOON-encoded
+FR-007,AC-007-01,TC-CI-02,positive,Must Have,ITERATION_REQUIREMENTS section TOON-encoded
+FR-007,AC-007-01,TC-CI-03,positive,Must Have,WORKFLOW_CONFIG section TOON-encoded
+FR-007,AC-007-01,TC-CI-04,positive,Must Have,ARTIFACT_PATHS section TOON-encoded
+FR-007,AC-007-02,TC-CI-05,positive,Must Have,[TOON] marker present in encoded sections
+FR-007,AC-007-03,TC-CI-06,negative,Must Have,Fail-open JSON fallback on encodeValue error
+FR-007,AC-007-03,TC-CI-07,negative,Must Have,Fail-open JSON fallback on empty output
+FR-007,AC-007-04,TC-CI-08,positive,Must Have,Verbose mode logs per-section stats
+FR-007,AC-007-05,TC-CI-10,positive,Must Have,_comment keys stripped from all sections
+FR-007,,TC-CI-11,positive,Must Have,Non-JSON sections unchanged
+FR-007,,TC-CI-12,positive,Must Have,Cache file written successfully
+FR-007,,TC-CI-13,positive,Must Have,Character reduction meets 25% target
+FR-008,AC-008-01,TC-DV-06,positive,Should Have,Decodes flat key-value pairs
+FR-008,AC-008-01,TC-DV-07,positive,Should Have,Decodes nested indented object
+FR-008,AC-008-01,TC-DV-08,positive,Should Have,Decodes object with mixed value types
+FR-008,AC-008-01,TC-DV-09,positive,Should Have,Decodes object with quoted strings
+FR-008,AC-008-01,TC-DV-10,boundary,Should Have,Decodes object with empty string
+FR-008,AC-008-02,TC-DV-11,positive,Should Have,Decodes inline string array
+FR-008,AC-008-02,TC-DV-12,positive,Should Have,Decodes inline number array
+FR-008,AC-008-02,TC-DV-13,boundary,Should Have,Decodes empty inline array
+FR-008,AC-008-02,TC-DV-14,positive,Should Have,Decodes inline array with quoted elements
+FR-008,AC-008-03,TC-DV-15,positive,Should Have,Decodes simple list array
+FR-008,AC-008-03,TC-DV-16,positive,Should Have,Decodes list array of objects
+FR-008,AC-008-03,TC-DV-17,positive,Should Have,Decodes list array with nested objects
+FR-008,AC-008-04,TC-DV-01,positive,Should Have,Decodes "null" to null
+FR-008,AC-008-04,TC-DV-02,positive,Should Have,Decodes "true" to true
+FR-008,AC-008-04,TC-DV-03,positive,Should Have,Decodes "false" to false
+FR-008,AC-008-04,TC-DV-04,positive,Should Have,Decodes numeric string to number
+FR-008,AC-008-04,TC-DV-05,positive,Should Have,Decodes bare string as string
+FR-008,AC-008-05,TC-EVRT-01,positive,Should Have,Round-trips flat object
+FR-008,AC-008-05,TC-EVRT-02,positive,Should Have,Round-trips nested object
+FR-008,AC-008-05,TC-EVRT-03,positive,Should Have,Round-trips object with inline arrays
+FR-008,AC-008-05,TC-EVRT-04,positive,Should Have,Round-trips object with special chars
+FR-008,AC-008-05,TC-EVRT-05,positive,Should Have,Round-trips skills-manifest structure
+FR-008,AC-008-05,TC-EVRT-06,positive,Should Have,Round-trips iteration-requirements structure
+FR-008,AC-008-05,TC-EVRT-07,positive,Should Have,Round-trips workflows structure
+FR-008,AC-008-05,TC-EVRT-08,positive,Should Have,Round-trips artifact-paths structure
+FR-008,,TC-DV-18,positive,Should Have,Decodes tabular format via decode()
+FR-008,,TC-DV-19,positive,Should Have,Falls back to JSON.parse for valid JSON
+FR-008,,TC-DV-20,negative,Should Have,Throws SyntaxError for invalid input
+FR-008,,TC-DV-21,boundary,Should Have,Handles empty string input
+FR-008,,TC-DV-22,boundary,Should Have,Handles whitespace-only input
+FR-009,AC-009-01,TC-BC-01,positive,Must Have,All 47 existing tests pass unchanged
+FR-009,AC-009-01,TC-BC-02,negative,Must Have,encode() still throws TypeError for non-uniform
+FR-009,AC-009-01,TC-BC-03,negative,Must Have,encode() still throws TypeError for non-array
+FR-009,AC-009-01,TC-BC-04,positive,Must Have,decode() still falls back to JSON.parse
+FR-009,AC-009-02,TC-MOD-01,positive,Must Have,All existing exports present
+FR-009,AC-009-02,TC-MOD-02,positive,Must Have,New exports present (encodeValue/decodeValue/isPrimitiveArray)
+FR-010,AC-010-01,TC-CI-08,positive,Could Have,Verbose mode logs per-section encoding stats
+FR-010,AC-010-02,TC-CI-09,positive,Could Have,Verbose summary line reports total reduction
+FR-001/FR-006,,TC-EV-44,positive,Must Have,Combined indent and stripKeys options

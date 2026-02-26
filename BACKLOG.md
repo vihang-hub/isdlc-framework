@@ -159,8 +159,8 @@
     - #94 [ ] Token measurement benchmarks — formal before/after token counting to validate actual savings on SKILLS_MANIFEST section.
   - **Not pursuing** (per ADR-0040-02): SKILL_INDEX (already compact text), ITERATION_REQUIREMENTS/WORKFLOW_CONFIG (deeply nested, non-tabular — TOON ineffective)
   - **Superseded by REQ-0041**: ADR-0040-02 conclusion was wrong — full TOON spec supports nested objects via indentation, not just tabular arrays. REQ-0041 upgrades the encoder to handle all JSON sections.
-- [ ] Upgrade TOON encoder to full spec compliance — implement nested objects, key-value pairs, inline primitive arrays, mixed arrays; apply to all JSON cache sections for ~33% JSON reduction (~9.4% total cache) -> [requirements](docs/requirements/REQ-0041-toon-full-spec-session-cache-reduction/)
-- [ ] Session cache markdown tightening — condense verbose markdown sections (ROUNDTABLE_CONTEXT 47K, SKILL_INDEX 40K, DISCOVERY_CONTEXT 23K) without losing information; depends on REQ-0041 -> [requirements](docs/requirements/REQ-0042-session-cache-markdown-tightening/)
+- [x] ~~Upgrade TOON encoder to full spec compliance — implement nested objects, key-value pairs, inline primitive arrays, mixed arrays; apply to all JSON cache sections for ~33% JSON reduction (~9.4% total cache)~~ -> [requirements](docs/requirements/REQ-0041-toon-full-spec-session-cache-reduction/) **Completed: 2026-02-26** *(merged 1c0af90)*
+- [ ] Session cache markdown tightening — condense verbose markdown sections (ROUNDTABLE_CONTEXT 47K, SKILL_INDEX 40K, DISCOVERY_CONTEXT 23K) without losing information; depends on ~~REQ-0041~~ (done) -> [requirements](docs/requirements/REQ-0042-session-cache-markdown-tightening/)
 - #34 [ ] Improve search capabilities to help Claude be more effective
 - #35 [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
 - #27 [ ] /isdlc validate command — on-demand artifact quality check (constitutional + completeness) without running a full workflow
@@ -329,6 +329,9 @@
   - **Complexity**: Low-medium
 
 ## Completed
+
+### 2026-02-26
+- [x] REQ-0041: TOON Full Spec Session Cache Reduction — upgraded `toon-encoder.cjs` to full TOON spec compliance: nested object encoding via indentation, inline primitive arrays `[a, b, c]`, mixed array handling, key-value pair encoding. Applied to all JSON cache sections (ITERATION_REQUIREMENTS, WORKFLOW_CONFIG, SKILLS_MANIFEST) with per-section JSON fallback (Article X). 129 new tests, zero regressions, 32.6% JSON reduction achieved. 9 files changed, 1607 insertions. 4 phases: test strategy, implementation, quality loop, code review *(merged 1c0af90)*.
 
 ### 2026-02-25
 - [x] REQ-0040 (#33 MVP): TOON Format Integration — native CJS TOON encoder/decoder (`toon-encoder.cjs`, zero npm deps), SKILLS_MANIFEST section TOON-encoded in session cache via `rebuildSessionCache()`, per-section JSON fallback (Article X fail-open), `[TOON]` section markers. 47 new tests (44 unit + 3 integration), zero regressions. 4 FRs in-scope, 1 FR deferred (FR-003: no injection point). 2 files changed + 2 new files, ~600 insertions *(merged ea0afab)*.
