@@ -152,13 +152,15 @@
 
 ### Framework Features
 
-- #33 [ ] TOON format integration — adopt Token-Oriented Object Notation for agent prompts and state data to reduce token usage
-  - TOON (Token-Oriented Object Notation) reduces token consumption by 30-60% vs JSON while maintaining or improving LLM accuracy
-  - Sweet spot: uniform arrays (tabular data like skill manifests, phase tables, workflow history) — field names declared once as header, rows follow
-  - Less effective for deeply nested/non-uniform structures (keep JSON for those)
-  - SDKs available: TypeScript, Python, Go, Rust, .NET ([github.com/toon-format/toon](https://github.com/toon-format/toon))
-  - **Candidate areas**: skills-manifest.json, state.json arrays, agent prompt data injection, hook config loading
-  - **Not a full JSON replacement** — complement for token-heavy tabular data only
+- #33 [~] TOON format integration — adopt Token-Oriented Object Notation for agent prompts and state data to reduce token usage -> [requirements](docs/requirements/REQ-0040-toon-format-integration/)
+  - **MVP DONE** (2026-02-25): Native CJS encoder (`toon-encoder.cjs`, zero deps), SKILLS_MANIFEST section TOON-encoded in session cache, per-section JSON fallback, 47 new tests. Merged `ea0afab`.
+  - **Remaining**:
+    - #93 [ ] State array TOON encoding (FR-003) — encode workflow_history, history, skill_usage_log at injection time. Blocked: no injection mechanism exists yet. ~50K token savings potential.
+    - #94 [ ] Token measurement benchmarks — formal before/after token counting to validate actual savings on SKILLS_MANIFEST section.
+  - **Not pursuing** (per ADR-0040-02): SKILL_INDEX (already compact text), ITERATION_REQUIREMENTS/WORKFLOW_CONFIG (deeply nested, non-tabular — TOON ineffective)
+  - **Superseded by REQ-0041**: ADR-0040-02 conclusion was wrong — full TOON spec supports nested objects via indentation, not just tabular arrays. REQ-0041 upgrades the encoder to handle all JSON sections.
+- [ ] Upgrade TOON encoder to full spec compliance — implement nested objects, key-value pairs, inline primitive arrays, mixed arrays; apply to all JSON cache sections for ~33% JSON reduction (~9.4% total cache) -> [requirements](docs/requirements/REQ-0041-toon-full-spec-session-cache-reduction/)
+- [ ] Session cache markdown tightening — condense verbose markdown sections (ROUNDTABLE_CONTEXT 47K, SKILL_INDEX 40K, DISCOVERY_CONTEXT 23K) without losing information; depends on REQ-0041 -> [requirements](docs/requirements/REQ-0042-session-cache-markdown-tightening/)
 - #34 [ ] Improve search capabilities to help Claude be more effective
 - #35 [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
 - #27 [ ] /isdlc validate command — on-demand artifact quality check (constitutional + completeness) without running a full workflow
@@ -325,6 +327,7 @@
 ## Completed
 
 ### 2026-02-25
+- [x] REQ-0040 (#33 MVP): TOON Format Integration — native CJS TOON encoder/decoder (`toon-encoder.cjs`, zero npm deps), SKILLS_MANIFEST section TOON-encoded in session cache via `rebuildSessionCache()`, per-section JSON fallback (Article X fail-open), `[TOON]` section markers. 47 new tests (44 unit + 3 integration), zero regressions. 4 FRs in-scope, 1 FR deferred (FR-003: no injection point). 2 files changed + 2 new files, ~600 insertions *(merged ea0afab)*.
 - [x] Project skills delivery_type changed from `context` to `instruction` — project skills from `/discover` now injected with "You MUST follow these guidelines" directive instead of passive background context. 1-line change in `discover-orchestrator.md` *(commit d9fb449)*.
 - [x] CLAUDE.md consent message fix — replaced formulaic "Looks like you want to..." template with natural conversational guidance. Consent messages no longer parrot back the user's intent or describe internal workflow stages.
 - [x] GH-91 scope expanded to "Unified SessionStart cache" — absorbed #84, #86, #89. Verified all acceptance criteria already met. Closed #91, #86, #89 on GitHub.
