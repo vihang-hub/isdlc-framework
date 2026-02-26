@@ -275,6 +275,10 @@
 - #62 [x] ~~Stale pending_delegation marker blocks all responses across sessions~~ — delegation-gate.cjs now has `STALENESS_THRESHOLD_MINUTES` expiry check with auto-clearing of stale markers **Completed: 2026-02-20**
 - #3 [x] ~~Framework file operations should not require user permission~~ — added `Write(*/.isdlc/*)` and `Edit(*/.isdlc/*)` allow rules to `src/claude/settings.json` **Completed: 2026-02-21** *(trivial, commit 37a1501)*
 - #56 [ ] Install script landing page and demo GIF — update the install script landing/README with a polished visual experience including an animated GIF demonstrating the framework in action (invisible framework flow, workflow progression, quality gates)
+- #95 [~] Build-after-analyze UX improvements — 3 changes, uncommitted (pending REQ-0041 merge):
+  1. Contextual tier menu descriptions — `getTierDescription()` in `three-verb-utils.cjs` now accepts `phasesCompleted` param; "skip architecture and design" becomes "use completed analysis, lightweight quality gates" when those phases are already done. 5 new tests.
+  2. `3f-bash-state-guard` handler in `isdlc.md` — re-delegates with Write/Edit guidance when state-file-guard hook blocks a Bash write to state.json (max 2 retries).
+  3. State.json update guidance in delegation prompt — step 3d template now includes "Use Write/Edit for state.json, never Bash" so agents don't attempt `node -e` writes in the first place.
 
 ### Backlog Management UX (from 2026-02-17 gap analysis)
 

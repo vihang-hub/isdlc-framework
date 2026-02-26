@@ -54,7 +54,7 @@ After detecting intent, ask for a brief go-ahead in natural conversational langu
 
 - **Ambiguous intent**: If the intent is unclear (could be feature or fix), ask a brief clarifying question rather than guessing
 - **Questions / exploration**: If the user asks questions, explores code, or seeks explanation -- respond normally. Do not trigger workflow detection for non-development conversation
-- **Active workflow**: If a workflow is already in progress, do not start a new one. Inform the user and suggest they continue the current workflow or cancel it first
+- **Active workflow**: The **Add** and **Analyze** intents are workflow-exempt -- they run inline without creating a workflow and can always execute regardless of whether another workflow is active. For workflow intents (**Build**, **Fix**, **Upgrade**, **Test run**, **Test generate**), if a workflow is already in progress, do not start a new one. Inform the user and suggest they continue the current workflow or cancel it first
 - **Refactor requests**: Treat refactoring as a Build intent (refactoring follows the feature workflow)
 - **Non-dev requests**: Requests like "explain this code", "what does this function do", or "help me understand" are not development tasks -- skip intent detection entirely
 

@@ -2961,6 +2961,43 @@ describe('getTierDescription()', () => {
         assert.equal(second.description, 'direct edit, no workflow');
         assert.equal(second.fileRange, '1-2 files');
     });
+
+    // TC-GTD-11: light tier contextualised when analysis phases completed
+    it('returns contextual description for light when arch+design done (TC-GTD-11)', () => {
+        const phases = ['00-quick-scan', '01-requirements', '02-impact-analysis', '03-architecture', '04-design'];
+        const desc = getTierDescription('light', phases);
+        assert.equal(desc.label, 'Light');
+        assert.equal(desc.description, 'use completed analysis, lightweight quality gates');
+        assert.equal(desc.fileRange, '3-8 files');
+    });
+
+    // TC-GTD-12: standard tier contextualised when analysis phases completed
+    it('returns contextual description for standard when arch+design done (TC-GTD-12)', () => {
+        const phases = ['00-quick-scan', '01-requirements', '02-impact-analysis', '03-architecture', '04-design'];
+        const desc = getTierDescription('standard', phases);
+        assert.equal(desc.label, 'Standard');
+        assert.equal(desc.description, 'use completed analysis, full quality gates');
+        assert.equal(desc.fileRange, '9-20 files');
+    });
+
+    // TC-GTD-13: light tier unchanged when no phases completed
+    it('returns default description for light with empty phasesCompleted (TC-GTD-13)', () => {
+        const desc = getTierDescription('light', []);
+        assert.equal(desc.description, 'skip architecture and design');
+    });
+
+    // TC-GTD-14: light tier unchanged when only partial analysis done
+    it('returns default description for light when only arch done (TC-GTD-14)', () => {
+        const desc = getTierDescription('light', ['03-architecture']);
+        assert.equal(desc.description, 'skip architecture and design');
+    });
+
+    // TC-GTD-15: trivial/epic unaffected by phasesCompleted
+    it('trivial and epic descriptions unaffected by phasesCompleted (TC-GTD-15)', () => {
+        const phases = ['03-architecture', '04-design'];
+        assert.equal(getTierDescription('trivial', phases).description, 'direct edit, no workflow');
+        assert.equal(getTierDescription('epic', phases).description, 'full workflow with decomposition');
+    });
 });
 
 // ===========================================================================
