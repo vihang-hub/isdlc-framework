@@ -1007,16 +1007,36 @@ function computeRecommendedTier(estimatedFiles, riskLevel, thresholds) {
  * Returns a human-readable description object for a workflow tier.
  * Pure function -- lookup only.
  *
+ * When phasesCompleted includes architecture/design phases, descriptions
+ * are contextualised to reflect that analysis is already done (not "skipped").
+ *
  * GH-59: Complexity-Based Routing
  * Traces: FR-009 (AC-009a, AC-009b)
  *
  * @param {string} tier
+ * @param {string[]} [phasesCompleted] - phases already completed (from meta.phases_completed)
  * @returns {{ label: string, description: string, fileRange: string }}
  */
-function getTierDescription(tier) {
+function getTierDescription(tier, phasesCompleted) {
     if (typeof tier === 'string' && tier in TIER_DESCRIPTIONS) {
         // Return a copy to prevent mutation of the lookup table
-        return { ...TIER_DESCRIPTIONS[tier] };
+        const desc = { ...TIER_DESCRIPTIONS[tier] };
+        // Contextualise when analysis phases are already done
+        if (Array.isArray(phasesCompleted) && phasesCompleted.length > 0 && tier === 'light') {
+            const archDone = phasesCompleted.includes('03-architecture');
+            const designDone = phasesCompleted.includes('04-design');
+            if (archDone && designDone) {
+                desc.description = 'use completed analysis, lightweight quality gates';
+            }
+        }
+        if (Array.isArray(phasesCompleted) && phasesCompleted.length > 0 && tier === 'standard') {
+            const archDone = phasesCompleted.includes('03-architecture');
+            const designDone = phasesCompleted.includes('04-design');
+            if (archDone && designDone) {
+                desc.description = 'use completed analysis, full quality gates';
+            }
+        }
+        return desc;
     }
     return { ...UNKNOWN_TIER_DESCRIPTION };
 }

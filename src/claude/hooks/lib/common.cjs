@@ -4129,38 +4129,24 @@ function rebuildSessionCache(options = {}) {
         return fs.readFileSync(path.join(root, 'docs', 'isdlc', 'constitution.md'), 'utf8');
     }));
 
-    // Section 2: WORKFLOW_CONFIG
-    parts.push(buildSection('WORKFLOW_CONFIG', () => {
-        return fs.readFileSync(path.join(root, 'src', 'isdlc', 'config', 'workflows.json'), 'utf8');
-    }));
-
-    // Section 3: ITERATION_REQUIREMENTS
-    parts.push(buildSection('ITERATION_REQUIREMENTS', () => {
-        return fs.readFileSync(path.join(root, '.claude', 'hooks', 'config', 'iteration-requirements.json'), 'utf8');
-    }));
-
-    // Section 4: ARTIFACT_PATHS
-    parts.push(buildSection('ARTIFACT_PATHS', () => {
-        return fs.readFileSync(path.join(root, '.claude', 'hooks', 'config', 'artifact-paths.json'), 'utf8');
-    }));
-
-    // Section 5: SKILLS_MANIFEST (REQ-0040: TOON encoding with fail-open fallback)
-    parts.push(buildSection('SKILLS_MANIFEST', () => {
-        const manifestPath = path.join(root, 'src', 'claude', 'hooks', 'config', 'skills-manifest.json');
-        const raw = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    // REQ-0041: Shared TOON encoding helper for JSON sections
+    // Encodes JSON data via encodeValue() with fail-open JSON fallback per section.
+    // Traces to: FR-007 (AC-007-01 through AC-007-05), FR-010 (AC-010-01, AC-010-02)
+    let totalJsonChars = 0;
+    let totalToonChars = 0;
+    function buildJsonSection(name, sourcePath) {
+        const raw = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
         const jsonContent = JSON.stringify(raw, null, 2);
 
-        // Attempt TOON encoding if data is a uniform array (ADR-0040-02, ADR-0040-03)
         try {
             const toonEncoder = require('./toon-encoder.cjs');
-            if (toonEncoder.isUniformArray(raw)) {
-                const toonContent = toonEncoder.encode(raw);
-                // Log encoding stats to stderr (REQ-0040 FR-001)
-                const jsonTokens = jsonContent.length;
-                const toonTokens = toonContent.length;
-                const reduction = ((1 - toonTokens / jsonTokens) * 100).toFixed(1);
+            const toonContent = toonEncoder.encodeValue(raw, { stripKeys: ['_comment'] });
+            if (toonContent && toonContent.trim().length > 0) {
+                totalJsonChars += jsonContent.length;
+                totalToonChars += toonContent.length;
                 if (verbose) {
-                    process.stderr.write(`TOON encoding: ${jsonTokens} -> ${toonTokens} chars (${reduction}% reduction)\n`);
+                    const reduction = ((1 - toonContent.length / jsonContent.length) * 100).toFixed(1);
+                    process.stderr.write(`TOON ${name}: ${jsonContent.length} -> ${toonContent.length} chars (${reduction}% reduction)\n`);
                 }
                 return '[TOON]\n' + toonContent;
             }
@@ -4168,7 +4154,29 @@ function rebuildSessionCache(options = {}) {
             // Fail-open: any error falls through to JSON (ADR-0040-03, Article X)
         }
 
+        totalJsonChars += jsonContent.length;
+        totalToonChars += jsonContent.length;
         return jsonContent;
+    }
+
+    // Section 2: WORKFLOW_CONFIG (REQ-0041: TOON encoding with fail-open fallback)
+    parts.push(buildSection('WORKFLOW_CONFIG', () => {
+        return buildJsonSection('WORKFLOW_CONFIG', path.join(root, 'src', 'isdlc', 'config', 'workflows.json'));
+    }));
+
+    // Section 3: ITERATION_REQUIREMENTS (REQ-0041: TOON encoding with fail-open fallback)
+    parts.push(buildSection('ITERATION_REQUIREMENTS', () => {
+        return buildJsonSection('ITERATION_REQUIREMENTS', path.join(root, '.claude', 'hooks', 'config', 'iteration-requirements.json'));
+    }));
+
+    // Section 4: ARTIFACT_PATHS (REQ-0041: TOON encoding with fail-open fallback)
+    parts.push(buildSection('ARTIFACT_PATHS', () => {
+        return buildJsonSection('ARTIFACT_PATHS', path.join(root, '.claude', 'hooks', 'config', 'artifact-paths.json'));
+    }));
+
+    // Section 5: SKILLS_MANIFEST (REQ-0041: TOON encoding with fail-open fallback)
+    parts.push(buildSection('SKILLS_MANIFEST', () => {
+        return buildJsonSection('SKILLS_MANIFEST', path.join(root, 'src', 'claude', 'hooks', 'config', 'skills-manifest.json'));
     }));
 
     // Section 6: SKILL_INDEX (per-agent blocks)
@@ -4284,6 +4292,11 @@ function rebuildSessionCache(options = {}) {
 
     if (verbose) {
         process.stderr.write(`Session cache written: ${cachePath} (${output.length} chars, ${sections.length} sections)\n`);
+        // REQ-0041 FR-010 (AC-010-02): Total TOON reduction summary
+        if (totalJsonChars > 0) {
+            const totalReduction = ((1 - totalToonChars / totalJsonChars) * 100).toFixed(1);
+            process.stderr.write(`TOON total: ${totalJsonChars} -> ${totalToonChars} chars (${totalReduction}% reduction across JSON sections)\n`);
+        }
     }
 
     return { path: cachePath, size: output.length, hash, sections, skipped };

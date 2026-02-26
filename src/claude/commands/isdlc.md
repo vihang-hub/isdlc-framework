@@ -871,11 +871,12 @@ Step 4a-tier: Tier Selection (GH-59, FR-005, FR-006, FR-008, NFR-001, AD-07)
            (fall through to tier menu below)
 
 4. Present tier menu:
+   LET phases_done = meta.phases_completed OR []
    LET descriptions = {
-       trivial:  getTierDescription("trivial"),
-       light:    getTierDescription("light"),
-       standard: getTierDescription("standard"),
-       epic:     getTierDescription("epic")
+       trivial:  getTierDescription("trivial", phases_done),
+       light:    getTierDescription("light", phases_done),
+       standard: getTierDescription("standard", phases_done),
+       epic:     getTierDescription("epic", phases_done)
    }
 
    Display:
@@ -1790,6 +1791,7 @@ Use Task tool → {agent_name} with:
   "Execute Phase {NN} - {Phase Name} for {workflow_type} workflow.
    Artifact folder: {artifact_folder}
    Phase key: {phase_key}
+   STATE.JSON UPDATES: Use the Write or Edit tool to modify .isdlc/state.json. Never use Bash (node -e, python -c, redirects) to write state — those commands will be blocked by the state-file-guard hook.
    {WORKFLOW MODIFIERS: {json} — if applicable}
    {DISCOVERY CONTEXT: ... — if present in SessionStart cache}
    {built_in_skills_block — from SKILL INJECTION STEP A above, omit if empty}
@@ -2252,7 +2254,8 @@ state update, check if adaptive workflow sizing should run.
   3. Contains `"PHASE COMPLETION BLOCKED"` OR `"CONSTITUTIONAL VALIDATION INCOMPLETE"` → Follow **3f-constitutional** below
   4. Contains `"ITERATION CORRIDOR"` → Follow **3f-iteration-corridor** below
   5. Contains `"TEST ADEQUACY REQUIRED"` → Follow **3f-test-adequacy** below
-  6. Otherwise → Generic fallback: display blocker banner (same format as 3c), use `AskUserQuestion` for Retry/Skip/Cancel
+  6. Contains `"BASH STATE GUARD"` → Follow **3f-bash-state-guard** below
+  7. Otherwise → Generic fallback: display blocker banner (same format as 3c), use `AskUserQuestion` for Retry/Skip/Cancel
 - Any other error → Display error, use `AskUserQuestion` for Retry/Skip/Cancel
 
 **3f-blast-radius.** BLAST RADIUS BLOCK HANDLING (Traces to: BUG-0019, FR-01 through FR-05)
@@ -2323,6 +2326,7 @@ This protocol manages retry counters for hook block re-delegations. Each handler
 | 3f-constitutional | 3 | CV max_iterations is 5 in config, but orchestrator-level retries should be fewer |
 | 3f-iteration-corridor | 3 | Same rationale as constitutional |
 | 3f-test-adequacy | 2 | Precondition block — if test gen fails twice, escalate |
+| 3f-bash-state-guard | 2 | Agent used wrong tool — guidance should fix on first retry |
 
 **3f-gate-blocker.** GATE BLOCKER RE-DELEGATION
 
@@ -2431,6 +2435,27 @@ You MUST establish adequate test coverage before proceeding:
 1. Write unit tests for the affected code
 2. Achieve the minimum coverage threshold shown above
 3. Run the test suite to verify coverage
+```
+
+3. On return, loop back to STEP 3d per the retry protocol.
+
+**3f-bash-state-guard.** BASH STATE GUARD RE-DELEGATION
+
+When the block message contains `"BASH STATE GUARD"`:
+
+1. Check retry counter (`bash-state-guard:{phase_key}`) per **3f-retry-protocol**. If >= 2, escalate.
+2. Re-delegate to the SAME phase agent with this prompt:
+
+```
+BASH STATE GUARD — Retry {N} of 2
+
+Your previous attempt to update state.json via a Bash command was blocked.
+Direct Bash writes to state.json are not permitted.
+
+Use the Write tool (for full replacement) or Edit tool (for targeted field updates)
+to modify .isdlc/state.json. These tools are validated by the state-write-validator hook.
+
+Resume your phase work — do NOT restart from the beginning.
 ```
 
 3. On return, loop back to STEP 3d per the retry protocol.
