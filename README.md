@@ -4,13 +4,13 @@
 
 <h3><em>Behind every chat, a structured development lifecycle — managing your backlog, running workflows, enforcing quality, tracking progress, and documenting every change so you pick up where you left off.</em></h3>
 
-<p><strong>An invisible framework for Claude Code that orchestrates agents, skills, and hooks behind the scenes — managing workflows, enforcing quality gates, preserving context across sessions, and producing a traceable artifact chain from requirements to code review.</strong></p>
+<p><strong>An invisible framework for Claude Code and Antigravity that orchestrates agents, skills, and hooks behind the scenes — managing workflows, enforcing quality gates, preserving context across sessions, and producing a traceable artifact chain from requirements to code review.</strong></p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Agents](https://img.shields.io/badge/Agents-64-purple.svg)](docs/AGENTS.md)
 [![Skills](https://img.shields.io/badge/Skills-273-green.svg)](docs/DETAILED-SKILL-ALLOCATION.md)
 [![Gates](https://img.shields.io/badge/Quality%20Gates-21-orange.svg)](docs/ARCHITECTURE.md#quality-gates)
-[![Hooks](https://img.shields.io/badge/Hooks-28-red.svg)](docs/HOOKS.md)
+[![Bridge](https://img.shields.io/badge/Antigravity-Bridge-blue.svg)](ANTIGRAVITY.md)
 
 </div>
 
@@ -18,13 +18,13 @@
 
 ## What is iSDLC?
 
-The iSDLC (intelligent Software Development Lifecycle) framework adds structure to AI-powered development. It works in the background — detecting intent, selecting the right workflow, and managing the full lifecycle from requirements through production. You never have to learn commands, manage phase transitions, or remember what to do next.
+The iSDLC (intelligent Software Development Lifecycle) framework adds structure to AI-powered development. It works in the background — detecting intent, selecting the right workflow, and managing the full lifecycle from requirements through production. It provides a consistent development experience across **Claude Code** and **Antigravity**.
 
 It exists because LLM-based coding assistants are powerful but unreliable without external constraints — they skip tests, drift from requirements, lose context across sessions, and declare work "done" prematurely. iSDLC adds the structure they lack, invisibly.
 
 ### How it works
 
-Just talk to Claude naturally. The framework detects your intent and runs the right workflow:
+Just talk to your AI assistant naturally. The framework detects your intent and runs the right workflow:
 
 ```
 You:     "The login page crashes when the password field is empty"
@@ -136,8 +136,9 @@ For users who prefer explicit control, slash commands are available:
 
 | Requirement | Version | Notes |
 |-------------|---------|-------|
-| **Node.js** | 20+ | Required for hooks and CLI |
-| **Claude Code** | Latest | [Install guide](https://docs.anthropic.com/en/docs/claude-code/overview) |
+| **Node.js** | 20+ | Required for hooks, tools, and CLI |
+| **Claude Code** | Latest | [Optional] [Install guide](https://docs.anthropic.com/en/docs/claude-code/overview) |
+| **Antigravity** | Latest | [Optional] |
 
 ### Install
 
@@ -358,6 +359,6 @@ MIT License
 
 <div align="center">
 
-**iSDLC Framework** v0.1.0-alpha — 64 agents, 273 skills, 21 enforced phases, 28 hooks
+**iSDLC Framework** v0.1.0-alpha — 64 agents, 273 skills, 21 enforced phases, 28 hooks, Antigravity Bridge
 
 </div>
