@@ -25,7 +25,7 @@ ownership:
   sdlc-orchestrator:
     agent_id: "00"
     phase: "all"
-    skill_count: 12
+    skill_count: 15
     skills:
       - id: ORCH-001
         name: workflow-management
@@ -63,6 +63,15 @@ ownership:
       - id: ORCH-012
         name: generate-plan
         path: orchestration/generate-plan
+      - id: ORCH-013
+        name: antigravity-validate-gate
+        path: orchestration/antigravity-validate-gate
+      - id: ORCH-014
+        name: antigravity-validate-state
+        path: orchestration/antigravity-validate-state
+      - id: ORCH-015
+        name: antigravity-prime-session
+        path: orchestration/antigravity-prime-session
 
   # ---------------------------------------------------------------------------
   # Discover Orchestrator
@@ -478,7 +487,7 @@ ownership:
   solution-architect:
     agent_id: "02"
     phase: "02-architecture"
-    skill_count: 13
+    skill_count: 15
     skills:
       - id: ARCH-001
         name: architecture-pattern-selection
@@ -592,7 +601,7 @@ ownership:
   software-developer:
     agent_id: "05"
     phase: "05-implementation"
-    skill_count: 14
+    skill_count: 15
     skills:
       - id: DEV-001
         name: code-implementation
@@ -694,7 +703,7 @@ ownership:
   security-compliance-auditor:
     agent_id: "08"
     phase: "08-validation"
-    skill_count: 13
+    skill_count: 15
     skills:
       - id: SEC-001
         name: security-architecture-review
@@ -854,7 +863,7 @@ ownership:
   site-reliability-engineer:
     agent_id: "13"
     phase: "13-operations"
-    skill_count: 14
+    skill_count: 15
     skills:
       - id: SRE-001
         name: system-monitoring
