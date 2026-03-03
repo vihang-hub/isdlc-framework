@@ -315,13 +315,10 @@
   - **Depends on**: #19 (three-verb model exists) — DONE
   - **Complexity**: Low-medium
 
-### Search Wiring
-
-- 9.1 [A] #95: Wire search abstraction layer into setup pipeline and migrate high-impact agents -> [requirements](docs/requirements/REQ-0042-wire-search-abstraction-layer-into-setup-pipeline/)
-
 ## Completed
 
 ### 2026-03-03
+- [x] #95: Wire search abstraction layer into setup pipeline and migrate high-impact agents — setupSearchCapabilities(), CLI --search-backend flag, installer step 8, 6 agent migrations. 47 tests, 95.83% coverage. *(merged 9e09bbc)*
 - [x] #34: Improve search capabilities for Claude effectiveness — search abstraction layer with backend registry (lexical, enhanced-lexical, structural/ast-grep), BM25-inspired ranking, query routing, graceful degradation. 180 tests, 96.59% coverage. *(merged 8356153)*
 
 ### 2026-02-27
