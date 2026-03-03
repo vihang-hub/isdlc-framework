@@ -152,7 +152,7 @@
 
 ### Framework Features
 
-- #34 [A] Improve search capabilities to help Claude be more effective -> [requirements](docs/requirements/REQ-0041-improve-search-capabilities-for-claude-effectiveness/)
+- #34 [x] ~~Improve search capabilities to help Claude be more effective~~ -> [requirements](docs/requirements/REQ-0041-improve-search-capabilities-for-claude-effectiveness/) **Completed: 2026-03-03** *(merged 8356153)*
 - #35 [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
 - #27 [ ] /isdlc validate command — on-demand artifact quality check (constitutional + completeness) without running a full workflow
 - #28 [ ] Progressive disclosure / lite mode — expose only constitution → requirements → implement → quality loop for simple projects, full lifecycle opt-in
@@ -315,7 +315,14 @@
   - **Depends on**: #19 (three-verb model exists) — DONE
   - **Complexity**: Low-medium
 
+### Search Wiring
+
+- 9.1 [A] #95: Wire search abstraction layer into setup pipeline and migrate high-impact agents -> [requirements](docs/requirements/REQ-0042-wire-search-abstraction-layer-into-setup-pipeline/)
+
 ## Completed
+
+### 2026-03-03
+- [x] #34: Improve search capabilities for Claude effectiveness — search abstraction layer with backend registry (lexical, enhanced-lexical, structural/ast-grep), BM25-inspired ranking, query routing, graceful degradation. 180 tests, 96.59% coverage. *(merged 8356153)*
 
 ### 2026-02-27
 - [x] #33: TOON format integration — adopt Token-Oriented Object Notation for agent prompts and state data to reduce token usage. Completed last week based on user confirmation.
