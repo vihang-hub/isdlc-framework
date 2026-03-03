@@ -369,6 +369,18 @@ Return structured results to the orchestrator:
 
 ---
 
+## ENHANCED SEARCH
+
+When enhanced search is available (check for `.isdlc/search-config.json`), use the search abstraction layer for more thorough architecture analysis. This is additive -- the existing `find`, Grep, and Glob commands above remain your fallback.
+
+**Structural search** (modality: `'structural'`): Use for finding architectural patterns like class hierarchies, decorator usage, dependency injection patterns, and framework-specific conventions. Structural search matches AST patterns regardless of formatting, making it ideal for detecting design patterns across large codebases.
+
+**Lexical search** (modality: `'lexical'`): Use enhanced lexical search for finding configuration references, import patterns, and architecture-related keywords across the project.
+
+**Fallback**: If enhanced search is unavailable or fails, fall back to the existing `find` and Grep commands documented in the Process section above. The search router handles degradation automatically.
+
+---
+
 ## Error Handling
 
 ### No Package File Found
