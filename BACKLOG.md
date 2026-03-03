@@ -153,7 +153,7 @@
 ### Framework Features
 
 - #34 [x] ~~Improve search capabilities to help Claude be more effective~~ -> [requirements](docs/requirements/REQ-0041-improve-search-capabilities-for-claude-effectiveness/) **Completed: 2026-03-03** *(merged 8356153)*
-- #96 [ ] Migrate remaining 4 agents to Enhanced Search sections -> [requirements](docs/requirements/REQ-0043-migrate-remaining-4-agents-to-enhanced-search-sections/)
+- #96 [x] ~~Migrate remaining 4 agents to Enhanced Search sections~~ -> [requirements](docs/requirements/REQ-0043-migrate-remaining-4-agents-to-enhanced-search-sections/) **Completed: 2026-03-03** *(merged 717d625)*
 - #35 [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
 - #27 [ ] /isdlc validate command — on-demand artifact quality check (constitutional + completeness) without running a full workflow
 - #28 [ ] Progressive disclosure / lite mode — expose only constitution → requirements → implement → quality loop for simple projects, full lifecycle opt-in
@@ -319,6 +319,7 @@
 ## Completed
 
 ### 2026-03-03
+- [x] #96: Migrate remaining 4 agents to Enhanced Search sections — upgrade-engineer, execution-path-tracer, cross-validation-verifier, roundtable-analyst. 39 tests, 0 regressions. *(merged 717d625)*
 - [x] #95: Wire search abstraction layer into setup pipeline and migrate high-impact agents — setupSearchCapabilities(), CLI --search-backend flag, installer step 8, 6 agent migrations. 47 tests, 95.83% coverage. *(merged 9e09bbc)*
 - [x] #34: Improve search capabilities for Claude effectiveness — search abstraction layer with backend registry (lexical, enhanced-lexical, structural/ast-grep), BM25-inspired ranking, query routing, graceful degradation. 180 tests, 96.59% coverage. *(merged 8356153)*
 
