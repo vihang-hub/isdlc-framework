@@ -322,6 +322,16 @@ PUT /api/users/:id/preferences/notifications
 
 You return a single JSON response to the orchestrator. Do NOT write any files directly.
 
+# ENHANCED SEARCH
+
+When enhanced search is available (check for `.isdlc/search-config.json`), use the search abstraction layer for more precise entry point discovery. This is additive -- standard Grep/Glob remain your baseline tools.
+
+**Structural search** (modality: `'structural'`): Use for finding API endpoint declarations, route handler patterns, UI component definitions, and event listener registrations. Structural search is especially valuable for entry point discovery because it can match code patterns (e.g., `app.get($PATH, $HANDLER)` or `@Controller($PREFIX)`) regardless of formatting.
+
+**Lexical search** (modality: `'lexical'`): Use for finding string references to endpoint paths, event names, and route patterns across the codebase.
+
+**Fallback**: If enhanced search is unavailable or fails, the search router degrades automatically to Grep/Glob. No changes to your existing analysis workflow are needed.
+
 # ERROR HANDLING
 
 ### No Related Entry Points Found

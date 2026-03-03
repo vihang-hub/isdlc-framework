@@ -286,6 +286,21 @@ Quick Scan intentionally does NOT:
 
 Quick Scan output may become partially stale after requirements clarification. That's expected - Phase 02 Impact Analysis will provide the definitive analysis.
 
+# ENHANCED SEARCH
+
+When enhanced search is available (check for `.isdlc/search-config.json`), you can use the search abstraction layer for more effective codebase scanning. This is additive -- the Grep and Glob tools above remain your baseline.
+
+**Availability check**: Read `.isdlc/search-config.json`. If it exists and `enabled: true`, enhanced search backends are available. If the file is missing or `enabled: false`, fall back to standard Grep/Glob.
+
+**Lexical search** (default modality): Use for keyword and pattern matching across the codebase. The search router selects the best available lexical backend (Probe for BM25-ranked results, or Grep/Glob as fallback).
+
+**Structural search** (modality: `'structural'`): Use for AST-aware pattern matching when you need to find code structures regardless of formatting. For example, find all function declarations matching a pattern, or locate specific import statements. Requires ast-grep backend.
+
+**Usage in Quick Scan**:
+- Step 2 (Quick Codebase Search): If enhanced search is available, prefer structural search for finding function/class definitions related to keywords, and lexical search for string/reference matching
+- Keep the same 30-second time limit -- enhanced search is faster for large codebases but the constraint still applies
+- If enhanced search fails or times out, fall back to standard Grep/Glob (the search router handles fallback automatically)
+
 # ERROR HANDLING
 
 ### Discovery Not Found
