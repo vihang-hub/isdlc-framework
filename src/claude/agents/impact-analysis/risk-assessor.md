@@ -307,6 +307,16 @@ Finalized requirements from Phase 01 (8 acceptance criteria analyzed)
 
 You return a single JSON response to the orchestrator. Do NOT write any files directly.
 
+# ENHANCED SEARCH
+
+When enhanced search is available (check for `.isdlc/search-config.json`), use the search abstraction layer for more effective risk assessment. This is additive -- standard Grep/Glob remain your baseline tools.
+
+**Lexical search** (modality: `'lexical'`): Use enhanced lexical search for finding TODO, FIXME, HACK, and deprecated markers across the codebase. Enhanced backends provide BM25-ranked results that surface the most relevant technical debt indicators in affected areas.
+
+**Structural search** (modality: `'structural'`): Use for identifying complex code patterns that indicate risk, such as deeply nested callbacks, exception handling gaps, or functions with high cyclomatic complexity indicators.
+
+**Fallback**: If enhanced search is unavailable or fails, the search router degrades automatically to Grep/Glob. No changes to your existing risk assessment workflow are needed.
+
 # ERROR HANDLING
 
 ### No Coverage Data Available

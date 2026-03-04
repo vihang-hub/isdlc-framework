@@ -1,0 +1,33 @@
+FR_ID,FR_Title,AC_ID,AC_Description,User_Story,Priority,Confidence
+FR-001,Setup Pipeline Integration,AC-001-01,Install function includes step 8 calling detectSearchCapabilities,US-001,Must Have,High
+FR-001,Setup Pipeline Integration,AC-001-02,Detection results displayed using logger utilities,US-001,Must Have,High
+FR-001,Setup Pipeline Integration,AC-001-03,Installer calls installTool with consent callback,US-002,Must Have,High
+FR-001,Setup Pipeline Integration,AC-001-04,configureMcpServers called after successful installations,US-004,Must Have,High
+FR-001,Setup Pipeline Integration,AC-001-05,writeSearchConfig called to persist configuration,US-001,Must Have,High
+FR-001,Setup Pipeline Integration,AC-001-06,Baseline config written when user declines all,US-001,Must Have,High
+FR-001,Setup Pipeline Integration,AC-001-07,Failures logged as warnings never block installer,US-002,Must Have,High
+FR-002,CLI Flag Support,AC-002-01,parseArgs recognizes --no-search-setup flag,US-003,Must Have,High
+FR-002,CLI Flag Support,AC-002-02,noSearchSetup set to true when flag passed,US-003,Must Have,High
+FR-002,CLI Flag Support,AC-002-03,Step 8 skipped when noSearchSetup is true,US-003,Must Have,High
+FR-002,CLI Flag Support,AC-002-04,--force auto-accepts recommendations,US-007,Must Have,High
+FR-002,CLI Flag Support,AC-002-05,--dry-run reports without making changes,US-008,Should Have,High
+FR-002,CLI Flag Support,AC-002-06,Help text includes --no-search-setup,US-010,Should Have,High
+FR-003,Quick-Scan Agent Migration,AC-003-01,quick-scan-agent.md includes Enhanced Search section,US-005,Should Have,High
+FR-003,Quick-Scan Agent Migration,AC-003-02,Enhanced search section includes example requests,US-005,Should Have,High
+FR-003,Quick-Scan Agent Migration,AC-003-03,Agent describes checking hasEnhancedSearch,US-005,Should Have,Medium
+FR-003,Quick-Scan Agent Migration,AC-003-04,Existing Grep/Glob instructions remain as fallback,US-005,Should Have,High
+FR-003,Quick-Scan Agent Migration,AC-003-05,Agent frontmatter NOT modified,US-005,Should Have,High
+FR-004,Impact Analysis Sub-Agent Migration,AC-004-01,impact-analyzer.md includes structural search guidance,US-006,Should Have,Medium
+FR-004,Impact Analysis Sub-Agent Migration,AC-004-02,entry-point-finder.md includes structural search guidance,US-006,Should Have,Medium
+FR-004,Impact Analysis Sub-Agent Migration,AC-004-03,risk-assessor.md includes enhanced lexical search guidance,US-006,Should Have,Medium
+FR-004,Impact Analysis Sub-Agent Migration,AC-004-04,New sections added without modifying existing process,US-006,Should Have,High
+FR-004,Impact Analysis Sub-Agent Migration,AC-004-05,Agent frontmatter NOT modified,US-006,Should Have,High
+FR-005,Discovery Analyzer Migration,AC-005-01,architecture-analyzer.md includes structural search guidance,US-009,Could Have,Medium
+FR-005,Discovery Analyzer Migration,AC-005-02,feature-mapper.md includes structural search guidance,US-009,Could Have,Medium
+FR-005,Discovery Analyzer Migration,AC-005-03,Existing find/grep patterns remain as fallback,US-009,Could Have,Medium
+FR-005,Discovery Analyzer Migration,AC-005-04,Agent frontmatter NOT modified,US-009,Could Have,High
+FR-006,Installer Step Count Update,AC-006-01,Step labels use correct denominator,N/A,Must Have,High
+FR-006,Installer Step Count Update,AC-006-02,New step uses correct step number,N/A,Must Have,High
+FR-006,Installer Step Count Update,AC-006-03,Step numbering is sequential,N/A,Must Have,High
+FR-007,Help Text and Documentation,AC-007-01,showHelp includes --no-search-setup in Options,US-010,Should Have,High
+FR-007,Help Text and Documentation,AC-007-02,Option description explains search setup skip,US-010,Should Have,High

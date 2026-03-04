@@ -1,0 +1,107 @@
+{
+  "version": "1.0.0",
+  "slug": "REQ-0042-wire-search-abstraction-layer-into-setup-pipeline",
+  "source_id": "GH-95",
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Search Detection During Init",
+      "as_a": "developer running isdlc init",
+      "i_want_to": "have search tools detected and recommended automatically",
+      "so_that": "I get enhanced search capabilities without manual configuration",
+      "acceptance_criteria": ["AC-001-01", "AC-001-02", "AC-001-03", "AC-001-06"],
+      "priority": "Must Have",
+      "fr_refs": ["FR-001"]
+    },
+    {
+      "id": "US-002",
+      "title": "Tool Installation with Consent",
+      "as_a": "developer running isdlc init",
+      "i_want_to": "be asked before any tools are installed on my system",
+      "so_that": "I maintain control over what is installed",
+      "acceptance_criteria": ["AC-001-03", "AC-001-04", "AC-001-07"],
+      "priority": "Must Have",
+      "fr_refs": ["FR-001"]
+    },
+    {
+      "id": "US-003",
+      "title": "Opt-Out of Search Setup",
+      "as_a": "developer in a restricted environment",
+      "i_want_to": "skip search setup entirely with a flag",
+      "so_that": "I can install iSDLC without any search-related changes",
+      "acceptance_criteria": ["AC-002-01", "AC-002-02", "AC-002-03"],
+      "priority": "Must Have",
+      "fr_refs": ["FR-002"]
+    },
+    {
+      "id": "US-004",
+      "title": "MCP Server Auto-Configuration",
+      "as_a": "developer who accepts tool installation",
+      "i_want_to": "have MCP servers configured automatically in settings.json",
+      "so_that": "I do not need to manually configure MCP entries",
+      "acceptance_criteria": ["AC-001-04"],
+      "priority": "Must Have",
+      "fr_refs": ["FR-001"]
+    },
+    {
+      "id": "US-005",
+      "title": "Quick-Scan Agent Uses Enhanced Search",
+      "as_a": "developer running a feature workflow",
+      "i_want_to": "have the quick-scan agent use structural search when available",
+      "so_that": "codebase scans are more precise and faster",
+      "acceptance_criteria": ["AC-003-01", "AC-003-02", "AC-003-03", "AC-003-04"],
+      "priority": "Should Have",
+      "fr_refs": ["FR-003"]
+    },
+    {
+      "id": "US-006",
+      "title": "Impact Analysis Uses Enhanced Search",
+      "as_a": "developer running impact analysis",
+      "i_want_to": "have impact sub-agents use structural search for blast radius assessment",
+      "so_that": "impact analysis is more accurate with AST-aware results",
+      "acceptance_criteria": ["AC-004-01", "AC-004-02", "AC-004-03", "AC-004-04"],
+      "priority": "Should Have",
+      "fr_refs": ["FR-004"]
+    },
+    {
+      "id": "US-007",
+      "title": "Force Mode Auto-Installs",
+      "as_a": "CI/CD pipeline operator",
+      "i_want_to": "have all recommended tools installed without prompts under --force",
+      "so_that": "automated installations get full search capabilities",
+      "acceptance_criteria": ["AC-002-04"],
+      "priority": "Must Have",
+      "fr_refs": ["FR-002"]
+    },
+    {
+      "id": "US-008",
+      "title": "Dry-Run Preview",
+      "as_a": "cautious developer",
+      "i_want_to": "preview what search setup would do without making changes",
+      "so_that": "I can evaluate before committing to changes",
+      "acceptance_criteria": ["AC-002-05"],
+      "priority": "Should Have",
+      "fr_refs": ["FR-002"]
+    },
+    {
+      "id": "US-009",
+      "title": "Discovery Agents Use Enhanced Search",
+      "as_a": "developer running /discover",
+      "i_want_to": "have discovery agents use structural search for architecture analysis",
+      "so_that": "project discovery produces more accurate results",
+      "acceptance_criteria": ["AC-005-01", "AC-005-02", "AC-005-03"],
+      "priority": "Could Have",
+      "fr_refs": ["FR-005"]
+    },
+    {
+      "id": "US-010",
+      "title": "Help Text Documents Search Setup",
+      "as_a": "new iSDLC user",
+      "i_want_to": "see documentation for --no-search-setup in the help text",
+      "so_that": "I know how to control search setup behavior",
+      "acceptance_criteria": ["AC-007-01", "AC-007-02"],
+      "priority": "Should Have",
+      "fr_refs": ["FR-007"]
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+Requirement,AC,Test Case,Test Type,Priority,Test Level,Description
+FR-001,AC-001-01,TC-U-001,positive,P0,unit,setupSearchCapabilities calls detectSearchCapabilities with projectRoot
+FR-001,AC-001-01,TC-I-001,positive,P0,integration,init --force completes with step 8 search setup
+FR-001,AC-001-02,TC-U-010,positive,P1,unit,Detection findings logged via logger.labeled and logger.success
+FR-001,AC-001-02,TC-U-012,positive,P2,unit,Successful installation logged with tool name and version
+FR-001,AC-001-03,TC-U-001,positive,P0,unit,installTool called with consent callback for each recommendation
+FR-001,AC-001-03,TC-U-011,positive,P1,unit,Multiple recommendations each get consent callback
+FR-001,AC-001-04,TC-U-001,positive,P0,unit,configureMcpServers called with installed backends
+FR-001,AC-001-04,TC-U-008,negative,P1,unit,MCP configuration failure continues to config write
+FR-001,AC-001-05,TC-U-001,positive,P0,unit,writeSearchConfig called with config containing installed backends
+FR-001,AC-001-05,TC-U-013,positive,P0,unit,buildConfig constructs correct config from detection + installs
+FR-001,AC-001-05,TC-U-015,positive,P1,unit,buildConfig handles multiple successful installs
+FR-001,AC-001-05,TC-U-016,positive,P1,unit,buildConfig always includes grep-glob as first backend
+FR-001,AC-001-05,TC-I-004,positive,P0,integration,init --force produces search-config.json with baseline
+FR-001,AC-001-06,TC-U-002,positive,P0,unit,No recommendations triggers baseline config write
+FR-001,AC-001-06,TC-U-007,positive,P1,unit,User decline triggers baseline config write without warning
+FR-001,AC-001-06,TC-U-014,positive,P0,unit,buildConfig with no successful installs returns baseline
+FR-001,AC-001-07,TC-U-005,negative,P0,unit,Detection failure caught by outer try-catch
+FR-001,AC-001-07,TC-U-006,negative,P1,unit,Tool installation failure continues to next recommendation
+FR-001,AC-001-07,TC-U-009,negative,P1,unit,Config write failure caught by outer try-catch
+FR-001,AC-001-07,TC-I-005,negative,P0,integration,Error in search detection does not crash installer
+FR-001,AC-001-07,TC-I-008,positive,P1,integration,Existing files and dirs unaffected by search setup
+FR-002,AC-002-01,TC-U-017,positive,P0,unit,parseArgs recognizes --no-search-setup flag
+FR-002,AC-002-01,TC-U-018,positive,P0,unit,Default noSearchSetup is false when flag absent
+FR-002,AC-002-01,TC-U-021,positive,P2,unit,Flag order does not matter
+FR-002,AC-002-02,TC-U-017,positive,P0,unit,noSearchSetup set to true when flag present
+FR-002,AC-002-03,TC-U-025,positive,P0,unit,noSearchSetup=true skips step 8 entirely
+FR-002,AC-002-03,TC-I-002,positive,P0,integration,init --force --no-search-setup skips step 8
+FR-002,AC-002-03,TC-I-006,positive,P1,integration,--no-search-setup takes precedence over --force
+FR-002,AC-002-03,TC-E-002,positive,P0,e2e,Opt-out during installation produces no search artifacts
+FR-002,AC-002-04,TC-U-003,positive,P0,unit,Force mode uses auto-accept consent callback
+FR-002,AC-002-05,TC-U-004,positive,P0,unit,Dry-run mode prevents installations and config writes
+FR-002,AC-002-05,TC-I-003,positive,P1,integration,init --force --dry-run shows recommendations without changes
+FR-002,AC-002-06,TC-U-022,positive,P1,unit,showHelp includes --no-search-setup documentation
+FR-003,AC-003-01,TC-U-026,positive,P1,unit,quick-scan-agent.md contains Enhanced Search section
+FR-003,AC-003-02,TC-U-027,positive,P1,unit,Enhanced Search describes structural and lexical modalities
+FR-003,AC-003-03,TC-U-037,positive,P1,unit,Agent instructions describe hasEnhancedSearch availability check
+FR-003,AC-003-04,TC-U-028,positive,P1,unit,Existing Grep/Glob instructions preserved
+FR-003,AC-003-05,TC-U-029,negative,P1,unit,Agent frontmatter unchanged after migration
+FR-004,AC-004-01,TC-U-030,positive,P1,unit,impact-analyzer.md contains Enhanced Search section
+FR-004,AC-004-02,TC-U-031,positive,P1,unit,entry-point-finder.md contains Enhanced Search section
+FR-004,AC-004-03,TC-U-032,positive,P1,unit,risk-assessor.md contains Enhanced Search section
+FR-004,AC-004-04,TC-U-030,positive,P1,unit,New section does not modify existing process steps
+FR-004,AC-004-04,TC-U-031,positive,P1,unit,New section does not modify existing process steps
+FR-004,AC-004-04,TC-U-032,positive,P1,unit,New section does not modify existing process steps
+FR-004,AC-004-05,TC-U-033,negative,P1,unit,Impact analysis agent frontmatter unchanged
+FR-005,AC-005-01,TC-U-034,positive,P2,unit,architecture-analyzer.md contains Enhanced Search section
+FR-005,AC-005-02,TC-U-035,positive,P2,unit,feature-mapper.md contains Enhanced Search section
+FR-005,AC-005-03,TC-U-034,positive,P2,unit,Existing find/Grep patterns remain as fallback
+FR-005,AC-005-03,TC-U-035,positive,P2,unit,Existing Grep patterns remain as fallback
+FR-005,AC-005-04,TC-U-036,negative,P2,unit,Discovery agent frontmatter unchanged
+FR-006,AC-006-01,TC-U-024,positive,P0,unit,Existing steps renumbered to X/8 denominator
+FR-006,AC-006-02,TC-U-023,positive,P0,unit,Step 8 label is 8/8
+FR-006,AC-006-03,TC-U-024,positive,P0,unit,Step numbering sequential with no gaps
+FR-006,AC-006-03,TC-I-007,positive,P1,integration,Step numbering sequential in full install output
+FR-007,AC-007-01,TC-U-022,positive,P1,unit,showHelp includes --no-search-setup in Options section
+FR-007,AC-007-02,TC-U-022,positive,P1,unit,Option description explains search tool detection skip
+Security,Art-III,TC-S-001,negative,P1,unit,Path traversal rejected in setupSearchCapabilities
+Security,Art-III,TC-S-002,negative,P1,unit,MCP server command injection prevented
+Security,Art-III,TC-S-003,negative,P2,unit,Search config sanitization against prototype pollution
+Performance,QA-002,TC-P-001,positive,P1,unit,Detection completes within 5s timeout
+Performance,QA-002,TC-P-002,positive,P2,unit,Step 8 adds minimal overhead (<2s with mocks)
+E2E,UJ-01,TC-E-001,positive,P0,e2e,New installation with full search setup
+E2E,UJ-03,TC-E-002,positive,P0,e2e,Opt-out during installation
+E2E,FR-003/004/005,TC-E-003,positive,P1,e2e,Agent markdown integrity after migration

@@ -742,6 +742,18 @@ AC files are written directly to `docs/requirements/reverse-engineered/`.
 
 ---
 
+## ENHANCED SEARCH
+
+When enhanced search is available (check for `.isdlc/search-config.json`), use the search abstraction layer for more comprehensive feature discovery. This is additive -- existing Grep and Glob patterns above remain your fallback.
+
+**Structural search** (modality: `'structural'`): Use for finding API route declarations, UI component definitions, event handlers, and function signatures across the codebase. Structural search is particularly valuable for mapping features because it can identify code patterns like `router.get($PATH, $HANDLER)` or `@Route($PATH)` regardless of formatting.
+
+**Lexical search** (modality: `'lexical'`): Use enhanced lexical search for finding business domain keywords, feature flags, configuration keys, and documentation references. Enhanced backends provide ranked results for more relevant feature mapping.
+
+**Fallback**: If enhanced search is unavailable or fails, fall back to the existing Grep and Glob commands. The search router handles degradation automatically.
+
+---
+
 ## Error Handling
 
 ### No Routes or Endpoints Found

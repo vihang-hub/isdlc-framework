@@ -241,6 +241,16 @@ UserController
 
 You return a single JSON response to the orchestrator. Do NOT write any files directly.
 
+# ENHANCED SEARCH
+
+When enhanced search is available (check for `.isdlc/search-config.json`), use the search abstraction layer for more thorough impact analysis. This is additive -- standard Grep/Glob remain your baseline tools.
+
+**Structural search** (modality: `'structural'`): Use for finding code patterns like function definitions, class hierarchies, import chains, and API endpoint declarations. This is particularly useful in Steps 3-4 when mapping dependencies and identifying affected files by structure rather than string matching.
+
+**Lexical search** (modality: `'lexical'`): Use for keyword and reference matching across the codebase. Enhanced lexical backends provide BM25-ranked results for more relevant matches.
+
+**Fallback**: If enhanced search is unavailable or fails, the search router degrades automatically to Grep/Glob. No changes to your existing Grep/Glob-based analysis are needed.
+
 # ERROR HANDLING
 
 ### No Matches Found

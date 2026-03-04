@@ -161,7 +161,9 @@
   - **Superseded by REQ-0041**: ADR-0040-02 conclusion was wrong — full TOON spec supports nested objects via indentation, not just tabular arrays. REQ-0041 upgrades the encoder to handle all JSON sections.
 - [x] ~~Upgrade TOON encoder to full spec compliance — implement nested objects, key-value pairs, inline primitive arrays, mixed arrays; apply to all JSON cache sections for ~33% JSON reduction (~9.4% total cache)~~ -> [requirements](docs/requirements/REQ-0041-toon-full-spec-session-cache-reduction/) **Completed: 2026-02-26** *(merged 1c0af90)*
 - [A] Session cache markdown tightening — condense verbose markdown sections (ROUNDTABLE_CONTEXT 47K, SKILL_INDEX 40K, DISCOVERY_CONTEXT 23K) without losing information; depends on ~~REQ-0041~~ (done) -> [requirements](docs/requirements/REQ-0042-session-cache-markdown-tightening/)
-- #34 [ ] Improve search capabilities to help Claude be more effective
+- #34 [x] ~~Improve search capabilities to help Claude be more effective~~ -> [requirements](docs/requirements/REQ-0041-improve-search-capabilities-for-claude-effectiveness/) **Completed: 2026-03-03** *(merged 8356153)*
+- #96 [x] ~~Migrate remaining 4 agents to Enhanced Search sections~~ -> [requirements](docs/requirements/REQ-0043-migrate-remaining-4-agents-to-enhanced-search-sections/) **Completed: 2026-03-03** *(merged 717d625)*
+- [x] ~~Indexed search backend — sub-second full-codebase queries for large codebases (promoted from REQ-0041 FR-013)~~ -> [requirements](docs/requirements/REQ-0044-indexed-search-backend-zoekt/) **Completed: 2026-03-03** *(merged eac5b62)*
 - #35 [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
 - #27 [ ] /isdlc validate command — on-demand artifact quality check (constitutional + completeness) without running a full workflow
 - #28 [ ] Progressive disclosure / lite mode — expose only constitution → requirements → implement → quality loop for simple projects, full lifecycle opt-in
@@ -329,6 +331,14 @@
   - **Complexity**: Low-medium
 
 ## Completed
+
+### 2026-03-03
+- [x] #96: Migrate remaining 4 agents to Enhanced Search sections — upgrade-engineer, execution-path-tracer, cross-validation-verifier, roundtable-analyst. 39 tests, 0 regressions. *(merged 717d625)*
+- [x] #95: Wire search abstraction layer into setup pipeline and migrate high-impact agents — setupSearchCapabilities(), CLI --search-backend flag, installer step 8, 6 agent migrations. 47 tests, 95.83% coverage. *(merged 9e09bbc)*
+- [x] #34: Improve search capabilities for Claude effectiveness — search abstraction layer with backend registry (lexical, enhanced-lexical, structural/ast-grep), BM25-inspired ranking, query routing, graceful degradation. 180 tests, 96.59% coverage. *(merged 8356153)*
+
+### 2026-02-27
+- [x] #33: TOON format integration — adopt Token-Oriented Object Notation for agent prompts and state data to reduce token usage. Completed last week based on user confirmation.
 
 ### 2026-02-26
 - [x] REQ-0041: TOON Full Spec Session Cache Reduction — upgraded `toon-encoder.cjs` to full TOON spec compliance: nested object encoding via indentation, inline primitive arrays `[a, b, c]`, mixed array handling, key-value pair encoding. Applied to all JSON cache sections (ITERATION_REQUIREMENTS, WORKFLOW_CONFIG, SKILLS_MANIFEST) with per-section JSON fallback (Article X). 129 new tests, zero regressions, 32.6% JSON reduction achieved. 9 files changed, 1607 insertions. 4 phases: test strategy, implementation, quality loop, code review *(merged 1c0af90)*.

@@ -11,6 +11,49 @@
 const fs = require('fs');
 const path = require('path');
 
+/**
+ * Detect if the framework is running within an Antigravity environment.
+ * @returns {boolean} True if Antigravity is detected
+ */
+function isAntigravity() {
+    return process.env.ANTIGRAVITY_AGENT === '1';
+}
+
+/**
+ * Get the platform-specific configuration directory name.
+ * @returns {string} '.antigravity' or '.claude'
+ */
+function getFrameworkDir() {
+    return isAntigravity() ? '.antigravity' : '.claude';
+}
+
+/**
+ * Get the skills directory path for the current environment.
+ * @param {string} projectRoot - The project root path
+ * @returns {string} Path to skills directory
+ */
+function getSkillsDir(projectRoot) {
+    return path.join(projectRoot, getFrameworkDir(), 'skills');
+}
+
+/**
+ * Get the hooks configuration directory path.
+ * @param {string} projectRoot - The project root path
+ * @returns {string} Path to hooks config directory
+ */
+function getHooksConfigDir(projectRoot) {
+    return path.join(projectRoot, getFrameworkDir(), 'hooks', 'config');
+}
+
+/**
+ * Get the hooks schema directory path.
+ * @param {string} projectRoot - The project root path
+ * @returns {string} Path to hooks schema directory
+ */
+function getHooksSchemaDir(projectRoot) {
+    return path.join(getHooksConfigDir(projectRoot), 'schemas');
+}
+
 // =========================================================================
 // Per-Process Caching (REQ-0020: T6 Hook I/O Optimization)
 // =========================================================================
@@ -449,7 +492,7 @@ function resolveExternalSkillsPath(projectId) {
         }
     }
 
-    return path.join(projectRoot, '.claude', 'skills', 'external');
+    return path.join(getSkillsDir(projectRoot), 'external');
 }
 
 /**
@@ -1309,7 +1352,7 @@ function getManifestPath() {
     const projectRoot = getProjectRoot();
 
     // Primary location: .claude/hooks/config/ (hooks config lives with hooks)
-    const hooksConfigPath = path.join(projectRoot, '.claude', 'hooks', 'config', 'skills-manifest.json');
+    const hooksConfigPath = path.join(getHooksConfigDir(projectRoot), 'skills-manifest.json');
     if (fs.existsSync(hooksConfigPath)) {
         return hooksConfigPath;
     }
@@ -1406,7 +1449,7 @@ function _buildSkillPathIndex() {
     if (_skillPathIndex !== null) {
         try {
             const devDir = path.join(projectRoot, 'src', 'claude', 'skills');
-            const installedDir = path.join(projectRoot, '.claude', 'skills');
+            const installedDir = getSkillsDir(projectRoot);
             let latestMtime = 0;
             if (fs.existsSync(devDir)) {
                 latestMtime = Math.max(latestMtime, fs.statSync(devDir).mtimeMs);
@@ -1459,7 +1502,7 @@ function _buildSkillPathIndex() {
     // Scan dev directory first (takes precedence in dogfooding mode)
     scanDir(path.join(projectRoot, 'src', 'claude', 'skills'), path.join('src', 'claude', 'skills'));
     // Then scan installed directory
-    scanDir(path.join(projectRoot, '.claude', 'skills'), path.join('.claude', 'skills'));
+    scanDir(getSkillsDir(projectRoot), path.join(getFrameworkDir(), 'skills'));
 
     _skillPathIndex = index;
     _skillPathIndexBuiltAt = Date.now();
@@ -2109,7 +2152,7 @@ function loadSchema(schemaId) {
 
     const projectRoot = getProjectRoot();
     const schemaPaths = [
-        path.join(projectRoot, '.claude', 'hooks', 'config', 'schemas', `${schemaId}.schema.json`),
+        path.join(getHooksSchemaDir(projectRoot), `${schemaId}.schema.json`),
         path.join(projectRoot, '.isdlc', 'config', 'schemas', `${schemaId}.schema.json`)
     ];
 
@@ -2534,7 +2577,7 @@ function _extractTestIterations(phaseData) {
     return {
         count: count,
         result: testIter.completed === true ? 'passed' :
-                testIter.escalated === true ? 'escalated' : 'unknown',
+            testIter.escalated === true ? 'escalated' : 'unknown',
         escalated: testIter.escalated === true
     };
 }
@@ -3084,7 +3127,7 @@ function addSkillLogEntry(state, entry) {
 function loadIterationRequirements() {
     const projectRoot = getProjectRoot();
     const configPaths = [
-        path.join(projectRoot, '.claude', 'hooks', 'config', 'iteration-requirements.json'),
+        path.join(getHooksConfigDir(projectRoot), 'iteration-requirements.json'),
         path.join(projectRoot, '.isdlc', 'config', 'iteration-requirements.json')
     ];
 
@@ -3110,7 +3153,7 @@ function loadWorkflowDefinitions() {
     const projectRoot = getProjectRoot();
     const configPaths = [
         path.join(projectRoot, '.isdlc', 'config', 'workflows.json'),
-        path.join(projectRoot, '.claude', 'hooks', 'config', 'workflows.json')
+        path.join(getHooksConfigDir(projectRoot), 'workflows.json')
     ];
 
     for (const configPath of configPaths) {
@@ -3333,15 +3376,15 @@ function computeSizingRecommendation(metrics, thresholds) {
     if (metrics.file_count <= t.light_max_files && !highRisk) {
         intensity = 'light';
         rationale = `Low scope (${metrics.file_count} files, ${metrics.risk_score} risk). ` +
-                    `Architecture and Design phases can be skipped.`;
+            `Architecture and Design phases can be skipped.`;
     } else if (metrics.file_count >= t.epic_min_files || highRisk) {
         intensity = 'epic';
         rationale = `Large scope (${metrics.file_count} files, ${metrics.risk_score} risk). ` +
-                    `Epic decomposition recommended.`;
+            `Epic decomposition recommended.`;
     } else {
         intensity = 'standard';
         rationale = `Medium scope (${metrics.file_count} files, ${metrics.risk_score} risk). ` +
-                    `Full workflow recommended.`;
+            `Full workflow recommended.`;
     }
 
     return { intensity, rationale, metrics };
@@ -4016,7 +4059,7 @@ function _collectSourceMtimes(projectRoot) {
     ];
 
     const hookConfigPaths = [
-        path.join(projectRoot, '.claude', 'hooks', 'config', 'iteration-requirements.json'),
+        path.join(getHooksConfigDir(projectRoot), 'iteration-requirements.json'),
         path.join(projectRoot, '.claude', 'hooks', 'config', 'artifact-paths.json')
     ];
 
@@ -4542,8 +4585,20 @@ function rebuildSessionCache(options = {}) {
         return result;
     }));
 
-    // Section 9: REMOVED (REQ-0037) — discovery content now delivered via
-    // Section 7 EXTERNAL_SKILLS as distilled project skill files.
+    // Section 8: ROUNDTABLE_TOPICS (REMOVED logic above but kept key for cache)
+    // Section 9: REMOVED (REQ-0037)
+
+    // Section 10: INSTRUCTIONS (Antigravity-native)
+    parts.push(buildSection('INSTRUCTIONS', () => {
+        const agPath = path.join(root, 'ANTIGRAVITY.md');
+        const clPath = path.join(root, 'CLAUDE.md');
+        if (fs.existsSync(agPath)) {
+            return fs.readFileSync(agPath, 'utf8');
+        } else if (fs.existsSync(clPath)) {
+            return fs.readFileSync(clPath, 'utf8');
+        }
+        return '';
+    }));
 
     // Assemble header + all sections
     const header = `<!-- SESSION CACHE: Generated ${new Date().toISOString()} | Sources: ${count} | Hash: ${hash} -->`;
@@ -4588,6 +4643,11 @@ function rebuildSessionCache(options = {}) {
 }
 
 module.exports = {
+    isAntigravity,
+    getFrameworkDir,
+    getSkillsDir,
+    getHooksConfigDir,
+    getHooksSchemaDir,
     getProjectRoot,
     // Phase prefixes (BUG-0009 item 0.13)
     PHASE_PREFIXES,
