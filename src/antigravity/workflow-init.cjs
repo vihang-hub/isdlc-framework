@@ -28,9 +28,14 @@ const { getProjectRoot, readState } = require('../claude/hooks/lib/common.cjs');
 const WORKFLOW_PHASES = {
     feature: ['00-quick-scan', '01-requirements', '02-impact-analysis', '03-architecture', '04-design', '05-test-strategy', '06-implementation', '16-quality-loop', '08-code-review'],
     fix: ['01-requirements', '02-tracing', '05-test-strategy', '06-implementation', '16-quality-loop', '08-code-review'],
-    upgrade: ['01-requirements', '02-impact-analysis', '05-test-strategy', '06-implementation', '16-quality-loop', '08-code-review'],
+    upgrade: ['15-upgrade-plan', '15-upgrade-execute', '08-code-review'],
     'test-run': ['11-local-testing', '07-testing'],
     'test-generate': ['05-test-strategy', '06-implementation', '16-quality-loop', '08-code-review']
+};
+
+const REQUIRES_BRANCH = {
+    feature: true, fix: true, upgrade: true,
+    'test-run': false, 'test-generate': false
 };
 
 function parseArgs() {
@@ -90,12 +95,22 @@ function main() {
             process.exit(1);
         }
 
-        // Determine folder name
-        const prefix = args.type === 'fix' ? 'BUG' : 'REQ';
-        const seqNum = getNextSeqNum(projectRoot, prefix);
-        const slug = args.slug || `${prefix}-${seqNum}-${generateSlug(args.description)}`;
-        const branchPrefix = args.type === 'fix' ? 'bugfix' : 'feature';
-        const branchName = `${branchPrefix}/${slug}`;
+        const requiresBranch = REQUIRES_BRANCH[args.type] !== false;
+
+        // Determine slug and branch (only for branch-requiring workflows)
+        let slug, branchName, artifactFolder;
+        if (requiresBranch) {
+            const prefix = args.type === 'fix' ? 'BUG' : 'REQ';
+            const seqNum = getNextSeqNum(projectRoot, prefix);
+            slug = args.slug || `${prefix}-${seqNum}-${generateSlug(args.description)}`;
+            const branchPrefix = args.type === 'fix' ? 'bugfix' : 'feature';
+            branchName = `${branchPrefix}/${slug}`;
+            artifactFolder = `docs/requirements/${slug}`;
+        } else {
+            slug = args.type;
+            branchName = null;
+            artifactFolder = null;
+        }
 
         // Determine phases
         let phases = [...WORKFLOW_PHASES[args.type]];
@@ -117,10 +132,10 @@ function main() {
             current_phase: phases[0],
             current_phase_index: 0,
             phase_status: phaseStatus,
-            artifact_folder: `docs/requirements/${slug}`,
             started_at: new Date().toISOString(),
             flags: { light: args.light, supervised: args.supervised }
         };
+        if (artifactFolder) workflow.artifact_folder = artifactFolder;
 
         // Update state
         state.active_workflow = workflow;
@@ -131,13 +146,15 @@ function main() {
         if (!fs.existsSync(stateDir)) fs.mkdirSync(stateDir, { recursive: true });
         fs.writeFileSync(statePath, JSON.stringify(state, null, 2), 'utf8');
 
-        // Create branch
+        // Create branch (only for branch-requiring workflows)
         let branchCreated = false;
-        try {
-            execSync(`git checkout -b ${branchName}`, { cwd: projectRoot, stdio: 'pipe' });
-            branchCreated = true;
-        } catch (e) {
-            // Branch may already exist or git not available
+        if (requiresBranch && branchName) {
+            try {
+                execSync(`git checkout -b ${branchName}`, { cwd: projectRoot, stdio: 'pipe' });
+                branchCreated = true;
+            } catch (e) {
+                // Branch may already exist or git not available
+            }
         }
 
         output({
@@ -148,7 +165,7 @@ function main() {
             branch_created: branchCreated,
             phases,
             current_phase: phases[0],
-            artifact_folder: `docs/requirements/${slug}`,
+            artifact_folder: artifactFolder,
             flags: { light: args.light, supervised: args.supervised }
         });
         process.exit(0);

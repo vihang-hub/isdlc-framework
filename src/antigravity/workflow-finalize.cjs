@@ -57,13 +57,20 @@ function main() {
             process.exit(1);
         }
 
-        // Get branch name
-        const branchPrefix = aw.type === 'fix' ? 'bugfix' : 'feature';
-        const branchName = `${branchPrefix}/${aw.slug}`;
+        // Determine if this workflow type uses branches
+        const noBranchTypes = ['test-run', 'test-generate'];
+        const requiresBranch = !noBranchTypes.includes(aw.type);
 
-        // Merge branch
+        // Get branch name (only for branch-requiring workflows)
+        let branchName = null;
+        if (requiresBranch) {
+            const branchPrefix = aw.type === 'fix' ? 'bugfix' : 'feature';
+            branchName = `${branchPrefix}/${aw.slug}`;
+        }
+
+        // Merge branch (only for branch-requiring workflows)
         let merged = false;
-        if (!args.skipMerge) {
+        if (requiresBranch && branchName && !args.skipMerge) {
             try {
                 // Commit any uncommitted work
                 try { execSync('git add -A && git commit -m "Finalize workflow" --allow-empty', { cwd: projectRoot, stdio: 'pipe' }); } catch (e) { /* may be nothing to commit */ }
