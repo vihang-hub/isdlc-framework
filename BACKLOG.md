@@ -156,6 +156,9 @@
 - #96 [x] ~~Migrate remaining 4 agents to Enhanced Search sections~~ -> [requirements](docs/requirements/REQ-0043-migrate-remaining-4-agents-to-enhanced-search-sections/) **Completed: 2026-03-03** *(merged 717d625)*
 - [x] ~~Indexed search backend — sub-second full-codebase queries for large codebases (promoted from REQ-0041 FR-013)~~ -> [requirements](docs/requirements/REQ-0044-indexed-search-backend-zoekt/) **Completed: 2026-03-03** *(merged eac5b62)*
 - [x] ~~Semantic search backend (Group 1) — chunking engine, embedding engine, VCS adapters, installer, CLI~~ -> [requirements](docs/requirements/REQ-0045-semantic-search-backend/) **Completed: 2026-03-06**
+- [x] ~~Semantic search backend (Group 2) — Package Builder/Reader (FR-006, M5) and Module Registry (FR-013, M6)~~ -> [requirements](docs/requirements/REQ-0045-semantic-search-backend/) **Completed: 2026-03-06**
+- [x] ~~Semantic search backend (Group 3) — MCP Server, Query Orchestrator, Package Security (FR-003, FR-004, FR-008, M7)~~ -> [requirements](docs/requirements/REQ-0045-semantic-search-backend/) **Completed: 2026-03-06**
+- [x] ~~Semantic search backend (Group 4) — Content Redaction Pipeline + iSDLC Search Backend (FR-011, FR-012, M4, M10)~~ -> [requirements](docs/requirements/REQ-0045-semantic-search-backend/) **Completed: 2026-03-06**
 - #35 [ ] Implementation learning capture: if bug fixes were identified during implementation or iteration loops > 1, create a learning for subsequent implementation
 - #27 [ ] /isdlc validate command — on-demand artifact quality check (constitutional + completeness) without running a full workflow
 - #28 [ ] Progressive disclosure / lite mode — expose only constitution → requirements → implement → quality loop for simple projects, full lifecycle opt-in
@@ -317,6 +320,30 @@
   - **Files**: `isdlc.md` (build verb implementation), `meta.json` schema extension (per-phase completion tracking)
   - **Depends on**: #19 (three-verb model exists) — DONE
   - **Complexity**: Low-medium
+
+### Hackability & Extensibility
+
+> Full design: [docs/isdlc/hackability-roadmap.md](docs/isdlc/hackability-roadmap.md)
+
+**Tier 1 — Foundation**
+- #97 [ ] Gate profiles — configurable strictness levels (rapid/standard/strict)
+- #98 [ ] Workflow recovery — retry/redo current phase without restarting
+- #99 [ ] Workflow recovery — rollback to earlier phase
+- #100 [ ] Roundtable depth control — adaptive brief/standard/deep analysis
+
+**Tier 2 — Extension Points**
+- #101 [ ] User-space hooks — extensible pre/post phase hook points (.isdlc/hooks/)
+- #102 [ ] Custom workflow definitions — user-defined phase sequences (.isdlc/workflows/*.yaml)
+- #103 [ ] Post-implementation change summary — structured diff report after phase 06
+
+**Tier 3 — Developer Productivity**
+- #104 [ ] Template system — project-local code templates (.isdlc/templates/)
+- #105 [ ] Skill authoring scaffold — isdlc skill create for capturing best practices
+- #106 [ ] Context carry-forward — reuse prior analysis across related workflows
+
+**Tier 4 — Team & Organization Scale**
+- #107 [ ] Constitution composition — base + project constitution merge for team sharing
+- #108 [ ] Persona customization — add, tune, or disable roundtable personas (.isdlc/personas/)
 
 ## Completed
 
