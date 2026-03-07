@@ -354,9 +354,6 @@
 - #108a [A] Contributing personas — add domain-specific reviewers to roundtable (.isdlc/personas/) -> [requirements](docs/requirements/REQ-0047-contributing-personas-roundtable-extension/)
   - Split from #108. Contributing personas add observations without owning artifacts. Pairs with #100 (depth + who).
 
-**Performance**
-- #114 [ ] Bulk file I/O MCP server — multi-file read/write in a single tool call to reduce round-trip overhead during artifact-heavy phases -> [requirements](docs/requirements/REQ-0048-bulk-file-io-mcp-server/)
-
 **Tier 2 — Extension Points**
 - #101 [ ] User-space hooks — extensible pre/post phase hook points (.isdlc/hooks/)
 - #102 [ ] Custom workflow definitions — user-defined phase sequences (.isdlc/workflows/*.yaml)
@@ -373,6 +370,10 @@
   - Remainder of original #108. Requires artifact ownership model changes. Depends on #108a.
 
 ## Completed
+
+### 2026-03-08
+- [x] #114: Bulk file I/O MCP server — multi-file read/write in a single tool call to reduce round-trip overhead during artifact-heavy phases. 4 source modules (section-parser, lock-manager, file-ops, server), 104 tests (78 unit + 22 integration + 4 E2E), 91.53% line coverage. *(merged 7ba482b)*
+  - **Completed:** 2026-03-08
 
 ### 2026-03-07
 - [x] #100: Roundtable depth control — adaptive brief/standard/deep analysis. Dynamic depth sensing (FR-001), bidirectional adjustment (FR-002), inference tracking (FR-003), tiered assumption views (FR-004), scope recommendation (FR-005), --light deprecation (FR-006), topic file restructuring (FR-007). 31 prompt verification tests, 1277 total tests, 0 regressions. *(merged 13ddfa7)*
