@@ -250,7 +250,7 @@
 **Tier 2 — Extension Points**
 - #101 [ ] User-space hooks — extensible pre/post phase hook points (.isdlc/hooks/)
 - #102 [ ] Custom workflow definitions — user-defined phase sequences (.isdlc/workflows/*.yaml)
-- #103 [ ] Post-implementation change summary — structured diff report after phase 06
+- #103 [x] Post-implementation change summary — structured diff report after phase 06 **Completed: 2026-03-09**
 
 **Tier 3 — Developer Productivity**
 - #104 [ ] Template system — project-local code templates (.isdlc/templates/)
