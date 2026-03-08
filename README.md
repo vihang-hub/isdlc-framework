@@ -35,6 +35,7 @@ But a harness that only constrains is a cage. Every layer of iSDLC is hackable �
 | **Quality gates** | Set coverage thresholds per profile (`rapid` / `standard` / `strict`) | Drop domain-specific validators in `.isdlc/hooks/` | Write your own gate logic |
 | **Workflows** | Choose light/standard/epic sizing | Define custom workflows (`spike`, `hotfix`, `ui-feature`) with your own phase sequences | Replace built-in phase sequences entirely |
 | **Analysis** | Set depth (`brief` / `standard` / `deep`) | Author new personas — drop a markdown file, it joins the roundtable | Override built-in personas, disable ones you don't need, change analysis modes |
+| **Search** | Choose search backend (lexical, structural, indexed) | Add custom search backends — plug in your own indexer or embeddings provider | Build on the semantic search engine — chunking, embedding, and vector storage are composable modules you own |
 | **Constitution** | Edit thresholds and rules in your project constitution | Add domain-specific articles | Compose base + project constitutions for team-wide standards |
 | **Recovery** | Retry, redo, or rollback any phase | | |
 
