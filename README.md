@@ -42,11 +42,11 @@ You decide how much to loosen — or tighten:
 
 | Layer | What ships | Make it yours |
 |-------|-----------|---------------|
-| **Quality gates** | 28 hooks enforce coverage, constitutional compliance, and phase sequencing | • Set thresholds per profile (`rapid` / `standard` / `strict`)<br>• Drop domain-specific validators in `.isdlc/hooks/`<br>• Write your own gate logic<br>[→ Hooks guide](docs/HOOKS.md) |
-| **Workflows** | Feature, fix, upgrade, and test workflows with adaptive sizing | • Choose light/standard/epic sizing<br>• Define custom workflows with your own phase sequences<br>• Replace built-in sequences entirely<br>[→ Architecture guide](docs/ARCHITECTURE.md) |
-| **Analysis** | 3-persona roundtable (business analyst, solutions architect, system designer) | • Set depth (`brief` / `standard` / `deep`)<br>• Author new personas, override or disable built-in ones<br>• Change analysis modes<br>[→ Persona authoring guide](docs/isdlc/persona-authoring-guide.md) |
+| **Quality gates** | 28 hooks enforce coverage, constitutional compliance, and phase sequencing — [details](docs/HOOKS.md) | • Set thresholds per profile (`rapid` / `standard` / `strict`)<br>• Drop domain-specific validators in `.isdlc/hooks/`<br>• Write your own gate logic<br>[→ Quality gates guide](docs/isdlc/quality-gates-guide.md) |
+| **Workflows** | Feature, fix, upgrade, and test workflows with adaptive sizing — [details](docs/ARCHITECTURE.md) | • Choose light/standard/epic sizing<br>• Define custom workflows with your own phase sequences<br>• Replace built-in sequences entirely<br>[→ Workflow customization guide](docs/isdlc/workflow-customization-guide.md) |
+| **Analysis** | 3-persona roundtable (business analyst, solutions architect, system designer) — [details](docs/AGENTS.md) | • Set depth (`brief` / `standard` / `deep`)<br>• Author new personas, override or disable built-in ones<br>• Change analysis modes<br>[→ Persona authoring guide](docs/isdlc/persona-authoring-guide.md) |
 | **Project knowledge** | Code scanned, chunked, and embedded during `/discover` — agents search it semantically | • Choose embedding provider<br>• Inject your own documents<br>• Build on the composable semantic engine<br>[→ Project knowledge guide](docs/PROJECT-KNOWLEDGE.md) |
-| **Constitution** | Generated from your actual codebase during `/discover` | • Edit thresholds and rules<br>• Add domain-specific articles<br>• Compose base + project constitutions for team-wide standards<br>[→ Constitution guide](docs/CONSTITUTION-GUIDE.md) |
+| **Constitution** | Generated from your actual codebase during `/discover` — [details](docs/CONSTITUTION-GUIDE.md) | • Edit thresholds and rules<br>• Add domain-specific articles<br>• Compose base + project constitutions for team-wide standards<br>[→ Constitution guide](docs/CONSTITUTION-GUIDE.md) |
 | **Recovery** | Retry, redo, or rollback any phase | [→ Hackability roadmap](docs/isdlc/hackability-roadmap.md) |
 
 ---
@@ -354,6 +354,8 @@ New projects are also supported — `/discover` switches to vision elicitation, 
 | [MONOREPO-GUIDE.md](docs/MONOREPO-GUIDE.md) | Multi-project setup |
 | [AUTONOMOUS-ITERATION.md](docs/AUTONOMOUS-ITERATION.md) | Self-correcting agent behavior |
 | [PROJECT-KNOWLEDGE.md](docs/PROJECT-KNOWLEDGE.md) | Embed your documents into the project knowledge base |
+| [Quality Gates Guide](docs/isdlc/quality-gates-guide.md) | Configure profiles, extend validators, write custom gate logic |
+| [Workflow Customization Guide](docs/isdlc/workflow-customization-guide.md) | Sizing, custom workflows, and phase sequence replacement |
 | [SKILL-ENFORCEMENT.md](docs/SKILL-ENFORCEMENT.md) | Runtime skill observability |
 
 ---
