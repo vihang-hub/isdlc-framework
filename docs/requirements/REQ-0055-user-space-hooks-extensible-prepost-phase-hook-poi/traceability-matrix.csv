@@ -1,0 +1,12 @@
+FR_ID,FR_Title,AC_IDs,User_Story,Priority,Confidence,Artifact
+FR-001,Hook Discovery,"AC-001-01,AC-001-02,AC-001-03",US-001,Must Have,High,module-design.md
+FR-002,Hook Execution,"AC-002-01,AC-002-02,AC-002-03",US-001,Must Have,High,module-design.md
+FR-003,Exit Code Protocol,"AC-003-01,AC-003-02,AC-003-03,AC-003-04",US-002,Must Have,High,interface-spec.md
+FR-004,Hook Points (General Pattern),"AC-004-01,AC-004-02,AC-004-03,AC-004-04,AC-004-05",US-004,Must Have,High,architecture-overview.md
+FR-005,Phase Name Resolution,"AC-005-01,AC-005-02,AC-005-03,AC-005-04",US-003,Must Have,High,module-design.md
+FR-006,User Override on Block,"AC-006-01,AC-006-02",US-002,Must Have,High,error-taxonomy.md
+FR-007,Timeout Configuration,"AC-007-01,AC-007-02",US-005,Should Have,High,module-design.md
+FR-008,Context Passing,"AC-008-01,AC-008-02,AC-008-03,AC-008-04,AC-008-05",US-004,Should Have,Medium,interface-spec.md
+FR-009,Hook Authoring Guide,"AC-009-01,AC-009-02,AC-009-03",US-006,Should Have,High,impact-analysis.md
+FR-010,Update Safety,"AC-010-01,AC-010-02",,Must Have,High,impact-analysis.md
+FR-011,Hook Execution Logging,"AC-011-01,AC-011-02",,Could Have,Medium,module-design.md
