@@ -4298,17 +4298,21 @@ function rebuildSessionCache(options = {}) {
                 rtParts.push(`### Skipped Persona Files\n${skipLines.join('\n')}`);
             }
         } else {
-            // Fallback: hardcoded 3 primary personas (backward compatibility)
+            // REQ-0050 FR-005 AC-005-06: Fallback discovers all persona-*.md files (not just 3 primaries)
             const personaDir = path.join(root, 'src', 'claude', 'agents');
-            const personaFiles = ['persona-business-analyst.md', 'persona-solutions-architect.md', 'persona-system-designer.md'];
-            for (const pf of personaFiles) {
-                try {
-                    const content = fs.readFileSync(path.join(personaDir, pf), 'utf8');
-                    const name = pf.replace('persona-', '').replace('.md', '')
-                        .split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-                    rtParts.push(`### Persona: ${name}\n${content}`);
-                } catch (_) { /* skip */ }
-            }
+            try {
+                if (fs.existsSync(personaDir)) {
+                    const allPersonaFiles = fs.readdirSync(personaDir).filter(f => f.startsWith('persona-') && f.endsWith('.md')).sort();
+                    for (const pf of allPersonaFiles) {
+                        try {
+                            const content = fs.readFileSync(path.join(personaDir, pf), 'utf8');
+                            const name = pf.replace('persona-', '').replace('.md', '')
+                                .split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                            rtParts.push(`### Persona: ${name}\n${content}`);
+                        } catch (_) { /* skip */ }
+                    }
+                }
+            } catch (_) { /* fail-open */ }
         }
 
         // Roundtable config sub-section (FR-005)

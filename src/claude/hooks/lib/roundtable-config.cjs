@@ -21,8 +21,9 @@ const VALID_VERBOSITY = ['conversational', 'bulleted', 'silent'];
 /**
  * @typedef {Object} RoundtableConfig
  * @property {string} verbosity - 'conversational' | 'bulleted' | 'silent'
- * @property {string[]} default_personas - Always-include persona list
- * @property {string[]} disabled_personas - Never-propose persona list
+ * @property {string[]} default_personas - Recommended persona list (pre-population, not forced)
+ * @property {string[]} disabled_personas - Excluded-from-recommendation persona list (still available for manual add)
+ * @property {boolean} is_preselection - REQ-0050: true = config values are pre-selections, user will still be asked
  */
 
 /**
@@ -158,6 +159,10 @@ function readRoundtableConfig(projectRoot, overrides) {
     } catch (_) {
         // Read error: defaults are used
     }
+
+    // REQ-0050: Mark config values as pre-selections (AC-006-01, AC-006-02)
+    // Config serves as preference pre-population, not as silent defaults
+    config.is_preselection = true;
 
     // Conflict resolution: disabled wins over default (FR-005 AC-005-07)
     if (config.disabled_personas.length > 0 && config.default_personas.length > 0) {

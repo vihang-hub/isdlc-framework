@@ -18,7 +18,9 @@
 const fs = require('fs');
 const path = require('path');
 
-// Primary persona filenames (always included)
+// Primary persona filenames -- REQ-0050: no longer force-included, kept as
+// recommended defaults for roster proposals. See filterByRoster() for
+// dynamic roster filtering.
 const PRIMARY_PERSONAS = [
     'persona-business-analyst.md',
     'persona-solutions-architect.md',
@@ -302,6 +304,84 @@ function getPersonaPaths(projectRoot) {
     return { paths: resolvedPaths, driftWarnings, skippedFiles };
 }
 
+/**
+ * Filter persona paths by active roster names.
+ * Roster names are matched against the derived name from the filename
+ * (e.g., "security-reviewer" matches "persona-security-reviewer.md").
+ *
+ * @param {string[]} paths - All discovered persona paths
+ * @param {string[]} roster - Active roster names (e.g., ['security-reviewer', 'devops-engineer'])
+ * @returns {string[]} Filtered paths matching the roster
+ * @traces FR-003, FR-005, AC-003-02, AC-003-05, AC-005-01
+ */
+function filterByRoster(paths, roster) {
+    if (!roster || roster.length === 0) return [];
+    const rosterSet = new Set(roster.map(r => r.toLowerCase().trim()));
+    return paths.filter(p => {
+        const basename = path.basename(p);
+        const name = basename.replace(/^persona-/, '').replace(/\.md$/, '');
+        return rosterSet.has(name.toLowerCase());
+    });
+}
+
+/**
+ * Match persona trigger keywords against issue content.
+ * Returns categorized persona names: recommended (2+ hits),
+ * uncertain (1 hit), and available (0 hits).
+ *
+ * @param {string[]} paths - All discovered persona paths
+ * @param {string} issueContent - Issue title + body text to match against
+ * @param {{ disabled?: string[] }} [opts] - Options including disabled persona list
+ * @returns {{ recommended: string[], uncertain: string[], available: string[] }}
+ * @traces FR-003, AC-003-03, AC-003-04, AC-003-07
+ */
+function matchTriggers(paths, issueContent, opts) {
+    const disabled = new Set((opts && opts.disabled || []).map(d => d.toLowerCase()));
+    const contentLower = (issueContent || '').toLowerCase();
+    const recommended = [];
+    const uncertain = [];
+    const available = [];
+
+    for (const p of paths) {
+        const basename = path.basename(p);
+        const name = basename.replace(/^persona-/, '').replace(/\.md$/, '');
+        const nameLower = name.toLowerCase();
+
+        // Read frontmatter to get triggers
+        let triggers = [];
+        try {
+            const content = fs.readFileSync(p, 'utf8');
+            const fm = parseFrontmatter(content);
+            if (fm && Array.isArray(fm.triggers)) {
+                triggers = fm.triggers;
+            }
+        } catch (_) {
+            // If we can't read, treat as no triggers
+        }
+
+        // Count keyword hits
+        let hits = 0;
+        for (const trigger of triggers) {
+            if (contentLower.includes(trigger.toLowerCase())) {
+                hits++;
+            }
+        }
+
+        if (disabled.has(nameLower)) {
+            // AC-003-07: disabled personas excluded from recommendation but still available
+            available.push(name);
+        } else if (hits >= 2) {
+            recommended.push(name);
+        } else if (hits === 1) {
+            uncertain.push(name);
+        } else {
+            available.push(name);
+        }
+    }
+
+    return { recommended, uncertain, available };
+}
+
 module.exports = {
     getPersonaPaths,
     parseFrontmatter,
@@ -309,5 +389,7 @@ module.exports = {
     isSafeFilename,
     compareSemver,
     deriveDomain,
+    filterByRoster,
+    matchTriggers,
     PRIMARY_PERSONAS
 };
