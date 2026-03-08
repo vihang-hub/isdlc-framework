@@ -206,7 +206,9 @@ For each phase in `active_workflow.phases`:
 node src/antigravity/workflow-finalize.cjs
 # Add --skip-merge to archive without merging
 ```
-Merges branch to main, moves workflow to history, clears active_workflow.
+Generates a change summary (change-summary.md + change-summary.json), merges branch to main, closes the GitHub issue, updates BACKLOG.md, moves workflow to history, and clears active_workflow.
+
+After finalize completes, **clean up all stale tasks**: call `TaskList`, then `TaskUpdate` with `status: "deleted"` for every remaining task. This clears the task display so the next workflow starts clean.
 
 ---
 

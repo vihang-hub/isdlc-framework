@@ -25,7 +25,8 @@
   },
   "homepage": "https://github.com/your-org/isdlc#readme",
   "bin": {
-    "isdlc": "./bin/isdlc.js"
+    "isdlc": "./bin/isdlc.js",
+    "isdlc-setup-knowledge": "./bin/isdlc-setup-knowledge.js"
   },
   "main": "lib/cli.js",
   "files": [
@@ -50,8 +51,12 @@
   "dependencies": {
     "chalk": "^5.3.0",
     "fs-extra": "^11.2.0",
+    "onnxruntime-node": "^1.24.3",
     "prompts": "^2.4.2",
     "semver": "^7.6.0"
   },
-  "devDependencies": {}
+  "optionalDependencies": {
+    "better-sqlite3": "^12.6.2",
+    "faiss-node": "^0.5.1"
+  }
 }

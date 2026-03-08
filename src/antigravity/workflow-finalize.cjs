@@ -57,6 +57,17 @@ function main() {
             process.exit(1);
         }
 
+        // Generate change summary (non-blocking, runs before merge so diff is available)
+        try {
+            const slug = aw.slug || aw.artifact_folder;
+            if (slug) {
+                const generatorPath = path.join(projectRoot, 'src', 'antigravity', 'change-summary-generator.cjs');
+                if (fs.existsSync(generatorPath)) {
+                    execSync(`node "${generatorPath}" --folder "${slug}"`, { cwd: projectRoot, stdio: 'pipe', timeout: 30000 });
+                }
+            }
+        } catch (e) { /* non-blocking — change summary is informational */ }
+
         // Determine if this workflow type uses branches
         const noBranchTypes = ['test-run', 'test-generate'];
         const requiresBranch = !noBranchTypes.includes(aw.type);

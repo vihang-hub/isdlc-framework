@@ -1,0 +1,56 @@
+[
+  {
+    "id": "US-001",
+    "title": "Drop-in hook execution",
+    "persona": "Framework Developer",
+    "story": "As a framework developer, I want to drop a script into .isdlc/hooks/ and have it run automatically at the right workflow moment, so that I can extend the framework without modifying its source code.",
+    "acceptance_criteria": ["AC-001-01", "AC-001-02", "AC-002-01"],
+    "priority": "Must Have",
+    "fr_refs": ["FR-001", "FR-002"]
+  },
+  {
+    "id": "US-002",
+    "title": "Gate blocking with user control",
+    "persona": "Framework Developer",
+    "story": "As a framework developer, I want my validation hook to block gate advancement when it finds issues, and I want the ability to override that block when I decide the issue is acceptable.",
+    "acceptance_criteria": ["AC-003-03", "AC-006-01", "AC-006-02"],
+    "priority": "Must Have",
+    "fr_refs": ["FR-003", "FR-006"]
+  },
+  {
+    "id": "US-003",
+    "title": "Friendly hook point naming",
+    "persona": "Framework Developer",
+    "story": "As a framework developer, I want to name my hook directory post-implementation instead of post-06-implementation, so that I don't have to memorize internal phase identifiers.",
+    "acceptance_criteria": ["AC-005-01", "AC-005-02", "AC-005-04"],
+    "priority": "Must Have",
+    "fr_refs": ["FR-005"]
+  },
+  {
+    "id": "US-004",
+    "title": "Post-workflow notifications",
+    "persona": "Team Lead / DevOps",
+    "story": "As a team lead, I want to run notification scripts after workflows complete, so that the team is automatically informed of workflow outcomes.",
+    "acceptance_criteria": ["AC-004-05", "AC-008-01", "AC-008-02"],
+    "priority": "Must Have",
+    "fr_refs": ["FR-004", "FR-008"]
+  },
+  {
+    "id": "US-005",
+    "title": "Configurable hook timeout",
+    "persona": "Team Lead / DevOps",
+    "story": "As a team lead, I want to configure hook timeouts so that slow validation tools have enough time to complete without blocking fast hooks unnecessarily.",
+    "acceptance_criteria": ["AC-007-01", "AC-007-02"],
+    "priority": "Should Have",
+    "fr_refs": ["FR-007"]
+  },
+  {
+    "id": "US-006",
+    "title": "Hook authoring reference",
+    "persona": "Framework Developer",
+    "story": "As a framework developer, I want a guide explaining how to create hooks, available hook points, and the exit code protocol, so that I can write hooks without reading framework source code.",
+    "acceptance_criteria": ["AC-009-01", "AC-009-02", "AC-009-03"],
+    "priority": "Should Have",
+    "fr_refs": ["FR-009"]
+  }
+]
