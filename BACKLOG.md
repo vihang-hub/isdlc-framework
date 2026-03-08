@@ -261,7 +261,7 @@
 
 **Tier 4 — Team & Organization Scale**
 - #107 [ ] Constitution composition — base + project constitution merge for team sharing
-- #108b [ ] Full persona override — user controls analysis mode (personas/no-personas), verbosity, and roster; primaries demoted to recommended defaults; persona authoring docs -> [requirements](docs/requirements/REQ-0050-full-persona-override/) **Analyzed**
+- #108b [x] Full persona override — user controls analysis mode (personas/no-personas), verbosity, and roster; primaries demoted to recommended defaults; persona authoring docs -> [requirements](docs/requirements/REQ-0050-full-persona-override/) **Analyzed**
   - Depends on #108a (completed). 7 FRs, ~11 files, standard tier.
 
 ## Completed
