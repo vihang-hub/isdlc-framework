@@ -1,0 +1,26 @@
+Requirement ID,User Story ID,Epic,Priority,Status
+FR-001,US-001,Change Summary Generation,Must Have,Draft
+FR-002,US-001,Change Summary Generation,Must Have,Draft
+FR-002,US-002,Change Summary Generation,Must Have,Draft
+FR-003,US-003,Change Summary Generation,Must Have,Draft
+FR-004,US-004,Change Summary Generation,Should Have,Draft
+FR-005,US-005,Change Summary Output,Must Have,Draft
+FR-006,US-006,Change Summary Output,Must Have,Draft
+FR-007,US-007,Resilience,Must Have,Draft
+FR-008,US-008,Integration,Must Have,Draft
+NFR-001,,Performance,Should Have,Draft
+NFR-002,,Reliability,Must Have,Draft
+NFR-003,,Reliability,Must Have,Draft
+NFR-004,,Reliability,Must Have,Draft
+NFR-005,,Schema Stability,Must Have,Draft
+NFR-006,,Schema Stability,Must Have,Draft
+NFR-007,,Compatibility,Must Have,Draft
+NFR-008,,Compatibility,Must Have,Draft
+NFR-009,,Maintainability,Should Have,Draft
+NFR-010,,Data Integrity,Must Have,Draft
+NFR-011,,Data Integrity,Must Have,Draft
+CON-001,,Constraint,Must Have,Draft
+CON-002,,Constraint,Must Have,Draft
+CON-003,,Constraint,Must Have,Draft
+CON-004,,Constraint,Must Have,Draft
+CON-005,,Constraint,Must Have,Draft
