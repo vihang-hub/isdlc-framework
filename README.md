@@ -28,18 +28,17 @@ iSDLC is that enforcement layer. Install it into your existing project and it le
 
 From there, 28 hooks running as separate Node.js processes intercept tool calls and block non-compliant behavior. The AI doesn't get to decide when it's done. The harness does.
 
-But a harness that only constrains is a cage. iSDLC ships with opinionated defaults — then gives you control over every one of them:
+But a harness that only constrains is a cage. Every layer of iSDLC is hackable — from changing a threshold to replacing entire subsystems:
 
-| What the harness enforces | What you control |
-|--------------------------|-----------------|
-| Phase sequences — the AI can't skip requirements and jump to code | Which phases run: light workflows skip architecture/design |
-| Quality gates — tests must pass, coverage must meet thresholds | Gate profiles: `rapid` (60%), `standard` (80%), `strict` (95%) |
-| Requirements elicitation — the AI must ask before assuming | Analysis depth: `brief`, `standard`, or `deep` probing |
-| Constitutional compliance — artifacts must meet your standards | The constitution itself — your rules, your thresholds |
-| Roundtable analysis — multiple perspectives review every feature | Which personas participate, how they behave, or skip them entirely |
-| Iteration limits — circuit breakers stop infinite loops | Max iterations, escalation rules, retry/rollback recovery |
+| Layer | Configure | Extend | Override |
+|-------|-----------|--------|----------|
+| **Quality gates** | Set coverage thresholds per profile (`rapid` / `standard` / `strict`) | Drop domain-specific validators in `.isdlc/hooks/` | Write your own gate logic |
+| **Workflows** | Choose light/standard/epic sizing | Define custom workflows (`spike`, `hotfix`, `ui-feature`) with your own phase sequences | Replace built-in phase sequences entirely |
+| **Analysis** | Set depth (`brief` / `standard` / `deep`) | Author new personas — drop a markdown file, it joins the roundtable | Override built-in personas, disable ones you don't need, change analysis modes |
+| **Constitution** | Edit thresholds and rules in your project constitution | Add domain-specific articles | Compose base + project constitutions for team-wide standards |
+| **Recovery** | Retry, redo, or rollback any phase | | |
 
-**Every constraint has a named override. Every layer is hackable.**
+The harness ships strict. You decide how much to loosen — or tighten.
 
 ---
 
