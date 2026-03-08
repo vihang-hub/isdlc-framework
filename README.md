@@ -42,12 +42,12 @@ You decide how much to loosen — or tighten:
 
 | Layer | What ships | Make it yours |
 |-------|-----------|---------------|
-| **Quality gates** | 28 hooks enforce coverage, constitutional compliance, and phase sequencing | • Set thresholds per profile (`rapid` / `standard` / `strict`)<br>• Drop domain-specific validators in `.isdlc/hooks/`<br>• Write your own gate logic |
-| **Workflows** | Feature, fix, upgrade, and test workflows with adaptive sizing | • Choose light/standard/epic sizing<br>• Define custom workflows with your own phase sequences<br>• Replace built-in sequences entirely |
-| **Analysis** | 3-persona roundtable (business analyst, solutions architect, system designer) | • Set depth (`brief` / `standard` / `deep`)<br>• Author new personas, override or disable built-in ones<br>• Change analysis modes |
-| **Project knowledge** | Code scanned, chunked, and embedded during `/discover` — agents search it semantically | • Choose embedding provider<br>• [Inject your own documents](docs/PROJECT-KNOWLEDGE.md)<br>• Build on the composable semantic engine |
-| **Constitution** | Generated from your actual codebase during `/discover` | • Edit thresholds and rules<br>• Add domain-specific articles<br>• Compose base + project constitutions for team-wide standards |
-| **Recovery** | Retry, redo, or rollback any phase | |
+| **Quality gates** | 28 hooks enforce coverage, constitutional compliance, and phase sequencing | • Set thresholds per profile (`rapid` / `standard` / `strict`)<br>• Drop domain-specific validators in `.isdlc/hooks/`<br>• Write your own gate logic<br>[→ Hooks guide](docs/HOOKS.md) |
+| **Workflows** | Feature, fix, upgrade, and test workflows with adaptive sizing | • Choose light/standard/epic sizing<br>• Define custom workflows with your own phase sequences<br>• Replace built-in sequences entirely<br>[→ Architecture guide](docs/ARCHITECTURE.md) |
+| **Analysis** | 3-persona roundtable (business analyst, solutions architect, system designer) | • Set depth (`brief` / `standard` / `deep`)<br>• Author new personas, override or disable built-in ones<br>• Change analysis modes<br>[→ Persona authoring guide](docs/isdlc/persona-authoring-guide.md) |
+| **Project knowledge** | Code scanned, chunked, and embedded during `/discover` — agents search it semantically | • Choose embedding provider<br>• Inject your own documents<br>• Build on the composable semantic engine<br>[→ Project knowledge guide](docs/PROJECT-KNOWLEDGE.md) |
+| **Constitution** | Generated from your actual codebase during `/discover` | • Edit thresholds and rules<br>• Add domain-specific articles<br>• Compose base + project constitutions for team-wide standards<br>[→ Constitution guide](docs/CONSTITUTION-GUIDE.md) |
+| **Recovery** | Retry, redo, or rollback any phase | [→ Hackability roadmap](docs/isdlc/hackability-roadmap.md) |
 
 ---
 
