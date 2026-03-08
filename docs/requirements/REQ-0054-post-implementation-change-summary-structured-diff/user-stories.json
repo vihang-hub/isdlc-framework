@@ -1,0 +1,266 @@
+{
+  "feature": "REQ-0054",
+  "feature_name": "Post-Implementation Change Summary",
+  "version": "1.0",
+  "created": "2026-03-08",
+  "stories": [
+    {
+      "id": "US-001",
+      "epic": "Change Summary Generation",
+      "title": "View changed files after implementation",
+      "persona": "Framework Developer",
+      "goal": "see a list of all files changed during implementation",
+      "benefit": "understand the scope of what was built",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-001-01",
+          "given": "phase 06 has completed",
+          "when": "the generator runs",
+          "then": "all modified/added/deleted/renamed files are listed with their change type"
+        },
+        {
+          "id": "AC-001-02",
+          "given": "a feature branch exists",
+          "when": "the generator diffs against the base branch via git merge-base",
+          "then": "the complete set of changes since branching is captured"
+        },
+        {
+          "id": "AC-001-03",
+          "given": "a file was renamed",
+          "when": "the generator processes the diff",
+          "then": "both old and new paths are shown"
+        }
+      ],
+      "linked_requirements": ["FR-001", "FR-002"]
+    },
+    {
+      "id": "US-002",
+      "epic": "Change Summary Generation",
+      "title": "Understand why each file changed",
+      "persona": "Framework Developer",
+      "goal": "see a 1-2 line rationale for each changed file",
+      "benefit": "quickly understand the purpose of each change without reading the code",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-002-01",
+          "given": "a file appears in the change list",
+          "when": "the summary is generated",
+          "then": "a 1-2 line rationale is included describing why the file was changed"
+        },
+        {
+          "id": "AC-002-02",
+          "given": "a new file was created",
+          "when": "the summary is generated",
+          "then": "the rationale describes its purpose"
+        }
+      ],
+      "linked_requirements": ["FR-002"]
+    },
+    {
+      "id": "US-003",
+      "epic": "Change Summary Generation",
+      "title": "Trace changes back to requirements",
+      "persona": "Framework Developer",
+      "goal": "see each changed file mapped to the FR/AC identifiers it addresses",
+      "benefit": "verify all requirements were implemented",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-003-01",
+          "given": "tasks.md contains trace annotations for a file",
+          "when": "the generator processes that file",
+          "then": "the FR/AC IDs from tasks.md are mapped to it"
+        },
+        {
+          "id": "AC-003-02",
+          "given": "tasks.md does not cover a file",
+          "when": "the generator falls back to commit messages",
+          "then": "FR/AC IDs found in commit messages for that file are mapped"
+        },
+        {
+          "id": "AC-003-03",
+          "given": "neither tasks.md nor commit messages match",
+          "when": "the generator falls back to code comments",
+          "then": "FR/AC IDs found in code comments are mapped"
+        },
+        {
+          "id": "AC-003-04",
+          "given": "no tracing source matches a file",
+          "when": "the generator processes that file",
+          "then": "it is flagged as untraced"
+        },
+        {
+          "id": "AC-003-05",
+          "given": "requirements-spec.md exists",
+          "when": "the generator starts",
+          "then": "all FR-NNN and AC-NNN-NN identifiers are extracted as the valid set"
+        }
+      ],
+      "linked_requirements": ["FR-003"]
+    },
+    {
+      "id": "US-004",
+      "epic": "Change Summary Generation",
+      "title": "See test results at a glance",
+      "persona": "Framework Developer",
+      "goal": "see test pass/fail counts and coverage included in the summary",
+      "benefit": "confirm the implementation is solid without re-running tests",
+      "priority": "Should Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-004-01",
+          "given": "state.json contains phase 06 test results",
+          "when": "the summary is generated",
+          "then": "test pass/fail counts are included"
+        },
+        {
+          "id": "AC-004-02",
+          "given": "state.json contains coverage data",
+          "when": "the summary is generated",
+          "then": "coverage percentage is included"
+        }
+      ],
+      "linked_requirements": ["FR-004"]
+    },
+    {
+      "id": "US-005",
+      "epic": "Change Summary Output",
+      "title": "Read a human-friendly summary",
+      "persona": "Framework Developer",
+      "goal": "see the summary displayed as a brief table after phase 06 and saved as a persistent markdown artifact",
+      "benefit": "get immediate feedback and reference it later",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-005-01",
+          "given": "the generator completes",
+          "when": "results are displayed inline",
+          "then": "a metrics header (files modified, new files, FRs traced, test counts) is shown followed by a file table"
+        },
+        {
+          "id": "AC-005-02",
+          "given": "the generator completes",
+          "when": "the markdown file is written",
+          "then": "it is saved to docs/requirements/{artifact_folder}/change-summary.md"
+        },
+        {
+          "id": "AC-005-03",
+          "given": "the summary contains untraced files",
+          "when": "the markdown is rendered",
+          "then": "untraced files are clearly distinguished from traced files"
+        }
+      ],
+      "linked_requirements": ["FR-005"]
+    },
+    {
+      "id": "US-006",
+      "epic": "Change Summary Output",
+      "title": "Provide machine-readable change data",
+      "persona": "Hook Consumer",
+      "goal": "have a versioned JSON file with structured change data",
+      "benefit": "reliably parse it for external integrations",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-006-01",
+          "given": "the generator completes",
+          "when": "the JSON file is written",
+          "then": "it is saved to .isdlc/change-summary.json"
+        },
+        {
+          "id": "AC-006-02",
+          "given": "the JSON is written",
+          "when": "a consumer reads it",
+          "then": "it contains a schema_version field with value 1.0"
+        },
+        {
+          "id": "AC-006-03",
+          "given": "the JSON is written",
+          "when": "parsed with JSON.parse()",
+          "then": "it is valid JSON under all conditions"
+        },
+        {
+          "id": "AC-006-04",
+          "given": "the JSON schema",
+          "when": "it contains file entries",
+          "then": "each entry includes path, change_type, rationale, traced_requirements array, and tracing_source"
+        }
+      ],
+      "linked_requirements": ["FR-006"]
+    },
+    {
+      "id": "US-007",
+      "epic": "Resilience",
+      "title": "Survive failures gracefully",
+      "persona": "Framework Developer",
+      "goal": "have the generator produce partial output when data sources are unavailable",
+      "benefit": "my workflow is never blocked by a summary generation failure",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-007-01",
+          "given": "git is unavailable",
+          "when": "the generator runs",
+          "then": "it falls back to state.json artifact data and emits a warning"
+        },
+        {
+          "id": "AC-007-02",
+          "given": "requirements-spec.md is missing",
+          "when": "the generator runs",
+          "then": "all files are marked untraced and a warning is emitted"
+        },
+        {
+          "id": "AC-007-03",
+          "given": "tasks.md is missing",
+          "when": "the generator runs",
+          "then": "it falls back to commit messages and code comments for tracing"
+        },
+        {
+          "id": "AC-007-04",
+          "given": "state.json phase 06 data is missing",
+          "when": "the generator runs",
+          "then": "test results section is omitted with a warning"
+        },
+        {
+          "id": "AC-007-05",
+          "given": "any unexpected error occurs",
+          "when": "the generator catches it",
+          "then": "it logs a warning and exits cleanly without blocking the workflow"
+        }
+      ],
+      "linked_requirements": ["FR-007"]
+    },
+    {
+      "id": "US-008",
+      "epic": "Integration",
+      "title": "Automatic generation with no interaction",
+      "persona": "Framework Developer",
+      "goal": "have the change summary generated automatically when phase 06 completes",
+      "benefit": "get the summary without any extra steps",
+      "priority": "Must Have",
+      "acceptance_criteria": [
+        {
+          "id": "AC-008-01",
+          "given": "phase 06 completes successfully",
+          "when": "the phase-loop controller reaches step 3e",
+          "then": "the change summary generator is invoked automatically"
+        },
+        {
+          "id": "AC-008-02",
+          "given": "the generator is invoked",
+          "when": "it runs",
+          "then": "no user prompts or menus are presented"
+        },
+        {
+          "id": "AC-008-03",
+          "given": "the generator completes",
+          "when": "the workflow continues",
+          "then": "the next phase proceeds without delay"
+        }
+      ],
+      "linked_requirements": ["FR-008"]
+    }
+  ]
+}

@@ -254,7 +254,6 @@
 
 **Tier 3 — Developer Productivity**
 - #104 [ ] Template system — project-local code templates (.isdlc/templates/)
-- #105 [ ] Skill authoring scaffold — isdlc skill create for capturing best practices
 - #106 [ ] Context carry-forward — reuse prior analysis across related workflows
 
 **Tier 4 — Team & Organization Scale**
@@ -265,6 +264,7 @@
 ## Completed
 
 ### 2026-03-08
+- [x] #105: Skill authoring scaffold — already implemented. Users say "add a new skill" for interactive creation/wiring. Slash commands: `skill add`, `wire`, `list`, `remove`. Removed from "Coming next" roadmap, added to README. *(closed as already-exists)*
 - [x] #98 + #99: Workflow recovery — retry/redo current phase + rollback to earlier phase. 3 production files (workflow-retry.cjs, workflow-rollback.cjs, state-logic.cjs V8 exception), 79 tests (28 retry + 31 rollback + 12 V8 + 8 integration), 0 regressions. -> [requirements](docs/requirements/REQ-0051-workflow-recovery-retryredo-current-phase-without-/) *(merged b80d744)*
 - [x] #114: Bulk file I/O MCP server — multi-file read/write in a single tool call to reduce round-trip overhead during artifact-heavy phases. 4 source modules (section-parser, lock-manager, file-ops, server), 104 tests (78 unit + 22 integration + 4 E2E), 91.53% line coverage. *(merged 7ba482b)*
 - [x] #108a: Contributing personas — add domain-specific reviewers to roundtable (.isdlc/personas/). Split from #108. Contributing personas add observations without owning artifacts. -> [requirements](docs/requirements/REQ-0047-contributing-personas-roundtable-extension/) *(merged 4f614b4)*

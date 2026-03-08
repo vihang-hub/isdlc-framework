@@ -25,7 +25,8 @@
   },
   "homepage": "https://github.com/your-org/isdlc#readme",
   "bin": {
-    "isdlc": "./bin/isdlc.js"
+    "isdlc": "./bin/isdlc.js",
+    "isdlc-setup-knowledge": "./bin/isdlc-setup-knowledge.js"
   },
   "main": "lib/cli.js",
   "files": [

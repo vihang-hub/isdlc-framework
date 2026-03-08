@@ -105,6 +105,10 @@ For users who prefer explicit control:
 | `/isdlc add "description"` | Add an item to the backlog |
 | `/isdlc analyze "description"` | Roundtable analysis with 3 personas |
 | `/isdlc build "item"` | Build from analysis artifacts |
+| `/isdlc skill add <path>` | Register a custom skill from a SKILL.md file |
+| `/isdlc skill wire <name>` | Rebind a skill to different phases/agents |
+| `/isdlc skill list` | Show registered external skills |
+| `/isdlc skill remove <name>` | Unregister a skill |
 
 ---
 
@@ -169,6 +173,16 @@ Made a mistake? No need to restart from scratch.
 
 Artifacts on disk are preserved so agents read and revise rather than starting blind.
 
+### Custom skills
+
+Capture team best practices as reusable, agent-consumable knowledge. Say "add a new skill" and the framework walks you through defining and wiring it:
+
+- **Add** — point to a SKILL.md file or create one interactively
+- **Wire** — bind a skill to specific phases and agents (implementation, architecture, etc.)
+- **List/Remove** — manage registered skills
+
+Skills are injected into agent context during workflow execution. Use them for coding conventions, API patterns, domain rules — anything agents should know when working in your codebase.
+
 ### Constitution
 
 The project constitution (`docs/isdlc/constitution.md`) codifies your governance rules: test coverage thresholds, security requirements, module system constraints, platform compatibility. Generated during `/discover`, enforced by hooks at every phase boundary. Edit it to match your team's standards — it's your document.
@@ -181,7 +195,6 @@ The project constitution (`docs/isdlc/constitution.md`) codifies your governance
 | **Custom workflows** | Define `spike`, `hotfix`, `ui-feature` — your own phase sequences |
 | **User-space hooks** | Drop scripts in `.isdlc/hooks/` for domain-specific validation |
 | **Templates** | Project-local file templates agents use during implementation |
-| **Skill authoring** | Capture team best practices as reusable skills |
 | **Constitution composition** | Base + project merge for team-wide standards |
 
 > [Full Hackability Roadmap](docs/isdlc/hackability-roadmap.md)
@@ -382,7 +395,6 @@ Projects that operate at different layers of the AI agent stack and can compleme
 
 | Project | Layer | Description |
 |---------|-------|-------------|
-| [ai-orchestrator](https://github.com/Community-Tech-UK/ai-orchestrator) | Process management | Electron GUI for managing concurrent Claude CLI instances with supervisor trees, multi-agent verification, and real-time telemetry |
 | [desiAgent](https://github.com/ugmurthy/desiAgent) | Task execution | Library-first TypeScript SDK that decomposes natural language goals into DAGs, executes them autonomously with cost tracking and event streaming |
 
 ---
