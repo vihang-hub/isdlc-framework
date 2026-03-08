@@ -2,7 +2,7 @@
 
 # iSDLC Framework
 
-<h3><em>An AI development harness — opinionated defaults you can override, deterministic enforcement you can tune, and extension points at every layer.</em></h3>
+<h3><em>A development harness for AI-assisted engineering on existing codebases — opinionated defaults you can override, deterministic enforcement you can tune, and extension points at every layer.</em></h3>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Agents](https://img.shields.io/badge/Agents-64-purple.svg)](docs/AGENTS.md)
@@ -18,11 +18,15 @@
 
 AI coding assistants are powerful but structurally unreliable. They skip tests, drift from requirements, lose context across sessions, declare work "done" prematurely, and scope-creep every task. Prompt-based instructions help but can't guarantee behavior — the same prompt produces different results, and rules get forgotten as conversations grow long.
 
-You need constraints that run **outside** the LLM — deterministic enforcement that the AI can't ignore, reinterpret, or forget.
+These problems are worse on existing codebases. The AI doesn't know your architecture, your conventions, your test coverage gaps, or your team's standards. It guesses — and guesses wrong. It reinvents patterns you already have, proposes changes that break established conventions, and ignores the constraints that matter to your project.
+
+You need constraints that run **outside** the LLM — deterministic enforcement that the AI can't ignore, reinterpret, or forget. And you need them grounded in your actual codebase, not generic best practices.
 
 ## The Harness
 
-iSDLC is that enforcement layer. It wraps AI coding assistants in structured workflows, quality gates, and a project constitution — 28 hooks running as separate Node.js processes that intercept tool calls and block non-compliant behavior. The AI doesn't get to decide when it's done. The harness does.
+iSDLC is that enforcement layer. Install it into your existing project and it learns your codebase first — 23 discovery agents map your architecture, test coverage, dependencies, data models, and feature inventory before changing a single line. The result is a project constitution: governance rules verified against your actual code, not hallucinated from training data.
+
+From there, 28 hooks running as separate Node.js processes intercept tool calls and block non-compliant behavior. The AI doesn't get to decide when it's done. The harness does.
 
 But a harness that only constrains is a cage. iSDLC ships with opinionated defaults — then gives you control over every one of them:
 
@@ -207,9 +211,19 @@ Each workflow type defines a fixed phase sequence. The AI cannot invent extra st
 
 Adaptive sizing scales workflows — light features skip architecture and design phases; simple changes get rapid gates.
 
-### Knowledge layer: discovery and constitution
+### Knowledge layer: your codebase as ground truth
 
-`/discover` runs 23 specialized agents that map your codebase before any changes: architecture patterns, test coverage, dependencies, feature inventory, data models. Results persist as structured artifacts and a project constitution — governance rules verified against your actual codebase, not hallucinated.
+Before changing anything, `/discover` runs 23 agents that build a structured model of your project:
+
+| What it maps | How it's used |
+|-------------|---------------|
+| **Architecture** — module boundaries, naming conventions, dependency chains | Agents extend existing patterns instead of inventing new ones |
+| **Test coverage** — framework detection, coverage by module, gap identification | Quality gates calibrated to your actual baseline |
+| **Dependencies** — versions, vulnerability scan, compatibility matrix | Upgrade workflows know what's safe to change |
+| **Features & behavior** — API endpoints, UI pages, business rules as acceptance criteria | Reverse-engineered AC become characterization tests |
+| **Data models** — schemas, entity relationships, migration history | Implementation respects your data layer |
+
+Results persist as a **project constitution** — governance rules verified against your actual code. The constitution is enforced at every phase boundary, not suggested and forgotten.
 
 Each phase reads predecessor artifacts as input. The architect reads the requirements spec. The designer reads the architecture doc. The developer reads the design. Context is structured and traceable, not conversational and ephemeral.
 
@@ -225,47 +239,34 @@ Each phase reads predecessor artifacts as input. The architect reads the require
 
 </details>
 
-### Lifecycle: Discovery → Analyze → Build
+### Lifecycle: Discover → Analyze → Build
 
 ```mermaid
 flowchart TD
-    START["User starts a project"] --> DETECT{"New or Existing?"}
+    START["Install iSDLC into your project"] --> DISCOVER
 
-    DETECT -->|"New project"| NEW_FLOW
-    DETECT -->|"Existing codebase"| EXISTING_FLOW
-
-    subgraph NEW_FLOW["New Project Discovery"]
-        N1["Vision Elicitation"] --> N2["Research\n(best practices, compliance, testing)"]
-        N2 --> N3["Tech Stack Selection"]
-        N3 --> N4["PRD Generation"]
-        N4 --> N5["Architecture Blueprint"]
-        N5 --> N6["Constitution Generation"]
-        N6 --> N7["Project Scaffold"]
+    subgraph DISCOVER["Discover — learn your codebase"]
+        D1["23 agents analyze in parallel:\narchitecture, tests, data models,\nfeatures, dependencies"]
+        D1 --> D2["Discovery Report\n+ Project Constitution"]
+        D2 --> D3["Interactive Walkthrough\n(review findings, configure)"]
     end
 
-    subgraph EXISTING_FLOW["Existing Codebase Discovery"]
-        E1["Parallel Analysis\n(architecture, tests, data model, features)"]
-        E1 --> E2["Discovery Report"]
-        E2 --> E3["Constitution + Skills"]
-        E3 --> E4["Interactive Walkthrough"]
-    end
-
-    N7 --> BACKLOG
-    E4 --> BACKLOG
-
-    BACKLOG["Backlog"]
+    DISCOVER --> BACKLOG["Add items to backlog"]
 
     BACKLOG --> ANALYZE
 
-    subgraph ANALYZE["Analyze"]
-        A1["Roundtable\n(business analyst, architect, designer)"]
-        A1 --> A2["Artifacts\n(requirements, architecture, design)"]
-        A2 --> A3["Sizing\n(light / standard / epic)"]
+    subgraph ANALYZE["Analyze — roundtable review"]
+        A1["Business Analyst\ncaptures requirements"]
+        A2["Solutions Architect\nscans codebase, assesses impact"]
+        A3["System Designer\nspecifies modules + interfaces"]
+        A1 --> A4["Artifacts + Sizing"]
+        A2 --> A4
+        A3 --> A4
     end
 
     ANALYZE --> BUILD
 
-    subgraph BUILD["Build"]
+    subgraph BUILD["Build — phased implementation"]
         B1["Requirements"] --> B2["Impact Analysis"]
         B2 --> B3["Architecture"]
         B3 --> B4["Design"]
@@ -314,13 +315,19 @@ The installer sets up 64 agents, 273 skills, 28 hooks, and the `.isdlc/` state d
 
 ### First steps
 
+iSDLC is designed for existing codebases. Install into your project, run discovery, then work naturally:
+
 ```bash
-claude
+claude                        # start Claude Code in your project
+> /discover                   # maps architecture, tests, dependencies, conventions
+> "fix the login bug"         # harness detects intent, runs the right workflow
+> "add user authentication"   # full lifecycle: requirements → design → implement → review
+> "upgrade to Node 22"        # impact analysis, migration plan, test validation
 ```
 
-**Existing projects** — start with `/discover` to map your architecture, tests, dependencies, and conventions. Then describe what you want naturally — "fix the login bug", "add user authentication", "upgrade to Node 22".
+Discovery generates a constitution from your actual codebase — your patterns, your thresholds, your constraints. Every subsequent workflow is grounded in that knowledge.
 
-**New projects** — run `/discover` to define your project vision and generate a constitution, then describe features naturally.
+New projects are also supported — `/discover` switches to vision elicitation, tech stack selection, and project scaffolding.
 
 ---
 
