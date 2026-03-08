@@ -4,8 +4,6 @@
 > BACKLOG.md is the curated working set with detailed specs. GitHub Issues are for tracking.
 
 ## Open
-- [ ] Workflow recovery — rollback to earlier phase [github: GH-99] → `REQ-0052-workflow-recovery-rollback-to-earlier-phase/` -> [requirements](docs/requirements/REQ-0052-workflow-recovery-rollback-to-earlier-phase/) **Analyzed**
-- [ ] Workflow recovery — retry/redo current phase without restarting [github: GH-98] → `REQ-0051-workflow-recovery-retryredo-current-phase-without-/` -> [requirements](docs/requirements/REQ-0051-workflow-recovery-retryredo-current-phase-without-/) **Analyzed**
 
 ### Parallel Workflows (Architecture)
 
@@ -242,8 +240,8 @@
 
 **Tier 1 — Foundation**
 - #97 [x] Gate profiles — configurable strictness levels (rapid/standard/strict)
-- #98 [ ] Workflow recovery — retry/redo current phase without restarting
-- #99 [ ] Workflow recovery — rollback to earlier phase
+- #98 [x] Workflow recovery — retry/redo current phase without restarting
+- #99 [x] Workflow recovery — rollback to earlier phase
 
 **Infrastructure**
 - #115 [ ] Installer should inject monorepo protocol into user project CLAUDE.md — when `isMonorepo === true`, inject path routing table, project context delegation template, and workflow independence rules into generated CLAUDE.md
@@ -267,6 +265,7 @@
 ## Completed
 
 ### 2026-03-08
+- [x] #98 + #99: Workflow recovery — retry/redo current phase + rollback to earlier phase. 3 production files (workflow-retry.cjs, workflow-rollback.cjs, state-logic.cjs V8 exception), 79 tests (28 retry + 31 rollback + 12 V8 + 8 integration), 0 regressions. -> [requirements](docs/requirements/REQ-0051-workflow-recovery-retryredo-current-phase-without-/) *(merged b80d744)*
 - [x] #114: Bulk file I/O MCP server — multi-file read/write in a single tool call to reduce round-trip overhead during artifact-heavy phases. 4 source modules (section-parser, lock-manager, file-ops, server), 104 tests (78 unit + 22 integration + 4 E2E), 91.53% line coverage. *(merged 7ba482b)*
 - [x] #108a: Contributing personas — add domain-specific reviewers to roundtable (.isdlc/personas/). Split from #108. Contributing personas add observations without owning artifacts. -> [requirements](docs/requirements/REQ-0047-contributing-personas-roundtable-extension/) *(merged 4f614b4)*
 
