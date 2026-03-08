@@ -4,6 +4,8 @@
 > BACKLOG.md is the curated working set with detailed specs. GitHub Issues are for tracking.
 
 ## Open
+- [ ] Workflow recovery — rollback to earlier phase [github: GH-99] → `REQ-0052-workflow-recovery-rollback-to-earlier-phase/` -> [requirements](docs/requirements/REQ-0052-workflow-recovery-rollback-to-earlier-phase/) **Analyzed**
+- [ ] Workflow recovery — retry/redo current phase without restarting [github: GH-98] → `REQ-0051-workflow-recovery-retryredo-current-phase-without-/` -> [requirements](docs/requirements/REQ-0051-workflow-recovery-retryredo-current-phase-without-/) **Analyzed**
 
 ### Parallel Workflows (Architecture)
 

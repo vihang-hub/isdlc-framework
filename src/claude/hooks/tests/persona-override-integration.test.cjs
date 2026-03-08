@@ -202,3 +202,86 @@ describe('M1+M5 Integration: Override-by-Copy', () => {
         assert.ok(result.skippedFiles.length > 0);
     });
 });
+
+// ---------------------------------------------------------------------------
+// REQ-0050: No-Primary-Forcing + Config Pre-population Integration
+// ---------------------------------------------------------------------------
+
+const { readRoundtableConfig } = require('../lib/roundtable-config.cjs');
+const { filterByRoster } = require('../lib/persona-loader.cjs');
+
+describe('M2+M3 Integration: No-Primary-Forcing + Config -- REQ-0050', () => {
+    beforeEach(() => createTmpRoot());
+    afterEach(() => cleanupTmpRoot());
+
+    it('TC-INT-50-09: removing all primaries from roster works', () => {
+        // AC-003-02, AC-005-01
+        writePersonaFile(builtInDir(), 'persona-business-analyst.md', { name: 'persona-business-analyst' });
+        writePersonaFile(builtInDir(), 'persona-solutions-architect.md', { name: 'persona-solutions-architect' });
+        writePersonaFile(builtInDir(), 'persona-system-designer.md', { name: 'persona-system-designer' });
+        writePersonaFile(builtInDir(), 'persona-security-reviewer.md', { name: 'persona-security-reviewer' });
+
+        const result = getPersonaPaths(tmpRoot);
+        const filtered = filterByRoster(result.paths, ['security-reviewer']);
+        assert.equal(filtered.length, 1);
+        assert.ok(filtered[0].includes('security-reviewer'));
+    });
+
+    it('TC-INT-50-10: removing all personas triggers no-persona fallback', () => {
+        // AC-003-06
+        writePersonaFile(builtInDir(), 'persona-business-analyst.md', { name: 'persona-business-analyst' });
+        const result = getPersonaPaths(tmpRoot);
+        const filtered = filterByRoster(result.paths, []);
+        assert.equal(filtered.length, 0);
+    });
+
+    it('TC-INT-50-11: config pre-population + user override = user choice wins', () => {
+        // AC-006-02: config defaults to security-reviewer but user removes it
+        writePersonaFile(builtInDir(), 'persona-security-reviewer.md', { name: 'persona-security-reviewer' });
+        writePersonaFile(builtInDir(), 'persona-business-analyst.md', { name: 'persona-business-analyst' });
+        fs.mkdirSync(path.join(tmpRoot, '.isdlc'), { recursive: true });
+        fs.writeFileSync(path.join(tmpRoot, '.isdlc', 'roundtable.yaml'),
+            'default_personas:\n  - security-reviewer\n', 'utf8');
+
+        const config = readRoundtableConfig(tmpRoot);
+        assert.ok(config.default_personas.includes('security-reviewer'));
+        // User overrides by removing from roster
+        const result = getPersonaPaths(tmpRoot);
+        const filtered = filterByRoster(result.paths, ['business-analyst']);
+        assert.equal(filtered.length, 1);
+        assert.ok(!filtered.some(p => p.includes('security-reviewer')));
+    });
+
+    it('TC-INT-50-12: config verbosity pre-populates but user can change', () => {
+        // AC-006-01
+        fs.mkdirSync(path.join(tmpRoot, '.isdlc'), { recursive: true });
+        fs.writeFileSync(path.join(tmpRoot, '.isdlc', 'roundtable.yaml'),
+            'verbosity: conversational\n', 'utf8');
+
+        const config = readRoundtableConfig(tmpRoot);
+        assert.equal(config.verbosity, 'conversational');
+        // User passes --silent override
+        const overridden = readRoundtableConfig(tmpRoot, { silent: true });
+        assert.equal(overridden.verbosity, 'silent');
+    });
+
+    it('TC-INT-50-13: no config file + no flags = sensible defaults', () => {
+        // AC-006-05
+        const config = readRoundtableConfig(tmpRoot);
+        assert.equal(config.verbosity, 'bulleted');
+        assert.deepEqual(config.default_personas, []);
+        assert.deepEqual(config.disabled_personas, []);
+    });
+
+    it('TC-INT-50-14: existing config continues working without modification', () => {
+        // AC-006-04: REQ-0047-era config
+        fs.mkdirSync(path.join(tmpRoot, '.isdlc'), { recursive: true });
+        fs.writeFileSync(path.join(tmpRoot, '.isdlc', 'roundtable.yaml'),
+            'verbosity: bulleted\ndefault_personas:\n  - security-reviewer\ndisabled_personas: []\n', 'utf8');
+
+        const config = readRoundtableConfig(tmpRoot);
+        assert.equal(config.verbosity, 'bulleted');
+        assert.deepEqual(config.default_personas, ['security-reviewer']);
+        assert.deepEqual(config.disabled_personas, []);
+    });
+});

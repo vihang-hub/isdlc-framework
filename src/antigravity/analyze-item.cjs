@@ -39,7 +39,7 @@ const { getProjectRoot } = require('../claude/hooks/lib/common.cjs');
 
 function parseArgs() {
     const args = process.argv.slice(2);
-    const result = { input: null, light: false, verbose: false, silent: false, personas: null };
+    const result = { input: null, light: false, verbose: false, silent: false, personas: null, noRoundtable: false };
     for (let i = 0; i < args.length; i++) {
         if (args[i] === '--input' && args[i + 1]) {
             result.input = args[i + 1];
@@ -57,6 +57,10 @@ function parseArgs() {
         if (args[i] === '--personas' && args[i + 1]) {
             result.personas = args[i + 1];
             i++;
+        }
+        // REQ-0050 FR-001: --no-roundtable flag for no-persona analysis mode
+        if (args[i] === '--no-roundtable') {
+            result.noRoundtable = true;
         }
     }
     return result;
@@ -264,6 +268,7 @@ function updateBacklog(projectRoot, folderName, title, inputType) {
 
 const personaLoader = require('../claude/hooks/lib/persona-loader.cjs');
 const roundtableConfig = require('../claude/hooks/lib/roundtable-config.cjs');
+const { parseModeFlags } = require('./mode-selection.cjs');
 
 function getPersonaPaths(projectRoot) {
     return personaLoader.getPersonaPaths(projectRoot);
@@ -367,14 +372,30 @@ function main() {
         }
 
         // Step 4: Return READY with all context
-        const personaResult = getPersonaPaths(projectRoot);
-        const topicPaths = getTopicPaths(projectRoot);
+
+        // REQ-0050 FR-001: Parse mode selection flags
+        const modeFlags = parseModeFlags({
+            noRoundtable: args.noRoundtable,
+            silent: args.silent,
+            verbose: args.verbose,
+            personas: args.personas,
+            light: args.light
+        });
 
         // Read roundtable config with per-analysis overrides (FR-005, FR-011)
         const rtConfig = roundtableConfig.readRoundtableConfig(projectRoot, {
             verbose: args.verbose,
             silent: args.silent
         });
+
+        // REQ-0050 FR-004: In no-personas mode, skip persona file loading (AC-004-01)
+        let personaResult;
+        if (modeFlags.mode === 'no-personas') {
+            personaResult = { paths: [], driftWarnings: [], skippedFiles: [] };
+        } else {
+            personaResult = getPersonaPaths(projectRoot);
+        }
+        const topicPaths = getTopicPaths(projectRoot);
 
         const output = {
             result: 'READY',
@@ -393,6 +414,11 @@ function main() {
             codebase_hash: currentHash,
             issue_data: issueData
         };
+
+        // REQ-0050: Add analysis_mode field when mode is determined by flags (AC-001-07, AC-001-05)
+        if (modeFlags.mode) {
+            output.analysis_mode = modeFlags.mode;
+        }
 
         // Per-analysis persona pre-selection (FR-011 AC-011-03)
         if (args.personas) {

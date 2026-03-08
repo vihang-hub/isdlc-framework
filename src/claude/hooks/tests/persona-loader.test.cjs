@@ -26,7 +26,9 @@ const {
     validatePersona,
     isSafeFilename,
     compareSemver,
-    deriveDomain
+    deriveDomain,
+    filterByRoster,
+    matchTriggers
 } = require('../lib/persona-loader.cjs');
 
 // ---------------------------------------------------------------------------
@@ -545,6 +547,151 @@ describe('M1: Validation Rules', () => {
             // Restore permissions for cleanup
             try { fs.chmodSync(badFile, 0o644); } catch (_) {}
         }
+    });
+});
+
+// ---------------------------------------------------------------------------
+// 2.0 REQ-0050: Remove Primary Persona Forcing
+// ---------------------------------------------------------------------------
+
+describe('M2 REQ-0050: PRIMARY_PERSONAS Removal', () => {
+    beforeEach(() => createTmpRoot());
+    afterEach(() => cleanupTmpRoot());
+
+    it('TC-PL-01: PRIMARY_PERSONAS constant no longer forces inclusion', () => {
+        // AC-005-01: with no persona files, paths should be empty
+        const result = getPersonaPaths(tmpRoot);
+        assert.equal(result.paths.length, 0);
+    });
+
+    it('TC-PL-02: primary personas included only when files exist', () => {
+        // AC-005-01, AC-005-03: only 2 of 3 primaries exist
+        const dir = builtInDir();
+        writePersonaFile(dir, 'persona-business-analyst.md', { name: 'persona-business-analyst' });
+        writePersonaFile(dir, 'persona-solutions-architect.md', { name: 'persona-solutions-architect' });
+
+        const result = getPersonaPaths(tmpRoot);
+        assert.equal(result.paths.length, 2);
+    });
+
+    it('TC-PL-03: all personas treated equally in discovery', () => {
+        // AC-003-01: no preference ordering between primary and contributing
+        const dir = builtInDir();
+        writePersonaFile(dir, 'persona-business-analyst.md', { name: 'persona-business-analyst', role_type: 'primary' });
+        writePersonaFile(dir, 'persona-solutions-architect.md', { name: 'persona-solutions-architect', role_type: 'primary' });
+        writePersonaFile(dir, 'persona-security-reviewer.md', { name: 'persona-security-reviewer', role_type: 'contributing' });
+        writePersonaFile(dir, 'persona-devops-engineer.md', { name: 'persona-devops-engineer', role_type: 'contributing' });
+        writePersonaFile(dir, 'persona-qa-tester.md', { name: 'persona-qa-tester', role_type: 'contributing' });
+
+        const result = getPersonaPaths(tmpRoot);
+        assert.equal(result.paths.length, 5);
+    });
+
+    it('TC-PL-04: user can remove a primary persona by not including in roster', () => {
+        // AC-003-02: roster filtering excludes business-analyst
+        const dir = builtInDir();
+        writePersonaFile(dir, 'persona-business-analyst.md', { name: 'persona-business-analyst' });
+        writePersonaFile(dir, 'persona-solutions-architect.md', { name: 'persona-solutions-architect' });
+        writePersonaFile(dir, 'persona-security-reviewer.md', { name: 'persona-security-reviewer' });
+
+        const result = getPersonaPaths(tmpRoot);
+        const filtered = filterByRoster(result.paths, ['solutions-architect', 'security-reviewer']);
+        assert.equal(filtered.length, 2);
+        assert.ok(!filtered.some(p => p.includes('business-analyst')));
+    });
+});
+
+// ---------------------------------------------------------------------------
+// 2.1 REQ-0050: Dynamic Roster Filtering
+// ---------------------------------------------------------------------------
+
+describe('M2 REQ-0050: Dynamic Roster Filtering', () => {
+    beforeEach(() => createTmpRoot());
+    afterEach(() => cleanupTmpRoot());
+
+    it('TC-PL-05: getPersonaPaths returns all available personas', () => {
+        // AC-003-01, AC-005-06
+        const dir = builtInDir();
+        for (const name of ['business-analyst', 'solutions-architect', 'system-designer',
+            'security-reviewer', 'devops-engineer', 'ux-reviewer', 'qa-tester', 'performance-engineer']) {
+            writePersonaFile(dir, `persona-${name}.md`, { name: `persona-${name}` });
+        }
+
+        const result = getPersonaPaths(tmpRoot);
+        assert.equal(result.paths.length, 8);
+    });
+
+    it('TC-PL-06: persona paths can be filtered by active_roster', () => {
+        // AC-003-02, AC-003-05
+        const dir = builtInDir();
+        for (const name of ['business-analyst', 'solutions-architect', 'system-designer',
+            'security-reviewer', 'devops-engineer', 'ux-reviewer', 'qa-tester', 'performance-engineer']) {
+            writePersonaFile(dir, `persona-${name}.md`, { name: `persona-${name}` });
+        }
+
+        const result = getPersonaPaths(tmpRoot);
+        const filtered = filterByRoster(result.paths, ['security-reviewer', 'devops-engineer']);
+        assert.equal(filtered.length, 2);
+    });
+
+    it('TC-PL-07: empty active_roster returns empty paths', () => {
+        // AC-003-06
+        const dir = builtInDir();
+        writePersonaFile(dir, 'persona-business-analyst.md', { name: 'persona-business-analyst' });
+
+        const result = getPersonaPaths(tmpRoot);
+        const filtered = filterByRoster(result.paths, []);
+        assert.equal(filtered.length, 0);
+    });
+
+    it('TC-PL-08: trigger keyword matching returns persona names', () => {
+        // AC-003-03
+        const dir = builtInDir();
+        writePersonaFile(dir, 'persona-security-reviewer.md', {
+            name: 'persona-security-reviewer',
+            triggers: ['security', 'authentication', 'auth']
+        });
+        writePersonaFile(dir, 'persona-devops-engineer.md', {
+            name: 'persona-devops-engineer',
+            triggers: ['ci', 'deployment', 'infrastructure']
+        });
+
+        const result = getPersonaPaths(tmpRoot);
+        const matched = matchTriggers(result.paths, 'Add security headers and authentication flow');
+        assert.ok(matched.recommended.includes('security-reviewer'));
+        assert.ok(!matched.recommended.includes('devops-engineer'));
+    });
+
+    it('TC-PL-09: disabled_personas excluded from recommendation', () => {
+        // AC-003-07
+        const dir = builtInDir();
+        writePersonaFile(dir, 'persona-ux-reviewer.md', {
+            name: 'persona-ux-reviewer',
+            triggers: ['ux', 'ui', 'design']
+        });
+        writePersonaFile(dir, 'persona-security-reviewer.md', {
+            name: 'persona-security-reviewer',
+            triggers: ['security']
+        });
+
+        const result = getPersonaPaths(tmpRoot);
+        const matched = matchTriggers(result.paths, 'ux design review needed',
+            { disabled: ['ux-reviewer'] });
+        assert.ok(!matched.recommended.includes('ux-reviewer'));
+    });
+
+    it('TC-PL-10: disabled_personas still available for manual add', () => {
+        // AC-003-07
+        const dir = builtInDir();
+        writePersonaFile(dir, 'persona-ux-reviewer.md', {
+            name: 'persona-ux-reviewer',
+            triggers: ['ux']
+        });
+
+        const result = getPersonaPaths(tmpRoot);
+        const matched = matchTriggers(result.paths, 'some content',
+            { disabled: ['ux-reviewer'] });
+        assert.ok(matched.available.includes('ux-reviewer'));
     });
 });
 

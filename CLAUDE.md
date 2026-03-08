@@ -70,6 +70,14 @@ Progress updates, phase transitions, and quality checks remain fully visible to 
 
 Do NOT implement changes directly without going through a workflow. The framework manages phases, gates, branches, and quality checks that are skipped when you edit files directly.
 
+### Analysis Completion Rules
+
+**CRITICAL — These are mandatory steps after every roundtable analysis:**
+
+1. **Three-domain confirmation sequence**: ALWAYS present confirmations sequentially per domain — Requirements (Maya) → Architecture (Alex) → Design (Jordan) — each with explicit Accept/Amend. NEVER collapse into a single combined confirmation. Produce the corresponding artifacts (requirements-spec.md, architecture-overview.md, module-design.md) BEFORE their respective confirmation prompts.
+
+2. **Run analyze-finalize after acceptance**: After the user accepts all three domain confirmations, ALWAYS run `node src/antigravity/analyze-finalize.cjs --folder "<folder>"` for EACH analyzed item. This updates BACKLOG.md and comments on the GitHub issue. Do NOT just update meta.json manually.
+
 ---
 
 ## Agent Framework Context
@@ -181,6 +189,10 @@ This is the iSDLC (integrated Software Development Lifecycle) framework for Clau
 ### Current Version
 
 **0.1.0-alpha** - Initial public release
+
+### Guides
+
+- **Persona Authoring**: `docs/isdlc/persona-authoring-guide.md` - How to create, override, and configure roundtable personas
 
 ### Important Conventions
 
