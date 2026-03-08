@@ -187,6 +187,11 @@ function main() {
         const folderName = path.basename(folderAbsolute);
         const folderRelative = `docs/requirements/${folderName}`;
 
+        // Step 0: Mark analysis as complete in meta.json
+        meta.analysis_status = 'complete';
+        const metaPath = path.join(folderAbsolute, 'meta.json');
+        fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2) + '\n', 'utf8');
+
         // Step 1: Update BACKLOG.md
         const backlogUpdated = updateBacklog(projectRoot, folderName, meta);
 

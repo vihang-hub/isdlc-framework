@@ -1,7 +1,8 @@
 # iSDLC Framework — Hackability & Extensibility Roadmap
 
 **Created**: 2026-03-06
-**Status**: Design (pre-analysis)
+**Updated**: 2026-03-08
+**Status**: Tier 1 complete, Tier 4 persona customization complete
 **Source**: Extensibility research + latent demand analysis + early user feedback
 
 ---
@@ -380,14 +381,14 @@ Slash command equivalents exist for power users and backward compatibility, but 
 
 ## 6. Priority & Sequencing
 
-### Tier 1: Foundation (enables everything else)
+### Tier 1: Foundation (enables everything else) — COMPLETE
 
-| Item | Layer | Effort | Rationale |
+| Item | Layer | Status | Reference |
 |------|-------|--------|-----------|
-| Gate profiles | Configure | Medium | Every subsequent feature needs configurable strictness |
-| Workflow recovery (retry/redo/rollback) | Configure | Medium | Core developer experience gap — can't recover from mistakes |
-| Roundtable depth control | Configure | Low | Quick win — infrastructure exists, just needs wiring |
-| Contributing personas (#108a) | Override (light) | Low-Medium | Pairs with depth control — customize WHO and HOW DEEP. No artifact ownership changes. |
+| Gate profiles | Configure | **Shipped** | #97, REQ-0049 |
+| Workflow recovery (retry/redo/rollback) | Configure | **Shipped** | #98 + #99, REQ-0051 + REQ-0052 |
+| Roundtable depth control | Configure | **Shipped** | #100, REQ-0046 |
+| Contributing personas (#108a) | Override (light) | **Shipped** | #108a, REQ-0047 |
 
 ### Tier 2: Extension Points (platform primitives)
 
@@ -407,28 +408,28 @@ Slash command equivalents exist for power users and backward compatibility, but 
 
 ### Tier 4: Team & Organization Scale
 
-| Item | Layer | Effort | Rationale |
+| Item | Layer | Status | Reference |
 |------|-------|--------|-----------|
-| Constitution composition | Override | Medium | Team-level sharing of quality standards |
-| Full persona override (#108b) | Override | High | Disable/replace/tune built-in personas. Depends on #108a. |
+| Constitution composition | Override | Planned | #107 |
+| Full persona override (#108b) | Override | **Shipped** | #108b, REQ-0050 |
 
 ### Recommended Build Order
 
 ```
-Tier 1 (foundation):
+Tier 1 (foundation):                      ✅ COMPLETE
   Gate profiles → Workflow recovery → Roundtable depth + Contributing personas (#108a)
                                           │
-Tier 2 (extension points):                ▼
+Tier 2 (extension points):                ▼  NEXT
   User-space hooks → Custom workflows → Change summary
                                           │
 Tier 3 (productivity):                    ▼
   Templates → Skill scaffold → Context carry-forward
                                           │
-Tier 4 (organization):                    ▼
+Tier 4 (organization):                    ▼  Persona override ✅
   Constitution composition → Full persona override (#108b)
 ```
 
-Each tier builds on the previous. Tier 1 items are prerequisites for making Tier 2 items meaningful (e.g., custom workflows need gate profiles to be useful — a `spike` workflow needs `rapid` gates). #108a and roundtable depth control pair naturally and share the same dispatch surface.
+Tier 1 is complete. #108b (full persona override) shipped ahead of sequence because it paired naturally with #108a. Next priority is Tier 2 — user-space hooks and custom workflow definitions.
 
 ---
 
