@@ -159,6 +159,21 @@ When a hook blocks your action (PreToolUse, PostToolUse, or notification), you M
 | `phase-sequence-guard` | "OUT-OF-ORDER PHASE DELEGATION" | Complete the current phase before delegating to the next |
 | `delegation-gate` | Agent delegation blocked | Use the correct agent for the current phase |
 
+**Harness bug detection (REQ-0059):**
+
+If a hook error is caused by a bug in the framework itself (not the user's code), follow this protocol:
+1. **Identify the bug** — the error originates from `src/claude/hooks/`, `src/antigravity/`, or framework config files
+2. **Inform the user** — explain that this is a framework bug, not their code
+3. **Suspend the active workflow** — use `--interrupt` to suspend and start a fix workflow:
+   ```
+   node src/antigravity/workflow-init.cjs --type fix --interrupt --description "Fix <description>"
+   ```
+4. **Fix the bug** through the normal fix workflow (requirements → tracing → test strategy → implementation → quality loop → code review)
+5. **Finalize the fix** — `workflow-finalize.cjs` automatically restores the suspended workflow with phase iteration reset
+6. **Resume the original workflow** — the user continues where they left off
+
+**Constraints**: Only fix workflows can interrupt. Max 1 level of suspension depth (no nested interrupts).
+
 **Escalate to user ONLY when:**
 - The block message does not specify a recovery action
 - You have already retried the alternative and it was also blocked

@@ -4,8 +4,6 @@
 > BACKLOG.md is the curated working set with detailed specs. GitHub Issues are for tracking.
 
 ## Open
-- [ ] Custom workflow definitions — user-defined phase sequences (.isdlc/workflows/*.yaml) [github: GH-102] → `REQ-0058-custom-workflow-definitions-user-defined-phase-seq/` -> [requirements](docs/requirements/REQ-0058-custom-workflow-definitions-user-defined-phase-seq/) **Analyzed**
-- [x] Adaptive process complexity (rippable phases) [github: GH-111] → `REQ-0056-adaptive-process-complexity-rippable-phases/` -> [requirements](docs/requirements/REQ-0056-adaptive-process-complexity-rippable-phases/)
 - [x] User-space hooks — extensible pre/post phase hook points [github: GH-101] → `REQ-0055-user-space-hooks-extensible-prepost-phase-hook-poi/` -> [requirements](docs/requirements/REQ-0055-user-space-hooks-extensible-prepost-phase-hook-poi/)
 
 ### Parallel Workflows (Architecture)
@@ -228,7 +226,7 @@
 - #110 [ ] Observability-as-context for agents — feed runtime data (error logs, performance baselines, incidents) to Phase 02 tracing, impact analysis, and Phase 16 quality loop via `.isdlc/observability/` directory convention. Fail-open per Article X.
   - **Priority**: Could Have
   - **Complexity**: Medium
-- #111 [x] Adaptive process complexity (rippable phases) — extend sizing/tier system with model confidence dimension. Phase-level skip conditions configurable in `.isdlc/process.json`. Audit trail for skipped/abbreviated phases. Override with `--strict`.
+- #111 [ ] Adaptive process complexity (rippable phases) — extend sizing/tier system with model confidence dimension. Phase-level skip conditions configurable in `.isdlc/process.json`. Audit trail for skipped/abbreviated phases. Override with `--strict`.
   - **Priority**: Should Have
   - **Complexity**: Medium
   - **Builds on**: REQ-0011, #28, #97
@@ -236,6 +234,14 @@
   - **Priority**: Should Have
   - **Complexity**: Low-medium
   - **Builds on**: #109 (entropy sweep)
+
+### Process Enforcement
+
+- #118 [ ] Phase-work guard hook — warning-only `PreToolUse[Edit,Write]` hook that detects when an active workflow's phase agent has not been engaged before code changes begin. Checks `skill_usage_log` for any entry matching the current phase. Emits a visible notification (not a block) so the AI and user see "No phase agent engaged yet for {phase}. Follow the Build Protocol." Must be custom-workflow-aware: read phase-to-agent mapping from custom workflow definitions (#102) and pass through for phases with no mapped agent.
+  - **Priority**: Should Have
+  - **Complexity**: Low-medium
+  - **Depends on**: #102 (custom workflow definitions)
+  - **Root cause**: No hook enforces structured agent engagement during phase work. The AI can skip reading phase agent files and edit code directly. Gate validation catches missing artifacts but not missing process. Discovered 2026-03-10 when #102 build session skipped orchestrator engagement entirely.
 
 ### Hackability & Extensibility
 
@@ -252,7 +258,7 @@
 
 **Tier 2 — Extension Points**
 - #101 [ ] User-space hooks — extensible pre/post phase hook points (.isdlc/hooks/)
-- #102 [ ] Custom workflow definitions — user-defined phase sequences (.isdlc/workflows/*.yaml)
+- #102 [x] Custom workflow definitions — user-defined phase sequences (.isdlc/workflows/*.yaml)
 
 **Tier 3 — Developer Productivity**
 - #104 [ ] Template system — project-local code templates (.isdlc/templates/)

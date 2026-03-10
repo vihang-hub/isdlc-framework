@@ -131,7 +131,7 @@ function printPhaseList(phases, phaseStatus, skippedReasons) {
 
 function parseArgs() {
     const args = process.argv.slice(2);
-    const result = { type: null, description: null, slug: null, light: false, supervised: false, startPhase: null };
+    const result = { type: null, description: null, slug: null, light: false, supervised: false, startPhase: null, interrupt: false };
     for (let i = 0; i < args.length; i++) {
         if (args[i] === '--type' && args[i + 1]) { result.type = args[i + 1]; i++; }
         if (args[i] === '--description' && args[i + 1]) { result.description = args[i + 1]; i++; }
@@ -139,6 +139,7 @@ function parseArgs() {
         if (args[i] === '--start-phase' && args[i + 1]) { result.startPhase = args[i + 1]; i++; }
         if (args[i] === '--light') result.light = true;
         if (args[i] === '--supervised') result.supervised = true;
+        if (args[i] === '--interrupt') result.interrupt = true;
     }
     return result;
 }
@@ -176,15 +177,39 @@ function main() {
             process.exit(1);
         }
 
-        // Check no active workflow
+        // Check no active workflow (or suspend if --interrupt)
         const state = readState() || {};
+        let suspendedFrom = null;
         if (state.active_workflow) {
-            output({
-                result: 'BLOCKED',
-                reason: 'Active workflow already exists',
-                current_workflow: { type: state.active_workflow.type, phase: state.active_workflow.current_phase }
-            });
-            process.exit(1);
+            if (args.interrupt && args.type === 'fix') {
+                // FR-005: Check suspension depth limit (max 1)
+                if (state.suspended_workflow) {
+                    output({
+                        result: 'ERROR',
+                        message: 'Cannot suspend: already a suspended workflow',
+                        active_workflow: { type: state.active_workflow.type, description: state.active_workflow.description },
+                        suspended_workflow: { type: state.suspended_workflow.type, description: state.suspended_workflow.description }
+                    });
+                    process.exit(1);
+                }
+                // FR-002: Suspend active workflow
+                suspendedFrom = { type: state.active_workflow.type, slug: state.active_workflow.slug, phase: state.active_workflow.current_phase };
+                state.suspended_workflow = { ...state.active_workflow };
+                delete state.active_workflow;
+            } else if (args.interrupt && args.type !== 'fix') {
+                output({
+                    result: 'ERROR',
+                    message: 'Only fix workflows can interrupt. Use --type fix with --interrupt.'
+                });
+                process.exit(1);
+            } else {
+                output({
+                    result: 'BLOCKED',
+                    reason: 'Active workflow already exists',
+                    current_workflow: { type: state.active_workflow.type, phase: state.active_workflow.current_phase }
+                });
+                process.exit(1);
+            }
         }
 
         const requiresBranch = REQUIRES_BRANCH[args.type] !== false;
@@ -310,7 +335,7 @@ function main() {
             executeHooks('pre-workflow', hookCtx);
         } catch (e) { /* pre-workflow hooks are non-blocking */ }
 
-        output({
+        const result = {
             result: 'INITIALIZED',
             workflow_type: args.type,
             slug,
@@ -320,7 +345,12 @@ function main() {
             current_phase: phases[0],
             artifact_folder: artifactFolder,
             flags: { light: args.light, supervised: args.supervised }
-        });
+        };
+        if (suspendedFrom) {
+            result.interrupted = true;
+            result.suspended_workflow = suspendedFrom;
+        }
+        output(result);
         process.exit(0);
 
     } catch (error) {

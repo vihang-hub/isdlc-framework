@@ -74,36 +74,37 @@ function main() {
         allWarnings.push(...v9.warnings);
 
         // V7/V8 require comparing incoming vs disk — for the CLI we validate current disk state
-        // Check for basic structural integrity
-        if (state.active_workflow) {
-            const aw = state.active_workflow;
-
-            // Check phase index is a valid number
-            if (aw.current_phase_index !== undefined && typeof aw.current_phase_index !== 'number') {
-                errors.push(`active_workflow.current_phase_index should be a number, got: ${typeof aw.current_phase_index}`);
+        // Shared workflow shape validator (used for both active and suspended workflows)
+        function validateWorkflowShape(wf, prefix) {
+            if (wf.current_phase_index !== undefined && typeof wf.current_phase_index !== 'number') {
+                errors.push(`${prefix}.current_phase_index should be a number, got: ${typeof wf.current_phase_index}`);
             }
-
-            // Check phases array exists
-            if (aw.phases && !Array.isArray(aw.phases)) {
-                errors.push('active_workflow.phases should be an array');
+            if (wf.phases && !Array.isArray(wf.phases)) {
+                errors.push(`${prefix}.phases should be an array`);
             }
-
-            // Check current_phase is in phases array
-            if (aw.current_phase && aw.phases && Array.isArray(aw.phases)) {
-                if (!aw.phases.includes(aw.current_phase)) {
-                    errors.push(`active_workflow.current_phase '${aw.current_phase}' is not in phases array`);
+            if (wf.current_phase && wf.phases && Array.isArray(wf.phases)) {
+                if (!wf.phases.includes(wf.current_phase)) {
+                    errors.push(`${prefix}.current_phase '${wf.current_phase}' is not in phases array`);
                 }
             }
-
-            // Check phase_status values are valid
-            if (aw.phase_status && typeof aw.phase_status === 'object') {
+            if (wf.phase_status && typeof wf.phase_status === 'object') {
                 const validStatuses = ['pending', 'in_progress', 'completed', 'skipped'];
-                for (const [phase, status] of Object.entries(aw.phase_status)) {
+                for (const [phase, status] of Object.entries(wf.phase_status)) {
                     if (!validStatuses.includes(status)) {
-                        errors.push(`active_workflow.phase_status['${phase}'] has invalid status: '${status}'`);
+                        errors.push(`${prefix}.phase_status['${phase}'] has invalid status: '${status}'`);
                     }
                 }
             }
+        }
+
+        // Check active_workflow structural integrity
+        if (state.active_workflow) {
+            validateWorkflowShape(state.active_workflow, 'active_workflow');
+        }
+
+        // Check suspended_workflow structural integrity (FR-006: same schema as active_workflow)
+        if (state.suspended_workflow) {
+            validateWorkflowShape(state.suspended_workflow, 'suspended_workflow');
         }
 
         // Check state_version is present and numeric

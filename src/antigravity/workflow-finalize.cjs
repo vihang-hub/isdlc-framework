@@ -151,12 +151,41 @@ function main() {
 
         // Clear active workflow
         delete state.active_workflow;
+
+        // FR-004/FR-006: Restore suspended workflow if present
+        let resumedWorkflow = null;
+        if (state.suspended_workflow) {
+            state.active_workflow = state.suspended_workflow;
+            delete state.suspended_workflow;
+
+            // FR-008: Phase iteration reset on resume (reuse workflow-retry logic)
+            const currentPhase = state.active_workflow.current_phase;
+            const phaseData = state.phases && state.phases[currentPhase];
+            if (phaseData) {
+                if (phaseData.iteration_requirements) {
+                    delete phaseData.iteration_requirements.test_iteration;
+                    delete phaseData.iteration_requirements.interactive_elicitation;
+                }
+                delete phaseData.test_iteration;
+                delete phaseData.interactive_elicitation;
+                delete phaseData.constitutional_validation;
+            }
+
+            state.active_workflow.recovery_action = {
+                type: 'resumed_from_suspension',
+                phase: currentPhase,
+                timestamp: new Date().toISOString()
+            };
+
+            resumedWorkflow = { type: state.active_workflow.type, slug: state.active_workflow.slug, phase: currentPhase };
+        }
+
         state.state_version = (state.state_version || 0) + 1;
 
         const statePath = path.join(projectRoot, '.isdlc', 'state.json');
         fs.writeFileSync(statePath, JSON.stringify(state, null, 2), 'utf8');
 
-        output({
+        const finalResult = {
             result: 'FINALIZED',
             workflow_type: aw.type,
             slug: aw.slug,
@@ -166,7 +195,11 @@ function main() {
             state_version: state.state_version,
             github_closed: githubClosed,
             backlog_updated: backlogUpdated
-        });
+        };
+        if (resumedWorkflow) {
+            finalResult.resumed_workflow = resumedWorkflow;
+        }
+        output(finalResult);
         process.exit(0);
 
     } catch (error) {
