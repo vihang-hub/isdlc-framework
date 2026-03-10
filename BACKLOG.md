@@ -235,6 +235,14 @@
   - **Complexity**: Low-medium
   - **Builds on**: #109 (entropy sweep)
 
+### Process Enforcement
+
+- [ ] Phase-work guard hook — warning-only `PreToolUse[Edit,Write]` hook that detects when an active workflow's phase agent has not been engaged before code changes begin. Checks `skill_usage_log` for any entry matching the current phase. Emits a visible notification (not a block) so the AI and user see "No phase agent engaged yet for {phase}. Follow the Build Protocol." Must be custom-workflow-aware: read phase-to-agent mapping from custom workflow definitions (#102) and pass through for phases with no mapped agent.
+  - **Priority**: Should Have
+  - **Complexity**: Low-medium
+  - **Depends on**: #102 (custom workflow definitions)
+  - **Root cause**: No hook enforces structured agent engagement during phase work. The AI can skip reading phase agent files and edit code directly. Gate validation catches missing artifacts but not missing process. Discovered 2026-03-10 when #102 build session skipped orchestrator engagement entirely.
+
 ### Hackability & Extensibility
 
 > Full design: [docs/isdlc/hackability-roadmap.md](docs/isdlc/hackability-roadmap.md)

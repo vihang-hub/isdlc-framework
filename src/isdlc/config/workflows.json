@@ -6,6 +6,14 @@
       "label": "New Feature",
       "command": "/isdlc feature",
       "description": "Implement a new feature end-to-end",
+      "intent": "Build a new capability, implement a feature, add functionality, create something new, develop a component, ship a feature end-to-end with full analysis and quality gates",
+      "examples": [
+        "Build a REST API for user authentication",
+        "Add payment processing",
+        "Implement dark mode",
+        "Create a dashboard widget",
+        "Add export to CSV functionality"
+      ],
       "phases": [
         "00-quick-scan",
         "01-requirements",
@@ -123,10 +131,40 @@
       },
       "requires_branch": true
     },
+    "feature-light": {
+      "label": "Lightweight Feature",
+      "command": "/isdlc feature -light",
+      "description": "Implement a small feature without architecture and design phases",
+      "intent": "Build a small or simple feature quickly, implement a minor change, add a small piece of functionality without full architecture and design phases",
+      "examples": [
+        "Add a config flag",
+        "Small refactor of a utility function",
+        "Add a new CLI option",
+        "Update a validation rule"
+      ],
+      "phases": [
+        "00-quick-scan",
+        "01-requirements",
+        "02-impact-analysis",
+        "05-test-strategy",
+        "06-implementation",
+        "16-quality-loop",
+        "08-code-review"
+      ],
+      "gate_mode": "strict",
+      "requires_branch": true
+    },
     "fix": {
       "label": "Bug Fix",
       "command": "/isdlc fix",
       "description": "Fix a bug or defect with TDD",
+      "intent": "Fix a bug, resolve a defect, repair broken functionality, address an error, correct wrong behavior, debug and fix a crash or failure",
+      "examples": [
+        "Login endpoint returns 500 on empty password",
+        "Dashboard crashes when no data",
+        "Search returns stale results after update",
+        "File upload fails for large files"
+      ],
       "phases": [
         "01-requirements",
         "02-tracing",
@@ -201,6 +239,12 @@
       "label": "Run Tests",
       "command": "/isdlc test run",
       "description": "Execute existing automation tests",
+      "intent": "Run existing tests, execute test suite, check if tests pass, verify test results",
+      "examples": [
+        "Run the test suite",
+        "Check if all tests pass",
+        "Execute integration tests"
+      ],
       "phases": [
         "11-local-testing",
         "07-testing"
@@ -228,6 +272,12 @@
       "label": "Generate Tests",
       "command": "/isdlc test generate",
       "description": "Create new tests for existing code",
+      "intent": "Write new tests, add test coverage, generate tests for existing code, create unit tests or integration tests",
+      "examples": [
+        "Add unit tests for the auth module",
+        "Generate tests for the API endpoints",
+        "Improve test coverage for utils"
+      ],
       "phases": [
         "05-test-strategy",
         "06-implementation",
@@ -257,6 +307,13 @@
       "label": "Dependency/Tool Upgrade",
       "command": "/isdlc upgrade <name>",
       "description": "Upgrade a dependency, runtime, framework, or tool with full impact analysis and regression testing",
+      "intent": "Upgrade a dependency, update a package, bump a version, migrate a runtime or framework, update a tool to a newer version",
+      "examples": [
+        "Upgrade React to latest",
+        "Update Node.js to v22",
+        "Bump TypeScript version",
+        "Migrate from Express 4 to Express 5"
+      ],
       "phases": [
         "15-upgrade-plan",
         "15-upgrade-execute",
@@ -294,6 +351,12 @@
       "label": "Reverse Engineer",
       "command": "/isdlc reverse-engineer",
       "description": "Extract acceptance criteria and generate characterization tests from existing code",
+      "intent": "Reverse engineer existing code, extract behavior, generate characterization tests, understand undocumented code behavior",
+      "examples": [
+        "Reverse engineer the payments module",
+        "Extract acceptance criteria from existing code",
+        "Generate characterization tests"
+      ],
       "phases": [
         "R1-behavior-extraction",
         "R2-characterization-tests",

@@ -25,19 +25,7 @@ const path = require('path');
 const { execSync } = require('child_process');
 const { getProjectRoot, readState } = require('../claude/hooks/lib/common.cjs');
 const { executeHooks, buildContext } = require('../claude/hooks/lib/user-hooks.cjs');
-
-const WORKFLOW_PHASES = {
-    feature: ['00-quick-scan', '01-requirements', '02-impact-analysis', '03-architecture', '04-design', '05-test-strategy', '06-implementation', '16-quality-loop', '08-code-review'],
-    fix: ['01-requirements', '02-tracing', '05-test-strategy', '06-implementation', '16-quality-loop', '08-code-review'],
-    upgrade: ['15-upgrade-plan', '15-upgrade-execute', '08-code-review'],
-    'test-run': ['11-local-testing', '07-testing'],
-    'test-generate': ['05-test-strategy', '06-implementation', '16-quality-loop', '08-code-review']
-};
-
-const REQUIRES_BRANCH = {
-    feature: true, fix: true, upgrade: true,
-    'test-run': false, 'test-generate': false
-};
+const { loadWorkflows, resolveExtension } = require('../isdlc/workflow-loader.cjs');
 
 function parseArgs() {
     const args = process.argv.slice(2);
@@ -74,10 +62,21 @@ function main() {
     try {
         const args = parseArgs();
         if (!args.type) { output({ result: 'ERROR', message: 'Missing --type argument' }); process.exit(2); }
-        if (!WORKFLOW_PHASES[args.type]) { output({ result: 'ERROR', message: `Unknown workflow type: ${args.type}` }); process.exit(2); }
         if (!args.description && !args.slug) { output({ result: 'ERROR', message: 'Need --description or --slug' }); process.exit(2); }
 
         const projectRoot = getProjectRoot();
+
+        // Load workflow registry (shipped + custom)
+        const { merged: workflowRegistry, errors: loaderErrors } = loadWorkflows(projectRoot);
+        if (loaderErrors.length > 0) {
+            output({ result: 'WARNING', loader_errors: loaderErrors });
+        }
+
+        const workflowDef = workflowRegistry[args.type];
+        if (!workflowDef) {
+            output({ result: 'ERROR', message: `Unknown workflow type: ${args.type}. Available: ${Object.keys(workflowRegistry).join(', ')}` });
+            process.exit(2);
+        }
 
         // Check constitution
         const constPath = path.join(projectRoot, 'docs', 'isdlc', 'constitution.md');
@@ -97,7 +96,7 @@ function main() {
             process.exit(1);
         }
 
-        const requiresBranch = REQUIRES_BRANCH[args.type] !== false;
+        const requiresBranch = workflowDef.requires_branch !== false;
 
         // Determine slug and branch (only for branch-requiring workflows)
         let slug, branchName, artifactFolder;
@@ -114,11 +113,8 @@ function main() {
             artifactFolder = null;
         }
 
-        // Determine phases
-        let phases = [...WORKFLOW_PHASES[args.type]];
-        if (args.light) {
-            phases = phases.filter(p => p !== '03-architecture' && p !== '04-design');
-        }
+        // Determine phases from workflow definition
+        let phases = [...workflowDef.phases];
         // Skip to start phase (for pre-analyzed items)
         if (args.startPhase) {
             const idx = phases.indexOf(args.startPhase);
