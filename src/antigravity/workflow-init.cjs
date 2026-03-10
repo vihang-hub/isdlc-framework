@@ -23,13 +23,103 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
-const { getProjectRoot, readState } = require('../claude/hooks/lib/common.cjs');
+const { getProjectRoot, readState, readProcessConfig } = require('../claude/hooks/lib/common.cjs');
 const { executeHooks, buildContext } = require('../claude/hooks/lib/user-hooks.cjs');
 const { loadWorkflows, resolveExtension } = require('../isdlc/workflow-loader.cjs');
 
+/** All known phase identifiers — used to validate process.json entries (REQ-0056 FR-006) */
+const PHASE_LIBRARY = [
+    '00-quick-scan', '01-requirements', '02-impact-analysis', '02-tracing',
+    '03-architecture', '04-design', '05-test-strategy', '06-implementation',
+    '07-testing', '08-code-review', '11-local-testing',
+    '15-upgrade-plan', '15-upgrade-execute', '16-quality-loop'
+];
+
+/**
+ * Compute the final phase array merging process.json config with defaults (REQ-0056).
+ * Phases in the config are active; default phases NOT in config are marked "skipped".
+ * Config phases NOT in defaults are added (recomposition, FR-006).
+ *
+ * @param {string[]|null} configPhases - Phase array from process.json, or null
+ * @param {string[]} defaultPhases - Built-in default phases for this workflow type
+ * @returns {{ phases: string[], phaseStatus: object, skippedReasons: object }}
+ */
+function computePhaseArray(configPhases, defaultPhases) {
+    if (!configPhases) {
+        // No config — use defaults unchanged
+        const phaseStatus = {};
+        for (const p of defaultPhases) phaseStatus[p] = 'pending';
+        return { phases: [...defaultPhases], phaseStatus, skippedReasons: {} };
+    }
+
+    // Validate config phases against PHASE_LIBRARY
+    const validConfigPhases = [];
+    for (const p of configPhases) {
+        if (PHASE_LIBRARY.includes(p)) {
+            validConfigPhases.push(p);
+        } else {
+            process.stderr.write(`[process-config] Unknown phase "${p}" in process.json, ignoring\n`);
+        }
+    }
+
+    // Empty after validation → warn and use defaults
+    if (validConfigPhases.length === 0) {
+        process.stderr.write('[process-config] process.json phase array is empty after validation, using defaults\n');
+        const phaseStatus = {};
+        for (const p of defaultPhases) phaseStatus[p] = 'pending';
+        return { phases: [...defaultPhases], phaseStatus, skippedReasons: {} };
+    }
+
+    const configSet = new Set(validConfigPhases);
+    const phases = [];
+    const phaseStatus = {};
+    const skippedReasons = {};
+
+    // Walk defaults: active if in config, skipped if not
+    for (const p of defaultPhases) {
+        phases.push(p);
+        if (configSet.has(p)) {
+            phaseStatus[p] = 'pending';
+            configSet.delete(p);
+        } else {
+            phaseStatus[p] = 'skipped';
+            skippedReasons[p] = 'process.json override';
+        }
+    }
+
+    // Recomposition: config phases NOT in defaults get added at the end
+    for (const p of validConfigPhases) {
+        if (configSet.has(p)) {
+            phases.push(p);
+            phaseStatus[p] = 'pending';
+            configSet.delete(p);
+        }
+    }
+
+    return { phases, phaseStatus, skippedReasons };
+}
+
+/**
+ * Print a visual phase list at workflow start (REQ-0056 FR-004).
+ * Active phases: [ ] 01-requirements
+ * Skipped phases: [x] 03-architecture (skipped: process.json override)
+ */
+function printPhaseList(phases, phaseStatus, skippedReasons) {
+    process.stderr.write('\nPhase sequence:\n');
+    for (const p of phases) {
+        if (phaseStatus[p] === 'skipped') {
+            const reason = skippedReasons[p] || 'skipped';
+            process.stderr.write(`  [x] ${p} (skipped: ${reason})\n`);
+        } else {
+            process.stderr.write(`  [ ] ${p}\n`);
+        }
+    }
+    process.stderr.write('\n');
+}
+
 function parseArgs() {
     const args = process.argv.slice(2);
-    const result = { type: null, description: null, slug: null, light: false, supervised: false, startPhase: null };
+    const result = { type: null, description: null, slug: null, light: false, supervised: false, startPhase: null, interrupt: false };
     for (let i = 0; i < args.length; i++) {
         if (args[i] === '--type' && args[i + 1]) { result.type = args[i + 1]; i++; }
         if (args[i] === '--description' && args[i + 1]) { result.description = args[i + 1]; i++; }
@@ -37,6 +127,7 @@ function parseArgs() {
         if (args[i] === '--start-phase' && args[i + 1]) { result.startPhase = args[i + 1]; i++; }
         if (args[i] === '--light') result.light = true;
         if (args[i] === '--supervised') result.supervised = true;
+        if (args[i] === '--interrupt') result.interrupt = true;
     }
     return result;
 }
@@ -66,7 +157,7 @@ function main() {
 
         const projectRoot = getProjectRoot();
 
-        // Load workflow registry (shipped + custom)
+        // Load workflow registry (shipped + custom) (REQ-0058)
         const { merged: workflowRegistry, errors: loaderErrors } = loadWorkflows(projectRoot);
         if (loaderErrors.length > 0) {
             output({ result: 'WARNING', loader_errors: loaderErrors });
@@ -85,15 +176,39 @@ function main() {
             process.exit(1);
         }
 
-        // Check no active workflow
+        // Check no active workflow (or suspend if --interrupt) (REQ-0059)
         const state = readState() || {};
+        let suspendedFrom = null;
         if (state.active_workflow) {
-            output({
-                result: 'BLOCKED',
-                reason: 'Active workflow already exists',
-                current_workflow: { type: state.active_workflow.type, phase: state.active_workflow.current_phase }
-            });
-            process.exit(1);
+            if (args.interrupt && args.type === 'fix') {
+                // FR-005: Check suspension depth limit (max 1)
+                if (state.suspended_workflow) {
+                    output({
+                        result: 'ERROR',
+                        message: 'Cannot suspend: already a suspended workflow',
+                        active_workflow: { type: state.active_workflow.type, description: state.active_workflow.description },
+                        suspended_workflow: { type: state.suspended_workflow.type, description: state.suspended_workflow.description }
+                    });
+                    process.exit(1);
+                }
+                // FR-002: Suspend active workflow
+                suspendedFrom = { type: state.active_workflow.type, slug: state.active_workflow.slug, phase: state.active_workflow.current_phase };
+                state.suspended_workflow = { ...state.active_workflow };
+                delete state.active_workflow;
+            } else if (args.interrupt && args.type !== 'fix') {
+                output({
+                    result: 'ERROR',
+                    message: 'Only fix workflows can interrupt. Use --type fix with --interrupt.'
+                });
+                process.exit(1);
+            } else {
+                output({
+                    result: 'BLOCKED',
+                    reason: 'Active workflow already exists',
+                    current_workflow: { type: state.active_workflow.type, phase: state.active_workflow.current_phase }
+                });
+                process.exit(1);
+            }
         }
 
         const requiresBranch = workflowDef.requires_branch !== false;
@@ -106,25 +221,66 @@ function main() {
             slug = args.slug || `${prefix}-${seqNum}-${generateSlug(args.description)}`;
             const branchPrefix = args.type === 'fix' ? 'bugfix' : 'feature';
             branchName = `${branchPrefix}/${slug}`;
-            artifactFolder = `docs/requirements/${slug}`;
+            artifactFolder = slug;
         } else {
             slug = args.type;
             branchName = null;
             artifactFolder = null;
         }
 
-        // Determine phases from workflow definition
-        let phases = [...workflowDef.phases];
+        // Determine phases (REQ-0056: process.json override, REQ-0058: workflow registry)
+        const defaultPhases = [...workflowDef.phases];
+        const processConfig = readProcessConfig(projectRoot);
+        const configPhasesRaw = processConfig && processConfig[args.type];
+
+        // Validate config phase array type
+        let configPhases = null;
+        if (configPhasesRaw != null) {
+            if (Array.isArray(configPhasesRaw) && configPhasesRaw.every(p => typeof p === 'string')) {
+                configPhases = configPhasesRaw;
+            } else {
+                process.stderr.write(`[process-config] "${args.type}" key in process.json must be a string array, using defaults\n`);
+            }
+        }
+
+        let phases, phaseStatus, skippedReasons;
+        if (configPhases) {
+            // process.json takes precedence over --light (FR-001, precedence order)
+            ({ phases, phaseStatus, skippedReasons } = computePhaseArray(configPhases, defaultPhases));
+        } else if (args.light) {
+            // Existing --light behavior (backward compat)
+            phases = defaultPhases.filter(p => p !== '03-architecture' && p !== '04-design');
+            phaseStatus = {};
+            for (const p of phases) phaseStatus[p] = 'pending';
+            skippedReasons = {};
+        } else {
+            // Defaults
+            phases = defaultPhases;
+            phaseStatus = {};
+            for (const p of phases) phaseStatus[p] = 'pending';
+            skippedReasons = {};
+        }
+
         // Skip to start phase (for pre-analyzed items)
         if (args.startPhase) {
             const idx = phases.indexOf(args.startPhase);
-            if (idx > 0) phases = phases.slice(idx);
+            if (idx > 0) {
+                phases = phases.slice(idx);
+                // Rebuild phaseStatus for remaining phases only
+                const newStatus = {};
+                for (const p of phases) newStatus[p] = phaseStatus[p] || 'pending';
+                phaseStatus = newStatus;
+            }
         }
 
-        // Build phase_status
-        const phaseStatus = {};
-        for (const p of phases) phaseStatus[p] = 'pending';
-        phaseStatus[phases[0]] = 'in_progress';
+        // Set first non-skipped phase to in_progress
+        const firstActive = phases.find(p => phaseStatus[p] !== 'skipped');
+        if (firstActive) phaseStatus[firstActive] = 'in_progress';
+
+        // Print visual phase list (FR-004)
+        if (Object.keys(skippedReasons).length > 0 || configPhases) {
+            printPhaseList(phases, phaseStatus, skippedReasons);
+        }
 
         // Create active_workflow
         const workflow = {
@@ -132,8 +288,8 @@ function main() {
             description: args.description || slug,
             slug,
             phases,
-            current_phase: phases[0],
-            current_phase_index: 0,
+            current_phase: firstActive || phases[0],
+            current_phase_index: phases.indexOf(firstActive || phases[0]),
             phase_status: phaseStatus,
             started_at: new Date().toISOString(),
             flags: { light: args.light, supervised: args.supervised }
@@ -178,7 +334,7 @@ function main() {
             executeHooks('pre-workflow', hookCtx);
         } catch (e) { /* pre-workflow hooks are non-blocking */ }
 
-        output({
+        const result = {
             result: 'INITIALIZED',
             workflow_type: args.type,
             slug,
@@ -188,7 +344,12 @@ function main() {
             current_phase: phases[0],
             artifact_folder: artifactFolder,
             flags: { light: args.light, supervised: args.supervised }
-        });
+        };
+        if (suspendedFrom) {
+            result.interrupted = true;
+            result.suspended_workflow = suspendedFrom;
+        }
+        output(result);
         process.exit(0);
 
     } catch (error) {
@@ -197,4 +358,10 @@ function main() {
     }
 }
 
-main();
+// Guard for testability: only run main() when executed directly
+if (require.main === module) {
+    main();
+}
+
+// Export internals for unit testing (REQ-0056)
+module.exports = { computePhaseArray, printPhaseList, PHASE_LIBRARY };

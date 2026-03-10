@@ -237,7 +237,7 @@
 
 ### Process Enforcement
 
-- [ ] Phase-work guard hook — warning-only `PreToolUse[Edit,Write]` hook that detects when an active workflow's phase agent has not been engaged before code changes begin. Checks `skill_usage_log` for any entry matching the current phase. Emits a visible notification (not a block) so the AI and user see "No phase agent engaged yet for {phase}. Follow the Build Protocol." Must be custom-workflow-aware: read phase-to-agent mapping from custom workflow definitions (#102) and pass through for phases with no mapped agent.
+- #118 [ ] Phase-work guard hook — warning-only `PreToolUse[Edit,Write]` hook that detects when an active workflow's phase agent has not been engaged before code changes begin. Checks `skill_usage_log` for any entry matching the current phase. Emits a visible notification (not a block) so the AI and user see "No phase agent engaged yet for {phase}. Follow the Build Protocol." Must be custom-workflow-aware: read phase-to-agent mapping from custom workflow definitions (#102) and pass through for phases with no mapped agent.
   - **Priority**: Should Have
   - **Complexity**: Low-medium
   - **Depends on**: #102 (custom workflow definitions)
@@ -258,7 +258,7 @@
 
 **Tier 2 — Extension Points**
 - #101 [ ] User-space hooks — extensible pre/post phase hook points (.isdlc/hooks/)
-- #102 [ ] Custom workflow definitions — user-defined phase sequences (.isdlc/workflows/*.yaml)
+- #102 [x] Custom workflow definitions — user-defined phase sequences (.isdlc/workflows/*.yaml)
 
 **Tier 3 — Developer Productivity**
 - #104 [ ] Template system — project-local code templates (.isdlc/templates/)
