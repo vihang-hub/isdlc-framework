@@ -704,12 +704,83 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
    - Display forced-light banner: "ANALYSIS SIZING: Light (forced via -light flag)."
    - Note: The lead orchestrator will adapt its artifact production accordingly.
 
-7. **Roundtable conversation loop** (REQ-0032, FR-014, REQ-0037):
+6.5. **Bug Classification Gate** (REQ-0061, FR-001, FR-002, FR-004, FR-005):
+
    Read the draft content: `docs/requirements/{slug}/draft.md`. If missing and not already in-memory from step 3a, set draftContent = "(No draft available)".
 
-   7a. **Initial dispatch**: Delegate to the `roundtable-analyst` agent via Task tool with the following prompt. The prompt includes PERSONA_CONTEXT, TOPIC_CONTEXT, and DISCOVERY_CONTEXT fields so the roundtable can skip file reads at startup:
-
    **Discovery context extraction**: Check if session context contains `<!-- SECTION: DISCOVERY_CONTEXT -->`. If found, extract the full section content as `{discoveryContent}`. If not found, set `{discoveryContent}` to empty string.
+
+   6.5a. **Classify subject as bug or feature**: Read the full issue description (draftContent) and any labels from meta. Infer whether the subject is a bug or a feature based on the description content:
+   - **Bug signals**: error messages, stack traces, crash descriptions, "expected X but got Y", regression language, unexpected behavior, broken functionality, ENOENT/TypeError/500 errors
+   - **Feature signals**: "add support for", "it would be great if", "new capability", enhancement proposals, "allow users to", improvement descriptions
+   - **Labels are supplementary**: Labels like "bug" or "enhancement" are additional evidence but do NOT override the inference from description content. A "bug" label on a feature request is still a feature. An "enhancement" label on a crash report is still a bug.
+   - **Ambiguous cases**: If the description is genuinely ambiguous (could be either), ask the user directly: "I'm not sure if this is a bug or a feature request. Which analysis flow should I use?" and let the user decide.
+
+   6.5b. **Route based on classification**:
+
+   **IF classified as "feature"** (or user overrides bug classification to feature):
+   - Proceed directly to step 7 (Roundtable conversation loop). No bug confirmation prompt. No bug-gather agent. No bug artifacts produced. (AC-001-02, AC-005-01, AC-005-02, AC-005-03)
+
+   **IF classified as "bug"**:
+   - Present classification with reasoning to the user: "This looks like a bug -- [1-2 sentence reasoning based on specific signals from the description]. Use the bug analysis flow?"
+   - Wait for user response. (AC-001-01)
+   - **If user confirms** (yes, go ahead, correct): proceed to step 6.5c (bug-gather dispatch).
+   - **If user overrides** (no, it's a feature, treat as feature): proceed to step 7 (Roundtable). (AC-001-04)
+
+   6.5c. **Bug-gather dispatch**: Delegate to the `bug-gather-analyst` agent via Task tool with the following prompt:
+
+   ```
+   "Analyze bug '{slug}' using the bug-gather flow.
+
+    ARTIFACT_FOLDER: docs/requirements/{slug}/
+    SLUG: {slug}
+    SOURCE: {meta.source}
+    SOURCE_ID: {meta.source_id}
+
+    META_CONTEXT:
+    {JSON.stringify(meta, null, 2)}
+
+    DRAFT_CONTENT:
+    {draftContent}
+
+    DISCOVERY_CONTEXT:
+    {discoveryContent}
+
+    ANALYSIS_MODE: No state.json writes, no branch creation."
+   ```
+
+   **Task description format**: `Bug analysis for {slug}`
+
+   6.5d. **Bug-gather relay-and-resume loop**: The bug-gather agent returns after each exchange when it needs user input (e.g., asking if the user has anything to add). Loop as follows:
+
+   WHILE the bug-gather agent has NOT signaled completion:
+     i.   **Output the agent's text VERBATIM as your response.** Do NOT summarize, paraphrase, or reformat.
+     ii.  **Let the user respond naturally.** Do NOT use menus or multiple-choice options.
+     iii. Resume the bug-gather agent (using the `resume` parameter with the agent's ID), passing ONLY the user's exact response as the prompt.
+     iv.  On return, check if the agent signaled completion (output ends with "BUG_GATHER_COMPLETE"). If yes, exit loop.
+
+   **Completion signal**: The bug-gather agent signals completion by including "BUG_GATHER_COMPLETE" as the last line of its final output.
+
+   6.5e. **Post bug-gather: Update meta.json**: After the bug-gather agent returns:
+   - Re-read meta.json using `readMetaJson(slugDir)` to get the agent's updates
+   - Verify meta.phases_completed includes "01-requirements" (the bug-gather agent should have added it)
+   - Update meta.analysis_status using `deriveAnalysisStatus(meta.phases_completed, meta.sizing_decision)`
+   - Set `meta.bug_classification = { classification: "bug", reasoning: "<the reasoning from 6.5b>", confirmed_by_user: true }`
+   - Update meta.codebase_hash to current git HEAD short SHA
+   - Write meta.json using `writeMetaJson(slugDir, meta)`
+   - Update BACKLOG.md marker using `updateBacklogMarker()` with `deriveBacklogMarker()`
+
+   6.5f. **Fix Handoff Gate** (REQ-0061, FR-004): After artifacts are produced and meta.json is updated:
+   - Ask the user: "Should I fix it?" (AC-004-01)
+   - Wait for user response.
+   - **If user confirms** (yes, go ahead, fix it): Invoke the fix workflow for this item. Follow the fix handler's initialization steps (validate constitution, check no active workflow, initialize active_workflow with type "fix" and fix phases `["01-requirements", "02-tracing", "05-test-strategy", "06-implementation", "16-quality-loop", "08-code-review"]`). Since Phase 01 artifacts (bug-report.md, requirements-spec.md) already exist in the artifact folder and meta.phases_completed includes "01-requirements", explicitly pass `START_PHASE: "02-tracing"` and `ARTIFACT_FOLDER: "{slug}"` to the orchestrator so the fix workflow begins at Phase 02 (tracing), skipping Phase 01 which is already complete. (AC-004-02, AC-004-04)
+   - **If user declines** (no, not now, I just wanted to understand it): Preserve all artifacts (bug-report.md, requirements-spec.md remain on disk). Display: "Bug analysis complete. Artifacts saved to docs/requirements/{slug}/. You can fix it later with `/isdlc fix \"{slug}\"`." STOP -- do not proceed to step 7. (AC-004-03)
+   - **In either case**: STOP after this step. Do NOT proceed to step 7 (Roundtable). The bug flow is complete. Skip steps 7, 7.5, 7.6, 7.7, 7.8, 8, and 9 entirely.
+
+7. **Roundtable conversation loop** (REQ-0032, FR-014, REQ-0037):
+   (NOTE: This step is ONLY reached for items classified as features. Bugs are handled entirely by step 6.5 above.)
+
+   7a. **Initial dispatch**: Delegate to the `roundtable-analyst` agent via Task tool with the following prompt. The prompt includes PERSONA_CONTEXT, TOPIC_CONTEXT, and DISCOVERY_CONTEXT fields so the roundtable can skip file reads at startup. (Note: draftContent and discoveryContent were already resolved in step 6.5 -- reuse them here.)
 
    ```
    "Analyze '{slug}' using concurrent roundtable analysis.
