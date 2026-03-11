@@ -4,7 +4,8 @@
 > BACKLOG.md is the curated working set with detailed specs. GitHub Issues are for tracking.
 
 ## Open
-- [A] Bug-aware analyze flow — inject Phase 02 tracing into analyze when subject is a bug [github: GH-119] → `REQ-0061-bug-aware-analyze-flow-inject-phase-02-tracing-int/` -> [requirements](docs/requirements/REQ-0061-bug-aware-analyze-flow-inject-phase-02-tracing-int/) **Analyzed**
+- [x] Bug-aware analyze flow — inject Phase 02 tracing into analyze when subject is a bug [github: GH-119] → `REQ-0061-bug-aware-analyze-flow-inject-phase-02-tracing-int/` -> [requirements](docs/requirements/REQ-0061-bug-aware-analyze-flow-inject-phase-02-tracing-int/) **Completed**
+  - **Completed:** 2026-03-11
 - [x] User-space hooks — extensible pre/post phase hook points [github: GH-101] → `REQ-0055-user-space-hooks-extensible-prepost-phase-hook-poi/` -> [requirements](docs/requirements/REQ-0055-user-space-hooks-extensible-prepost-phase-hook-poi/)
 
 ### Parallel Workflows (Architecture)
@@ -275,6 +276,9 @@
   - Depends on #108a (completed). 7 FRs, ~11 files, standard tier.
 
 ## Completed
+
+### 2026-03-11
+- [x] #119: Bug-aware analyze flow — inject Phase 02 tracing into analyze-fix path. Bug classification gate in analyze command, bug-gather analyst agent, fix handoff gate. Prompt-level markdown only (no JS code). 17 tests, 1274/1277 full suite (3 pre-existing). -> [requirements](docs/requirements/REQ-0061-bug-aware-analyze-flow-inject-phase-02-tracing-int/) *(merged 5febd79)*
 
 ### 2026-03-09
 - [x] #103: Post-implementation change summary — structured diff report after phase 06. CJS script (change-summary-generator.cjs) with 13-function pipeline, dual output (change-summary.md + change-summary.json), 4-level requirement tracing, section-independent degradation. 59 tests (42 unit + 13 integration + 4 E2E), 90% coverage. *(merged 876c58b)*
