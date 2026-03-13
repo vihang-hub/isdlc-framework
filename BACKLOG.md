@@ -149,7 +149,6 @@
 - #92 [ ] Generalize hook block retry in orchestrator step 3f
 - #93 [ ] TOON: State array encoding at injection time (FR-003)
 - #94 [ ] TOON: Token measurement benchmarks for session cache
-- #113 [A] Roundtable memory layer — user + project memory backed by semantic search -> [requirements](docs/requirements/REQ-0063-roundtable-memory-layer-user-project-memory/)
 
 ### Product/Vision
 
@@ -277,6 +276,9 @@
   - Depends on #108a (completed). 7 FRs, ~11 files, standard tier.
 
 ## Completed
+
+### 2026-03-13
+- [x] #113: Roundtable memory layer — user + project memory backed by semantic search. MemoryManager class with user/project memory stores, semantic search via embedding similarity with BM25 fallback, memory lifecycle (add/update/archive/prune) with TTL and access tracking, privacy controls (PII scrubbing, export, selective deletion). 75 tests, 99.34% line coverage. -> [requirements](docs/requirements/REQ-0063-roundtable-memory-layer-user-project-memory/) *(merged 40df47e)*
 
 ### 2026-03-11
 - [x] #119: Bug-aware analyze flow — inject Phase 02 tracing into analyze-fix path. Bug classification gate in analyze command, bug-gather analyst agent, fix handoff gate. Prompt-level markdown only (no JS code). 17 tests, 1274/1277 full suite (3 pre-existing). -> [requirements](docs/requirements/REQ-0061-bug-aware-analyze-flow-inject-phase-02-tracing-int/) *(merged 5febd79)*
