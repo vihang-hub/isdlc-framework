@@ -4,6 +4,7 @@
 > BACKLOG.md is the curated working set with detailed specs. GitHub Issues are for tracking.
 
 ## Open
+- [ ] Developer usage analytics — friction/flow event capture with privacy-respecting telemetry [github: GH-121] → `REQ-0062-developer-usage-analytics-friction-flow-event-capture/` -> [requirements](docs/requirements/REQ-0062-developer-usage-analytics-friction-flow-event-capture/) **Analyzed**
 - [x] Bug-aware analyze flow — inject Phase 02 tracing into analyze when subject is a bug [github: GH-119] → `REQ-0061-bug-aware-analyze-flow-inject-phase-02-tracing-int/` -> [requirements](docs/requirements/REQ-0061-bug-aware-analyze-flow-inject-phase-02-tracing-int/) **Completed**
   - **Completed:** 2026-03-11
 - [x] User-space hooks — extensible pre/post phase hook points [github: GH-101] → `REQ-0055-user-space-hooks-extensible-prepost-phase-hook-poi/` -> [requirements](docs/requirements/REQ-0055-user-space-hooks-extensible-prepost-phase-hook-poi/)
@@ -148,7 +149,7 @@
 - #92 [ ] Generalize hook block retry in orchestrator step 3f
 - #93 [ ] TOON: State array encoding at injection time (FR-003)
 - #94 [ ] TOON: Token measurement benchmarks for session cache
-- #113 [ ] Roundtable memory layer — user + project memory backed by semantic search
+- #113 [A] Roundtable memory layer — user + project memory backed by semantic search -> [requirements](docs/requirements/REQ-0063-roundtable-memory-layer-user-project-memory/)
 
 ### Product/Vision
 

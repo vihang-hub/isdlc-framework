@@ -1,0 +1,131 @@
+[
+  {
+    "id": "US-001",
+    "title": "Automatic event collection",
+    "story": "As a developer using iSDLC, I want the framework to automatically capture usage events (workflow starts, completions, gate results, verb invocations) so that I can understand my development patterns without manual effort.",
+    "acceptance_criteria": [
+      "Events are emitted automatically during normal framework use with no developer action required",
+      "Events capture workflow type, verb, phase, timing, and gate results",
+      "Event emission adds less than 5ms latency per hook execution",
+      "Events are stored locally regardless of telemetry consent state"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-001"]
+  },
+  {
+    "id": "US-002",
+    "title": "Compaction frequency tracking",
+    "story": "As a developer using iSDLC, I want to know how often my conversations compact so that I can understand context window pressure from the session cache.",
+    "acceptance_criteria": [
+      "Session cache reloads are detected and recorded as events",
+      "First load is distinguished from subsequent reloads (compaction indicators)",
+      "Session cache size in bytes is captured on each load",
+      "/isdlc stats shows average compactions per session"
+    ],
+    "priority": "Should Have",
+    "traces": ["FR-002"]
+  },
+  {
+    "id": "US-003",
+    "title": "Reliable local event storage",
+    "story": "As a developer using iSDLC, I want my analytics events stored reliably on disk so that I never lose usage data even when offline or when the collector is unreachable.",
+    "acceptance_criteria": [
+      "Events are appended to a local JSONL file immediately on emission",
+      "Store rotates when exceeding 1MB to prevent unbounded growth",
+      "Events persist across sessions and survive framework restarts",
+      "Store operations never block or fail framework operations"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-003"]
+  },
+  {
+    "id": "US-004",
+    "title": "Batched telemetry transmission",
+    "story": "As a framework author, I want opted-in installations to transmit anonymized usage data in batches so that I can understand adoption patterns across all users.",
+    "acceptance_criteria": [
+      "Events are transmitted in batches, not individually",
+      "Transmission retries after 10 minutes if the collector is unreachable",
+      "Successfully transmitted events are flushed from the local store",
+      "Transmission only occurs when telemetry is enabled"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-004"]
+  },
+  {
+    "id": "US-005",
+    "title": "Collector service receives telemetry",
+    "story": "As a framework author, I want a collector endpoint that receives and stores anonymized telemetry batches so that I can query aggregate usage data across all iSDLC installations.",
+    "acceptance_criteria": [
+      "Collector accepts HTTP POST with JSON batch payload",
+      "Collector validates schema and rejects malformed or oversized batches",
+      "Stored events are queryable by framework version, event type, and time range",
+      "Collector runs on free-tier PaaS with auto-deploy from the repo"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-005"]
+  },
+  {
+    "id": "US-006",
+    "title": "One-time telemetry consent",
+    "story": "As a developer using iSDLC, I want to be asked once whether to share anonymous usage data so that I maintain control over what leaves my machine.",
+    "acceptance_criteria": [
+      "Consent prompt appears after first successful workflow completion",
+      "Prompt mentions the ability to preview what would be sent",
+      "Saying no means no transmission but local collection continues",
+      "Decision persists and is changeable via /isdlc telemetry on|off"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-006"]
+  },
+  {
+    "id": "US-007",
+    "title": "Local usage stats dashboard",
+    "story": "As a developer using iSDLC, I want to run /isdlc stats and see a summary of my framework usage so that I can identify my own friction points and efficiency patterns.",
+    "acceptance_criteria": [
+      "Stats show workflow counts by type with completion rates and average duration",
+      "Stats show most-used verbs, tier selection distribution, and phase timing",
+      "Stats show friction breakdown (developer vs framework vs ambiguous)",
+      "Trend indicators appear when 7+ days of data exist"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-007"]
+  },
+  {
+    "id": "US-008",
+    "title": "Telemetry preview before opting in",
+    "story": "As a developer using iSDLC, I want to preview exactly what anonymized data would be transmitted so that I can make an informed decision about opting in.",
+    "acceptance_criteria": [
+      "/isdlc telemetry preview shows anonymized versions of pending events",
+      "No field in the preview output contains PII (slugs, paths, project names, branch names)",
+      "Preview works regardless of current telemetry state (enabled, disabled, or unset)"
+    ],
+    "priority": "Should Have",
+    "traces": ["FR-008"]
+  },
+  {
+    "id": "US-009",
+    "title": "PII-free anonymization guarantee",
+    "story": "As a developer using iSDLC, I want assurance that transmitted telemetry contains zero personally identifiable information so that I can trust the system with my usage data.",
+    "acceptance_criteria": [
+      "Anonymization uses an explicit allowlist -- new fields are excluded by default",
+      "Anonymous instance ID is a random UUID, never derived from machine or user identity",
+      "Fields like slug, file_path, branch_name, project_name, description are stripped entirely",
+      "failure_detail (which may contain file paths) is replaced with failure_category enum"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-009"]
+  },
+  {
+    "id": "US-010",
+    "title": "Configurable data retention",
+    "story": "As a developer using iSDLC, I want to control how long analytics data is retained locally so that I can balance history depth against disk usage.",
+    "acceptance_criteria": [
+      "Retention is controlled by both max_entries and max_days (whichever triggers first)",
+      "Defaults are 10,000 entries and 90 days",
+      "Settings are configurable in .isdlc/config.yaml",
+      "Oldest events are pruned first"
+    ],
+    "priority": "Should Have",
+    "traces": ["FR-010"]
+  }
+]

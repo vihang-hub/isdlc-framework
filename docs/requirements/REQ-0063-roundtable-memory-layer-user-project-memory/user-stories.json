@@ -1,0 +1,100 @@
+[
+  {
+    "id": "US-001",
+    "title": "Remembered depth preferences",
+    "story": "As a developer, I want the roundtable to remember my topic depth preferences across sessions so that I don't have to re-establish my style every time.",
+    "acceptance_criteria": [
+      "User preferences stored in ~/.isdlc/user-memory/profile.json",
+      "Preferences persist across projects",
+      "At topic transitions, roundtable acknowledges known preference and asks for confirmation"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-001", "FR-003", "FR-004"]
+  },
+  {
+    "id": "US-002",
+    "title": "Project-specific topic history",
+    "story": "As a team member, I want the project to remember how topics were handled in past analyses so that new sessions benefit from shared context.",
+    "acceptance_criteria": [
+      "Project memory stored in .isdlc/roundtable-memory.json",
+      "Per-topic records include depth used and assumption counts",
+      "Shared across team members via version control"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-002", "FR-003"]
+  },
+  {
+    "id": "US-003",
+    "title": "Conflict resolution between memory layers",
+    "story": "As a developer, I want to be informed when my personal preferences conflict with project history so that I can make an informed choice about depth for this session.",
+    "acceptance_criteria": [
+      "Both signals surfaced when user and project memory disagree",
+      "User chooses which to follow",
+      "Choice recorded in session record"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-005"]
+  },
+  {
+    "id": "US-004",
+    "title": "Session record persistence",
+    "story": "As a developer, I want each roundtable session's outcomes recorded automatically so that future sessions can learn from past behavior.",
+    "acceptance_criteria": [
+      "Session record written to user and project memory after ROUNDTABLE_COMPLETE",
+      "Record captures per-topic depth, acknowledgment, and override status",
+      "Write failures do not block the roundtable completion signal"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-006"]
+  },
+  {
+    "id": "US-005",
+    "title": "Manual memory compaction",
+    "story": "As a developer, I want to compact my raw session logs into a summary when I choose so that memory reads stay fast without automatic background processing.",
+    "acceptance_criteria": [
+      "isdlc memory compact command available",
+      "Supports --user and --project scopes",
+      "Aggregates raw sessions into compacted summary",
+      "Reports results to CLI"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-007"]
+  },
+  {
+    "id": "US-006",
+    "title": "Graceful degradation without memory",
+    "story": "As a developer, I want the roundtable to work normally when memory files are missing or corrupted so that memory is never a blocker.",
+    "acceptance_criteria": [
+      "Missing files silently skipped",
+      "Corrupted files treated as missing",
+      "Partial data accepted where valid",
+      "No error messages shown to user"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-008"]
+  },
+  {
+    "id": "US-007",
+    "title": "Performance warning for large memory",
+    "story": "As a developer, I want to be warned when memory reads are getting slow so that I know to run compaction.",
+    "acceptance_criteria": [
+      "Warning shown when memory reads exceed 1 second",
+      "Suggestion to run isdlc memory compact",
+      "Warning is conversational, not an error"
+    ],
+    "priority": "Should Have",
+    "traces": ["FR-009"]
+  },
+  {
+    "id": "US-008",
+    "title": "Preference weight adjustment",
+    "story": "As a developer, I want my preferences to strengthen when confirmed and weaken when overridden so that the memory adapts to my changing behavior over time.",
+    "acceptance_criteria": [
+      "Override increments override_count and reduces weight",
+      "Confirmation increases weight",
+      "Stale preferences decay toward neutral"
+    ],
+    "priority": "Should Have",
+    "traces": ["FR-010"]
+  }
+]

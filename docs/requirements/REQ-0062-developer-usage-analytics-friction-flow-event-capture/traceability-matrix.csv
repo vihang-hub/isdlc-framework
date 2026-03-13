@@ -1,0 +1,38 @@
+FR_ID,AC_ID,User_Story_ID,Confidence,Source
+FR-001,AC-001-01,US-001,High,User-confirmed
+FR-001,AC-001-02,US-001,High,User-confirmed
+FR-001,AC-001-03,US-001,High,User-confirmed
+FR-001,AC-001-04,US-001,High,User-confirmed
+FR-001,AC-001-05,US-001,High,User-confirmed
+FR-001,AC-001-06,US-001,High,User-confirmed
+FR-002,AC-002-01,US-002,Medium,Inferred from session cache hook behavior
+FR-002,AC-002-02,US-002,Medium,Inferred from session cache hook behavior
+FR-002,AC-002-03,US-002,Medium,Inferred from session cache hook behavior
+FR-003,AC-003-01,US-003,High,User-confirmed
+FR-003,AC-003-02,US-003,High,User-confirmed (1MB cap)
+FR-003,AC-003-03,US-003,High,User-confirmed (flush on success)
+FR-003,AC-003-04,US-003,High,User-confirmed (store-and-forward)
+FR-004,AC-004-01,US-004,High,User-confirmed (batch transmission)
+FR-004,AC-004-02,US-004,High,User-confirmed (10-min retry)
+FR-004,AC-004-03,US-004,High,User-confirmed (flush on success)
+FR-004,AC-004-04,US-004,High,User-confirmed
+FR-005,AC-005-01,US-005,Medium,User-confirmed (standalone microservice)
+FR-005,AC-005-02,US-005,Medium,Inferred from standard API validation
+FR-005,AC-005-03,US-005,Medium,Inferred from analytics query needs
+FR-006,AC-006-01,US-006,High,User-confirmed (prompt on first completion)
+FR-006,AC-006-02,US-006,High,User-confirmed
+FR-006,AC-006-03,US-006,High,User-confirmed
+FR-006,AC-006-04,US-006,High,User-confirmed (toggle via CLI)
+FR-007,AC-007-01,US-007,High,User-confirmed (specific metrics listed)
+FR-007,AC-007-02,US-007,High,User-confirmed
+FR-007,AC-007-03,US-007,High,User-confirmed (friction attribution)
+FR-007,AC-007-04,US-007,Medium,Inferred from compaction detection design
+FR-008,AC-008-01,US-008,High,User-confirmed
+FR-008,AC-008-02,US-008,High,User-confirmed (no PII)
+FR-009,AC-009-01,US-009,High,User-confirmed
+FR-009,AC-009-02,US-009,High,User-confirmed (random UUID)
+FR-009,AC-009-03,US-009,High,User-confirmed (allowlist-based)
+FR-009,AC-009-04,US-009,High,User-confirmed
+FR-010,AC-010-01,US-010,High,User-confirmed (10k/90d)
+FR-010,AC-010-02,US-010,High,User-confirmed (defaults)
+FR-010,AC-010-03,US-010,High,User-confirmed
