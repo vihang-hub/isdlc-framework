@@ -4,7 +4,8 @@
 > BACKLOG.md is the curated working set with detailed specs. GitHub Issues are for tracking.
 
 ## Open
-- [A] Inline roundtable analysis — eliminate subagent dispatch overhead [github: GH-124] → `REQ-0065-inline-roundtable-eliminate-subagent-overhead/` -> [requirements](docs/requirements/REQ-0065-inline-roundtable-eliminate-subagent-overhead/) **Analyzed**
+- [x] Inline roundtable analysis — eliminate subagent dispatch overhead [github: GH-124] → `REQ-0065-inline-roundtable-eliminate-subagent-overhead/` -> [requirements](docs/requirements/REQ-0065-inline-roundtable-eliminate-subagent-overhead/) **Completed**
+  - **Completed:** 2026-03-15
 - [A] Roundtable memory vector DB migration — move both user and project memory layers from flat JSON to vector DB using existing embedding infrastructure → `REQ-0064-roundtable-memory-vector-db-migration/` -> [requirements](docs/requirements/REQ-0064-roundtable-memory-vector-db-migration/) **Analyzed**
 - [ ] Developer usage analytics — friction/flow event capture with privacy-respecting telemetry [github: GH-121] → `REQ-0062-developer-usage-analytics-friction-flow-event-capture/` -> [requirements](docs/requirements/REQ-0062-developer-usage-analytics-friction-flow-event-capture/) **Analyzed**
 - [x] Bug-aware analyze flow — inject Phase 02 tracing into analyze when subject is a bug [github: GH-119] → `REQ-0061-bug-aware-analyze-flow-inject-phase-02-tracing-int/` -> [requirements](docs/requirements/REQ-0061-bug-aware-analyze-flow-inject-phase-02-tracing-int/) **Completed**
@@ -286,6 +287,9 @@
   - Depends on #108a (completed). 7 FRs, ~11 files, standard tier.
 
 ## Completed
+
+### 2026-03-15
+- [x] #124: Inline roundtable analysis — eliminate subagent dispatch overhead. Removed subagent dispatch for roundtable analysis, executing inline to reduce overhead. 26 tests, all passing. -> [requirements](docs/requirements/REQ-0065-inline-roundtable-eliminate-subagent-overhead/) *(merged d479b2c)*
 
 ### 2026-03-13
 - [x] #113: Roundtable memory layer — user + project memory backed by semantic search. MemoryManager class with user/project memory stores, semantic search via embedding similarity with BM25 fallback, memory lifecycle (add/update/archive/prune) with TTL and access tracking, privacy controls (PII scrubbing, export, selective deletion). 75 tests, 99.34% line coverage. -> [requirements](docs/requirements/REQ-0063-roundtable-memory-layer-user-project-memory/) *(merged 40df47e)*
