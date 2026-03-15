@@ -6,6 +6,8 @@
 ## Open
 - [x] Inline roundtable analysis — eliminate subagent dispatch overhead [github: GH-124] → `REQ-0065-inline-roundtable-eliminate-subagent-overhead/` -> [requirements](docs/requirements/REQ-0065-inline-roundtable-eliminate-subagent-overhead/) **Completed**
   - **Completed:** 2026-03-15
+- [ ] #125 Team continuity memory — project-level knowledge retention across work gaps [github: GH-125] → `REQ-0066-team-continuity-memory-project-knowledge-retent/` -> [requirements](docs/requirements/REQ-0066-team-continuity-memory-project-knowledge-retent/)
+  - Depends on REQ-0064. Inspired by Hyperspace Research DAGs. Surfaces past team decisions when work resumes after gaps.
 - [A] Roundtable memory vector DB migration — move both user and project memory layers from flat JSON to vector DB using existing embedding infrastructure → `REQ-0064-roundtable-memory-vector-db-migration/` -> [requirements](docs/requirements/REQ-0064-roundtable-memory-vector-db-migration/) **Analyzed**
 - [ ] Developer usage analytics — friction/flow event capture with privacy-respecting telemetry [github: GH-121] → `REQ-0062-developer-usage-analytics-friction-flow-event-capture/` -> [requirements](docs/requirements/REQ-0062-developer-usage-analytics-friction-flow-event-capture/) **Analyzed**
 - [x] Bug-aware analyze flow — inject Phase 02 tracing into analyze when subject is a bug [github: GH-119] → `REQ-0061-bug-aware-analyze-flow-inject-phase-02-tracing-int/` -> [requirements](docs/requirements/REQ-0061-bug-aware-analyze-flow-inject-phase-02-tracing-int/) **Completed**
@@ -172,15 +174,8 @@
 
 ### Code Quality Gaps
 
-- #52 [ ] Coverage threshold discrepancy — Constitution mandates 95% unit coverage but Phase 16 only enforces 80%
-  - **Problem**: Article II of the constitution requires ≥95% unit test coverage and ≥85% integration test coverage, with 100% for critical paths. But `iteration-requirements.json` for Phase 16 sets `min_coverage_percent: 80`. The constitutional requirement is aspirational — nothing enforces it. This means code can pass all gates while violating the constitution.
-  - **Options**:
-    - (A) **Raise the Phase 16 threshold to 95%** to match the constitution — risks blocking workflows on legacy codebases or projects where 95% is impractical
-    - (B) **Lower the constitutional requirement to 80%** — honest about what's enforced, but weakens the quality bar
-    - (C) **Tiered enforcement by intensity** — light: 60%, standard: 80%, epic: 95%. Constitution states the aspirational target, iteration-requirements enforces the practical one per intensity
-    - **Recommendation**: Option C — matches the existing intensity system. Constitution remains the north star, enforcement is pragmatic.
-  - **Files to change**: `iteration-requirements.json` (per-intensity thresholds), possibly `constitution.md` (add note about intensity-based enforcement)
-  - **Complexity**: Low
+- #52 [x] Coverage threshold discrepancy — Constitution mandates 95% unit coverage but Phase 16 only enforces 80%
+  - **Completed:** 2026-03-15
 
 - #53 [ ] No automated complexity measurement — IC-04 relies on agent judgment, not tooling
   - **Problem**: The Implementation Reviewer's IC-04 check says "cyclomatic complexity >10 = BLOCKING" but this is pure agent judgment. No eslint-plugin-complexity, radon (Python), gocyclo (Go), or similar tool actually measures complexity. The agent estimates by reading the code — it can miss deeply nested logic or undercount decision points.
@@ -289,6 +284,7 @@
 ## Completed
 
 ### 2026-03-15
+- [x] #52: Coverage threshold discrepancy — intensity-aware coverage thresholds. Added resolveCoverageThreshold() to common.cjs with tiered enforcement (light: 60/50%, standard: 80/70%, epic: 95/85%). Updated test-watcher, profile-loader, gate-requirements-injector. 38 new tests, 211 total passing. -> [requirements](docs/requirements/bug-52-coverage-threshold/) *(merged 9ab14bf)*
 - [x] #124: Inline roundtable analysis — eliminate subagent dispatch overhead. Removed subagent dispatch for roundtable analysis, executing inline to reduce overhead. 26 tests, all passing. -> [requirements](docs/requirements/REQ-0065-inline-roundtable-eliminate-subagent-overhead/) *(merged d479b2c)*
 
 ### 2026-03-13
