@@ -83,6 +83,46 @@
 
 **Rationale**: This aligns with the semantic search model — everything is content, everything is searchable by meaning. No separate configuration layer is needed. The more a user reinforces a preference across sessions, the higher its relevance score in search results (boosted by self-ranking hit_rate).
 
+### ADR-007: 4-Tier Deduplication with Curator-Annotated Relationship Hints
+
+**Context**: Session records accumulate over time. Simple append creates duplicates and bloat. Binary supersession (user-memories' >= 0.92 replace) loses history. Need a model that handles both contradictions and enrichments without data loss.
+
+**Options Considered**:
+
+| Option | Summary | Pros | Cons | Verdict |
+|---|---|---|---|---|
+| A. Binary supersession | >= 0.92 replaces old entry | Simple | Loses contradicted content; can't distinguish "update" from "enrich" | Eliminated |
+| B. 3-tier (reject/merge/new) | smartmemorymcp pattern — >= 0.95 reject, 0.85-0.94 merge, < 0.85 new | Better than binary | "Merge" blends contradictions and enrichments — "we chose middleware" merged with "we switched to direct integration" produces incoherent content | Eliminated |
+| C. 4-tier with relationship hints | Curator annotates `relationship_hint` at session end. Embedder uses hint: Update (contradicts) preserves both with `isLatest`, Extend (additive) merges content | Distinguishes contradictions from enrichments; preserves history; curator has conversation context to judge correctly | Requires curator to make judgment call; adds `relationship_hint` field | **Selected** |
+
+**Decision**: Option C. The curator already synthesizes the session into NL content (ADR-005) — annotating relationship hints is a marginal addition. The embedder consumes hints mechanically, no LLM call needed during async embedding. Default hint is `null` → Extend (safe, additive). Wrong hint → worst case is an Extend where an Update was appropriate (enriches instead of supersedes — inconvenient but not destructive).
+
+### ADR-008: .emb Metadata Sidecar for Project Store Curation
+
+**Context**: The project `.emb` store needs to support pin/archive/tag/isLatest for team curation (FR-015, FR-013). The `.emb` binary format from REQ-0045 bundles vectors + a metadata JSON + a manifest. Curation fields need to persist alongside vectors.
+
+**Decision**: Extend the `.emb` package's per-chunk metadata JSON to include curation fields: `{ pinned, archived, tags, is_latest, container, importance, appeared_count, accessed_count, updates_ref, merge_history, ttl }`. The package builder/reader already handle arbitrary metadata — no format change needed, just additional fields. Mutations (pin, archive, tag) trigger a metadata update + `.emb` rebuild. Rebuild cost is acceptable for memory-sized indexes (hundreds of vectors, sub-second).
+
+**Rationale**: Adding a separate sidecar file alongside `.emb` would create a sync problem (two files to commit, potential desync). Keeping curation in the existing metadata JSON within the `.emb` package is atomic — one file, one commit, one truth.
+
+**Consequence**: Every curation operation on the project store triggers an `.emb` rebuild. For the expected index size (< 500 vectors), this is sub-second. If team usage grows beyond 1000+ vectors, a journal-and-batch-rebuild pattern should be considered.
+
+### ADR-009: Capacity-Based Auto-Pruning with Temporal Decay
+
+**Context**: Vector indexes grow unboundedly as sessions accumulate. Need a pruning strategy that removes low-value memories while preserving important ones.
+
+**Options Considered**:
+
+| Option | Summary | Pros | Cons | Verdict |
+|---|---|---|---|---|
+| A. Capacity-only | Prune when count > limit, remove lowest-ranked | Simple; predictable size | Time-insensitive — a 1-year-old low-access memory and a 1-week-old low-access memory pruned equally | Eliminated |
+| B. Time-only | Prune entries older than N months | Simple; time-based | Size-insensitive — a very active project may exceed reasonable memory limits before the age threshold | Eliminated |
+| C. Combined: capacity limit + temporal decay | Capacity limit (default: 500) triggers pruning. Ranking formula incorporates age decay. Episodic memories (appeared_count <= 3) decay faster than preference memories (appeared_count > 3). Time-bound memories (TTL) auto-archive on expiry. | Adapts to both usage patterns and time; preferences strengthen, episodes fade; TTL handles "sprint deadline Friday" memories | More complex ranking formula | **Selected** |
+
+**Decision**: Option C. The ranking formula for pruning is: `prune_score = final_score * age_factor` where `age_factor = 1.0` for memories < 1 month, linearly decaying to `0.1` at 12 months. Preference memories (`appeared_count > 3`) decay at half rate. Pinned memories are exempt. TTL-expired memories are auto-archived (not deleted — retained for audit).
+
+**TTL detection**: The playbook curator uses heuristics to detect time-bound content: date/time references ("by Friday", "this sprint", "before the release"), temporal qualifiers ("currently", "for now", "until we decide"). When detected, `ttl` is set to the inferred expiry date. If detection confidence is low, `ttl` is left null (no expiry — safe default per Article X).
+
 ## 2. Technology Decisions
 
 - **No new dependencies**: Reuses existing embedding engine, store-manager, knowledge pipeline, `.emb` format from REQ-0045. `better-sqlite3` already a dependency.

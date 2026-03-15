@@ -223,7 +223,72 @@ Analyze Handler (inline roundtable conversation)
   └── No additional file I/O needed (memory already loaded)
 ```
 
-## 7. Team Sharing Flow
+## 7. Curation Flow (FR-015)
+
+> Handler has direct access to stores via adapter (REQ-0065: inline execution).
+
+```
+User: "forget that thing about middleware"
+  │
+  ▼
+Analyze Handler (inline roundtable conversation)
+  ├── Detect curation intent: archive
+  ├── Extract target description: "middleware"
+  ├── searchMemory("middleware", ..., { maxResults: 3 })
+  │
+  ├── 1 result found?
+  │     └── Yes: store.archive(chunkId)
+  │           ├── User store (SQLite): UPDATE SET archived=1 WHERE chunk_id=?
+  │           └── Project store (.emb): update metadata, rebuild package
+  │
+  ├── Multiple results?
+  │     └── Present disambiguation to user, wait for selection
+  │           └── store.archive(selected chunkId)
+  │
+  └── No results?
+        └── "I don't have any memories about middleware."
+
+User: "always remember this" (during conversation about auth integration)
+  │
+  ▼
+Handler
+  ├── Detect curation intent: pin
+  ├── Target = most recent memory excerpt from current conversation context
+  │   (chunkId available from search results already in memory)
+  └── store.pin(chunkId)
+        ├── User store (SQLite): UPDATE SET pinned=1 WHERE chunk_id=?
+        └── Project store (.emb): update metadata, rebuild package
+```
+
+## 8. Temporal Decay Flow (FR-016)
+
+```
+[During async embedding — after embedSession() writes new vectors]
+  ├── Check TTL: scan store for entries where ttl < NOW
+  │     └── For each expired entry: store.archive(chunkId)
+  │         (auto-archived, not deleted — retained for audit)
+  │
+  └── Check capacity: store.getCount() > capacityLimit?
+        └── Yes: store.prune(capacityLimit * 0.9)
+              │
+              ├── Compute prune_score for each non-pinned entry:
+              │     prune_score = final_score * age_factor
+              │     where:
+              │       final_score = cosine * (1+log(1+hit_rate)) * (1+importance/20)
+              │       age_factor = 1.0 (< 1 month) → 0.1 (12 months), linear
+              │       preference boost: if appeared_count > 3, age decays at half rate
+              │
+              ├── Sort by prune_score ascending (lowest = first to prune)
+              ├── Remove entries until count <= targetCount
+              └── Log: "{N} memories pruned to stay within {limit} capacity"
+
+[During compaction — isdlc memory compact --vectors]
+  ├── Same TTL expiry check as above
+  ├── Same capacity check as above
+  └── Additionally: deduplicate (cosine > 0.95 between existing entries)
+```
+
+## 9. Team Sharing Flow
 
 ```
 Developer A (commits project memory):

@@ -80,17 +80,19 @@ async function compact(options: {
   project?: boolean;
   projectRoot?: string;
   userMemoryDir?: string;
-  vectorPrune?: boolean;      // New: enable vector pruning
+  vectorPrune?: boolean;       // New: enable vector pruning
   ageThresholdMonths?: number; // New: prune vectors older than N months (default: 6)
   dedupeThreshold?: number;    // New: cosine similarity threshold for dedup (default: 0.95)
+  expireTtl?: boolean;         // New: auto-archive TTL-expired memories (default: true when vectorPrune)
 }): Promise<CompactionResult & {
-  vectorPruned?: { removed: number; remaining: number; rebuilt: boolean };
+  vectorPruned?: { removed: number; archived: number; remaining: number; rebuilt: boolean };
 }>
 ```
 
 **Changes**:
 - New optional parameters for vector index maintenance
-- When `vectorPrune: true`, loads `.emb` indexes, removes old/duplicate vectors, rebuilds
+- When `vectorPrune: true`: opens stores via adapter, runs TTL expiry (archive expired), prunes old vectors, deduplicates, rebuilds
+- `expireTtl` defaults to `true` when `vectorPrune` is set — TTL-expired memories are archived (not deleted, per ADR-009)
 - Existing flat JSON compaction behavior unchanged when `vectorPrune` is not set
 
 ## 3. Module: `lib/memory-embedder.js` (New)
@@ -187,6 +189,7 @@ async function searchMemory(
   options?: {
     maxResults?: number;            // Default: 10
     minScore?: number;              // Default: 0.5
+    container?: string;             // FR-017: filter by domain context (e.g., "auth")
     userSessionsDir?: string;      // For lazy embed check
     projectSessionsDir?: string;   // For lazy embed check
   }
@@ -334,6 +337,29 @@ function createProjectStore(embPath: string): MemoryStore
 
 Returns an `.emb`-backed `MemoryStore` using the existing store-manager and package builder/reader.
 
+**`.emb` metadata sidecar format** (ADR-008): Each chunk's metadata JSON within the `.emb` package includes curation fields:
+
+```json
+{
+  "chunkId": "chunk_sess_20260315_001",
+  "sessionId": "sess_20260315_231000",
+  "timestamp": "2026-03-15T23:10:00Z",
+  "importance": 7,
+  "pinned": false,
+  "archived": false,
+  "is_latest": true,
+  "tags": ["architecture"],
+  "container": "auth",
+  "appeared_count": 1,
+  "accessed_count": 0,
+  "updates_ref": null,
+  "merge_history": [],
+  "ttl": null
+}
+```
+
+Curation mutations (`pin`, `archive`, `tag`) update the metadata for the target chunk and trigger an `.emb` package rebuild. The store-manager's `readPackage()` already deserializes per-chunk metadata — no format change to the `.emb` binary structure, just additional fields in the metadata JSON.
+
 #### `MemoryStore` interface
 
 ```typescript
@@ -407,7 +433,39 @@ After each `add()` call, check `getCount()` against the configured capacity limi
 - `lib/embedding/package/builder.js` — `.emb` rebuild (project store)
 - `lib/embedding/package/reader.js` — `.emb` read (project store)
 
-## 6. Fallback Path
+## 6. Curation Resolution
+
+When the user issues a conversational curation command (FR-015), the handler must resolve the natural language reference to a specific `chunkId` in the store.
+
+**Resolution flow**:
+```
+User: "forget that thing about middleware"
+  │
+  ▼
+Handler (inline roundtable)
+  ├── Extract intent: archive
+  ├── Extract target description: "middleware"
+  ├── Search both stores with "middleware" as query text
+  │     └── searchMemory("middleware", ..., { maxResults: 3 })
+  ├── If exactly 1 result: execute archive on that chunkId
+  ├── If multiple results: present disambiguation:
+  │     "I found a few memories about middleware:
+  │      1. 'Team chose middleware for auth in REQ-0042' (3 months ago)
+  │      2. 'Middleware approach reconsidered due to auth complexity' (2 months ago)
+  │      Which one should I archive?"
+  └── If no results: "I don't have any memories about middleware."
+```
+
+**Curation commands**:
+| User says | Intent | Store operation |
+|---|---|---|
+| "always remember this" / "pin this" | Pin | `store.pin(chunkId)` |
+| "forget that" / "that's no longer relevant" | Archive | `store.archive(chunkId)` |
+| "tag this as architecture" | Tag | `store.tag(chunkId, ["architecture"])` |
+
+**Scope**: Curation on user store operates immediately. Curation on project store triggers `.emb` rebuild (ADR-008). The handler determines which store to target based on the memory's `layer` field from search results.
+
+## 7. Fallback Path
 
 When vector storage is unavailable (no embedding backend, no indexes, corrupted indexes):
 

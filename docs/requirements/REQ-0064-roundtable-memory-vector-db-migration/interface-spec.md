@@ -75,6 +75,7 @@ async function searchMemory(
   options?: {
     maxResults?: number;         // Default: 10
     minScore?: number;           // Default: 0.5
+    container?: string;          // FR-017: filter by domain context (e.g., "auth")
     userSessionsDir?: string;
     projectSessionsDir?: string;
   }
@@ -82,7 +83,7 @@ async function searchMemory(
 ```
 
 **Preconditions**: `queryText` is non-empty; `engineConfig` has a valid provider
-**Postconditions**: Returns ranked search results from both stores; never throws; increments `accessed_count` for returned user results (self-ranking)
+**Postconditions**: Returns ranked search results from both stores; never throws; increments `accessed_count` for returned user results (self-ranking); when `container` is set, only memories matching that container are returned
 **Error handling**: Returns `[]` on any unrecoverable error; individual store failures are isolated
 **Invariants**:
 - Results are sorted by score descending
@@ -156,12 +157,14 @@ async function compact(options: {
   project?: boolean;
   projectRoot?: string;
   userMemoryDir?: string;
-  vectorPrune?: boolean;
+  vectorPrune?: boolean;        // Enable vector index pruning
   ageThresholdMonths?: number;  // Default: 6
   dedupeThreshold?: number;     // Default: 0.95
+  expireTtl?: boolean;          // FR-016: auto-archive memories past their TTL (default: true when vectorPrune)
 }): Promise<CompactionResult & {
   vectorPruned?: {
     removed: number;
+    archived: number;           // TTL-expired memories moved to archived state
     remaining: number;
     rebuilt: boolean;
   };
@@ -169,8 +172,9 @@ async function compact(options: {
 ```
 
 **Changes from REQ-0063**:
-- New optional `vectorPrune`, `ageThresholdMonths`, `dedupeThreshold` parameters
-- When `vectorPrune: true`: loads `.emb` indexes, removes old/duplicate vectors, rebuilds
+- New optional `vectorPrune`, `ageThresholdMonths`, `dedupeThreshold`, `expireTtl` parameters
+- When `vectorPrune: true`: loads indexes via store adapters, removes old/duplicate vectors, archives TTL-expired memories, rebuilds
+- `expireTtl` defaults to `true` when `vectorPrune` is set — TTL-expired memories are auto-archived (not deleted, retained for audit per ADR-009)
 - Existing flat JSON compaction unchanged when `vectorPrune` is absent or false
 
 ## 4. Data Type Definitions
