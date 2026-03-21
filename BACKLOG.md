@@ -4,6 +4,8 @@
 > BACKLOG.md is the curated working set with detailed specs. GitHub Issues are for tracking.
 
 ## Open
+- [ ] #133 Memory infrastructure scale-out — HNSW indexing, remote vector store, incremental indexing [github: GH-133] → `REQ-0069-memory-infrastructure-scale-out-hnsw-indexing-r/` -> [requirements](docs/requirements/REQ-0069-memory-infrastructure-scale-out-hnsw-indexing-r/)
+  - Depends on REQ-0064, REQ-0066, BUG-0056. Not urgent for dogfooding; critical for enterprise adoption.
 - [x] #126 CodeBERT embedding non-functional — stub tokenizer, missing model download, handler not wired [github: GH-126] → `BUG-0056-codebert-embedding-non-functional-stub-tokenize/` -> [requirements](docs/requirements/BUG-0056-codebert-embedding-non-functional-stub-tokenize/) **Completed**
   - **Completed:** 2026-03-21
 - [A] #128 Execution observability — surface workflow trace as structured report [github: GH-128] → `REQ-0068-execution-observability-workflow-trace-report/` -> [requirements](docs/requirements/REQ-0068-execution-observability-workflow-trace-report/)
@@ -289,6 +291,192 @@
 - #107 [ ] Constitution composition — base + project constitution merge for team sharing
 - #108b [x] Full persona override — user controls analysis mode (personas/no-personas), verbosity, and roster; primaries demoted to recommended defaults; persona authoring docs -> [requirements](docs/requirements/REQ-0050-full-persona-override/) **Analyzed**
   - Depends on #108a (completed). 7 FRs, ~11 files, standard tier.
+
+### Codex Integration
+
+> **Source**: [CODEX-INTEGRATION-DESIGN.md](../isdlc-codex/docs/CODEX-INTEGRATION-DESIGN.md) + [CODEX-INTEGRATION-IMPLEMENTATION-PLAN.md](../isdlc-codex/docs/CODEX-INTEGRATION-IMPLEMENTATION-PLAN.md)
+>
+> Extract a provider-neutral iSDLC core and implement Claude and Codex as separate runtime adapters over that shared core. 58 items across 6 workstreams (A-F) and 10 implementation phases (0-9). Phase 0 must complete before broad extraction.
+
+**Workstream A — Runtime & Governance**
+
+- #134 [ ] Codex runtime capability audit [github: GH-134] → `REQ-0070-codex-runtime-capability-audit/` -> [requirements](docs/requirements/REQ-0070-codex-runtime-capability-audit/) **Analyzed**
+  - Phase 0. Audit sub-agent execution, structured results, file/process behavior, instruction projection, permissions. Classify each as verified/inferred/unsupported. **Gate: must complete before any broad extraction.**
+- #135 [ ] Governance strength assessment [github: GH-135] → `REQ-0071-governance-strength-assessment/` -> [requirements](docs/requirements/REQ-0071-governance-strength-assessment/) **Analyzed**
+  - Phase 0. Depends on REQ-0070. Classify enforcement per provider. Produce governance strength matrix.
+- #136 [ ] Antigravity viability assessment [github: GH-136] → `REQ-0072-antigravity-viability-assessment/` -> [requirements](docs/requirements/REQ-0072-antigravity-viability-assessment/) **Analyzed**
+  - Phase 0. Depends on REQ-0070. Disposition: **peer provider** (not shared backbone). 12 scripts rewire to core, 1 needs redesign, 1 absorbed, 1 template.
+- #139 [ ] Module system boundary decision [github: GH-139] → `REQ-0075-module-system-boundary-decision/` -> [requirements](docs/requirements/REQ-0075-module-system-boundary-decision/) **Analyzed**
+  - Phase 0. **Decision: ESM core + thin CJS bridge** for Claude hooks. External consumers (Codex, Antigravity) via npm package. ADR-CODEX-006.
+- #152 [ ] Implement enforcement layering protocol [github: GH-152] → `REQ-0088`
+  - Phase 3. Depends on REQ-0081, REQ-0087. Core validates → Claude hooks verify core outputs on critical paths.
+- #154 [ ] Hook conversion — core validators to provider-neutral modules [github: GH-154] → `REQ-0090`
+  - Phase 3. Depends on REQ-0081, REQ-0087. gate-blocker, constitution-validator, phase-sequence-guard, test-watcher, etc.
+- #155 [ ] Hook conversion — workflow guards to engine rules [github: GH-155] → `REQ-0091`
+  - Phase 3. Depends on REQ-0082, REQ-0087. iteration-corridor, phase-loop-controller, workflow-completion-enforcer, etc.
+- #156 [ ] Hook conversion — observability to provider-neutral services [github: GH-156] → `REQ-0092`
+  - Phase 3. Depends on REQ-0087. skill-validator, log-skill-usage, menu-tracker, etc.
+- #157 [ ] Dispatcher layer refactor [github: GH-157] → `REQ-0093`
+  - Phase 3. Depends on REQ-0081, REQ-0087, REQ-0090. Tool matching stays Claude; checkpoint routing moves to core.
+- #181 [ ] Codex governance checkpoint integration [github: GH-181] → `REQ-0117`
+  - Phase 8. Depends on REQ-0071, REQ-0088, REQ-0114. Wire workflow-driven checkpoints; document irreducible gaps.
+- #187 [ ] Dual-provider runtime constraints [github: GH-187] → `REQ-0123`
+  - Phase 0. Depends on REQ-0070. One active provider per workflow; cross-provider resume rules.
+
+**Workstream B — Core Extraction**
+
+- #143 [ ] Create src/core/ scaffold [github: GH-143] → `REQ-0079`
+  - Phase 2. Depends on REQ-0075, REQ-0076. Dirs: workflow/, validators/, state/, teams/, skills/, search/, memory/, providers/, content/.
+- #144 [ ] Extract StateStore service [github: GH-144] → `REQ-0080`
+  - Phase 2. Depends on REQ-0079. Atomic writes, schema validation, corruption recovery, receipt generation.
+- #145 [ ] Extract ValidatorEngine [github: GH-145] → `REQ-0081`
+  - Phase 2. Depends on REQ-0079, REQ-0080. Checkpoint-based invocation for all gate/constitution/state validators.
+- #146 [ ] Extract WorkflowRegistry and WorkflowEngine [github: GH-146] → `REQ-0082`
+  - Phase 2. Depends on REQ-0079, REQ-0080. Includes workflow interruption/suspension, history continuity.
+- #147 [ ] Extract BacklogService and ItemStateService [github: GH-147] → `REQ-0083`
+  - Phase 2. Depends on REQ-0079, REQ-0080. BACKLOG.md parsing, meta.json, item resolution, slugs, markers, issue sync.
+- #148 [ ] Extract search and memory service boundaries [github: GH-148] → `REQ-0084`
+  - Phase 2. Depends on REQ-0079. SearchSetup, KnowledgeSetup, Embedding, VectorStore services. Validate MCP portability.
+- #149 [ ] Decompose common.cjs [github: GH-149] → `REQ-0085`
+  - Phase 2. Depends on REQ-0079, REQ-0080, REQ-0081, REQ-0082. Split into ProjectRoot, FrameworkProjection, Config, SessionCache, PathPolicy, RuntimeContext services. Migrate by caller group.
+- #150 [ ] Split three-verb-utils.cjs structural logic [github: GH-150] → `REQ-0086`
+  - Phase 2. Depends on REQ-0079, REQ-0083. Backlog/item resolution, slugs, artifact paths, constants.
+- #158 [ ] Provider-neutral team spec model [github: GH-158] → `REQ-0094`
+  - Phase 4. Depends on REQ-0082, REQ-0081. team_type, members, parallelism, contracts, merge/retry policy.
+- #188 [ ] State schema versioning and migration [github: GH-188] → `REQ-0124`
+  - Phase 2. Depends on REQ-0080. Schema versions, forward migration, in-flight compatibility, doctor repair.
+- #189 [ ] Gate profiles and JSON schemas to shared core [github: GH-189] → `REQ-0125`
+  - Phase 2. Depends on REQ-0079, REQ-0081. rapid/standard/strict profiles + JSON schemas + phase IDs as constants.
+- #190 [ ] Skill injection planner [github: GH-190] → `REQ-0126`
+  - Phase 4. Depends on REQ-0094, REQ-0084. Provider-neutral injection by workflow/phase/role/skills/precedence.
+- #191 [ ] Provider routing shared service [github: GH-191] → `REQ-0127`
+  - Phase 3. Depends on REQ-0079. Config loading, mode selection, fallback, usage tracking, defaults.
+
+**Workstream C — Provider Adapters**
+
+- #140 [ ] Vertical spike — implementation loop shared core slice [github: GH-140] → `REQ-0076-vertical-spike-implementation-loop/` -> [requirements](docs/requirements/REQ-0076-vertical-spike-implementation-loop/) **Analyzed**
+  - Phase 1. Creates src/core/ with: teams/implementation-loop.js, state/index.js, bridge/*.cjs, contracts/. **First end-to-end proof.**
+- #141 [ ] Claude parity tests for implementation loop slice [github: GH-141] → `REQ-0077-claude-parity-tests-implementation-loop/` -> [requirements](docs/requirements/REQ-0077-claude-parity-tests-implementation-loop/) **Analyzed**
+  - Phase 1. Fixture-based parity: loop state, contracts, state persistence. Proves core + Claude == current.
+- #142 [ ] Codex adapter for implementation loop slice [github: GH-142] → `REQ-0078-codex-adapter-implementation-loop/` -> [requirements](docs/requirements/REQ-0078-codex-adapter-implementation-loop/) **Analyzed**
+  - Phase 1. Codex sub-agents (Writer/Reviewer/Updater) consume same core contracts. Lives in isdlc-codex repo.
+- #151 [ ] Create src/providers/claude/ adapter boundary [github: GH-151] → `REQ-0087`
+  - Phase 3. Depends on REQ-0080, REQ-0081, REQ-0082, REQ-0085. Hook registration, dispatchers, .claude/ projection.
+- #153 [ ] Provider-aware installer/updater/doctor/uninstaller [github: GH-153] → `REQ-0089`
+  - Phase 3. Depends on REQ-0087. Shared .isdlc/ setup + provider-specific adapter assets.
+- #159 [ ] Impact analysis team port to shared orchestration [github: GH-159] → `REQ-0095`
+  - Phase 4. Depends on REQ-0094, REQ-0087. M1/M2/M3 + verifier fan-out.
+- #160 [ ] Tracing team port to shared orchestration [github: GH-160] → `REQ-0096`
+  - Phase 4. Depends on REQ-0094, REQ-0087. T1/T2/T3 fan-out.
+- #161 [ ] Quality loop team port to shared orchestration [github: GH-161] → `REQ-0097`
+  - Phase 4. Depends on REQ-0094, REQ-0087. Track A/B + fan-out chunks.
+- #162 [ ] Debate team orchestration pattern [github: GH-162] → `REQ-0098`
+  - Phase 5. Depends on REQ-0094. Creator → critic → refiner for requirements, architecture, design, test strategy.
+- #178 [ ] Create src/providers/codex/ adapter [github: GH-178] → `REQ-0114`
+  - Phase 8. Depends on REQ-0087, REQ-0094, REQ-0098. Runtime projection, instruction packaging, commands, teams.
+- #179 [ ] Codex installation and doctor paths [github: GH-179] → `REQ-0115`
+  - Phase 8. Depends on REQ-0089, REQ-0114.
+- #180 [ ] Codex instruction projection service [github: GH-180] → `REQ-0116`
+  - Phase 8. Depends on REQ-0085, REQ-0114. Per-task/subagent/session projection. Session cache compatibility.
+- #182 [ ] Parity verification suite [github: GH-182] → `REQ-0118`
+  - Phase 9. Depends on REQ-0087, REQ-0114. state.json, artifacts, BACKLOG.md, meta.json, memory, validator outcomes.
+
+**Workstream D — Content Model**
+
+- #137 [ ] Analyze lifecycle architecture decision [github: GH-137] → `REQ-0073-analyze-lifecycle-architecture-decision/` -> [requirements](docs/requirements/REQ-0073-analyze-lifecycle-architecture-decision/) **Analyzed**
+  - Phase 0. **Decision: separate subsystem** (not WorkflowEngine). Analyze uses meta.json, build uses state.json — parallel execution preserved. ADR-CODEX-005. **Unblocks Phases 6-7.**
+- #138 [ ] Content audit sizing confirmation [github: GH-138] → `REQ-0074-content-audit-sizing-confirmation/` -> [requirements](docs/requirements/REQ-0074-content-audit-sizing-confirmation/) **Analyzed**
+  - Phase 0. **Actual: 325 files / 2.1 MB** (larger than estimated). 81% medium-effort templated work (skills + structured agents). Hard work in ~23 files (discover, commands, orchestrators).
+- #163 [ ] Agent content decomposition — RoleSpec + RuntimePackaging [github: GH-163] → `REQ-0099`
+  - Phase 5. Depends on REQ-0074. Split 48 agent files into provider-neutral role specs + provider packaging.
+- #164 [ ] Skill content audit and decomposition [github: GH-164] → `REQ-0100`
+  - Phase 5. Depends on REQ-0074. ~240 SKILL.md files: metadata (portable) vs instruction content (needs audit).
+- #165 [ ] Command system decomposition [github: GH-165] → `REQ-0101`
+  - Phase 5. Depends on REQ-0074. isdlc.md is a major workstream. Shared semantics vs provider packaging.
+- #166 [ ] Topic content classification [github: GH-166] → `REQ-0102`
+  - Phase 5. Depends on REQ-0074. Topics have analytical knowledge and depth guidance, not just metadata.
+
+**Workstream E — Discover & Analyze**
+
+- #167 [ ] Discover execution model design [github: GH-167] → `REQ-0103`
+  - Phase 6. Depends on REQ-0070, REQ-0082. Four programs: existing/new/incremental/deep. Modes, depths, agent groups.
+- #168 [ ] Discover interactive UX layer [github: GH-168] → `REQ-0104`
+  - Phase 6. Depends on REQ-0103. Menus, walkthroughs, Chat/Explore disposition.
+- #169 [ ] Discover state/resume implementation [github: GH-169] → `REQ-0105`
+  - Phase 6. Depends on REQ-0103, REQ-0080. Status, steps, flow type, partial resume, known limitations.
+- #170 [ ] Project skill distillation preservation [github: GH-170] → `REQ-0106`
+  - Phase 6. Depends on REQ-0103. Source-aware reconciliation, stale removal, user field preservation.
+- #171 [ ] Discover cache and projection refresh [github: GH-171] → `REQ-0107`
+  - Phase 6. Depends on REQ-0103, REQ-0105. Completion → skills → context → cache rebuild.
+- #172 [ ] Analyze lifecycle implementation [github: GH-172] → `REQ-0108`
+  - Phase 7. Depends on REQ-0073, REQ-0082, REQ-0083, REQ-0085. Entry routing, bug-gather/roundtable split, 6-way prefetch.
+- #173 [ ] Roundtable confirmation state machine [github: GH-173] → `REQ-0109`
+  - Phase 7. Depends on REQ-0108. Accept/amend transitions, tier-dependent paths, completion protocol.
+- #174 [ ] Artifact readiness and write strategy [github: GH-174] → `REQ-0110`
+  - Phase 7. Depends on REQ-0108. Readiness thresholds, topic dependencies, write-once batch + meta.json checkpoints.
+- #175 [ ] Memory layering — user/project/session [github: GH-175] → `REQ-0111`
+  - Phase 7. Depends on REQ-0084, REQ-0108. 3-layer model, dual-path search, weighting/decay, writeSessionRecord().
+- #176 [ ] Analyze finalization path [github: GH-176] → `REQ-0112`
+  - Phase 7. Depends on REQ-0108, REQ-0083, REQ-0111. meta.json + BACKLOG.md + issue sync + memory + async enrichment chain.
+- #177 [ ] Inference tracking and depth sensing [github: GH-177] → `REQ-0113`
+  - Phase 7. Depends on REQ-0108, REQ-0111. Assumptions, confidence, memory-backed depth, coverage guardrails.
+
+**Workstream F — Verification**
+
+- #183 [ ] Golden fixture test suite [github: GH-183] → `REQ-0119`
+  - Phase 9. Depends on REQ-0118. Fixtures for discover, feature, fix, upgrade, analyze, implementation loop, quality loop.
+- #184 [ ] State migration verification [github: GH-184] → `REQ-0120`
+  - Phase 9. Depends on REQ-0080, REQ-0082. Schema versioning, forward migration, in-flight compatibility, doctor repair.
+- #185 [ ] Performance validation [github: GH-185] → `REQ-0121`
+  - Phase 9. Depends on REQ-0114, REQ-0087. Checkpoints <100ms, artifact validation <500ms, no regressions.
+- #186 [ ] Provider support matrix [github: GH-186] → `REQ-0122`
+  - Phase 9. Depends on REQ-0114, REQ-0117. Per-feature Claude vs Codex differences, honest scope statement.
+
+**Dependency Summary**
+
+```
+Phase 0 (Gate: must complete first)
+  REQ-0070 (capability audit) ──┬──> REQ-0071 (governance) ──> REQ-0088 (enforcement layering)
+                                ├──> REQ-0072 (Antigravity)    REQ-0117 (Codex checkpoints)
+                                ├──> REQ-0073 (analyze decision) ──> Phases 6-7
+                                └──> REQ-0123 (dual-provider)
+  REQ-0074 (content sizing) ──────> Workstream D (Phases 5+)
+  REQ-0075 (module system) ───────> Phase 1+
+
+Phase 1 (Vertical Spike)
+  REQ-0076 (spike) ──> REQ-0077 (Claude parity) ──> REQ-0078 (Codex adapter)
+
+Phase 2 (Core Foundations)
+  REQ-0079 (scaffold) ──> REQ-0080 (StateStore) ──┬──> REQ-0081 (Validator)
+                                                   ├──> REQ-0082 (Workflow)
+                                                   ├──> REQ-0083 (Backlog)
+                                                   └──> REQ-0085 (common.cjs)
+
+Phase 3 (Claude Adapter + Hooks)
+  REQ-0087 (Claude adapter) ──> REQ-0088-0093 (enforcement + hooks + dispatchers)
+  REQ-0089 (provider-aware installer)
+  REQ-0127 (provider routing)
+
+Phase 4 (Direct-Fit Teams)
+  REQ-0094 (team spec) ──> REQ-0095-0097 (impact/tracing/quality ports)
+                       ──> REQ-0126 (skill injection)
+
+Phase 5 (Debate + Content)
+  REQ-0098 (debate pattern)
+  REQ-0099-0102 (agent/skill/command/topic decomposition)
+
+Phase 6 (Discover)
+  REQ-0103 (model) ──> REQ-0104-0107 (UX, state, skills, cache)
+
+Phase 7 (Analyze/Roundtable)
+  REQ-0108 (lifecycle) ──> REQ-0109-0113 (confirmation, readiness, memory, finalize, inference)
+
+Phase 8 (Codex Adapter)
+  REQ-0114 (codex adapter) ──> REQ-0115-0117 (install, projection, checkpoints)
+
+Phase 9 (Verification)
+  REQ-0118-0122 (parity, fixtures, migration, performance, matrix)
+```
 
 ## Completed
 
