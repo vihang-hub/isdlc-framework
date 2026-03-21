@@ -4,6 +4,9 @@
 > BACKLOG.md is the curated working set with detailed specs. GitHub Issues are for tracking.
 
 ## Open
+- [ ] #128 Execution observability — surface workflow trace as structured report [github: GH-128] → `REQ-0068-execution-observability-workflow-trace-report/` -> [requirements](docs/requirements/REQ-0068-execution-observability-workflow-trace-report/)
+- [~] #127 Blast radius validator fails-open when coverage artifact missing [github: GH-127] → `BUG-0055-blast-radius-validator-fails-open-when-coverage-ar/` -> [requirements](docs/requirements/BUG-0055-blast-radius-validator-fails-open-when-coverage-ar/)
+  - Gate escape: blast-radius-validator, quality loop, and code review all missed unimplemented blast radius files
 - [x] Configurable session cache token budget — replace hardcoded limits with project-configurable token budget up to 200-300K tokens → `REQ-0067-configurable-session-cache-token-budget/` -> [requirements](docs/requirements/REQ-0067-configurable-session-cache-token-budget/) **Completed**
   - **Completed:** 2026-03-15
 - [x] Inline roundtable analysis — eliminate subagent dispatch overhead [github: GH-124] → `REQ-0065-inline-roundtable-eliminate-subagent-overhead/` -> [requirements](docs/requirements/REQ-0065-inline-roundtable-eliminate-subagent-overhead/) **Completed**

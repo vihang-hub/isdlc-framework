@@ -219,7 +219,7 @@ Minimize wall-clock time by maximizing parallel tool calls and avoiding unnecess
 
 ## Project Context
 
-This is the iSDLC (integrated Software Development Lifecycle) framework for Claude Code.
+This is the iSDLC (Intelligent Software Development Lifecycle) Harness for Claude Code.
 
 ### Key Files
 

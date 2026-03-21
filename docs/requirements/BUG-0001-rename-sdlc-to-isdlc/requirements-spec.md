@@ -10,7 +10,7 @@
 
 ## Summary
 
-The project is named "iSDLC" (integrated Software Development Lifecycle) but the primary slash command is registered as `/sdlc` instead of `/isdlc`. This naming inconsistency creates confusion and misaligns the CLI interface with the project identity.
+The project is named "iSDLC" (Intelligent Software Development Lifecycle) but the primary slash command is registered as `/sdlc` instead of `/isdlc`. This naming inconsistency creates confusion and misaligns the CLI interface with the project identity.
 
 ## Expected Behavior
 
