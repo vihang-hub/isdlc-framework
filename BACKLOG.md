@@ -325,10 +325,10 @@
 
 **Workstream B — Core Extraction**
 
-- #143 [ ] Create src/core/ scaffold [github: GH-143] → `REQ-0079-create-src-core-scaffold/` -> [requirements](docs/requirements/REQ-0079-create-src-core-scaffold/) **Analyzed**
-  - Phase 2. Expand scaffold with validators/, workflow/, skills/, search/, memory/, providers/, content/.
-- #144 [ ] Extract StateStore service [github: GH-144] → `REQ-0080-extract-statestore-service/` -> [requirements](docs/requirements/REQ-0080-extract-statestore-service/) **Analyzed**
-  - Phase 2. ~25 state functions from common.cjs + ~8 from state-logic.cjs. Wrapper preservation — 0 caller breakage.
+- [x] #143 Create src/core/ scaffold [github: GH-143] → `REQ-0079-create-src-core-scaffold/` -> [requirements](docs/requirements/REQ-0079-create-src-core-scaffold/) **Completed**
+  - **Completed:** 2026-03-21
+- [x] #144 Extract StateStore service [github: GH-144] → `REQ-0080-extract-statestore-service/` -> [requirements](docs/requirements/REQ-0080-extract-statestore-service/) **Completed**
+  - **Completed:** 2026-03-21
 - #145 [ ] Extract ValidatorEngine [github: GH-145] → `REQ-0081`
   - Phase 2. Depends on REQ-0079, REQ-0080. Checkpoint-based invocation for all gate/constitution/state validators.
 - #146 [ ] Extract WorkflowRegistry and WorkflowEngine [github: GH-146] → `REQ-0082`
@@ -343,8 +343,8 @@
   - Phase 2. Depends on REQ-0079, REQ-0083. Backlog/item resolution, slugs, artifact paths, constants.
 - #158 [ ] Provider-neutral team spec model [github: GH-158] → `REQ-0094`
   - Phase 4. Depends on REQ-0082, REQ-0081. team_type, members, parallelism, contracts, merge/retry policy.
-- #188 [ ] State schema versioning and migration [github: GH-188] → `REQ-0124-state-schema-versioning-migration/` -> [requirements](docs/requirements/REQ-0124-state-schema-versioning-migration/) **Analyzed**
-  - Phase 2. Add schema_version field, forward migration, in-flight state preservation, doctor repair.
+- [x] #188 State schema versioning and migration [github: GH-188] → `REQ-0124-state-schema-versioning-migration/` -> [requirements](docs/requirements/REQ-0124-state-schema-versioning-migration/) **Completed**
+  - **Completed:** 2026-03-21
 - #189 [ ] Gate profiles and JSON schemas to shared core [github: GH-189] → `REQ-0125`
   - Phase 2. Depends on REQ-0079, REQ-0081. rapid/standard/strict profiles + JSON schemas + phase IDs as constants.
 - #190 [ ] Skill injection planner [github: GH-190] → `REQ-0126`
@@ -479,6 +479,14 @@ Phase 9 (Verification)
 ## Completed
 
 ### 2026-03-21
+- [x] #143: Create src/core/ scaffold — expanded scaffold with validators/, workflow/, skills/, search/, memory/, providers/, content/ stub modules. -> [requirements](docs/requirements/REQ-0079-create-src-core-scaffold/) *(merged 4c02e72)*
+  - **Completed:** 2026-03-21
+- [x] #144: Extract StateStore service — ~25 state functions from common.cjs + ~8 from state-logic.cjs into src/core/state/ ESM modules (paths, monorepo, validation, schema). Bridge-first CJS wrappers, 0 caller breakage. 62 new tests, 154 total core tests, 0 regressions. -> [requirements](docs/requirements/REQ-0080-extract-statestore-service/) *(merged 4c02e72)*
+  - **Completed:** 2026-03-21
+- [x] #188: State schema versioning and migration — schema_version field, forward migration, in-flight state preservation. -> [requirements](docs/requirements/REQ-0124-state-schema-versioning-migration/) *(merged 4c02e72)*
+  - **Completed:** 2026-03-21
+- [x] #142: Codex adapter for implementation loop slice. 14 parity tests, runner + 3 instruction files, codex adapter integration. -> [requirements](docs/requirements/REQ-0078-codex-adapter-implementation-loop/) *(merged a9f3ece)*
+  - **Completed:** 2026-03-21
 - [x] #141: Claude parity tests for implementation loop slice. 22 new parity tests (PT-09 through PT-30), 6 fixture files, 78 total tests passing, 0 regressions. Proves core + Claude == current via fixture-based parity for loop state, contracts, and state persistence. -> [requirements](docs/requirements/REQ-0077-claude-parity-tests-implementation-loop/) *(merged 4b0ff8e)*
   - **Completed:** 2026-03-21
 - [x] #140: Vertical spike — implementation loop shared core slice. Creates src/core/ with ESM modules: teams/implementation-loop.js (Writer/Reviewer/Updater loop), state/index.js (StateStore), bridge/*.cjs (CJS interop), contracts/*.json (JSON Schema). 56 tests, 97.29% line coverage, 0 regressions. -> [requirements](docs/requirements/REQ-0076-vertical-spike-implementation-loop/) *(merged 7dafdce)*
