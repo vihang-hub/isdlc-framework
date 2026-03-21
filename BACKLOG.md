@@ -329,12 +329,12 @@
   - **Completed:** 2026-03-21
 - [x] #144 Extract StateStore service [github: GH-144] → `REQ-0080-extract-statestore-service/` -> [requirements](docs/requirements/REQ-0080-extract-statestore-service/) **Completed**
   - **Completed:** 2026-03-21
-- #145 [ ] Extract ValidatorEngine [github: GH-145] → `REQ-0081-extract-validator-engine/` -> [requirements](docs/requirements/REQ-0081-extract-validator-engine/) **Analyzed**
-  - Phase 2. Extract 11 functions from gate-logic.cjs + profile-loader + gate-requirements-injector. ~20 tests.
-- #146 [ ] Extract WorkflowRegistry and WorkflowEngine [github: GH-146] → `REQ-0082-extract-workflow-registry-engine/` -> [requirements](docs/requirements/REQ-0082-extract-workflow-registry-engine/) **Analyzed**
-  - Phase 2. Extract 7 functions from workflow-loader.cjs + phase constants + interruption/suspension. ~20 tests.
-- #147 [ ] Extract BacklogService and ItemStateService [github: GH-147] → `REQ-0083-extract-backlog-itemstate-service/` -> [requirements](docs/requirements/REQ-0083-extract-backlog-itemstate-service/) **Analyzed**
-  - Phase 2. Extract backlog/item functions from three-verb-utils.cjs (1417 lines). ~25 tests.
+- [x] #145 Extract ValidatorEngine [github: GH-145] → `REQ-0081-extract-validator-engine/` -> [requirements](docs/requirements/REQ-0081-extract-validator-engine/) **Completed**
+  - **Completed:** 2026-03-21
+- [x] #146 Extract WorkflowRegistry and WorkflowEngine [github: GH-146] → `REQ-0082-extract-workflow-registry-engine/` -> [requirements](docs/requirements/REQ-0082-extract-workflow-registry-engine/) **Completed**
+  - **Completed:** 2026-03-21
+- [x] #147 Extract BacklogService and ItemStateService [github: GH-147] → `REQ-0083-extract-backlog-itemstate-service/` -> [requirements](docs/requirements/REQ-0083-extract-backlog-itemstate-service/) **Completed**
+  - **Completed:** 2026-03-21
 - #148 [ ] Extract search and memory service boundaries [github: GH-148] → `REQ-0084`
   - Phase 2. Depends on REQ-0079. SearchSetup, KnowledgeSetup, Embedding, VectorStore services. Validate MCP portability.
 - #149 [ ] Decompose common.cjs [github: GH-149] → `REQ-0085`
@@ -345,8 +345,8 @@
   - Phase 4. Depends on REQ-0082, REQ-0081. team_type, members, parallelism, contracts, merge/retry policy.
 - [x] #188 State schema versioning and migration [github: GH-188] → `REQ-0124-state-schema-versioning-migration/` -> [requirements](docs/requirements/REQ-0124-state-schema-versioning-migration/) **Completed**
   - **Completed:** 2026-03-21
-- #189 [ ] Gate profiles and JSON schemas to shared core [github: GH-189] → `REQ-0125-gate-profiles-schemas-to-core/` -> [requirements](docs/requirements/REQ-0125-gate-profiles-schemas-to-core/) **Analyzed**
-  - Phase 2. Move 3 profile JSONs + 8 schema JSONs + phase IDs to src/core/config/. ~15 tests.
+- [x] #189 Gate profiles and JSON schemas to shared core [github: GH-189] → `REQ-0125-gate-profiles-schemas-to-core/` -> [requirements](docs/requirements/REQ-0125-gate-profiles-schemas-to-core/) **Completed**
+  - **Completed:** 2026-03-21
 - #190 [ ] Skill injection planner [github: GH-190] → `REQ-0126`
   - Phase 4. Depends on REQ-0094, REQ-0084. Provider-neutral injection by workflow/phase/role/skills/precedence.
 - #191 [ ] Provider routing shared service [github: GH-191] → `REQ-0127`
@@ -484,6 +484,14 @@ Phase 9 (Verification)
 - [x] #144: Extract StateStore service — ~25 state functions from common.cjs + ~8 from state-logic.cjs into src/core/state/ ESM modules (paths, monorepo, validation, schema). Bridge-first CJS wrappers, 0 caller breakage. 62 new tests, 154 total core tests, 0 regressions. -> [requirements](docs/requirements/REQ-0080-extract-statestore-service/) *(merged 4c02e72)*
   - **Completed:** 2026-03-21
 - [x] #188: State schema versioning and migration — schema_version field, forward migration, in-flight state preservation. -> [requirements](docs/requirements/REQ-0124-state-schema-versioning-migration/) *(merged 4c02e72)*
+  - **Completed:** 2026-03-21
+- [x] #145: Extract ValidatorEngine — gate-logic, profile-loader, gate-requirements (11 functions) to src/core/validators/ ESM modules. Bridge-first CJS wrappers, 0 caller breakage. -> [requirements](docs/requirements/REQ-0081-extract-validator-engine/) *(merged 609afbf)*
+  - **Completed:** 2026-03-21
+- [x] #146: Extract WorkflowRegistry and WorkflowEngine — workflow constants, registry, phase resolution (7 functions) to src/core/workflow/ ESM modules. -> [requirements](docs/requirements/REQ-0082-extract-workflow-registry-engine/) *(merged 609afbf)*
+  - **Completed:** 2026-03-21
+- [x] #147: Extract BacklogService and ItemStateService — slug, source-detection, item-state, backlog-ops, item-resolution, github (18 functions) to src/core/backlog/ ESM modules. -> [requirements](docs/requirements/REQ-0083-extract-backlog-itemstate-service/) *(merged 609afbf)*
+  - **Completed:** 2026-03-21
+- [x] #189: Gate profiles and JSON schemas to shared core — 3 profiles, 8 schemas, phase-ids to src/core/config/. -> [requirements](docs/requirements/REQ-0125-gate-profiles-schemas-to-core/) *(merged 609afbf)*
   - **Completed:** 2026-03-21
 - [x] #142: Codex adapter for implementation loop slice. 14 parity tests, runner + 3 instruction files, codex adapter integration. -> [requirements](docs/requirements/REQ-0078-codex-adapter-implementation-loop/) *(merged a9f3ece)*
   - **Completed:** 2026-03-21
