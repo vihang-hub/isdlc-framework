@@ -325,10 +325,10 @@
 
 **Workstream B — Core Extraction**
 
-- #143 [ ] Create src/core/ scaffold [github: GH-143] → `REQ-0079`
-  - Phase 2. Depends on REQ-0075, REQ-0076. Dirs: workflow/, validators/, state/, teams/, skills/, search/, memory/, providers/, content/.
-- #144 [ ] Extract StateStore service [github: GH-144] → `REQ-0080`
-  - Phase 2. Depends on REQ-0079. Atomic writes, schema validation, corruption recovery, receipt generation.
+- #143 [ ] Create src/core/ scaffold [github: GH-143] → `REQ-0079-create-src-core-scaffold/` -> [requirements](docs/requirements/REQ-0079-create-src-core-scaffold/) **Analyzed**
+  - Phase 2. Expand scaffold with validators/, workflow/, skills/, search/, memory/, providers/, content/.
+- #144 [ ] Extract StateStore service [github: GH-144] → `REQ-0080-extract-statestore-service/` -> [requirements](docs/requirements/REQ-0080-extract-statestore-service/) **Analyzed**
+  - Phase 2. ~25 state functions from common.cjs + ~8 from state-logic.cjs. Wrapper preservation — 0 caller breakage.
 - #145 [ ] Extract ValidatorEngine [github: GH-145] → `REQ-0081`
   - Phase 2. Depends on REQ-0079, REQ-0080. Checkpoint-based invocation for all gate/constitution/state validators.
 - #146 [ ] Extract WorkflowRegistry and WorkflowEngine [github: GH-146] → `REQ-0082`
@@ -343,8 +343,8 @@
   - Phase 2. Depends on REQ-0079, REQ-0083. Backlog/item resolution, slugs, artifact paths, constants.
 - #158 [ ] Provider-neutral team spec model [github: GH-158] → `REQ-0094`
   - Phase 4. Depends on REQ-0082, REQ-0081. team_type, members, parallelism, contracts, merge/retry policy.
-- #188 [ ] State schema versioning and migration [github: GH-188] → `REQ-0124`
-  - Phase 2. Depends on REQ-0080. Schema versions, forward migration, in-flight compatibility, doctor repair.
+- #188 [ ] State schema versioning and migration [github: GH-188] → `REQ-0124-state-schema-versioning-migration/` -> [requirements](docs/requirements/REQ-0124-state-schema-versioning-migration/) **Analyzed**
+  - Phase 2. Add schema_version field, forward migration, in-flight state preservation, doctor repair.
 - #189 [ ] Gate profiles and JSON schemas to shared core [github: GH-189] → `REQ-0125`
   - Phase 2. Depends on REQ-0079, REQ-0081. rapid/standard/strict profiles + JSON schemas + phase IDs as constants.
 - #190 [ ] Skill injection planner [github: GH-190] → `REQ-0126`
