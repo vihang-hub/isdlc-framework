@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "isdlc:core:update-context",
+  "title": "UPDATE_CONTEXT",
+  "description": "Provider-neutral contract for the Updater role in the implementation loop. Tells the updater which file to fix and what findings to address.",
+  "type": "object",
+  "required": ["file_path", "cycle", "reviewer_verdict", "findings"],
+  "properties": {
+    "file_path": { "type": "string" },
+    "cycle": { "type": "integer", "minimum": 1 },
+    "reviewer_verdict": { "const": "REVISE" },
+    "findings": {
+      "type": "object",
+      "properties": {
+        "blocking": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "warning": {
+          "type": "array",
+          "items": { "type": "object" }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

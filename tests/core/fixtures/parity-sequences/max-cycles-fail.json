@@ -1,0 +1,13 @@
+{
+  "description": "Loop where one file exhausts all 3 review cycles and fails",
+  "files": [
+    { "path": "src/broken.js", "type": "source", "order": 1 }
+  ],
+  "verdicts_sequence": ["REVISE", "REVISE", "REVISE"],
+  "expected_completed_files": [],
+  "expected_final_action": "fail",
+  "findings_for_revise": {
+    "blocking": [{ "category": "security", "description": "SQL injection vulnerability" }],
+    "warning": []
+  }
+}
