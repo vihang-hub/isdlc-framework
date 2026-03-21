@@ -1,0 +1,14 @@
+{
+  "description": "Loop where the first file gets REVISE, then PASS after updater fixes it",
+  "files": [
+    { "path": "tests/auth.test.js", "type": "test", "order": 1 },
+    { "path": "src/auth.js", "type": "source", "order": 2 }
+  ],
+  "verdicts_sequence": ["REVISE", "PASS", "PASS"],
+  "expected_completed_files": ["tests/auth.test.js", "src/auth.js"],
+  "expected_final_action": "complete",
+  "findings_for_revise": {
+    "blocking": [{ "category": "correctness", "description": "Missing null check" }],
+    "warning": [{ "category": "style", "description": "Consider using const" }]
+  }
+}

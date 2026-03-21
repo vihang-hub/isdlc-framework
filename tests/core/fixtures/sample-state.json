@@ -1,0 +1,14 @@
+{
+  "files": [
+    { "path": "tests/widget.test.js", "type": "test", "order": 1 },
+    { "path": "src/widget.js", "type": "source", "order": 2 },
+    { "path": "tests/helper.test.js", "type": "test", "order": 3 },
+    { "path": "src/helper.js", "type": "source", "order": 4 }
+  ],
+  "current_file_index": 0,
+  "cycle_per_file": {},
+  "max_cycles": 3,
+  "verdicts": [],
+  "completed_files": [],
+  "tdd_ordering": true
+}

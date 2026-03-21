@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "isdlc:core:writer-context",
+  "title": "WRITER_CONTEXT",
+  "description": "Provider-neutral contract for the Writer role in the implementation loop. Tells the writer which file to produce and loop state.",
+  "type": "object",
+  "required": ["mode", "per_file_loop", "file_number", "total_files"],
+  "properties": {
+    "mode": { "const": "writer" },
+    "per_file_loop": { "type": "boolean" },
+    "tdd_ordering": { "type": "boolean" },
+    "file_number": { "type": "integer", "minimum": 1 },
+    "total_files": { "type": "integer", "minimum": 1 },
+    "file_path": { "type": "string" },
+    "completed_files": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

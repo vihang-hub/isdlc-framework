@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "isdlc:core:review-context",
+  "title": "REVIEW_CONTEXT",
+  "description": "Provider-neutral contract for the Reviewer role in the implementation loop. Tells the reviewer which file to review and current cycle.",
+  "type": "object",
+  "required": ["file_path", "file_number", "cycle"],
+  "properties": {
+    "file_path": { "type": "string" },
+    "file_number": { "type": "integer", "minimum": 1 },
+    "cycle": { "type": "integer", "minimum": 1, "maximum": 3 },
+    "tech_stack": { "type": "string" },
+    "constitution_path": { "type": "string" }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,11 @@
+{
+  "description": "3-file loop where every file passes review on the first cycle",
+  "files": [
+    { "path": "tests/auth.test.js", "type": "test", "order": 1 },
+    { "path": "src/auth.js", "type": "source", "order": 2 },
+    { "path": "src/config.js", "type": "source", "order": 3 }
+  ],
+  "verdicts_sequence": ["PASS", "PASS", "PASS"],
+  "expected_completed_files": ["tests/auth.test.js", "src/auth.js", "src/config.js"],
+  "expected_final_action": "complete"
+}

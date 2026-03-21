@@ -44,7 +44,8 @@
     "test:hooks": "node --test src/claude/hooks/tests/*.test.cjs",
     "test:char": "node --test tests/characterization/*.test.js",
     "test:e2e": "node --test tests/e2e/*.test.js",
-    "test:all": "npm test && npm run test:hooks && npm run test:char && npm run test:e2e",
+    "test:core": "node --test tests/core/**/*.test.js",
+    "test:all": "npm test && npm run test:hooks && npm run test:char && npm run test:e2e && npm run test:core",
     "lint": "echo 'No linter configured'",
     "prepare": "echo 'Package ready'"
   },
