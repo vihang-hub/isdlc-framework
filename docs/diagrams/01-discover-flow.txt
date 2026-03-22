@@ -38,8 +38,26 @@
   |  characterization tests/      | <-- regression safety net       |
   +-------------------------------+                                 |
                    |                                                |
-                   |  injected into Phases 01, 02, 03               |
-                   |  referenced by ALL gates                       |
+                   v                                                |
+  +-------------------------------+                                 |
+  | EMBEDDING PIPELINE:           |                                 |
+  |                               |                                 |
+  |  source code + docs           |                                 |
+  |    --> Tree-sitter chunker    | <-- AST-aware, 100+ languages  |
+  |    --> embedding engine       | <-- CodeBERT / Voyage / OpenAI  |
+  |    --> .emb packages          | <-- partitioned by module       |
+  |    --> vector store           | <-- FAISS or SQLite             |
+  |    --> MCP server exposes     | <-- semantic_search tool        |
+  |        semantic search        |     for agents during workflows |
+  |                               |                                 |
+  |  3 trigger modes:             |                                 |
+  |    before / during / after    |                                 |
+  |    discovery analysis         |                                 |
+  +-------------------------------+                                 |
+                   |                                                |
+                   |  text artifacts injected into Phases 01, 02, 03|
+                   |  embeddings queryable by ALL phase agents       |
+                   |  constitution referenced by ALL gates           |
                    v                                                |
               SYSTEM READY                                          |
               (Scenario 3)                                          |
