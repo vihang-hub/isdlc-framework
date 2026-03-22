@@ -310,14 +310,14 @@
   - Phase 0. **Decision: ESM core + thin CJS bridge** for Claude hooks. External consumers (Codex, Antigravity) via npm package. ADR-CODEX-006.
 - [x] #152 Implement enforcement layering protocol [github: GH-152] → `REQ-0088-enforcement-layering-protocol/` -> [requirements](docs/requirements/REQ-0088-enforcement-layering-protocol/) **Completed**
   - **Completed:** 2026-03-22
-- #154 [ ] Hook conversion — core validators to provider-neutral modules [github: GH-154] → `REQ-0090`
-  - Phase 3. Depends on REQ-0081, REQ-0087. gate-blocker, constitution-validator, phase-sequence-guard, test-watcher, etc.
-- #155 [ ] Hook conversion — workflow guards to engine rules [github: GH-155] → `REQ-0091`
-  - Phase 3. Depends on REQ-0082, REQ-0087. iteration-corridor, phase-loop-controller, workflow-completion-enforcer, etc.
-- #156 [ ] Hook conversion — observability to provider-neutral services [github: GH-156] → `REQ-0092`
-  - Phase 3. Depends on REQ-0087. skill-validator, log-skill-usage, menu-tracker, etc.
-- #157 [ ] Dispatcher layer refactor [github: GH-157] → `REQ-0093`
-  - Phase 3. Depends on REQ-0081, REQ-0087, REQ-0090. Tool matching stays Claude; checkpoint routing moves to core.
+- #154 [ ] Hook conversion — core validators to provider-neutral modules [github: GH-154] → `REQ-0090-hook-conversion-core-validators/` -> [requirements](docs/requirements/REQ-0090-hook-conversion-core-validators/) **Analyzed**
+  - Phase 3. 9 hooks → bridge-first delegation to core validators. Enforcement layering pattern.
+- #155 [ ] Hook conversion — workflow guards to engine rules [github: GH-155] → `REQ-0091-hook-conversion-workflow-guards/` -> [requirements](docs/requirements/REQ-0091-hook-conversion-workflow-guards/) **Analyzed**
+  - Phase 3. 7 hooks → bridge-first delegation to core workflow engine rules.
+- #156 [ ] Hook conversion — observability to provider-neutral services [github: GH-156] → `REQ-0092-hook-conversion-observability/` -> [requirements](docs/requirements/REQ-0092-hook-conversion-observability/) **Analyzed**
+  - Phase 3. 6 hooks → core telemetry services. Non-blocking, simplest conversion.
+- #157 [ ] Dispatcher layer refactor [github: GH-157] → `REQ-0093-dispatcher-layer-refactor/` -> [requirements](docs/requirements/REQ-0093-dispatcher-layer-refactor/) **Analyzed**
+  - Phase 3. 5 dispatchers → core checkpoint routing. Tool matching stays Claude-specific.
 - #181 [ ] Codex governance checkpoint integration [github: GH-181] → `REQ-0117`
   - Phase 8. Depends on REQ-0071, REQ-0088, REQ-0114. Wire workflow-driven checkpoints; document irreducible gaps.
 - #187 [ ] Dual-provider runtime constraints [github: GH-187] → `REQ-0123`
