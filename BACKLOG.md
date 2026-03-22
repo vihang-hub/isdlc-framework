@@ -360,8 +360,8 @@
   - **Completed:** 2026-03-21
 - [x] #151 Create src/providers/claude/ adapter boundary [github: GH-151] → `REQ-0087-claude-adapter-boundary/` -> [requirements](docs/requirements/REQ-0087-claude-adapter-boundary/) **Completed**
   - **Completed:** 2026-03-22
-- #153 [ ] Provider-aware installer/updater/doctor/uninstaller [github: GH-153] → `REQ-0089`
-  - Phase 3. Depends on REQ-0087. Shared .isdlc/ setup + provider-specific adapter assets.
+- #153 [ ] Provider-aware installer/updater/doctor/uninstaller [github: GH-153] → `REQ-0089-provider-aware-installer/` -> [requirements](docs/requirements/REQ-0089-provider-aware-installer/) **Analyzed**
+  - Phase 3. Split into installCore() + installProvider(). ~2867 lines across 4 ESM files.
 - #159 [ ] Impact analysis team port to shared orchestration [github: GH-159] → `REQ-0095`
   - Phase 4. Depends on REQ-0094, REQ-0087. M1/M2/M3 + verifier fan-out.
 - #160 [ ] Tracing team port to shared orchestration [github: GH-160] → `REQ-0096`
