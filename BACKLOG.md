@@ -388,16 +388,11 @@
 
 **Workstream E — Discover & Analyze**
 
-- #167 [ ] Discover execution model design [github: GH-167] → `REQ-0103` -> [requirements](docs/requirements/REQ-0103-discover-execution-model/) **Analyzed**
-  - Phase 6. Depends on REQ-0070, REQ-0082. Four programs: existing/new/incremental/deep. Modes, depths, agent groups.
-- #168 [ ] Discover interactive UX layer [github: GH-168] → `REQ-0104` -> [requirements](docs/requirements/REQ-0104-discover-interactive-ux/) **Analyzed**
-  - Phase 6. Depends on REQ-0103. Menus, walkthroughs, Chat/Explore disposition.
-- #169 [ ] Discover state/resume implementation [github: GH-169] → `REQ-0105` -> [requirements](docs/requirements/REQ-0105-discover-state-resume/) **Analyzed**
-  - Phase 6. Depends on REQ-0103, REQ-0080. Status, steps, flow type, partial resume, known limitations.
-- #170 [ ] Project skill distillation preservation [github: GH-170] → `REQ-0106` -> [requirements](docs/requirements/REQ-0106-project-skill-distillation/) **Analyzed**
-  - Phase 6. Depends on REQ-0103. Source-aware reconciliation, stale removal, user field preservation.
-- #171 [ ] Discover cache and projection refresh [github: GH-171] → `REQ-0107` -> [requirements](docs/requirements/REQ-0107-discover-cache-projection/) **Analyzed**
-  - Phase 6. Depends on REQ-0103, REQ-0105. Completion → skills → context → cache rebuild.
+- #167 [x] Discover execution model design [github: GH-167] → `REQ-0103` -> [requirements](docs/requirements/REQ-0103-discover-execution-model/) *(merged e16e18b)*
+- #168 [x] Discover interactive UX layer [github: GH-168] → `REQ-0104` -> [requirements](docs/requirements/REQ-0104-discover-interactive-ux/) *(merged e16e18b)*
+- #169 [x] Discover state/resume implementation [github: GH-169] → `REQ-0105` -> [requirements](docs/requirements/REQ-0105-discover-state-resume/) *(merged e16e18b)*
+- #170 [x] Project skill distillation preservation [github: GH-170] → `REQ-0106` -> [requirements](docs/requirements/REQ-0106-project-skill-distillation/) *(merged e16e18b)*
+- #171 [x] Discover cache and projection refresh [github: GH-171] → `REQ-0107` -> [requirements](docs/requirements/REQ-0107-discover-cache-projection/) *(merged e16e18b)*
 - #172 [ ] Analyze lifecycle implementation [github: GH-172] → `REQ-0108`
   - Phase 7. Depends on REQ-0073, REQ-0082, REQ-0083, REQ-0085. Entry routing, bug-gather/roundtable split, 6-way prefetch.
 - #173 [ ] Roundtable confirmation state machine [github: GH-173] → `REQ-0109`
@@ -471,6 +466,16 @@ Phase 9 (Verification)
 ## Completed
 
 ### 2026-03-22
+- [x] #167: Discover execution model design -> [requirements](docs/requirements/REQ-0103-discover-execution-model/) *(merged e16e18b)*
+  - **Completed:** 2026-03-22
+- [x] #168: Discover interactive UX layer -> [requirements](docs/requirements/REQ-0104-discover-interactive-ux/) *(merged e16e18b)*
+  - **Completed:** 2026-03-22
+- [x] #169: Discover state/resume implementation -> [requirements](docs/requirements/REQ-0105-discover-state-resume/) *(merged e16e18b)*
+  - **Completed:** 2026-03-22
+- [x] #170: Project skill distillation preservation -> [requirements](docs/requirements/REQ-0106-project-skill-distillation/) *(merged e16e18b)*
+  - **Completed:** 2026-03-22
+- [x] #171: Discover cache and projection refresh -> [requirements](docs/requirements/REQ-0107-discover-cache-projection/) *(merged e16e18b)*
+  - **Completed:** 2026-03-22
 - [x] #163: Agent content decomposition — RoleSpec + RuntimePackaging -> [requirements](docs/requirements/REQ-0099-agent-content-decomposition/) *(merged b3c804e)*
   - **Completed:** 2026-03-22
 - [x] #164: Skill content audit and decomposition -> [requirements](docs/requirements/REQ-0100-skill-content-audit/) *(merged b3c804e)*
