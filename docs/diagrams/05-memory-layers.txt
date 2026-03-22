@@ -53,7 +53,31 @@
                             |
                             v
   +------------------------------------------------------------------+
-  |  LAYER 5: SESSION CACHE (single conversation only)               |
+  |  LAYER 5: SEMANTIC MEMORY (vector embeddings, queryable)         |
+  |                                                                  |
+  |  CODE EMBEDDINGS:                                                |
+  |  source code -----> Tree-sitter chunker --> CodeBERT/Voyage/     |
+  |                     (AST-aware, 100+ langs)  OpenAI embeddings   |
+  |                         --> .emb packages --> FAISS/SQLite store  |
+  |                                                                  |
+  |  KNOWLEDGE EMBEDDINGS:                                           |
+  |  docs, RFCs, guides --> document chunker --> same engine          |
+  |                         (heading-aware)     --> tagged separately |
+  |                                                                  |
+  |  SESSION EMBEDDINGS:                                             |
+  |  roundtable sessions --> memory-embedder --> vector store         |
+  |                         (after analyze)     --> semantic search   |
+  |                                                                  |
+  |  MCP server exposes: semantic_search, list_modules, module_info  |
+  |  Agents query during workflows for relevant code/doc context     |
+  |                                                                  |
+  |  Enables: "find code related to authentication middleware"        |
+  |           "what did we decide about token storage?"               |
+  +------------------------------------------------------------------+
+                            |
+                            v
+  +------------------------------------------------------------------+
+  |  LAYER 6: SESSION CACHE (single conversation only)               |
   |                                                                  |
   |  session-cache.md -------> pre-loaded constitution, personas,    |
   |                            discovery context                     |

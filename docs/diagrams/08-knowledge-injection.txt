@@ -130,7 +130,74 @@
   +------------------------------------------------------------------+
       |
       |  These files now exist on disk, in git.
-      |  They are the project's knowledge base.
+      |
+      v
+  EMBEDDING PIPELINE (runs during or after discovery):
+  +------------------------------------------------------------------+
+  |                                                                  |
+  |  Source code + docs                                              |
+  |      |                                                           |
+  |      v                                                           |
+  |  CHUNKER (lib/embedding/chunker/)                                |
+  |    - Tree-sitter AST-based chunking (100+ languages)             |
+  |    - Falls back to line-based splitting if no grammar            |
+  |    - Produces semantic chunks: function, class, method, block    |
+  |    - Each chunk has: id, filePath, startLine, endLine, type,     |
+  |      language, tokenCount, parentName, signatures                |
+  |      |                                                           |
+  |      v                                                           |
+  |  EMBEDDING ENGINE (lib/embedding/engine/)                        |
+  |    - CodeBERT (local, 768 dimensions, no API key needed)         |
+  |    - Voyage  (cloud, configurable dimensions)                    |
+  |    - OpenAI  (cloud, configurable dimensions)                    |
+  |      |                                                           |
+  |      v                                                           |
+  |  .emb PACKAGES (lib/embedding/package/)                          |
+  |    - vectors + metadata bundled per module                       |
+  |    - optional encryption for distribution                        |
+  |    - partitioned by module boundaries found by D1                |
+  |      |                                                           |
+  |      v                                                           |
+  |  VECTOR STORE (FAISS or SQLite)                                  |
+  |    - loaded by MCP server (lib/embedding/mcp-server/)            |
+  |    - exposes: semantic_search, list_modules, module_info         |
+  |    - agents query during workflows for relevant code context     |
+  |                                                                  |
+  |  3 trigger modes:            [lib/embedding/discover-integration]|
+  |    "before": flat embed of entire codebase before analysis       |
+  |    "during": runs in parallel with D1-D6 analysis agents         |
+  |    "after":  uses discovered module boundaries for partitioned   |
+  |              embeddings (more accurate, uses D1 output)          |
+  |                                                                  |
+  +------------------------------------------------------------------+
+  |                                                                  |
+  |  KNOWLEDGE DOCS PIPELINE (lib/embedding/knowledge/)              |
+  |    - Markdown: split on headings, code blocks kept atomic        |
+  |    - HTML: split on block elements, tags stripped                 |
+  |    - Plain text: paragraph-aware splitting                       |
+  |    - Tagged as 'knowledge-base' (separate from code embeddings)  |
+  |    - External docs (RFCs, compliance, guidelines) can be added   |
+  |      via API or CLI (isdlc setup-knowledge)                      |
+  |                                                                  |
+  +------------------------------------------------------------------+
+      |
+      v
+  ALSO: session memory embeddings (after /isdlc analyze):
+  +------------------------------------------------------------------+
+  |  embedSession() fires async after roundtable completes           |
+  |    [lib/memory-embedder.js, triggered from isdlc.md:829]        |
+  |                                                                  |
+  |  Embeds enriched session records into:                           |
+  |    .isdlc/roundtable-memory.emb  (project-level vector store)   |
+  |    ~/.isdlc/user-memory/         (user-level vector store)       |
+  |                                                                  |
+  |  Enables semantic search over past team decisions:               |
+  |    "what did the team decide about authentication?"              |
+  |    --> retrieves relevant session records by meaning, not keyword|
+  |                                                                  |
+  |  Non-blocking: embedding failure does not stop the workflow      |
+  |  (fail-open, Article X)                                          |
+  +------------------------------------------------------------------+
       |
       v
   DISCOVERY COMPLETE. Project is ready for workflows.
