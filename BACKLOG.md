@@ -368,8 +368,8 @@
   - **Completed:** 2026-03-22
 - [x] #161 Quality loop team port to shared orchestration [github: GH-161] → `REQ-0097` -> [requirements](docs/requirements/REQ-0097-quality-loop-team-port/) **Completed**
   - **Completed:** 2026-03-22
-- #162 [ ] Debate team orchestration pattern [github: GH-162] → `REQ-0098` -> [requirements](docs/requirements/REQ-0098-debate-team-orchestration-pattern/) **Analyzed**
-  - Phase 5. Depends on REQ-0094. Creator → critic → refiner for requirements, architecture, design, test strategy.
+- [x] #162 Debate team orchestration pattern [github: GH-162] → `REQ-0098` -> [requirements](docs/requirements/REQ-0098-debate-team-orchestration-pattern/) **Completed**
+  - **Completed:** 2026-03-22
 - #178 [ ] Create src/providers/codex/ adapter [github: GH-178] → `REQ-0114`
   - Phase 8. Depends on REQ-0087, REQ-0094, REQ-0098. Runtime projection, instruction packaging, commands, teams.
 - #179 [ ] Codex installation and doctor paths [github: GH-179] → `REQ-0115`
@@ -479,6 +479,8 @@ Phase 9 (Verification)
 ## Completed
 
 ### 2026-03-22
+- [x] #162: Debate team orchestration pattern -> [requirements](docs/requirements/REQ-0098-debate-team-orchestration-pattern/) *(merged cf0bfc9)*
+  - **Completed:** 2026-03-22
 - [x] #159: Impact analysis team port to shared orchestration -> [requirements](docs/requirements/REQ-0095-impact-analysis-team-port/) *(merged ced9b67)*
   - **Completed:** 2026-03-22
 - [x] #160: Tracing team port to shared orchestration -> [requirements](docs/requirements/REQ-0096-tracing-team-port/) *(merged ced9b67)*
