@@ -308,8 +308,8 @@
   - Phase 0. Depends on REQ-0070. Disposition: **peer provider** (not shared backbone). 12 scripts rewire to core, 1 needs redesign, 1 absorbed, 1 template.
 - #139 [ ] Module system boundary decision [github: GH-139] → `REQ-0075-module-system-boundary-decision/` -> [requirements](docs/requirements/REQ-0075-module-system-boundary-decision/) **Analyzed**
   - Phase 0. **Decision: ESM core + thin CJS bridge** for Claude hooks. External consumers (Codex, Antigravity) via npm package. ADR-CODEX-006.
-- #152 [ ] Implement enforcement layering protocol [github: GH-152] → `REQ-0088-enforcement-layering-protocol/` -> [requirements](docs/requirements/REQ-0088-enforcement-layering-protocol/) **Analyzed**
-  - Phase 3. 5-layer model: core validates → hooks verify evidence. Hooks become verification wrappers.
+- [x] #152 Implement enforcement layering protocol [github: GH-152] → `REQ-0088-enforcement-layering-protocol/` -> [requirements](docs/requirements/REQ-0088-enforcement-layering-protocol/) **Completed**
+  - **Completed:** 2026-03-22
 - #154 [ ] Hook conversion — core validators to provider-neutral modules [github: GH-154] → `REQ-0090`
   - Phase 3. Depends on REQ-0081, REQ-0087. gate-blocker, constitution-validator, phase-sequence-guard, test-watcher, etc.
 - #155 [ ] Hook conversion — workflow guards to engine rules [github: GH-155] → `REQ-0091`
@@ -349,8 +349,8 @@
   - **Completed:** 2026-03-21
 - #190 [ ] Skill injection planner [github: GH-190] → `REQ-0126`
   - Phase 4. Depends on REQ-0094, REQ-0084. Provider-neutral injection by workflow/phase/role/skills/precedence.
-- #191 [ ] Provider routing shared service [github: GH-191] → `REQ-0127-provider-routing-shared-service/` -> [requirements](docs/requirements/REQ-0127-provider-routing-shared-service/) **Analyzed**
-  - Phase 3. Extract ~23 functions from provider-utils.cjs (964 lines) into src/core/providers/.
+- [x] #191 Provider routing shared service [github: GH-191] → `REQ-0127-provider-routing-shared-service/` -> [requirements](docs/requirements/REQ-0127-provider-routing-shared-service/) **Completed**
+  - **Completed:** 2026-03-22
 
 **Workstream C — Provider Adapters**
 
@@ -358,8 +358,8 @@
   - **Completed:** 2026-03-21
 - [x] #142 Codex adapter for implementation loop slice [github: GH-142] → `REQ-0078-codex-adapter-implementation-loop/` -> [requirements](docs/requirements/REQ-0078-codex-adapter-implementation-loop/) **Completed**
   - **Completed:** 2026-03-21
-- #151 [ ] Create src/providers/claude/ adapter boundary [github: GH-151] → `REQ-0087-claude-adapter-boundary/` -> [requirements](docs/requirements/REQ-0087-claude-adapter-boundary/) **Analyzed**
-  - Phase 3. Create src/providers/claude/ with adapter-specific logic wrapping core services.
+- [x] #151 Create src/providers/claude/ adapter boundary [github: GH-151] → `REQ-0087-claude-adapter-boundary/` -> [requirements](docs/requirements/REQ-0087-claude-adapter-boundary/) **Completed**
+  - **Completed:** 2026-03-22
 - #153 [ ] Provider-aware installer/updater/doctor/uninstaller [github: GH-153] → `REQ-0089`
   - Phase 3. Depends on REQ-0087. Shared .isdlc/ setup + provider-specific adapter assets.
 - #159 [ ] Impact analysis team port to shared orchestration [github: GH-159] → `REQ-0095`
@@ -479,6 +479,12 @@ Phase 9 (Verification)
 ## Completed
 
 ### 2026-03-22
+- [x] #151: Create src/providers/claude/ adapter boundary — adapter-specific logic wrapping core services. -> [requirements](docs/requirements/REQ-0087-claude-adapter-boundary/) *(merged 43d4d09)*
+  - **Completed:** 2026-03-22
+- [x] #152: Implement enforcement layering protocol — 5-layer model, core validates, hooks verify evidence. -> [requirements](docs/requirements/REQ-0088-enforcement-layering-protocol/) *(merged 43d4d09)*
+  - **Completed:** 2026-03-22
+- [x] #191: Provider routing shared service — extract ~23 functions from provider-utils.cjs into src/core/providers/. -> [requirements](docs/requirements/REQ-0127-provider-routing-shared-service/) *(merged 43d4d09)*
+  - **Completed:** 2026-03-22
 - [x] #148: Extract search and memory service boundaries — src/core/search/ and src/core/memory/ service objects with bridge loaders. -> [requirements](docs/requirements/REQ-0084-extract-search-memory-boundaries/) *(merged ecc942b)*
   - **Completed:** 2026-03-22
 - [x] #149: Decompose common.cjs — wire bridge delegates for validators, workflow, backlog to core modules. -> [requirements](docs/requirements/REQ-0085-decompose-common-cjs/) *(merged ecc942b)*
