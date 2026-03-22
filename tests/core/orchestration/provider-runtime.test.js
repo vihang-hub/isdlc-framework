@@ -274,20 +274,12 @@ describe('FR-007: createProviderRuntime()', () => {
     );
   });
 
-  // PR-24: Known provider with no module throws with helpful message
-  it('PR-24: known provider with no runtime module throws helpful error (AC-007-01)', async () => {
-    // No provider runtime.js files exist yet, so all known providers will fail import
-    await assert.rejects(
-      () => createProviderRuntime('claude', {}),
-      (err) => {
-        assert.ok(err instanceof Error);
-        assert.ok(
-          err.message.includes('ERR-RUNTIME-001') || err.message.includes('runtime'),
-          'Error should mention runtime loading failure'
-        );
-        return true;
-      }
-    );
+  // PR-24: Known provider with runtime module loads successfully
+  it('PR-24: known provider with runtime module loads and validates (AC-007-01)', async () => {
+    // claude runtime.js now exists (REQ-0134), so createProviderRuntime succeeds
+    const runtime = await createProviderRuntime('claude', {});
+    assert.ok(runtime, 'Should return a runtime object');
+    assert.strictEqual(typeof runtime.executeTask, 'function');
   });
 
   // PR-25: Error code is ERR-RUNTIME-001 for unknown provider
