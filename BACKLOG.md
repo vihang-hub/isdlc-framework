@@ -476,9 +476,9 @@ Phase 10 (Provider-Neutral Orchestration)
   - **Completed:** 2026-03-22
 - [x] #199 Provider-neutral analyze orchestrator [github: GH-199] → `REQ-0133` -> [requirements](docs/requirements/REQ-0133-analyze-orchestrator-core/) **Completed**
   - **Completed:** 2026-03-22
-- #200 [ ] Claude ProviderRuntime adapter [github: GH-200] → `REQ-0134`
+- #200 [ ] Claude ProviderRuntime adapter [github: GH-200] → `REQ-0134` -> [requirements](docs/requirements/REQ-0134-claude-runtime-adapter/) **Analyzed**
   - Phase 10. Depends on REQ-0128. Task tool + agent .md delegation.
-- #201 [ ] Codex ProviderRuntime adapter [github: GH-201] → `REQ-0135`
+- #201 [ ] Codex ProviderRuntime adapter [github: GH-201] → `REQ-0135` -> [requirements](docs/requirements/REQ-0135-codex-runtime-adapter/) **Analyzed**
   - Phase 10. Depends on REQ-0128. codex exec + instruction prompts.
 - #202 [ ] Provider instruction generation [github: GH-202] → `REQ-0136`
   - Phase 10. Depends on REQ-0128. CLAUDE.md / CODEX.md / .cursorrules / .windsurfrules generation.

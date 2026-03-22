@@ -1,0 +1,10 @@
+{
+  "id": "REQ-0135",
+  "slug": "REQ-0135-codex-runtime-adapter",
+  "status": "analyzed",
+  "source": "github",
+  "source_id": "GH-201",
+  "codebase_hash": "70ee68a",
+  "acceptance": "2026-03-23T00:00:00.000Z",
+  "analysis_status": "complete"
+}
