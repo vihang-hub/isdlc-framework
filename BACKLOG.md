@@ -385,13 +385,13 @@
   - Phase 0. **Decision: separate subsystem** (not WorkflowEngine). Analyze uses meta.json, build uses state.json — parallel execution preserved. ADR-CODEX-005. **Unblocks Phases 6-7.**
 - #138 [ ] Content audit sizing confirmation [github: GH-138] → `REQ-0074-content-audit-sizing-confirmation/` -> [requirements](docs/requirements/REQ-0074-content-audit-sizing-confirmation/) **Analyzed**
   - Phase 0. **Actual: 325 files / 2.1 MB** (larger than estimated). 81% medium-effort templated work (skills + structured agents). Hard work in ~23 files (discover, commands, orchestrators).
-- #163 [ ] Agent content decomposition — RoleSpec + RuntimePackaging [github: GH-163] → `REQ-0099`
+- #163 [ ] Agent content decomposition — RoleSpec + RuntimePackaging [github: GH-163] → `REQ-0099` -> [requirements](docs/requirements/REQ-0099-agent-content-decomposition/) **Analyzed**
   - Phase 5. Depends on REQ-0074. Split 48 agent files into provider-neutral role specs + provider packaging.
-- #164 [ ] Skill content audit and decomposition [github: GH-164] → `REQ-0100`
+- #164 [ ] Skill content audit and decomposition [github: GH-164] → `REQ-0100` -> [requirements](docs/requirements/REQ-0100-skill-content-audit/) **Analyzed**
   - Phase 5. Depends on REQ-0074. ~240 SKILL.md files: metadata (portable) vs instruction content (needs audit).
-- #165 [ ] Command system decomposition [github: GH-165] → `REQ-0101`
+- #165 [ ] Command system decomposition [github: GH-165] → `REQ-0101` -> [requirements](docs/requirements/REQ-0101-command-system-decomposition/) **Analyzed**
   - Phase 5. Depends on REQ-0074. isdlc.md is a major workstream. Shared semantics vs provider packaging.
-- #166 [ ] Topic content classification [github: GH-166] → `REQ-0102`
+- #166 [ ] Topic content classification [github: GH-166] → `REQ-0102` -> [requirements](docs/requirements/REQ-0102-topic-content-classification/) **Analyzed**
   - Phase 5. Depends on REQ-0074. Topics have analytical knowledge and depth guidance, not just metadata.
 
 **Workstream E — Discover & Analyze**
