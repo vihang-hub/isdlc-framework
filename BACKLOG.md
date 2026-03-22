@@ -476,10 +476,10 @@ Phase 10 (Provider-Neutral Orchestration)
   - **Completed:** 2026-03-22
 - [x] #199 Provider-neutral analyze orchestrator [github: GH-199] → `REQ-0133` -> [requirements](docs/requirements/REQ-0133-analyze-orchestrator-core/) **Completed**
   - **Completed:** 2026-03-22
-- #200 [ ] Claude ProviderRuntime adapter [github: GH-200] → `REQ-0134` -> [requirements](docs/requirements/REQ-0134-claude-runtime-adapter/) **Analyzed**
-  - Phase 10. Depends on REQ-0128. Task tool + agent .md delegation.
-- #201 [ ] Codex ProviderRuntime adapter [github: GH-201] → `REQ-0135` -> [requirements](docs/requirements/REQ-0135-codex-runtime-adapter/) **Analyzed**
-  - Phase 10. Depends on REQ-0128. codex exec + instruction prompts.
+- [x] #200 Claude ProviderRuntime adapter [github: GH-200] → `REQ-0134` -> [requirements](docs/requirements/REQ-0134-claude-runtime-adapter/) **Completed**
+  - **Completed:** 2026-03-22
+- [x] #201 Codex ProviderRuntime adapter [github: GH-201] → `REQ-0135` -> [requirements](docs/requirements/REQ-0135-codex-runtime-adapter/) **Completed**
+  - **Completed:** 2026-03-22
 - #202 [ ] Provider instruction generation [github: GH-202] → `REQ-0136`
   - Phase 10. Depends on REQ-0128. CLAUDE.md / CODEX.md / .cursorrules / .windsurfrules generation.
 - #203 [ ] Unified CLI with provider auto-detection [github: GH-203] → `REQ-0137`
@@ -488,6 +488,10 @@ Phase 10 (Provider-Neutral Orchestration)
 ## Completed
 
 ### 2026-03-22
+- [x] #200: Claude ProviderRuntime adapter -> [requirements](docs/requirements/REQ-0134-claude-runtime-adapter/) *(merged 3557a07)*
+  - **Completed:** 2026-03-22
+- [x] #201: Codex ProviderRuntime adapter -> [requirements](docs/requirements/REQ-0135-codex-runtime-adapter/) *(merged 3557a07)*
+  - **Completed:** 2026-03-22
 - [x] #195: Provider-neutral phase-loop orchestrator -> [requirements](docs/requirements/REQ-0129-phase-loop-orchestrator/) *(merged 1af5f13)*
   - **Completed:** 2026-03-22
 - [x] #196: Provider-neutral fan-out orchestrator -> [requirements](docs/requirements/REQ-0130-fan-out-orchestrator/) *(merged 1af5f13)*
