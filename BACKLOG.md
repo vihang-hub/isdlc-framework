@@ -393,17 +393,17 @@
 - #169 [x] Discover state/resume implementation [github: GH-169] → `REQ-0105` -> [requirements](docs/requirements/REQ-0105-discover-state-resume/) *(merged e16e18b)*
 - #170 [x] Project skill distillation preservation [github: GH-170] → `REQ-0106` -> [requirements](docs/requirements/REQ-0106-project-skill-distillation/) *(merged e16e18b)*
 - #171 [x] Discover cache and projection refresh [github: GH-171] → `REQ-0107` -> [requirements](docs/requirements/REQ-0107-discover-cache-projection/) *(merged e16e18b)*
-- #172 [ ] Analyze lifecycle implementation [github: GH-172] → `REQ-0108`
+- #172 [ ] Analyze lifecycle implementation [github: GH-172] → `REQ-0108` -> [requirements](docs/requirements/REQ-0108-analyze-lifecycle/) **Analyzed**
   - Phase 7. Depends on REQ-0073, REQ-0082, REQ-0083, REQ-0085. Entry routing, bug-gather/roundtable split, 6-way prefetch.
-- #173 [ ] Roundtable confirmation state machine [github: GH-173] → `REQ-0109`
+- #173 [ ] Roundtable confirmation state machine [github: GH-173] → `REQ-0109` -> [requirements](docs/requirements/REQ-0109-roundtable-state-machine/) **Analyzed**
   - Phase 7. Depends on REQ-0108. Accept/amend transitions, tier-dependent paths, completion protocol.
-- #174 [ ] Artifact readiness and write strategy [github: GH-174] → `REQ-0110`
+- #174 [ ] Artifact readiness and write strategy [github: GH-174] → `REQ-0110` -> [requirements](docs/requirements/REQ-0110-artifact-readiness/) **Analyzed**
   - Phase 7. Depends on REQ-0108. Readiness thresholds, topic dependencies, write-once batch + meta.json checkpoints.
-- #175 [ ] Memory layering — user/project/session [github: GH-175] → `REQ-0111`
+- #175 [ ] Memory layering — user/project/session [github: GH-175] → `REQ-0111` -> [requirements](docs/requirements/REQ-0111-memory-layering/) **Analyzed**
   - Phase 7. Depends on REQ-0084, REQ-0108. 3-layer model, dual-path search, weighting/decay, writeSessionRecord().
-- #176 [ ] Analyze finalization path [github: GH-176] → `REQ-0112`
+- #176 [ ] Analyze finalization path [github: GH-176] → `REQ-0112` -> [requirements](docs/requirements/REQ-0112-analyze-finalization/) **Analyzed**
   - Phase 7. Depends on REQ-0108, REQ-0083, REQ-0111. meta.json + BACKLOG.md + issue sync + memory + async enrichment chain.
-- #177 [ ] Inference tracking and depth sensing [github: GH-177] → `REQ-0113`
+- #177 [ ] Inference tracking and depth sensing [github: GH-177] → `REQ-0113` -> [requirements](docs/requirements/REQ-0113-inference-depth-sensing/) **Analyzed**
   - Phase 7. Depends on REQ-0108, REQ-0111. Assumptions, confidence, memory-backed depth, coverage guardrails.
 
 **Workstream F — Verification**
