@@ -466,16 +466,16 @@ Phase 10 (Provider-Neutral Orchestration)
 
 - [x] #194 ProviderRuntime interface contract [github: GH-194] → `REQ-0128` -> [requirements](docs/requirements/REQ-0128-provider-runtime-interface/) **Completed**
   - **Completed:** 2026-03-22
-- #195 [ ] Provider-neutral phase-loop orchestrator [github: GH-195] → `REQ-0129` -> [requirements](docs/requirements/REQ-0129-phase-loop-orchestrator/) **Analyzed**
-  - Phase 10. Depends on REQ-0128. Extracts Phase-Loop Controller from isdlc.md into core.
-- #196 [ ] Provider-neutral fan-out orchestrator [github: GH-196] → `REQ-0130` -> [requirements](docs/requirements/REQ-0130-fan-out-orchestrator/) **Analyzed**
-  - Phase 10. Depends on REQ-0128. Parallel sub-agent dispatch with merge policy.
-- #197 [ ] Provider-neutral dual-track orchestrator [github: GH-197] → `REQ-0131` -> [requirements](docs/requirements/REQ-0131-dual-track-orchestrator/) **Analyzed**
-  - Phase 10. Depends on REQ-0128. Track A/B parallel with retry.
-- #198 [ ] Provider-neutral discover orchestrator [github: GH-198] → `REQ-0132` -> [requirements](docs/requirements/REQ-0132-discover-orchestrator-core/) **Analyzed**
-  - Phase 10. Depends on REQ-0128. Discover flow: mode → steps → agents → state.
-- #199 [ ] Provider-neutral analyze orchestrator [github: GH-199] → `REQ-0133` -> [requirements](docs/requirements/REQ-0133-analyze-orchestrator-core/) **Analyzed**
-  - Phase 10. Depends on REQ-0128. Analyze flow: routing → roundtable → confirmation → finalization.
+- [x] #195 Provider-neutral phase-loop orchestrator [github: GH-195] → `REQ-0129` -> [requirements](docs/requirements/REQ-0129-phase-loop-orchestrator/) **Completed**
+  - **Completed:** 2026-03-22
+- [x] #196 Provider-neutral fan-out orchestrator [github: GH-196] → `REQ-0130` -> [requirements](docs/requirements/REQ-0130-fan-out-orchestrator/) **Completed**
+  - **Completed:** 2026-03-22
+- [x] #197 Provider-neutral dual-track orchestrator [github: GH-197] → `REQ-0131` -> [requirements](docs/requirements/REQ-0131-dual-track-orchestrator/) **Completed**
+  - **Completed:** 2026-03-22
+- [x] #198 Provider-neutral discover orchestrator [github: GH-198] → `REQ-0132` -> [requirements](docs/requirements/REQ-0132-discover-orchestrator-core/) **Completed**
+  - **Completed:** 2026-03-22
+- [x] #199 Provider-neutral analyze orchestrator [github: GH-199] → `REQ-0133` -> [requirements](docs/requirements/REQ-0133-analyze-orchestrator-core/) **Completed**
+  - **Completed:** 2026-03-22
 - #200 [ ] Claude ProviderRuntime adapter [github: GH-200] → `REQ-0134`
   - Phase 10. Depends on REQ-0128. Task tool + agent .md delegation.
 - #201 [ ] Codex ProviderRuntime adapter [github: GH-201] → `REQ-0135`
@@ -488,6 +488,16 @@ Phase 10 (Provider-Neutral Orchestration)
 ## Completed
 
 ### 2026-03-22
+- [x] #195: Provider-neutral phase-loop orchestrator -> [requirements](docs/requirements/REQ-0129-phase-loop-orchestrator/) *(merged 1af5f13)*
+  - **Completed:** 2026-03-22
+- [x] #196: Provider-neutral fan-out orchestrator -> [requirements](docs/requirements/REQ-0130-fan-out-orchestrator/) *(merged 1af5f13)*
+  - **Completed:** 2026-03-22
+- [x] #197: Provider-neutral dual-track orchestrator -> [requirements](docs/requirements/REQ-0131-dual-track-orchestrator/) *(merged 1af5f13)*
+  - **Completed:** 2026-03-22
+- [x] #198: Provider-neutral discover orchestrator -> [requirements](docs/requirements/REQ-0132-discover-orchestrator-core/) *(merged 1af5f13)*
+  - **Completed:** 2026-03-22
+- [x] #199: Provider-neutral analyze orchestrator -> [requirements](docs/requirements/REQ-0133-analyze-orchestrator-core/) *(merged 1af5f13)*
+  - **Completed:** 2026-03-22
 - [x] #194: ProviderRuntime interface contract -> [requirements](docs/requirements/REQ-0128-provider-runtime-interface/) *(merged b3b02d2)*
   - **Completed:** 2026-03-22
 - [x] #182: Parity verification suite -> [requirements](docs/requirements/REQ-0118-parity-verification/) *(merged 00eade8)*
