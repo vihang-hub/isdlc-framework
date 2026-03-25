@@ -22,7 +22,13 @@
   "codebase_hash": "923985b",
   "acceptance": {
     "accepted_at": "2026-03-24T13:30:00.000Z",
-    "domains": ["requirements", "architecture", "design"],
+    "domains": [
+      "requirements",
+      "architecture",
+      "design"
+    ],
     "amendment_cycles": 0
-  }
+  },
+  "build_started_at": "2026-03-25T00:02:28.902Z",
+  "workflow_type": "feature"
 }
