@@ -178,7 +178,7 @@ Since the original analysis, the framework now supports multiple execution provi
 | FR-001 | Enriched CLI output | Must Have | Default experience for all users, no dependencies |
 | FR-002 | Live browser dashboard | Must Have | Core visual feature, primary differentiator |
 | FR-003 | Status inline | Must Have | Historical review without browser |
-| FR-004 | Status visual | Should Have | Depends on FR-002 infrastructure |
+| FR-004 | Status visual | Must Have | Browser-based historical review is essential for complex workflow analysis; FR-002 infrastructure is shared |
 | FR-005 | Sub-agent visibility | Must Have | Key user requirement -- phase-level alone isn't enough |
 | FR-006 | State tracking | Must Have | Data foundation for FR-001 through FR-005 |
 | FR-007 | Provider attribution | Must Have | Multi-provider architecture requires knowing which provider ran each phase |

@@ -46,7 +46,16 @@ You MUST classify the user's intent into one of the categories below before resp
 - User says: "Run the test suite and see what breaks" -- Intent: **Test run** -- Command: `/isdlc test run`
 - User says: "We need unit tests for the auth module" -- Intent: **Test generate** -- Command: `/isdlc test generate`
 
-**Disambiguation**: If the user's intent could match both Add and Analyze (e.g., "add and analyze this"), resolve to **Analyze** -- the analyze verb implicitly runs add first if the item does not yet exist. If the intent could match both Analyze and Build (e.g., "let's work on this"), resolve to **Build** -- build encompasses the full workflow. If uncertain, ask the user a brief clarifying question.
+#### Reserved Workflow Verbs
+
+Add, Analyze, and Build are **reserved workflow verbs**. When detected in imperative context, they MUST route to their mapped command before any other work. Do not perform freeform analysis, implementation, or backlog management without first resolving the workflow verb.
+
+**Disambiguation (precedence-based)**: When multiple reserved verbs match, apply these rules:
+- Add + Analyze --> resolve to **Analyze** (precedence 2 wins over 3) -- analyze implicitly runs add first if the item does not yet exist
+- Analyze + Build --> resolve to **Build** (precedence 1 wins over 2) -- build encompasses the full workflow
+- Add + Build --> resolve to **Build** (precedence 1 wins over 3)
+- Add + Analyze + Build --> resolve to **Build** (lowest precedence number wins)
+- If uncertain, ask the user a brief clarifying question
 
 ### Step 2 -- Get Consent
 

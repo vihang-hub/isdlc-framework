@@ -11,6 +11,7 @@
 - [x] #126 CodeBERT embedding non-functional — stub tokenizer, missing model download, handler not wired [github: GH-126] → `BUG-0056-codebert-embedding-non-functional-stub-tokenize/` -> [requirements](docs/requirements/BUG-0056-codebert-embedding-non-functional-stub-tokenize/) **Completed**
   - **Completed:** 2026-03-21
 - [A] #128 Execution observability — surface workflow trace as structured report [github: GH-128] → `REQ-0068-execution-observability-workflow-trace-report/` -> [requirements](docs/requirements/REQ-0068-execution-observability-workflow-trace-report/)
+  - **Re-analyzed:** 2026-03-25 (1 amendment cycle: FR-004 priority escalated to Must Have)
 - [x] #127 Blast radius validator fails-open when coverage artifact missing [github: GH-127] → `BUG-0055-blast-radius-validator-fails-open-when-coverage-ar/` -> [requirements](docs/requirements/BUG-0055-blast-radius-validator-fails-open-when-coverage-ar/) **Completed**
   - **Completed:** 2026-03-21
 - [x] Configurable session cache token budget — replace hardcoded limits with project-configurable token budget up to 200-300K tokens → `REQ-0067-configurable-session-cache-token-budget/` -> [requirements](docs/requirements/REQ-0067-configurable-session-cache-token-budget/) **Completed**

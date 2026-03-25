@@ -8,10 +8,13 @@
  * the Codex instruction projection service (projection.js) to build
  * per-task instruction bundles.
  *
- * Requirements: FR-001..FR-007
- * Source: GitHub #198 (REQ-0135)
+ * REQ-0139: Adds applyVerbGuard() for runtime-mode verb routing enforcement.
+ *
+ * Requirements: FR-001..FR-007 (REQ-0135), FR-003/FR-004 (REQ-0139)
+ * Source: GitHub #198 (REQ-0135), GitHub #205 (REQ-0139)
  * Interface: src/core/orchestration/provider-runtime.js
- * Dependencies: src/providers/codex/projection.js (projectInstructions)
+ * Dependencies: src/providers/codex/projection.js (projectInstructions),
+ *               src/providers/codex/verb-resolver.js (resolveVerb)
  *
  * @module src/providers/codex/runtime
  */
@@ -19,6 +22,7 @@
 import { execSync as nodeExecSync, execFile as nodeExecFile, spawn as nodeSpawn } from 'node:child_process';
 import * as nodeReadline from 'node:readline';
 import { projectInstructions as coreProjectInstructions } from './projection.js';
+import { resolveVerb } from './verb-resolver.js';
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -106,6 +110,58 @@ function parseOutput(stdout) {
 function formatChoicesPrompt(prompt, choices) {
   const numbered = choices.map((c, i) => `  ${i + 1}. ${c}`).join('\n');
   return `${prompt}\n${numbered}\n> `;
+}
+
+// ---------------------------------------------------------------------------
+// FR-003 (REQ-0139): Runtime Verb Guard
+// ---------------------------------------------------------------------------
+
+/**
+ * Apply verb guard to a user prompt based on config mode.
+ *
+ * When verb_routing === "runtime" and a verb is detected, prepends a
+ * structured RESERVED_VERB_ROUTING preamble to the prompt. Otherwise
+ * returns the prompt unmodified (fail-open, Article X).
+ *
+ * @param {string} prompt - Raw user prompt
+ * @param {Object} config - Parsed .isdlc/config.json
+ * @param {Object|null} stateJson - Parsed .isdlc/state.json (for active workflow check)
+ * @returns {{ modifiedPrompt: string, verbResult: Object }}
+ */
+export function applyVerbGuard(prompt, config, stateJson) {
+  // Default: prompt mode — return unmodified
+  if (!config || config.verb_routing !== 'runtime') {
+    return { modifiedPrompt: prompt, verbResult: { detected: false } };
+  }
+
+  // Resolve verb from prompt
+  const verbResult = resolveVerb(prompt, {
+    activeWorkflow: !!(stateJson && stateJson.active_workflow),
+    isSlashCommand: typeof prompt === 'string' && prompt.startsWith('/')
+  });
+
+  // If no verb detected, return unmodified
+  if (!verbResult.detected) {
+    return { modifiedPrompt: prompt, verbResult };
+  }
+
+  // Build structured preamble
+  const preamble = [
+    'RESERVED_VERB_ROUTING:',
+    `  detected: true`,
+    `  verb: "${verbResult.verb}"`,
+    `  command: "${verbResult.command}"`,
+    `  confirmation_required: true`,
+    `  ambiguity: ${verbResult.ambiguity}`,
+    `  ambiguous_verbs: [${verbResult.ambiguous_verbs.map(v => `"${v}"`).join(', ')}]`,
+    `  source_phrase: "${verbResult.source_phrase}"`,
+    `  blocked_by: ${verbResult.blocked_by ? `"${verbResult.blocked_by}"` : 'null'}`
+  ].join('\n');
+
+  return {
+    modifiedPrompt: `${preamble}\n\n${prompt}`,
+    verbResult
+  };
 }
 
 // ---------------------------------------------------------------------------

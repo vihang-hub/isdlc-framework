@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "verbs": {
+    "add": {
+      "command": "/isdlc add",
+      "phrases": ["add to backlog", "track this", "log this", "remember this", "save this idea", "note this down", "add"],
+      "imperative_forms": ["add this", "add it"],
+      "precedence": 3
+    },
+    "analyze": {
+      "command": "/isdlc analyze",
+      "phrases": ["analyze", "think through", "plan this", "review requirements", "assess impact", "design this", "prepare"],
+      "imperative_forms": ["analyze it", "analyze this"],
+      "precedence": 2
+    },
+    "build": {
+      "command": "/isdlc build",
+      "phrases": ["build", "implement", "create", "code", "develop", "ship", "make this", "let's do this", "refactor", "redesign"],
+      "imperative_forms": ["build this", "build it", "implement this", "implement it", "code this", "ship it"],
+      "precedence": 1
+    }
+  },
+  "disambiguation": {
+    "add+analyze": "analyze",
+    "analyze+build": "build",
+    "add+build": "build",
+    "add+analyze+build": "build"
+  },
+  "exclusions": [
+    "explain", "what does", "help me understand", "how does",
+    "show me", "describe", "tell me about", "what is"
+  ]
+}

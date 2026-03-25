@@ -153,6 +153,28 @@ The `/discover` command uses 23 specialized sub-agents to analyze projects befor
 
 ---
 
+## Reserved Verb Routing (REQ-0139)
+
+Add, Analyze, and Build are **reserved workflow verbs**. When detected in imperative context, they MUST route to their mapped command before any other work. Do not perform freeform analysis, implementation, or backlog management without first resolving the workflow verb.
+
+| Verb | Signal Phrases | Command |
+|------|---------------|---------|
+| **Add** | add to backlog, track this, log this, remember this, save this idea, note this down | `/isdlc add` |
+| **Analyze** | analyze, think through, plan this, review requirements, assess impact, design this, prepare | `/isdlc analyze` |
+| **Build** | build, implement, create, code, develop, ship, make this, let's do this, refactor, redesign | `/isdlc build` |
+
+**Disambiguation (precedence-based)**:
+- Add + Analyze --> **Analyze** (precedence 2 wins over 3)
+- Analyze + Build --> **Build** (precedence 1 wins over 2)
+- Add + Build --> **Build** (precedence 1 wins over 3)
+- Add + Analyze + Build --> **Build** (lowest precedence number wins)
+
+**Exclusions**: Non-development phrases (explain, what does, help me understand, how does, show me, describe, tell me about, what is) skip verb detection entirely.
+
+**Canonical spec**: `src/isdlc/config/reserved-verbs.json`
+
+---
+
 ## Development Phases
 
 The framework implements a workflow with quality gates between each phase.

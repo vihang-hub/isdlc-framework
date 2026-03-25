@@ -1,11 +1,13 @@
 /**
  * Codex Adapter — Projection
  * ============================
- * Codex instruction projection management (REQ-0114, REQ-0116, REQ-0138).
+ * Codex instruction projection management (REQ-0114, REQ-0116, REQ-0138, REQ-0139).
  *
  * Manages provider configuration, instruction directory paths, and
  * the instruction projection service that assembles core models into
  * a Codex-compatible markdown instruction bundle.
+ *
+ * REQ-0139: Adds buildVerbRoutingSection() for reserved verb routing.
  *
  * @module src/providers/codex/projection
  */
@@ -79,6 +81,74 @@ export function parseCacheSections(content) {
 
 /** Sections to inject from session cache (REQ-0138 FR-007) */
 const CACHE_SECTIONS_TO_INJECT = ['CONSTITUTION', 'WORKFLOW_CONFIG', 'SKILL_INDEX', 'ITERATION_REQUIREMENTS'];
+
+// ---------------------------------------------------------------------------
+// FR-002 (REQ-0139): Verb Routing Section Builder
+// ---------------------------------------------------------------------------
+
+/**
+ * Build the verb routing markdown section from the verb spec.
+ * Generates a RESERVED VERBS section with intent table, disambiguation
+ * rules, and MUST-route language for injection into instruction bundles.
+ *
+ * Fail-safe: returns empty string for null/undefined/empty spec (Article X).
+ *
+ * @param {Object|null} verbSpec - Parsed verb spec from reserved-verbs.json
+ * @returns {string} Markdown section content, or '' if spec is invalid
+ */
+export function buildVerbRoutingSection(verbSpec) {
+  if (!verbSpec || typeof verbSpec !== 'object' || !verbSpec.verbs || Object.keys(verbSpec.verbs).length === 0) {
+    return '';
+  }
+
+  const lines = [];
+
+  // Header
+  lines.push('## RESERVED VERBS');
+  lines.push('');
+  lines.push('Add, Analyze, and Build are **reserved workflow verbs**. When detected in imperative context, they MUST route to their mapped command before any other work. Do not perform freeform analysis, implementation, or backlog management without first resolving the workflow verb.');
+  lines.push('');
+
+  // Intent table
+  lines.push('| Verb | Signal Phrases | Command | Precedence |');
+  lines.push('|------|---------------|---------|------------|');
+
+  // Sort verbs by precedence ascending (highest priority first)
+  const sortedVerbs = Object.entries(verbSpec.verbs)
+    .sort(([, a], [, b]) => a.precedence - b.precedence);
+
+  for (const [verbName, verbDef] of sortedVerbs) {
+    const phrases = [...(verbDef.phrases || []), ...(verbDef.imperative_forms || [])].join(', ');
+    lines.push(`| **${verbName}** | ${phrases} | \`${verbDef.command}\` | ${verbDef.precedence} |`);
+  }
+
+  lines.push('');
+
+  // Disambiguation rules
+  if (verbSpec.disambiguation && Object.keys(verbSpec.disambiguation).length > 0) {
+    lines.push('### Disambiguation');
+    lines.push('');
+    lines.push('When multiple verbs match, the following precedence rules apply:');
+    lines.push('');
+    for (const [key, resolved] of Object.entries(verbSpec.disambiguation)) {
+      const verbs = key.split('+').join(' + ');
+      lines.push(`- ${verbs} --> **${resolved}**`);
+    }
+    lines.push('');
+  }
+
+  // Exclusions
+  if (verbSpec.exclusions && verbSpec.exclusions.length > 0) {
+    lines.push('### Exclusions');
+    lines.push('');
+    lines.push('The following patterns indicate non-development context and skip verb detection:');
+    lines.push('');
+    lines.push(verbSpec.exclusions.map(e => `\`${e}\``).join(', '));
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
 
 // ---------------------------------------------------------------------------
 // FR-001 (REQ-0116): Instruction Projection Service
