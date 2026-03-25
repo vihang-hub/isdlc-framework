@@ -6,8 +6,8 @@
 ## Open
 - [ ] #207 Mandatory web research enforcement in roundtable analysis — wire research: true flag [github: GH-207]
 - [ ] #208 Generate structured task breakdown artifact from analysis before build [github: GH-208]
-- [A] #206 Conversational enforcement via Stop hook — bulleted format, three-domain confirmation, roundtable skip [github: GH-206] → `REQ-0140-conversational-enforcement-stop-hook/` -> [requirements](docs/requirements/REQ-0140-conversational-enforcement-stop-hook/)
-  - **Analyzed:** 2026-03-25 (2 amendment cycles: FR-002 priority escalation, AD-07 sidecar file for roundtable state)
+- [x] #206 Conversational enforcement via Stop hook — bulleted format, three-domain confirmation, roundtable skip [github: GH-206] → `REQ-0140-conversational-enforcement-stop-hook/` -> [requirements](docs/requirements/REQ-0140-conversational-enforcement-stop-hook/) **Completed**
+  - **Completed:** 2026-03-25
 - [ ] #133 Memory infrastructure scale-out — HNSW indexing, remote vector store, incremental indexing [github: GH-133] → `REQ-0069-memory-infrastructure-scale-out-hnsw-indexing-r/` -> [requirements](docs/requirements/REQ-0069-memory-infrastructure-scale-out-hnsw-indexing-r/)
   - Depends on REQ-0064, REQ-0066, BUG-0056. Not urgent for dogfooding; critical for enterprise adoption.
 - [x] #126 CodeBERT embedding non-functional — stub tokenizer, missing model download, handler not wired [github: GH-126] → `BUG-0056-codebert-embedding-non-functional-stub-tokenize/` -> [requirements](docs/requirements/BUG-0056-codebert-embedding-non-functional-stub-tokenize/) **Completed**
@@ -493,6 +493,8 @@ Phase 10 (Provider-Neutral Orchestration)
 ## Completed
 
 ### 2026-03-25
+- [x] #206: Conversational enforcement via Stop hook -> [requirements](docs/requirements/REQ-0140-conversational-enforcement-stop-hook/) *(merged f533427)*
+  - **Completed:** 2026-03-25
 - [x] #205: Codex reserved verb routing for Add, Analyze, and Build -> [requirements](docs/requirements/REQ-0139-codex-reserved-verb-routing/) *(merged 1c5c086)*
   - **Completed:** 2026-03-25
 
