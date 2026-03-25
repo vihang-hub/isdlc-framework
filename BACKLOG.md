@@ -4,7 +4,8 @@
 > BACKLOG.md is the curated working set with detailed specs. GitHub Issues are for tracking.
 
 ## Open
-- [A] #205 Codex reserved verb routing for Add, Analyze, and Build [github: GH-205] → `REQ-0139-codex-reserved-verb-routing/` -> [requirements](docs/requirements/REQ-0139-codex-reserved-verb-routing/)
+- [ ] #207 Mandatory web research enforcement in roundtable analysis — wire research: true flag [github: GH-207]
+- [ ] #208 Generate structured task breakdown artifact from analysis before build [github: GH-208]
 - [ ] #206 Conversational enforcement via Stop hook — bulleted format, three-domain confirmation, roundtable skip [github: GH-206]
 - [ ] #133 Memory infrastructure scale-out — HNSW indexing, remote vector store, incremental indexing [github: GH-133] → `REQ-0069-memory-infrastructure-scale-out-hnsw-indexing-r/` -> [requirements](docs/requirements/REQ-0069-memory-infrastructure-scale-out-hnsw-indexing-r/)
   - Depends on REQ-0064, REQ-0066, BUG-0056. Not urgent for dogfooding; critical for enterprise adoption.
@@ -489,6 +490,10 @@ Phase 10 (Provider-Neutral Orchestration)
   - **Completed:** 2026-03-22
 
 ## Completed
+
+### 2026-03-25
+- [x] #205: Codex reserved verb routing for Add, Analyze, and Build -> [requirements](docs/requirements/REQ-0139-codex-reserved-verb-routing/) *(merged 1c5c086)*
+  - **Completed:** 2026-03-25
 
 ### 2026-03-22
 - [x] #202: Provider instruction generation -> [requirements](docs/requirements/REQ-0136-provider-instruction-generation/) *(merged a3af941)*
