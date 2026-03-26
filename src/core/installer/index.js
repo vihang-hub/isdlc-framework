@@ -629,6 +629,7 @@ function generateState(projectName, isExistingProject, timestamp, providerMode) 
     iteration_enforcement: { enabled: true },
     code_review: { enabled: false, team_size: 1 },
     skill_usage_log: [],
+    contract_violations: [],
     active_workflow: null,
     workflow_history: [],
     counters: { next_req_id: 1, next_bug_id: 1 },

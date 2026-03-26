@@ -1,0 +1,17 @@
+{
+  "version": "1.0.0",
+  "ownership": {
+    "software-developer": {
+      "agent_id": "05",
+      "phase": "06-implementation",
+      "skill_count": 3,
+      "skills": ["IMP-001", "IMP-002", "IMP-003"]
+    },
+    "qa-engineer": {
+      "agent_id": "08",
+      "phase": "08-code-review",
+      "skill_count": 2,
+      "skills": ["QA-001", "QA-002"]
+    }
+  }
+}

@@ -24,6 +24,8 @@ import * as nodeReadline from 'node:readline';
 import { projectInstructions as coreProjectInstructions } from './projection.js';
 import { resolveVerb } from './verb-resolver.js';
 import { validatePhase } from '../../core/validators/validate-phase.js';
+import { evaluateContract } from '../../core/validators/contract-evaluator.js';
+import { loadContractEntry } from '../../core/validators/contract-loader.js';
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -371,7 +373,40 @@ export function createRuntime(config = {}) {
  */
 export async function validatePhaseGate(phaseKey, inputs, options = {}) {
   try {
-    return await validatePhase(phaseKey, inputs, options);
+    // Existing phase validation
+    const phaseResult = await validatePhase(phaseKey, inputs, options);
+
+    // Contract evaluation (additive, REQ-0141)
+    let contractResult = { violations: [], warnings: [], stale_contract: false };
+    try {
+      const workflowType = options.workflowType || 'feature';
+      const intensity = options.intensity || 'standard';
+      const context = `${workflowType}:${intensity}`;
+      const loaded = loadContractEntry(phaseKey, context, {
+        projectRoot: options.projectRoot || '.'
+      });
+      if (loaded.entry) {
+        contractResult = evaluateContract({
+          state: options.state || {},
+          contractEntry: loaded.entry,
+          projectRoot: options.projectRoot || '.',
+          artifactFolder: options.artifactFolder
+        });
+        contractResult.stale_contract = loaded.stale;
+      }
+    } catch {
+      // Fail-open: contract evaluation errors do not block
+    }
+
+    // Merge results
+    const blockViolations = contractResult.violations.filter(v => v.severity === 'block');
+    return {
+      pass: phaseResult.pass && blockViolations.length === 0,
+      failures: [...phaseResult.failures, ...blockViolations],
+      details: { ...phaseResult.details, contract: contractResult },
+      warnings: [...(phaseResult.warnings || []), ...contractResult.warnings],
+      validator_errors: phaseResult.validator_errors || []
+    };
   } catch (err) {
     // Fail-open on validator code errors (ADR-004)
     return {

@@ -20,6 +20,8 @@
     "security"
   ],
   "codebase_hash": "336f1de",
+  "build_started_at": "2026-03-26T14:00:00.000Z",
+  "workflow_type": "feature",
   "acceptance": {
     "accepted_at": "2026-03-26T13:30:00.000Z",
     "domains": {

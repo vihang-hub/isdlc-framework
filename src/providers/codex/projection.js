@@ -301,6 +301,20 @@ export function projectInstructions(phase, agent, options = {}) {
     }
   }
 
+  // 7. Inject contract summary (advisory-only, ADR-008, REQ-0141)
+  let contractSummaryInjected = false;
+  if (options.projectRoot) {
+    try {
+      const contractSummary = loadContractSummary(phase, workflow, options.projectRoot);
+      if (contractSummary) {
+        content += `\n\n## Expected Outputs (Advisory)\n\n${contractSummary}`;
+        contractSummaryInjected = true;
+      }
+    } catch {
+      // Fail-open: missing contract is non-fatal
+    }
+  }
+
   return {
     content,
     metadata: {
@@ -309,7 +323,47 @@ export function projectInstructions(phase, agent, options = {}) {
       skills_injected: (injectionPlan.merged || []).map(s => s.skillId || s.name),
       team_type: teamSpec?.team_type ?? 'unknown',
       ...(cacheSectionsInjected.length > 0 && { cache_sections_injected: cacheSectionsInjected }),
+      ...(contractSummaryInjected && { contract_summary_injected: true }),
       ...(warnings.length > 0 && { warnings })
     }
   };
+}
+
+/**
+ * Load a contract summary for advisory injection into agent instructions.
+ * Advisory-only (ADR-008) -- runtime evaluator is the sole enforcement authority.
+ *
+ * REQ-0141: Execution Contract System
+ *
+ * @param {string} phase - Phase key
+ * @param {string} workflow - Workflow type
+ * @param {string} projectRoot - Project root
+ * @returns {string|null} Summary text or null
+ */
+function loadContractSummary(phase, workflow, projectRoot) {
+  try {
+    const contractDir = join(projectRoot, '.claude', 'hooks', 'config', 'contracts');
+    if (!existsSync(contractDir)) return null;
+    const contractFile = join(contractDir, `workflow-${workflow}.contract.json`);
+    if (!existsSync(contractFile)) return null;
+    const contract = JSON.parse(readFileSync(contractFile, 'utf8'));
+    if (!contract || !Array.isArray(contract.entries)) return null;
+    const entry = contract.entries.find(e => e.execution_unit === phase);
+    if (!entry || !entry.expectations) return null;
+    const lines = [];
+    if (entry.expectations.agent) {
+      lines.push(`- Expected agent: ${entry.expectations.agent}`);
+    }
+    if (entry.expectations.artifacts_produced) {
+      lines.push(`- Expected artifacts: (resolved at runtime from artifact-paths.json)`);
+    }
+    if (Array.isArray(entry.expectations.state_assertions)) {
+      for (const a of entry.expectations.state_assertions) {
+        lines.push(`- State assertion: ${a.path} === ${JSON.stringify(a.equals)}`);
+      }
+    }
+    return lines.length > 0 ? lines.join('\n') : null;
+  } catch {
+    return null;
+  }
 }

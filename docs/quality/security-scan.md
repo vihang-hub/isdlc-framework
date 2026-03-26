@@ -1,7 +1,7 @@
-# Security Scan -- REQ-0103 Discover Execution Model
+# Security Scan -- REQ-0141 Execution Contract System
 
 **Phase**: 16-quality-loop
-**Date**: 2026-03-22
+**Date**: 2026-03-26
 **Verdict**: PASS -- No critical or high vulnerabilities
 
 ## SAST Analysis (QL-008)
@@ -10,40 +10,55 @@
 
 | File | Risk Level | Findings |
 |------|-----------|----------|
-| `src/core/discover/modes.js` | None | Pure frozen data, 4 mode configs |
-| `src/core/discover/agent-groups.js` | None | Pure frozen data, 7 group configs |
-| `src/core/discover/ux-flows.js` | None | Pure frozen data + Map-based registry helpers |
-| `src/core/discover/discover-state-schema.js` | None | Schema + stateless helper functions |
-| `src/core/discover/skill-distillation.js` | None | Pure frozen data, reconciliation rules |
-| `src/core/discover/projection-chain.js` | None | Pure frozen data, 4-step chain |
-| `src/core/discover/index.js` | None | Re-exports + Map-based registry |
-| `src/core/bridge/discover.cjs` | None | Lazy-load CJS bridge for ESM modules |
+| `src/core/validators/contract-schema.js` | None | Pure validation, no I/O |
+| `src/core/validators/contract-ref-resolver.js` | Low | File reads via readFileSync (config files only, not user input) |
+| `src/core/validators/contract-loader.js` | Low | File reads via readFileSync + readdirSync (fixed directories only) |
+| `src/core/validators/contract-evaluator.js` | Low | File existence checks via existsSync |
+| `bin/generate-contracts.js` | Low | File reads + writes (config -> contract generation) |
+| `.claude/hooks/lib/common.cjs` (additions) | None | Pure in-memory state manipulation |
+| `src/providers/codex/runtime.js` (additions) | None | Contract evaluation call (no new I/O) |
+| `src/providers/codex/governance.js` (additions) | None | Pure data addition |
+| `src/providers/codex/projection.js` (additions) | Low | File reads for contract summary injection |
 
 ### Checks Performed
 
 - [x] No `eval()`, `Function()`, or dynamic code execution
-- [x] No user input processing or injection vectors
-- [x] No file system operations or path traversal
-- [x] No network calls or HTTP requests
-- [x] No subprocess spawning or command execution
-- [x] No prototype pollution (all `Object.freeze()`)
-- [x] No secrets, credentials, or environment variable access
-- [x] No `__proto__` or `constructor` manipulation
-- [x] No unsafe deserialization
-- [x] No dynamic imports from user-controlled paths (bridge uses static import paths only)
-- [x] No module system cross-contamination (ESM files use import/export, CJS uses require/module.exports)
+- [x] No user input processing or command injection vectors
+- [x] No subprocess spawning or shell command execution
+- [x] No prototype pollution (`__proto__`, `constructor[]`)
+- [x] No hardcoded secrets, credentials, or API keys
+- [x] No unsafe deserialization (all JSON.parse wrapped in try/catch)
+- [x] No dynamic imports from user-controlled paths
+- [x] Path traversal safe: all file paths constructed via `join()` from fixed base directories
+- [x] Path traversal tested: `loadContractEntry("../../../etc/passwd", ...)` returns null
+- [x] All file I/O guarded with `existsSync` checks
+- [x] All public functions validate inputs before processing
+- [x] Fail-open error handling (Article X) on all external operations
 
-**Attack surface: zero.** These are pure frozen data modules with no external I/O.
+### Input Validation Summary
+
+| Function | Validation |
+|----------|-----------|
+| validateContract() | Checks type, required fields, nested validation |
+| validateContractEntry() | Checks type, required fields, enum values |
+| resolveRef() | Guards null, non-object, missing $ref key |
+| loadContractEntry() | Falls back to null on any error |
+| evaluateContract() | Validates entry shape, guards all state paths |
+| generateContracts() | Guards all config file reads with try/catch |
 
 ## Dependency Audit (QL-009)
 
 ```
-npm audit: found 0 vulnerabilities
+npm audit --omit=dev: found 0 vulnerabilities
 ```
 
-No new dependencies introduced by the discover batch. All imports are from within the project (`./modes.js`, `../discover/index.js`, etc.) or Node.js built-ins (`node:test`, `node:assert`, `node:module`).
+No new dependencies introduced. All imports use Node.js built-in modules:
+- `node:fs` (readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync)
+- `node:path` (join, resolve, dirname)
+- `node:crypto` (createHash for SHA-256 staleness detection)
+- `node:module` (createRequire for CJS interop in generator)
 
 ## Constitutional Compliance
 
-- **Article V (Security by Design)**: Satisfied. No security surface introduced.
-- **Article X (Fail-Safe Defaults)**: Satisfied. Frozen objects prevent runtime mutation. Invalid inputs are rejected with descriptive errors listing available options.
+- **Article V (Security by Design)**: Satisfied. All inputs validated, no injection vectors, fail-open on errors.
+- **Article X (Fail-Safe Defaults)**: Satisfied. Every function returns safe defaults on error (empty arrays, null, false).
