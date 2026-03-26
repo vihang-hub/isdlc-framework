@@ -66,6 +66,13 @@ export function getGovernanceModel() {
         codex_equivalent: 'file-system-check',
         status: 'enforceable',
         mitigation: 'Artifact files checked before gate passage'
+      }),
+      Object.freeze({
+        checkpoint: 'execution-contract',
+        claude_hook: 'contract-evaluator (STEP 3e-contract)',
+        codex_equivalent: 'core-contract-evaluator',
+        status: 'enforceable',
+        mitigation: 'Contract evaluated at phase gate via core evaluator'
       })
     ]),
     gaps: Object.freeze([

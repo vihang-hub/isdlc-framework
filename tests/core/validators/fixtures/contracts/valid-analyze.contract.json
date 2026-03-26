@@ -1,0 +1,35 @@
+{
+  "version": "1.0.0",
+  "entries": [
+    {
+      "execution_unit": "roundtable",
+      "context": "analyze",
+      "expectations": {
+        "agent": null,
+        "skills_required": null,
+        "artifacts_produced": null,
+        "state_assertions": [],
+        "cleanup": [],
+        "presentation": {
+          "confirmation_sequence": ["requirements", "architecture", "design"],
+          "persona_format": "bulleted",
+          "progress_format": null,
+          "completion_summary": true
+        }
+      },
+      "violation_response": {
+        "agent_not_engaged": "report",
+        "skills_missing": "report",
+        "artifacts_missing": "block",
+        "state_incomplete": "report",
+        "cleanup_skipped": "warn",
+        "presentation_violated": "warn"
+      }
+    }
+  ],
+  "_generation_metadata": {
+    "generated_at": "2026-03-26T00:00:00.000Z",
+    "generator_version": "1.0.0",
+    "input_files": []
+  }
+}

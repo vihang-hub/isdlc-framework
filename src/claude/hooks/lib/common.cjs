@@ -2946,7 +2946,7 @@ function pruneWorkflowHistory(state, maxEntries = 50, maxCharLen = 200) {
  *
  * Transient field list (explicit allowlist -- ADR-002):
  *   current_phase, active_agent, phases, blockers,
- *   pending_escalations, pending_delegation
+ *   pending_escalations, pending_delegation, contract_violations
  *
  * Traces to: FR-003 (AC-003-01 through AC-003-08), GH-39
  *
@@ -2962,6 +2962,7 @@ function clearTransientFields(state) {
     state.blockers = [];
     state.pending_escalations = [];
     state.pending_delegation = null;
+    state.contract_violations = [];
 
     return state;
 }
@@ -4840,6 +4841,77 @@ function readProcessConfig(projectRoot) {
     }
 }
 
+// =========================================================================
+// Contract Violation Helpers (REQ-0141: Execution Contract System)
+// =========================================================================
+
+/** Maximum contract_violations entries (FIFO ring buffer) */
+const MAX_CONTRACT_VIOLATIONS = 20;
+
+/**
+ * Append a contract violation entry to state.contract_violations[].
+ * Deduplicates by contract_id + expectation_type. FIFO cap: 20.
+ * Pure in-memory mutator -- caller persists.
+ *
+ * Traces: FR-004 (AC-004-01, AC-004-02, AC-004-03)
+ *
+ * @param {Object} state - State object (mutated in place)
+ * @param {Object} entry - Violation entry (shape from evaluator)
+ */
+function writeContractViolation(state, entry) {
+    if (!state || !entry) return;
+    if (!Array.isArray(state.contract_violations)) {
+        state.contract_violations = [];
+    }
+
+    // Dedup by contract_id + expectation_type
+    const dedupKey = `${entry.contract_id}:${entry.expectation_type}`;
+    const existingIdx = state.contract_violations.findIndex(existing =>
+        `${existing.contract_id}:${existing.expectation_type}` === dedupKey
+    );
+
+    if (existingIdx !== -1) {
+        // Update existing entry (refresh timestamp/details)
+        state.contract_violations[existingIdx] = entry;
+        return;
+    }
+
+    state.contract_violations.push(entry);
+
+    // FIFO cap: keep only the newest MAX_CONTRACT_VIOLATIONS entries
+    if (state.contract_violations.length > MAX_CONTRACT_VIOLATIONS) {
+        state.contract_violations = state.contract_violations.slice(-MAX_CONTRACT_VIOLATIONS);
+    }
+}
+
+/**
+ * Read contract_violations from state.
+ * Returns empty array if missing or malformed.
+ *
+ * Traces: FR-004 (AC-004-04)
+ *
+ * @param {Object} state - State object
+ * @returns {Array} Contract violations array
+ */
+function readContractViolations(state) {
+    if (!state) return [];
+    if (!Array.isArray(state.contract_violations)) return [];
+    return state.contract_violations;
+}
+
+/**
+ * Clear all contract violations from state.
+ * Pure in-memory mutator -- caller persists.
+ *
+ * Traces: FR-004 (AC-004-04)
+ *
+ * @param {Object} state - State object (mutated in place)
+ */
+function clearContractViolations(state) {
+    if (!state) return;
+    state.contract_violations = [];
+}
+
 module.exports = {
     isAntigravity,
     getFrameworkDir,
@@ -4965,7 +5037,14 @@ module.exports = {
     readProcessConfig,
     // Project config (REQ-0067)
     readConfig,
-    DEFAULT_CONFIG
+    DEFAULT_CONFIG,
+    // Contract violation helpers (REQ-0141)
+    writeContractViolation,
+    readContractViolations,
+    clearContractViolations,
+    MAX_CONTRACT_VIOLATIONS,
+    // Phase-to-agent map -- stable API export (ADR-006, REQ-0141)
+    PHASE_AGENT_MAP
 };
 
 // Test-only exports (not part of public API) -- REQ-0020 FR-001/FR-002

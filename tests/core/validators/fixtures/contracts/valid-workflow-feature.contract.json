@@ -1,0 +1,37 @@
+{
+  "version": "1.0.0",
+  "entries": [
+    {
+      "execution_unit": "06-implementation",
+      "context": "feature:standard",
+      "expectations": {
+        "agent": "software-developer",
+        "skills_required": { "$ref": "skills-manifest", "agent": "software-developer" },
+        "artifacts_produced": { "$ref": "artifact-paths", "phase": "06-implementation" },
+        "state_assertions": [
+          { "path": "phases.06-implementation.status", "equals": "completed" }
+        ],
+        "cleanup": [],
+        "presentation": {
+          "confirmation_sequence": null,
+          "persona_format": null,
+          "progress_format": "task-list",
+          "completion_summary": null
+        }
+      },
+      "violation_response": {
+        "agent_not_engaged": "block",
+        "skills_missing": "report",
+        "artifacts_missing": "block",
+        "state_incomplete": "report",
+        "cleanup_skipped": "warn",
+        "presentation_violated": "warn"
+      }
+    }
+  ],
+  "_generation_metadata": {
+    "generated_at": "2026-03-26T00:00:00.000Z",
+    "generator_version": "1.0.0",
+    "input_files": []
+  }
+}
