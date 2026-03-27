@@ -4,7 +4,8 @@
 > BACKLOG.md is the curated working set with detailed specs. GitHub Issues are for tracking.
 
 ## Open
-- [A] #213 Contract enforcement must be inline (during execution), not post-phase [github: GH-213] -> [requirements](docs/requirements/REQ-GH-213-contract-enforcement-must-be-inline/)
+- [x] #213 Contract enforcement must be inline (during execution), not post-phase [github: GH-213] -> [requirements](docs/requirements/REQ-GH-213-contract-enforcement-must-be-inline/) **Completed**
+  - **Completed:** 2026-03-27
 - [ ] #207 Mandatory web research enforcement in roundtable analysis — wire research: true flag [github: GH-207]
 - [x] #212 Task list consumption model for build phase agents (05/06/16/08) [github: GH-212] -> [requirements](docs/requirements/REQ-GH-212-task-list-consumption-model-for-build-phase-agents/) **Completed**
   - Depends on #208. Covers how Phase 05/06/16/08 read and execute against pre-generated tasks.md.
@@ -493,6 +494,10 @@ Phase 10 (Provider-Neutral Orchestration)
   - **Completed:** 2026-03-22
 
 ## Completed
+
+### 2026-03-27
+- [x] #213: Contract enforcement must be inline (during execution), not post-phase -> [requirements](docs/requirements/REQ-GH-213-contract-enforcement-must-be-inline/) *(merged 9e42608)*
+  - **Completed:** 2026-03-27
 
 ### 2026-03-26
 - [x] #212: Task list consumption model for build phase agents -> [requirements](docs/requirements/REQ-GH-212-task-list-consumption-model-for-build-phase-agents/) *(merged 11b77b2)*
