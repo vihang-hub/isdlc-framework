@@ -5,7 +5,8 @@
 
 ## Open
 - [A] #116 Extract agent protocols from CLAUDE.md into shared protocols file [github: GH-116] -> [requirements](docs/requirements/REQ-GH-116-extract-agent-protocols-from-claude-md/)
-- [A] #214 PreToolUse enforcement: route agents to higher-fidelity MCP tools when available [github: GH-214] -> [requirements](docs/requirements/REQ-GH-214-pretooluse-enforcement-route-agents-higher-fidelity-mcp/)
+- [x] #214 PreToolUse enforcement: route agents to higher-fidelity MCP tools when available [github: GH-214] -> [requirements](docs/requirements/REQ-GH-214-pretooluse-enforcement-route-agents-higher-fidelity-mcp/) **Completed**
+  - **Completed:** 2026-03-27
 - [x] #213 Contract enforcement must be inline (during execution), not post-phase [github: GH-213] -> [requirements](docs/requirements/REQ-GH-213-contract-enforcement-must-be-inline/) **Completed**
   - **Completed:** 2026-03-27
 - [ ] #207 Mandatory web research enforcement in roundtable analysis — wire research: true flag [github: GH-207]
@@ -498,6 +499,8 @@ Phase 10 (Provider-Neutral Orchestration)
 ## Completed
 
 ### 2026-03-27
+- [x] #214: PreToolUse enforcement — route agents to higher-fidelity MCP tools when available -> [requirements](docs/requirements/REQ-GH-214-pretooluse-enforcement-route-agents-higher-fidelity-mcp/) *(merged 6f23ee8)*
+  - **Completed:** 2026-03-27
 - [x] #213: Contract enforcement must be inline (during execution), not post-phase -> [requirements](docs/requirements/REQ-GH-213-contract-enforcement-must-be-inline/) *(merged 9e42608)*
   - **Completed:** 2026-03-27
 
