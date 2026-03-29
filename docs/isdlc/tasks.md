@@ -1,9 +1,9 @@
-# Task Plan: REQ-GH-213-contract-enforcement-must-be-inline
+# Task Plan: REQ-GH-214 REQ-GH-214-pretooluse-enforcement-route-agents-higher-fidelity-mcp
 
-**Source**: github GH-213
-**Generated after**: Analysis acceptance
-**FRs**: 7 | **ADRs**: 3 | **Estimated LOC**: ~800
-**Format**: v2.0
+**Version**: 2.0
+**Generated**: 2026-03-29
+**Workflow**: feature
+**Artifact Folder**: REQ-GH-214-pretooluse-enforcement-route-agents-higher-fidelity-mcp
 
 ---
 
@@ -11,256 +11,181 @@
 
 | Phase | Tasks | Completed | Status |
 |-------|-------|-----------|--------|
-| 05 - Test Strategy | 8 | 0 | PENDING |
-| 06 - Implementation | 25 | 0 | PENDING |
-| 16 - Quality Loop | 3 | 0 | PENDING |
-| 08 - Code Review | 2 | 0 | PENDING |
-| **Total** | **38** | **0** | **0%** |
+| 05 — Test Strategy | 3 | 0 | PENDING |
+| 06 — Implementation | 17 | 0 | PENDING |
+| 16 — Quality Loop | 3 | 0 | PENDING |
+| 08 — Code Review | 2 | 0 | PENDING |
+| **Total** | **25** | **0** | **0%** |
 
 ---
 
 ## Phase 05: Test Strategy -- PENDING
 
-- [ ] T0001 [P] Design test cases for ContractViolationError and all 6 check functions | traces: FR-001, AC-001-01, AC-001-02, AC-001-03, AC-001-04
-    files: docs/requirements/REQ-GH-213-.../test-strategy.md (CREATE)
-    blocked_by: none
-    blocks: T0011, T0012
-- [ ] T0002 [P] Design test cases for checkDomainTransition — correct sequence, wrong sequence, missing sequence (fail-open) | traces: FR-002, AC-002-01
-    files: docs/requirements/REQ-GH-213-.../test-strategy.md (MODIFY)
-    blocked_by: none
-    blocks: T0013
-- [ ] T0003 [P] Design test cases for checkBatchWrite — all present, missing artifacts, null artifacts_produced (fail-open) | traces: FR-002, AC-002-02
-    files: docs/requirements/REQ-GH-213-.../test-strategy.md (MODIFY)
-    blocked_by: none
-    blocks: T0014
-- [ ] T0004 [P] Design test cases for checkPersonaFormat — bulleted format, numbered violation, table violation, missing template (fail-open) | traces: FR-002, AC-002-03, FR-004, AC-004-01, AC-004-03
-    files: docs/requirements/REQ-GH-213-.../test-strategy.md (MODIFY)
-    blocked_by: none
-    blocks: T0015
-- [ ] T0005 [P] Design test cases for checkPersonaContribution — all contribute, missing persona, dynamic persona list from config | traces: FR-002, AC-002-04, AC-002-05
-    files: docs/requirements/REQ-GH-213-.../test-strategy.md (MODIFY)
-    blocked_by: none
-    blocks: T0016
-- [ ] T0006 [P] Design test cases for template-loader — shipped default, user override, missing template (fail-open), malformed template (fail-open) | traces: FR-004, AC-004-01, AC-004-02, AC-004-04
-    files: docs/requirements/REQ-GH-213-.../test-strategy.md (MODIFY)
-    blocked_by: none
-    blocks: T0017
-- [ ] T0007 [P] Design test cases for checkTaskList — all categories present, missing category, missing metadata, missing required section | traces: FR-004, AC-004-05, AC-004-06
-    files: docs/requirements/REQ-GH-213-.../test-strategy.md (MODIFY)
-    blocked_by: none
-    blocks: T0037
-- [ ] T0038 [P] Design test cases for Codex parity — same check functions produce identical results when called from runtime.js vs analyze handler | traces: FR-007, AC-007-01, AC-007-02, AC-007-04
-    files: docs/requirements/REQ-GH-213-.../test-strategy.md (MODIFY)
-    blocked_by: none
-    blocks: T0028, T0029
+### test_case_design
+
+- [ ] T0001 Design test strategy for tool-router hook — unit tests for each function, integration tests for end-to-end hook flow | traces: FR-001, FR-008
+- [ ] T0002 Define test cases for exemption mechanism — pattern regex matching, context condition evaluation, exemption precedence | traces: FR-006, AC-006-01, AC-006-02, AC-006-03
+- [ ] T0003 Define test cases for three-source rule merge — priority ordering, conflict resolution, missing sources | traces: FR-003, AC-003-01, AC-003-02
+
+---
 
 ## Phase 06: Implementation -- PENDING
 
-### Setup
+### setup
 
-- [ ] T0008 Create src/core/validators/contract-checks.js module skeleton with ContractViolationError class | traces: FR-001, AC-001-04
-    files: src/core/validators/contract-checks.js (CREATE)
-    blocked_by: none
-    blocks: T0011, T0012, T0013, T0014, T0015, T0016
-- [ ] T0009 Create src/core/validators/template-loader.js module skeleton | traces: FR-004, AC-004-01
-    files: src/core/validators/template-loader.js (CREATE)
-    blocked_by: none
-    blocks: T0017
-- [ ] T0010 Create shipped presentation templates (requirements, architecture, design, tasks) | traces: FR-004, AC-004-01, AC-004-03, AC-004-05
-    files: src/claude/hooks/config/templates/requirements.template.json (CREATE), src/claude/hooks/config/templates/architecture.template.json (CREATE), src/claude/hooks/config/templates/design.template.json (CREATE), src/claude/hooks/config/templates/tasks.template.json (CREATE)
-    blocked_by: none
-    blocks: T0017, T0022, T0037
+- [ ] T0004 Create tool-routing.json with framework default rules search-semantic find-files file-summary, inference probes, and empty user_overrides | traces: FR-002, AC-002-01
+  files: src/claude/hooks/config/tool-routing.json (CREATE)
+  blocks: [T0006, T0015]
 
-### Core Check Functions
+- [ ] T0005 Add tool_preferences field to external-skills-manifest schema and document the field | traces: FR-005, AC-005-01
+  files: docs/isdlc/external-skills-manifest.json (MODIFY)
 
-- [ ] T0011 Implement checkDomainTransition() — validate confirmation domain matches expected sequence position | traces: FR-002, AC-002-01, FR-001, AC-001-04
-    files: src/core/validators/contract-checks.js (MODIFY)
-    blocked_by: T0001, T0008
-    blocks: T0019
-- [ ] T0012 Implement checkBatchWrite() — validate all expected artifacts are in write set | traces: FR-002, AC-002-02, FR-001, AC-001-04
-    files: src/core/validators/contract-checks.js (MODIFY)
-    blocked_by: T0001, T0008
-    blocks: T0019
-- [ ] T0013 Implement checkPersonaFormat() — validate output matches active template format rules | traces: FR-002, AC-002-03, FR-001, AC-001-04
-    files: src/core/validators/contract-checks.js (MODIFY)
-    blocked_by: T0002, T0008
-    blocks: T0019
-- [ ] T0014 Implement checkPersonaContribution() — validate all configured personas have contributed | traces: FR-002, AC-002-04, AC-002-05
-    files: src/core/validators/contract-checks.js (MODIFY)
-    blocked_by: T0003, T0008
-    blocks: T0019
-- [ ] T0015 Implement checkDelegation() — validate correct agent for phase | traces: FR-003, AC-003-01
-    files: src/core/validators/contract-checks.js (MODIFY)
-    blocked_by: T0004, T0008
-    blocks: T0020
-- [ ] T0016 Implement checkArtifacts() — validate required artifacts exist on disk before phase completion | traces: FR-003, AC-003-02
-    files: src/core/validators/contract-checks.js (MODIFY)
-    blocked_by: T0005, T0008
-    blocks: T0020
+### core_implementation
 
-### Template Loader
+- [ ] T0006 Implement tool-router.cjs — stdin parsing via readStdin, main loop, fail-open shell exit 0 on any error | traces: FR-001, FR-008, NFR-001, AC-001-03, AC-008-01
+  files: src/claude/hooks/tool-router.cjs (CREATE)
+  blocked_by: [T0004]
+  blocks: [T0007, T0008, T0009, T0010, T0011, T0012, T0014]
 
-- [ ] T0017 Implement loadTemplate() and loadAllTemplates() with override resolution | traces: FR-004, AC-004-01, AC-004-02, AC-004-04
-    files: src/core/validators/template-loader.js (MODIFY)
-    blocked_by: T0006, T0009, T0010
-    blocks: T0022
+- [ ] T0007 Implement loadRoutingRules — read framework config, read skill manifest tool_preferences, run inferEnvironmentRules, read user_overrides, merge by priority | traces: FR-003, AC-003-01, AC-003-02
+  files: src/claude/hooks/tool-router.cjs (MODIFY)
+  blocked_by: [T0006]
 
-### Task List Check
+- [ ] T0008 Implement inferEnvironmentRules — probe MCP tool availability via filesystem heuristics, check for embeddings directory, generate inferred rules at warn level | traces: FR-004, FR-009, AC-004-01, AC-004-02, AC-009-01, AC-009-02
+  files: src/claude/hooks/tool-router.cjs (MODIFY)
+  blocked_by: [T0006]
 
-- [ ] T0037 Implement checkTaskList() — validate task plan includes all required phases, categories, metadata, and sections per template | traces: FR-004, AC-004-05, AC-004-06
-    files: src/core/validators/contract-checks.js (MODIFY)
-    blocked_by: T0007, T0008, T0010
-    blocks: T0039
+- [ ] T0009 Implement evaluateRule and checkExemptions — pattern regex matching, context condition evaluation edit_prep targeted_file exact_filename, first-match-wins | traces: FR-006, AC-006-01, AC-006-02, AC-006-03
+  files: src/claude/hooks/tool-router.cjs (MODIFY)
+  blocked_by: [T0006]
 
-### Unit Tests
+- [ ] T0010 Implement formatBlockMessage and formatWarnMessage — block message with preferred tool name, warn message with config path for promotion | traces: FR-007, AC-007-01, AC-001-01, AC-001-02
+  files: src/claude/hooks/tool-router.cjs (MODIFY)
+  blocked_by: [T0006]
 
-- [ ] T0039 Write unit tests for checkTaskList | traces: FR-004, AC-004-05, AC-004-06
-    files: tests/core/validators/contract-checks.test.js (MODIFY)
-    blocked_by: T0037
-    blocks: T0030
+- [ ] T0011 Implement appendAuditEntry — JSONL append to .isdlc/tool-routing-audit.jsonl, create file if missing, non-blocking on failure | traces: FR-011, AC-011-01, AC-011-02, AC-011-03
+  files: src/claude/hooks/tool-router.cjs (MODIFY)
+  blocked_by: [T0006]
 
-- [ ] T0018 Write unit tests for ContractViolationError class | traces: FR-001, AC-001-04
-    files: tests/core/validators/contract-checks.test.js (CREATE)
-    blocked_by: T0008
-    blocks: T0030
-- [ ] T0019 Write unit tests for checkDomainTransition, checkBatchWrite, checkPersonaFormat, checkPersonaContribution | traces: FR-002, AC-002-01, AC-002-02, AC-002-03, AC-002-04, AC-002-05
-    files: tests/core/validators/contract-checks.test.js (MODIFY)
-    blocked_by: T0011, T0012, T0013, T0014
-    blocks: T0030
-- [ ] T0020 Write unit tests for checkDelegation and checkArtifacts | traces: FR-003, AC-003-01, AC-003-02
-    files: tests/core/validators/contract-checks.test.js (MODIFY)
-    blocked_by: T0015, T0016
-    blocks: T0030
-- [ ] T0021 Write unit tests for template-loader | traces: FR-004, AC-004-01, AC-004-02, AC-004-04
-    files: tests/core/validators/template-loader.test.js (CREATE)
-    blocked_by: T0017
-    blocks: T0030
+### unit_tests
 
-### Wiring — Claude Path
+- [ ] T0012 Write unit tests for tool-router.cjs — test each function in isolation loadRoutingRules inferEnvironmentRules evaluateRule checkExemptions formatBlockMessage formatWarnMessage appendAuditEntry | traces: FR-001, FR-003, FR-006, FR-008
+  files: tests/hooks/tool-router.test.cjs (CREATE)
+  blocked_by: [T0006]
 
-- [ ] T0022 Add templates to SessionStart cache — update rebuild-cache.js to include PRESENTATION_TEMPLATES section | traces: FR-004, AC-004-01, FR-001, AC-001-01
-    files: bin/rebuild-cache.js (MODIFY)
-    blocked_by: T0010, T0017
-    blocks: T0023, T0024
-- [ ] T0023 Wire 4 roundtable checks into analyze handler (isdlc.md step 7b) — checkDomainTransition, checkBatchWrite, checkPersonaFormat, checkPersonaContribution | traces: FR-002, AC-002-01, AC-002-02, AC-002-03, AC-002-04
-    files: src/claude/commands/isdlc.md (MODIFY)
-    blocked_by: T0019, T0022
-    blocks: T0030
-- [ ] T0024 Wire 2 phase-loop checks into isdlc.md — checkDelegation at STEP 3d, checkArtifacts at STEP 3e | traces: FR-003, AC-003-01, AC-003-02
-    files: src/claude/commands/isdlc.md (MODIFY)
-    blocked_by: T0020, T0022
-    blocks: T0030
-- [ ] T0025 Remove STEP 3e-contract post-phase evaluation from phase-loop controller | traces: FR-005, AC-005-01, AC-005-02
-    files: src/claude/commands/isdlc.md (MODIFY)
-    blocked_by: T0024
-    blocks: T0030
-- [ ] T0026 Update roundtable-analyst.md — reference inline contract checks at each protocol transition | traces: FR-002, AC-002-01, AC-002-03, AC-002-04
-    files: src/claude/agents/roundtable-analyst.md (MODIFY)
-    blocked_by: T0023
-    blocks: T0030
-- [ ] T0027 Wire discover orchestrator checks — checkDelegation and checkArtifacts at sub-agent boundaries | traces: FR-006, AC-006-01, AC-006-02, AC-006-03
-    files: src/claude/agents/discover-orchestrator.md (MODIFY)
-    blocked_by: T0020
-    blocks: T0030
-- [ ] T0040 Wire checkTaskList into analyze handler — validate task plan at "tasks" confirmation domain before presenting to user | traces: FR-004, AC-004-05, AC-004-06
-    files: src/claude/commands/isdlc.md (MODIFY)
-    blocked_by: T0039, T0022
-    blocks: T0030
+- [ ] T0013 Write unit tests for config loading — missing config, malformed JSON, valid config, user overrides, skill preferences merge | traces: FR-002, FR-003, AC-008-01, AC-008-03
+  files: tests/hooks/tool-router.test.cjs (MODIFY)
+  blocked_by: [T0012]
 
-### Wiring — Codex Path
+- [ ] T0014 Write unit tests for exemption evaluation — pattern exemptions with regex, context exemptions edit_prep targeted_file exact_filename, invalid regex handling | traces: FR-006, AC-006-01, AC-006-02, AC-006-03
+  files: tests/hooks/tool-router.test.cjs (MODIFY)
+  blocked_by: [T0012]
 
-- [ ] T0028 Replace evaluateContract() call in runtime.js validatePhaseGate() with individual check functions | traces: FR-007, AC-007-02, FR-005, AC-005-03
-    files: src/providers/codex/runtime.js (MODIFY)
-    blocked_by: T0019, T0020
-    blocks: T0030
-- [ ] T0029 Update governance.js — change execution-contract checkpoint to reference contract-checks.js | traces: FR-007, AC-007-03
-    files: src/providers/codex/governance.js (MODIFY)
-    blocked_by: T0028
-    blocks: T0030
+### wiring_claude
 
-### Cleanup
+- [ ] T0015 Register hook in src/claude/settings.json — add PreToolUse matchers for Grep Glob Read pointing to tool-router.cjs | traces: FR-001
+  files: src/claude/settings.json (MODIFY)
+  blocked_by: [T0006]
+  blocks: [T0020]
 
-- [ ] T0030 Remove evaluateContract() batch function and formatViolationBanner() from contract-evaluator.js | traces: FR-005, AC-005-02, AC-005-04
-    files: src/core/validators/contract-evaluator.js (MODIFY)
-    blocked_by: T0019, T0020, T0023, T0024, T0025, T0026, T0027, T0028, T0029
-    blocks: T0031
-- [ ] T0031 Update existing contract-evaluator tests to remove batch function tests, add redirect tests | traces: FR-005, AC-005-04
-    files: tests/core/validators/contract-evaluator.test.js (MODIFY), tests/core/validators/contract-evaluator-integration.test.js (MODIFY)
-    blocked_by: T0030
-    blocks: none
+- [ ] T0016 Add Article XV Tool Preference Enforcement to docs/isdlc/constitution.md — principle statement, validation references, amendment log entry | traces: FR-010, AC-010-01
+  files: docs/isdlc/constitution.md (MODIFY)
+
+### wiring_codex
+
+- [ ] T0017 Confirm Codex provider is not affected — tool routing is Claude-provider-specific as Codex does not use PreToolUse hooks. Document in architecture-overview.md. | traces: FR-001
+  files: docs/requirements/REQ-GH-214-pretooluse-enforcement-route-agents-higher-fidelity-mcp/architecture-overview.md (MODIFY)
+
+### cleanup
+
+- [ ] T0018 Copy tool-router.cjs to .claude/hooks/tool-router.cjs for dogfooding dual-file | traces: FR-001
+  files: .claude/hooks/tool-router.cjs (CREATE)
+  blocked_by: [T0006]
+
+- [ ] T0019 Copy tool-routing.json to .claude/hooks/config/tool-routing.json for dogfooding dual-file | traces: FR-002
+  files: .claude/hooks/config/tool-routing.json (CREATE)
+  blocked_by: [T0004]
+
+- [ ] T0020 Update .claude/settings.json with new PreToolUse matchers for Grep Glob Read | traces: FR-001
+  files: .claude/settings.json (MODIFY)
+  blocked_by: [T0015]
+
+---
 
 ## Phase 16: Quality Loop -- PENDING
 
-- [ ] T0032 Run full test suite — verify all new tests pass and no regressions in existing 555+ test baseline | traces: FR-001, FR-002, FR-003, FR-004, FR-005, FR-006, FR-007
-    files: (test execution, no file changes)
-    blocked_by: T0018, T0019, T0020, T0021, T0031
-    blocks: T0034
-- [ ] T0033 Run Codex parity tests — verify governance-parity.test.js passes with updated checkpoint references | traces: FR-007, AC-007-04
-    files: tests/verification/parity/governance-parity.test.js (MODIFY)
-    blocked_by: T0007, T0028, T0029
-    blocks: T0034
-- [ ] T0034 Verify template override resolution — run with user override template, confirm override takes precedence | traces: FR-004, AC-004-02
-    files: (test execution, no file changes)
-    blocked_by: T0032, T0033
-    blocks: T0035
+### test_execution
+
+- [ ] T0021 Run full test suite ESM lib plus CJS hooks — ensure no regressions from new hook registration | traces: NFR-001
+- [ ] T0022 Verify fail-open behavior end-to-end — config missing, MCP unavailable, malformed stdin, audit write failure | traces: FR-008, AC-008-01, AC-008-02, AC-008-03
+
+### parity_verification
+
+- [ ] T0023 Verify src/claude/ and .claude/ copies are identical — diff tool-router.cjs, tool-routing.json, settings.json entries | traces: FR-001, FR-002
+
+---
 
 ## Phase 08: Code Review -- PENDING
 
-- [ ] T0035 Review all new and modified files against constitutional articles (I, III, V, VII, IX, X, XIII) | traces: all FRs
-    files: docs/requirements/REQ-GH-213-.../code-review-report.md (CREATE)
-    blocked_by: T0034
-    blocks: T0036
-- [ ] T0036 Verify dual-file awareness — confirm both src/ (shipped) and .isdlc/ (dogfooding) template copies exist | traces: FR-004, FR-007
-    files: .isdlc/config/templates/ (VERIFY)
-    blocked_by: T0035
-    blocks: none
+### constitutional_review
+
+- [ ] T0024 Constitutional review — verify Article XV is correct, hook enforces Article X fail-open, Article XIII CJS module system | traces: FR-010, FR-008
+
+### dual_file_check
+
+- [ ] T0025 Dual-file check — confirm src/ and .claude/ are in sync for all new and modified files | traces: FR-001, FR-002
 
 ---
 
 ## Dependency Graph
 
 ```
-T0001-T0007 (test design, parallel)
-    │
-    ├── T0008-T0009 (module skeletons, parallel)
-    │     │
-    │     ├── T0011-T0016 (6 check functions, parallel after T0008)
-    │     │     │
-    │     │     ├── T0018-T0020 (unit tests for checks)
-    │     │     └── T0023-T0024 (Claude wiring, after tests pass)
-    │     │           │
-    │     │           ├── T0025 (remove STEP 3e-contract)
-    │     │           ├── T0026 (roundtable-analyst.md update)
-    │     │           └── T0027 (discover orchestrator wiring)
-    │     │
-    │     └── T0017 (template-loader impl, after T0009+T0010)
-    │           │
-    │           ├── T0021 (template-loader tests)
-    │           └── T0022 (rebuild-cache.js update)
-    │
-    ├── T0010 (shipped templates, no deps)
-    │
-    ├── T0028-T0029 (Codex wiring, after check function tests)
-    │
-    └── T0030-T0031 (cleanup, after ALL wiring complete)
-          │
-          └── T0032-T0034 (quality loop)
-                │
-                └── T0035-T0036 (code review)
+T0004 ──┬──→ T0006 ──┬──→ T0007 (parallel with T0008-T0011)
+        │            ├──→ T0008
+        │            ├──→ T0009
+        │            ├──→ T0010
+        │            ├──→ T0011
+        │            ├──→ T0012 ──→ T0013 ──→ T0014
+        │            ├──→ T0015 ──→ T0020
+        │            ├──→ T0018
+        │            └──→ (T0017 independent)
+        └──→ T0019
+T0005 (independent)
+T0016 (independent)
+T0021 ──→ T0022 ──→ T0023
+T0024 ──→ T0025
 ```
 
-**Critical path**: T0001 → T0008 → T0011 → T0019 → T0023 → T0025 → T0030 → T0032 → T0035
+**Critical Path**: T0004 → T0006 → T0012 → T0013 → T0014 → T0021 → T0022 → T0023 → T0024 → T0025 (10 tasks)
 
 ---
 
 ## Traceability Matrix
 
-| FR | ACs | Test Design Tasks | Implementation Tasks | Verification Tasks |
-|----|-----|-------------------|---------------------|--------------------|
-| FR-001 | AC-001-01 to AC-001-04 | T0001 | T0008, T0011-T0016, T0018 | T0032 |
-| FR-002 | AC-002-01 to AC-002-05 | T0002-T0005 | T0011-T0014, T0019, T0023, T0026 | T0032 |
-| FR-003 | AC-003-01, AC-003-02 | T0001 | T0015, T0016, T0020, T0024 | T0032 |
-| FR-004 | AC-004-01 to AC-004-06 | T0004, T0006, T0007 | T0009, T0010, T0017, T0021, T0022, T0037, T0039, T0040 | T0034 |
-| FR-005 | AC-005-01 to AC-005-04 | — | T0025, T0028, T0030, T0031 | T0032 |
-| FR-006 | AC-006-01 to AC-006-03 | — | T0027 | T0032 |
-| FR-007 | AC-007-01 to AC-007-04 | T0007 | T0028, T0029 | T0033 |
+| Task | FR | AC |
+|------|----|----|
+| T0001 | FR-001, FR-008 | — |
+| T0002 | FR-006 | AC-006-01, AC-006-02, AC-006-03 |
+| T0003 | FR-003 | AC-003-01, AC-003-02 |
+| T0004 | FR-002 | AC-002-01 |
+| T0005 | FR-005 | AC-005-01 |
+| T0006 | FR-001, FR-008 | AC-001-03, AC-008-01 |
+| T0007 | FR-003 | AC-003-01, AC-003-02 |
+| T0008 | FR-004, FR-009 | AC-004-01, AC-004-02, AC-009-01, AC-009-02 |
+| T0009 | FR-006 | AC-006-01, AC-006-02, AC-006-03 |
+| T0010 | FR-007 | AC-007-01, AC-001-01, AC-001-02 |
+| T0011 | FR-011 | AC-011-01, AC-011-02, AC-011-03 |
+| T0012 | FR-001, FR-003, FR-006, FR-008 | — |
+| T0013 | FR-002, FR-003 | AC-008-01, AC-008-03 |
+| T0014 | FR-006 | AC-006-01, AC-006-02, AC-006-03 |
+| T0015 | FR-001 | — |
+| T0016 | FR-010 | AC-010-01 |
+| T0017 | FR-001 | — |
+| T0018 | FR-001 | — |
+| T0019 | FR-002 | — |
+| T0020 | FR-001 | — |
+| T0021 | NFR-001 | — |
+| T0022 | FR-008 | AC-008-01, AC-008-02, AC-008-03 |
+| T0023 | FR-001, FR-002 | — |
+| T0024 | FR-010, FR-008 | — |
+| T0025 | FR-001, FR-002 | — |

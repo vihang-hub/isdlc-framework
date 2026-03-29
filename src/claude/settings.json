@@ -247,6 +247,41 @@
             "type": "command",
             "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/state-file-guard.cjs",
             "timeout": 10000
+          },
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/mcp-tool-router.cjs",
+            "timeout": 10000
+          }
+        ]
+      },
+      {
+        "matcher": "Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/mcp-tool-router.cjs",
+            "timeout": 10000
+          }
+        ]
+      },
+      {
+        "matcher": "Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/mcp-tool-router.cjs",
+            "timeout": 10000
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/mcp-tool-router.cjs",
+            "timeout": 10000
           }
         ]
       },
@@ -256,6 +291,11 @@
           {
             "type": "command",
             "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/explore-readonly-enforcer.cjs",
+            "timeout": 10000
+          },
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/mcp-tool-router.cjs",
             "timeout": 10000
           }
         ]

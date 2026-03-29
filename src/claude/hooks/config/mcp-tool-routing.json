@@ -1,0 +1,71 @@
+{
+  "version": "1.0.0",
+  "description": "MCP tool routing rules for PreToolUse enforcement. Routes agents from lower-fidelity tools to higher-fidelity MCP alternatives when available.",
+  "default_enforcement": "warn",
+  "rules": [
+    {
+      "tool": "Grep",
+      "operation": "codebase_search",
+      "mcp_tool": "mcp__code-index-mcp__search_code_advanced",
+      "enforcement": "block",
+      "description": "Use semantic code search instead of regex grep for codebase exploration",
+      "exceptions": {
+        "specific_file": true,
+        "description": "Allow Grep when targeting a specific file path (not a directory search)"
+      }
+    },
+    {
+      "tool": "Glob",
+      "operation": "file_discovery",
+      "mcp_tool": "mcp__code-index-mcp__find_files",
+      "enforcement": "warn",
+      "description": "Use indexed file discovery instead of filesystem glob"
+    },
+    {
+      "tool": "Read",
+      "operation": "file_summary",
+      "mcp_tool": "mcp__code-index-mcp__get_file_summary",
+      "enforcement": "warn",
+      "description": "Use file summary for orientation instead of reading full files",
+      "exceptions": {
+        "partial_read": true,
+        "pdf_read": true,
+        "description": "Allow Read with offset/limit (edit prep) or pages param (PDF reading)"
+      }
+    },
+    {
+      "tool": "Read",
+      "operation": "bulk_read",
+      "mcp_tool": "mcp__bulk-fs-mcp__read_files",
+      "enforcement": "warn",
+      "description": "Use bulk read for multiple file reads in sequence",
+      "exceptions": {
+        "single_file": true,
+        "description": "Only triggers when multiple Read calls are detected (tracked by hook state)"
+      }
+    },
+    {
+      "tool": "Write",
+      "operation": "bulk_write",
+      "mcp_tool": "mcp__bulk-fs-mcp__write_files",
+      "enforcement": "allow",
+      "description": "Use bulk write for multiple file writes in sequence",
+      "exceptions": {
+        "single_file": true,
+        "description": "Only triggers when multiple Write calls are detected (tracked by hook state)"
+      }
+    },
+    {
+      "tool": "Bash",
+      "operation": "directory_creation",
+      "mcp_tool": "mcp__bulk-fs-mcp__create_directories",
+      "enforcement": "warn",
+      "description": "Use MCP directory creation instead of bash mkdir",
+      "command_pattern": "^mkdir\\b",
+      "exceptions": {
+        "temp_directory": true,
+        "description": "Allow mkdir to temp directories (/tmp, $TMPDIR)"
+      }
+    }
+  ]
+}
