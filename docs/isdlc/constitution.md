@@ -1,7 +1,7 @@
 # Project Constitution - iSDLC Framework
 
 **Created**: 2026-02-07
-**Version**: 1.2.0
+**Version**: 1.3.0
 **Project Type**: Developer tooling / CLI framework / Agent orchestration system
 
 ---
@@ -12,7 +12,7 @@ This constitution establishes the fundamental principles governing all developme
 
 All agents (01-13) and the SDLC Orchestrator (00) MUST read and enforce these principles throughout the project lifecycle.
 
-**Project Context**: The iSDLC framework is a Claude Code extension that installs into target projects via symlinks. It consists of a Node.js CLI (ESM), runtime hooks (CommonJS), 36 agent definitions, 229 skill definitions, and shell scripts. It has no database -- all state is managed via JSON files on the filesystem.
+**Project Context**: The iSDLC framework is a Claude Code and Codex extension that installs into target projects via symlinks. It consists of a Node.js CLI (ESM), runtime hooks (CommonJS), a provider-neutral core layer (`src/core/`), provider adapters (`src/providers/`), 70 agent definitions, 276 skill definitions, 30 hooks, and shell scripts. It has no database -- all state is managed via JSON files on the filesystem. Dual-provider support enables both Claude Code (agent markdown + Task tool) and Codex (projection bundles + `codex exec`).
 
 ---
 
@@ -53,20 +53,22 @@ These 10 articles are mandatory for all projects. They represent industry best p
 - Unit test coverage: >=80% (adjusted from 95% -- CLI/framework tooling has many interactive code paths that require integration-level testing)
 - Integration test coverage: >=70%
 - Critical paths: 100% coverage required (installer, updater, hook enforcement logic)
-- Baseline: 555 tests (302 ESM lib tests + 253 CJS hook tests) as of 2026-02-07
+- Baseline: 1,600 tests across 365 test files as of 2026-03-27
 - Regression threshold: total test count MUST NOT decrease without documented justification in an ADR
 
-**Current Coverage by Module** (established during discovery):
-- All 10 lib/ modules: COVERED (cli, installer, updater, uninstaller, doctor, project-detector, monorepo-handler, fs-helpers, logger, prompts)
-- All 10 hook modules: COVERED (gate-blocker, iteration-corridor, skill-validator, log-skill-usage, constitution-validator, menu-tracker, test-watcher, model-provider-router, common, provider-utils)
-- 87 reverse-engineered acceptance criteria: 58 covered (66.7%), 9 partially covered (10.3%), 20 uncovered (23.0%)
-- 6 high-priority coverage gaps identified (see docs/isdlc/reverse-engineer-report.md)
+**Current Coverage by Module** (updated during re-discovery 2026-03-27):
+- lib/ (12 prod + 4 util + 28 embedding + 12 search modules): ~600 tests, ~80% estimated coverage
+- hooks/ (30 hooks + 14 lib modules): ~600 tests, ~90% estimated coverage
+- core/ (112 provider-neutral modules): ~250 tests, ~85% estimated coverage
+- providers/ (11 provider adapter modules): ~100 tests, ~85% estimated coverage
+- Critical paths (installer, updater, hook enforcement): ~95% estimated coverage
+- Prompt verification tests: ~30 tests (3 currently failing -- stale content expectations)
 
 **Enforcement Note (BUG-0054-GH-52)**: The coverage thresholds above are aspirational targets. Practical enforcement uses intensity-based tiered thresholds configured in `iteration-requirements.json`. Light workflows enforce lower thresholds (60% unit, 50% integration), standard workflows enforce the baseline thresholds (80% unit, 70% integration), and epic workflows enforce higher thresholds (95% unit, 85% integration). When no intensity is configured (e.g., fix workflows), the standard tier is used as default.
 
 **Validation**:
 - GATE-04: Test strategy approved
-- GATE-05: Unit test coverage >=80%, total tests >= 555 baseline
+- GATE-05: Unit test coverage >=80%, total tests >= 1,600 baseline
 - Agent 05 follows TDD: Red -> Green -> Refactor
 
 ---
@@ -299,14 +301,16 @@ These 10 articles are mandatory for all projects. They represent industry best p
 
 **Requirements**:
 1. CLI and lib files (`lib/*.js`, `bin/*.js`) MUST use ES Module syntax (`import`/`export`)
-2. Hook files (`src/claude/hooks/*.js`) MUST use CommonJS syntax (`require`/`module.exports`)
-3. This separation exists because Claude Code spawns hooks as standalone node processes outside package scope
-4. Tests for hooks MUST copy hook files to a temporary directory outside the package to avoid ESM/CJS resolution conflicts
-5. Never add `"type": "commonjs"` overrides or `.cjs` extensions to hooks -- they work correctly as-is
-6. New dependencies imported in hooks MUST be available via `require()` (no ESM-only packages in hooks)
+2. Core layer files (`src/core/**/*.js`) MUST use ES Module syntax (`import`/`export`)
+3. Hook files (`src/claude/hooks/*.cjs`) MUST use CommonJS syntax (`require`/`module.exports`) with `.cjs` extension
+4. Bridge files (`src/core/bridge/*.cjs`) provide CJS-to-ESM adapters for hooks to call core modules
+5. This separation exists because Claude Code spawns hooks as standalone node processes outside package scope -- `.cjs` extension ensures CommonJS resolution regardless of package.json `"type"` setting
+6. Tests for hooks MUST copy hook files to a temporary directory outside the package to avoid ESM/CJS resolution conflicts
+7. New dependencies imported in hooks MUST be available via `require()` (no ESM-only packages in hooks)
+8. Provider adapter files (`src/providers/**/*.js`) MUST use ES Module syntax
 
 **Validation**:
-- GATE-05: No ESM imports in hook files, no CommonJS require in lib files
+- GATE-05: No ESM imports in hook/bridge `.cjs` files, no CommonJS require in lib/core `.js` files
 - GATE-06: Hook tests execute from temp directories (not in-tree)
 - Agent 07 verifies module system boundaries during code review
 
@@ -363,6 +367,7 @@ These 10 articles are mandatory for all projects. They represent industry best p
 | 1.0.0 | 2026-02-07 | Initial constitution | Project discovery and setup |
 | 1.1.0 | 2026-02-07 | Article II: Added 555-test baseline, regression threshold, per-module coverage status, and 87 AC traceability metrics | Full deep discovery with behavior extraction established comprehensive test baseline |
 | 1.2.0 | 2026-02-10 | Article XII req 4: Updated Node version matrix from "Node 18, 20, 22" to "Node 20, 22, 24" | Node 18 reached EOL (April 2025); dropped in favor of Node 24 Active LTS (ADR-0008) |
+| 1.3.0 | 2026-03-27 | Preamble: Updated project context (70 agents, 276 skills, 30 hooks, dual-provider). Article II: Updated baseline from 555 to 1,600 tests, updated module coverage to reflect core/providers/embedding/search layers. Article XIII: Updated to reflect .cjs hook convention, added core layer and bridge layer rules. | Full re-discovery revealed significant codebase growth since 2026-02-07 |
 
 ---
 

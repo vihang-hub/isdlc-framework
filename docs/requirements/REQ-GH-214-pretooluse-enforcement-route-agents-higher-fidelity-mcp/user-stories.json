@@ -1,0 +1,72 @@
+[
+  {
+    "id": "US-001",
+    "title": "Auto-route to installed MCP tools",
+    "story": "As a framework user, I want agents to automatically use my installed MCP tools instead of lower-fidelity built-in tools, so that I get better results without manually intervening.",
+    "acceptance_criteria": [
+      "When I have code-index MCP installed and an agent tries Grep, the hook blocks and redirects to the MCP search tool",
+      "When I have bulk-fs MCP installed and an agent tries Read for a full file, the hook warns about the MCP alternative",
+      "When no MCP tools are available, all built-in tools work normally"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-001", "FR-004", "FR-008"]
+  },
+  {
+    "id": "US-002",
+    "title": "Configure custom tool preferences",
+    "story": "As a framework user, I want to define my own tool routing rules in a config file, so that my specific tool preferences are enforced without code changes.",
+    "acceptance_criteria": [
+      "I can add a new rule to tool-routing.json and it takes effect on the next tool call",
+      "My custom rules override framework defaults",
+      "The config file format is documented and easy to understand"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-002", "FR-003"]
+  },
+  {
+    "id": "US-003",
+    "title": "Legitimate tool use not blocked",
+    "story": "As a framework user, I want my legitimate use of Grep/Glob/Read (targeted file reads for editing, specific file searches) to not be blocked, so that the hook doesn't create false positives.",
+    "acceptance_criteria": [
+      "Reading a file with a limit parameter for edit prep is not blocked",
+      "Grep targeting a specific file path is not blocked",
+      "Glob with an exact filename is not blocked"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-006"]
+  },
+  {
+    "id": "US-004",
+    "title": "Discover config path from warnings",
+    "story": "As a framework user, when I see a tool routing warning, I want to know where to edit the config to change the enforcement level, so that I can promote warn to block easily.",
+    "acceptance_criteria": [
+      "Warning messages include the full path to tool-routing.json",
+      "Warning messages name the preferred tool and the rule source"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-007"]
+  },
+  {
+    "id": "US-005",
+    "title": "Skill-declared tool preferences enforced",
+    "story": "As a skill author, I want to declare tool preferences in my skill manifest, so that when users install my skill, the preferred tools are automatically enforced.",
+    "acceptance_criteria": [
+      "Adding tool_preferences to a skill's bindings in the manifest makes those preferences active",
+      "Skill-declared preferences are enforced at block level"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-005"]
+  },
+  {
+    "id": "US-006",
+    "title": "Audit trail for tool routing decisions",
+    "story": "As a framework user, I want a log of all tool routing decisions, so that I can audit which tools were used and which were redirected.",
+    "acceptance_criteria": [
+      "Every routing decision is logged to .isdlc/tool-routing-audit.jsonl",
+      "Each log entry includes timestamp, tools, enforcement, decision, and rule source",
+      "Audit log failures don't block tool execution"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-011"]
+  }
+]

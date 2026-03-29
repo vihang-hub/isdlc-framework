@@ -1,0 +1,66 @@
+{
+  "version": "1.0.0",
+  "generated_at": "2026-03-28T12:00:00Z",
+  "skills": [
+    {
+      "name": "project-architecture",
+      "file": "project-architecture.md",
+      "skill_id": "PROJ-001",
+      "description": "Distilled project architecture -- components, boundaries, data flow, key patterns",
+      "sourcePhase": "D1",
+      "source": "discover",
+      "added_at": "2026-03-28T12:00:00Z",
+      "bindings": {
+        "phases": ["all"],
+        "agents": ["all"],
+        "injection_mode": "always",
+        "delivery_type": "instruction"
+      }
+    },
+    {
+      "name": "project-conventions",
+      "file": "project-conventions.md",
+      "skill_id": "PROJ-002",
+      "description": "Distilled project conventions -- naming, error handling, file organization, patterns",
+      "sourcePhase": "D1",
+      "source": "discover",
+      "added_at": "2026-03-28T12:00:00Z",
+      "bindings": {
+        "phases": ["all"],
+        "agents": ["all"],
+        "injection_mode": "always",
+        "delivery_type": "instruction"
+      }
+    },
+    {
+      "name": "project-domain",
+      "file": "project-domain.md",
+      "skill_id": "PROJ-003",
+      "description": "Distilled project domain -- terminology, business rules, feature catalog",
+      "sourcePhase": "D6",
+      "source": "discover",
+      "added_at": "2026-03-28T12:00:00Z",
+      "bindings": {
+        "phases": ["all"],
+        "agents": ["all"],
+        "injection_mode": "always",
+        "delivery_type": "instruction"
+      }
+    },
+    {
+      "name": "project-test-landscape",
+      "file": "project-test-landscape.md",
+      "skill_id": "PROJ-004",
+      "description": "Distilled test landscape -- framework, coverage, gaps, patterns, fragile areas",
+      "sourcePhase": "D2",
+      "source": "discover",
+      "added_at": "2026-03-28T12:00:00Z",
+      "bindings": {
+        "phases": ["all"],
+        "agents": ["all"],
+        "injection_mode": "always",
+        "delivery_type": "instruction"
+      }
+    }
+  ]
+}

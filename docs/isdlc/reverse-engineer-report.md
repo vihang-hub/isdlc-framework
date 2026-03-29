@@ -1,6 +1,7 @@
 # Reverse-Engineer Report
 
-**Generated**: 2026-02-07
+**Generated**: 2026-03-28 (re-discovery)
+**Previous**: 2026-02-07
 **Project**: iSDLC Framework (self-development / dogfooding)
 **Method**: Full source code analysis with behavior extraction
 
@@ -8,18 +9,18 @@
 
 ## Execution Summary
 
-| Metric | Value |
-|--------|-------|
-| Total Acceptance Criteria | 87 |
-| Business Domains | 7 |
-| Source Files Analyzed | 20 production files (12,895 LOC) |
-| Test Files Analyzed | 20 test files (555 tests) |
-| Characterization Tests Generated | 7 files, 87 test.skip() scaffolds |
-| Traceability Entries | 87 rows in ac-traceability.csv |
+| Metric | Previous (2026-02-07) | Current (2026-03-28) |
+|--------|-----------------------|----------------------|
+| Total Acceptance Criteria | 87 | 87 (existing) + ~150 estimated new |
+| Business Domains | 7 + 1 TBD | 8 existing + 9 new domains identified |
+| Source Files Analyzed | 20 production files (12,895 LOC) | 255 production files (60,288 LOC) |
+| Test Files Analyzed | 20 test files (555 tests) | 365 test files (1,600 tests) |
+| Characterization Tests Generated | 7 files, 87 test.skip() scaffolds | Pending regeneration |
+| Traceability Entries | 87 rows in ac-traceability.csv | 87 rows (pending expansion) |
 
 ---
 
-## AC by Priority
+## AC by Priority (Existing 87 AC)
 
 | Priority | Count | Percentage |
 |----------|-------|------------|
@@ -29,7 +30,7 @@
 
 ---
 
-## AC by Domain
+## AC by Domain (Existing 8 Domains)
 
 | Domain | AC Count | Critical | High | Medium |
 |--------|----------|----------|------|--------|
@@ -40,96 +41,62 @@
 | Multi-Provider LLM Routing | 9 | 3 | 4 | 2 |
 | Constitution Management | 8 | 2 | 4 | 2 |
 | Monorepo & Project Detection | 12 | 3 | 6 | 3 |
+| Agent Orchestration | TBD | -- | -- | -- |
 
 ---
 
-## Test Coverage Against AC
+## New Domains Identified (Not Yet Extracted)
 
-| Coverage Status | Count | Percentage |
-|----------------|-------|------------|
-| COVERED (existing tests verify this AC) | 58 | 66.7% |
-| PARTIAL (some aspects tested) | 9 | 10.3% |
-| UNCOVERED (no existing tests) | 20 | 23.0% |
+The codebase has grown from ~24 to ~255 production modules since the last extraction. The following 9 new domains have been identified but AC have NOT yet been extracted:
+
+| # | Domain | Key Modules | Estimated AC |
+|---|--------|-------------|--------------|
+| 9 | Core Orchestration | phase-loop.js, fan-out.js, dual-track.js, instruction-generator.js | 15-20 |
+| 10 | Content Model | agent-classification.js, skill-classification.js, command-classification.js, content-model.js | 10-12 |
+| 11 | Search Subsystem | router.js, ranker.js, backends/*.js, config.js, detection.js | 12-15 |
+| 12 | Embedding Pipeline | chunker/, engine/, aggregation/, distribution/, knowledge/, redaction/ | 15-20 |
+| 13 | Backlog Management | backlog-ops.js, item-resolution.js, item-state.js, slug.js, source-detection.js | 10-12 |
+| 14 | Compliance Engine | engine.cjs, contract-evaluator.js, contract-loader.js, enforcement.js | 12-15 |
+| 15 | State Management | schema.js, validation.js, paths.js, monorepo.js | 8-10 |
+| 16 | Teams Framework | specs/*.js, instances/*.js, registry.js, implementation-loop.js | 15-18 |
+| 17 | Validators | gate-logic.js, checkpoint-router.js, traceability-validator.js, coverage-presence-validator.js | 12-15 |
+
+**Estimated total when fully extracted:** ~220-240 AC across 17 domains.
+
+---
+
+## Test Coverage Against Existing AC (87 AC)
+
+| Coverage Status | Count | Percentage | Change from Previous |
+|----------------|-------|------------|----------------------|
+| COVERED (existing tests verify this AC) | 58 | 66.7% | No change |
+| PARTIAL (some aspects tested) | 9 | 10.3% | No change |
+| UNCOVERED (no existing tests) | 20 | 23.0% | No change |
+
+**Note:** Coverage status for the original 87 AC has not been re-evaluated against the expanded test suite. Some previously UNCOVERED AC may now be covered by new tests in `tests/core/` and `tests/providers/`. A full re-evaluation is recommended.
 
 ### High-Priority Uncovered AC
 
-These Critical/High AC items have no existing test coverage:
+These Critical/High AC items had no test coverage at last evaluation:
 
-1. **AC-WO-004** (Medium): Background Update Check - no test for notification suppression
-2. **AC-WO-010** (High): Workflow Override Merging - deep merge of workflow overrides
-3. **AC-WO-014** (Critical): Last Workflow Phase Detection - final phase in sequence
-4. **AC-IE-015** (High): ATDD Skipped Test Detection - skipped test warning in ATDD mode
-5. **AC-IE-016** (Medium): Post-Gate Cloud Config Trigger - cloud config after gate pass
-6. **AC-IE-017** (Medium): Escalation Approval Gate - human approval check
-7. **AC-IL-009** (High): Obsolete File Cleanup - manifest diff cleanup
-8. **AC-IL-012** (Medium): Legacy Pattern-Based Uninstall
-9. **AC-IL-015** (Medium): Backup Creation
-10. **AC-PR-005** (High): Environment Override Injection
-11. **AC-PR-006** (High): Fallback Warning Emission
-12. **AC-PR-008** (Medium): Usage Tracking
-13. **AC-CM-004** (High): Article Description Mapping
-14. **AC-SO-009** (Medium): External Manifest Recognition
-15. **AC-MD-010** (Medium): Legacy Migration Detection
-16. **AC-MD-012** (Medium): Updater Monorepo Propagation
+1. **AC-WO-010** (High): Workflow Override Merging
+2. **AC-WO-014** (Critical): Last Workflow Phase Detection
+3. **AC-IE-015** (High): ATDD Skipped Test Detection
+4. **AC-IL-009** (High): Obsolete File Cleanup
+5. **AC-PR-005** (High): Environment Override Injection
+6. **AC-PR-006** (High): Fallback Warning Emission
+7. **AC-CM-004** (High): Article Description Mapping
 
 ---
 
-## Characterization Test Files
+## Recommendations
 
-| File | Domain | Scaffold Count |
-|------|--------|----------------|
-| tests/characterization/workflow-orchestration.test.js | Workflow Orchestration | 12 |
-| tests/characterization/installation-lifecycle.test.js | Installation & Lifecycle | 14 |
-| tests/characterization/iteration-enforcement.test.js | Iteration Enforcement | 21 |
-| tests/characterization/skill-observability.test.js | Skill Observability | 15 |
-| tests/characterization/provider-routing.test.js | Provider Routing | 11 |
-| tests/characterization/constitution-management.test.js | Constitution Management | 13 |
-| tests/characterization/monorepo-detection.test.js | Monorepo & Project Detection | 14 |
+1. **Re-extract AC for new domains** (P1): The 9 new domains represent ~150 additional AC that should be formally documented. This would enable targeted test coverage analysis.
 
----
+2. **Re-evaluate existing AC coverage** (P1): The test suite tripled since original extraction. Many previously UNCOVERED AC may now be covered.
 
-## Key Findings
+3. **Regenerate characterization tests** (P2): The original 87 `test.skip()` scaffolds should be regenerated to include new domains.
 
-### 1. Test Coverage is Strong for Core Paths
-The existing 555 tests cover 66.7% of extracted AC, with the strongest coverage in:
-- Hook enforcement logic (gate-blocker, iteration-corridor, test-watcher)
-- CLI commands (installer, updater, doctor)
-- Monorepo path resolution
-- Skill observability hooks
+4. **Update traceability matrix** (P2): ac-traceability.csv should be expanded to cover all 17 domains.
 
-### 2. Gaps in Edge Case Coverage
-The 23% uncovered AC are primarily:
-- Workflow override merging and phase sequence edge cases
-- Provider fallback chain and environment injection
-- Backup and cleanup operations
-- ATDD-specific behaviors (skipped test detection)
-
-### 3. Architecture is Clean and Well-Separated
-- ESM/CJS boundary is consistently maintained
-- Hooks follow identical patterns: readStdin -> parse -> check -> process -> exit 0
-- All hooks fail-open (Constitution Article X compliance)
-- Monorepo support is comprehensive with 8 path resolution functions
-
-### 4. Domain Boundaries are Clear
-The 7 domains map cleanly to file boundaries:
-- Each hook has a single responsibility
-- lib/ modules are cohesive (one per CLI command)
-- common.js is the shared utilities hub for hooks
-
----
-
-## Artifacts Generated
-
-| Artifact | Path |
-|----------|------|
-| AC Index | docs/requirements/reverse-engineered/index.md |
-| Domain 01: Workflow | docs/requirements/reverse-engineered/domain-01-workflow-orchestration.md |
-| Domain 02: Installation | docs/requirements/reverse-engineered/domain-02-installation-lifecycle.md |
-| Domain 03: Iteration | docs/requirements/reverse-engineered/domain-03-iteration-enforcement.md |
-| Domain 04: Skill | docs/requirements/reverse-engineered/domain-04-skill-observability.md |
-| Domain 05: Provider | docs/requirements/reverse-engineered/domain-05-provider-routing.md |
-| Domain 06: Constitution | docs/requirements/reverse-engineered/domain-06-constitution-management.md |
-| Domain 07: Monorepo | docs/requirements/reverse-engineered/domain-07-monorepo-detection.md |
-| Characterization Tests (7 files) | tests/characterization/*.test.js |
-| Traceability Matrix | docs/isdlc/ac-traceability.csv |
-| This Report | docs/isdlc/reverse-engineer-report.md |
+5. **Add formal coverage tooling** (P1): Enable `node --test --experimental-test-coverage` or c8 to get quantitative coverage metrics against AC source files.

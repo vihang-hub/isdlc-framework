@@ -1,137 +1,159 @@
 # Test Evaluation Report
 
-**Generated:** 2026-02-07
-**Evaluated by:** iSDLC Discover (D2 Test Evaluator)
-**Project:** iSDLC Framework
+**Generated:** 2026-03-28
+**Evaluated by:** iSDLC Discover (D2 Test Evaluator, re-discovery)
+**Project:** iSDLC Framework v0.1.0-alpha
+**Previous Evaluation:** 2026-02-07
 
 ---
 
 ## Executive Summary
 
-The iSDLC framework has **minimal test coverage**: 1 test file with 24 tests covering only the hook subsystem. The CLI layer (lib/), shell scripts, and 5 of 8 hooks have **zero tests**. The npm test command (`node --test lib/**/*.test.js`) matches no files. CI provides smoke tests but no automated unit or integration test suite for the core functionality.
+The iSDLC framework has **strong test coverage** with 1,600 tests across 365 test files, of which 1,597 pass (99.8% pass rate). This represents a massive improvement from the previous evaluation (24 tests, ~15-20% coverage). All major production modules have corresponding test files. The test-to-code ratio is 2.21:1 (133K test lines vs 60K prod lines). Key gaps: no formal code coverage tooling, 3 failing prompt-format tests, no integration tests for the embedding pipeline, and limited E2E workflow tests.
 
-**Overall Coverage Estimate: ~15-20%** (hooks only, no lib/ coverage)
+**Overall Coverage Estimate: ~85%** (based on test file presence vs production module count)
 
 ---
 
 ## Current Test Infrastructure
 
 ### Test Framework
+- **Runner:** `node --test` (Node.js built-in test runner, no external framework)
+- **Assertion:** `node:assert` (strict mode)
+- **Coverage tool:** None configured (no nyc, c8, or istanbul)
+- **Node versions tested:** 20, 22, 24 (CI matrix)
+- **Platforms tested:** Ubuntu, macOS, Windows (CI matrix)
 
-The project uses a **custom Node.js test runner** (`src/claude/hooks/tests/test-skill-validator.js`) with no external test framework dependency. The test file:
-- Spawns hook processes with controlled stdin/env
-- Uses temp directories for isolation
-- Has pass/fail counting with colored output
-- Cleans up after each test
+### Test Scripts
 
-### Existing Tests (24 total)
+| Script | Command | Scope |
+|--------|---------|-------|
+| `npm test` | `node --test lib/*.test.js lib/utils/*.test.js lib/search/*.test.js lib/search/backends/*.test.js lib/embedding/**/*.test.js` | lib/ unit tests |
+| `npm run test:hooks` | `node --test src/claude/hooks/tests/*.test.cjs` | Hook CJS tests |
+| `npm run test:core` | `node --test tests/core/**/*.test.js` | Core module tests |
+| `npm run test:providers` | `node --test tests/providers/**/*.test.js` | Provider adapter tests |
+| `npm run test:e2e` | `node --test tests/e2e/*.test.js` | CLI end-to-end tests |
+| `npm run test:all` | All above combined | Full suite |
 
-| Category | Count | What's Tested |
-|----------|-------|---------------|
-| common.js | 7 | getProjectRoot, fs module, readStateValue, getTimestamp, normalizeAgentName (3 variants) |
-| skill-validator.js | 8 | Non-Task allowed, phase match, orchestrator bypass, cross-phase observe, warn/audit/disabled/observe modes |
-| log-skill-usage.js | 4 | Task logging, non-Task skip, accumulation, correct agent name |
-| Integration | 1 | Full flow: validator -> logger for same-phase agent |
-| gate-blocker.js | 4 | Delegation pass with log, fail without log, disabled phase, missing manifest |
+### Test Results (as of 2026-03-28)
 
-### CI/CD Test Coverage
-
-The `ci.yml` GitHub Actions workflow provides:
-- **Lint job**: `npm run lint` (currently echo stub)
-- **Test job**: `npm test` on 3 OS x 3 Node versions (but npm test matches no files)
-- **Integration job**: CLI smoke tests (help, version, doctor, init --dry-run, actual install, uninstall --dry-run)
-- **Bash install job**: Shell installer smoke test on Ubuntu and macOS
-
----
-
-## Gap Analysis
-
-### Critical Gaps (Must Fix)
-
-| Component | Lines | Tests | Risk | Recommendation |
-|-----------|-------|-------|------|---------------|
-| `lib/installer.js` | 845 | 0 | CRITICAL | Symlink creation, state init, settings.json generation, project detection -- all untested. Bugs here break all new installations. |
-| `lib/updater.js` | 550 | 0 | CRITICAL | Manifest diffing, file cleanup, backup creation, deep merge -- all untested. Bugs here can destroy existing installations. |
-| `lib/project-detector.js` | 277 | 0 | HIGH | New vs existing detection logic untested. Wrong detection leads to wrong workflow. |
-| `lib/monorepo-handler.js` | 247 | 0 | HIGH | Multi-project isolation untested. Cross-project state corruption possible. |
-| `lib/uninstaller.js` | 514 | 0 | HIGH | Cleanup logic untested. Could leave orphaned files or remove user files. |
-
-### Medium Gaps (Should Fix)
-
-| Component | Lines | Tests | Risk | Recommendation |
-|-----------|-------|-------|------|---------------|
-| `gate-blocker.js` | 575 | 4 | MEDIUM | Only delegation tests exist. Missing: menu interaction check, test iteration check, constitutional check, workflow override. |
-| `iteration-corridor.js` | 337 | 0 | MEDIUM | TEST_CORRIDOR and CONST_CORRIDOR blocking logic untested. |
-| `constitution-validator.js` | 323 | 0 | MEDIUM | Phase completion detection, article checking, state initialization untested. |
-| `test-watcher.js` | 545 | 0 | MEDIUM | Test command detection, result parsing, circuit breaker, ATDD skip detection untested. |
-| `menu-tracker.js` | 261 | 0 | MEDIUM | Menu pattern detection, selection tracking, step completion untested. |
-| `model-provider-router.js` | 153 | 0 | MEDIUM | Provider selection, health check, fallback chain untested. |
-| `lib/doctor.js` | 238 | 0 | MEDIUM | Health check validation logic untested. |
-| `lib/cli.js` | 233 | 0 | MEDIUM | Argument parsing, command routing untested. |
-
-### Low Gaps (Nice to Have)
-
-| Component | Lines | Tests | Risk | Recommendation |
-|-----------|-------|-------|------|---------------|
-| `install.sh` | 1,162 | CI smoke | LOW | Complex shell script with many edge cases. Consider shellcheck. |
-| `update.sh` | 580 | 0 | LOW | Shell update script untested. |
-| `uninstall.sh` | 867 | CI smoke | LOW | Shell uninstall script. |
-| `lib/utils/fs-helpers.js` | 250 | 0 | LOW | File system utilities. |
-| `lib/utils/logger.js` | 137 | 0 | LOW | Logger is cosmetic, low risk. |
-| `lib/utils/prompts.js` | 110 | 0 | LOW | Interactive prompts, hard to unit test. |
+```
+tests:        1600
+suites:       526
+pass:         1597
+fail:         3
+cancelled:    0
+skipped:      0
+todo:         0
+duration_ms:  37833
+```
 
 ---
 
-## Recommended Test Infrastructure
+## Coverage by Module Area
 
-### Phase 1: Fix npm test (Immediate)
+### src/core/ (112 production modules)
 
-The `npm test` script (`node --test lib/**/*.test.js`) matches zero files. Either:
-- Create `lib/*.test.js` files using Node.js built-in test runner
-- Or update the script to point to existing test files
+| Subdomain | Prod Files | Test Files | Coverage |
+|-----------|-----------|------------|----------|
+| analyze/ | 7 | 7 | Full |
+| backlog/ | 6 | 4 | Good (slug, source-detection lack dedicated tests) |
+| bridge/ | 18 | 6 | Partial (bridges tested via integration, not unit) |
+| compliance/ | 4 | -- | Gap (tested via validator tests indirectly) |
+| config/ | 3 | 3 | Full |
+| content/ | 5 | 6 | Full |
+| discover/ | 7 | 7 | Full |
+| installer/ | 1 | 1 | Full |
+| memory/ | 1 | 1 | Full |
+| observability/ | 4 | 5 | Full |
+| orchestration/ | 8 | 8 | Full |
+| providers/ | 6 | 5 | Good |
+| search/ | 1 | 1 | Full |
+| skills/ | 3 | 3 | Full |
+| state/ | 5 | 6 | Full |
+| tasks/ | 1 | 1 | Full |
+| teams/ | 10 | 12 | Full (includes parity tests) |
+| validators/ | 20 | 18 | Good |
+| workflow/ | 2 | 2 | Full |
 
-### Phase 2: Unit Tests for lib/ (Priority: CRITICAL)
+### src/claude/hooks/ (30 hooks + 14 lib + 5 dispatchers)
 
-Create test files for each lib module:
-- `lib/installer.test.js` -- Test symlink creation, state init, settings generation
-- `lib/updater.test.js` -- Test manifest diff, file cleanup, backup, deep merge
-- `lib/project-detector.test.js` -- Test new/existing detection with various project layouts
-- `lib/monorepo-handler.test.js` -- Test project resolution, state scoping
-- `lib/uninstaller.test.js` -- Test cleanup logic, file removal
-- `lib/doctor.test.js` -- Test health check validation
-- `lib/cli.test.js` -- Test argument parsing, command routing
+| Area | Prod Files | Test Files | Notes |
+|------|-----------|------------|-------|
+| Root hooks | 30 | ~120 | Extensive (many hooks have multiple test files) |
+| Dispatchers | 5 | ~20 | Well covered |
+| Lib modules | 14 | ~31 | Well covered |
+| **Total** | **49** | **171** | 77,524 test lines |
 
-### Phase 3: Hook Tests (Priority: HIGH)
+### lib/ (56 production modules)
 
-Extend the existing test file or create per-hook test files:
-- `hooks/tests/test-gate-blocker.js` -- Complete gate check coverage
-- `hooks/tests/test-iteration-corridor.js` -- Corridor state and blocking
-- `hooks/tests/test-constitution-validator.js` -- Completion detection, article checking
-- `hooks/tests/test-test-watcher.js` -- Command detection, result parsing, circuit breaker
-- `hooks/tests/test-menu-tracker.js` -- Menu detection, selection tracking
+| Area | Prod Files | Test Files | Notes |
+|------|-----------|------------|-------|
+| Core CLI | 7 | 7 | Full (cli, installer, updater, uninstaller, doctor, project-detector, monorepo-handler) |
+| Memory | 4 | 4 | Full |
+| Utils | 4 | 4 | Full |
+| Embedding | 28 | ~18 | Partial (aggregation, distribution, redaction, knowledge have tests; some adapters lack dedicated tests) |
+| Search | 12 | 12 | Full |
 
-### Phase 4: Integration Tests (Priority: MEDIUM)
+### src/providers/ (11 modules)
 
-- Install -> Doctor -> Update -> Uninstall flow
-- Monorepo: install -> add project -> switch project -> verify isolation
-- Hook chain: PreToolUse -> action -> PostToolUse state changes
+| Provider | Prod Files | Test Files | Notes |
+|----------|-----------|------------|-------|
+| Claude | 5 | 3 | Good (installer, runtime, adapter tested) |
+| Codex | 6 | 14 | Extensive (includes parity, projection, governance tests) |
 
-### Phase 5: Additional Tooling (Priority: LOW)
+### tests/ directory (127 test files)
 
-- **Mutation testing**: Stryker for JavaScript
-- **Shell script linting**: shellcheck for install.sh/uninstall.sh/update.sh
-- **Coverage reporting**: c8 or istanbul for Node.js code coverage
+| Category | Files | Purpose |
+|----------|-------|---------|
+| tests/core/ | 89 | Core module unit tests |
+| tests/providers/ | 19 | Provider adapter tests |
+| tests/e2e/ | 2 | CLI lifecycle, status command |
+| tests/hooks/ | 2 | Bridge delegation, plan surfacer |
+| tests/prompt-verification/ | 9 | Agent prompt content validation |
+| tests/verification/ | 6 | Golden tests, migration, parity, performance benchmarks |
 
 ---
 
-## Test Quality Metrics (Current)
+## Critical Coverage Gaps
 
-| Metric | Current | Target |
-|--------|---------|--------|
-| Test files | 1 | 15+ |
-| Total tests | 24 | 150+ |
-| Hook coverage | 3 of 8 (37.5%) | 8 of 8 (100%) |
-| Lib coverage | 0 of 10 (0%) | 10 of 10 (100%) |
-| CI matrix | 9 combinations | 9 combinations (keep) |
-| Mutation score | N/A | >=80% |
-| npm test | Matches 0 files | Runs all lib tests |
+| # | Gap | Risk | Priority | Recommendation |
+|---|-----|------|----------|----------------|
+| 1 | No formal coverage metrics | Cannot validate constitution thresholds quantitatively | P1 | Add `node --test --experimental-test-coverage` or c8 |
+| 2 | 3 failing prompt-format tests | CI would fail if these tests are in the main test suite | P0 | Fix stale content expectations in lib/prompt-format.test.js |
+| 3 | No E2E workflow lifecycle tests | Full feature/fix workflow untested end-to-end | P2 | Add E2E test that exercises workflow-init -> phase-loop -> workflow-finalize |
+| 4 | Embedding pipeline integration | 28 modules with unit tests but no pipeline integration test | P2 | Add integration test: chunk -> embed -> store -> query |
+| 5 | Contract evaluator integration | Tested in isolation but not with real contract files + state | P2 | Add integration test with .isdlc/config/contracts/ |
+| 6 | src/core/bridge/ undercovered | 18 bridge modules, only 6 test files | P3 | Bridge modules are thin wrappers; unit tests would catch import errors |
+
+---
+
+## Quality Assessment
+
+**Strengths:**
+- High test-to-code ratio (2.21:1) indicates thorough testing culture
+- Hook subsystem extremely well-tested (171 test files)
+- Core modules have near-complete test file coverage
+- Multi-platform CI matrix (3 OS x 3 Node versions = 9 combinations)
+- Test organization mirrors source structure cleanly
+
+**Weaknesses:**
+- No formal code coverage tool -- thresholds are aspirational
+- Hook test files are disproportionately large (77K lines for 49 prod files)
+- No mutation testing
+- Prompt verification tests are brittle (depend on exact content strings)
+- Missing integration test layer between unit and E2E
+
+---
+
+## Comparison with Previous Evaluation (2026-02-07)
+
+| Metric | Previous | Current | Change |
+|--------|----------|---------|--------|
+| Total tests | 24 | 1,600 | +1,576 (+6,567%) |
+| Test files | 1 | 365 | +364 |
+| Pass rate | 100% | 99.8% | -0.2% (3 failures) |
+| Coverage estimate | ~15-20% | ~85% | +65% |
+| Prod modules | ~24 | ~255 | +231 |
+| Test lines | ~800 | 133,111 | +132,311 |
+| Constitution baseline | 555 | 1,600 | +1,045 (baseline needs update) |
