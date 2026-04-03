@@ -2571,73 +2571,53 @@ After the phase loop exits (all phases completed or skipped), before STEP 4 (orc
 
 29. **Error handling**: If dashboard rendering fails, log `DASHBOARD_ERROR: Could not render completion dashboard: <error>` and proceed. Never block finalization. (NFR-001)
 
-#### STEP 4: FINALIZE — Complete the workflow
+#### STEP 4: FINALIZE — Complete the workflow (REQ-GH-219)
 
-After all phases complete:
+After all phases complete, run the **finalize checklist** — a config-driven, per-step sequence that replaces the previous orchestrator delegation. Each step is small, tracked, and retried independently (same pattern as #220 task-level dispatch).
 
-```
-Use Task tool → sdlc-orchestrator with:
-  MODE: finalize
-  (include MONOREPO CONTEXT if applicable)
-```
+**4a. Read the finalize checklist**: Read `.isdlc/config/finalize-steps.md` using `task-reader.js`. If missing, fall back to `src/core/finalize/finalize-steps.default.md` and copy it to `.isdlc/config/` for future runs. Parse using the standard tasks.md format (extended with `| critical: true, fail_open: true, max_retries: N, type: internal|shell|mcp|provider` metadata).
 
-The orchestrator runs the Human Review Checkpoint (if code_review.enabled), merges the branch, and then performs **non-blocking external status sync**:
+**4b. Execute steps sequentially** respecting `blocked_by` dependencies (tier-ordered). For each step:
 
-**Jira sync** (if `active_workflow.source === "jira"` and `active_workflow.external_id` exists):
-- Call `getAccessibleAtlassianResources` to resolve `cloudId` (first accessible resource). If MCP unavailable or call fails: log warning, set `jira_sync_status = "failed"`, continue.
-- Call `getTransitionsForJiraIssue(cloudId, external_id)` to discover available transitions. If call fails: log warning, set `jira_sync_status = "failed"`, continue.
-- Match transition name (case-insensitive): "Done" first, then fall back to "Complete", "Resolved", "Closed", or status category `"done"`. If no terminal transition found: log warning, set `jira_sync_status = "failed"`, continue.
-- Call `transitionJiraIssue(cloudId, external_id, transition: { id: targetTransitionId })` to execute the transition. If call fails: log warning, set `jira_sync_status = "failed"`, continue.
-- On success: set `jira_sync_status = "synced"` in `workflow_history`
-- Any Jira sync failure logs a warning but does **not** block workflow completion (non-blocking)
+1. Display step name to the user
+2. Execute based on `type`:
+   - `internal` — call the corresponding function from `src/core/finalize/finalize-utils.js`:
+     - **F0001 Merge branch**: `mergeBranch(branch, projectRoot)` — git checkout main, merge --no-ff, delete branch
+     - **F0002 Sync external status**: `syncExternalStatus(workflowInfo, projectRoot)` — GitHub close, BACKLOG.md mark [x]
+     - **F0003 Move workflow to history**: `moveWorkflowToHistory(state)` + `clearTransientFields(state)` — moves `active_workflow` to `workflow_history`, nulls transients
+   - `shell` — execute via `child_process.execSync`:
+     - **F0005 Session cache**: `node bin/rebuild-cache.js`
+     - **F0006 Contracts**: `node bin/generate-contracts.js` + `--output .isdlc/config/contracts`
+     - **F0008 Memory embeddings**: rebuild user + project indexes
+     - **F0009 Code embeddings**: refresh if pipeline configured
+   - `mcp` — execute MCP tool calls (Claude Code only, skipped in other providers):
+     - **F0007 Code index**: `mcp__code-index-mcp__refresh_index` + `mcp__code-index-mcp__build_deep_index`
+   - `provider` — provider-specific steps (skipped when provider doesn't match):
+     - **F0004 Task cleanup**: `TaskList` → delete all tasks
+3. On failure: retry up to `max_retries` from step metadata
+4. After retries exhausted:
+   - If `critical: true` AND `fail_open: false` → halt finalization, escalate to user
+   - If `fail_open: true` → log warning, continue to next step
+5. Display per-step result (passed/failed/skipped)
 
-**GitHub sync** (if `active_workflow.source === "github"` and `active_workflow.source_id` matches `GH-N`):
-- Extract the issue number from `source_id` (e.g., `GH-55` → `55`)
-- Run `gh issue close N` to close the GitHub issue
-- If the command fails, log a warning and continue — never block workflow completion (non-blocking)
+**4c. Jira sync** (non-blocking, runs as part of F0002 or as a separate step if configured):
+If `active_workflow.source === "jira"` and `active_workflow.external_id` exists, transition the Jira issue to Done via Atlassian MCP. Failure is non-blocking.
 
-**BACKLOG.md sync** (runs unconditionally for all workflows):
-- Locate the matching BACKLOG.md item by `artifact_folder` slug, `external_id`/`source_id`, or item number
-- Mark the item checkbox `[x]`
-- Add a `**Completed:** {YYYY-MM-DD}` sub-bullet beneath the item
-- Move the entire item block (parent line + all indented sub-bullets) to the `## Completed` section
-- If `## Completed` section does not exist, auto-create it at the end of BACKLOG.md
-- If BACKLOG.md does not exist or no matching item is found, skip silently
-- Any BACKLOG.md sync failure logs a warning but does **not** block workflow completion (non-blocking)
-
-After sync steps, the orchestrator collects workflow progress snapshots (`collectPhaseSnapshots()`), applies state pruning, moves the workflow to `workflow_history` (with `phases`, `phase_snapshots`, and `metrics`), and clears `active_workflow`.
-
-**CRITICAL — MANDATORY CLEANUP (must execute even if finalize output is long):**
-
-After the orchestrator returns from finalize, execute this cleanup loop immediately:
-
+**4d. Task cleanup** (F0004, provider-specific):
 1. Call `TaskList` to retrieve ALL tasks in the session
-2. For EACH task returned by TaskList:
-   a. Call `TaskUpdate` with `status: "deleted"` to permanently remove it from the display
-3. This loop processes ALL tasks (workflow phase tasks AND sub-agent tasks) — do not attempt to filter or identify which tasks "belong" to the workflow. After finalize, every remaining task is stale by definition. Delete them all so the screen is clean for the next workflow.
-4. Do NOT exit the Phase-Loop Controller until this cleanup loop has completed.
+2. For EACH task: call `TaskUpdate` with `status: "deleted"`
+3. This processes ALL tasks — workflow phase tasks AND sub-agent tasks. After finalize, every remaining task is stale by definition.
+4. Do NOT exit the Phase-Loop Controller until this cleanup has completed.
 
-**INDEX REFRESH (post-finalize, non-blocking):**
+**4e. Display finalize summary**: After all steps complete, display the per-step results table showing which steps passed, failed, were skipped, or were retried.
 
-After task cleanup completes, refresh all search indexes so the next workflow or conversation sees the current codebase state. All steps are fail-open — index refresh failures MUST NOT block workflow completion.
-
-5. **Code index refresh**: Call `mcp__code-index-mcp__refresh_index` to rebuild the shallow file index, then call `mcp__code-index-mcp__build_deep_index` for symbol-level indexing. If either MCP call fails (tool unavailable, timeout), log a warning and continue.
-
-6. **Session cache rebuild**: Run `node bin/rebuild-cache.js` to refresh the SessionStart skill/config cache with any new or modified skills, contracts, or config files from this workflow. If the command fails, log a warning and continue.
-
-7. **Contract regeneration**: Run `node bin/generate-contracts.js` to regenerate shipped contracts reflecting any config changes made during this workflow (new skills added, workflows.json modified, etc.). Also regenerate project-local contracts: `node bin/generate-contracts.js --output .isdlc/config/contracts`. If either command fails, log a warning and continue.
-
-8. **Memory embeddings rebuild**: Rebuild roundtable memory vector indexes so semantic search in the next session reflects conversations from this workflow. Run `node -e 'import("./lib/memory-embedder.js").then(m => m.rebuildIndex(process.env.HOME + "/.isdlc/user-memory/sessions", process.env.HOME + "/.isdlc/user-memory/index.emb", { provider: "local" }).then(r => console.log(JSON.stringify(r))))'`. Also rebuild project-level index at `.isdlc/roundtable-memory.json` if sessions exist. If either fails, log a warning and continue.
-
-9. **Code embeddings refresh**: If the embedding pipeline is configured (check `docs/.embeddings/` exists or `.isdlc/config.json` has `semantic.enabled: true`), run `node -e 'import("./lib/embedding/chunker/index.js").then(() => console.log("Embedding pipeline available"))'` as a probe. If available, trigger a re-index of changed files by running the embedding generation for modified source files. If the pipeline is not configured or the probe fails, skip silently — code embeddings are optional infrastructure.
-
-**Non-workflow index refresh**: The same steps (code index, session cache, contracts, memory embeddings, code embeddings) also run at the end of:
+**Non-workflow index refresh**: The same index refresh steps (code index, session cache, contracts, memory embeddings, code embeddings) also run at the end of:
 - `/isdlc analyze` — after step 9 (GitHub label sync), before returning
 - `/discover` — after discovery finalization
 - `/isdlc test generate` — after STEP 4 finalize (already covered above via Phase-Loop Controller)
 - `/isdlc upgrade` — after STEP 4 finalize (already covered above via Phase-Loop Controller)
 
-For non-workflow contexts, call the same 3 steps inline. Failures are non-blocking.
+For non-workflow contexts, call the same steps inline using `finalize-utils.js` functions. Failures are non-blocking.
 
 #### Flow Summary
 

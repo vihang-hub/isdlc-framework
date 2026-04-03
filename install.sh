@@ -639,6 +639,15 @@ if [ -f "$FRAMEWORK_DIR/isdlc/config/workflows.json" ]; then
     echo -e "${GREEN}  ✓ Copied workflow definitions${NC}"
 fi
 
+# Copy finalize-steps.md default (only if not already present — preserve user customizations)
+FINALIZE_STEPS_DEFAULT="$FRAMEWORK_DIR/../src/core/finalize/finalize-steps.default.md"
+FINALIZE_STEPS_TARGET=".isdlc/config/finalize-steps.md"
+if [ -f "$FINALIZE_STEPS_DEFAULT" ] && [ ! -f "$FINALIZE_STEPS_TARGET" ]; then
+    mkdir -p ".isdlc/config"
+    cp "$FINALIZE_STEPS_DEFAULT" "$FINALIZE_STEPS_TARGET"
+    echo -e "${GREEN}  ✓ Created default finalize-steps.md${NC}"
+fi
+
 # Copy checklists
 if [ -d "$FRAMEWORK_DIR/isdlc/checklists" ]; then
     cp -r "$FRAMEWORK_DIR/isdlc/checklists" ".isdlc/"

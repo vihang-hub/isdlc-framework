@@ -231,8 +231,8 @@ function extractField(content, pattern) {
  */
 function splitPhaseSections(content) {
   const sections = [];
-  // Match ## Phase NN: headers
-  const phasePattern = /^## Phase \d+:/gm;
+  // Match ## Phase NN: headers (supports numeric and alphanumeric keys like FN)
+  const phasePattern = /^## Phase \w+:/gm;
   const matches = [];
   let match;
 
@@ -272,7 +272,7 @@ function splitPhaseSections(content) {
  */
 function parsePhaseSection(section) {
   // Parse header: ## Phase NN: Name -- STATUS
-  const headerMatch = section.match(/^## Phase (\d+):\s*(.+?)\s*--\s*(PENDING|IN PROGRESS|COMPLETE)/m);
+  const headerMatch = section.match(/^## Phase (\w+):\s*(.+?)\s*--\s*(PENDING|IN PROGRESS|COMPLETE)/m);
   const phaseKey = headerMatch ? headerMatch[1] : '00';
   const name = headerMatch ? headerMatch[2].trim() : 'Unknown';
   const status = headerMatch ? headerMatch[3] : 'PENDING';
@@ -283,8 +283,8 @@ function parsePhaseSection(section) {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // Match task lines: - [ ] TNNNN or - [X] TNNNN or - [BLOCKED] TNNNN
-    const taskMatch = line.match(/^- \[([ X])\]\s+(T\d{4})\s+(.+)/);
+    // Match task lines: - [ ] TNNNN or - [X] TNNNN (T=task, F=finalize step)
+    const taskMatch = line.match(/^- \[([ X])\]\s+([A-Z]\d{4})\s+(.+)/);
     if (!taskMatch) continue;
 
     const complete = taskMatch[1] === 'X';
@@ -298,12 +298,35 @@ function parsePhaseSection(section) {
       remainder = remainder.substring(4);
     }
 
-    // Extract traces from pipe annotation
+    // Extract metadata from pipe annotations (key: value pairs)
     let traces = [];
-    const tracesMatch = remainder.match(/\|\s*traces:\s*(.+?)$/);
-    if (tracesMatch) {
-      traces = tracesMatch[1].split(',').map(s => s.trim());
-      remainder = remainder.substring(0, remainder.indexOf('|')).trim();
+    let metadata = {};
+    const pipeIdx = remainder.indexOf('|');
+    if (pipeIdx >= 0) {
+      const annotationStr = remainder.substring(pipeIdx + 1).trim();
+      remainder = remainder.substring(0, pipeIdx).trim();
+
+      // Split on ", key:" boundaries where key starts with lowercase
+      // This preserves trace values (FR-001, AC-001-02) which start uppercase
+      const pairs = annotationStr.split(/,\s*(?=[a-z_]\w*:)/);
+
+      for (const pair of pairs) {
+        const colonIdx = pair.indexOf(':');
+        if (colonIdx < 0) continue;
+        const key = pair.substring(0, colonIdx).trim();
+        let value = pair.substring(colonIdx + 1).trim();
+
+        if (key === 'traces') {
+          traces = value.split(',').map(s => s.trim());
+          metadata.traces = traces;
+        } else {
+          // Type coercion: booleans and numbers
+          if (value === 'true') metadata[key] = true;
+          else if (value === 'false') metadata[key] = false;
+          else if (/^\d+$/.test(value)) metadata[key] = parseInt(value, 10);
+          else metadata[key] = value;
+        }
+      }
     }
 
     const description = remainder.trim();
@@ -345,7 +368,7 @@ function parsePhaseSection(section) {
       }
     }
 
-    tasks.push({ id, description, complete, parallel, files, blockedBy, blocks, traces });
+    tasks.push({ id, description, complete, parallel, files, blockedBy, blocks, traces, metadata });
   }
 
   return { phaseKey, name, status, tasks };

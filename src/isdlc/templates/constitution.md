@@ -1,13 +1,27 @@
 # Project Constitution - [PROJECT_NAME]
 
+<!-- CONSTITUTION_STATUS: STARTER_TEMPLATE -->
+<!-- This is a starter template. Run /discover to customize for your project. -->
+
 **Created**: [DATE]
 **Version**: 1.0.0
+**Status**: Needs customization — run `/discover` to tailor articles to your project
+
+---
+
+## Instructions
+
+This is a **starter constitution** copied during framework installation. It contains universal articles that apply to all projects, plus domain-specific placeholders.
+
+**To customize**: Run `/discover` to analyze your project and generate tailored articles interactively.
+
+**To use as-is**: Remove this Instructions section and the `STARTER_TEMPLATE` marker above. The framework will then treat it as a customized constitution.
 
 ---
 
 ## Preamble
 
-This constitution establishes the fundamental principles governing all development activities within this project. These articles are **immutable** once established and guide all SDLC workflows and agent interactions, whether the workflow includes all 13 phases or a subset (e.g., feature, fix, test workflows).
+This constitution establishes the fundamental principles governing all development activities within the **[PROJECT_NAME]** project. These articles are **immutable** once established and guide all SDLC workflows and agent interactions, whether the workflow includes all 13 phases or a subset (e.g., build, test, upgrade workflows).
 
 All agents (01-13) and the SDLC Orchestrator (00) MUST read and enforce these principles throughout the project lifecycle.
 
@@ -170,12 +184,12 @@ These 10 articles are mandatory for all projects. They represent industry best p
 3. "Move fast and break things" is FORBIDDEN
 4. Gate fails twice → Escalate to human
 5. Workflow phase sequences are fixed — phases cannot be skipped or reordered
-6. Gate requirements may vary by workflow type (e.g., lighter elicitation for bug fixes) but gates themselves cannot be bypassed
+6. Gate requirements may vary by workflow type but gates themselves cannot be bypassed
 
 **Validation**:
 - Orchestrator validates all gate criteria before advancement
 - `gate-validation.json` MUST show PASS status
-- Gate enforcement applies to all workflows: feature, fix, test-run, test-generate, upgrade
+- Gate enforcement applies to all workflows: build, test-run, test-generate, upgrade
 
 ---
 
