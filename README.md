@@ -179,6 +179,16 @@ Capture team best practices as reusable, agent-consumable knowledge:
 
 Skills are injected into agent context during workflow execution. Use them for coding conventions, API patterns, domain rules — anything agents should know when working in your codebase.
 
+### Configuration
+
+User-configurable files live in `.isdlc/config/`:
+
+| File | What it controls |
+|------|-----------------|
+| `workflows.json` | Workflow definitions, phase sequences, and sizing rules |
+| `finalize-steps.md` | Ordered checklist of post-workflow finalization steps — add, remove, or reorder steps to customize cleanup behavior |
+| `iteration-requirements.json` | Max iterations, circuit-breaker thresholds, and coverage targets per gate profile |
+
 ### Workflow recovery
 
 Made a mistake? No need to restart from scratch.

@@ -233,6 +233,7 @@ This is the iSDLC (Intelligent Software Development Lifecycle) Harness for Claud
 - **Skills**: `src/claude/skills/` - 240 skills across 17 categories
 - **Hooks**: `src/claude/hooks/` - 26 runtime enforcement hooks
 - **Config**: `src/claude/hooks/config/` - Skills manifest and iteration requirements
+- **Finalize Steps**: `.isdlc/config/finalize-steps.md` - Ordered checklist of post-workflow finalization steps (user-customizable)
 - **CLI**: `bin/isdlc.js` + `lib/` - Cross-platform npm package CLI
 - **CI/CD**: `.github/workflows/` - GitHub Actions for testing and publishing
 
