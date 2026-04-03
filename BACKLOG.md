@@ -4,7 +4,8 @@
 > BACKLOG.md is the curated working set with detailed specs. GitHub Issues are for tracking.
 
 ## Open
-- [A] #219 Post-finalize validation hook — verify all finalization steps completed [github: GH-219] -> [requirements](docs/requirements/REQ-GH-219-post-finalize-validation-hook/)
+- [x] #219 Post-finalize validation hook — verify all finalization steps completed [github: GH-219] -> [requirements](docs/requirements/REQ-GH-219-post-finalize-validation-hook/) **Completed**
+  - **Completed:** 2026-04-03
 - [x] #220 Task-level delegation in Phase-Loop Controller [github: GH-220] -> [requirements](docs/requirements/REQ-GH-220-task-level-delegation-in-phase-loop-controller/) **Completed**
   - **Completed:** 2026-04-03
 - [x] #218 Support bug-specific roundtable analysis in analyze command [github: GH-218] -> [requirements](docs/requirements/REQ-GH-218-support-bug-specific-roundtable-analysis-in-analyze/) **Completed**
@@ -505,6 +506,10 @@ Phase 10 (Provider-Neutral Orchestration)
   - **Completed:** 2026-03-22
 
 ## Completed
+
+### 2026-04-03
+- [x] #219: Post-finalize validation hook — verify all finalization steps completed -> [requirements](docs/requirements/REQ-GH-219-post-finalize-validation-hook/) *(merged aa99008)*
+  - **Completed:** 2026-04-03
 
 ### 2026-03-27
 - [x] #116: Extract agent protocols from CLAUDE.md into shared protocols file -> [requirements](docs/requirements/REQ-GH-116-extract-agent-protocols-from-claude-md/) *(merged dbd6d5c)*
