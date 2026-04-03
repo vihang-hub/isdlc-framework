@@ -88,7 +88,7 @@ Sizing triggers from natural language or flags:
 ```
 "quick fix for the typo"     → light (signal word "quick")
 "build the payment system"   → standard (default)
-/isdlc feature -light "..."  → light (explicit flag)
+/isdlc analyze -light "..."  → light (explicit flag)
 ```
 
 ## Defining Custom Workflows

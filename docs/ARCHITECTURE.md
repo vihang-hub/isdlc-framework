@@ -193,11 +193,12 @@ The orchestrator loads workflow definitions from `.isdlc/config/workflows.json`:
 
 | Workflow | Command | Phase Sequence |
 |----------|---------|----------------|
-| **Feature** | `/isdlc feature` | 00 → 01 → 02(IA) → 03 → 04 → 05 → 06 → 16(QL) → 08 |
-| **Fix** | `/isdlc fix` | 01 → 02(T) → 05 → 06 → 16(QL) → 08 |
+| **Build** | `/isdlc build` | 05 → 06 → 16(QL) → 08 |
 | **Test Run** | `/isdlc test run` | 11 → 07 |
-| **Test Generate** | `/isdlc test generate` | 05 → 06 → 11 → 07 → 08 |
+| **Test Generate** | `/isdlc test generate` | 05 → 06 → 16(QL) → 08 |
 | **Upgrade** | `/isdlc upgrade` | 15(plan) → 15(execute) → 08 |
+
+> **Note**: Analysis phases (00-04 for features, 01-02 for bugs) are handled by `/isdlc analyze` before the build workflow starts.
 
 ### Phase Delegation
 
@@ -831,7 +832,7 @@ modes:
 
 ## End-to-End Flow Example
 
-**Scenario**: A user runs `/isdlc feature "Add user authentication"` on an existing Node.js project that has already been through `/discover`.
+**Scenario**: A user runs `/analyze "Add user authentication"` followed by `/build "add-user-authentication"` on an existing Node.js project that has already been through `/discover`.
 
 ### Phase 00: Quick Scan
 

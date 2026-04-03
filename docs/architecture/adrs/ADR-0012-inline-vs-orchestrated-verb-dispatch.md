@@ -19,7 +19,7 @@ Use **inline execution** for `add` and `analyze`, and **orchestrated execution**
 
 - `add` and `analyze` are added to `EXEMPT_ACTIONS` in both `skill-delegation-enforcer.cjs` and `delegation-gate.cjs`, preventing the hook system from requiring orchestrator delegation.
 - `build` is NOT added to EXEMPT_ACTIONS. It routes through the standard orchestrator delegation flow, identical to the current `feature` command.
-- `/isdlc feature` is preserved as a hidden alias for `build`.
+- `/isdlc feature` and `/isdlc fix` have been removed (GH-215). The canonical commands are now `add`, `analyze`, and `build`.
 
 ## Consequences
 

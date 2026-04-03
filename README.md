@@ -94,14 +94,12 @@ Each verb is a natural escalation: **add** captures the idea, **analyze** deepen
 | Command | Description |
 |---------|-------------|
 | `/discover` | Analyze an existing project or set up a new one |
-| `/isdlc feature "description"` | Feature development through 9 phases |
-| `/isdlc fix "description"` | Bug fix — root cause tracing, test-first fix, quality validation |
+| `/add "description"` | Add an item to the backlog |
+| `/analyze "item"` | Roundtable analysis with 3 personas (bugs and features) |
+| `/build "item"` | Implement an analyzed item (test strategy → code → quality → review) |
 | `/isdlc upgrade "name"` | Upgrade a dependency with impact analysis and test validation |
 | `/isdlc test generate` | Generate tests for existing code |
 | `/isdlc test run` | Execute test suite and report coverage |
-| `/isdlc add "description"` | Add an item to the backlog |
-| `/isdlc analyze "description"` | Roundtable analysis with 3 personas |
-| `/isdlc build "item"` | Build from analysis artifacts |
 | `/isdlc skill add <path>` | Register a custom skill from a SKILL.md file |
 | `/isdlc skill wire <name>` | Rebind a skill to different phases/agents |
 | `/isdlc skill list` | Show registered external skills |

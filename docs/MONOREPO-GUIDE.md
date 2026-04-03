@@ -202,7 +202,7 @@ There are four ways to target a project (in priority order):
 
 1. **`--project` flag** (highest priority):
    ```
-   /isdlc feature "Add auth" --project api-service
+   /isdlc build "Add auth" --project api-service
    /discover --project web-frontend
    ```
 

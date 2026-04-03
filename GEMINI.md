@@ -19,9 +19,8 @@ When the user speaks, classify their intent into one of these categories using t
 | Intent | Signal Words / Patterns | Command (internal) |
 |-------------|-----------------------------------------------|-------------------------------|
 | **Add** | add to backlog, track this, log this, remember this, save this idea, note this down | `/isdlc add "<description>"` |
-| **Analyze** | analyze, think through, plan this, review requirements, assess impact, design this, prepare | `/isdlc analyze "<item>"` |
+| **Analyze** | analyze, think through, plan this, review requirements, assess impact, design this, prepare, broken, fix, bug, crash, error, wrong, failing, not working, 500 | `/isdlc analyze "<item>"` |
 | **Build** | build, implement, create, code, develop, ship, make this, let's do this, refactor, redesign | `/isdlc build "<description>"` |
-| **Fix** | broken, fix, bug, crash, error, wrong, failing, not working, 500 | `/isdlc fix "<description>"` |
 | **Upgrade** | upgrade, update, bump, version, dependency, migrate | `/isdlc upgrade "<target>"` |
 | **Test run** | run tests, run the tests, check if tests pass, execute test suite | `/isdlc test run` |
 | **Test generate** | write tests, add tests, add unit tests, generate tests, test coverage | `/isdlc test generate` |
@@ -41,7 +40,7 @@ After detecting intent, ask for a brief go-ahead in natural conversational langu
 
 **Bad examples**:
 - "Looks like you want to build X. I'll set this up as a new feature and guide you through requirements, design, and implementation. Sound good?" (robotic, repeats what the user said, describes internal process)
-- "I'll run `/isdlc feature` to start Phase 01..." (exposes internals)
+- "I'll run `/isdlc analyze` to start Phase 01..." (exposes internals)
 - "This is a significant feature. I'll set it up as a feature workflow." (restates the obvious)
 
 **Rules**:
@@ -54,15 +53,17 @@ After detecting intent, ask for a brief go-ahead in natural conversational langu
 
 ### Step 3 -- Edge Cases
 
-- **Ambiguous intent**: If the intent is unclear (could be feature or fix), ask a brief clarifying question rather than guessing
+- **Ambiguous intent**: If the intent is unclear, ask a brief clarifying question rather than guessing
 - **Questions / exploration**: If the user asks questions, explores code, or seeks explanation -- respond normally. Do not trigger workflow detection for non-development conversation
 - **Active workflow**: If a workflow is already in progress, do not start a new one. Inform the user and suggest they continue the current workflow or cancel it first
-- **Refactor requests**: Treat refactoring as a Build intent (refactoring follows the feature workflow)
+- **Refactor requests**: Treat refactoring as an Analyze intent (analyze first, then build)
 - **Non-dev requests**: Requests like "explain this code", "what does this function do", or "help me understand" are not development tasks -- skip intent detection entirely
 
 ### Backward Compatibility
 
-If the user has already invoked a slash command directly (e.g. `/isdlc fix "..."`), execute it immediately without re-asking. Slash commands always work -- they are just not the default interaction pattern.
+If the user has already invoked a slash command directly (e.g. `/isdlc build "..."`), execute it immediately without re-asking. Slash commands always work -- they are just not the default interaction pattern.
+
+Note: `/isdlc fix` and `/isdlc feature` have been removed. If invoked, display a message directing the user to use `/analyze` and `/build` instead.
 
 If a user explicitly asks about the framework or its commands, explain them openly -- the commands are not secret, just invisible by default.
 
@@ -169,11 +170,11 @@ When a hook blocks your action (PreToolUse, PostToolUse, or notification), you M
 If a hook error is caused by a bug in the framework itself (not the user's code), follow this protocol:
 1. **Identify the bug** — the error originates from `src/claude/hooks/`, or framework config files
 2. **Inform the user** — explain that this is a framework bug, not their code
-3. **Suspend the active workflow** — use `--interrupt` to suspend and start a fix workflow:
+3. **Suspend the active workflow** — use `--interrupt` to suspend and start a fix:
    ```
-   /isdlc fix --interrupt "Fix <description>"
+   /isdlc analyze --interrupt "Fix <description>"
    ```
-4. **Fix the bug** through the normal fix workflow (requirements → tracing → test strategy → implementation → quality loop → code review)
+4. **Fix the bug** through analyze (bug roundtable) → build (test strategy → implementation → quality loop → code review)
 5. **Finalize the fix** — `workflow-finalize.cjs` automatically restores the suspended workflow with phase iteration reset
 6. **Resume the original workflow** — the user continues where they left off
 

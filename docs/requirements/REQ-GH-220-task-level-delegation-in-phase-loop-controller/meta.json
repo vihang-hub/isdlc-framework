@@ -1,0 +1,25 @@
+{
+  "source": "github",
+  "source_id": "GH-220",
+  "slug": "REQ-GH-220-task-level-delegation-in-phase-loop-controller",
+  "created_at": "2026-04-03T00:00:00.000Z",
+  "analysis_status": "analyzed",
+  "phases_completed": [
+    "00-quick-scan",
+    "01-requirements",
+    "02-impact-analysis",
+    "03-architecture",
+    "04-design"
+  ],
+  "codebase_hash": "5f6e8ac",
+  "acceptance": {
+    "accepted_at": "2026-04-03T01:00:00.000Z",
+    "domains": [
+      "requirements",
+      "architecture",
+      "design",
+      "tasks"
+    ],
+    "amendment_cycles": 2
+  }
+}

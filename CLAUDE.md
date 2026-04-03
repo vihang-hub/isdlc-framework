@@ -170,11 +170,11 @@ When a hook blocks your action (PreToolUse, PostToolUse, or notification), you M
 If a hook error is caused by a bug in the framework itself (not the user's code), follow this protocol:
 1. **Identify the bug** — the error originates from `src/claude/hooks/`, or framework config files
 2. **Inform the user** — explain that this is a framework bug, not their code
-3. **Suspend the active workflow** — use `--interrupt` to suspend and start a fix workflow:
+3. **Suspend the active workflow** — use `--interrupt` to suspend and start a fix:
    ```
-   /isdlc fix --interrupt "Fix <description>"
+   /isdlc analyze --interrupt "Fix <description>"
    ```
-4. **Fix the bug** through the normal fix workflow (requirements → tracing → test strategy → implementation → quality loop → code review)
+4. **Fix the bug** through analyze (bug roundtable) → build (test strategy → implementation → quality loop → code review)
 5. **Finalize the fix** — `workflow-finalize.cjs` automatically restores the suspended workflow with phase iteration reset
 6. **Resume the original workflow** — the user continues where they left off
 
