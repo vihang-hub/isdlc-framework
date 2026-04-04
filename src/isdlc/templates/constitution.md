@@ -42,6 +42,7 @@ These 10 articles are mandatory for all projects. They represent industry best p
 2. Any deviation from specifications MUST be documented and justified in an ADR
 3. Specifications MUST be updated BEFORE code changes
 4. Implementation MUST NOT assume requirements beyond what is specified
+5. User-confirmed task plans are binding specifications. Phase agents MAY refine tasks into sub-tasks but MUST NOT alter, remove, or expand the scope of parent tasks without user approval.
 
 **Validation**:
 - Agent 01 ensures specifications are complete

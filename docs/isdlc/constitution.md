@@ -1,7 +1,7 @@
 # Project Constitution - iSDLC Framework
 
 **Created**: 2026-02-07
-**Version**: 1.4.0
+**Version**: 1.5.0
 **Project Type**: Developer tooling / CLI framework / Agent orchestration system
 
 ---
@@ -31,6 +31,7 @@ These 10 articles are mandatory for all projects. They represent industry best p
 2. Any deviation from specifications MUST be documented and justified in an ADR
 3. Specifications MUST be updated BEFORE code changes
 4. Implementation MUST NOT assume requirements beyond what is specified
+5. User-confirmed task plans are binding specifications. Phase agents MAY refine tasks into sub-tasks but MUST NOT alter, remove, or expand the scope of parent tasks without user approval.
 
 **Validation**:
 - Agent 01 ensures specifications are complete
@@ -397,6 +398,7 @@ The constitution is enforced through a 4-layer pipeline (see `docs/ARCHITECTURE.
 | 1.2.0 | 2026-02-10 | Article XII req 4: Updated Node version matrix from "Node 18, 20, 22" to "Node 20, 22, 24" | Node 18 reached EOL (April 2025); dropped in favor of Node 24 Active LTS (ADR-0008) |
 | 1.3.0 | 2026-03-27 | Preamble: Updated project context (70 agents, 276 skills, 30 hooks, dual-provider). Article II: Updated baseline from 555 to 1,600 tests, updated module coverage to reflect core/providers/embedding/search layers. Article XIII: Updated to reflect .cjs hook convention, added core layer and bridge layer rules. | Full re-discovery revealed significant codebase growth since 2026-02-07 |
 | 1.4.0 | 2026-03-29 | Article XV: Tool Preference Enforcement added. Agents must use highest-fidelity tool available; config-driven routing via tool-routing.json; fail-open when preferred tool unavailable. | REQ-GH-214: PreToolUse enforcement for higher-fidelity MCP tool routing |
+| 1.5.0 | 2026-04-04 | Article I req 5: User-confirmed task plans are binding specifications. Phase agents may refine into sub-tasks but must not alter parent task scope without user approval. | REQ-GH-223: Tasks as user contract |
 | 1.5.0 | 2026-04-03 | Article XI rewritten: "Integration Testing Integrity" → "Test Quality Beyond Coverage". Removed unenforceable requirements (mutation testing, fuzz testing, adversarial testing, property-based testing) that required specific tooling dependencies. Replaced with framework-enforceable principles (error path coverage, mock-in-integration scan, test name quality). Article III: Added secret scan enforcement block with patterns, exemptions, and override mechanism. | Constitution must be enforceable by the framework without requiring project-specific tool dependencies |
 
 ---
