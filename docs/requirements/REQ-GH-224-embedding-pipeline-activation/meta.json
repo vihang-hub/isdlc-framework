@@ -1,0 +1,20 @@
+{
+  "source": "github",
+  "source_id": "GH-224",
+  "bundles": ["GH-224", "GH-225", "GH-226", "GH-228"],
+  "slug": "REQ-GH-224-embedding-pipeline-activation",
+  "created_at": "2026-04-04T16:15:00.000Z",
+  "analysis_status": "analyzed",
+  "phases_completed": [
+    "01-requirements",
+    "02-impact-analysis",
+    "03-architecture",
+    "04-design"
+  ],
+  "codebase_hash": "666f379",
+  "acceptance": {
+    "accepted_at": "2026-04-04T17:00:00.000Z",
+    "domains": ["requirements", "architecture", "design", "tasks"],
+    "amendment_cycles": 2
+  }
+}
