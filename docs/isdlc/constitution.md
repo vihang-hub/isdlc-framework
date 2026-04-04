@@ -91,9 +91,15 @@ These 10 articles are mandatory for all projects. They represent industry best p
 9. The `settings.local.json` file MUST remain gitignored (contains user-specific secrets)
 10. Provider API keys MUST never be logged or written to state.json
 
+**Enforcement** (framework-verified):
+- Secret scan: The framework scans staged files for common secret patterns (API keys, tokens, passwords, private keys) before phase advancement. Matches block the gate.
+- Patterns checked: `AKIA[0-9A-Z]{16}` (AWS), `sk-[a-zA-Z0-9]{20,}` (API keys), `-----BEGIN (RSA |EC )?PRIVATE KEY-----`, `password\s*=\s*['"][^'"]+['"]`, `secret\s*=\s*['"][^'"]+['"]`, hardcoded bearer tokens
+- Exemptions: `.env.example`, test fixtures with dummy values, documentation examples
+- Override: Add `<!-- secret-scan-exempt: reason -->` to exempt a specific line
+
 **Validation**:
 - GATE-02: Security architecture approved
-- GATE-05: No secrets in code, dependency scans clean
+- GATE-05: No secrets in code (framework secret scan), dependency scans clean
 - GATE-08: SAST/DAST testing complete
 
 ---
@@ -229,45 +235,43 @@ These 10 articles are mandatory for all projects. They represent industry best p
 
 ---
 
-### Article XI: Integration Testing Integrity
+### Article XI: Test Quality Beyond Coverage
 
-**Principle**: Integration tests MUST validate real system behavior, not mocked assumptions.
+**Principle**: Tests MUST verify behavior, not just execute code. Line coverage alone is insufficient proof of test quality.
 
 **Requirements**:
 
-1. **Mutation Testing Required**
-   - All test suites MUST include mutation testing to validate test quality
-   - Mutation score threshold: >=80%
-   - Tests that don't catch mutations are ineffective tests
+1. **Tests MUST cover error paths, not just happy paths**
+   - Every public function with error handling MUST have tests for failure cases
+   - Edge cases (empty inputs, boundary values, null/undefined) MUST be tested
+   - The framework verifies error-path test presence by scanning test files for negative-case patterns
 
-2. **Real URLs Only (No Stubs in Integration Tests)**
-   - Integration tests MUST call actual service endpoints
-   - Mocking/stubbing of external services is FORBIDDEN in integration tests
-   - Use test environments, not mocked responses
-   - Stubs are only permitted in unit tests
+2. **Integration tests MUST NOT mock the system under test**
+   - Mocking/stubbing of the module being tested is FORBIDDEN in integration tests
+   - External dependencies MAY be mocked in unit tests only
+   - The framework scans integration test files for mock patterns and flags violations
 
-3. **No Assertions in Integration Tests**
-   - Integration tests validate behavior through execution success/failure
-   - Tests MUST verify system state changes, not assert intermediate values
-   - Use contract validation and schema verification instead of assertions
-   - Test outcomes are determined by actual system responses
+3. **Test descriptions MUST be meaningful**
+   - Test names MUST describe the expected behavior, not the implementation
+   - The framework flags generic test names ("test 1", "it works", "should pass")
 
-4. **Adversarial Testing Required**
-   - Property-based testing MUST be used for input validation
-   - Fuzz testing MUST be applied to all public interfaces
-   - Edge cases MUST be generated dynamically, not hardcoded
-   - Boundary conditions MUST be tested with generated data
+4. **Regression tests MUST accompany bug fixes**
+   - Every bug fix MUST include a test that reproduces the original failure
+   - The test MUST fail without the fix and pass with it (TDD red-green)
 
-5. **Execution-Based Reporting**
-   - Test reports MUST reflect actual execution results
-   - No assertion-count-based metrics
-   - Report: executed, passed, failed, skipped, mutation score
-   - Include actual response data in failure reports
+**Project-Specific Additions**:
+5. Hook tests MUST copy hook files to a temporary directory outside the package to avoid ESM/CJS resolution conflicts (per Article XIII)
+6. Prompt verification tests MUST validate agent file counts and skill manifest consistency
+
+**Enforcement** (framework-verified):
+- Error path scan: Framework scans test files for negative-case patterns (`.rejects`, `.throws`, `expect(err)`, error status codes). Flags modules with zero error-path tests.
+- Mock-in-integration scan: Framework scans files matching `**/integration/**` or `**/e2e/**` for mock/stub patterns (`jest.mock`, `vi.mock`, `sinon.stub`, `nock`). Matches block the gate.
+- Test name quality: Framework flags test descriptions shorter than 10 characters or matching generic patterns.
 
 **Validation**:
-- GATE-06: Mutation testing configured and passing (>=80% score)
-- GATE-06: Integration tests use real URLs (no stub detection)
-- GATE-06: Adversarial testing tools installed and executed
+- GATE-06: Error path coverage present for critical modules
+- GATE-06: No mocking detected in integration test files
+- GATE-06: Test descriptions meet quality threshold
 - Agent 06 enforces these rules during test execution
 
 ---
@@ -393,6 +397,7 @@ The constitution is enforced through a 4-layer pipeline (see `docs/ARCHITECTURE.
 | 1.2.0 | 2026-02-10 | Article XII req 4: Updated Node version matrix from "Node 18, 20, 22" to "Node 20, 22, 24" | Node 18 reached EOL (April 2025); dropped in favor of Node 24 Active LTS (ADR-0008) |
 | 1.3.0 | 2026-03-27 | Preamble: Updated project context (70 agents, 276 skills, 30 hooks, dual-provider). Article II: Updated baseline from 555 to 1,600 tests, updated module coverage to reflect core/providers/embedding/search layers. Article XIII: Updated to reflect .cjs hook convention, added core layer and bridge layer rules. | Full re-discovery revealed significant codebase growth since 2026-02-07 |
 | 1.4.0 | 2026-03-29 | Article XV: Tool Preference Enforcement added. Agents must use highest-fidelity tool available; config-driven routing via tool-routing.json; fail-open when preferred tool unavailable. | REQ-GH-214: PreToolUse enforcement for higher-fidelity MCP tool routing |
+| 1.5.0 | 2026-04-03 | Article XI rewritten: "Integration Testing Integrity" → "Test Quality Beyond Coverage". Removed unenforceable requirements (mutation testing, fuzz testing, adversarial testing, property-based testing) that required specific tooling dependencies. Replaced with framework-enforceable principles (error path coverage, mock-in-integration scan, test name quality). Article III: Added secret scan enforcement block with patterns, exemptions, and override mechanism. | Constitution must be enforceable by the framework without requiring project-specific tool dependencies |
 
 ---
 
