@@ -19,8 +19,7 @@
   - **Completed:** 2026-03-27
 - [x] #213 Contract enforcement must be inline (during execution), not post-phase [github: GH-213] -> [requirements](docs/requirements/REQ-GH-213-contract-enforcement-must-be-inline/) **Completed**
   - **Completed:** 2026-03-27
-- [A] #224 Embedding pipeline activation — persistent HTTP server, session integration, provider selection, discover wiring (bundles #225, #226, #228) [github: GH-224] -> [requirements](docs/requirements/REQ-GH-224-embedding-pipeline-activation/)
-  - 16 FRs, 24 tasks. Long-running HTTP/SSE server, in-memory vector store (Option A), session-push external content (Option β), 3-tier redaction for vendor shipping.
+- [x] #224 Embedding pipeline activation — persistent HTTP server, session integration, provider selection, discover wiring (bundles #225, #226, #228) [github: GH-224] -> [requirements](docs/requirements/REQ-GH-224-embedding-pipeline-activation/) **Completed**
 - [ ] #227 Approximate nearest neighbor search (HNSW) for large embedding stores [github: GH-227]
   - Group B — scale. Brute-force cosine acceptable for MVP.
 - [ ] #229 Incremental embedding indexing via VCS diff — re-embed only changed files [github: GH-229]
