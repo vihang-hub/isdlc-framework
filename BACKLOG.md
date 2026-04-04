@@ -4,7 +4,7 @@
 > BACKLOG.md is the curated working set with detailed specs. GitHub Issues are for tracking.
 
 ## Open
-- [A] #223 Tasks as user contract: authoritative task list from analysis, Claude Task tool consumption, sub-task model, traceability enforcement [github: GH-223] -> [requirements](docs/requirements/REQ-GH-223-tasks-as-user-contract/)
+- [x] #223 Tasks as user contract: authoritative task list from analysis, Claude Task tool consumption, sub-task model, traceability enforcement [github: GH-223] -> [requirements](docs/requirements/REQ-GH-223-tasks-as-user-contract/)
 - [x] #219 Post-finalize validation hook — verify all finalization steps completed [github: GH-219] -> [requirements](docs/requirements/REQ-GH-219-post-finalize-validation-hook/) **Completed**
   - **Completed:** 2026-04-03
 - [x] #220 Task-level delegation in Phase-Loop Controller [github: GH-220] -> [requirements](docs/requirements/REQ-GH-220-task-level-delegation-in-phase-loop-controller/) **Completed**
