@@ -20,15 +20,17 @@
 - [x] #213 Contract enforcement must be inline (during execution), not post-phase [github: GH-213] -> [requirements](docs/requirements/REQ-GH-213-contract-enforcement-must-be-inline/) **Completed**
   - **Completed:** 2026-03-27
 - [x] #224 Embedding pipeline activation — persistent HTTP server, session integration, provider selection, discover wiring (bundles #225, #226, #228) [github: GH-224] -> [requirements](docs/requirements/REQ-GH-224-embedding-pipeline-activation/) **Completed**
-- [ ] #227 Approximate nearest neighbor search (HNSW) for large embedding stores [github: GH-227]
+- [ ] #227 Approximate nearest neighbor search (HNSW) for large embedding stores [github: GH-227] -> [requirements](docs/requirements/REQ-GH-227-embedding-scale-out/) **Analyzed**
   - Group B — scale. Brute-force cosine acceptable for MVP.
-- [ ] #229 Incremental embedding indexing via VCS diff — re-embed only changed files [github: GH-229]
+- [ ] #229 Incremental embedding indexing via VCS diff — re-embed only changed files [github: GH-229] -> [requirements](docs/requirements/REQ-GH-227-embedding-scale-out/) **Analyzed (combined with #227)**
   - Group B — scale. Basic VCS-diff incremental mode is in #224 scope.
 - [ ] #230 Chunking performance: parallelize tree-sitter parsing for large codebases [github: GH-230]
   - Group B — scale. Sequential chunking acceptable for MVP.
+- [ ] #234 Enforce artifact templates strictly in roundtable confirmations and artifact writes [github: GH-234]
+  - Gap revealed by REQ-GH-227 analysis. Templates exist but nothing enforces them; LLMs default to own structure. Needs strict binding in roundtable-analyst.md + template-validator hook.
 - [ ] #233 task-dispatch-enforcer hook: verify task-level dispatch was used when configured [github: GH-233]
   - Gap revealed by REQ-GH-224 build. Enforces the Phase-Loop Controller's task-dispatch protocol.
-- [ ] #232 task-completion-gate hook: block phase advancement if tasks.md has unfinished tasks [github: GH-232]
+- [A] #232 task-completion-gate hook: block phase advancement if tasks.md has unfinished tasks [github: GH-232] -> [requirements](docs/requirements/REQ-GH-232-task-completion-gate-hook/) **Analyzed**
   - Gap revealed by REQ-GH-224 build. Enforces Article I.5 binding task plans at runtime.
 - [x] #231 Configuration consolidation: unify config locations, eliminate duplicates, single config service [github: GH-231] -> [requirements](docs/requirements/REQ-GH-231-configuration-consolidation-unify-config/) **Completed**
 - [ ] #207 Mandatory web research enforcement in roundtable analysis — wire research: true flag [github: GH-207]

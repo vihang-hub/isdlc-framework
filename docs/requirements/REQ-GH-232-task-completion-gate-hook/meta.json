@@ -1,0 +1,21 @@
+{
+  "source": "github",
+  "source_id": "GH-232",
+  "slug": "REQ-GH-232-task-completion-gate-hook",
+  "created_at": "2026-04-04T18:30:00.000Z",
+  "analysis_status": "analyzed",
+  "phases_completed": [
+    "00-quick-scan",
+    "01-requirements",
+    "02-impact-analysis",
+    "03-architecture",
+    "04-design"
+  ],
+  "codebase_hash": "9da49b8",
+  "acceptance": {
+    "accepted_at": "2026-04-05T00:00:00.000Z",
+    "domains": ["requirements", "architecture", "design", "tasks"],
+    "amendment_cycles": 0
+  },
+  "recommended_tier": "light"
+}

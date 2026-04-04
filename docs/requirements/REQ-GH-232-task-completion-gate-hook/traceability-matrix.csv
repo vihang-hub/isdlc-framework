@@ -1,0 +1,17 @@
+FR_ID,AC_ID,User_Story_ID,Confidence,Source
+FR-001,AC-001-01,US-001,High,user-confirmed
+FR-001,AC-001-02,US-001,High,user-confirmed
+FR-001,AC-001-03,US-004,High,user-confirmed
+FR-002,AC-002-01,US-002,High,user-confirmed
+FR-002,AC-002-02,US-002,High,user-confirmed
+FR-002,AC-002-03,US-002,High,user-confirmed
+FR-002,AC-002-04,US-002,High,user-confirmed
+FR-002,AC-002-05,US-002,High,inferred-from-pattern
+FR-002,AC-002-06,US-002,High,user-confirmed
+FR-003,AC-003-01,US-003,High,user-confirmed
+FR-003,AC-003-02,US-003,High,user-confirmed
+FR-003,AC-003-03,US-003,High,user-confirmed
+FR-003,AC-003-04,US-003,High,user-confirmed
+FR-003,AC-003-05,US-003,High,user-confirmed
+FR-004,AC-004-01,US-004,High,user-confirmed
+FR-004,AC-004-02,US-004,High,user-confirmed

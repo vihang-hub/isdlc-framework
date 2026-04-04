@@ -1,0 +1,48 @@
+[
+  {
+    "id": "US-001",
+    "title": "Hook blocks phase completion when tasks are unfinished",
+    "story": "As a framework user running /isdlc build, I want the runtime to block phase completion if tasks.md has unfinished tasks, so that Article I.5 is enforced without relying on agent convention.",
+    "acceptance_criteria": [
+      "Given I'm in a build workflow and the phase agent signals Phase 06 complete with T019 still [ ], when the Phase-Loop Controller writes state.json, then the hook blocks the write with a TASKS INCOMPLETE message naming T019.",
+      "Given the block fires, when I view the block output, then I can see the unfinished task IDs, descriptions, and an Article I.5 reference."
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-001"]
+  },
+  {
+    "id": "US-002",
+    "title": "Hook fails open in unintended contexts",
+    "story": "As a framework operator, I want the hook to fail open in any context where it doesn't apply, so that it never blocks legitimate workflows or causes cascading failures.",
+    "acceptance_criteria": [
+      "Given I'm running /isdlc test run (not a build workflow), when the hook fires on state.json edits, then it exits 0 silently.",
+      "Given tasks.md is missing, when the hook fires during a build workflow, then it exits 0 with a warning to stderr.",
+      "Given the hook encounters any internal exception, when it's thrown, then it's caught and exit 0."
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-002"]
+  },
+  {
+    "id": "US-003",
+    "title": "User can retry, skip with audit, or cancel after hook blocks",
+    "story": "As a user whose phase agent can't complete tasks after 3 retries, I want a clear escalation menu that lets me override with an audit trail, so that I'm not stuck in an infinite loop.",
+    "acceptance_criteria": [
+      "Given the hook has blocked Phase 06 three times, when the next block fires, then I see an escalation menu with [M] Manually prompt / [S] Skip / [C] Cancel options naming the unfinished tasks.",
+      "Given I select [S] Skip, when confirmed, then active_workflow.skipped_tasks[] records { phase, tasks, skipped_at, reason } and the phase advances.",
+      "Given I select [M] Manually prompt, when I enter my guidance, then the phase agent is re-delegated with my guidance appended and the retry counter resets to 0."
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-003"]
+  },
+  {
+    "id": "US-004",
+    "title": "Phase-Loop Controller routes TASKS INCOMPLETE blocks correctly",
+    "story": "As an architect, I want the Phase-Loop Controller to recognize TASKS INCOMPLETE blocks and route them to a dedicated 3f-task-completion handler, so that the re-delegation prompt is task-specific and actionable.",
+    "acceptance_criteria": [
+      "Given a block message starts with TASKS INCOMPLETE, when STEP 3f processes blocked_by_hook, then it dispatches to 3f-task-completion.",
+      "Given 3f-task-completion fires, when it builds the re-delegation prompt, then the prompt names each unfinished task ID with its description explicitly."
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-004"]
+  }
+]
