@@ -244,10 +244,11 @@ The task summary uses the 4-column traceability format defined in `traceability.
 | FR | Requirement | Design / Blast Radius | Related Tasks |
 |----|-------------|----------------------|---------------|
 
-For each FR:
+Each cell follows the **narrative first, then details** pattern:
+
 - **FR column**: The FR ID (e.g., FR-001)
-- **Requirement column**: 2-4 sentences describing what the FR requires in plain language. Weave acceptance criteria into the description naturally — do NOT list AC IDs.
-- **Design / Blast Radius column**: 2-4 sentences describing what changes in the codebase. Name the affected modules, patterns, and contracts. Explain the architectural impact — do NOT list raw file paths.
+- **Requirement column**: 2-4 sentences describing what the FR requires in plain language. Below the narrative, list each AC on its own line: `AC-NNN-NN: brief description` (one line each).
+- **Design / Blast Radius column**: 2-4 sentences describing what changes in the codebase — name the affected modules, patterns, and contracts. Below the narrative, list affected file paths: `path/to/file (NEW|MODIFY)` (one per line).
 - **Related Tasks column**: Each related task as `TNNN brief-description` on its own line. Keep descriptions to 3-5 words.
 
 Render as an ASCII box table with row separators and cell wrapping for readability. After the table, include:

@@ -37,15 +37,20 @@ describe('TT-02: Domain scoping rules', () => {
   });
 });
 
-// TT-03: Content guidance present for narrative columns
+// TT-03: Content guidance with narrative-first-then-details structure
 describe('TT-03: Content guidance', () => {
-  it('content_guidance exists for requirement, design, and tasks columns', () => {
+  it('content_guidance exists for all three content columns with structure field', () => {
     const guidance = template.format.content_guidance;
     assert.ok('requirement_column' in guidance);
     assert.ok('design_column' in guidance);
     assert.ok('tasks_column' in guidance);
-    // Guidance should discourage raw IDs/file paths
-    assert.ok(guidance.requirement_column.includes('Do NOT list AC IDs'));
-    assert.ok(guidance.design_column.includes('Do NOT list file paths'));
+    // Narrative columns should have narrative_first_then_details structure
+    assert.equal(guidance.requirement_column.structure, 'narrative_first_then_details');
+    assert.equal(guidance.design_column.structure, 'narrative_first_then_details');
+    // Both should have narrative and details sub-fields
+    assert.ok('narrative' in guidance.requirement_column);
+    assert.ok('details' in guidance.requirement_column);
+    assert.ok('narrative' in guidance.design_column);
+    assert.ok('details' in guidance.design_column);
   });
 });

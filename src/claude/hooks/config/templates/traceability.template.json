@@ -1,12 +1,12 @@
 {
   "domain": "traceability",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "format": {
     "columns": [
       { "key": "fr_id", "header": "FR", "width": "narrow" },
-      { "key": "requirement", "header": "Requirement", "width": "wide", "content": "Human-readable description of what the FR requires. Synthesizes FR title and key ACs into a coherent paragraph — not just IDs." },
-      { "key": "design_blast_radius", "header": "Design / Blast Radius", "width": "wide", "content": "What the implementation touches and how it impacts the system. Drawn from architecture-overview.md and module-design.md. Describes affected modules, contracts, patterns, and behavioral changes — not just file paths." },
-      { "key": "related_tasks", "header": "Related Tasks", "width": "medium", "content": "TNNN task IDs with brief descriptions. One line per task. Format: TNNN description-fragment" }
+      { "key": "requirement", "header": "Requirement", "width": "wide" },
+      { "key": "design_blast_radius", "header": "Design / Blast Radius", "width": "wide" },
+      { "key": "related_tasks", "header": "Related Tasks", "width": "medium" }
     ],
     "rendering": {
       "table_style": "ascii_box",
@@ -15,15 +15,28 @@
       "row_separator": true
     },
     "scoping_rules": {
-      "tasks": "Primary view: FR → Requirement description → Design impact → Task list. Used at PRESENTING_TASKS confirmation.",
-      "requirements": "FR → Requirement description → (design column omitted or shows 'pending') → (tasks column omitted or shows 'pending')",
-      "architecture": "FR → Requirement description → Design impact → (tasks column shows 'pending')",
-      "design": "FR → Requirement description → Design impact → (tasks column shows 'pending')"
+      "tasks": "Primary view: FR → Requirement narrative + ACs → Design narrative + file paths → Task list. Used at PRESENTING_TASKS confirmation.",
+      "requirements": "FR → Requirement narrative + ACs → (design column shows 'pending') → (tasks column shows 'pending')",
+      "architecture": "FR → Requirement narrative + ACs → Design narrative + file paths → (tasks column shows 'pending')",
+      "design": "FR → Requirement narrative + ACs → Design narrative + file paths → (tasks column shows 'pending')"
     },
     "content_guidance": {
-      "requirement_column": "Write 2-4 sentences describing what the FR requires in plain language. Include the core behavior change and why it matters. Do NOT list AC IDs — weave the acceptance criteria into the description naturally.",
-      "design_column": "Write 2-4 sentences describing what changes in the codebase. Name the affected modules, patterns, and contracts. Explain the blast radius — what else is impacted by this change. Do NOT list file paths — describe the architectural impact.",
-      "tasks_column": "List each related task as 'TNNN brief-description' on its own line. Keep descriptions to 3-5 words. Group by logical area if many tasks."
+      "requirement_column": {
+        "structure": "narrative_first_then_details",
+        "narrative": "Write 2-4 sentences describing what the FR requires in plain language. Include the core behavior change and why it matters.",
+        "details": "Below the narrative, list each AC on its own line as 'AC-NNN-NN: brief description'. Keep AC descriptions to one line each.",
+        "example": "Validate task coverage before PRESENTING_TASKS\nso uncovered requirements are caught.\n\nAC-001-01: validateTaskCoverage returns\n  structured result\nAC-001-02: uncovered items trigger\n  re-generation before presenting"
+      },
+      "design_column": {
+        "structure": "narrative_first_then_details",
+        "narrative": "Write 2-4 sentences describing what changes in the codebase. Name the affected modules, patterns, and contracts. Explain the architectural impact.",
+        "details": "Below the narrative, list affected file paths as 'path/to/file (NEW|MODIFY)'. One file per line.",
+        "example": "Adds coverage validation to the analysis\nconfirmation flow. Introduces a validator\nresult model with covered / uncovered /\norphan outputs.\n\nsrc/core/tasks/task-validator.js (NEW)\nsrc/claude/agents/roundtable-analyst.md\n  (MODIFY)"
+      },
+      "tasks_column": {
+        "structure": "flat_list",
+        "format": "List each related task as 'TNNN brief-description' on its own line. Keep descriptions to 3-5 words."
+      }
     }
   }
 }
