@@ -1,125 +1,121 @@
-# Task Plan: REQ-GH-224 embedding-pipeline-activation
+# Task Plan: REQ-GH-232 task-completion-gate-hook
 
 ## Progress Summary
 
 | Phase | Tasks | Complete | Status |
 |-------|-------|----------|--------|
-| 05 | 8 | 0 | PENDING |
-| 06 | 12 | 0 | PENDING |
-| 16 | 2 | 0 | PENDING |
-| 08 | 2 | 0 | PENDING |
-| **Total** | **24** | **0** | **0%** |
+| 05 | 5 | 5 | COMPLETE |
+| 06 | 11 | 11 | COMPLETE |
+| 16 | 2 | 2 | COMPLETE |
+| 08 | 2 | 2 | COMPLETE |
+| **Total** | **20** | **20** | **100%** |
 
-## Phase 05: Test Strategy -- PENDING
+## Phase 05: Test Strategy -- COMPLETE
 
-- [ ] T001 Design test cases for http-server endpoints (all 7 endpoints, source tagging, error paths) | traces: FR-001, FR-007, FR-008, FR-010, AC-001-01, AC-007-01, AC-008-01, AC-010-01
-  files: tests/embedding/server/http-server.test.js (CREATE)
-- [ ] T002 Design test cases for lifecycle (spawn, stop, status, PID+lock management) | traces: FR-002, FR-016, AC-002-01, AC-002-02, AC-002-03, AC-016-01, AC-016-03
-  files: tests/embedding/server/lifecycle.test.js (CREATE)
-- [ ] T003 Design test cases for port-discovery (config read, health check, retry) | traces: FR-003, FR-004, AC-003-01, AC-004-01
-  files: tests/embedding/server/port-discovery.test.js (CREATE)
-- [ ] T004 Design test cases for refresh-client and finalize step (delta POST, fail-open) | traces: FR-005, FR-015, AC-005-01, AC-005-02, AC-015-01
-  files: tests/embedding/server/refresh-client.test.js (CREATE), tests/core/finalize/refresh-embeddings.test.js (CREATE)
-- [ ] T005 Design test cases for SessionStart hook (reachable/unreachable/prompt/fail-open) | traces: FR-004, FR-015, AC-004-01, AC-004-02, AC-004-03, AC-015-01, AC-015-02
-  files: tests/core/hooks/embedding-session-check.test.cjs (CREATE)
-- [ ] T006 Design test cases for CLI server subcommands (start/stop/status/restart/reload) | traces: FR-002, FR-013, AC-002-01, AC-002-02, AC-002-03, AC-013-01
-  files: tests/bin/isdlc-embedding-server-cli.test.js (CREATE)
-- [ ] T007 Design test cases for multi-session lock coordination (concurrent starts, stale locks) | traces: FR-016, AC-016-01, AC-016-02, AC-016-03
-  files: tests/embedding/server/multi-session.test.js (CREATE)
-- [ ] T008 Design test cases for discover incremental integration (first gen + incremental + VCS diff) | traces: FR-006, AC-006-01, AC-006-02, AC-006-03
-  files: tests/embedding/discover-incremental.test.js (CREATE)
+- [X] T001 Design unit test cases for task-completion-logic pure functions | traces: FR-001, FR-002, AC-001-01, AC-001-02, AC-002-01, AC-002-02, AC-002-03, AC-002-04, AC-002-05, AC-002-06
+  files: docs/requirements/REQ-GH-232-task-completion-gate-hook/test-cases.md (CREATE)
+  blocks: [T008, T009]
+- [X] T002 Design unit test cases for task-completion-gate hook entry (copy-to-temp pattern per Article XIII) | traces: FR-001, AC-001-03
+  files: docs/requirements/REQ-GH-232-task-completion-gate-hook/test-cases.md (MODIFY)
+  blocked_by: [T001]
+  blocks: [T010, T011]
+- [X] T003 Design unit test cases for tasks bridge (dynamic ESM import, fail-open) | traces: ADR-002
+  files: docs/requirements/REQ-GH-232-task-completion-gate-hook/test-cases.md (MODIFY)
+  blocked_by: [T001]
+  blocks: [T006, T007]
+- [X] T004 Design integration test for 3f-task-completion dispatch routing | traces: FR-004, AC-004-01, AC-004-02
+  files: docs/requirements/REQ-GH-232-task-completion-gate-hook/test-cases.md (MODIFY)
+  blocked_by: [T001]
+  blocks: [T014, T015]
+- [X] T005 Design test fixtures (sample tasks.md files, state.json diff scenarios) | traces: FR-001, FR-002
+  files: docs/requirements/REQ-GH-232-task-completion-gate-hook/test-fixtures.md (CREATE)
+  blocked_by: [T001]
+  blocks: [T007, T009, T011, T015]
 
-## Phase 06: Implementation -- PENDING
+## Phase 06: Implementation -- COMPLETE
 
-- [ ] T009 Create http-server.js with all 7 HTTP endpoints wrapping MCP server | traces: FR-001, FR-007, FR-008, FR-010, AC-001-01, AC-007-01, AC-008-01, AC-010-01
-  files: lib/embedding/server/http-server.js (CREATE)
-  blocks: [T010, T012, T013, T020]
-- [ ] T010 Create bin/isdlc-embedding-server.js runner entry point | traces: FR-001, FR-011, AC-001-01, AC-011-01, AC-011-02
-  files: bin/isdlc-embedding-server.js (CREATE)
-  blocked_by: [T009]
-  blocks: [T011]
-- [ ] T011 Create lifecycle.js (spawn detached, PID/lock/log files, stop/status) | traces: FR-002, FR-016, AC-002-01, AC-002-02, AC-002-03, AC-016-01, AC-016-03
-  files: lib/embedding/server/lifecycle.js (CREATE)
-  blocked_by: [T010]
-  blocks: [T016, T019]
-- [ ] T012 Create port-discovery.js (client config + health check + retry) | traces: FR-003, FR-004, AC-003-01, AC-004-01
-  files: lib/embedding/server/port-discovery.js (CREATE)
-  blocked_by: [T009]
-  blocks: [T014]
-- [ ] T013 Create refresh-client.js (POST /refresh and /add-content helpers) | traces: FR-005, FR-008, AC-005-01, AC-008-01
-  files: lib/embedding/server/refresh-client.js (CREATE)
-  blocked_by: [T009]
-  blocks: [T015]
-- [ ] T014 Create SessionStart hook + register in Claude/Codex/Antigravity | traces: FR-004, FR-015, AC-004-01, AC-004-02, AC-004-03, AC-015-01, AC-015-02
-  files: src/core/hooks/embedding-session-check.cjs (CREATE), src/claude/settings.json (MODIFY)
-  blocked_by: [T012]
-- [ ] T015 Create refresh-embeddings finalize step + add to default steps | traces: FR-005, FR-015, AC-005-01, AC-005-02, AC-015-03
-  files: src/core/finalize/refresh-embeddings.js (CREATE), src/core/finalize/finalize-steps.default.md (MODIFY)
-  blocked_by: [T013]
-- [ ] T016 Extend bin/isdlc-embedding.js with server and regenerate subcommands | traces: FR-002, FR-012, FR-013, AC-002-01, AC-012-01, AC-013-01
-  files: bin/isdlc-embedding.js (MODIFY)
-  blocked_by: [T011]
-- [ ] T017 Add configure CLI subcommand (interactive provider setup) | traces: FR-011, AC-011-01, AC-011-02, AC-011-03
-  files: bin/isdlc-embedding.js (MODIFY)
-  blocked_by: [T018]
-- [ ] T018 Add embeddings section to config-defaults + migration in updater | traces: FR-003, FR-011, FR-014, AC-003-03, AC-011-01, AC-014-01, AC-014-02, AC-014-03
-  files: src/core/config/config-defaults.js (MODIFY), lib/updater.js (MODIFY), .gitignore (MODIFY)
-  blocks: [T017]
-- [ ] T019 Wire discover integration: incremental + auto-start after /discover | traces: FR-006, AC-006-01, AC-006-02, AC-006-03
-  files: lib/embedding/discover-integration.js (MODIFY), src/claude/agents/discover-orchestrator.md (MODIFY)
-  blocked_by: [T011]
-- [ ] T020 Register isdlc_embedding_add_content MCP tool in 3 providers | traces: FR-008, FR-009, AC-008-01, AC-009-01, AC-009-02, AC-009-03
+- [X] T006 Create tasks bridge src/core/bridge/tasks.cjs with dynamic ESM import of readTaskPlan (setup) | traces: ADR-002
+  files: src/core/bridge/tasks.cjs (CREATE)
+  blocked_by: [T003]
+  blocks: [T007, T008, T010]
+- [X] T007 Write unit tests for tasks bridge (unit_tests) | traces: ADR-002
+  files: src/claude/hooks/tests/tasks-bridge.test.cjs (CREATE)
+  blocked_by: [T005, T006]
+- [X] T008 Create task-completion-logic.cjs with check, detectPhaseCompletionTransition, countUnfinishedTopLevelTasks, formatBlockMessage pure functions (core_implementation) | traces: FR-001, FR-002, AC-001-01, AC-001-02, AC-002-05
+  files: src/claude/hooks/lib/task-completion-logic.cjs (CREATE)
+  blocked_by: [T001, T006]
+  blocks: [T009, T010]
+- [X] T009 Write unit tests for task-completion-logic covering all 9 error codes TCG-001 through TCG-009 (unit_tests) | traces: FR-001, FR-002, AC-001-01, AC-001-02, AC-002-01, AC-002-02, AC-002-03, AC-002-04, AC-002-05, AC-002-06
+  files: src/claude/hooks/tests/task-completion-logic.test.cjs (CREATE)
+  blocked_by: [T005, T008]
+- [X] T010 Create task-completion-gate.cjs hook entry (stdin read, delegate to logic, outputBlockResponse on block) (core_implementation) | traces: FR-001, FR-002
+  files: src/claude/hooks/task-completion-gate.cjs (CREATE)
+  blocked_by: [T002, T006, T008]
+  blocks: [T011, T012]
+- [X] T011 Write unit tests for task-completion-gate hook entry using copy-to-temp pattern (unit_tests) | traces: FR-001, FR-002, AC-002-06
+  files: src/claude/hooks/tests/task-completion-gate.test.cjs (CREATE)
+  blocked_by: [T005, T010]
+- [X] T012 Register task-completion-gate in src/claude/settings.json PreToolUse hooks with matcher Edit|Write (wiring_claude) | traces: ADR-001
   files: src/claude/settings.json (MODIFY)
-  blocked_by: [T009]
+  blocked_by: [T010]
+- [X] T013 Verify no Codex wiring needed — Claude Code hooks are provider-specific; document decision in codex-notes (wiring_codex) | traces: ADR-000
+  files: docs/requirements/REQ-GH-232-task-completion-gate-hook/codex-notes.md (CREATE)
+- [X] T014 Add 3f-task-completion handler section to src/claude/commands/isdlc.md STEP 3f and update dispatch table entry for TASKS INCOMPLETE routing (core_implementation) | traces: FR-003, FR-004, AC-003-01, AC-003-02, AC-003-03, AC-003-04, AC-003-05, AC-004-01, AC-004-02
+  files: src/claude/commands/isdlc.md (MODIFY)
+  blocked_by: [T004]
+  blocks: [T015]
+- [X] T015 Write integration test verifying 3f dispatch routes TASKS INCOMPLETE to 3f-task-completion handler (unit_tests) | traces: FR-004, AC-004-01, AC-004-02
+  files: src/claude/hooks/tests/task-completion-dispatch.test.cjs (CREATE)
+  blocked_by: [T005, T014]
+- [X] T016 Document active_workflow.skipped_tasks[] schema addition in state-schema-notes (cleanup) | traces: AC-003-04
+  files: docs/requirements/REQ-GH-232-task-completion-gate-hook/state-schema-notes.md (CREATE)
+  blocked_by: [T014]
 
-## Phase 16: Quality Loop -- PENDING
+## Phase 16: Quality Loop -- COMPLETE
 
-- [ ] T021 Run full test suite, fix regressions from new modules and hook changes | traces: all
-  blocked_by: [T009, T010, T011, T012, T013, T014, T015, T016, T017, T018, T019, T020]
-- [ ] T022 Dogfood smoke test: start server on this project, verify semantic_search works | traces: FR-001, FR-004, FR-006, FR-007
+- [X] T017 Run full hook test suite and verify all tests pass (test_execution) | traces: FR-001, FR-002, FR-003, FR-004
+  files: src/claude/hooks/tests/task-completion-logic.test.cjs (MODIFY), src/claude/hooks/tests/task-completion-gate.test.cjs (MODIFY), src/claude/hooks/tests/tasks-bridge.test.cjs (MODIFY), src/claude/hooks/tests/task-completion-dispatch.test.cjs (MODIFY)
+  blocked_by: [T007, T009, T011, T015]
+- [X] T018 Verify test coverage >= 80% for task-completion-logic.cjs and >= 85% for task-completion-gate.cjs (parity_verification) | traces: Article II
+  files: src/claude/hooks/lib/task-completion-logic.cjs (MODIFY), src/claude/hooks/task-completion-gate.cjs (MODIFY)
+  blocked_by: [T017]
+
+## Phase 08: Code Review -- COMPLETE
+
+- [X] T019 Constitutional review — verify Article I.5 enforcement intent, Article III security (no user input eval), Article X fail-open on 8 of 9 error codes, Article XIII CJS/ESM bridge pattern, Article XIV state integrity (constitutional_review) | traces: Article I, III, X, XIII, XIV
+  files: src/claude/hooks/task-completion-gate.cjs (MODIFY), src/claude/hooks/lib/task-completion-logic.cjs (MODIFY), src/core/bridge/tasks.cjs (MODIFY)
+  blocked_by: [T018]
+- [X] T020 Dual-file check — verify src/claude/ changes propagate correctly to .claude/ symlinks after install (dual_file_check) | traces: Article VIII
+  files: .claude/hooks/task-completion-gate.cjs (MODIFY), .claude/hooks/lib/task-completion-logic.cjs (MODIFY)
   blocked_by: [T019]
-
-## Phase 08: Code Review -- PENDING
-
-- [ ] T023 Constitutional review: Articles X (fail-open), XIII (ESM/CJS), XIV (state), XV (tool routing) | traces: all
-  blocked_by: [T021, T022]
-- [ ] T024 Provider parity: Claude+Codex+Antigravity hooks, MCP tools, finalize steps | traces: FR-004, FR-005, FR-009, FR-015
-  blocked_by: [T021, T022]
 
 ## Dependency Graph
 
 ```
-T009 (http-server) ──┬──> T010 (runner) ──> T011 (lifecycle) ──┬──> T016 (CLI server cmd)
-                     │                                          └──> T019 (discover integration)
-                     ├──> T012 (port-discovery) ──> T014 (SessionStart hook)
-                     ├──> T013 (refresh-client) ──> T015 (finalize step)
-                     └──> T020 (MCP tool registration)
-
-T018 (config + migration) ──> T017 (configure subcommand)
-
-All T009-T020 ──> T021 (quality loop) ──> T023, T024 (code review)
-T019 ──> T022 (smoke test) ──> T023, T024
+T001 ---> T002, T003, T004, T005
+T003 ---> T006
+T005 ---> T007, T009, T011, T015
+T006 ---> T007, T008, T010
+T008 ---> T009, T010
+T002 ---> T010, T011
+T010 ---> T011, T012
+T004 ---> T014
+T014 ---> T015, T016
+T007, T009, T011, T015 ---> T017
+T017 ---> T018
+T018 ---> T019
+T019 ---> T020
 ```
 
-**Critical path**: T009 → T010 → T011 → T016 → T021 → T023
+**Critical path** (longest chain, 9 tasks): T001 → T003 → T006 → T008 → T010 → T011 → T017 → T018 → T019 → T020
 
 ## Traceability Matrix
 
-| FR | ACs | Tasks |
-|----|-----|-------|
-| FR-001 | AC-001-01/02/03 | T001, T009, T010 |
-| FR-002 | AC-002-01/02/03 | T002, T006, T011, T016 |
-| FR-003 | AC-003-01/02/03 | T003, T012, T018 |
-| FR-004 | AC-004-01/02/03 | T003, T005, T012, T014 |
-| FR-005 | AC-005-01/02/03 | T004, T013, T015 |
-| FR-006 | AC-006-01/02/03 | T008, T019 |
-| FR-007 | AC-007-01/02 | T001, T009 |
-| FR-008 | AC-008-01/02/03 | T001, T004, T009, T013, T020 |
-| FR-009 | AC-009-01/02/03 | T020 |
-| FR-010 | AC-010-01/02/03 | T001, T009 |
-| FR-011 | AC-011-01/02/03 | T010, T017, T018 |
-| FR-012 | AC-012-01/02/03 | T016 |
-| FR-013 | AC-013-01/02 | T006, T016 |
-| FR-014 | AC-014-01/02/03 | T018 |
-| FR-015 | AC-015-01/02/03 | T004, T005, T014, T015 |
-| FR-016 | AC-016-01/02/03 | T002, T007, T011 |
+| FR | Related ACs | Phase 05 tasks | Phase 06 tasks | Phase 16 tasks | Phase 08 tasks |
+|----|-------------|----------------|----------------|----------------|----------------|
+| FR-001 | AC-001-01, AC-001-02, AC-001-03 | T001, T002 | T008, T009, T010, T011 | T017 | T019 |
+| FR-002 | AC-002-01..06 | T001 | T008, T009, T010, T011 | T017, T018 | T019 |
+| FR-003 | AC-003-01..05 | T004 | T014 | T017 | T019 |
+| FR-004 | AC-004-01, AC-004-02 | T004 | T014, T015 | T017 | T019 |
+
+**Coverage**: 4/4 FRs covered, 16/16 ACs covered. No orphan tasks.

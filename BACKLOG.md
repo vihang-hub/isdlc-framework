@@ -30,8 +30,9 @@
   - Gap revealed by REQ-GH-227 analysis. Templates exist but nothing enforces them; LLMs default to own structure. Needs strict binding in roundtable-analyst.md + template-validator hook.
 - [ ] #233 task-dispatch-enforcer hook: verify task-level dispatch was used when configured [github: GH-233]
   - Gap revealed by REQ-GH-224 build. Enforces the Phase-Loop Controller's task-dispatch protocol.
-- [A] #232 task-completion-gate hook: block phase advancement if tasks.md has unfinished tasks [github: GH-232] -> [requirements](docs/requirements/REQ-GH-232-task-completion-gate-hook/) **Analyzed**
+- [x] #232 task-completion-gate hook: block phase advancement if tasks.md has unfinished tasks [github: GH-232] -> [requirements](docs/requirements/REQ-GH-232-task-completion-gate-hook/) **Completed**
   - Gap revealed by REQ-GH-224 build. Enforces Article I.5 binding task plans at runtime.
+  - **Completed:** 2026-04-05
 - [x] #231 Configuration consolidation: unify config locations, eliminate duplicates, single config service [github: GH-231] -> [requirements](docs/requirements/REQ-GH-231-configuration-consolidation-unify-config/) **Completed**
 - [ ] #207 Mandatory web research enforcement in roundtable analysis — wire research: true flag [github: GH-207]
 - [x] #212 Task list consumption model for build phase agents (05/06/16/08) [github: GH-212] -> [requirements](docs/requirements/REQ-GH-212-task-list-consumption-model-for-build-phase-agents/) **Completed**

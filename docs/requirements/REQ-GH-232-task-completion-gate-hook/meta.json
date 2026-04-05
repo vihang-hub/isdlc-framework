@@ -17,5 +17,7 @@
     "domains": ["requirements", "architecture", "design", "tasks"],
     "amendment_cycles": 0
   },
-  "recommended_tier": "light"
+  "recommended_tier": "light",
+  "build_started_at": "2026-04-04T00:00:00.000Z",
+  "workflow_type": "build"
 }

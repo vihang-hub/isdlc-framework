@@ -2336,7 +2336,8 @@ state update, check if adaptive workflow sizing should run.
   4. Contains `"ITERATION CORRIDOR"` → Follow **3f-iteration-corridor** below
   5. Contains `"TEST ADEQUACY REQUIRED"` → Follow **3f-test-adequacy** below
   6. Contains `"PROTOCOL VIOLATION"` → Follow **3f-protocol-violation** below
-  7. Otherwise → Generic fallback: display blocker banner (same format as 3c), use `AskUserQuestion` for Retry/Skip/Cancel
+  7. Contains `"TASKS INCOMPLETE"` → Follow **3f-task-completion** below
+  8. Otherwise → Generic fallback: display blocker banner (same format as 3c), use `AskUserQuestion` for Retry/Skip/Cancel
 - Any other error → Display error, use `AskUserQuestion` for Retry/Skip/Cancel
 
 **3f-blast-radius.** BLAST RADIUS BLOCK HANDLING (Traces to: BUG-0019, FR-01 through FR-05)
@@ -2408,6 +2409,7 @@ This protocol manages retry counters for hook block re-delegations. Each handler
 | 3f-iteration-corridor | 3 | Same rationale as constitutional |
 | 3f-test-adequacy | 2 | Precondition block — if test gen fails twice, escalate |
 | 3f-protocol-violation | 2 | Protocol violations are often one-shot (e.g., git commit already made) — escalate quickly |
+| 3f-task-completion | 3 | Matches blast-radius pattern — 3 retries before user escalation |
 
 **3f-gate-blocker.** GATE BLOCKER RE-DELEGATION
 
@@ -2551,6 +2553,65 @@ Remediate these violations before the phase can advance.
    [S] Skip — Continue without resolving
    [C] Cancel workflow
    ```
+
+**3f-task-completion.** TASK COMPLETION RE-DELEGATION (REQ-GH-232)
+
+Triggered when a `blocked_by_hook` message contains `"TASKS INCOMPLETE"`. The `task-completion-gate` hook emits this block when a phase is being marked `status: "completed"` but top-level tasks for that phase in `docs/isdlc/tasks.md` are still `[ ]` (not done).
+
+1. **Parse the unfinished task list** from the block message. The hook emits lines matching:
+   ```
+     - [ ] T{id}: {description}
+   ```
+   Extract the phase key (from the message header `Phase {phase_key} has {N} unfinished top-level tasks`) and the list of `{ id, description }` pairs.
+
+2. **Check retry counter** (`task-completion-gate:{phase_key}`) per **3f-retry-protocol**. Max retries: 3.
+
+3. **If retries >= 3, present escalation menu** to the user with `AskUserQuestion`:
+   ```
+   I have asked the orchestrator to implement these tasks T{id1}, T{id2}, T{id3} but does not look like I am able to make progress.
+
+   Options:
+   [M] Manually prompt the orchestrator
+   [S] Skip for now
+   [C] Cancel workflow
+   ```
+
+4. **On [M] (manually prompt)**:
+   - Prompt the user for free-form guidance text (`AskUserQuestion` or equivalent input prompt).
+   - Reset `hook_block_retries["task-completion-gate:{phase_key}"]` to 0 in state.json.
+   - Re-delegate to the SAME phase agent with the standard re-delegation prompt below, appending the user's guidance text as an additional section titled `USER GUIDANCE:`.
+
+5. **On [S] (skip for now)**:
+   - Append an entry to `active_workflow.skipped_tasks[]` in state.json with schema:
+     ```json
+     {
+       "phase": "{phase_key}",
+       "tasks": [{ "id": "T{id}", "description": "..." }, ...],
+       "skipped_at": "{ISO-8601 timestamp}",
+       "reason": "user_skip_after_retries"
+     }
+     ```
+     Create the `skipped_tasks` array in `active_workflow` if it does not exist.
+   - Clear `hook_block_retries["task-completion-gate:{phase_key}"]` from state.json.
+   - Allow phase advancement: proceed as if the phase had returned `"passed"` (mark phase task completed, continue to next phase).
+
+6. **On [C] (cancel workflow)**: Delegate to the existing 3f cancellation path (same as generic Cancel handling).
+
+7. **If retries < 3, re-delegate** to the SAME phase agent (resolve from the PHASE→AGENT table in STEP 3d) with this prompt:
+
+```
+TASKS INCOMPLETE — Retry {N} of 3
+
+The task-completion-gate hook blocked phase advancement. The following tasks in docs/isdlc/tasks.md are still [ ] (not done) for phase {phase_key}:
+
+{for each unfinished task:
+  - T{id}: {description}
+}
+
+You MUST complete these tasks and mark them [X] in tasks.md before signaling phase completion. Do not abandon them or mark them as skipped. Each task ID listed above corresponds to a concrete work item in the task plan — implement the required files and tests, then flip the `[ ]` marker to `[X]` in docs/isdlc/tasks.md.
+```
+
+8. On return, loop back to STEP 3d per the retry protocol.
 
 #### STEP 3-dashboard: COMPLETION DASHBOARD (REQ-0022)
 
