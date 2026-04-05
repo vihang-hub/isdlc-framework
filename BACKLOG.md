@@ -4,6 +4,9 @@
 > BACKLOG.md is the curated working set with detailed specs. GitHub Issues are for tracking.
 
 ## Open
+- [x] #235 Rewrite roundtable-analyst.md for consistent roundtable UX [github: GH-235] -> [requirements](docs/requirements/REQ-GH-235-rewrite-roundtable-analyst-for-consistent-roundtable-ux/) **Completed**
+  - Behavior-first rewrite (987→889 lines) with state-local template bindings, first-class rendering modes, plugin/contribution persona extensibility. Added runtime-composer.js, 3 new hooks, 314 tests.
+  - **Completed:** 2026-04-05
 - [x] #223 Tasks as user contract: authoritative task list from analysis, Claude Task tool consumption, sub-task model, traceability enforcement [github: GH-223] -> [requirements](docs/requirements/REQ-GH-223-tasks-as-user-contract/)
 - [x] #219 Post-finalize validation hook — verify all finalization steps completed [github: GH-219] -> [requirements](docs/requirements/REQ-GH-219-post-finalize-validation-hook/) **Completed**
   - **Completed:** 2026-04-03
