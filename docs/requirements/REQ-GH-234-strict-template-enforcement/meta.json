@@ -1,0 +1,9 @@
+{
+  "source": "github",
+  "source_id": "GH-234",
+  "slug": "REQ-GH-234-strict-template-enforcement",
+  "created_at": "2026-04-05T00:00:00.000Z",
+  "analysis_status": "raw",
+  "phases_completed": [],
+  "codebase_hash": "01aa5d1"
+}
