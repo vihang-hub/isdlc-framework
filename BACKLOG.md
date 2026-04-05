@@ -20,10 +20,10 @@
 - [x] #213 Contract enforcement must be inline (during execution), not post-phase [github: GH-213] -> [requirements](docs/requirements/REQ-GH-213-contract-enforcement-must-be-inline/) **Completed**
   - **Completed:** 2026-03-27
 - [x] #224 Embedding pipeline activation — persistent HTTP server, session integration, provider selection, discover wiring (bundles #225, #226, #228) [github: GH-224] -> [requirements](docs/requirements/REQ-GH-224-embedding-pipeline-activation/) **Completed**
-- [ ] #227 Approximate nearest neighbor search (HNSW) for large embedding stores [github: GH-227] -> [requirements](docs/requirements/REQ-GH-227-embedding-scale-out/) **Analyzed**
-  - Group B — scale. Brute-force cosine acceptable for MVP.
-- [ ] #229 Incremental embedding indexing via VCS diff — re-embed only changed files [github: GH-229] -> [requirements](docs/requirements/REQ-GH-227-embedding-scale-out/) **Analyzed (combined with #227)**
-  - Group B — scale. Basic VCS-diff incremental mode is in #224 scope.
+- [x] #227 Approximate nearest neighbor search (HNSW) for large embedding stores [github: GH-227] -> [requirements](docs/requirements/REQ-GH-227-embedding-scale-out/) **Completed**
+  - **Completed:** 2026-04-05 (bundled with #229)
+- [x] #229 Incremental embedding indexing via filesystem-hash diff — re-embed only changed files [github: GH-229] -> [requirements](docs/requirements/REQ-GH-227-embedding-scale-out/) **Completed**
+  - **Completed:** 2026-04-05 (bundled with #227)
 - [ ] #230 Chunking performance: parallelize tree-sitter parsing for large codebases [github: GH-230]
   - Group B — scale. Sequential chunking acceptable for MVP.
 - [ ] #234 Enforce artifact templates strictly in roundtable confirmations and artifact writes [github: GH-234]

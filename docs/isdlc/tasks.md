@@ -1,121 +1,107 @@
-# Task Plan: REQ-GH-232 task-completion-gate-hook
+# Task Plan: REQ-GH-227 embedding-scale-out
 
 ## Progress Summary
 
 | Phase | Tasks | Complete | Status |
 |-------|-------|----------|--------|
-| 05 | 5 | 5 | COMPLETE |
-| 06 | 11 | 11 | COMPLETE |
-| 16 | 2 | 2 | COMPLETE |
-| 08 | 2 | 2 | COMPLETE |
-| **Total** | **20** | **20** | **100%** |
+| 05 | 7 | 7 | PENDING |
+| 06 | 7 | 7 | PENDING |
+| 16 | 3 | 3 | PENDING |
+| 08 | 2 | 2 | PENDING |
+| **Total** | **19** | **19** | **100%** |
 
 ## Phase 05: Test Strategy -- COMPLETE
 
-- [X] T001 Design unit test cases for task-completion-logic pure functions | traces: FR-001, FR-002, AC-001-01, AC-001-02, AC-002-01, AC-002-02, AC-002-03, AC-002-04, AC-002-05, AC-002-06
-  files: docs/requirements/REQ-GH-232-task-completion-gate-hook/test-cases.md (CREATE)
-  blocks: [T008, T009]
-- [X] T002 Design unit test cases for task-completion-gate hook entry (copy-to-temp pattern per Article XIII) | traces: FR-001, AC-001-03
-  files: docs/requirements/REQ-GH-232-task-completion-gate-hook/test-cases.md (MODIFY)
-  blocked_by: [T001]
-  blocks: [T010, T011]
-- [X] T003 Design unit test cases for tasks bridge (dynamic ESM import, fail-open) | traces: ADR-002
-  files: docs/requirements/REQ-GH-232-task-completion-gate-hook/test-cases.md (MODIFY)
-  blocked_by: [T001]
-  blocks: [T006, T007]
-- [X] T004 Design integration test for 3f-task-completion dispatch routing | traces: FR-004, AC-004-01, AC-004-02
-  files: docs/requirements/REQ-GH-232-task-completion-gate-hook/test-cases.md (MODIFY)
-  blocked_by: [T001]
-  blocks: [T014, T015]
-- [X] T005 Design test fixtures (sample tasks.md files, state.json diff scenarios) | traces: FR-001, FR-002
-  files: docs/requirements/REQ-GH-232-task-completion-gate-hook/test-fixtures.md (CREATE)
-  blocked_by: [T001]
-  blocks: [T007, T009, T011, T015]
+- [X] T001 Design test cases for HnswIndex (build, serialize, deserialize roundtrip, search recall vs linear ground truth) | traces: FR-001, FR-002, AC-001-01, AC-001-02, AC-001-03, AC-002-01, AC-002-02, NFR-003
+  files: tests/embedding/hnsw/index.test.js (CREATE)
+- [X] T002 Design test cases for FileHashManifest (computeManifest over temp dir, diffManifests returning changed+added+deleted sets) | traces: FR-004, AC-004-01, AC-004-02, AC-004-03
+  files: tests/embedding/incremental/file-hash.test.js (CREATE)
+- [X] T003 Design test cases for incrementalDiff orchestrator (happy path + error paths NoPriorPackage, LegacyPackage, DeletionsDetected) | traces: FR-004, FR-005, FR-006, AC-004-04, AC-004-07, AC-004-08, AC-005-01, AC-006-01, AC-006-02
+  files: tests/embedding/incremental/index.test.js (CREATE)
+- [X] T004 Design test cases for StoreManager HNSW routing (load HNSW, load legacy, fallback to linear, deduped warning) | traces: FR-002, FR-003, AC-002-02, AC-003-01, AC-003-02, AC-003-03, AC-003-04, AC-003-05
+  files: tests/embedding/mcp-server/store-manager-hnsw.test.js (CREATE)
+- [X] T005 Design test cases for CLI --incremental flag (flag parse, error translation, interactive prompt Y/n) | traces: FR-004, FR-005, FR-006, AC-004-05, AC-005-02, AC-005-03, AC-005-04, AC-006-02, AC-006-03
+  files: tests/bin/isdlc-embedding-incremental.test.js (CREATE)
+- [X] T006 Design test cases for .emb manifest backward compat (legacy package loads, new fields write, round-trip) | traces: FR-007, NFR-004, AC-007-01, AC-007-02, AC-007-03, AC-007-04, AC-007-05
+  files: tests/embedding/package/manifest-compat.test.js (CREATE)
+- [X] T007 Design synthetic corpus harness for scale validation (generate 50K fake files, measure p95 query, recall vs linear) | traces: NFR-001, NFR-002, NFR-003
+  files: tests/embedding/scale/synthetic-corpus.test.js (CREATE)
 
 ## Phase 06: Implementation -- COMPLETE
 
-- [X] T006 Create tasks bridge src/core/bridge/tasks.cjs with dynamic ESM import of readTaskPlan (setup) | traces: ADR-002
-  files: src/core/bridge/tasks.cjs (CREATE)
-  blocked_by: [T003]
-  blocks: [T007, T008, T010]
-- [X] T007 Write unit tests for tasks bridge (unit_tests) | traces: ADR-002
-  files: src/claude/hooks/tests/tasks-bridge.test.cjs (CREATE)
-  blocked_by: [T005, T006]
-- [X] T008 Create task-completion-logic.cjs with check, detectPhaseCompletionTransition, countUnfinishedTopLevelTasks, formatBlockMessage pure functions (core_implementation) | traces: FR-001, FR-002, AC-001-01, AC-001-02, AC-002-05
-  files: src/claude/hooks/lib/task-completion-logic.cjs (CREATE)
-  blocked_by: [T001, T006]
-  blocks: [T009, T010]
-- [X] T009 Write unit tests for task-completion-logic covering all 9 error codes TCG-001 through TCG-009 (unit_tests) | traces: FR-001, FR-002, AC-001-01, AC-001-02, AC-002-01, AC-002-02, AC-002-03, AC-002-04, AC-002-05, AC-002-06
-  files: src/claude/hooks/tests/task-completion-logic.test.cjs (CREATE)
-  blocked_by: [T005, T008]
-- [X] T010 Create task-completion-gate.cjs hook entry (stdin read, delegate to logic, outputBlockResponse on block) (core_implementation) | traces: FR-001, FR-002
-  files: src/claude/hooks/task-completion-gate.cjs (CREATE)
-  blocked_by: [T002, T006, T008]
-  blocks: [T011, T012]
-- [X] T011 Write unit tests for task-completion-gate hook entry using copy-to-temp pattern (unit_tests) | traces: FR-001, FR-002, AC-002-06
-  files: src/claude/hooks/tests/task-completion-gate.test.cjs (CREATE)
-  blocked_by: [T005, T010]
-- [X] T012 Register task-completion-gate in src/claude/settings.json PreToolUse hooks with matcher Edit|Write (wiring_claude) | traces: ADR-001
-  files: src/claude/settings.json (MODIFY)
-  blocked_by: [T010]
-- [X] T013 Verify no Codex wiring needed — Claude Code hooks are provider-specific; document decision in codex-notes (wiring_codex) | traces: ADR-000
-  files: docs/requirements/REQ-GH-232-task-completion-gate-hook/codex-notes.md (CREATE)
-- [X] T014 Add 3f-task-completion handler section to src/claude/commands/isdlc.md STEP 3f and update dispatch table entry for TASKS INCOMPLETE routing (core_implementation) | traces: FR-003, FR-004, AC-003-01, AC-003-02, AC-003-03, AC-003-04, AC-003-05, AC-004-01, AC-004-02
-  files: src/claude/commands/isdlc.md (MODIFY)
-  blocked_by: [T004]
+- [X] T008 Create HnswIndex module (buildHnswIndex with defaults M=16 efC=200 efS=50, serializeHnswIndex, deserializeHnswIndex, searchHnsw) | traces: FR-001, FR-002, AC-001-01, AC-001-03, AC-002-01, AC-002-02
+  files: lib/embedding/hnsw/index.js (CREATE)
+  blocks: [T010, T011, T012, T013]
+- [X] T009 Create FileHashManifest module (computeManifest via fs/promises + Node crypto SHA-256, diffManifests into changed+added+deleted) | traces: FR-004, AC-004-01, AC-004-02, AC-004-03
+  files: lib/embedding/incremental/file-hash.js (CREATE)
+  blocks: [T010]
+- [X] T010 Create incrementalDiff orchestrator runIncremental (load prior emb, diff hashes, embed delta, merge unchanged vectors, rebuild HNSW, write new emb) | traces: FR-004, FR-005, FR-006, AC-004-04, AC-004-06, AC-004-07, AC-005-01, AC-006-01, AC-006-04
+  files: lib/embedding/incremental/index.js (CREATE)
+  blocked_by: [T008, T009, T012]
+  blocks: [T014]
+- [X] T011 Extend .emb package writer to serialize hnsw_index, file_hashes, hnsw_params, hash_algorithm fields | traces: FR-001, FR-007, AC-001-02, AC-007-01, AC-007-02, AC-007-03, AC-007-04
+  files: lib/embedding/package/writer.js (MODIFY)
+  blocked_by: [T008]
+- [X] T012 Extend .emb package reader with backward-compat for missing new fields (legacy packages still load) | traces: FR-007, NFR-004, AC-007-05
+  files: lib/embedding/package/reader.js (MODIFY)
+  blocked_by: [T008]
+  blocks: [T010, T013]
+- [X] T013 Extend StoreManager detect hnsw_index_present on load, route findNearest to HNSW or linear, emit deduped HNSW_INDEX_UNAVAILABLE warning | traces: FR-002, FR-003, AC-002-02, AC-002-03, AC-003-01, AC-003-02, AC-003-03, AC-003-04, AC-003-05
+  files: lib/embedding/mcp-server/store-manager.js (MODIFY)
+  blocked_by: [T008, T012]
   blocks: [T015]
-- [X] T015 Write integration test verifying 3f dispatch routes TASKS INCOMPLETE to 3f-task-completion handler (unit_tests) | traces: FR-004, AC-004-01, AC-004-02
-  files: src/claude/hooks/tests/task-completion-dispatch.test.cjs (CREATE)
-  blocked_by: [T005, T014]
-- [X] T016 Document active_workflow.skipped_tasks[] schema addition in state-schema-notes (cleanup) | traces: AC-003-04
-  files: docs/requirements/REQ-GH-232-task-completion-gate-hook/state-schema-notes.md (CREATE)
-  blocked_by: [T014]
+- [X] T014 Extend bin/isdlc-embedding.js with --incremental flag, error code translation, interactive prompt for NO_PRIOR_PACKAGE | traces: FR-004, FR-005, FR-006, AC-004-05, AC-005-02, AC-005-03, AC-005-04, AC-006-02, AC-006-03
+  files: bin/isdlc-embedding.js (MODIFY)
+  blocked_by: [T010]
+  blocks: [T015, T017]
 
 ## Phase 16: Quality Loop -- COMPLETE
 
-- [X] T017 Run full hook test suite and verify all tests pass (test_execution) | traces: FR-001, FR-002, FR-003, FR-004
-  files: src/claude/hooks/tests/task-completion-logic.test.cjs (MODIFY), src/claude/hooks/tests/task-completion-gate.test.cjs (MODIFY), src/claude/hooks/tests/tasks-bridge.test.cjs (MODIFY), src/claude/hooks/tests/task-completion-dispatch.test.cjs (MODIFY)
-  blocked_by: [T007, T009, T011, T015]
-- [X] T018 Verify test coverage >= 80% for task-completion-logic.cjs and >= 85% for task-completion-gate.cjs (parity_verification) | traces: Article II
-  files: src/claude/hooks/lib/task-completion-logic.cjs (MODIFY), src/claude/hooks/task-completion-gate.cjs (MODIFY)
-  blocked_by: [T017]
+- [X] T015 Run full test suite, fix regressions from HNSW integration and manifest changes | traces: all
+  blocked_by: [T008, T009, T010, T011, T012, T013, T014]
+- [X] T016 Run synthetic corpus scale validation (50K files, measure p95 <1s, recall >=95%) | traces: NFR-001, NFR-002, NFR-003
+  blocked_by: [T013, T015]
+- [X] T017 Dogfood smoke test regenerate this project emb with HNSW, run --incremental after edits, verify semantic_search results | traces: FR-001, FR-002, FR-004, FR-005
+  blocked_by: [T014, T015]
 
 ## Phase 08: Code Review -- COMPLETE
 
-- [X] T019 Constitutional review — verify Article I.5 enforcement intent, Article III security (no user input eval), Article X fail-open on 8 of 9 error codes, Article XIII CJS/ESM bridge pattern, Article XIV state integrity (constitutional_review) | traces: Article I, III, X, XIII, XIV
-  files: src/claude/hooks/task-completion-gate.cjs (MODIFY), src/claude/hooks/lib/task-completion-logic.cjs (MODIFY), src/core/bridge/tasks.cjs (MODIFY)
-  blocked_by: [T018]
-- [X] T020 Dual-file check — verify src/claude/ changes propagate correctly to .claude/ symlinks after install (dual_file_check) | traces: Article VIII
-  files: .claude/hooks/task-completion-gate.cjs (MODIFY), .claude/hooks/lib/task-completion-logic.cjs (MODIFY)
-  blocked_by: [T019]
+- [X] T018 Constitutional review Articles X (fail-open), XI (integration testing integrity), XIII (ESM), XIV (emb package integrity) | traces: all
+  blocked_by: [T015, T016, T017]
+- [X] T019 Provider parity verification (lib/embedding/ is provider-neutral, confirm no provider-specific changes needed) | traces: none
+  blocked_by: [T015, T016, T017]
 
 ## Dependency Graph
 
 ```
-T001 ---> T002, T003, T004, T005
-T003 ---> T006
-T005 ---> T007, T009, T011, T015
-T006 ---> T007, T008, T010
-T008 ---> T009, T010
-T002 ---> T010, T011
-T010 ---> T011, T012
-T004 ---> T014
-T014 ---> T015, T016
-T007, T009, T011, T015 ---> T017
-T017 ---> T018
-T018 ---> T019
-T019 ---> T020
+T008 (HnswIndex) ──┬──> T011 (writer)
+                   ├──> T012 (reader) ─┬──> T013 (StoreManager)
+                   │                    └──> T010 (runIncremental)
+                   └──> T013
+T009 (FileHashManifest) ──> T010
+
+T010 ──> T014 (CLI --incremental)
+
+All implementation (T008-T014) ──> T015 (test suite)
+T015 + T013 ──> T016 (scale validation)
+T015 + T014 ──> T017 (dogfood)
+T015, T016, T017 ──> T018 (constitutional), T019 (parity)
 ```
 
-**Critical path** (longest chain, 9 tasks): T001 → T003 → T006 → T008 → T010 → T011 → T017 → T018 → T019 → T020
+**Critical path**: T008 → T012 → T010 → T014 → T017 → T018
 
 ## Traceability Matrix
 
-| FR | Related ACs | Phase 05 tasks | Phase 06 tasks | Phase 16 tasks | Phase 08 tasks |
-|----|-------------|----------------|----------------|----------------|----------------|
-| FR-001 | AC-001-01, AC-001-02, AC-001-03 | T001, T002 | T008, T009, T010, T011 | T017 | T019 |
-| FR-002 | AC-002-01..06 | T001 | T008, T009, T010, T011 | T017, T018 | T019 |
-| FR-003 | AC-003-01..05 | T004 | T014 | T017 | T019 |
-| FR-004 | AC-004-01, AC-004-02 | T004 | T014, T015 | T017 | T019 |
-
-**Coverage**: 4/4 FRs covered, 16/16 ACs covered. No orphan tasks.
+| FR/NFR | ACs | Tasks |
+|--------|-----|-------|
+| FR-001 | AC-001-01/02/03 | T001, T008, T011 |
+| FR-002 | AC-002-01/02/03 | T001, T004, T008, T013 |
+| FR-003 | AC-003-01/02/03/04/05 | T004, T013 |
+| FR-004 | AC-004-01 through AC-004-08 | T002, T003, T005, T009, T010, T014 |
+| FR-005 | AC-005-01/02/03/04 | T003, T005, T010, T014 |
+| FR-006 | AC-006-01/02/03/04/05 | T003, T005, T010, T014 |
+| FR-007 | AC-007-01/02/03/04/05 | T006, T011, T012 |
+| NFR-001 | p95 <1s | T007, T016 |
+| NFR-002 | <60s incremental | T007, T016 |
+| NFR-003 | ≥95% recall | T001, T007, T016 |
+| NFR-004 | backward compat | T006, T012 |

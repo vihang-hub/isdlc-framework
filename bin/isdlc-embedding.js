@@ -204,9 +204,25 @@ async function runConfigure() {
  * AC-014-03: Incremental mode re-embeds only changed files via VCS adapter
  */
 async function runGenerate(genArgs) {
-  const workingCopy = resolve(genArgs[0] || '.');
+  // Skip flag args (starting with --) when picking working copy path
+  const pathArg = genArgs.find(a => !a.startsWith('--'));
+  const workingCopy = resolve(pathArg || '.');
   const autoStart = !genArgs.includes('--no-auto-start');
   const tier = (genArgs.find(a => a.startsWith('--tier=')) || '--tier=full').split('=')[1];
+
+  // REQ-GH-227 / FR-004: --incremental flag routing
+  const { parseIncrementalFlag, translateErrorCode, shouldPromptFullGenerate } = await import('../lib/embedding/incremental/cli-helpers.js');
+  if (parseIncrementalFlag(genArgs)) {
+    const handled = await runIncrementalGenerate(workingCopy, genArgs, {
+      translateErrorCode,
+      shouldPromptFullGenerate
+    });
+    if (handled === 'fallthrough') {
+      // fall through to full generation
+    } else {
+      return handled;
+    }
+  }
 
   console.log(`Generating embeddings for: ${workingCopy}`);
   console.log(`Tier: ${tier}`);
@@ -322,6 +338,74 @@ async function runGenerate(genArgs) {
  */
 async function runStatus() {
   console.log('Embedding status: Not yet implemented (Group 2+ scope)');
+}
+
+/**
+ * Run incremental embedding generation.
+ *
+ * REQ-GH-227 / FR-004, FR-005, FR-006 / AC-004-04..08, AC-005-01..04, AC-006-01..04
+ *
+ * @returns {Promise<undefined | 'fallthrough'>} 'fallthrough' to run full generate
+ */
+async function runIncrementalGenerate(workingCopy, genArgs, { translateErrorCode, shouldPromptFullGenerate }) {
+  const { join } = await import('node:path');
+  const { existsSync } = await import('node:fs');
+  const { runIncremental } = await import('../lib/embedding/incremental/index.js');
+
+  // Default prior .emb location — convention: .isdlc/embeddings/latest.emb
+  const priorPackagePath = join(workingCopy, '.isdlc', 'embeddings', 'latest.emb');
+  const outputPath = priorPackagePath;
+
+  console.log(`Running incremental embedding for: ${workingCopy}`);
+
+  const result = await runIncremental({
+    rootPath: workingCopy,
+    priorPackagePath,
+    outputPath
+  });
+
+  if (result.ok) {
+    console.log(`Incremental complete: ${result.summary.changed.length} changed, ${result.summary.added.length} added, ${result.summary.unchanged} unchanged.`);
+    return;
+  }
+
+  // Error path — translate and handle
+  const msg = translateErrorCode(result.errorCode, { deletedCount: result.deletedCount });
+
+  if (result.errorCode === 'NO_PRIOR_PACKAGE') {
+    // AC-005-02, AC-005-03: interactive prompt
+    console.log(msg);
+    const response = await promptStdin();
+    if (shouldPromptFullGenerate(response)) {
+      console.log('Running full generation...');
+      return 'fallthrough';
+    } else {
+      console.log('Exiting without changes.');
+      return;
+    }
+  }
+
+  // AC-004-08, AC-006-02: print error and exit non-zero
+  console.error(msg);
+  process.exit(1);
+}
+
+/**
+ * Read one line from stdin for interactive prompts.
+ */
+function promptStdin() {
+  return new Promise((resolve) => {
+    let data = '';
+    process.stdin.setEncoding('utf8');
+    const onData = (chunk) => { data += chunk; };
+    const onEnd = () => { resolve(data.trim()); };
+    process.stdin.once('data', (chunk) => {
+      data = chunk.toString().trim();
+      process.stdin.pause();
+      resolve(data);
+    });
+    process.stdin.resume();
+  });
 }
 
 function printHelp() {
