@@ -1,0 +1,41 @@
+FR_ID,AC_ID,User_Story_ID,Confidence,Source
+FR-001,AC-001-01,US-001,High,preservation-inventory §1
+FR-001,AC-001-02,US-001,High,draft Success Criteria
+FR-001,AC-001-03,US-001,High,preservation-inventory §2-7
+FR-002,AC-002-01,US-002,High,roundtable architecture ADR-002
+FR-002,AC-002-02,US-002,High,preservation-inventory §4
+FR-002,AC-002-03,US-002,High,preservation-inventory §4
+FR-003,AC-003-01,US-003,High,preservation-inventory §14
+FR-003,AC-003-02,US-003,High,roundtable decision (silent mode internal-only)
+FR-003,AC-003-03,US-003,High,preservation-inventory §14
+FR-003,AC-003-04,US-003,High,preservation-inventory §14
+FR-004,AC-004-01,US-004,High,preservation-inventory §6
+FR-004,AC-004-02,US-004,High,preservation-inventory §6 shared invariants
+FR-004,AC-004-03,US-004,High,roundtable decision (silent internal-only)
+FR-005,AC-005-01,US-005,High,preservation-inventory §7
+FR-005,AC-005-02,US-005,High,preservation-inventory §7
+FR-005,AC-005-03,US-005,High,roundtable architecture ADR-003
+FR-005,AC-005-04,US-005,High,roundtable architecture ADR-003
+FR-005,AC-005-05,US-005,Medium,design decision (first-wins + warn)
+FR-005,AC-005-06,US-005,High,existing persona files audit
+FR-006,AC-006-01,US-006,High,preservation-inventory §13
+FR-006,AC-006-02,US-006,High,preservation-inventory §13
+FR-006,AC-006-03,US-006,High,preservation-inventory §10
+FR-007,AC-007-01,US-007,High,roundtable decision (all 7 tests in scope)
+FR-007,AC-007-02,US-007,High,roundtable decision
+FR-007,AC-007-03,US-007,High,roundtable decision
+FR-007,AC-007-04,US-007,High,roundtable decision
+FR-007,AC-007-05,US-007,High,roundtable decision
+FR-007,AC-007-06,US-007,High,roundtable decision
+FR-007,AC-007-07,US-007,High,roundtable decision
+FR-008,AC-008-01,US-008,High,roundtable decision (scope C)
+FR-008,AC-008-02,US-008,High,hook audit finding
+FR-008,AC-008-03,US-008,High,roundtable decision (3 new hooks)
+FR-008,AC-008-04,US-008,High,existing hook test suite
+FR-009,AC-009-01,US-009,High,roundtable decision (include bug)
+FR-009,AC-009-02,US-009,High,roundtable architecture ADR-005
+FR-009,AC-009-03,US-009,High,bug templates existing
+FR-009,AC-009-04,US-009,High,roundtable decision
+FR-010,AC-010-01,US-010,Medium,Article VIII documentation currency
+FR-010,AC-010-02,US-010,Medium,Article VIII req 8
+FR-010,AC-010-03,US-010,Medium,inferred from persona extensibility

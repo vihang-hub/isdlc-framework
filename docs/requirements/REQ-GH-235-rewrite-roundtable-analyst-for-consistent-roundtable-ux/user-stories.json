@@ -1,0 +1,82 @@
+[
+  {
+    "id": "US-001",
+    "title": "Rewrite prompt for consistency",
+    "story": "As a framework maintainer, I want roundtable-analyst.md rewritten into a behavior-first architecture so that Claude and Codex stay in the staged roundtable flow consistently.",
+    "acceptance_criteria": ["AC-001-01", "AC-001-02", "AC-001-03"],
+    "priority": "Must",
+    "traces": ["FR-001"]
+  },
+  {
+    "id": "US-002",
+    "title": "State-local template binding",
+    "story": "As a framework maintainer, I want template authority bound inline at each confirmation state so that templates can't drift from distant guidance.",
+    "acceptance_criteria": ["AC-002-01", "AC-002-02", "AC-002-03"],
+    "priority": "Must",
+    "traces": ["FR-002"]
+  },
+  {
+    "id": "US-003",
+    "title": "Anti-shortcut contract",
+    "story": "As a user invoking analyze, I want the roundtable to refuse shortcutting to artifacts so that I see the full discussion before confirmations.",
+    "acceptance_criteria": ["AC-003-01", "AC-003-02", "AC-003-03", "AC-003-04"],
+    "priority": "Must",
+    "traces": ["FR-003"]
+  },
+  {
+    "id": "US-004",
+    "title": "First-class rendering modes",
+    "story": "As a user, I want the three rendering modes treated as first-class presentation variants so that mode changes never weaken the roundtable protocol.",
+    "acceptance_criteria": ["AC-004-01", "AC-004-02", "AC-004-03"],
+    "priority": "Must",
+    "traces": ["FR-004"]
+  },
+  {
+    "id": "US-005",
+    "title": "Persona extensibility via plugin model",
+    "story": "As a persona author, I want to promote a persona to own a confirmation stage by editing only that persona's frontmatter so that my customization survives framework updates.",
+    "acceptance_criteria": ["AC-005-01", "AC-005-02", "AC-005-03", "AC-005-04", "AC-005-05", "AC-005-06"],
+    "priority": "Must",
+    "traces": ["FR-005"]
+  },
+  {
+    "id": "US-006",
+    "title": "Appendix separation",
+    "story": "As a framework maintainer, I want dormant/adapter content in labeled appendices so that the main execution path stays UX-contract-focused.",
+    "acceptance_criteria": ["AC-006-01", "AC-006-02", "AC-006-03"],
+    "priority": "Must",
+    "traces": ["FR-006"]
+  },
+  {
+    "id": "US-007",
+    "title": "Prompt-verification test coverage",
+    "story": "As a framework maintainer, I want 7 new prompt-verification tests so that rewrite regressions are caught in CI.",
+    "acceptance_criteria": ["AC-007-01", "AC-007-02", "AC-007-03", "AC-007-04", "AC-007-05", "AC-007-06", "AC-007-07"],
+    "priority": "Must",
+    "traces": ["FR-007"]
+  },
+  {
+    "id": "US-008",
+    "title": "Hook runtime alignment",
+    "story": "As a framework maintainer, I want hooks audited, updated, and extended so that the runtime enforcement matches the rewritten prompt contract.",
+    "acceptance_criteria": ["AC-008-01", "AC-008-02", "AC-008-03", "AC-008-04"],
+    "priority": "Must",
+    "traces": ["FR-008"]
+  },
+  {
+    "id": "US-009",
+    "title": "bug-roundtable parallel rewrite",
+    "story": "As a framework maintainer, I want bug-roundtable-analyst.md rewritten with the same architecture so that both prompts don't drift apart.",
+    "acceptance_criteria": ["AC-009-01", "AC-009-02", "AC-009-03", "AC-009-04"],
+    "priority": "Must",
+    "traces": ["FR-009"]
+  },
+  {
+    "id": "US-010",
+    "title": "Documentation alignment",
+    "story": "As a new persona author, I want updated docs explaining the persona extensibility model so that I can promote my first persona without reading source code.",
+    "acceptance_criteria": ["AC-010-01", "AC-010-02", "AC-010-03"],
+    "priority": "Should",
+    "traces": ["FR-010"]
+  }
+]
