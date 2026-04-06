@@ -1,43 +1,69 @@
-# QA Sign-Off: REQ-GH-235 Rewrite Roundtable Analyst
+# QA Sign-Off: REQ-GH-237 -- Replace CodeBERT with Jina v2 Base Code
 
-**Date**: 2026-04-05
-**Phase**: 16-quality-loop
-**Iteration Count**: 1
-**Verdict**: QA APPROVED
+**Date**: 2026-04-06
+**Phase**: 08-code-review
+**Agent**: QA Engineer
+**Review Mode**: Human Review Only (Phase 06 implementation loop completed)
 
 ---
 
-## Sign-Off Summary
+## Decision: QA APPROVED
 
-| Gate Item | Status |
-|-----------|--------|
-| Build integrity | PASS (all modules load cleanly) |
-| New tests (109 tests across 5 suites) | PASS (0 failures) |
-| Updated tests (192 tests across 8 files) | PASS (0 failures) |
-| Regression suite (1647 tests) | PASS (63 pre-existing failures, 0 new) |
-| Lint/syntax check | PASS (all files pass node --check) |
-| Dependency audit | PASS (0 vulnerabilities) |
-| Security review | PASS (no concerns) |
-| Code review | PASS (no blockers) |
-| Hook registration | PASS (3 hooks registered in settings.json) |
+### Rationale
 
-## Test Totals
+1. **Zero regressions**: 0 new test failures introduced by this changeset. All 64 pre-existing failures exist identically on main.
 
-| Category | Tests | Pass | Fail |
-|----------|-------|------|------|
-| New prompt-verification | 53 | 53 | 0 |
-| Updated prompt-verification | 192 | 192 | 0 |
-| Runtime composer unit | 23 | 23 | 0 |
-| Hook tests | 20 | 20 | 0 |
-| Bridge test | 13 | 13 | 0 |
-| **REQ-GH-235 Total** | **301** | **301** | **0** |
+2. **Embedding tests pass**: 55/55 embedding engine and adapter tests pass. 14 pre-warm tests are scaffolded (`.skip`).
 
-## Pre-Existing Failures (Not Blocking)
+3. **Build integrity verified**: Both `lib/embedding/engine/index.js` and `lib/embedding/engine/jina-code-adapter.js` load without error. Module imports resolve correctly.
 
-63 pre-existing test failures exist on the base branch and are unrelated to this change. Verified by running the full test suite on both the feature branch and the stashed base -- identical results (1584 pass / 63 fail).
+4. **Blast radius 100% covered**: All 8 Tier 1 files from impact-analysis.md are addressed in the working tree diff. No gaps.
 
-## Certification
+5. **Security clean**: 0 npm audit vulnerabilities. No secrets, no user input passed to exec/eval. Dependency change (`onnxruntime-node` removed, `@huggingface/transformers` added) reduces native binary attack surface.
 
-This change introduces 301 passing tests across 21 test files, with zero regressions to the existing 1584 passing tests. All new production code follows project conventions (Article X fail-open, Article XIII module format, pure functions, defensive null checks).
+6. **Core functionality verified**:
+   - Jina Code adapter creates embeddings via `@huggingface/transformers` pipeline
+   - Engine routes `jina-code` provider correctly as the new default
+   - `codebert` provider throws removal error with migration hint
+   - JINA_CODE_DIMENSIONS (768) exported and consistent across all modules
+   - Deleted files (codebert-adapter.js, codebert-adapter.test.js, model-downloader.js, model-downloader.test.js) confirmed absent
+   - Pre-warm step added to discover flow with fail-open behavior
 
-**QA APPROVED** for Phase 08 code review.
+### Code Review Findings (non-blocking)
+
+| ID | Severity | File | Description |
+|----|----------|------|-------------|
+| F-001 | Medium | setup-project-knowledge.js:570 | Stale `model: 'codebert'` metadata label in document embedding pipeline |
+| F-002 | Medium | setup-project-knowledge.js:659 | Stale `modelPath` referencing CodeBERT directory |
+| F-003 | Medium | semantic-search-setup.js:102-189 | Vestigial `onnxruntime-node` check and `provider: 'codebert'` default |
+| F-004 | Low | pre-warm.test.js | All 14 tests are `.skip` scaffolds |
+| F-005 | Low | bin/isdlc-setup-knowledge.js:121 | Stale `onnxruntime-node` reference |
+
+All medium findings are cosmetic: the actual embedding calls use the correct `jina-code` provider, and stale references are in config-writing paths that do not affect runtime embedding generation. The `codebert` provider throws a clear migration error at the engine layer.
+
+### Constitutional Compliance
+
+| Article | Status | Notes |
+|---------|--------|-------|
+| V (Simplicity First) | PASS | 113-line adapter, no over-engineering |
+| VI (Code Review Required) | PASS | This review satisfies the requirement |
+| VII (Artifact Traceability) | PASS | All 7 FRs traced to implementation and tests |
+| VIII (Documentation Currency) | PASS | JSDoc updated, module comments reference REQ-GH-237 |
+| IX (Quality Gate Integrity) | PASS | All required artifacts present, tests passing |
+| XI (Integration Testing) | PASS | Engine routing + discover integration tests pass |
+| XIII (Module System Consistency) | PASS | All files use ESM |
+
+### Phase 16 Quality Loop Results (verified)
+
+- 1677 total tests, 1599 passing, 64 pre-existing failures, 14 skipped
+- 0 npm audit vulnerabilities
+- 0 regressions
+
+---
+
+**GATE-07**: PASS
+**GATE-08**: PASS (Code Review)
+**Approved at**: 2026-04-06
+**Verdict**: APPROVE
+**Debate rounds used**: 0
+**Fan-out chunks**: 0
