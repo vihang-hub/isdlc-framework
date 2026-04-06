@@ -1,0 +1,28 @@
+{
+  "source": "github",
+  "source_id": "GH-217",
+  "slug": "REQ-GH-217-use-claude-code-plan-mode-for-task-execution-ux-ke",
+  "created_at": "2026-04-06T17:07:00.000Z",
+  "analysis_status": "analyzed",
+  "phases_completed": [
+    "01-requirements",
+    "04-design"
+  ],
+  "topics_covered": [
+    "problem-discovery",
+    "requirements-definition",
+    "specification"
+  ],
+  "codebase_hash": "b907d51",
+  "recommended_scope": {
+    "scope": "light",
+    "rationale": "4-5 files affected, instruction edits plus one small utility, no new architectural patterns",
+    "user_confirmed": true,
+    "user_override": null
+  },
+  "acceptance": {
+    "accepted_at": "2026-04-06T17:15:00.000Z",
+    "domains": ["requirements", "design", "tasks"],
+    "amendment_cycles": 0
+  }
+}

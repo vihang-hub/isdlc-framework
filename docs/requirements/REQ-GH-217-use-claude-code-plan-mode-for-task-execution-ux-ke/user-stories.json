@@ -1,0 +1,37 @@
+[
+  {
+    "id": "US-001",
+    "title": "See task-level progress in task bar",
+    "story": "As a developer running a build workflow, I want to see individual tasks checking off in the task bar so that I can track progress without reading file diffs.",
+    "acceptance_criteria": [
+      "TaskCreate entry created for each main task (not sub-tasks)",
+      "Completed tasks show strikethrough in the task bar",
+      "Task entries persist through the full phase (not deleted after tier)"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-001", "FR-002"]
+  },
+  {
+    "id": "US-002",
+    "title": "See stable-order phase summary",
+    "story": "As a developer completing a phase, I want to see a formatted summary of all tasks in their original order so that I get a clear picture of what was done.",
+    "acceptance_criteria": [
+      "Summary prints at phase boundary with tasks in stable order",
+      "Tasks grouped by category with status icons and progress counts",
+      "Task entries cleaned up from task bar after summary prints"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-003", "FR-002"]
+  },
+  {
+    "id": "US-003",
+    "title": "Upstream stable ordering request",
+    "story": "As the iSDLC maintainer, I want to file a feature request for stable task ordering so that future versions can display tasks in their original order.",
+    "acceptance_criteria": [
+      "GitHub issue filed on anthropics/claude-code",
+      "Issue describes the stable ordering / position parameter need"
+    ],
+    "priority": "Should Have",
+    "traces": ["FR-004"]
+  }
+]
