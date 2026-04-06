@@ -4,6 +4,7 @@
 > BACKLOG.md is the curated working set with detailed specs. GitHub Issues are for tracking.
 
 ## Open
+- [A] #237 Replace CodeBERT with Jina v2 Base Code — unblock embedding pipeline [github: GH-237] -> [requirements](docs/requirements/REQ-GH-237-replace-codebert-with-jina-v2-base-code/)
 - [x] #235 Rewrite roundtable-analyst.md for consistent roundtable UX [github: GH-235] -> [requirements](docs/requirements/REQ-GH-235-rewrite-roundtable-analyst-for-consistent-roundtable-ux/) **Completed**
   - Behavior-first rewrite (987→889 lines) with state-local template bindings, first-class rendering modes, plugin/contribution persona extensibility. Added runtime-composer.js, 3 new hooks, 314 tests.
   - **Completed:** 2026-04-05

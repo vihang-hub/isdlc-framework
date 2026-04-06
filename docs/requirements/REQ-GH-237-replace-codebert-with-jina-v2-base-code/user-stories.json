@@ -1,0 +1,48 @@
+[
+  {
+    "id": "US-001",
+    "title": "Generate embeddings with Jina model",
+    "story": "As a framework developer, I want the embedding pipeline to use the Jina v2 Base Code model so that I can generate working embeddings for semantic search.",
+    "acceptance_criteria": [
+      "Jina adapter initializes and returns valid embeddings",
+      "768-dimensional Float32Array vectors are L2-normalized",
+      "Adapter returns null when transformers package is missing"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-001", "FR-002"]
+  },
+  {
+    "id": "US-002",
+    "title": "Install without native build steps",
+    "story": "As a framework user on macOS ARM, I want npm install to complete without native compilation so that I can get started without installing Python or Rust toolchains.",
+    "acceptance_criteria": [
+      "npm install requires no native build steps on macOS ARM",
+      "onnxruntime-node is removed from direct dependencies",
+      "@huggingface/transformers is present as a regular dependency"
+    ],
+    "priority": "Must Have",
+    "traces": ["FR-003"]
+  },
+  {
+    "id": "US-003",
+    "title": "Pre-warm model during discover",
+    "story": "As a framework user running /discover for the first time, I want the Jina model to be downloaded during setup so that my first embedding generation is fast.",
+    "acceptance_criteria": [
+      "Model downloads during /discover pre-warm step",
+      "Pre-warm failure does not block discover (fail-open)"
+    ],
+    "priority": "Should Have",
+    "traces": ["FR-005"]
+  },
+  {
+    "id": "US-004",
+    "title": "Warning for stale embeddings",
+    "story": "As a framework user with existing .emb files, I want to see a clear warning when my embeddings were generated with a different model so that I know to regenerate.",
+    "acceptance_criteria": [
+      "Warning shown when .emb files lack model_id or have wrong model_id",
+      "No warning for freshly generated .emb files with correct model_id"
+    ],
+    "priority": "Should Have",
+    "traces": ["FR-006"]
+  }
+]
