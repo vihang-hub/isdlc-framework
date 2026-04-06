@@ -5,7 +5,8 @@
 
 ## Open
 - [A] #238 Embedding inference performance: hardware acceleration + parallelism on Apple Silicon [github: GH-238] -> [requirements](docs/requirements/REQ-GH-238-embedding-inference-performance-hardware-acceleration/)
-- [A] #217 Use Claude Code Plan Mode for task execution UX — keep tasks.md for traceability metadata [github: GH-217] -> [requirements](docs/requirements/REQ-GH-217-use-claude-code-plan-mode-for-task-execution-ux-ke/)
+- [x] #217 Use Claude Code Plan Mode for task execution UX — keep tasks.md for traceability metadata [github: GH-217] -> [requirements](docs/requirements/REQ-GH-217-use-claude-code-plan-mode-for-task-execution-ux-ke/) **Completed**
+  - TaskCreate entries for main tasks during phase execution, persist through phase, formatted summary at boundary. New task-formatter.js module. 19 tests.
 - [x] #237 Replace CodeBERT with Jina v2 Base Code — unblock embedding pipeline [github: GH-237] -> [requirements](docs/requirements/REQ-GH-237-replace-codebert-with-jina-v2-base-code/) **Completed**
   - Replaced CodeBERT (broken deps) with Jina v2 Base Code via @huggingface/transformers v4. Same 768 dims. Removed onnxruntime-node, deleted CodeBERT adapter + model-downloader. Added discover pre-warm, stale .emb warning. 55 new tests.
   - **Completed:** 2026-04-06
