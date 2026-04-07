@@ -56,7 +56,7 @@
   |  LAYER 5: SEMANTIC MEMORY (vector embeddings, queryable)         |
   |                                                                  |
   |  CODE EMBEDDINGS:                                                |
-  |  source code -----> Tree-sitter chunker --> CodeBERT/Voyage/     |
+  |  source code -----> Tree-sitter chunker --> Jina v2/Voyage/       |
   |                     (AST-aware, 100+ langs)  OpenAI embeddings   |
   |                         --> .emb packages --> FAISS/SQLite store  |
   |                                                                  |

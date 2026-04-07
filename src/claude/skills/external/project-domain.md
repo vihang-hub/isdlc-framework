@@ -57,7 +57,7 @@ dependencies: []
 | Agent Orchestration | Teams | Debate loops, fan-out, dual-track, roundtable analysis |
 | Backlog Management | Backlog | Item resolution, GitHub sync, slug generation |
 | Search | Search | Multi-backend code search with ranking |
-| Embeddings | Embedding | CodeBERT chunking, encoding, and semantic search |
+| Embeddings | Embedding | Jina v2 chunking, encoding, and semantic search |
 | Content Model | Content | Agent/skill/command/topic classification |
 | Compliance | Validators | Contract evaluation, gate logic, traceability |
 

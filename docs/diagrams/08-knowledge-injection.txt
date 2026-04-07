@@ -188,7 +188,7 @@
   |      |                                                           |
   |      v                                                           |
   |  EMBEDDING ENGINE (lib/embedding/engine/)                        |
-  |    - CodeBERT (local, 768 dimensions, no API key needed)         |
+  |    - Jina v2  (local, 768 dimensions, no API key needed)         |
   |    - Voyage  (cloud, configurable dimensions)                    |
   |    - OpenAI  (cloud, configurable dimensions)                    |
   |      |                                                           |

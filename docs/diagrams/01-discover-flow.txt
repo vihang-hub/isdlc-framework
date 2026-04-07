@@ -44,7 +44,7 @@
   |                               |                                 |
   |  source code + docs           |                                 |
   |    --> Tree-sitter chunker    | <-- AST-aware, 100+ languages  |
-  |    --> embedding engine       | <-- CodeBERT / Voyage / OpenAI  |
+  |    --> embedding engine       | <-- Jina v2 / Voyage / OpenAI   |
   |    --> .emb packages          | <-- partitioned by module       |
   |    --> vector store           | <-- FAISS or SQLite             |
   |    --> MCP server exposes     | <-- semantic_search tool        |

@@ -18,7 +18,7 @@ The iSDLC framework is a Node.js CLI and agent orchestration platform that insta
 | CLI Entry | `bin/isdlc.js` -> `lib/cli.js` | ESM command router | 8 commands: init, update, version, doctor, uninstall, search-setup, setup-knowledge, memory compact |
 | CLI Modules | `lib/*.js` (12 prod modules) | Procedural async/await | installer, updater, uninstaller, doctor, project-detector, monorepo-handler, memory, memory-embedder, memory-search, memory-store-adapter, setup-project-knowledge, setup-search |
 | CLI Utilities | `lib/utils/*.js` (4 modules) | Shared helpers | fs-helpers, logger, prompts, test-helpers |
-| Embedding Pipeline | `lib/embedding/**/*.js` (28 modules) | Multi-engine pipeline | Chunker, engine (CodeBERT/OpenAI/Voyage), aggregation, distribution, redaction, VCS, registry, knowledge, MCP server, package builder |
+| Embedding Pipeline | `lib/embedding/**/*.js` (28 modules) | Multi-engine pipeline | Chunker, engine (Jina v2/OpenAI/Voyage), aggregation, distribution, redaction, VCS, registry, knowledge, MCP server, package builder |
 | Search Subsystem | `lib/search/**/*.js` (12 modules) | Backend-routed search | Lexical, enhanced-lexical, semantic, structural, indexed backends + config, detection, install, ranker, registry, router |
 | Core Layer | `src/core/**/*.js` (112 modules) | Provider-neutral ESM | analyze, backlog, bridge, compliance, config, content, discover, installer, memory, observability, orchestration, providers, search, skills, state, tasks, teams, validators, workflow |
 | Bridge Layer | `src/core/bridge/*.cjs` (18 modules) | CJS-ESM bridge | Adapters for each core domain callable from CJS hooks |
@@ -51,7 +51,7 @@ The iSDLC framework is a Node.js CLI and agent orchestration platform that insta
 | VCS | Git + GitHub | -- | Main branch, feature branches per workflow |
 | CI/CD | GitHub Actions | v4 | ci.yml (lint + test matrix + integration + bash/PowerShell install), publish.yml |
 | MCP Servers | code-index-mcp, bulk-fs-mcp | -- | Code search and bulk file ops |
-| Embedding Engine | CodeBERT (ONNX) | codebert-base | Local offline embeddings for semantic search |
+| Embedding Engine | Jina v2 Base Code | @huggingface/transformers | Local offline embeddings for semantic search |
 | State Management | JSON files on filesystem | -- | .isdlc/state.json (main), .isdlc/config.json, .isdlc/roundtable.yaml |
 | Configuration | JSON + YAML | -- | skills-manifest.yaml, iteration-requirements.json, phase-topology.json, profiles/*.json, contracts/*.contract.json |
 
@@ -227,8 +227,8 @@ init, update, version, doctor, uninstall, search-setup, setup-knowledge, memory 
 | .claude/settings.json | JSON | Claude Code permissions |
 
 **Embedding Store:**
-- `.isdlc/embeddings/isdlc-framework-1.0.0.emb` -- 50MB CodeBERT embedding file
-- `.isdlc/models/codebert-base/` -- Local ONNX model
+- `.isdlc/embeddings/isdlc-framework-1.0.0.emb` -- Jina v2 embedding file
+- Model cached at `~/.cache/huggingface/hub/` (auto-downloaded on first use)
 
 **No database.** All persistence is file-based. No migrations. State schema validated by `src/core/state/validation.js` and `state-write-validator.cjs` hook.
 
@@ -272,7 +272,7 @@ init, update, version, doctor, uninstall, search-setup, setup-knowledge, memory 
 | Gitea | External | git remote | Mirror repository |
 | code-index-mcp | MCP Server | MCP protocol | Code search and indexing |
 | bulk-fs-mcp | MCP Server (local) | MCP protocol | Bulk file operations with locking |
-| CodeBERT ONNX | Local | onnxruntime-node | Offline code embeddings |
+| Jina v2 Base Code | Local | @huggingface/transformers | Offline code embeddings |
 
 ### 7.5 Conventions and Patterns
 

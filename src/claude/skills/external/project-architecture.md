@@ -15,7 +15,7 @@ dependencies: []
 ## Components
 - **CLI Entry** (`bin/isdlc.js` -> `lib/cli.js`): ESM command router, 8 commands
 - **CLI Modules** (`lib/*.js`): 12 prod modules -- installer, updater, uninstaller, doctor, project-detector, monorepo-handler, memory, search setup
-- **Embedding Pipeline** (`lib/embedding/`): 28 modules -- chunking, CodeBERT/OpenAI/Voyage engines, aggregation, distribution, redaction, MCP server
+- **Embedding Pipeline** (`lib/embedding/`): 28 modules -- chunking, Jina v2/OpenAI/Voyage engines, aggregation, distribution, redaction, MCP server
 - **Search Subsystem** (`lib/search/`): 12 modules -- backend-routed (lexical, semantic, structural, indexed), config, router, ranker
 - **Core Layer** (`src/core/`): 112 provider-neutral ESM modules across 19 subdomains (analyze, backlog, bridge, compliance, config, content, discover, installer, memory, observability, orchestration, providers, search, skills, state, tasks, teams, validators, workflow)
 - **Bridge Layer** (`src/core/bridge/`): 18 CJS modules wrapping ESM core for hook consumption via dynamic `import()`
@@ -32,7 +32,7 @@ dependencies: []
 - CLI (bin/isdlc.js) -> lib/cli.js -> lib/{installer,updater,uninstaller}.js -> file system operations
 - Hooks read stdin JSON -> process via hook lib -> write stdout JSON (allow/block/modify)
 - Core bridge: CJS hooks -> bridge/*.cjs -> dynamic import() -> src/core/*.js (ESM)
-- Embedding: Source files -> chunker -> engine (CodeBERT ONNX) -> aggregation -> .emb file
+- Embedding: Source files -> chunker -> engine (Jina v2 via Transformers.js) -> aggregation -> .emb file
 
 ## Integration Points
 | Integration | Type | Protocol | Notes |
@@ -42,7 +42,7 @@ dependencies: []
 | GitHub | External | gh CLI + GitHub Actions | CI/CD, issues |
 | code-index-mcp | MCP | MCP protocol | Code search |
 | bulk-fs-mcp | MCP (local) | MCP protocol | Bulk file ops |
-| CodeBERT | Local | onnxruntime-node | Offline embeddings |
+| Jina v2 Base Code | Local | @huggingface/transformers | Offline embeddings |
 
 ## Architectural Patterns
 - **Dual Module System**: ESM for core/lib, CJS for hooks (Claude Code protocol requirement)

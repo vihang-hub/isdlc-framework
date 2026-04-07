@@ -9,7 +9,7 @@ Your documents (Markdown, HTML, text)
     ↓
 Document chunker (structure-aware: headings, sections, paragraphs)
     ↓
-Embedding engine (CodeBERT local, Voyage cloud, or OpenAI cloud)
+Embedding engine (Jina v2 local, Voyage cloud, or OpenAI cloud)
     ↓
 .emb package (vectors + metadata)
     ↓
@@ -62,7 +62,7 @@ const result = await pipeline.processDocuments([
 
 | Provider | Type | Setup | Dimensions |
 |----------|------|-------|------------|
-| **CodeBERT** | Local | `npm install onnxruntime-node` (optional — model downloads on first use) | 768 |
+| **Jina v2 Base Code** | Local | Bundled via `@huggingface/transformers` (model downloads on first use) | 768 |
 | **Voyage-code-3** | Cloud | Set `VOYAGE_API_KEY` | Configurable |
 | **OpenAI text-embedding-3-small** | Cloud | Set `OPENAI_API_KEY` | Configurable |
 

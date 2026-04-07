@@ -54,7 +54,7 @@ dependencies: []
 - `fs-extra` for filesystem operations in CLI modules
 - `js-yaml` for YAML parsing
 - `semver` for version comparison
-- `onnxruntime-node` for local CodeBERT embeddings
+- `@huggingface/transformers` for local Jina v2 embeddings
 - Single-line bash convention: all bash in agent/command files must be one line (for permission auto-allow)
 - Dual-file awareness (dogfooding): changes to src/ must also update root .isdlc/ and .claude/
 
