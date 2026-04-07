@@ -48,8 +48,8 @@ export const DEFAULT_PROJECT_CONFIG = {
       auto_start: true,
       startup_timeout_ms: 30000,
     },
-    provider: 'codebert',
-    model: 'microsoft/codebert-base',
+    provider: 'jina-code',
+    model: 'jinaai/jina-embeddings-v2-base-code',
     api_key_env: null,
     sources: [
       { type: 'code', path: 'src/', tier: 'full' },

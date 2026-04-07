@@ -31,10 +31,10 @@ import { embed } from 'isdlc/lib/embedding/engine';
 // 1. Create a pipeline with your embedding provider
 const pipeline = createKnowledgePipeline({
   embedFn: async (texts) => {
-    const result = await embed(texts, { provider: 'codebert' });
+    const result = await embed(texts, { provider: 'jina-code' });
     return result.vectors;
   },
-  model: 'codebert',
+  model: 'jina-code',
   dimensions: 768,
 });
 

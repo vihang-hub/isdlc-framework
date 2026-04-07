@@ -44,7 +44,7 @@ async function main() {
   const serverConfig = embConfig.server || {};
   const port = portOverride || serverConfig.port || 7777;
   const host = hostOverride || serverConfig.host || 'localhost';
-  const provider = embConfig.provider || 'codebert';
+  const provider = embConfig.provider || 'jina-code';
 
   console.log(`[server] starting embedding server`);
   console.log(`[server] config: ${configPath}`);
