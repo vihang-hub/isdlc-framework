@@ -334,6 +334,56 @@ trap {
     break
 }
 
+# ============================================================================
+# Sanity check: $ScriptDir must be an iSDLC framework clone
+# ============================================================================
+# Catches the "extracted framework files into project root and ran install.ps1"
+# failure mode. In the correct layout the script lives at
+# <project>\isdlc-framework\install.ps1, so $ScriptDir contains the framework
+# source tree and specific marker files. Mirror of install.sh sanity block.
+$sanityErrors = @()
+if (-not (Test-Path (Join-Path $ScriptDir "ANTIGRAVITY.md"))) {
+    $sanityErrors += "    - missing: $ScriptDir\ANTIGRAVITY.md"
+}
+if (-not (Test-Path (Join-Path $ScriptDir "src\claude\agents"))) {
+    $sanityErrors += "    - missing: $ScriptDir\src\claude\agents\"
+}
+if (-not (Test-Path (Join-Path $ScriptDir "bin\isdlc.js"))) {
+    $sanityErrors += "    - missing: $ScriptDir\bin\isdlc.js"
+}
+$pkgJsonPath = Join-Path $ScriptDir "package.json"
+if (Test-Path $pkgJsonPath) {
+    $pkgContent = Get-Content $pkgJsonPath -Raw -ErrorAction SilentlyContinue
+    # Accept any name containing "isdlc": "isdlc", "isdlc-framework",
+    # "@isdlc/framework", "@some-scope/isdlc", etc.
+    if ($pkgContent -and $pkgContent -notmatch '"name"\s*:\s*"[^"]*isdlc[^"]*"') {
+        $sanityErrors += "    - $ScriptDir\package.json name does not contain 'isdlc'"
+    }
+}
+if ($sanityErrors.Count -gt 0) {
+    # Don't let the trap fire its "framework left behind" message here — in
+    # this case $ScriptDir is likely the user's actual project root and we
+    # explicitly do NOT want to suggest Remove-Item'ing it.
+    $Script:InstallCompleted = $true
+    Write-Host ""
+    Write-Host "ERROR: install.ps1 is not running from an iSDLC framework clone." -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Sanity check failures:" -ForegroundColor Yellow
+    foreach ($line in $sanityErrors) { Write-Host $line }
+    Write-Host ""
+    Write-Host "Correct usage:" -ForegroundColor Cyan
+    Write-Host "  git clone <repo-url> isdlc-framework"
+    Write-Host "  .\isdlc-framework\install.ps1"
+    Write-Host ""
+    Write-Host "Do NOT extract framework files into your project root." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "If you extracted framework files into a project directory by mistake,"
+    Write-Host "run the content-aware cleanup tool (ships with any correct clone):"
+    Write-Host "  bash <framework-path>/scripts/recover-stray-framework.sh"
+    Write-Host ""
+    exit 1
+}
+
 # ── Step 0: Prerequisites cleanup ────────────────────────────
 
 # Remove development files from framework clone
@@ -379,7 +429,9 @@ if (Test-Path $testHelpers) { Remove-Item $testHelpers -Force -ErrorAction Silen
 
 # Development tooling
 Remove-Item (Join-Path $ScriptDir "src" "claude" "agents-backup") -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item (Join-Path $ScriptDir "scripts") -Recurse -Force -ErrorAction SilentlyContinue
+# scripts/ is NOT cleaned up here — it now holds user-facing recovery tools
+# (scripts/recover-stray-framework.sh) that install.ps1 copies to
+# .isdlc/scripts/ below. Dev-only scripts were moved out of this directory.
 Remove-Item (Join-Path $ScriptDir ".github") -Recurse -Force -ErrorAction SilentlyContinue
 
 # OS artifacts
@@ -1546,6 +1598,14 @@ foreach ($scriptName in @("uninstall.sh", "update.sh")) {
         Copy-Item $scriptSrc $scriptsTarget -Force
         Write-Success "Copied $scriptName to .isdlc/scripts/"
     }
+}
+
+# Copy the stray-framework recovery tool so users can clean up a misplaced
+# framework extraction post-install without re-cloning.
+$recoverSrc = Join-Path (Join-Path $ScriptDir "scripts") "recover-stray-framework.sh"
+if (Test-Path $recoverSrc) {
+    Copy-Item $recoverSrc $scriptsTarget -Force
+    Write-Success "Copied recover-stray-framework.sh to .isdlc/scripts/"
 }
 
 # Store the script dir before we delete it

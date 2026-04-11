@@ -175,6 +175,63 @@ _on_exit_cleanup_notice() {
 trap _on_exit_cleanup_notice EXIT
 
 # ============================================================================
+# Sanity check: SCRIPT_DIR must be an iSDLC framework clone
+# ============================================================================
+# This catches the "extracted framework files into project root and ran
+# ./install.sh" failure mode. In the correct layout the script lives at
+# <project>/isdlc-framework/install.sh, so SCRIPT_DIR contains the framework
+# source tree and specific marker files (ANTIGRAVITY.md, src/claude/agents/,
+# bin/isdlc.js, and an isdlc-framework-named package.json).
+#
+# If any of these are missing we abort BEFORE the destructive dev-cleanup
+# below, so the user's project files (docs/, tests/, etc.) are untouched.
+_SANITY_ERRORS=""
+if [ ! -f "$SCRIPT_DIR/ANTIGRAVITY.md" ]; then
+    _SANITY_ERRORS="${_SANITY_ERRORS}    - missing: $SCRIPT_DIR/ANTIGRAVITY.md
+"
+fi
+if [ ! -d "$SCRIPT_DIR/src/claude/agents" ]; then
+    _SANITY_ERRORS="${_SANITY_ERRORS}    - missing: $SCRIPT_DIR/src/claude/agents/
+"
+fi
+if [ ! -f "$SCRIPT_DIR/bin/isdlc.js" ]; then
+    _SANITY_ERRORS="${_SANITY_ERRORS}    - missing: $SCRIPT_DIR/bin/isdlc.js
+"
+fi
+if [ -f "$SCRIPT_DIR/package.json" ]; then
+    # Accept any name containing "isdlc": "isdlc", "isdlc-framework",
+    # "@isdlc/framework", "@some-scope/isdlc", etc.
+    if ! grep -q '"name"[[:space:]]*:[[:space:]]*"[^"]*isdlc[^"]*"' "$SCRIPT_DIR/package.json"; then
+        _SANITY_ERRORS="${_SANITY_ERRORS}    - $SCRIPT_DIR/package.json name does not contain 'isdlc'
+"
+    fi
+fi
+if [ -n "$_SANITY_ERRORS" ]; then
+    # Don't let the EXIT trap fire its "framework left behind" message here —
+    # in this case SCRIPT_DIR is likely the user's actual project root and we
+    # explicitly do NOT want to suggest rm -rf'ing it.
+    _INSTALL_COMPLETED=true
+    echo "" >&2
+    echo -e "${RED}ERROR: install.sh is not running from an iSDLC framework clone.${NC}" >&2
+    echo "" >&2
+    echo -e "${YELLOW}Sanity check failures:${NC}" >&2
+    printf "%b" "$_SANITY_ERRORS" >&2
+    echo "" >&2
+    echo -e "${CYAN}Correct usage:${NC}" >&2
+    echo "  git clone <repo-url> isdlc-framework" >&2
+    echo "  ./isdlc-framework/install.sh" >&2
+    echo "" >&2
+    echo -e "${YELLOW}Do NOT extract framework files into your project root.${NC}" >&2
+    echo "" >&2
+    echo "If you extracted framework files into a project directory by mistake," >&2
+    echo "run the content-aware cleanup tool (ships with any correct clone):" >&2
+    echo "  /path/to/isdlc-framework/scripts/recover-stray-framework.sh" >&2
+    echo "" >&2
+    exit 1
+fi
+unset _SANITY_ERRORS
+
+# ============================================================================
 # Remove framework development files (not needed by end users)
 # ============================================================================
 # Git artifacts
@@ -222,7 +279,9 @@ rm -f "$SCRIPT_DIR/lib/utils/test-helpers.js" 2>/dev/null || true
 
 # Development tooling
 rm -rf "$SCRIPT_DIR/src/claude/agents-backup" 2>/dev/null || true
-rm -rf "$SCRIPT_DIR/scripts" 2>/dev/null || true
+# scripts/ is NOT cleaned up here — it now holds user-facing recovery tools
+# (scripts/recover-stray-framework.sh) that install.sh copies to
+# .isdlc/scripts/ below. Dev-only scripts were moved out of this directory.
 rm -rf "$SCRIPT_DIR/.github" 2>/dev/null || true
 
 # OS artifacts
@@ -1407,6 +1466,13 @@ if [ -f "$SCRIPT_DIR/update.sh" ]; then
     cp "$SCRIPT_DIR/update.sh" ".isdlc/scripts/"
     chmod +x ".isdlc/scripts/update.sh"
     echo -e "${GREEN}  ✓ Copied update.sh to .isdlc/scripts/${NC}"
+fi
+# Also copy the stray-framework recovery tool so users can clean up a
+# misplaced framework extraction post-install without re-cloning.
+if [ -f "$SCRIPT_DIR/scripts/recover-stray-framework.sh" ]; then
+    cp "$SCRIPT_DIR/scripts/recover-stray-framework.sh" ".isdlc/scripts/"
+    chmod +x ".isdlc/scripts/recover-stray-framework.sh"
+    echo -e "${GREEN}  ✓ Copied recover-stray-framework.sh to .isdlc/scripts/${NC}"
 fi
 
 # Store the script dir before we delete it
