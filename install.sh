@@ -137,8 +137,29 @@ if [ "${BASH_SOURCE[0]}" != "$0" ]; then
   return 0 2>/dev/null || true
 fi
 
-# Now that the source-detection guard has fired, it is safe to enable `set -e`
-# for the installer's own execution. Sourced callers never reach this line.
+# Bash version preflight — catches macOS's bundled Bash 3.2 (frozen at 3.2 due
+# to GPL-3 licensing) before we hit any 4.0+ feature like associative arrays.
+# We require 4.0+ for a clean install; fail fast with a helpful hint if older.
+_BASH_MAJOR="${BASH_VERSINFO[0]:-0}"
+if [ "$_BASH_MAJOR" -lt 4 ]; then
+    echo ""
+    echo -e "${RED}ERROR: iSDLC installer requires Bash 4.0 or newer.${NC}" >&2
+    echo "  Current: Bash ${BASH_VERSION:-unknown}" >&2
+    echo "" >&2
+    echo "macOS ships with Bash 3.2 by default. To upgrade:" >&2
+    echo "  brew install bash" >&2
+    echo "  /opt/homebrew/bin/bash ./isdlc-framework/install.sh   (Apple Silicon)" >&2
+    echo "  /usr/local/bin/bash ./isdlc-framework/install.sh      (Intel)" >&2
+    echo "" >&2
+    echo "Or run with a specific newer bash:" >&2
+    echo "  \$(brew --prefix bash)/bin/bash ./isdlc-framework/install.sh" >&2
+    exit 1
+fi
+unset _BASH_MAJOR
+
+# Now that the source-detection guard and bash version check have fired, it
+# is safe to enable `set -e` for the installer's own execution. Sourced
+# callers never reach this line.
 set -e
 
 # Get the directory where this script is located (the cloned isdlc-framework folder)
@@ -147,6 +168,29 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 # Framework resources are in src/ subdirectory
 FRAMEWORK_DIR="$SCRIPT_DIR/src"
+
+# Install-failure safety net: if the script exits non-zero before the explicit
+# `rm -rf "$CLEANUP_DIR"` at the end, tell the user where the half-installed
+# framework folder is and how to remove it. On clean success the trap's rc=0
+# branch is a silent no-op. Requires SCRIPT_DIR so it's installed here.
+_INSTALL_COMPLETED=false
+_on_exit_cleanup_notice() {
+    local rc=$?
+    if [ "$_INSTALL_COMPLETED" = true ]; then
+        return 0
+    fi
+    if [ $rc -ne 0 ] && [ -n "${SCRIPT_DIR:-}" ] && [ -d "$SCRIPT_DIR" ]; then
+        echo "" >&2
+        echo -e "${RED}Install failed (exit code $rc). Framework folder left in place:${NC}" >&2
+        echo "  $SCRIPT_DIR" >&2
+        echo "" >&2
+        echo "Fix the error above, then either re-run the installer or remove the" >&2
+        echo "framework folder manually:" >&2
+        echo "  rm -rf '$SCRIPT_DIR'" >&2
+        echo "" >&2
+    fi
+}
+trap _on_exit_cleanup_notice EXIT
 
 # ============================================================================
 # Remove framework development files (not needed by end users)
@@ -984,9 +1028,12 @@ if [ "$IS_MONOREPO" = true ]; then
     fi
 
     # Build scan_paths array from detected project paths
+    # Bash 3.2 compatible: space-delimited SEEN list instead of associative array.
+    # SCAN_PATH values cannot contain spaces (they're directory names derived
+    # from $PROJ_PATH), so a single-space delimiter is unambiguous.
     SCAN_PATHS_JSON="["
     FIRST_SCAN=true
-    declare -A SEEN_SCAN_PATHS=()
+    SEEN_SCAN_PATHS=""
     for PROJ_ENTRY in "${DETECTED_PROJECTS[@]}"; do
         PROJ_PATH="${PROJ_ENTRY#*:}"
         # For nested paths like apps/web, use the parent dir (apps/)
@@ -996,14 +1043,19 @@ if [ "$IS_MONOREPO" = true ]; then
         else
             SCAN_PATH="$PROJ_PATH"
         fi
-        if [ -z "${SEEN_SCAN_PATHS[$SCAN_PATH]+x}" ]; then
-            SEEN_SCAN_PATHS["$SCAN_PATH"]=1
-            if [ "$FIRST_SCAN" = false ]; then
-                SCAN_PATHS_JSON+=", "
-            fi
-            SCAN_PATHS_JSON+="\"${SCAN_PATH}\""
-            FIRST_SCAN=false
-        fi
+        case " $SEEN_SCAN_PATHS " in
+            *" $SCAN_PATH "*)
+                # Already seen — skip.
+                ;;
+            *)
+                SEEN_SCAN_PATHS="$SEEN_SCAN_PATHS $SCAN_PATH"
+                if [ "$FIRST_SCAN" = false ]; then
+                    SCAN_PATHS_JSON+=", "
+                fi
+                SCAN_PATHS_JSON+="\"${SCAN_PATH}\""
+                FIRST_SCAN=false
+                ;;
+        esac
     done
     SCAN_PATHS_JSON+="]"
 
@@ -1383,6 +1435,9 @@ echo -e "${YELLOW}  Removing isdlc-framework/ folder...${NC}"
 # We need to be careful here - delete the framework folder
 cd "$PROJECT_ROOT"
 rm -rf "$CLEANUP_DIR"
+
+# Mark install as complete so the EXIT trap's failure-notice branch is a no-op.
+_INSTALL_COMPLETED=true
 
 echo -e "${GREEN}  ✓ Removed isdlc-framework/${NC}"
 
