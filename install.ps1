@@ -313,6 +313,27 @@ $FrameworkClaude = Join-Path $FrameworkDir "claude"
 $FrameworkIsdlc = Join-Path $FrameworkDir "isdlc"
 $Timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 
+# Install-failure safety net: if the script exits before the explicit
+# Remove-Item $CleanupDir at the end, tell the user where the half-installed
+# framework folder is and how to clean it up. Flipped to $true only after the
+# successful Remove-Item, so clean runs produce no extra output. Matches the
+# EXIT trap pattern in install.sh.
+$Script:InstallCompleted = $false
+trap {
+    if (-not $Script:InstallCompleted -and $ScriptDir -and (Test-Path $ScriptDir)) {
+        Write-Host ""
+        Write-Host "Install failed. Framework folder left in place:" -ForegroundColor Red
+        Write-Host "  $ScriptDir"
+        Write-Host ""
+        Write-Host "Fix the error above, then either re-run the installer or remove" -ForegroundColor Yellow
+        Write-Host "the framework folder manually:" -ForegroundColor Yellow
+        Write-Host "  Remove-Item -Recurse -Force '$ScriptDir'"
+        Write-Host ""
+    }
+    # Re-raise the terminating error so the script still exits non-zero
+    break
+}
+
 # ── Step 0: Prerequisites cleanup ────────────────────────────
 
 # Remove development files from framework clone
@@ -1044,6 +1065,76 @@ $statePath = Join-Path $isdlcDir "state.json"
 Write-JsonFile $statePath $stateObj
 Write-Success "Created state.json"
 
+# ----------------------------------------------------------------------------
+# FR-010 (REQ-GH-239): install-time embeddings opt-in prompt
+# ----------------------------------------------------------------------------
+# Parity with install.sh lines 920-960. Default N. Non-interactive (-Force or
+# redirected stdin) and the EOF / broken-input branches all fall through to
+# disabled (NFR-006 fail-open). Exact prompt wording is binding — must match
+# install.sh and tests/bin/isdlc-init.test.js character-for-character.
+$EmbeddingsEnabled = $false
+$isInteractive = (-not $Force) -and (-not [Console]::IsInputRedirected) -and [Environment]::UserInteractive
+if ($isInteractive) {
+    Write-Host ""
+    Write-Host "Code Embeddings (Optional)"
+    Write-Host "Enables semantic code search, sprawl detection, duplication analysis."
+    Write-Host "First generation: ~30-60 min on medium codebases. Refresh: seconds-minutes."
+    Write-Host ""
+    $embAnswer = $null
+    try {
+        $embAnswer = Read-Host "Enable code embeddings for semantic search? [y/N]"
+    } catch {
+        $embAnswer = $null
+    }
+    if ($embAnswer -and ($embAnswer.Trim().ToLower() -in @('y','yes'))) {
+        $EmbeddingsEnabled = $true
+    }
+}
+
+$isdlcConfigPath = Join-Path $isdlcDir "config.json"
+if (Test-Path $isdlcConfigPath) {
+    Write-Warn "  .isdlc/config.json already exists -- leaving user config untouched"
+} else {
+    if ($EmbeddingsEnabled) {
+        # Heredoc matches install.sh embeddings_config_block() byte-for-byte
+        # (sans bash-specific indentation). Contributors: if you change this,
+        # change install.sh line 83-102 too.
+        $configContent = @'
+{
+  "embeddings": {
+    "provider": "jina-code",
+    "model": "jinaai/jina-embeddings-v2-base-code",
+    "server": {
+      "port": 7777,
+      "host": "localhost",
+      "auto_start": true
+    },
+    "parallelism": "auto",
+    "device": "auto",
+    "dtype": "auto",
+    "batch_size": 32,
+    "session_options": {},
+    "max_memory_gb": null,
+    "refresh_on_finalize": true
+  }
+}
+'@
+    } else {
+        $configContent = @'
+{
+}
+'@
+    }
+    Write-Utf8NoBom -Path $isdlcConfigPath -Content $configContent
+    if ($EmbeddingsEnabled) {
+        Write-Success "Created .isdlc/config.json (embeddings enabled)"
+        Write-Host "  -> Embeddings enabled. Run 'isdlc-embedding generate .' to bootstrap."
+    } else {
+        Write-Success "Created .isdlc/config.json"
+        Write-Host "  -> Embeddings disabled. Run 'isdlc-embedding configure' at any time to enable."
+    }
+}
+
 # Create provider.env for Ollama users
 if ($ProviderMode -eq "ollama") {
     $providerEnvContent = @"
@@ -1465,6 +1556,9 @@ Write-Warn "Removing isdlc-framework/ folder..."
 # Delete the framework folder
 Set-Location $ProjectRoot
 Remove-Item $CleanupDir -Recurse -Force
+
+# Mark install as complete so the trap's failure-notice branch is a no-op.
+$Script:InstallCompleted = $true
 
 Write-Success "Removed isdlc-framework/"
 
