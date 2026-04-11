@@ -6,7 +6,9 @@
 ## Open
 - [ ] #252 Smooth embeddings UX — discover → generation → server → search wiring should be seamless by default [github: GH-252]
 - [ ] #251 Extend task-level dispatch to /isdlc test generate and /isdlc upgrade workflows [github: GH-251]
-- [A] #250 Bug: FR-006 opt-in gap — isdlc-embedding generate and discover Step 7.9 ignore hasUserEmbeddingsConfig() [github: GH-250]
+- [x] #250 Bug: FR-006 opt-in gap — isdlc-embedding generate and discover Step 7.9 ignore hasUserEmbeddingsConfig() [github: GH-250] -> [requirements](docs/requirements/BUG-GH-250-embeddings-opt-in-gap/) **Completed**
+  - FR-006 opt-in guard (`hasUserEmbeddingsConfig`) now called at 4 entry points: `bin/isdlc-embedding.js` (runGenerate CLI — interactive readline prompt when TTY, silent skip when non-TTY), `bin/isdlc-embedding-server.js` (main() refuse-to-start with exit 1), `bin/isdlc-embedding-mcp.js` (module-level clean exit 0 before readline, MCP handshake fast-fail), `src/claude/agents/discover-orchestrator.md` (Step 7.9 single-line `node -e` pre-check + opt-out banner variant). 4 new test files covering 10 test gaps (TG1-TG10), all RED-first per ATDD, all GREEN after production lands. 5/5 AC coverage. Phase 16 68/68 in-scope tests green. Phase 08 QA approved (0 CRITICAL/MAJOR, 4 MINOR, 5 NIT — non-blocking). Out-of-scope: `lib/memory-embedder.js` session record embeddings (different data flow, follow-up).
+  - **Completed:** 2026-04-11
 - [ ] #249 Re-enable graphOptimizationLevel for Jina v2 fp16 (remove GH-238 workaround) [github: GH-249]
 - [ ] #248 Calibrator under-measures per-worker memory by ~6x for real code chunks [github: GH-248]
 - [ ] #247 Auto-trigger incremental embedding refresh (file watcher / post-commit / PostToolUse) [github: GH-247]
