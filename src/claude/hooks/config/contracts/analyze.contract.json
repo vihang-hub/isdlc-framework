@@ -1,0 +1,55 @@
+{
+  "_generation_metadata": {
+    "generated_at": "2026-04-11T04:15:20.819Z",
+    "generator_version": "1.0.0",
+    "input_files": [
+      {
+        "hash": "f0e69a1575faadefba40e3941eab8fc814ea6d04527a497d0b37279abab053a4",
+        "path": ".isdlc/config/workflows.json"
+      },
+      {
+        "hash": "ddd1d03b4183fdf40854ecf682cc0777c3bac6c831690f599ea97dbff64c45ad",
+        "path": ".isdlc/roundtable.yaml"
+      },
+      {
+        "hash": "4f31000cee45f09e3c1769fe33845b2a39f6292c5243d113c30112476ce74624",
+        "path": "docs/isdlc/external-skills-manifest.json"
+      }
+    ]
+  },
+  "entries": [
+    {
+      "context": "analyze",
+      "execution_unit": "roundtable",
+      "expectations": {
+        "agent": null,
+        "artifacts_produced": null,
+        "cleanup": [],
+        "presentation": {
+          "completion_summary": true,
+          "confirmation_sequence": [
+            "requirements",
+            "architecture",
+            "design",
+            "tasks"
+          ],
+          "persona_format": "bulleted",
+          "progress_format": null,
+          "task_display": "counter",
+          "task_scope": "full-workflow"
+        },
+        "skills_required": null,
+        "state_assertions": []
+      },
+      "violation_response": {
+        "agent_not_engaged": "report",
+        "artifacts_missing": "block",
+        "cleanup_skipped": "warn",
+        "presentation_violated": "warn",
+        "skills_missing": "report",
+        "state_incomplete": "report"
+      }
+    }
+  ],
+  "version": "1.0.0"
+}
