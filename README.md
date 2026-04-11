@@ -2,11 +2,12 @@
 
 # iSDLC Framework
 
-<h3><em>An AI development harness for existing codebases — opinionated defaults you can override, deterministic enforcement you can tune, and extension points at every layer.</em></h3>
+<h3><em>AI Development Governance Harness — wraps existing codebases with structure, enforcement, and context management for enterprise AI-assisted software engineering.</em></h3>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Agents](https://img.shields.io/badge/Agents-64-purple.svg)](docs/AGENTS.md)
-[![Skills](https://img.shields.io/badge/Skills-273-green.svg)](docs/DETAILED-SKILL-ALLOCATION.md)
+[![Agents](https://img.shields.io/badge/Agents-40-purple.svg)](docs/AGENTS.md)
+[![Skills](https://img.shields.io/badge/Skills-245-green.svg)](docs/DETAILED-SKILL-ALLOCATION.md)
+[![Hooks](https://img.shields.io/badge/Hooks-37-red.svg)](docs/HOOKS.md)
 [![Gates](https://img.shields.io/badge/Quality%20Gates-21-orange.svg)](docs/ARCHITECTURE.md#quality-gates)
 [![Bridge](https://img.shields.io/badge/Antigravity-Bridge-blue.svg)](ANTIGRAVITY.md)
 
@@ -34,10 +35,10 @@
 
 | Area | What it does | Why it matters |
 |------|-------------|----------------|
-| **[Discovery](#knowledge-your-codebase-as-ground-truth)** | 23 agents analyze your architecture, tests, dependencies, data models, and features in parallel | Agents understand your codebase before changing a single line |
+| **[Discovery](#knowledge-your-codebase-as-ground-truth)** | 22 agents analyze your architecture, tests, dependencies, data models, and features in parallel | Agents understand your codebase before changing a single line |
 | **[Roundtable](#what-you-experience)** | Business analyst, architect, and designer analyze requirements through structured debate | Three perspectives catch gaps a single prompt never will |
 | **[Workflows](#workflows-fixed-phase-sequences)** | Feature, fix, upgrade, and test workflows with fixed phases and adaptive sizing | AI can't skip steps, scope-creep, or declare "done" prematurely |
-| **[Quality Gates](#enforcement-28-hooks)** | 28 hooks enforce coverage, compliance, and sequencing — running outside the LLM | Deterministic enforcement the AI can't argue with or ignore |
+| **[Quality Gates](#enforcement-28-hooks)** | 37 hooks enforce coverage, compliance, and sequencing — running outside the LLM | Deterministic enforcement the AI can't argue with or ignore |
 | **[Constitution](#what-you-control)** | Governance rules generated from your actual codebase during discovery | Thresholds verified against real code, not hallucinated from training data |
 | **[Project Knowledge](docs/PROJECT-KNOWLEDGE.md)** | Codebase scanned, chunked, and embedded for semantic search | Agents find relevant patterns and conventions instead of guessing |
 | **[Impact Analysis](#workflows-fixed-phase-sequences)** | Parallel sub-agents map blast radius, entry points, and risk zones before implementation | Changes are scoped precisely — no surprise side effects |
@@ -115,7 +116,7 @@ Each verb is a natural escalation: **add** captures the idea, **analyze** deepen
 
 | Layer | What ships | Make it yours |
 |-------|-----------|---------------|
-| **Quality gates** | 28 hooks enforce coverage, constitutional compliance, and phase sequencing — [details](docs/HOOKS.md) | Set thresholds per profile (`rapid` / `standard` / `strict`), drop domain-specific validators, write your own gate logic — [guide](docs/isdlc/quality-gates-guide.md) |
+| **Quality gates** | 37 hooks enforce coverage, constitutional compliance, and phase sequencing — [details](docs/HOOKS.md) | Set thresholds per profile (`rapid` / `standard` / `strict`), drop domain-specific validators, write your own gate logic — [guide](docs/isdlc/quality-gates-guide.md) |
 | **Workflows** | Feature, fix, upgrade, and test workflows with adaptive sizing — [details](docs/ARCHITECTURE.md) | Choose light/standard/epic sizing, define custom workflows with your own phase sequences — [guide](docs/isdlc/workflow-customization-guide.md) |
 | **Analysis** | 3-persona roundtable (business analyst, solutions architect, system designer) — [details](docs/AGENTS.md) | Set depth (`brief` / `standard` / `deep`), author new personas, override or disable built-in ones — [guide](docs/isdlc/persona-authoring-guide.md) |
 | **Project knowledge** | Code scanned, chunked, and embedded during `/discover` — agents search it semantically | Choose embedding provider, inject your own documents — [guide](docs/PROJECT-KNOWLEDGE.md) |
@@ -218,7 +219,7 @@ Artifacts on disk are preserved so agents read and revise rather than starting b
 
 Three layers enforce quality independently — each runs outside the LLM conversation.
 
-### Enforcement: 28 hooks
+### Enforcement: 37 hooks
 
 Hooks are Node.js processes that intercept tool calls via Claude Code's `PreToolUse` and `PostToolUse` events. They are not part of the conversation — the AI cannot argue with, reinterpret, or ignore them. All hooks fail open — if a hook crashes, it allows the operation rather than blocking work.
 
@@ -252,7 +253,7 @@ Adaptive sizing scales automatically — light features skip phases, simple chan
 
 ### Knowledge: your codebase as ground truth
 
-Before changing anything, `/discover` runs 23 agents that build a structured model of your project:
+Before changing anything, `/discover` runs 22 agents that build a structured model of your project:
 
 | What it maps | How it's used |
 |-------------|---------------|
@@ -286,7 +287,7 @@ flowchart TD
     START["Install iSDLC into your project"] --> DISCOVER
 
     subgraph DISCOVER["Discover — learn your codebase"]
-        D1["23 agents analyze in parallel:\narchitecture, tests, data models,\nfeatures, dependencies"]
+        D1["22 agents analyze in parallel:\narchitecture, tests, data models,\nfeatures, dependencies"]
         D1 --> D2["Discovery Report\n+ Project Constitution"]
         D2 --> D3["Interactive Walkthrough\n(review findings, configure)"]
     end
@@ -354,7 +355,7 @@ git clone <repo-url> isdlc-framework
 .\isdlc-framework\install.ps1
 ```
 
-The installer sets up 64 agents, 273 skills, 28 hooks, and the `.isdlc/` state directory. See [Installation Flow](docs/ARCHITECTURE.md#installation-flow) for details.
+The installer sets up 40 agents, 245 skills, 37 hooks, and the `.isdlc/` state directory. See [Installation Flow](docs/ARCHITECTURE.md#installation-flow) for details.
 
 ### First steps
 
@@ -401,9 +402,9 @@ New projects are also supported — `/discover` switches to vision elicitation, 
 | Document | Description |
 |----------|-------------|
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture, hooks, agents, state management, end-to-end flow |
-| [HOOKS.md](docs/HOOKS.md) | All 28 hooks — what they block, warn, and track |
-| [AGENTS.md](docs/AGENTS.md) | All 64 agents with responsibilities and artifacts |
-| [DETAILED-SKILL-ALLOCATION.md](docs/DETAILED-SKILL-ALLOCATION.md) | 273 skills organized by category |
+| [HOOKS.md](docs/HOOKS.md) | All 37 hooks — what they block, warn, and track |
+| [AGENTS.md](docs/AGENTS.md) | All 40 agents with responsibilities and artifacts |
+| [DETAILED-SKILL-ALLOCATION.md](docs/DETAILED-SKILL-ALLOCATION.md) | 245 skills organized by category |
 | [CONSTITUTION-GUIDE.md](docs/CONSTITUTION-GUIDE.md) | Project governance principles |
 | [PROJECT-KNOWLEDGE.md](docs/PROJECT-KNOWLEDGE.md) | Semantic search over your codebase |
 | [Hackability Roadmap](docs/isdlc/hackability-roadmap.md) | Extension architecture and what's coming |

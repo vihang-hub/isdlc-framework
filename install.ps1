@@ -1667,28 +1667,38 @@ if ($isInteractive) {
 
         Write-Host "  --- What is iSDLC? ---" -ForegroundColor Cyan
         Write-Host ""
-        Write-Host "    iSDLC is a framework of 36 AI agents that guide development from"
-        Write-Host "    requirements through deployment. Quality gates enforce completion"
-        Write-Host "    between phases, and deterministic hooks enforce rules at runtime."
+        Write-Host "    iSDLC is an AI Development Governance Harness -- it wraps your"
+        Write-Host "    project with structure, enforcement, and context management for"
+        Write-Host "    enterprise AI-assisted software engineering."
         Write-Host ""
-        Write-Host "  --- Core Commands ---" -ForegroundColor Cyan
+        Write-Host "  --- What you get ---" -ForegroundColor Cyan
         Write-Host ""
-        Write-Host "    /discover               " -ForegroundColor Green -NoNewline
-        Write-Host "-- Analyze your project or set up a new one"
-        Write-Host "    /isdlc feature `"desc`"   " -ForegroundColor Green -NoNewline
-        Write-Host "-- Develop a feature end-to-end"
-        Write-Host "    /isdlc fix `"desc`"       " -ForegroundColor Green -NoNewline
-        Write-Host "-- Fix a bug with TDD and tracing agents"
-        Write-Host "    /isdlc test generate    " -ForegroundColor Green -NoNewline
-        Write-Host "-- Create tests for existing code"
-        Write-Host "    /isdlc upgrade `"name`"   " -ForegroundColor Green -NoNewline
-        Write-Host "-- Upgrade a dependency or runtime"
-        Write-Host "    /provider              " -ForegroundColor Green -NoNewline
-        Write-Host "-- Configure LLM model routing"
+        Write-Host "    > " -ForegroundColor Green -NoNewline
+        Write-Host "Constitutional governance       Living rulebook every agent must follow"
+        Write-Host "    > " -ForegroundColor Green -NoNewline
+        Write-Host "Spec-driven artifacts           Versioned markdown + JSON checked into your repo"
+        Write-Host "    > " -ForegroundColor Green -NoNewline
+        Write-Host "Deterministic enforcement       Runtime hooks that actually block drift"
+        Write-Host "    > " -ForegroundColor Green -NoNewline
+        Write-Host "Structured task management      tasks.md with dependency graphs + traceability"
+        Write-Host "    > " -ForegroundColor Green -NoNewline
+        Write-Host "Managed context                 Constitution + skills + session cache on every call"
+        Write-Host "    > " -ForegroundColor Green -NoNewline
+        Write-Host "Semantic code search (optional) Local embeddings, no data leaves your machine"
+        Write-Host "    > " -ForegroundColor Green -NoNewline
+        Write-Host "Hackable by design              Agents, skills, commands, hooks -- all markdown / JS"
+        Write-Host "    > " -ForegroundColor Green -NoNewline
+        Write-Host "Multi-provider                  Claude Code, Codex, Anthropic API, local Ollama"
         Write-Host ""
-        Write-Host "    For the full interactive guide, run " -NoNewline
+        Write-Host "  --- Core commands ---" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "    /discover  /add  /analyze  /build  /isdlc  /provider  /tour" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "    Full documentation:      " -NoNewline
+        Write-Host "https://github.com/vihang-hub/isdlc-framework" -ForegroundColor Green
+        Write-Host "    Interactive walkthrough: run " -NoNewline
         Write-Host "/tour" -ForegroundColor Green -NoNewline
-        Write-Host " in Claude Code."
+        Write-Host " in Claude Code"
         Write-Host ""
     }
     else {
@@ -1751,15 +1761,22 @@ else {
 
 Write-Host "  $step. Run " -NoNewline
 Write-Host "/discover" -ForegroundColor Green -NoNewline
-Write-Host " to analyze your project and create a constitution"
+Write-Host " to analyze your codebase and generate your constitution"
+$step++
+Write-Host "  $step. Review and edit " -NoNewline
+Write-Host "docs/isdlc/constitution.md" -ForegroundColor Green -NoNewline
+Write-Host " to reflect your team's standards"
 $step++
 Write-Host "  $step. Run " -NoNewline
-Write-Host "/isdlc feature" -ForegroundColor Green -NoNewline
-Write-Host " to begin your workflow"
+Write-Host "/add" -ForegroundColor Green -NoNewline
+Write-Host " `"your first item`" to seed the backlog, then " -NoNewline
+Write-Host "/analyze" -ForegroundColor Green -NoNewline
+Write-Host " and " -NoNewline
+Write-Host "/build" -ForegroundColor Green
 $step++
 Write-Host "  $step. Run " -NoNewline
 Write-Host "/tour" -ForegroundColor Green -NoNewline
-Write-Host " for the framework introduction"
+Write-Host " anytime for the interactive walkthrough"
 Write-Host ""
 
 if ($IsExistingProject) {
