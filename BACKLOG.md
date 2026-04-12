@@ -11,14 +11,14 @@
 - [x] #250 Bug: FR-006 opt-in gap — isdlc-embedding generate and discover Step 7.9 ignore hasUserEmbeddingsConfig() [github: GH-250] -> [requirements](docs/requirements/BUG-GH-250-embeddings-opt-in-gap/) **Completed**
   - FR-006 opt-in guard (`hasUserEmbeddingsConfig`) now called at 4 entry points: `bin/isdlc-embedding.js` (runGenerate CLI — interactive readline prompt when TTY, silent skip when non-TTY), `bin/isdlc-embedding-server.js` (main() refuse-to-start with exit 1), `bin/isdlc-embedding-mcp.js` (module-level clean exit 0 before readline, MCP handshake fast-fail), `src/claude/agents/discover-orchestrator.md` (Step 7.9 single-line `node -e` pre-check + opt-out banner variant). 4 new test files covering 10 test gaps (TG1-TG10), all RED-first per ATDD, all GREEN after production lands. 5/5 AC coverage. Phase 16 68/68 in-scope tests green. Phase 08 QA approved (0 CRITICAL/MAJOR, 4 MINOR, 5 NIT — non-blocking). Out-of-scope: `lib/memory-embedder.js` session record embeddings (different data flow, follow-up).
   - **Completed:** 2026-04-11
-- [ ] #249 Re-enable graphOptimizationLevel for Jina v2 fp16 (remove GH-238 workaround) [github: GH-249]
-- [ ] #248 Calibrator under-measures per-worker memory by ~6x for real code chunks [github: GH-248]
-- [ ] #247 Auto-trigger incremental embedding refresh (file watcher / post-commit / PostToolUse) [github: GH-247]
-- [ ] #246 Embedding server: launchd/systemd integration for reboot survival [github: GH-246]
-- [ ] #245 Embedding server: auto-restart on crash (lifecycle supervision) [github: GH-245]
+- [x] #249 Re-enable graphOptimizationLevel for Jina v2 fp16 (remove GH-238 workaround) [github: GH-249] **Closed — merged into #248**
+- [ ] #248 Calibrator accuracy + graphOptimizationLevel re-enablement for parallelism: auto [github: GH-248] (includes #249)
+- [x] #247 Auto-trigger incremental embedding refresh (file watcher / post-commit / PostToolUse) [github: GH-247] **Closed — folded into #244 (status line shows staleness, manual refresh)**
+- [ ] #246 Embedding server: launchd/systemd integration + auto-restart (future — team server use case) [github: GH-246] `future-enhancement` (includes #245)
+- [x] #245 Embedding server: auto-restart on crash (lifecycle supervision) [github: GH-245] **Closed — merged into #246**
 - [ ] #244 Claude Code status line integration for embedding server [github: GH-244]
-- [ ] #243 CLI status command for embedding server and package [github: GH-243]
-- [ ] #242 Embedding staleness detection + auto-refresh on code changes [github: GH-242]
+- [x] #243 CLI status command for embedding server and package [github: GH-243] **Closed — folded into #244 (status line shows all diagnostic info)**
+- [x] #242 Embedding staleness detection + auto-refresh on code changes [github: GH-242] **Closed — folded into #244 (status line shows commits-behind count)**
 - [ ] #241 Bug: embedding server CLI auto-start reports false success when port already bound [github: GH-241]
 - [ ] #240 Investigate: Jina v2 fp16 on CoreML routes to GPU instead of Apple Neural Engine [github: GH-240]
 - [x] #239 Worker pool parallelism: engine's sequential batch loop defeats multi-worker speedup [github: GH-239] -> [requirements](docs/requirements/REQ-GH-239-worker-pool-engine-parallelism/) **Completed**
@@ -63,7 +63,7 @@
 - [x] #234 Enforce artifact templates strictly in roundtable confirmations and artifact writes [github: GH-234] -> [requirements](docs/requirements/REQ-GH-234-strict-template-enforcement/) **Completed**
   - Gap revealed by REQ-GH-227 analysis. Templates exist but nothing enforces them; LLMs default to own structure. Needs strict binding in roundtable-analyst.md + template-validator hook.
   - **Completed:** 2026-04-05
-- [ ] #233 task-dispatch-enforcer hook: verify task-level dispatch was used when configured [github: GH-233]
+- [x] #233 task-dispatch-enforcer hook: verify task-level dispatch was used when configured [github: GH-233] **Closed — redundant with #232 task-completion-gate**
   - Gap revealed by REQ-GH-224 build. Enforces the Phase-Loop Controller's task-dispatch protocol.
 - [x] #232 task-completion-gate hook: block phase advancement if tasks.md has unfinished tasks [github: GH-232] -> [requirements](docs/requirements/REQ-GH-232-task-completion-gate-hook/) **Completed**
   - Gap revealed by REQ-GH-224 build. Enforces Article I.5 binding task plans at runtime.
