@@ -226,7 +226,7 @@ When this command is invoked:
    b. **Session cache rebuild**: Run `node bin/rebuild-cache.js` (REQ-0001 FR-007). If it fails, log warning and continue.
    c. **Contract regeneration**: Run `node bin/generate-contracts.js` and `node bin/generate-contracts.js --output .isdlc/config/contracts`. If either fails, log warning and continue.
    d. **Memory embeddings rebuild**: Rebuild roundtable memory vector indexes if sessions exist. If it fails, log warning and continue.
-   e. **Code embeddings refresh**: If embedding pipeline is configured (`docs/.embeddings/` exists), trigger re-index of source files. If not configured or fails, skip silently.
+   e. **Code embeddings refresh**: If embedding pipeline is configured (`.isdlc/embeddings/` exists), trigger re-index of source files. If not configured or fails, skip silently.
 
 ### Related Commands
 - `/isdlc add "<description>"` - Add a feature or bug to the backlog after discover completes

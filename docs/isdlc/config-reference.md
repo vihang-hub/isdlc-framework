@@ -164,7 +164,7 @@ isdlc-embedding server start
 isdlc-embedding-server --port=7777
 ```
 
-**Important**: The server reads `.isdlc/config.json` and loads `.emb` packages from `docs/.embeddings/` **relative to `cwd`**. Always `cd` to the project root before starting.
+**Important**: The server reads `.isdlc/config.json` and loads `.emb` packages from `.isdlc/embeddings/` **relative to `cwd`**. Always `cd` to the project root before starting.
 
 #### Generating / refreshing embeddings
 
@@ -193,7 +193,7 @@ After generation, the CLI POSTs `/reload` to the running server to load the new 
 
 | File | Location | Purpose |
 |------|----------|---------|
-| `.emb` packages | `docs/.embeddings/` | Tar archives with manifest + HNSW index + metadata DB |
+| `.emb` packages | `.isdlc/embeddings/` | Tar archives with manifest + HNSW index + metadata DB |
 | Server log | `.isdlc/logs/embedding-server.log` | Server stdout/stderr |
 | Server PID | `.isdlc/logs/embedding-server.pid` | PID for lifecycle management |
 

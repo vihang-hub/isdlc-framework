@@ -201,7 +201,7 @@ export function refreshCodeEmbeddings(projectRoot) {
     }
 
     // FR-008: first-time bootstrap safety — do NOT run multi-hour generate on finalize.
-    const embDir = join(projectRoot, 'docs', '.embeddings');
+    const embDir = join(projectRoot, '.isdlc', 'embeddings');
     const hasEmbPackage =
       existsSync(embDir) &&
       (() => {

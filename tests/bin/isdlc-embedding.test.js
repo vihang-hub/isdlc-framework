@@ -69,11 +69,11 @@ function makeTempRoot(configContent) {
 }
 
 /**
- * Return true if any .emb file exists under <root>/docs/.embeddings/.
+ * Return true if any .emb file exists under <root>/.isdlc/embeddings/.
  * @param {string} root
  */
 function hasEmbFile(root) {
-  const dir = join(root, 'docs', '.embeddings');
+  const dir = join(root, '.isdlc', 'embeddings');
   if (!existsSync(dir)) return false;
   try {
     const entries = readdirSync(dir);
@@ -127,11 +127,11 @@ describe('BUG-GH-250 bin/isdlc-embedding.js generate -- FR-006 opt-in guard', ()
         `expected exit 0, got ${result.status}. stdout=${result.stdout} stderr=${result.stderr}`
       );
 
-      // And: no .emb file exists under <root>/docs/.embeddings/
+      // And: no .emb file exists under <root>/.isdlc/embeddings/
       assert.strictEqual(
         hasEmbFile(root),
         false,
-        'no .emb file should be written under docs/.embeddings/'
+        'no .emb file should be written under .isdlc/embeddings/'
       );
 
       // And: stderr contains a skip message referencing the configure command

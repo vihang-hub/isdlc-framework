@@ -2597,7 +2597,7 @@ This command:
 1. Scans all tracked files via VCS
 2. Chunks source files by language
 3. Generates embeddings using the configured provider + hardware acceleration
-4. Builds a `.emb` package in `docs/.embeddings/`
+4. Builds a `.emb` package in `.isdlc/embeddings/`
 5. Reloads the running embedding server (or auto-starts one)
 
 **If the command fails** (e.g., `@huggingface/transformers` not installed, model download fails), log the error and continue to finalize — embedding generation is optional and should not block discovery completion.
@@ -2606,7 +2606,7 @@ This command:
 ```
 EMBEDDING GENERATION                                  [Complete ✓]
 ├─ ✓ Generated {N} embeddings ({dimensions}-dim, {model})
-├─ ✓ Package: docs/.embeddings/{project}-code.emb
+├─ ✓ Package: .isdlc/embeddings/{project}-code.emb
 └─ ✓ Server reloaded
 ```
 
@@ -2776,7 +2776,7 @@ WALKTHROUGH PHASE                                    [Complete ✓]
 
 EMBEDDING GENERATION                                  [Complete ✓]
 ├─ ✓ Generated {N} embeddings ({dimensions}-dim)
-├─ ✓ Package: docs/.embeddings/{project}-code.emb
+├─ ✓ Package: .isdlc/embeddings/{project}-code.emb
 └─ ✓ Server reloaded
 
 PHASE 5: Finalize                                    [Complete ✓]
@@ -2800,7 +2800,7 @@ PHASE 5: Finalize                                    [Complete ✓]
     ✓ tests/characterization/ (characterization tests)
     ✓ docs/isdlc/ac-traceability.csv (traceability matrix)
     ✓ docs/isdlc/reverse-engineer-report.md
-    ✓ docs/.embeddings/{project}-code.emb (code embeddings)
+    ✓ .isdlc/embeddings/{project}-code.emb (code embeddings)
 
   Next action: {user's walkthrough selection, e.g. "/analyze"}
 

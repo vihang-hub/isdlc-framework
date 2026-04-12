@@ -5,7 +5,7 @@
  *
  * Starts the HTTP embedding server as a long-running process.
  * Reads configuration from .isdlc/config.json.
- * Loads .emb packages from docs/.embeddings/.
+ * Loads .emb packages from .isdlc/embeddings/.
  *
  * Usage:
  *   node bin/isdlc-embedding-server.js [--port=7777] [--host=localhost]
@@ -90,7 +90,7 @@ async function main() {
   }
 
   // Find .emb packages
-  const embeddingsDir = join(projectRoot, 'docs', '.embeddings');
+  const embeddingsDir = join(projectRoot, '.isdlc', 'embeddings');
   const packagePaths = [];
   if (existsSync(embeddingsDir)) {
     try {

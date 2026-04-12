@@ -97,7 +97,7 @@ function createLineSplitter(onLine) {
 
 /**
  * Detect whether the project has at least one `.emb` package on disk.
- * Looks at `docs/.embeddings/`. Any non-existence / unreadable directory
+ * Looks at `.isdlc/embeddings/`. Any non-existence / unreadable directory
  * counts as "no package" (fail-safe).
  *
  * @param {string} projectRoot
@@ -106,7 +106,7 @@ function createLineSplitter(onLine) {
  */
 function hasEmbPackage(projectRoot, _fs) {
   try {
-    const dir = path.join(projectRoot, 'docs', '.embeddings');
+    const dir = path.join(projectRoot, '.isdlc', 'embeddings');
     if (!_fs.existsSync(dir)) return false;
     const entries = _fs.readdirSync(dir);
     return entries.some(name => name.endsWith('.emb'));

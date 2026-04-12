@@ -445,7 +445,7 @@ async function runGenerate(genArgs) {
     console.log(`Generated ${result.vectors.length} embeddings (${result.dimensions}-dim, ${result.model})`);
 
     // 5. Build .emb package
-    const outputDir = join(workingCopy, 'docs', '.embeddings');
+    const outputDir = join(workingCopy, '.isdlc', 'embeddings');
     const projectName = (workingCopy.split('/').pop() || 'project').replace(/[^a-z0-9-]/gi, '-').toLowerCase();
     const packagePath = await buildPackage({
       vectors: result.vectors,

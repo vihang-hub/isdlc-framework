@@ -324,7 +324,7 @@ async function runPostDiscoverEmbeddings(projectRoot) {
     });
 
     // 4. Build .emb package
-    const outputDir = join(projectRoot, 'docs', '.embeddings');
+    const outputDir = join(projectRoot, '.isdlc', 'embeddings');
     const projectName = (projectRoot.split('/').pop() || 'project').replace(/[^a-z0-9-]/gi, '-').toLowerCase();
     const packagePath = await buildPackage({
       vectors: result.vectors,

@@ -59,4 +59,4 @@ src/isdlc/checklists/update-agents.txt
  research-docs/
 
 # Large embedding index files
-docs/.embeddings/*.emb
+.isdlc/embeddings/*.emb
