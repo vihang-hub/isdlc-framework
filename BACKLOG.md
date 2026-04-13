@@ -4,6 +4,7 @@
 > BACKLOG.md is the curated working set with detailed specs. GitHub Issues are for tracking.
 
 ## Open
+- [ ] #255 Roundtable escape hatches: licensed persona dissent + trivial-scope sanity gate [github: GH-255]
 - [ ] #254 Context-manager hooks: inject phase-specific instructions before delegation [github: GH-254]
 - [x] #252 Smooth embeddings UX — discover → generation → server → search wiring should be seamless by default [github: GH-252] -> [requirements](docs/requirements/REQ-GH-252-smooth-embeddings-ux/) **Completed**
   - Preflight checks, health probe, query classifier, tool-router semantic routing, CLI consolidation. 57 tests, 100% AC coverage.

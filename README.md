@@ -411,6 +411,8 @@ New projects are also supported — `/discover` switches to vision elicitation, 
 | [Persona Authoring Guide](docs/isdlc/persona-authoring-guide.md) | Create, override, and configure roundtable personas |
 | [Quality Gates Guide](docs/isdlc/quality-gates-guide.md) | Configure profiles, extend validators, write custom gate logic |
 | [Workflow Customization Guide](docs/isdlc/workflow-customization-guide.md) | Sizing, custom workflows, and phase sequence replacement |
+| [Plan Mode vs `/isdlc analyze`](docs/isdlc/plan-mode-vs-analyze.md) | When to use Claude Code's built-in plan mode vs the analyze workflow |
+| [Native Execute vs `/isdlc build`](docs/isdlc/native-execute-vs-build.md) | When to use direct Claude Code execution vs the build workflow |
 | [MONOREPO-GUIDE.md](docs/MONOREPO-GUIDE.md) | Multi-project setup |
 | [AUTONOMOUS-ITERATION.md](docs/AUTONOMOUS-ITERATION.md) | Self-correcting agent behavior |
 | [SKILL-ENFORCEMENT.md](docs/SKILL-ENFORCEMENT.md) | Runtime skill observability |
