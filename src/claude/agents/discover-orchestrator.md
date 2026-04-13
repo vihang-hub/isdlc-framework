@@ -2602,7 +2602,16 @@ This command:
 
 **If the command fails** (e.g., `@huggingface/transformers` not installed, model download fails), log the error and continue to finalize — embedding generation is optional and should not block discovery completion.
 
-**On completion:**
+**Exit code contract (REQ-GH-252 FR-001, AC-001-01 through AC-001-04):**
+
+| Exit Code | Meaning | Banner Symbol | Action |
+|-----------|---------|---------------|--------|
+| 0 | Success | `[Complete ✓]` | Show success banner |
+| 1 | Generation error | `[Failed ✗]` | Log stderr, continue to finalize |
+| 2 | Missing dependency (preflight) | `[Skipped ⊘]` | Show install hint, continue |
+| 3 | Insufficient resources (preflight) | `[Skipped ⊘]` | Show resource hint, continue |
+
+**On completion (exit 0):**
 ```
 EMBEDDING GENERATION                                  [Complete ✓]
 ├─ ✓ Generated {N} embeddings ({dimensions}-dim, {model})
@@ -2616,10 +2625,28 @@ EMBEDDING GENERATION                                  [Skipped ⊘]
 └─ ⊘ Embeddings skipped (opted out) — run 'isdlc-embedding configure' to enable
 ```
 
-**On skip/failure (other reasons):**
+**On generation error (exit 1):**
+```
+EMBEDDING GENERATION                                  [Failed ✗]
+└─ ✗ Generation failed: {stderr message}
+```
+
+**On missing dependency (exit 2):**
 ```
 EMBEDDING GENERATION                                  [Skipped ⊘]
-└─ ⊘ {reason — e.g., "transformers not installed", "no supported files", "malformed .isdlc/config.json (fail-open)"}
+└─ ⊘ Missing dependency: {stderr message — e.g., "@huggingface/transformers is not installed. Run: npm install @huggingface/transformers"}
+```
+
+**On insufficient resources (exit 3):**
+```
+EMBEDDING GENERATION                                  [Skipped ⊘]
+└─ ⊘ Insufficient resources: {stderr message — e.g., "42MB available, need at least 100MB"}
+```
+
+**On skip/failure (other exit codes or pre-check failure):**
+```
+EMBEDDING GENERATION                                  [Skipped ⊘]
+└─ ⊘ {reason — e.g., "malformed .isdlc/config.json (fail-open)"}
 ```
 
 ---

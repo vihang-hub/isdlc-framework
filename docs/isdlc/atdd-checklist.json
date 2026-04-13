@@ -1,178 +1,213 @@
 {
   "version": "1.0.0",
-  "created_at": "2026-04-12T18:00:00Z",
-  "requirement_id": "BUG-GH-241",
-  "requirement_name": "Embedding server auto-start false success",
-  "scope": "lib/embedding/server/lifecycle.js + src/core/finalize/refresh-code-embeddings.js",
-  "tests": [
+  "created_at": "2026-04-12T22:00:00Z",
+  "requirement_id": "REQ-GH-252",
+  "requirement_name": "Smooth Embeddings UX",
+  "scope": "query-classifier, health-probe, tool-router semantic routing, CLI preflight, fail-open",
+  "acceptance_criteria": [
     {
-      "fr_id": "AC-1",
-      "fr_description": "Foreign process on port not reported as success with dead child PID",
+      "ac_id": "AC-001-01",
+      "description": "Successful generation produces verified .emb output",
+      "given_when_then": {
+        "given": "embeddings opted-in and dependencies present",
+        "when": "/discover completes",
+        "then": ["docs/.embeddings/*.emb exists with >0 chunks"]
+      },
       "priority": "P0",
-      "test_files": ["lib/embedding/server/lifecycle.test.js"],
-      "scenarios": [
-        {
-          "scenario_id": "TC-LC-001",
-          "priority": "P0",
-          "given": "no PID file exists, a foreign process holds the configured port",
-          "when": "startServer() spawns child that dies (EADDRINUSE) while waitForServer gets 200 from foreign process",
-          "then": "startServer returns { success: false, foreignPort: true } and no PID file written",
-          "test_name": "[P0] AC-1: Given foreign process on port, When child dies with EADDRINUSE and waitForServer gets 200 from foreign process, Then startServer returns failure with foreignPort flag and no PID file written",
-          "test_file": "lib/embedding/server/lifecycle.test.js",
-          "status": "skip",
-          "implemented": false,
-          "red_at": null,
-          "green_at": null
-        },
-        {
-          "scenario_id": "TC-LC-005",
-          "priority": "P0",
-          "given": "clean spawn scenario with no port conflicts",
-          "when": "startServer() succeeds normally",
-          "then": "PID file write is deferred until after child aliveness confirmation via process.kill(pid, 0)",
-          "test_name": "[P0] AC-1/AC-2: Given successful spawn, When startServer completes, Then PID file write is deferred until after child aliveness confirmation",
-          "test_file": "lib/embedding/server/lifecycle.test.js",
-          "status": "skip",
-          "implemented": false,
-          "red_at": null,
-          "green_at": null
-        }
-      ]
+      "test_file": "tests/bin/isdlc-embedding-preflight.test.js",
+      "test_name": "[P0] AC-001-01: Given all dependencies present and generation succeeds, When isdlc-embedding generate runs, Then exit code 0 and verified .emb output exists",
+      "status": "skip",
+      "implemented": false,
+      "red_at": null,
+      "green_at": null
     },
     {
-      "fr_id": "AC-2",
-      "fr_description": "Stale PID file + port squatter results in failure, not spurious success",
+      "ac_id": "AC-001-02",
+      "description": "Missing dependency detected before generation",
+      "given_when_then": {
+        "given": "embeddings opted-in but @huggingface/transformers not installed",
+        "when": "Step 7.9 runs",
+        "then": ["user sees the missing dependency BEFORE generation is attempted"]
+      },
       "priority": "P0",
-      "test_files": ["lib/embedding/server/lifecycle.test.js"],
-      "scenarios": [
-        {
-          "scenario_id": "TC-LC-002",
-          "priority": "P0",
-          "given": "stale PID file exists (PID not alive), foreign process holds port",
-          "when": "startServer() cleans stale PID, spawns child that dies, waitForServer gets 200 from foreign process",
-          "then": "returns failure, stale PID file not replaced with dead child PID",
-          "test_name": "[P0] AC-2: Given stale PID file and port squatter, When startServer spawns child that dies but port responds, Then failure is reported and PID file not written with dead child PID",
-          "test_file": "lib/embedding/server/lifecycle.test.js",
-          "status": "skip",
-          "implemented": false,
-          "red_at": null,
-          "green_at": null
-        }
-      ]
+      "test_file": "tests/bin/isdlc-embedding-preflight.test.js",
+      "test_name": "[P0] AC-001-02: Given @huggingface/transformers not installed, When preflight() runs, Then exit code 2 and stderr contains missing dependency message",
+      "status": "skip",
+      "implemented": false,
+      "red_at": null,
+      "green_at": null
     },
     {
-      "fr_id": "AC-3",
-      "fr_description": "Normal clean spawn still works correctly (regression guard)",
+      "ac_id": "AC-001-03",
+      "description": "Generation failure shows failure banner, not success",
+      "given_when_then": {
+        "given": "generation fails (OOM, network, model error)",
+        "when": "discover completes",
+        "then": ["banner shows failure marker with the failure reason, not success"]
+      },
       "priority": "P0",
-      "test_files": ["lib/embedding/server/lifecycle.test.js"],
-      "scenarios": [
-        {
-          "scenario_id": "TC-LC-003",
-          "priority": "P0",
-          "given": "no PID file, no foreign process, port is free",
-          "when": "startServer() spawns child that stays alive, waitForServer gets 200",
-          "then": "returns { success: true, pid: child.pid } and PID file contains child.pid",
-          "test_name": "[P0] AC-3: Given clean environment with no port conflict, When startServer spawns child that stays alive and port responds, Then success with correct PID file written",
-          "test_file": "lib/embedding/server/lifecycle.test.js",
-          "status": "skip",
-          "implemented": false,
-          "red_at": null,
-          "green_at": null
-        },
-        {
-          "scenario_id": "TC-LC-004",
-          "priority": "P1",
-          "given": "no PID file, port is free",
-          "when": "startServer() spawns child that stays alive but waitForServer times out",
-          "then": "returns { success: false } with timeout error, no PID file written",
-          "test_name": "[P1] AC-3: Given child stays alive but port never responds, When waitForServer times out, Then failure returned and no PID file written",
-          "test_file": "lib/embedding/server/lifecycle.test.js",
-          "status": "skip",
-          "implemented": false,
-          "red_at": null,
-          "green_at": null
-        }
-      ]
+      "test_file": "tests/bin/isdlc-embedding-preflight.test.js",
+      "test_name": "[P0] AC-001-03: Given generation runs but output is empty (0 chunks), When post-verify runs, Then exit code 1 and stderr contains empty output message",
+      "status": "skip",
+      "implemented": false,
+      "red_at": null,
+      "green_at": null
     },
     {
-      "fr_id": "AC-4",
-      "fr_description": "Concurrent startServer calls: one wins, other detects, no dead PID",
+      "ac_id": "AC-001-04",
+      "description": "Opted-out embeddings skip generation with opt-out banner",
+      "given_when_then": {
+        "given": "embeddings opted-out",
+        "when": "Step 7.9 runs",
+        "then": ["generation is skipped and banner shows opt-out marker"]
+      },
+      "priority": "P2",
+      "test_file": "tests/bin/isdlc-embedding-preflight.test.js",
+      "test_name": "[P2] AC-001-04: Given embeddings opted-out in config, When Step 7.9 runs, Then generation is skipped and banner shows opt-out marker",
+      "status": "skip",
+      "implemented": false,
+      "red_at": null,
+      "green_at": null
+    },
+    {
+      "ac_id": "AC-002-01",
+      "description": "Natural-language Grep queries route to semantic search",
+      "given_when_then": {
+        "given": "isdlc-embedding MCP registered and server healthy",
+        "when": "a Grep call fires with a natural-language query",
+        "then": ["it routes to isdlc_embedding_semantic_search"]
+      },
+      "priority": "P0",
+      "test_file": "src/claude/hooks/tests/test-tool-router-semantic.test.cjs",
+      "test_name": "[P0] AC-002-01: Given isdlc-embedding MCP registered in settings.json, When inferEnvironmentRules() is called, Then returns a rule with id 'inferred-semantic-search'",
+      "status": "skip",
+      "implemented": false,
+      "red_at": null,
+      "green_at": null
+    },
+    {
+      "ac_id": "AC-002-02",
+      "description": "Exact symbol patterns fall back to lexical",
+      "given_when_then": {
+        "given": "server healthy",
+        "when": "a Grep call fires with an exact symbol pattern",
+        "then": ["it falls back to lexical with reason shown"]
+      },
+      "priority": "P0",
+      "test_file": "src/core/embedding/query-classifier.test.cjs",
+      "test_name": "[P0] AC-002-02: Given a camelCase symbol 'inferEnvironmentRules', When classifyQuery() is called, Then returns { type: 'lexical', reason: 'camelCase' }",
+      "status": "skip",
+      "implemented": false,
+      "red_at": null,
+      "green_at": null
+    },
+    {
+      "ac_id": "AC-002-03",
+      "description": "Server-down Grep calls fall back to lexical",
+      "given_when_then": {
+        "given": "server not running",
+        "when": "a Grep call fires",
+        "then": ["inline probe returns 'inactive'", "routing falls back to lexical with [Lexical fallback: server unavailable]"]
+      },
+      "priority": "P0",
+      "test_file": "lib/embedding/server/health-probe.test.cjs",
+      "test_name": "[P0] AC-002-03: Given no PID file exists, When probeEmbeddingHealth() is called, Then returns { status: 'inactive', error: 'no_pid_file' }",
+      "status": "skip",
+      "implemented": false,
+      "red_at": null,
+      "green_at": null
+    },
+    {
+      "ac_id": "AC-002-04",
+      "description": "Routing messages show semantic or lexical fallback labels",
+      "given_when_then": {
+        "given": "any routing decision",
+        "when": "the tool-router emits its message",
+        "then": ["message includes either [Semantic search] or [Lexical fallback: {reason}]"]
+      },
       "priority": "P1",
-      "test_files": ["lib/embedding/server/lifecycle.test.js"],
-      "scenarios": [
-        {
-          "scenario_id": "TC-LC-006",
-          "priority": "P1",
-          "given": "lock file held by live process (simulating concurrent startup)",
-          "when": "second startServer() call detects lock held",
-          "then": "second call waits for server, does not write its own PID file",
-          "test_name": "[P1] AC-4: Given lock held by another live process, When second startServer call runs, Then it waits for server and returns lock-based result without writing PID",
-          "test_file": "lib/embedding/server/lifecycle.test.js",
-          "status": "skip",
-          "implemented": false,
-          "red_at": null,
-          "green_at": null
-        },
-        {
-          "scenario_id": "TC-LC-007",
-          "priority": "P1",
-          "given": "lock file held by dead process, foreign process on port",
-          "when": "startServer() cleans stale lock, spawns child that dies, foreign process responds",
-          "then": "returns failure, does not write dead child PID",
-          "test_name": "[P1] AC-4: Given stale lock from dead process and foreign port squatter, When startServer acquires lock and child dies, Then no dead PID file written",
-          "test_file": "lib/embedding/server/lifecycle.test.js",
-          "status": "skip",
-          "implemented": false,
-          "red_at": null,
-          "green_at": null
-        }
-      ]
+      "test_file": "src/claude/hooks/tests/test-tool-router-semantic.test.cjs",
+      "test_name": "[P1] AC-002-04: Given routing to semantic search, When formatWarnMessage() is called, Then message contains '[Semantic search]'",
+      "status": "skip",
+      "implemented": false,
+      "red_at": null,
+      "green_at": null
     },
     {
-      "fr_id": "AC-5",
-      "fr_description": "After reload 2xx, verify /modules shows correct package loaded",
+      "ac_id": "AC-002-05",
+      "description": "Probe timeout falls back to lexical without blocking",
+      "given_when_then": {
+        "given": "inline probe times out (>200ms)",
+        "when": "tool-router evaluates routing",
+        "then": ["treats status as 'failed' and falls back to lexical", "no blocking"]
+      },
+      "priority": "P1",
+      "test_file": "lib/embedding/server/health-probe.test.cjs",
+      "test_name": "[P1] AC-002-05: Given health probe encounters unexpected error, When probeEmbeddingHealth() is called, Then returns { status: 'failed' } and never throws",
+      "status": "skip",
+      "implemented": false,
+      "red_at": null,
+      "green_at": null
+    },
+    {
+      "ac_id": "AC-003-01",
+      "description": "Embedding generation failure never blocks discover",
+      "given_when_then": {
+        "given": "embedding generation fails during discover",
+        "when": "Step 7.9 completes",
+        "then": ["discover continues to finalize", "generation never blocks discovery"]
+      },
       "priority": "P0",
-      "test_files": ["src/core/finalize/refresh-code-embeddings.test.js"],
-      "scenarios": [
-        {
-          "scenario_id": "TC-RL-001",
-          "priority": "P0",
-          "given": "embedding server running, /reload returns 200, /modules returns valid package metadata (chunks > 0)",
-          "when": "F0009 completes generation and postReload verifies",
-          "then": "serverReloaded is true, no reload_failed",
-          "test_name": "[P0] AC-5: Given reload returns 2xx and /modules shows valid package with chunks > 0, When postReload verifies, Then serverReloaded is true",
-          "test_file": "src/core/finalize/refresh-code-embeddings.test.js",
-          "status": "skip",
-          "implemented": false,
-          "red_at": null,
-          "green_at": null
-        },
-        {
-          "scenario_id": "TC-RL-002",
-          "priority": "P0",
-          "given": "embedding server running, /reload returns 200, /modules returns empty or zero-chunk",
-          "when": "F0009 completes generation and postReload verifies",
-          "then": "reload_failed is true, warning emitted to stderr",
-          "test_name": "[P0] AC-5: Given reload returns 2xx but /modules shows empty or zero-chunk package, When postReload verifies, Then reload_failed is true and warning emitted",
-          "test_file": "src/core/finalize/refresh-code-embeddings.test.js",
-          "status": "skip",
-          "implemented": false,
-          "red_at": null,
-          "green_at": null
-        }
-      ]
+      "test_file": "tests/integration/embedding-fail-open.test.js",
+      "test_name": "[P0] AC-003-01: Given embedding generation fails during discover, When Step 7.9 completes, Then discover continues to finalize and never blocks",
+      "status": "skip",
+      "implemented": false,
+      "red_at": null,
+      "green_at": null
+    },
+    {
+      "ac_id": "AC-003-02",
+      "description": "Health probe timeout/error never blocks tool calls",
+      "given_when_then": {
+        "given": "health probe times out or errors",
+        "when": "tool-router evaluates",
+        "then": ["routing falls back to lexical", "probe never blocks tool calls"]
+      },
+      "priority": "P0",
+      "test_file": "tests/integration/embedding-fail-open.test.js",
+      "test_name": "[P0] AC-003-02: Given health probe times out, When tool-router evaluates routing, Then falls back to lexical within total budget",
+      "status": "skip",
+      "implemented": false,
+      "red_at": null,
+      "green_at": null
+    },
+    {
+      "ac_id": "AC-003-03",
+      "description": "MCP failure falls back to Grep without crash or retry",
+      "given_when_then": {
+        "given": "isdlc-embedding MCP is registered but server is down",
+        "when": "semantic search MCP call fails",
+        "then": ["agent naturally falls back to Grep", "no crash, no infinite retry"]
+      },
+      "priority": "P0",
+      "test_file": "tests/integration/embedding-fail-open.test.js",
+      "test_name": "[P0] AC-003-03: Given isdlc-embedding MCP registered but server down, When semantic search MCP call fails, Then agent falls back to Grep with no infinite retry",
+      "status": "skip",
+      "implemented": false,
+      "red_at": null,
+      "green_at": null
     }
   ],
   "coverage_summary": {
-    "total_ac": 5,
-    "tests_generated": 9,
-    "tests_skipped": 9,
+    "total_ac": 12,
+    "tests_generated": 36,
+    "tests_skipped": 36,
     "tests_red": 0,
     "tests_passing": 0,
     "by_priority": {
-      "P0": { "total": 6, "passing": 0 },
-      "P1": { "total": 3, "passing": 0 },
-      "P2": { "total": 0, "passing": 0 },
+      "P0": { "total": 22, "passing": 0 },
+      "P1": { "total": 10, "passing": 0 },
+      "P2": { "total": 4, "passing": 0 },
       "P3": { "total": 0, "passing": 0 }
     }
   }

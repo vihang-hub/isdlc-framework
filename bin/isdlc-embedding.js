@@ -10,11 +10,18 @@
  *   isdlc embedding status                 Show embedding status
  *   isdlc embedding --help                 Show help
  *
- * REQ-0045 / FR-014
+ * Exit code contract (REQ-GH-252 FR-001):
+ *   0 = success
+ *   1 = generation error
+ *   2 = missing dependency (preflight)
+ *   3 = insufficient resources (preflight)
+ *
+ * REQ-0045 / FR-014, REQ-GH-252 / FR-001
  * @module bin/isdlc-embedding
  */
 
 import { resolve } from 'node:path';
+import { existsSync, statSync, readdirSync } from 'node:fs';
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -199,6 +206,125 @@ async function runConfigure() {
 }
 
 /**
+ * Preflight validation for embedding generation.
+ * Checks dependencies and resources before starting generation.
+ *
+ * REQ-GH-252 FR-001, AC-001-01, AC-001-02
+ *
+ * @param {string} projectRoot - Absolute path to the project root
+ * @returns {Promise<{ ok: boolean, exitCode?: number, reason?: string }>}
+ */
+export async function preflight(projectRoot) {
+  // Check 1: @huggingface/transformers importable (exit 2)
+  try {
+    await import('@huggingface/transformers');
+  } catch (err) {
+    return {
+      ok: false,
+      exitCode: 2,
+      reason: '@huggingface/transformers is not installed. Run: npm install @huggingface/transformers'
+    };
+  }
+
+  // Check 2: Disk space (exit 3) -- need at least 100MB free
+  try {
+    const { execSync } = await import('node:child_process');
+    // Use df to check available space on the filesystem containing projectRoot
+    const dfOutput = execSync(`df -k "${projectRoot}" | tail -1`, { encoding: 'utf8', timeout: 5000 });
+    const parts = dfOutput.trim().split(/\s+/);
+    // df -k outputs KB; available is typically the 4th column (index 3)
+    const availableKB = parseInt(parts[3], 10);
+    if (!isNaN(availableKB) && availableKB < 100 * 1024) {
+      return {
+        ok: false,
+        exitCode: 3,
+        reason: `Insufficient disk space: ${Math.round(availableKB / 1024)}MB available, need at least 100MB`
+      };
+    }
+  } catch (err) {
+    // Fail-open (Article X): if df fails, skip disk check
+  }
+
+  // Check 3: Model availability (exit 2) -- check if model cache exists or network is available
+  // This is a lightweight check; actual model download happens during generation
+  // We verify the config references a known provider
+  try {
+    const { join } = await import('node:path');
+    const { readFileSync } = await import('node:fs');
+    const configPath = join(projectRoot, '.isdlc', 'config.json');
+    if (existsSync(configPath)) {
+      const cfg = JSON.parse(readFileSync(configPath, 'utf8'));
+      const provider = cfg?.embeddings?.provider || 'jina-code';
+      const validProviders = ['jina-code', 'voyage', 'openai'];
+      if (!validProviders.includes(provider)) {
+        return {
+          ok: false,
+          exitCode: 2,
+          reason: `Unknown embedding provider: "${provider}". Valid providers: ${validProviders.join(', ')}`
+        };
+      }
+    }
+  } catch (err) {
+    // Fail-open (Article X): if config check fails, proceed
+  }
+
+  return { ok: true };
+}
+
+/**
+ * Post-generation verification.
+ * Validates that embeddings were actually produced and are non-empty.
+ *
+ * REQ-GH-252 FR-001, AC-001-01, AC-001-03
+ *
+ * @param {string} projectRoot - Absolute path to the project root
+ * @returns {{ ok: boolean, exitCode?: number, reason?: string, fileCount?: number }}
+ */
+export function postVerify(projectRoot) {
+  try {
+    const embDir = resolve(projectRoot, 'docs', '.embeddings');
+    const isdlcEmbDir = resolve(projectRoot, '.isdlc', 'embeddings');
+
+    // Check both possible embedding directories
+    let embFiles = [];
+    for (const dir of [embDir, isdlcEmbDir]) {
+      if (existsSync(dir)) {
+        const files = readdirSync(dir).filter(f => f.endsWith('.emb'));
+        embFiles.push(...files.map(f => resolve(dir, f)));
+      }
+    }
+
+    if (embFiles.length === 0) {
+      return {
+        ok: false,
+        exitCode: 1,
+        reason: 'Post-verification failed: no .emb files found in output directories'
+      };
+    }
+
+    // Verify files are non-zero size
+    for (const file of embFiles) {
+      const stat = statSync(file);
+      if (stat.size === 0) {
+        return {
+          ok: false,
+          exitCode: 1,
+          reason: `Post-verification failed: ${file} is empty (0 bytes)`
+        };
+      }
+    }
+
+    return { ok: true, fileCount: embFiles.length };
+  } catch (err) {
+    return {
+      ok: false,
+      exitCode: 1,
+      reason: `Post-verification error: ${err.message}`
+    };
+  }
+}
+
+/**
  * Run embedding generation.
  * AC-014-01: Produces a valid .emb package from the current working copy
  * AC-014-03: Incremental mode re-embeds only changed files via VCS adapter
@@ -288,6 +414,13 @@ async function runGenerate(genArgs) {
     wfs(cfgPath, JSON.stringify(existing, null, 2) + '\n');
     console.log('Embeddings enabled. Proceeding with generation.');
     // Fall through to the existing generation pipeline below.
+  }
+
+  // REQ-GH-252 / FR-001: Preflight validation (exit 2 = missing dep, exit 3 = resources)
+  const preflightResult = await preflight(workingCopy);
+  if (!preflightResult.ok) {
+    process.stderr.write(`Preflight failed: ${preflightResult.reason}\n`);
+    process.exit(preflightResult.exitCode);
   }
 
   // REQ-GH-227 / FR-004: --incremental flag routing
@@ -490,6 +623,13 @@ async function runGenerate(genArgs) {
           console.warn('Start manually: isdlc embedding server start');
         }
       }
+    }
+
+    // 7. Post-generation verification (REQ-GH-252 FR-001, AC-001-03)
+    const verification = postVerify(workingCopy);
+    if (!verification.ok) {
+      process.stderr.write(`${verification.reason}\n`);
+      process.exit(verification.exitCode);
     }
 
     console.log('\nEmbedding generation complete.');
