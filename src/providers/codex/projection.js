@@ -152,6 +152,44 @@ export function buildVerbRoutingSection(verbSpec) {
 }
 
 // ---------------------------------------------------------------------------
+// FR-002 (REQ-GH-252): Semantic Search Instruction
+// ---------------------------------------------------------------------------
+
+/**
+ * Build the semantic search instruction section for Codex agents.
+ * Injected when the isdlc-embedding MCP is available, guiding agents
+ * to prefer semantic search for natural-language queries while falling
+ * back to lexical Grep for code symbols and regex patterns.
+ *
+ * REQ-GH-252 FR-002, AC-002-01
+ *
+ * @returns {string} Markdown instruction section
+ */
+export function buildSemanticSearchInstruction() {
+  return `
+
+---
+
+## Semantic Code Search
+
+This project has an embedding server (\`isdlc-embedding\`) that provides semantic code search. When searching for concepts, behaviors, or natural-language descriptions, prefer the semantic search tool over lexical Grep:
+
+**Use semantic search** (\`mcp__isdlc-embedding__isdlc_embedding_semantic_search\`) for:
+- Natural-language queries: "where is error handling done", "how does authentication work"
+- Conceptual searches: "find the retry logic", "which module handles rate limiting"
+- Cross-file understanding: "what calls this function", "where is this pattern used"
+
+**Use lexical Grep** for:
+- Exact symbol names: \`inferEnvironmentRules\`, \`HealthResult\`
+- Regex patterns: \`log.*Error\`, \`import.*from\`
+- File extensions: \`.test.cjs\`, \`.config.json\`
+- Dotted paths: \`process.env.HOME\`, \`path.join\`
+- snake_case identifiers: \`tool_router\`, \`exit_code\`
+
+When the embedding server is unavailable, all searches automatically fall back to lexical Grep. This is a fail-open behavior (Article X) -- never block on server unavailability.`;
+}
+
+// ---------------------------------------------------------------------------
 // FR-001 (REQ-0116): Instruction Projection Service
 // ---------------------------------------------------------------------------
 
@@ -337,6 +375,27 @@ export function projectInstructions(phase, agent, options = {}) {
     }
   }
 
+  // 9. Inject semantic search instruction (REQ-GH-252 FR-002, AC-002-01)
+  // When the isdlc-embedding MCP is available, tell the Codex agent to
+  // prefer semantic search for natural-language code queries.
+  let semanticSearchInjected = false;
+  if (options.projectRoot) {
+    try {
+      const settingsPath = join(options.projectRoot, '.codex', 'settings.json');
+      const claudeSettingsPath = join(options.projectRoot, '.claude', 'settings.json');
+      const sPath = existsSync(settingsPath) ? settingsPath : (existsSync(claudeSettingsPath) ? claudeSettingsPath : null);
+      if (sPath) {
+        const settings = JSON.parse(readFileSync(sPath, 'utf-8'));
+        if (settings?.mcpServers?.['isdlc-embedding']) {
+          content += buildSemanticSearchInstruction();
+          semanticSearchInjected = true;
+        }
+      }
+    } catch {
+      // Fail-open: missing or malformed settings is non-fatal (Article X)
+    }
+  }
+
   return {
     content,
     metadata: {
@@ -347,6 +406,7 @@ export function projectInstructions(phase, agent, options = {}) {
       ...(cacheSectionsInjected.length > 0 && { cache_sections_injected: cacheSectionsInjected }),
       ...(taskContextInjected && { task_context_injected: true }),
       ...(contractSummaryInjected && { contract_summary_injected: true }),
+      ...(semanticSearchInjected && { semantic_search_injected: true }),
       ...(warnings.length > 0 && { warnings })
     }
   };

@@ -189,6 +189,23 @@ function inferEnvironmentRules(settingsPath) {
     // Check which MCP servers are available
     const available = probeMcpServers(sPath);
 
+    // REQ-GH-252 FR-002, AC-002-01: Semantic search routing via isdlc-embedding MCP
+    if (available.has('isdlc-embedding')) {
+        rules.push({
+            id: 'inferred-semantic-search',
+            operation: 'semantic_search',
+            intercept_tool: 'Grep',
+            preferred_tool: 'mcp__isdlc-embedding__isdlc_embedding_semantic_search',
+            enforcement: 'warn',
+            source: 'inferred',
+            exemptions: [
+                { type: 'context', condition: 'literal_pattern', signal: 'query_is_lexical' },
+                { type: 'context', condition: 'server_unavailable', signal: 'embedding_server_down' },
+                { type: 'context', condition: 'targeted_file', signal: 'path_has_extension_no_wildcards' }
+            ]
+        });
+    }
+
     if (available.has('code-index-mcp')) {
         rules.push({
             id: 'inferred-search-semantic',
@@ -376,6 +393,33 @@ function matchContextCondition(condition, toolInput, toolName) {
             if (!cmd || typeof cmd !== 'string') return true;
             return !/^\s*mkdir\b/.test(cmd);
         }
+        case 'literal_pattern': {
+            // REQ-GH-252 AC-002-02: Exempt lexical patterns from semantic routing
+            // Uses query-classifier to determine if the Grep pattern is lexical
+            try {
+                const { classifyQuery } = require('../../core/embedding/query-classifier.cjs');
+                const queryPattern = toolInput.pattern || toolInput.command || '';
+                const classification = classifyQuery(queryPattern);
+                // Return true (exempt) if the pattern is lexical
+                return classification.type === 'lexical';
+            } catch (e) {
+                // Fail-open (Article X): if classifier fails, exempt (fall back to Grep)
+                return true;
+            }
+        }
+        case 'server_unavailable': {
+            // REQ-GH-252 AC-002-03: Exempt when embedding server is not running
+            try {
+                const { probeEmbeddingHealth } = require('../../../lib/embedding/server/health-probe.cjs');
+                const projectDir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+                const health = probeEmbeddingHealth(projectDir);
+                // Return true (exempt) if server is NOT active
+                return health.status !== 'active';
+            } catch (e) {
+                // Fail-open (Article X): if probe fails, exempt (fall back to Grep)
+                return true;
+            }
+        }
         default:
             return false;
     }
@@ -463,7 +507,33 @@ function formatBlockMessage(rule, toolInput) {
  * @param {string} configPath - Path to tool-routing.json
  * @returns {string} Warning string for stderr
  */
-function formatWarnMessage(rule, toolInput, configPath) {
+function formatWarnMessage(rule, toolInput, configPath, exemption) {
+    // REQ-GH-252 AC-002-04: Distinct messages for semantic routing and lexical fallback
+    if (rule.operation === 'semantic_search') {
+        if (exemption) {
+            // Lexical fallback: pattern is lexical or server is unavailable
+            const reason = exemption.condition || exemption.signal || 'unknown';
+            const friendlyReason = reason === 'literal_pattern'
+                ? (function() {
+                    try {
+                        const { classifyQuery } = require('../../core/embedding/query-classifier.cjs');
+                        const queryPattern = (toolInput && (toolInput.pattern || toolInput.command)) || '';
+                        const classification = classifyQuery(queryPattern);
+                        return classification.reason;
+                    } catch { return 'lexical pattern'; }
+                })()
+                : reason === 'server_unavailable'
+                    ? 'server unavailable'
+                    : reason;
+            return `[Lexical fallback: ${friendlyReason}] Using \`${rule.intercept_tool}\` -- ` +
+                `semantic search via \`${rule.preferred_tool}\` skipped.`;
+        }
+        // Semantic routing: routing to MCP
+        return `[Semantic search] Consider using \`${rule.preferred_tool}\` instead of \`${rule.intercept_tool}\` ` +
+            `for natural-language queries. (source: ${rule.source || 'inferred'})`;
+    }
+
+    // Default format for non-semantic rules (backward compatible)
     return `TOOL_ROUTER WARNING: Consider using \`${rule.preferred_tool}\` instead of \`${rule.intercept_tool}\` ` +
         `for ${rule.operation || 'this operation'}. ` +
         `(source: ${rule.source || 'unknown'}, config: ${configPath}). ` +
@@ -611,7 +681,12 @@ function main(inputStr, options) {
         }
 
         if (result.decision === 'exempt') {
-            // Exempted: allow through
+            // Exempted: allow through.
+            // REQ-GH-252 AC-002-04: For semantic search rules, emit a lexical fallback message
+            if (rule.operation === 'semantic_search' && result.exemption) {
+                const fallbackMsg = formatWarnMessage(rule, toolInput, configPath, result.exemption);
+                return { stdout: null, stderr: fallbackMsg };
+            }
             return { stdout: null, stderr: null };
         }
 
