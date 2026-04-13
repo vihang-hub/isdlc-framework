@@ -7,6 +7,10 @@
     "bulk-fs-mcp": {
       "command": "node",
       "args": ["packages/bulk-fs-mcp/index.js"]
+    },
+    "isdlc-embedding": {
+      "command": "node",
+      "args": ["bin/isdlc-embedding-mcp.js"]
     }
   }
 }
