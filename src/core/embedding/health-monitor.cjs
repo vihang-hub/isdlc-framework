@@ -80,10 +80,20 @@ function generationLockExists(projectRoot) {
  */
 function readGeneratedAtCommit(projectRoot) {
   try {
-    const manifestPath = path.join(projectRoot, '.embeddings', 'manifest.json');
-    if (!fs.existsSync(manifestPath)) return null;
-    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-    return manifest.generatedAtCommit || null;
+    // Check sidecar metadata file in both possible .embeddings locations
+    const locations = [
+      path.join(projectRoot, 'docs', '.embeddings', '.generation-meta.json'),
+      path.join(projectRoot, '.embeddings', '.generation-meta.json'),
+      path.join(projectRoot, 'docs', '.embeddings', 'manifest.json'),
+      path.join(projectRoot, '.embeddings', 'manifest.json'),
+    ];
+    for (const loc of locations) {
+      if (fs.existsSync(loc)) {
+        const data = JSON.parse(fs.readFileSync(loc, 'utf8'));
+        if (data.generatedAtCommit) return data.generatedAtCommit;
+      }
+    }
+    return null;
   } catch {
     return null;
   }
@@ -103,7 +113,11 @@ async function probeServer(host, port, timeoutMs = 2000) {
     const res = await fetch(`http://${host}:${port}/health`, { signal: controller.signal });
     if (!res.ok) return { ok: false, chunks: null, error: `HTTP ${res.status}` };
     const body = await res.json();
-    return { ok: true, chunks: body.chunks ?? body.chunk_count ?? null, error: null };
+    // Extract chunks from nested modules structure or top-level fallbacks
+    const chunks = body.modules?.list?.[0]?.chunkCount
+      ?? body.modules?.list?.[0]?.chunk_count
+      ?? body.chunks ?? body.chunk_count ?? null;
+    return { ok: true, chunks, error: null };
   } catch (err) {
     const errMsg = err.name === 'AbortError' ? 'timeout' : (err.message || 'connection failed');
     return { ok: false, chunks: null, error: errMsg };

@@ -55,7 +55,7 @@ function formatStatus(health) {
 
   switch (health.status) {
     case 'healthy':
-      return `emb: ${health.chunks || 0} chunks \u2713`;
+      return health.chunks != null ? `emb: ${health.chunks} chunks \u2713` : 'emb: ready \u2713';
 
     case 'stale': {
       const parts = [];
@@ -116,13 +116,46 @@ async function run(projectRoot) {
   return formatStatus(health);
 }
 
+/**
+ * Read session data from stdin (piped by Claude Code).
+ * @returns {Promise<Object|null>}
+ */
+function readStdin() {
+  return new Promise((resolve) => {
+    let data = '';
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', (chunk) => { data += chunk; });
+    process.stdin.on('end', () => {
+      try { resolve(JSON.parse(data)); } catch { resolve(null); }
+    });
+    process.stdin.on('error', () => resolve(null));
+    setTimeout(() => resolve(null), 1000);
+  });
+}
+
+/**
+ * Format default session info from stdin data.
+ * @param {Object|null} session
+ * @returns {string}
+ */
+function formatSessionInfo(session) {
+  if (!session) return '';
+  const parts = [];
+  if (session.model) parts.push(session.model);
+  if (session.context_window?.used_percentage != null) {
+    parts.push(`ctx: ${Math.round(session.context_window.used_percentage)}%`);
+  }
+  return parts.join(' | ');
+}
+
 // When executed as main script
 if (require.main === module) {
-  run().then(output => {
-    if (output) process.stdout.write(output);
+  Promise.all([run(), readStdin()]).then(([embStatus, session]) => {
+    const sessionInfo = formatSessionInfo(session);
+    const parts = [embStatus, sessionInfo].filter(Boolean);
+    if (parts.length > 0) process.stdout.write(parts.join(' | '));
     process.exit(0);
   }).catch(() => {
-    // Fail-open: exit 0 with no output
     process.exit(0);
   });
 }
