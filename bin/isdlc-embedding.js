@@ -6,9 +6,11 @@
  * CLI entry point for embedding generation operations.
  *
  * Usage:
- *   isdlc embedding generate [options]     Generate embeddings for current working copy
- *   isdlc embedding status                 Show embedding status
- *   isdlc embedding --help                 Show help
+ *   isdlc-embedding generate [path]        Generate embeddings for current working copy
+ *   isdlc-embedding status                 Show embedding status
+ *   isdlc-embedding server start|stop|status|restart   Manage embedding server
+ *   isdlc-embedding configure              Interactive provider/model setup
+ *   isdlc-embedding --help                 Show help
  *
  * Exit code contract (REQ-GH-252 FR-001):
  *   0 = success
@@ -745,15 +747,22 @@ function printHelp() {
 iSDLC Embedding CLI
 
 Usage:
-  isdlc embedding generate [path]    Generate embeddings for working copy
-  isdlc embedding status             Show embedding status
-  isdlc embedding --help             Show this help
+  isdlc-embedding generate [path]        Generate embeddings for working copy
+  isdlc-embedding status                 Show embedding status
+  isdlc-embedding server start           Start the embedding server
+  isdlc-embedding server stop            Stop the embedding server
+  isdlc-embedding server status          Show server status (JSON)
+  isdlc-embedding server restart         Restart the embedding server
+  isdlc-embedding configure              Interactive provider/model setup
+  isdlc-embedding --help                 Show this help
 
 Options:
   path    Working copy path (default: current directory)
 
 Examples:
-  isdlc embedding generate           Generate from current directory
-  isdlc embedding generate ./mymod   Generate from specific module
+  isdlc-embedding generate               Generate from current directory
+  isdlc-embedding generate ./mymod       Generate from specific module
+  isdlc-embedding server start           Start server on configured port
+  isdlc-embedding server stop            Stop running server
 `.trim());
 }

@@ -111,6 +111,7 @@ async function run(projectRoot) {
     } catch {
       health = await refreshHealth(projectRoot);
     }
+
   }
 
   return formatStatus(health);
@@ -141,7 +142,11 @@ function readStdin() {
 function formatSessionInfo(session) {
   if (!session) return '';
   const parts = [];
-  if (session.model) parts.push(session.model);
+  if (session.model) {
+    const modelName = typeof session.model === 'string' ? session.model
+      : session.model.name || session.model.id || String(session.model);
+    if (modelName && modelName !== '[object Object]') parts.push(modelName);
+  }
   if (session.context_window?.used_percentage != null) {
     parts.push(`ctx: ${Math.round(session.context_window.used_percentage)}%`);
   }
