@@ -251,7 +251,9 @@
         "error-taxonomy.md",
         "data-flow.md",
         "design-summary.md",
-        "tasks.md"
+        "tasks.md",
+        "architecture-diagram.excalidraw",
+        "design-diagram.excalidraw"
       ],
       "batch_write_contract": {
         "max_responses": 2,
@@ -261,7 +263,8 @@
         ],
         "batch_b": [
           "module-design.md", "interface-spec.md", "error-taxonomy.md",
-          "data-flow.md", "design-summary.md", "tasks.md"
+          "data-flow.md", "design-summary.md", "tasks.md",
+          "architecture-diagram.excalidraw", "design-diagram.excalidraw"
         ]
       },
       "transitions": [

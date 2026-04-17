@@ -273,7 +273,9 @@
         "tasks.md",
         "bug-summary.md",
         "root-cause-summary.md",
-        "fix-strategy-summary.md"
+        "fix-strategy-summary.md",
+        "architecture-diagram.excalidraw",
+        "design-diagram.excalidraw"
       ],
       "artifact_exceptions": {
         "bug-report.md": "Written during PRESENTING_BUG_SUMMARY, NOT rewritten here"

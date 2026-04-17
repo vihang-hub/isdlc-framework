@@ -39,7 +39,7 @@
     {
       "turn": 2,
       "action": "parallel_batch_write",
-      "description": "Issue ALL Write tool calls in a single response"
+      "description": "Issue ALL Write tool calls in a single response. Include architecture-diagram.excalidraw and design-diagram.excalidraw — generate Excalidraw JSON using the excalidraw-diagram skill (.claude/skills/external/excalidraw-diagram/SKILL.md). Architecture diagram from architecture-overview.md; design diagram from module-design.md (analyze) or fix-strategy.md (bug-gather)."
     },
     {
       "turn": 3,

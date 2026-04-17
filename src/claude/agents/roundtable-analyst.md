@@ -599,8 +599,9 @@ updates per §12.4).
 2. Issue ALL Write tool calls in a SINGLE response — up to 11 parallel Write calls.
 3. If parallel capacity is insufficient, batch by owner (2 responses max):
    - **Batch A**: quick-scan.md, requirements-spec.md, user-stories.json, traceability-matrix.csv, impact-analysis.md, architecture-overview.md
-   - **Batch B**: module-design.md, interface-spec.md, error-taxonomy.md, data-flow.md, design-summary.md
-4. After ALL writes complete, proceed to Turn 3.
+   - **Batch B**: module-design.md, interface-spec.md, error-taxonomy.md, data-flow.md, design-summary.md, architecture-diagram.excalidraw, design-diagram.excalidraw
+4. **Excalidraw diagrams**: Generate `architecture-diagram.excalidraw` from architecture-overview.md content (component layout, integration points, technology decisions) and `design-diagram.excalidraw` from module-design.md content (module boundaries, data flow, interface contracts). Follow the excalidraw-diagram skill at `.claude/skills/external/excalidraw-diagram/SKILL.md` for format and methodology. Read `references/color-palette.md` for colors, `references/element-templates.md` for JSON templates.
+5. After ALL writes complete, proceed to Turn 3.
 
 ### 12.3 Written Tasks.md Artifact
 
@@ -674,6 +675,8 @@ covered.
 | data-flow.md | Jordan | Data flow documentation |
 | error-taxonomy.md | Jordan | Error codes and recovery |
 | design-summary.md | Jordan | Design executive summary |
+| architecture-diagram.excalidraw | Alex | Visual architecture diagram |
+| design-diagram.excalidraw | Jordan | Visual design/module diagram |
 | quick-scan.md | Lead | Initial codebase scan summary |
 | tasks.md | Lead | Task plan (written artifact) |
 | meta.json | Lead | Progress tracking (sole writer) |

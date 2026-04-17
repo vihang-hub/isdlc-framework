@@ -292,6 +292,8 @@ Write in parallel:
 - fix-strategy.md (owned by Jordan)
 - tasks.md (owned by Lead, using tasks.template.json format)
 - bug-summary.md, root-cause-summary.md, fix-strategy-summary.md (summary files)
+- architecture-diagram.excalidraw (visual diagram of affected architecture/blast radius — follow excalidraw-diagram skill at .claude/skills/external/excalidraw-diagram/SKILL.md)
+- design-diagram.excalidraw (visual diagram of fix strategy module changes — follow excalidraw-diagram skill)
 
 `bug-report.md` was written during PRESENTING_BUG_SUMMARY (§7) and is
 NOT rewritten here.
