@@ -5,7 +5,9 @@
 
 ## Open
 - [ ] #255 Roundtable escape hatches: licensed persona dissent + trivial-scope sanity gate [github: GH-255]
-- [A] #253 Context-manager hooks: inject phase-specific instructions before delegation, not just block after [github: GH-253] -> [requirements](docs/requirements/REQ-GH-253-context-manager-hooks-inject-before-delegation/) **Analyzed**
+- [x] #253 Context-manager hooks: inject phase-specific instructions before delegation, not just block after [github: GH-253] -> [requirements](docs/requirements/REQ-GH-253-context-manager-hooks-inject-before-delegation/) **Completed**
+  - State-machine-driven composition for analyze + bug-gather roundtables. Two-layer affordance model, hybrid rolling state, skills at sub-task granularity, bucketed audit + prose reduction (890→733 + 573→343). 589 tests.
+  - **Completed:** 2026-04-17
 - [x] #254 Context-manager hooks: inject phase-specific instructions before delegation [github: GH-254] **Closed — duplicate of #253**
 - [x] #252 Smooth embeddings UX — discover → generation → server → search wiring should be seamless by default [github: GH-252] -> [requirements](docs/requirements/REQ-GH-252-smooth-embeddings-ux/) **Completed**
   - Preflight checks, health probe, query classifier, tool-router semantic routing, CLI consolidation. 57 tests, 100% AC coverage.
