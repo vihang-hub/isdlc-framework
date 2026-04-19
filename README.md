@@ -6,6 +6,8 @@
 
 ### [Click for Walkthrough](https://isdlc.github.io/isdlc-framework/) — see how iSDLC works end-to-end
 
+[![Request to Join](https://img.shields.io/badge/Request_to_Join-isdlc-brightgreen?style=for-the-badge)](https://github.com/isdlc/isdlc-framework/issues/260)
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Agents](https://img.shields.io/badge/Agents-64-purple.svg)](docs/AGENTS.md)
 [![Skills](https://img.shields.io/badge/Skills-245-green.svg)](docs/DETAILED-SKILL-ALLOCATION.md)
