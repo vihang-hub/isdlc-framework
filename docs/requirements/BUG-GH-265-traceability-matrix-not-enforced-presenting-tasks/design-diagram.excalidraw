@@ -1,0 +1,35 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "isdlc-bug-roundtable",
+  "elements": [
+    {"type": "text", "id": "title", "x": 100, "y": 30, "width": 800, "height": 30, "text": "BUG-GH-265 Fix - A1 Inline References (state-card-composer flow, post-fix)", "fontSize": 18, "fontFamily": 1},
+    {"type": "rectangle", "id": "input", "x": 60, "y": 100, "width": 220, "height": 70, "backgroundColor": "#e7f5ff", "strokeColor": "#1971c2"},
+    {"type": "text", "id": "input-text", "x": 70, "y": 115, "width": 200, "height": 50, "text": "composeStateCard(\n  currentState='PRESENTING_TASKS',\n  context={ acceptedPayloads, ... }\n)", "fontSize": 11, "fontFamily": 1},
+    {"type": "rectangle", "id": "load-card", "x": 320, "y": 100, "width": 220, "height": 70, "backgroundColor": "#fff3bf", "strokeColor": "#e67700"},
+    {"type": "text", "id": "load-card-text", "x": 330, "y": 115, "width": 200, "height": 50, "text": "loadCardTemplate(state)\n-> presenting-tasks.card.json\n   { rendering_mandate, sections,\n     template_ref, transitions }", "fontSize": 11, "fontFamily": 1},
+    {"type": "rectangle", "id": "load-tpl", "x": 580, "y": 100, "width": 240, "height": 70, "backgroundColor": "#fff3bf", "strokeColor": "#e67700"},
+    {"type": "text", "id": "load-tpl-text", "x": 590, "y": 115, "width": 220, "height": 50, "text": "[NEW] loadTemplateBody(template_ref)\n-> traceability.template.json\n   { columns, rendering, content_guidance,\n     example }", "fontSize": 11, "fontFamily": 1},
+    {"type": "rectangle", "id": "render", "x": 240, "y": 240, "width": 420, "height": 130, "backgroundColor": "#d3f9d8", "strokeColor": "#2f9e44"},
+    {"type": "text", "id": "render-text", "x": 250, "y": 255, "width": 400, "height": 105, "text": "renderCard(template, templateBody, context)  [EXTENDED]\n\nEmits inline:\n - rendering_mandate (format/columns/style/bans)\n - content_coverage (per-stage requirements)\n - templateBody (columns, rendering, examples)\n - context.acceptedPayloads[priorStates]\n - per-section content_guidance from templateBody\nWrapped: try/catch + referenceFallback() per Article X", "fontSize": 11, "fontFamily": 1},
+    {"type": "rectangle", "id": "budget", "x": 280, "y": 410, "width": 340, "height": 70, "backgroundColor": "#f3d9fa", "strokeColor": "#9c36b5"},
+    {"type": "text", "id": "budget-text", "x": 290, "y": 425, "width": 320, "height": 45, "text": "[NEW] applySoftBudget(sections)\nPer-section caps + truncation pointer:\n'[truncated; see <ARTIFACT_FOLDER>/<file>.md]'", "fontSize": 11, "fontFamily": 1},
+    {"type": "rectangle", "id": "output", "x": 280, "y": 520, "width": 340, "height": 70, "backgroundColor": "#e7f5ff", "strokeColor": "#1971c2"},
+    {"type": "text", "id": "output-text", "x": 290, "y": 535, "width": 320, "height": 45, "text": "Composed Card (rich content, post-fix)\nLLM receives content, not references.\nNo recall from roundtable-analyst.md needed.", "fontSize": 11, "fontFamily": 1},
+    {"type": "rectangle", "id": "rolling", "x": 700, "y": 240, "width": 240, "height": 130, "backgroundColor": "#d3f9d8", "strokeColor": "#2f9e44"},
+    {"type": "text", "id": "rolling-text", "x": 710, "y": 255, "width": 220, "height": 105, "text": "rolling-state.js  [EXTENDED]\n\ncreate() returns:\n  + accepted_payloads: {\n      PRESENTING_REQUIREMENTS: null,\n      PRESENTING_ARCHITECTURE: null,\n      PRESENTING_DESIGN: null,\n      PRESENTING_TASKS: null,\n      PRESENTING_BUG_SUMMARY: null, ...\n    }\napplyAcceptedPayload(state, name, payload)\nupdate() defensive-init guard", "fontSize": 10, "fontFamily": 1},
+    {"type": "arrow", "id": "a1", "x": 280, "y": 130, "points": [[0, 0], [40, 0]]},
+    {"type": "arrow", "id": "a2", "x": 540, "y": 130, "points": [[0, 0], [40, 0]]},
+    {"type": "arrow", "id": "a3", "x": 450, "y": 170, "points": [[0, 0], [0, 70]]},
+    {"type": "arrow", "id": "a4", "x": 700, "y": 170, "points": [[0, 0], [0, 70]]},
+    {"type": "arrow", "id": "a5", "x": 700, "y": 305, "points": [[0, 0], [-40, 0]]},
+    {"type": "arrow", "id": "a6", "x": 450, "y": 370, "points": [[0, 0], [0, 40]]},
+    {"type": "arrow", "id": "a7", "x": 450, "y": 480, "points": [[0, 0], [0, 40]]},
+    {"type": "text", "id": "legend", "x": 60, "y": 620, "width": 880, "height": 30, "text": "Legend: BLUE=I/O   YELLOW=existing reads (extended)   GREEN=composer/state (modified)   PURPLE=new helpers", "fontSize": 11, "fontFamily": 1}
+  ],
+  "appState": {
+    "viewBackgroundColor": "#ffffff",
+    "gridSize": null
+  },
+  "files": {}
+}

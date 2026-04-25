@@ -4,7 +4,17 @@
   "slug": "BUG-GH-265-traceability-matrix-not-enforced-presenting-tasks",
   "item_type": "BUG",
   "created_at": "2026-04-25T00:00:00Z",
-  "analysis_status": "raw",
-  "phases_completed": [],
-  "codebase_hash": "e5728bdb"
+  "analysis_status": "analyzed",
+  "phases_completed": ["01-requirements", "02-tracing"],
+  "codebase_hash": "e5728bdb",
+  "bug_classification": {
+    "classification": "bug",
+    "reasoning": "Architectural regression in REQ-GH-253 implementation. The state-machine pipeline fires correctly per turn but the composers it drives emit a thin index of their inputs (state name, filename references, section names) instead of inlining the content the references point at. rolling-state.create() has no payload accumulator. Result: LLM is forced to recall format specs and prior-stage content from roundtable-analyst.md, exactly the failure mode the state machine was built to remove.",
+    "confirmed_by_user": true
+  },
+  "acceptance": {
+    "accepted_at": "2026-04-26T00:00:00Z",
+    "domains": ["bug-summary", "root-cause", "fix-strategy", "tasks"],
+    "amendment_cycles": 1
+  }
 }

@@ -1,0 +1,39 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "isdlc-bug-roundtable",
+  "elements": [
+    {"type": "text", "id": "title", "x": 100, "y": 40, "width": 700, "height": 30, "text": "BUG-GH-265 - Roundtable State-Machine Pipeline (current architecture, untouched by fix)", "fontSize": 18, "fontFamily": 1},
+    {"type": "rectangle", "id": "isdlc-md", "x": 80, "y": 110, "width": 320, "height": 80, "backgroundColor": "#e7f5ff", "strokeColor": "#1971c2"},
+    {"type": "text", "id": "isdlc-md-text", "x": 90, "y": 130, "width": 300, "height": 50, "text": "src/claude/commands/isdlc.md\nSTATE-MACHINE-DRIVEN COMPOSITION\nlines 685, 689, 757, 860, 864", "fontSize": 12, "fontFamily": 1},
+    {"type": "rectangle", "id": "codex-proj", "x": 480, "y": 110, "width": 320, "height": 80, "backgroundColor": "#e7f5ff", "strokeColor": "#1971c2"},
+    {"type": "text", "id": "codex-proj-text", "x": 490, "y": 130, "width": 300, "height": 50, "text": "src/providers/codex/projection.js\n(imports same ESM composers)", "fontSize": 12, "fontFamily": 1},
+    {"type": "rectangle", "id": "bridge", "x": 240, "y": 240, "width": 400, "height": 80, "backgroundColor": "#fff3bf", "strokeColor": "#e67700"},
+    {"type": "text", "id": "bridge-text", "x": 250, "y": 260, "width": 380, "height": 50, "text": "src/core/bridge/roundtable.cjs\ncomposeForTurn(machine, rollingState, ctx, manifestCtx)\n(pipeline correct - NOT changed)", "fontSize": 12, "fontFamily": 1},
+    {"type": "rectangle", "id": "state-comp", "x": 80, "y": 380, "width": 280, "height": 100, "backgroundColor": "#ffe3e3", "strokeColor": "#c92a2a"},
+    {"type": "text", "id": "state-comp-text", "x": 90, "y": 395, "width": 260, "height": 75, "text": "state-card-composer.js\nrenderCard()  [BUG: under-renders]\n- emits filename + section names only\n- never reads template_ref body\n- never extracts rendering_mandate\n- never extracts content_coverage", "fontSize": 11, "fontFamily": 1},
+    {"type": "rectangle", "id": "task-comp", "x": 400, "y": 380, "width": 280, "height": 100, "backgroundColor": "#ffe3e3", "strokeColor": "#c92a2a"},
+    {"type": "text", "id": "task-comp-text", "x": 410, "y": 395, "width": 260, "height": 75, "text": "task-card-composer.js\nrenderTaskCard()  [BUG: under-renders]\n- emits skill IDs + labels only\n- never inlines skill body\n- never surfaces sub-task description", "fontSize": 11, "fontFamily": 1},
+    {"type": "rectangle", "id": "rolling", "x": 720, "y": 380, "width": 200, "height": 100, "backgroundColor": "#ffe3e3", "strokeColor": "#c92a2a"},
+    {"type": "text", "id": "rolling-text", "x": 730, "y": 395, "width": 180, "height": 75, "text": "rolling-state.js\ncreate()  [BUG: no accumulator]\n- only booleans + counters\n- no accepted_payloads field", "fontSize": 11, "fontFamily": 1},
+    {"type": "rectangle", "id": "state-cards", "x": 60, "y": 540, "width": 280, "height": 60, "backgroundColor": "#d3f9d8", "strokeColor": "#2f9e44"},
+    {"type": "text", "id": "state-cards-text", "x": 70, "y": 555, "width": 260, "height": 35, "text": "src/isdlc/config/roundtable/state-cards/*.card.json\n(9 files - source content correct, untouched)", "fontSize": 11, "fontFamily": 1},
+    {"type": "rectangle", "id": "task-cards", "x": 380, "y": 540, "width": 280, "height": 60, "backgroundColor": "#d3f9d8", "strokeColor": "#2f9e44"},
+    {"type": "text", "id": "task-cards-text", "x": 390, "y": 555, "width": 260, "height": 35, "text": "src/isdlc/config/roundtable/task-cards/*.task-card.json\n(6 files - source content correct, untouched)", "fontSize": 11, "fontFamily": 1},
+    {"type": "rectangle", "id": "templates", "x": 700, "y": 540, "width": 240, "height": 60, "backgroundColor": "#d3f9d8", "strokeColor": "#2f9e44"},
+    {"type": "text", "id": "templates-text", "x": 710, "y": 555, "width": 220, "height": 35, "text": "src/isdlc/config/templates/*.template.json\n(format specs - never read by composer today)", "fontSize": 11, "fontFamily": 1},
+    {"type": "arrow", "id": "a1", "x": 240, "y": 200, "points": [[0, 0], [200, 40]]},
+    {"type": "arrow", "id": "a2", "x": 640, "y": 200, "points": [[0, 0], [-200, 40]]},
+    {"type": "arrow", "id": "a3", "x": 380, "y": 320, "points": [[0, 0], [-180, 60]]},
+    {"type": "arrow", "id": "a4", "x": 440, "y": 320, "points": [[0, 0], [80, 60]]},
+    {"type": "arrow", "id": "a5", "x": 540, "y": 320, "points": [[0, 0], [280, 60]]},
+    {"type": "arrow", "id": "a6", "x": 200, "y": 480, "points": [[0, 0], [0, 60]]},
+    {"type": "arrow", "id": "a7", "x": 540, "y": 480, "points": [[0, 0], [0, 60]]},
+    {"type": "text", "id": "legend", "x": 80, "y": 640, "width": 800, "height": 60, "text": "Legend: BLUE=callers (entry points)  YELLOW=bridge (correct)  RED=composers/state (BUG sites)  GREEN=source data (correct, untouched)", "fontSize": 11, "fontFamily": 1}
+  ],
+  "appState": {
+    "viewBackgroundColor": "#ffffff",
+    "gridSize": null
+  },
+  "files": {}
+}

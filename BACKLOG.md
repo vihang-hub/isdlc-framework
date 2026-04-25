@@ -4,7 +4,7 @@
 > BACKLOG.md is the curated working set with detailed specs. GitHub Issues are for tracking.
 
 ## Open
-- [ ] #265 Bug: #253 injection mechanism not delivered as designed — hook layer absent, state-machine bridge is opt-in via LLM recall [github: GH-265] -> [requirements](docs/requirements/BUG-GH-265-traceability-matrix-not-enforced-presenting-tasks/)
+- [A] #265 Bug: state-machine composers under-render at PRESENTING_* (REQ-GH-253 regression) [github: GH-265] -> [requirements](docs/requirements/BUG-GH-265-traceability-matrix-not-enforced-presenting-tasks/)
 - [A] #263 Centralised Vector DB: carve out embedding server into separate repo [github: GH-263] -> [requirements](docs/requirements/REQ-GH-263-centralised-vector-db-carve-out-embedding-server/)
 - [ ] #258 Live workflow dashboard: wire animated flow to state.json for real-time visualization [github: GH-258]
 - [ ] #257 Fisheye/Crucible integration: push AI review summaries into team code review workflow [github: GH-257]
