@@ -269,4 +269,46 @@ describe('roundtable bridge (CJS)', () => {
     assert.deepStrictEqual(init.rollingState, originalState,
       'original rolling state should not be mutated');
   });
+
+  // -------------------------------------------------------------------------
+  // BUG-GH-265 follow-ups (GH-266) — bridge propagates accepted_payloads via context
+  // -------------------------------------------------------------------------
+
+  // BP-01: composeForTurn passes rollingState.accepted_payloads as context.acceptedPayloads
+  // Traces: FR-006, AC-006-01
+  it('BP-01: composeForTurn passes rollingState.accepted_payloads via context', async () => {
+    const init = await bridge.initializeRoundtable('analyze');
+    if (!init) return;
+
+    const rsMod = await import('../roundtable/rolling-state.js');
+    let augmented = init.rollingState;
+    augmented = rsMod.applyAcceptedPayload(augmented, 'PRESENTING_REQUIREMENTS', 'FR-001 inlined');
+    augmented = rsMod.applyAcceptedPayload(augmented, 'PRESENTING_ARCHITECTURE', 'A1 approach');
+
+    const composed = await bridge.composeForTurn(init.machine, augmented);
+    assert.ok(composed && 'composedCard' in composed, 'composeForTurn returns card object');
+    // Rolling state still carries the payloads (input not mutated)
+    assert.strictEqual(augmented.accepted_payloads.PRESENTING_REQUIREMENTS, 'FR-001 inlined');
+    assert.strictEqual(augmented.accepted_payloads.PRESENTING_ARCHITECTURE, 'A1 approach');
+  });
+
+  // BP-02: caller-provided context.acceptedPayloads is honored over rolling state
+  // Traces: FR-006
+  it('BP-02: caller-provided context.acceptedPayloads is honored', async () => {
+    const init = await bridge.initializeRoundtable('analyze');
+    if (!init) return;
+
+    const rsMod = await import('../roundtable/rolling-state.js');
+    const augmented = rsMod.applyAcceptedPayload(init.rollingState, 'PRESENTING_REQUIREMENTS', 'from rolling state');
+
+    const composed = await bridge.composeForTurn(init.machine, augmented, {
+      acceptedPayloads: {
+        PRESENTING_REQUIREMENTS: 'from caller',
+        PRESENTING_TASKS: null,
+      },
+    });
+    assert.ok(composed && 'composedCard' in composed);
+    // Rolling state unchanged
+    assert.strictEqual(augmented.accepted_payloads.PRESENTING_REQUIREMENTS, 'from rolling state');
+  });
 });

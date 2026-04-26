@@ -213,4 +213,67 @@ describe('REQ-GH-253 state-card-composer', () => {
     }
   });
 
+  // -------------------------------------------------------------------------
+  // BUG-GH-265 follow-ups (GH-266)
+  // -------------------------------------------------------------------------
+
+  // SC-14: PRESENTING_TASKS card includes prior accepted_payloads from context
+  // Traces: FR-002, AC-002-01
+  it('SC-14: PRESENTING_TASKS card inlines prior accepted_payloads', () => {
+    const acceptedPayloads = {
+      PRESENTING_REQUIREMENTS: 'FR-001: Composers must inline content. AC-001-01: rendering_mandate present.',
+      PRESENTING_ARCHITECTURE: 'Selected: A1 inline references. Rationale: matches root cause.',
+      PRESENTING_DESIGN: 'Modify renderCard to load template_ref body and emit columns/rendering inline.',
+      PRESENTING_TASKS: null,
+      PRESENTING_BUG_SUMMARY: null,
+      PRESENTING_ROOT_CAUSE: null,
+      PRESENTING_FIX_STRATEGY: null,
+    };
+
+    const card = composeStateCard('PRESENTING_TASKS', { acceptedPayloads });
+
+    assert.match(card, /Prior accepted payloads:/i, 'header present');
+    assert.match(card, /PRESENTING_REQUIREMENTS:/, 'requirements label present');
+    assert.match(card, /PRESENTING_ARCHITECTURE:/, 'architecture label present');
+    assert.match(card, /PRESENTING_DESIGN:/, 'design label present');
+    assert.ok(card.includes('FR-001: Composers must inline content'), 'requirements payload inlined');
+    assert.ok(card.includes('A1 inline references'), 'architecture payload inlined');
+    assert.ok(card.includes('renderCard to load template_ref'), 'design payload inlined');
+  });
+
+  // SC-14b: PRESENTING_FIX_STRATEGY (bug flow) inlines bug_summary + root_cause
+  // Traces: FR-002, AC-002-01
+  it('SC-14b: bug-flow PRESENTING_FIX_STRATEGY inlines bug + root_cause payloads', () => {
+    const acceptedPayloads = {
+      PRESENTING_REQUIREMENTS: null,
+      PRESENTING_ARCHITECTURE: null,
+      PRESENTING_DESIGN: null,
+      PRESENTING_TASKS: null,
+      PRESENTING_BUG_SUMMARY: 'High severity: composers under-render at PRESENTING_*.',
+      PRESENTING_ROOT_CAUSE: 'H1: renderCard emits filename references not content.',
+      PRESENTING_FIX_STRATEGY: null,
+    };
+    const card = composeStateCard('PRESENTING_FIX_STRATEGY', { acceptedPayloads });
+    assert.match(card, /PRESENTING_BUG_SUMMARY:/);
+    assert.match(card, /PRESENTING_ROOT_CAUSE:/);
+    assert.ok(card.includes('composers under-render'));
+    assert.ok(card.includes('filename references not content'));
+  });
+
+  // FX-30: Article X — template_ref read failure leaves filename reference, no throw
+  // Traces: FR-007, AC-007-01
+  it('FX-30: template_ref read failure falls back to filename reference', () => {
+    // Force template lookup to a directory with no template files —
+    // composer should keep `Template: <filename>` line but skip body inlining.
+    let card;
+    assert.doesNotThrow(() => {
+      card = composeStateCard('PRESENTING_TASKS', {
+        templatesDir: '/nonexistent/templates/dir',
+      });
+    }, 'composer never throws when template_ref body cannot be loaded');
+    assert.match(card, /Template: traceability\.template\.json/, 'filename reference preserved');
+    // No body inlining means no Columns: line from template body.
+    // (rendering_mandate from the card itself still adds Columns:, which is OK.)
+  });
+
 });

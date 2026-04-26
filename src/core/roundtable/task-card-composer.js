@@ -38,11 +38,23 @@ const SHIPPED_BOOST = 0.1;
 /** External skills directory probe roots, in priority order. */
 const EXTERNAL_SKILLS_ROOTS = ['.claude/skills/external', '.codex/skills/external'];
 
+/** Built-in skills root (relative to projectRoot). */
+const BUILT_IN_SKILLS_ROOT = 'src/claude/skills';
+
 /** Max chars to inline per skill body (Article X — bound size). */
 const SKILL_BODY_MAX_CHARS = 4000;
 
 /** Max chars for "key rules" extract (delivery_type=instruction). */
 const SKILL_RULES_MAX_CHARS = 800;
+
+/**
+ * Lazy index mapping built-in skill_id -> absolute SKILL.md path.
+ * Built once on first need by walking BUILT_IN_SKILLS_ROOT and parsing
+ * frontmatter `skill_id`. Cached for the lifetime of the process.
+ * Article X: any error during build leaves the index empty; lookups return null.
+ */
+let _builtInSkillIndex = null;
+let _builtInSkillIndexProjectRoot = null;
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -186,21 +198,110 @@ function resolveMaxSkills(activeSubTask, config) {
 }
 
 /**
+ * Build (or return cached) index of built-in skill_id -> SKILL.md path.
+ * Walks BUILT_IN_SKILLS_ROOT one level down (categories) and two levels deep
+ * (skill folders), parsing frontmatter `skill_id` from each SKILL.md.
+ *
+ * Cached per projectRoot. Article X: any error returns an empty Map;
+ * subsequent lookups return null and renderSkillLine falls back to ID-only.
+ *
+ * @param {string} projectRoot
+ * @returns {Map<string, string>} skill_id -> absolute SKILL.md path
+ */
+function getBuiltInSkillIndex(projectRoot) {
+  if (_builtInSkillIndex && _builtInSkillIndexProjectRoot === projectRoot) {
+    return _builtInSkillIndex;
+  }
+  const index = new Map();
+  try {
+    const skillsRoot = resolve(projectRoot, BUILT_IN_SKILLS_ROOT);
+    if (!existsSync(skillsRoot)) {
+      _builtInSkillIndex = index;
+      _builtInSkillIndexProjectRoot = projectRoot;
+      return index;
+    }
+    // Lazy require — fs/promises sync surface is enough; use sync readdirSync
+    const { readdirSync, statSync } = require('node:fs');
+    const categories = readdirSync(skillsRoot, { withFileTypes: true });
+    for (const cat of categories) {
+      if (!cat.isDirectory()) continue;
+      // Skip the 'external' bucket — external skills have their own probe
+      if (cat.name === 'external') continue;
+      const catDir = resolve(skillsRoot, cat.name);
+      let skillFolders;
+      try {
+        skillFolders = readdirSync(catDir, { withFileTypes: true });
+      } catch {
+        continue;
+      }
+      for (const sf of skillFolders) {
+        if (!sf.isDirectory()) continue;
+        const skillMd = resolve(catDir, sf.name, 'SKILL.md');
+        try {
+          if (!existsSync(skillMd)) continue;
+          const head = readFileSync(skillMd, 'utf8').slice(0, 800);
+          // Frontmatter: ^---\n...skill_id: <id>...\n---
+          const match = head.match(/^skill_id:\s*([\w-]+)\s*$/m);
+          if (match && match[1]) {
+            index.set(match[1], skillMd);
+          }
+        } catch {
+          // skip
+        }
+      }
+    }
+  } catch {
+    // index stays empty
+  }
+  _builtInSkillIndex = index;
+  _builtInSkillIndexProjectRoot = projectRoot;
+  return index;
+}
+
+/**
  * Attempt to load a skill body file by probing common locations.
  * Returns null on any read failure (Article X fail-open).
  *
- * @param {string|null} file - Skill file path (relative to skills root)
+ * Probe order:
+ *   1. External skills via `file` field at .claude/skills/external/ or .codex/skills/external/
+ *   2. Built-in skills via skill_id lookup in src/claude/skills/<category>/<name>/SKILL.md (BUG-GH-265 follow-up)
+ *
+ * @param {object} skill - Skill entry { id, source, file?, ... }
  * @param {string} [projectRoot] - Project root for path resolution
  * @returns {string|null} File contents (truncated to SKILL_BODY_MAX_CHARS) or null
  */
-function loadSkillBody(file, projectRoot) {
-  if (!file || typeof file !== 'string') return null;
+function loadSkillBody(skill, projectRoot) {
   const root = projectRoot || process.cwd();
-  for (const skillRoot of EXTERNAL_SKILLS_ROOTS) {
+
+  // 1. External skill — file path is given
+  const file = skill && typeof skill === 'object' ? skill.file : null;
+  if (file && typeof file === 'string') {
+    for (const skillRoot of EXTERNAL_SKILLS_ROOTS) {
+      try {
+        const candidate = resolve(root, skillRoot, file);
+        if (existsSync(candidate)) {
+          const content = readFileSync(candidate, 'utf8');
+          if (content && content.trim()) {
+            return content.length > SKILL_BODY_MAX_CHARS
+              ? content.slice(0, SKILL_BODY_MAX_CHARS) + '\n[truncated]'
+              : content;
+          }
+        }
+      } catch {
+        // try next root
+      }
+    }
+  }
+
+  // 2. Built-in skill — look up by skill_id in the manifest-derived index
+  const skillId = skill && typeof skill === 'object' ? (skill.id || skill.skillId) : null;
+  const source = skill && typeof skill === 'object' ? skill.source : null;
+  if (skillId && (source === 'built_in' || source === 'shipped' || !file)) {
     try {
-      const candidate = resolve(root, skillRoot, file);
-      if (existsSync(candidate)) {
-        const content = readFileSync(candidate, 'utf8');
+      const index = getBuiltInSkillIndex(root);
+      const path = index.get(skillId);
+      if (path) {
+        const content = readFileSync(path, 'utf8');
         if (content && content.trim()) {
           return content.length > SKILL_BODY_MAX_CHARS
             ? content.slice(0, SKILL_BODY_MAX_CHARS) + '\n[truncated]'
@@ -208,9 +309,10 @@ function loadSkillBody(file, projectRoot) {
         }
       }
     } catch {
-      // try next root
+      // fall through to null
     }
   }
+
   return null;
 }
 
@@ -257,7 +359,9 @@ function renderSkillLine(skill, projectRoot) {
   // Article X: any read failure returns null and we fall back to ID-only line.
   if (skill.deliveryType === 'context' || skill.deliveryType === 'instruction') {
     try {
-      const body = loadSkillBody(skill.file, projectRoot);
+      // Pass the full skill entry so loadSkillBody can probe external (file)
+      // and built-in (id) sources. (BUG-GH-265 follow-up — built-in resolution.)
+      const body = loadSkillBody(skill, projectRoot);
       if (body) {
         const content = skill.deliveryType === 'instruction' ? extractKeyRules(body) : body;
         if (content) {
