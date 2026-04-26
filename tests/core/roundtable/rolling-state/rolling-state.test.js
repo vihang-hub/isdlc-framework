@@ -12,7 +12,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { create, update, snapshot } from '../../../../src/core/roundtable/rolling-state.js';
+import { create, update, snapshot, applyAcceptedPayload } from '../../../../src/core/roundtable/rolling-state.js';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -191,6 +191,89 @@ describe('REQ-GH-253 rolling-state', () => {
     const state = create(MINIMAL_DEF);
     const updated = update(state, { trailer: { amendment_cycles: 2 } });
     assert.strictEqual(updated.amendment_cycles, 2);
+  });
+
+  // -------------------------------------------------------------------------
+  // BUG-GH-265 follow-ups (GH-266) — accepted_payloads accumulator
+  // -------------------------------------------------------------------------
+
+  // RS-10: create() initializes accepted_payloads with all 7 PRESENTING_* keys
+  // Traces: FR-005, AC-005-01
+  it('RS-10: create() initializes accepted_payloads with 7 PRESENTING_* keys defaulted to null', () => {
+    const state = create(MINIMAL_DEF);
+    assert.ok(state.accepted_payloads, 'accepted_payloads field present');
+    const expected = [
+      'PRESENTING_REQUIREMENTS',
+      'PRESENTING_ARCHITECTURE',
+      'PRESENTING_DESIGN',
+      'PRESENTING_TASKS',
+      'PRESENTING_BUG_SUMMARY',
+      'PRESENTING_ROOT_CAUSE',
+      'PRESENTING_FIX_STRATEGY',
+    ];
+    for (const key of expected) {
+      assert.ok(key in state.accepted_payloads, `key ${key} present`);
+      assert.strictEqual(state.accepted_payloads[key], null, `${key} defaults to null`);
+    }
+  });
+
+  // RS-11: applyAcceptedPayload writes to correct slot, others untouched, immutable input
+  // Traces: FR-005, AC-005-02
+  it('RS-11: applyAcceptedPayload writes to correct slot, leaves others null, does not mutate input', () => {
+    const state = create(MINIMAL_DEF);
+    const stateBefore = snapshot(state);
+
+    const updated = applyAcceptedPayload(state, 'PRESENTING_REQUIREMENTS', 'FR-001 accepted');
+
+    assert.strictEqual(updated.accepted_payloads.PRESENTING_REQUIREMENTS, 'FR-001 accepted');
+    assert.strictEqual(updated.accepted_payloads.PRESENTING_ARCHITECTURE, null, 'others untouched');
+    assert.strictEqual(updated.accepted_payloads.PRESENTING_DESIGN, null);
+    // Input must not be mutated
+    assert.deepStrictEqual(snapshot(state), stateBefore, 'input state unchanged');
+    // Returned object must be different reference
+    assert.notStrictEqual(updated, state, 'new object returned');
+  });
+
+  // RS-11b: applyAcceptedPayload with unknown stateName returns input unchanged
+  // Traces: FR-005, AC-005-02 (negative)
+  it('RS-11b: applyAcceptedPayload with unknown state name returns input unchanged', () => {
+    const state = create(MINIMAL_DEF);
+    const result = applyAcceptedPayload(state, 'NOT_A_REAL_STATE', 'payload');
+    assert.strictEqual(result, state, 'returns same input on invalid stateName');
+  });
+
+  // RS-12: update() defensively self-heals legacy state without accepted_payloads
+  // Traces: FR-005, AC-005-03
+  it('RS-12: update() defensively initializes accepted_payloads on legacy state shapes', () => {
+    // Simulate a legacy in-flight session — rolling state pre-dates the
+    // accepted_payloads field, so it's absent from the input.
+    const legacyState = {
+      coverage_by_topic: {},
+      scan_complete: false,
+      scope_accepted: false,
+      current_persona_rotation: ['maya', 'alex', 'jordan'],
+      rendering_mode: 'bulleted',
+      amendment_cycles: 0,
+      participation_markers: { maya: false, alex: false, jordan: false },
+      sub_task_completion: {},
+      // accepted_payloads intentionally absent
+    };
+    const updated = update(legacyState, { markers: { scan_complete: true } });
+    assert.ok(updated.accepted_payloads, 'accepted_payloads self-healed onto output');
+    assert.strictEqual(updated.accepted_payloads.PRESENTING_TASKS, null);
+    assert.strictEqual(updated.scan_complete, true, 'normal update behavior preserved');
+  });
+
+  // RS-13: snapshot includes accepted_payloads
+  // Traces: FR-005, AC-005-01
+  it('RS-13: snapshot includes accepted_payloads', () => {
+    const state = create(MINIMAL_DEF);
+    const updated = applyAcceptedPayload(state, 'PRESENTING_TASKS', 'tasks accepted');
+    const snap = snapshot(updated);
+    assert.deepStrictEqual(snap.accepted_payloads, updated.accepted_payloads);
+    // Snapshot is independent
+    snap.accepted_payloads.PRESENTING_TASKS = 'mutated';
+    assert.strictEqual(updated.accepted_payloads.PRESENTING_TASKS, 'tasks accepted', 'snapshot is deep copy');
   });
 
 });
