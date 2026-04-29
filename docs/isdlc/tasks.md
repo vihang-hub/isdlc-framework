@@ -4,33 +4,33 @@
 
 | Phase | Total | Done | Remaining |
 |-------|-------|------|-----------|
-| 05-test-strategy | 1 | 0 | 1 |
-| 06-implementation | 6 | 0 | 6 |
+| 05-test-strategy | 1 | 1 | 0 |
+| 06-implementation | 6 | 6 | 0 |
 | 16-quality-loop | 1 | 0 | 1 |
 | 08-code-review | 1 | 0 | 1 |
-| **Total** | **9** | **0** | **9** |
+| **Total** | **9** | **7** | **2** |
 
-## Phase 05: Test Strategy -- PENDING
+## Phase 05: Test Strategy -- COMPLETE
 
-- [ ] T001 Design test strategy for analysis-index module and dashboard API changes | traces: FR-007, FR-008
+- [X] T001 Design test strategy for analysis-index module and dashboard API changes | traces: FR-007, FR-008
 
-## Phase 06: Implementation -- PENDING
+## Phase 06: Implementation -- COMPLETE
 
-- [ ] T002 Create src/core/backlog/analysis-index.js with updateAnalysisIndex(), rebuildAnalysisIndex(), readAnalysisIndex() | traces: FR-001
+- [X] T002 Create src/core/backlog/analysis-index.js with updateAnalysisIndex(), rebuildAnalysisIndex(), readAnalysisIndex() | traces: FR-001
   files: src/core/backlog/analysis-index.js (CREATE)
-- [ ] T003 Wire updateAnalysisIndex() into writeMetaJson() in item-state.js | traces: FR-002
+- [X] T003 Wire updateAnalysisIndex() into writeMetaJson() in item-state.js | traces: FR-002
   files: src/core/backlog/item-state.js (MODIFY)
   blocked_by: [T002]
-- [ ] T004 Add re-exports to src/core/backlog/index.js | traces: FR-003
+- [X] T004 Add re-exports to src/core/backlog/index.js | traces: FR-003
   files: src/core/backlog/index.js (MODIFY)
   blocked_by: [T002]
-- [ ] T005 Add analysis data to dashboard server API response | traces: FR-004
+- [X] T005 Add analysis data to dashboard server API response | traces: FR-004
   files: src/dashboard/server.js (MODIFY)
   blocked_by: [T002]
-- [ ] T006 Implement analysis UI view with radio toggle in dashboard | traces: FR-005
+- [X] T006 Implement analysis UI view with radio toggle in dashboard | traces: FR-005
   files: src/dashboard/index.html (MODIFY)
   blocked_by: [T005]
-- [ ] T007 Add .isdlc/analysis-index.json to .gitignore | traces: FR-006
+- [X] T007 Add .isdlc/analysis-index.json to .gitignore | traces: FR-006
   files: .gitignore (MODIFY)
 
 ## Phase 16: Quality Loop -- PENDING

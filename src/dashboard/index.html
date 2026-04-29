@@ -78,6 +78,28 @@
   /* No workflow state */
   .no-workflow { text-align: center; padding: 80px 24px; color: var(--text-muted); }
   .no-workflow h2 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+
+  /* Analysis view (BUG-GH-277) */
+  .analysis-view { padding: 24px; }
+  .analysis-view h2 { font-size: 16px; margin-bottom: 16px; }
+  .analysis-toggle { display: flex; gap: 12px; margin-bottom: 20px; }
+  .analysis-toggle label { cursor: pointer; font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+  .analysis-toggle input:checked + span { color: var(--text); font-weight: 600; }
+  .analysis-item { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 12px 16px; margin-bottom: 10px; }
+  .analysis-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .analysis-item-slug { font-size: 14px; font-weight: 600; }
+  .analysis-item-source { font-size: 12px; color: var(--text-muted); }
+  .analysis-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+  .analysis-badge-bug { background: #7c2d12; }
+  .analysis-badge-feature { background: #1e40af; }
+  .analysis-badge-upgrade { background: #7c3aed; }
+  .analysis-status-raw { color: var(--text-muted); }
+  .analysis-status-partial { color: #f59e0b; }
+  .analysis-status-analyzed { color: var(--completed-stroke); }
+  .phase-dots { display: flex; gap: 4px; margin-top: 6px; }
+  .phase-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--pending); border: 1px solid var(--pending-stroke); }
+  .phase-dot.completed { background: var(--completed); border-color: var(--completed-stroke); }
+  .phase-dot-label { font-size: 10px; color: var(--text-muted); margin-left: 8px; line-height: 10px; }
 </style>
 </head>
 <body>
@@ -275,6 +297,12 @@
       const badgeClass = type === 'fix' ? 'badge-fix' : type === 'upgrade' ? 'badge-upgrade' : 'badge-feature';
       const phaseInfo = data._historical ? `Status: ${wf.status || 'completed'}` : `Phase: ${wf.current_phase || '--'}`;
       meta.innerHTML = `<span class="badge ${badgeClass}">${type}</span> ${phaseInfo}`;
+    } else if (data.active_analysis) {
+      // BUG-GH-277: Show analysis info in header
+      const aa = data.active_analysis;
+      title.textContent = aa.slug || 'Analysis in Progress';
+      const badgeClass = aa.item_type === 'BUG' ? 'badge-fix' : aa.item_type === 'UPGRADE' ? 'badge-upgrade' : 'badge-feature';
+      meta.innerHTML = '<span class="badge ' + badgeClass + '">' + escapeHtml(aa.item_type || 'analysis') + '</span> Status: ' + escapeHtml(aa.analysis_status || 'raw');
     } else {
       title.textContent = 'iSDLC Workflow Dashboard';
       meta.textContent = 'No active workflow';
@@ -290,12 +318,81 @@
   // DAG Rendering
   // -----------------------------------------------------------------------
 
+  // BUG-GH-277: Analysis phases for phase dot rendering
+  const ANALYSIS_PHASE_NAMES = ['00-quick-scan', '01-requirements', '02-impact-analysis', '03-architecture', '04-design'];
+  let analysisFilter = 'active'; // 'active' or 'all'
+
+  function renderAnalysisView(data) {
+    const container = document.getElementById('dag-container');
+    const items = data.analysis_items || [];
+    if (items.length === 0) {
+      container.innerHTML = '<div class="no-workflow"><h2>No Active Workflow</h2><p>Start a workflow to see the execution DAG.</p></div>';
+      return;
+    }
+
+    const filtered = analysisFilter === 'active' ? items.filter(i => i.analysis_status === 'partial' || i.analysis_status === 'raw') : items;
+
+    let html = '<div class="analysis-view">';
+    html += '<h2>Analysis Items</h2>';
+
+    // Radio toggle
+    html += '<div class="analysis-toggle">';
+    html += '<label><input type="radio" name="analysis-filter" value="active"' + (analysisFilter === 'active' ? ' checked' : '') + '> <span>Active</span></label>';
+    html += '<label><input type="radio" name="analysis-filter" value="all"' + (analysisFilter === 'all' ? ' checked' : '') + '> <span>All</span></label>';
+    html += '</div>';
+
+    if (filtered.length === 0) {
+      html += '<p style="color: var(--text-muted);">No items match the current filter.</p>';
+    }
+
+    for (const item of filtered) {
+      const typeBadgeClass = item.item_type === 'BUG' ? 'analysis-badge-bug' : item.item_type === 'UPGRADE' ? 'analysis-badge-upgrade' : 'analysis-badge-feature';
+      const statusClass = 'analysis-status-' + (item.analysis_status || 'raw');
+      html += '<div class="analysis-item">';
+      html += '<div class="analysis-item-header">';
+      html += '<div>';
+      html += '<span class="analysis-item-slug">' + escapeHtml(item.slug) + '</span>';
+      html += ' <span class="analysis-badge ' + typeBadgeClass + '">' + escapeHtml(item.item_type || 'UNKNOWN') + '</span>';
+      html += '</div>';
+      html += '<span class="analysis-item-source">' + escapeHtml(item.source_id || '') + '</span>';
+      html += '</div>';
+      html += '<div><span class="' + statusClass + '">' + escapeHtml(item.analysis_status || 'raw') + '</span></div>';
+
+      // Phase dots
+      html += '<div class="phase-dots">';
+      for (const phase of ANALYSIS_PHASE_NAMES) {
+        const done = Array.isArray(item.phases_completed) && item.phases_completed.includes(phase);
+        html += '<div class="phase-dot' + (done ? ' completed' : '') + '" title="' + escapeHtml(phase) + '"></div>';
+      }
+      html += '<span class="phase-dot-label">' + (Array.isArray(item.phases_completed) ? item.phases_completed.length : 0) + '/' + ANALYSIS_PHASE_NAMES.length + ' phases</span>';
+      html += '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    container.innerHTML = html;
+
+    // Bind radio toggle events
+    const radios = container.querySelectorAll('input[name="analysis-filter"]');
+    for (const r of radios) {
+      r.addEventListener('change', function() {
+        analysisFilter = this.value;
+        if (lastData) renderAnalysisView(lastData);
+      });
+    }
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
   function renderDAG(data) {
     const svg = document.getElementById('dag-svg');
     const wf = data.active_workflow;
     if (!wf || !wf.phases) {
-      svg.innerHTML = '';
-      document.getElementById('dag-container').innerHTML = '<div class="no-workflow"><h2>No Active Workflow</h2><p>Start a workflow to see the execution DAG.</p></div>';
+      // BUG-GH-277: Show analysis view instead of empty state
+      renderAnalysisView(data);
       return;
     }
 
@@ -425,7 +522,21 @@
     const panel = document.getElementById('detail-panel');
     const wf = data.active_workflow;
     if (!wf) {
-      panel.innerHTML = '<h2>Phase Details</h2><p class="detail-row" style="color: var(--text-muted);">Click a phase node to view details.</p>';
+      // BUG-GH-277: Show analysis summary in detail panel
+      const aa = data.active_analysis;
+      if (aa) {
+        let html = '<h2>Active Analysis</h2>';
+        html += '<div class="detail-row"><span class="detail-label">Slug:</span> ' + escapeHtml(aa.slug) + '</div>';
+        html += '<div class="detail-row"><span class="detail-label">Source:</span> ' + escapeHtml(aa.source_id || '--') + '</div>';
+        html += '<div class="detail-row"><span class="detail-label">Type:</span> ' + escapeHtml(aa.item_type || '--') + '</div>';
+        html += '<div class="detail-row"><span class="detail-label">Status:</span> ' + escapeHtml(aa.analysis_status || 'raw') + '</div>';
+        html += '<div class="detail-row"><span class="detail-label">Phases:</span> ' + (Array.isArray(aa.phases_completed) ? aa.phases_completed.length : 0) + '/' + ANALYSIS_PHASE_NAMES.length + '</div>';
+        const totalItems = (data.analysis_items || []).length;
+        html += '<div class="detail-row"><span class="detail-label">Total items:</span> ' + totalItems + '</div>';
+        panel.innerHTML = html;
+      } else {
+        panel.innerHTML = '<h2>Phase Details</h2><p class="detail-row" style="color: var(--text-muted);">No active analysis or workflow.</p>';
+      }
       return;
     }
 
