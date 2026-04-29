@@ -4,6 +4,7 @@
 > BACKLOG.md is the curated working set with detailed specs. GitHub Issues are for tracking.
 
 ## Open
+- [A] #277 Bug: Dashboard shows no active workflows during analysis — meta.json not used as secondary data source [github: GH-277] -> [requirements](docs/requirements/BUG-GH-277-dashboard-no-active-workflows-during-analysis/)
 - [x] #265 Bug: state-machine composers under-render at PRESENTING_* (REQ-GH-253 regression) [github: GH-265] -> [requirements](docs/requirements/BUG-GH-265-traceability-matrix-not-enforced-presenting-tasks/) **Completed**
   - Composers now inline rendering_mandate, content_coverage, template_ref body, accepted_payloads, and skill bodies per delivery_type. Rolling-state has accepted_payloads accumulator with applyAcceptedPayload writer + defensive init. Bridge propagates payloads via context. Article X preserved on every new file read. 199 tests pass. Provider parity automatic.
   - **Completed:** 2026-04-26

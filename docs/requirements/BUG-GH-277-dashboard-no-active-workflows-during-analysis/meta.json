@@ -1,0 +1,20 @@
+{
+  "source": "github",
+  "source_id": "GH-277",
+  "slug": "BUG-GH-277-dashboard-no-active-workflows-during-analysis",
+  "item_type": "BUG",
+  "created_at": "2026-04-29T07:12:00.000Z",
+  "analysis_status": "analyzed",
+  "phases_completed": ["01-requirements", "02-tracing"],
+  "codebase_hash": "a26f4e75",
+  "bug_classification": {
+    "classification": "bug",
+    "reasoning": "Dashboard designed to show workflow observability (REQ-0068) but has a blind spot during analysis — gap in existing functionality, not a new feature",
+    "confirmed_by_user": true
+  },
+  "acceptance": {
+    "accepted_at": "2026-04-29T07:20:00.000Z",
+    "domains": ["bug_summary", "root_cause", "fix_strategy", "tasks"],
+    "amendment_cycles": 0
+  }
+}
