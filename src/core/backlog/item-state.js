@@ -10,7 +10,8 @@
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, basename, dirname, resolve } from 'node:path';
+import { updateAnalysisIndex } from './analysis-index.js';
 
 /**
  * Analysis phases (ordered).
@@ -76,6 +77,37 @@ export function writeMetaJson(slugDir, meta) {
   delete meta.phase_a_completed;
   meta.analysis_status = deriveAnalysisStatus(meta.phases_completed, meta.sizing_decision);
   writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+
+  // BUG-GH-277: Update the analysis index after writing meta.json.
+  // Derive projectRoot by walking up from slugDir (docs/requirements/{slug}/).
+  // Fail-open: if updateAnalysisIndex fails, meta.json is still written.
+  try {
+    const slug = basename(slugDir);
+    const projectRoot = deriveProjectRoot(slugDir);
+    if (projectRoot) {
+      updateAnalysisIndex(projectRoot, slug, meta);
+    }
+  } catch (_e) {
+    // Fail-open per Article X
+  }
+}
+
+/**
+ * Derives the project root from a slug directory path by walking up
+ * to find the directory containing .isdlc/.
+ * @param {string} slugDir - e.g. /path/to/project/docs/requirements/BUG-GH-277-fix
+ * @returns {string|null} Project root path or null if not found
+ */
+function deriveProjectRoot(slugDir) {
+  let dir = resolve(slugDir);
+  const root = dirname(dir).substring(0, 1) === '/' ? '/' : dirname(dir).substring(0, 3); // handle unix and windows
+  for (let i = 0; i < 10; i++) {
+    if (existsSync(join(dir, '.isdlc'))) return dir;
+    const parent = dirname(dir);
+    if (parent === dir) return null; // reached filesystem root
+    dir = parent;
+  }
+  return null;
 }
 
 /**

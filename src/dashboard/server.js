@@ -55,8 +55,16 @@ export async function startDashboardServer(options) {
   // Resolve index.html path
   const indexPath = join(__dirname, 'index.html');
 
+  // Resolve analysis-index.json path (sibling to state.json in .isdlc/)
+  const analysisIndexPath = join(dirname(stateJsonPath), 'analysis-index.json');
+
   // Cache for last-good state response
   let lastGoodState = null;
+
+  // Cache for analysis index (5-second TTL to avoid excess I/O)
+  let analysisIndexCache = null;
+  let analysisIndexCacheTime = 0;
+  const ANALYSIS_INDEX_CACHE_TTL_MS = 5000;
 
   // Auto-stop timer
   let autoStopTimer = null;
@@ -72,14 +80,60 @@ export async function startDashboardServer(options) {
     }
   }
 
+  /**
+   * Reads analysis-index.json with 5-second cache.
+   * Fail-open: returns default on missing/corrupt file.
+   */
+  function scanAnalysisIndex() {
+    const now = Date.now();
+    if (analysisIndexCache && (now - analysisIndexCacheTime) < ANALYSIS_INDEX_CACHE_TTL_MS) {
+      return analysisIndexCache;
+    }
+    try {
+      if (existsSync(analysisIndexPath)) {
+        const content = readFileSync(analysisIndexPath, 'utf8');
+        const parsed = JSON.parse(content);
+        analysisIndexCache = parsed;
+        analysisIndexCacheTime = now;
+        return parsed;
+      }
+    } catch (_err) {
+      // Fail-open: return empty on corrupt/missing
+    }
+    const empty = { version: '1.0.0', updated_at: null, items: [] };
+    analysisIndexCache = empty;
+    analysisIndexCacheTime = now;
+    return empty;
+  }
+
   function buildStateResponse(state) {
+    // BUG-GH-277: Include analysis data in response
+    const analysisIndex = scanAnalysisIndex();
+    const analysisItems = Array.isArray(analysisIndex.items) ? analysisIndex.items : [];
+
+    // active_analysis: most recently active partial or raw item
+    let activeAnalysis = null;
+    const partialItems = analysisItems.filter(i => i.analysis_status === 'partial');
+    if (partialItems.length > 0) {
+      // Pick the one with most recent last_activity_at
+      activeAnalysis = partialItems.reduce((a, b) => (a.last_activity_at >= b.last_activity_at ? a : b));
+    } else {
+      // Fallback to most recent raw item
+      const rawItems = analysisItems.filter(i => i.analysis_status === 'raw');
+      if (rawItems.length > 0) {
+        activeAnalysis = rawItems.reduce((a, b) => (a.last_activity_at >= b.last_activity_at ? a : b));
+      }
+    }
+
     return {
       active_workflow: state?.active_workflow || null,
       phases: state?.phases || {},
       topology: topology?.phases || {},
       workflow_type: state?.active_workflow?.type || null,
       timestamp: new Date().toISOString(),
-      stale: state === lastGoodState && state !== null
+      stale: state === lastGoodState && state !== null,
+      analysis_items: analysisItems,
+      active_analysis: activeAnalysis
     };
   }
 

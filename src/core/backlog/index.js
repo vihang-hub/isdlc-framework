@@ -15,6 +15,11 @@ export {
   deriveBacklogMarker
 } from './item-state.js';
 export {
+  readAnalysisIndex,
+  updateAnalysisIndex,
+  rebuildAnalysisIndex
+} from './analysis-index.js';
+export {
   parseBacklogLine,
   updateBacklogMarker,
   appendToBacklog

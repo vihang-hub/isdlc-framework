@@ -6,7 +6,7 @@
 
 import { describe, it, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { writeFileSync, mkdirSync, rmSync } from 'node:fs';
+import { writeFileSync, mkdirSync, rmSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -222,5 +222,153 @@ describe('port fallback', () => {
     await second.close();
     await first.close();
     serverInstance = null; // Both cleaned up manually
+  });
+});
+
+// ---------------------------------------------------------------------------
+// DS-AI: Analysis data in /api/state (BUG-GH-277)
+// ---------------------------------------------------------------------------
+
+function writeAnalysisIndex(dir, content) {
+  writeFileSync(join(dir, 'analysis-index.json'), typeof content === 'string' ? content : JSON.stringify(content, null, 2));
+}
+
+function makeAnalysisIndex(items = []) {
+  return {
+    version: '1.0.0',
+    updated_at: new Date().toISOString(),
+    items
+  };
+}
+
+function makeAnalysisItem(overrides = {}) {
+  return {
+    slug: 'BUG-GH-277-dashboard-fix',
+    source_id: 'GH-277',
+    item_type: 'BUG',
+    analysis_status: 'partial',
+    phases_completed: ['00-quick-scan', '01-requirements'],
+    created_at: '2026-04-29T10:00:00.000Z',
+    last_activity_at: '2026-04-29T12:00:00.000Z',
+    ...overrides
+  };
+}
+
+describe('GET /api/state — analysis data (BUG-GH-277)', () => {
+
+  it('DS-AI-01: includes analysis_items when analysis-index.json exists', async () => {
+    const stateJsonPath = setupTempState({ active_workflow: null, phases: {} });
+    writeAnalysisIndex(tempDir, makeAnalysisIndex([makeAnalysisItem()]));
+
+    serverInstance = await startDashboardServer({ stateJsonPath, port: 0 });
+    const res = await fetch(`${serverInstance.url}/api/state`);
+    const data = await res.json();
+
+    assert.ok(Array.isArray(data.analysis_items));
+    assert.strictEqual(data.analysis_items.length, 1);
+    assert.strictEqual(data.analysis_items[0].slug, 'BUG-GH-277-dashboard-fix');
+  });
+
+  it('DS-AI-02: includes active_analysis for partial items', async () => {
+    const stateJsonPath = setupTempState({ active_workflow: null, phases: {} });
+    writeAnalysisIndex(tempDir, makeAnalysisIndex([
+      makeAnalysisItem({ analysis_status: 'partial', last_activity_at: '2026-04-29T12:00:00.000Z' }),
+      makeAnalysisItem({ slug: 'REQ-GH-280-feature', analysis_status: 'analyzed', last_activity_at: '2026-04-29T11:00:00.000Z' })
+    ]));
+
+    serverInstance = await startDashboardServer({ stateJsonPath, port: 0 });
+    const res = await fetch(`${serverInstance.url}/api/state`);
+    const data = await res.json();
+
+    assert.ok(data.active_analysis);
+    assert.strictEqual(data.active_analysis.slug, 'BUG-GH-277-dashboard-fix');
+    assert.strictEqual(data.active_analysis.analysis_status, 'partial');
+  });
+
+  it('DS-AI-03: active_analysis is null when no partial items', async () => {
+    const stateJsonPath = setupTempState({ active_workflow: null, phases: {} });
+    writeAnalysisIndex(tempDir, makeAnalysisIndex([
+      makeAnalysisItem({ analysis_status: 'analyzed' })
+    ]));
+
+    serverInstance = await startDashboardServer({ stateJsonPath, port: 0 });
+    const res = await fetch(`${serverInstance.url}/api/state`);
+    const data = await res.json();
+
+    assert.strictEqual(data.active_analysis, null);
+  });
+
+  it('DS-AI-04: analysis_items is empty array when no index file', async () => {
+    const stateJsonPath = setupTempState({ active_workflow: null, phases: {} });
+    // Do NOT write an analysis-index.json
+
+    serverInstance = await startDashboardServer({ stateJsonPath, port: 0 });
+    const res = await fetch(`${serverInstance.url}/api/state`);
+    const data = await res.json();
+
+    assert.deepStrictEqual(data.analysis_items, []);
+    assert.strictEqual(data.active_analysis, null);
+  });
+
+  it('DS-AI-05: analysis data coexists with active_workflow', async () => {
+    const stateJsonPath = setupTempState(makeStateWithWorkflow());
+    writeAnalysisIndex(tempDir, makeAnalysisIndex([makeAnalysisItem()]));
+
+    serverInstance = await startDashboardServer({ stateJsonPath, port: 0 });
+    const res = await fetch(`${serverInstance.url}/api/state`);
+    const data = await res.json();
+
+    assert.ok(data.active_workflow);
+    assert.ok(Array.isArray(data.analysis_items));
+    assert.strictEqual(data.analysis_items.length, 1);
+  });
+
+  it('DS-AI-06: handles corrupt analysis-index.json', async () => {
+    const stateJsonPath = setupTempState({ active_workflow: null, phases: {} });
+    writeAnalysisIndex(tempDir, 'NOT VALID JSON {{{');
+
+    serverInstance = await startDashboardServer({ stateJsonPath, port: 0 });
+    const res = await fetch(`${serverInstance.url}/api/state`);
+    const data = await res.json();
+
+    assert.deepStrictEqual(data.analysis_items, []);
+    assert.strictEqual(data.active_analysis, null);
+  });
+
+  it('DS-AI-07: analysis_items match expected schema', async () => {
+    const stateJsonPath = setupTempState({ active_workflow: null, phases: {} });
+    writeAnalysisIndex(tempDir, makeAnalysisIndex([makeAnalysisItem()]));
+
+    serverInstance = await startDashboardServer({ stateJsonPath, port: 0 });
+    const res = await fetch(`${serverInstance.url}/api/state`);
+    const data = await res.json();
+
+    const item = data.analysis_items[0];
+    assert.ok('slug' in item);
+    assert.ok('source_id' in item);
+    assert.ok('item_type' in item);
+    assert.ok('analysis_status' in item);
+    assert.ok(Array.isArray(item.phases_completed));
+    assert.ok('created_at' in item);
+    assert.ok('last_activity_at' in item);
+  });
+
+  it('DS-AI-08: existing response fields unchanged', async () => {
+    const stateJsonPath = setupTempState(makeStateWithWorkflow());
+
+    serverInstance = await startDashboardServer({ stateJsonPath, port: 0 });
+    const res = await fetch(`${serverInstance.url}/api/state`);
+    const data = await res.json();
+
+    // All existing fields still present
+    assert.ok('active_workflow' in data);
+    assert.ok('phases' in data);
+    assert.ok('topology' in data);
+    assert.ok('timestamp' in data);
+    assert.ok('workflow_type' in data);
+    assert.strictEqual(data.workflow_type, 'feature');
+    // active_workflow should be populated (not null)
+    assert.ok(data.active_workflow);
+    assert.strictEqual(data.active_workflow.type, 'feature');
   });
 });

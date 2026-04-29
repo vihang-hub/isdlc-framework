@@ -62,5 +62,8 @@ src/isdlc/checklists/update-agents.txt
 .isdlc/embeddings/*.emb
 docs/.embeddings/
 
+# Analysis index (generated at runtime by analysis-index.js)
+.isdlc/analysis-index.json
+
 # Test coverage output
 coverage/

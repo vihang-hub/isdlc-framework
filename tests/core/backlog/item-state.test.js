@@ -5,7 +5,7 @@
 
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, readFileSync, rmSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync, rmSync, mkdirSync, chmodSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -15,6 +15,7 @@ import {
   deriveAnalysisStatus,
   deriveBacklogMarker
 } from '../../../src/core/backlog/item-state.js';
+import { readAnalysisIndex } from '../../../src/core/backlog/analysis-index.js';
 
 describe('deriveAnalysisStatus', () => {
   it('returns raw for non-array input', () => {
@@ -144,5 +145,91 @@ describe('writeMetaJson', () => {
     writeMetaJson(tmpDir, meta);
     const written = JSON.parse(readFileSync(join(tmpDir, 'meta.json'), 'utf8'));
     assert.strictEqual(written.phase_a_completed, undefined);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// WM-AI: writeMetaJson -> updateAnalysisIndex propagation (BUG-GH-277)
+// ---------------------------------------------------------------------------
+
+describe('writeMetaJson -> updateAnalysisIndex propagation', () => {
+  let projectRoot;
+  let slugDir;
+
+  beforeEach(() => {
+    projectRoot = mkdtempSync(join(tmpdir(), 'isdlc-wm-ai-'));
+    mkdirSync(join(projectRoot, '.isdlc'), { recursive: true });
+    slugDir = join(projectRoot, 'docs', 'requirements', 'BUG-GH-277-dashboard-fix');
+    mkdirSync(slugDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    rmSync(projectRoot, { recursive: true, force: true });
+  });
+
+  it('WM-AI-01: writeMetaJson triggers index update', () => {
+    const meta = {
+      source_id: 'GH-277', item_type: 'BUG',
+      phases_completed: ['00-quick-scan'],
+      created_at: '2026-04-29T10:00:00.000Z'
+    };
+    writeMetaJson(slugDir, meta);
+
+    const index = readAnalysisIndex(projectRoot);
+    assert.strictEqual(index.items.length, 1);
+    assert.strictEqual(index.items[0].slug, 'BUG-GH-277-dashboard-fix');
+    assert.strictEqual(index.items[0].source_id, 'GH-277');
+  });
+
+  it('WM-AI-02: writeMetaJson index update reflects analysis_status change', () => {
+    const meta1 = {
+      source_id: 'GH-277', item_type: 'BUG',
+      phases_completed: ['00-quick-scan'],
+      created_at: '2026-04-29T10:00:00.000Z'
+    };
+    writeMetaJson(slugDir, meta1);
+    const index1 = readAnalysisIndex(projectRoot);
+    assert.strictEqual(index1.items[0].analysis_status, 'partial');
+    assert.deepStrictEqual(index1.items[0].phases_completed, ['00-quick-scan']);
+
+    const meta2 = {
+      source_id: 'GH-277', item_type: 'BUG',
+      phases_completed: ['00-quick-scan', '01-requirements'],
+      created_at: '2026-04-29T10:00:00.000Z'
+    };
+    writeMetaJson(slugDir, meta2);
+    const index2 = readAnalysisIndex(projectRoot);
+    assert.strictEqual(index2.items.length, 1); // No duplicate
+    assert.deepStrictEqual(index2.items[0].phases_completed, ['00-quick-scan', '01-requirements']);
+  });
+
+  it('WM-AI-03: writeMetaJson succeeds even if index update fails', () => {
+    chmodSync(join(projectRoot, '.isdlc'), 0o444);
+
+    const meta = {
+      source_id: 'GH-277', item_type: 'BUG',
+      phases_completed: ['00-quick-scan'],
+      created_at: '2026-04-29T10:00:00.000Z'
+    };
+
+    // Should not throw -- meta.json still written
+    writeMetaJson(slugDir, meta);
+    const written = JSON.parse(readFileSync(join(slugDir, 'meta.json'), 'utf8'));
+    assert.strictEqual(written.source_id, 'GH-277');
+
+    // Restore permissions for cleanup
+    chmodSync(join(projectRoot, '.isdlc'), 0o755);
+  });
+
+  it('WM-AI-04: writeMetaJson index update extracts correct slug from path', () => {
+    const meta = {
+      source_id: 'GH-277', item_type: 'BUG',
+      phases_completed: [],
+      created_at: '2026-04-29T10:00:00.000Z'
+    };
+    writeMetaJson(slugDir, meta);
+
+    const index = readAnalysisIndex(projectRoot);
+    assert.strictEqual(index.items[0].slug, 'BUG-GH-277-dashboard-fix');
   });
 });
