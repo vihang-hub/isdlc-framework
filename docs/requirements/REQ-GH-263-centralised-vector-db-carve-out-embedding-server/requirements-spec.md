@@ -249,6 +249,14 @@
 - AC-016-01: Given iSDLC connected to a knowledge service, then the status line shows connection status, active project count, and staleness summary.
 - AC-016-02: Given the status line, then data is fetched from the `/metrics` endpoint — lightweight, cached, polled periodically.
 
+### FR-017: Source Locator Schema — Must Have
+**Confidence**: High
+
+- AC-017-01: Given a search result, then it MUST include a source locator with: project_id, source_type, vcs, commit SHA, path, git_blob_oid, content_sha256, chunk_hash, start_line, end_line, symbol name.
+- AC-017-02: Given a code chunk during indexing, then the embedding pipeline generates the source locator from Git metadata (commit, blob OID) and AST analysis (symbol name).
+- AC-017-03: Given a Confluence/doc chunk, then the source locator includes: source_type "doc", source_url, page_id, last_modified timestamp, section_heading.
+- AC-017-04: Given search results, then every result includes a `relationships[]` array linking to related sources (specified_by, tested_by, test_gap, implements, etc.).
+
 ## 7. Out of Scope
 
 | Item | Reason | Dependency |
@@ -281,6 +289,7 @@
 | FR-014 | Audit Logging | Must Have | Accountability |
 | FR-015 | Operational Monitoring | Must Have | Observability |
 | FR-016 | iSDLC Status Line | Should Have | Nice-to-have integration |
+| FR-017 | Source Locator Schema | Must Have | Deterministic identity for every chunk — enables local verification |
 
 ## Pending Sections
 
