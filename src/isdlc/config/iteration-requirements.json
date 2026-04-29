@@ -266,6 +266,37 @@
       },
       "agent_delegation_validation": {
         "enabled": true
+      },
+      "quality_enforcement": {
+        "_comment": "GH-261: Constitutional quality enforcement hooks for Phase 06",
+        "deferral_detector": {
+          "enabled": true,
+          "type": "PreToolUse",
+          "tools": ["Write", "Edit"],
+          "max_retries": 5,
+          "block_signal": "DEFERRAL LANGUAGE DETECTED"
+        },
+        "test_quality_validator": {
+          "enabled": true,
+          "type": "Notification",
+          "phases": ["06-implementation", "16-quality-loop"],
+          "max_retries": 5,
+          "block_signal": "TEST QUALITY INCOMPLETE"
+        },
+        "spec_trace_validator": {
+          "enabled": true,
+          "type": "Notification",
+          "phases": ["06-implementation"],
+          "max_retries": 5,
+          "block_signal": "SPEC TRACE INCOMPLETE"
+        },
+        "security_depth_validator": {
+          "enabled": true,
+          "type": "Notification",
+          "phases": ["06-implementation"],
+          "max_retries": 5,
+          "block_signal": "SECURITY DEPTH INCOMPLETE"
+        }
       }
     },
     "07-testing": {
@@ -368,6 +399,16 @@
         "paths": [
           "docs/requirements/{artifact_folder}/code-review-report.md"
         ]
+      },
+      "quality_enforcement": {
+        "_comment": "GH-261: Review depth enforcement for Phase 08",
+        "review_depth_validator": {
+          "enabled": true,
+          "type": "Notification",
+          "phases": ["08-code-review"],
+          "max_retries": 5,
+          "block_signal": "REVIEW DEPTH INCOMPLETE"
+        }
       }
     },
     "09-validation": {

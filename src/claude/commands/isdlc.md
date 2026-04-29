@@ -2542,7 +2542,12 @@ state update, check if adaptive workflow sizing should run.
   5. Contains `"TEST ADEQUACY REQUIRED"` → Follow **3f-test-adequacy** below
   6. Contains `"PROTOCOL VIOLATION"` → Follow **3f-protocol-violation** below
   7. Contains `"TASKS INCOMPLETE"` → Follow **3f-task-completion** below
-  8. Otherwise → Generic fallback: display blocker banner (same format as 3c), use `AskUserQuestion` for Retry/Skip/Cancel
+  8. Contains `"TEST QUALITY INCOMPLETE"` → Follow **3f-test-quality** below (GH-261)
+  9. Contains `"SPEC TRACE INCOMPLETE"` → Follow **3f-spec-trace** below (GH-261)
+  10. Contains `"SECURITY DEPTH INCOMPLETE"` → Follow **3f-security-depth** below (GH-261)
+  11. Contains `"REVIEW DEPTH INCOMPLETE"` → Follow **3f-review-depth** below (GH-261)
+  12. Contains `"DEFERRAL LANGUAGE DETECTED"` → Follow **3f-deferral** below (GH-261, fallback for inline PreToolUse)
+  13. Otherwise → Generic fallback: display blocker banner (same format as 3c), use `AskUserQuestion` for Retry/Skip/Cancel
 - Any other error → Display error, use `AskUserQuestion` for Retry/Skip/Cancel
 
 **3f-blast-radius.** BLAST RADIUS BLOCK HANDLING (Traces to: BUG-0019, FR-01 through FR-05)
@@ -2615,6 +2620,11 @@ This protocol manages retry counters for hook block re-delegations. Each handler
 | 3f-test-adequacy | 2 | Precondition block — if test gen fails twice, escalate |
 | 3f-protocol-violation | 2 | Protocol violations are often one-shot (e.g., git commit already made) — escalate quickly |
 | 3f-task-completion | 3 | Matches blast-radius pattern — 3 retries before user escalation |
+| 3f-test-quality | 5 | GH-261: AC coverage, assertions, error paths — 5 retries to reach quality bar |
+| 3f-spec-trace | 5 | GH-261: File-to-AC traceability — 5 retries for untraced/unimplemented gaps |
+| 3f-security-depth | 5 | GH-261: Input validation proximity — 5 retries for unvalidated inputs |
+| 3f-review-depth | 5 | GH-261: Review depth enforcement — 5 retries for generic approvals |
+| 3f-deferral | 5 | GH-261: Deferral language fallback — 5 retries (primary enforcement is inline PreToolUse) |
 
 **3f-gate-blocker.** GATE BLOCKER RE-DELEGATION
 
@@ -2817,6 +2827,144 @@ You MUST complete these tasks and mark them [X] in tasks.md before signaling pha
 ```
 
 8. On return, loop back to STEP 3d per the retry protocol.
+
+**3f-test-quality.** TEST QUALITY RE-DELEGATION (GH-261, AC-007-01)
+
+Triggered when the `blocked_by_hook` message contains `"TEST QUALITY INCOMPLETE"`. The `test-quality-validator` hook emits this block when test quality checks fail at phase 06 or 16 gate.
+
+1. **Parse the quality issues** from the block message. The hook lists specific issues:
+   - Untested ACs (AC IDs without test traces)
+   - Zero-assertion test blocks (file:line + test name)
+   - Missing negative tests for error paths
+
+2. **Check retry counter** (`test-quality:{phase_key}`) per **3f-retry-protocol**. Max retries: 5.
+
+3. **If retries < 5, re-delegate** to the SAME phase agent with this prompt:
+
+```
+TEST QUALITY INCOMPLETE — Retry {N} of 5
+
+The test-quality-validator hook blocked phase advancement. Issues found:
+
+{paste block message issues}
+
+You MUST:
+- Write tests for untested ACs (include AC ID in test description or traces comment)
+- Add assertions to zero-assertion test blocks
+- Add negative/error-path tests for modules with error handling
+```
+
+4. On return, loop back to STEP 3d per the retry protocol.
+
+**3f-spec-trace.** SPEC TRACE RE-DELEGATION (GH-261, AC-007-02)
+
+Triggered when the `blocked_by_hook` message contains `"SPEC TRACE INCOMPLETE"`. The `spec-trace-validator` hook emits this block when file-to-AC traceability checks fail at phase 06 gate.
+
+1. **Parse traceability issues** from the block message:
+   - Untraced files (modified files not mapped to any AC in tasks.md)
+   - Unimplemented ACs (ACs with expected files that have no modifications)
+
+2. **Check retry counter** (`spec-trace:{phase_key}`) per **3f-retry-protocol**. Max retries: 5.
+
+3. **If retries < 5, re-delegate** to the SAME phase agent with this prompt:
+
+```
+SPEC TRACE INCOMPLETE — Retry {N} of 5
+
+The spec-trace-validator hook blocked phase advancement. Issues found:
+
+{paste block message issues}
+
+You MUST:
+- Add untraced files to the appropriate task in tasks.md
+- Implement code changes for unimplemented ACs
+- Or remove unneeded file modifications
+```
+
+4. On return, loop back to STEP 3d per the retry protocol.
+
+**3f-security-depth.** SECURITY DEPTH RE-DELEGATION (GH-261, AC-007-03)
+
+Triggered when the `blocked_by_hook` message contains `"SECURITY DEPTH INCOMPLETE"`. The `security-depth-validator` hook emits this block when input validation or generic claim checks fail at phase 06 gate.
+
+1. **Parse security issues** from the block message:
+   - Unvalidated external inputs (file:line, input pattern, type)
+   - Generic security claims without file:line references
+
+2. **Check retry counter** (`security-depth:{phase_key}`) per **3f-retry-protocol**. Max retries: 5.
+
+3. **If retries < 5, re-delegate** to the SAME phase agent with this prompt:
+
+```
+SECURITY DEPTH INCOMPLETE — Retry {N} of 5
+
+The security-depth-validator hook blocked phase advancement. Issues found:
+
+{paste block message issues}
+
+You MUST:
+- Add input validation (typeof, schema.validate, null checks) near external inputs
+- Replace generic security claims with specific file:line references
+- Validation must appear within 15 lines of the external input usage
+```
+
+4. On return, loop back to STEP 3d per the retry protocol.
+
+**3f-review-depth.** REVIEW DEPTH RE-DELEGATION (GH-261, AC-007-04)
+
+Triggered when the `blocked_by_hook` message contains `"REVIEW DEPTH INCOMPLETE"`. The `review-depth-validator` hook emits this block when review output lacks specificity at phase 08 gate.
+
+1. **Parse review issues** from the block message:
+   - Insufficient file references (count vs minimum)
+   - Generic approval language detected
+   - Zero findings on substantial review output
+
+2. **Check retry counter** (`review-depth:{phase_key}`) per **3f-retry-protocol**. Max retries: 5.
+
+3. **If retries < 5, re-delegate** to the SAME review agent with this prompt:
+
+```
+REVIEW DEPTH INCOMPLETE — Retry {N} of 5
+
+The review-depth-validator hook blocked phase advancement. Issues found:
+
+{paste block message issues}
+
+You MUST:
+- Re-review the code with file-level findings (reference specific files)
+- Include at least 3 unique file references in review output
+- Identify specific issues, suggestions, or observations per file
+```
+
+4. On return, loop back to STEP 3d per the retry protocol.
+
+**3f-deferral.** DEFERRAL LANGUAGE FALLBACK (GH-261, AC-007-05, AC-007-07)
+
+The deferral-detector fires inline as a PreToolUse hook (blocking Write/Edit). This 3f handler is a fallback for cases where the deferral signal reaches the phase-loop (e.g., via gate-check notifications).
+
+1. **Parse deferral issues** from the block message:
+   - File path and line numbers with deferral text
+   - Matched deferral patterns
+
+2. **Check retry counter** (`deferral:{phase_key}`) per **3f-retry-protocol**. Max retries: 5.
+
+3. **If retries < 5, re-delegate** to the SAME phase agent with this prompt:
+
+```
+DEFERRAL LANGUAGE DETECTED — Retry {N} of 5
+
+The deferral-detector blocked phase advancement. Deferral language found:
+
+{paste block message issues}
+
+You MUST:
+- Implement the deferred functionality now (remove the deferral language)
+- Or document the deferral in an ADR with explicit justification
+- Or mark as out-of-scope in requirements-spec.md
+- Production code MUST NOT contain TODO later, FIXME next, will handle later, etc.
+```
+
+4. On return, loop back to STEP 3d per the retry protocol.
 
 #### STEP 3-dashboard: COMPLETION DASHBOARD (REQ-0022)
 
