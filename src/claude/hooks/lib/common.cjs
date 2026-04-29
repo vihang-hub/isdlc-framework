@@ -5003,6 +5003,269 @@ function readAtddConfig() {
     }
 }
 
+// =========================================================================
+// Quality Enforcement Utilities (REQ-GH-261)
+// =========================================================================
+
+/**
+ * Extract AC identifiers from requirements-spec.md content.
+ * Matches AC-NNN-NN format with optional description text.
+ * Traces to: FR-003, AC-003-02
+ *
+ * @param {string} specContent - Raw markdown content of requirements-spec.md
+ * @returns {Array<{ id: string, description: string }>}
+ */
+function extractACsFromSpec(specContent) {
+    if (!specContent || typeof specContent !== 'string') return [];
+    const results = [];
+    const seen = new Set();
+    const regex = /\b(AC-\d{3}-\d{2})\b[:\s]*(.*)/g;
+    let match;
+    while ((match = regex.exec(specContent)) !== null) {
+        const id = match[1];
+        if (!seen.has(id)) {
+            seen.add(id);
+            const desc = (match[2] || '').replace(/^\s*[:,-]\s*/, '').trim();
+            results.push({ id, description: desc });
+        }
+    }
+    return results;
+}
+
+/**
+ * Scan test content for trace annotations matching AC IDs.
+ * Looks for AC IDs in it()/test() descriptions and // traces: comments.
+ * Traces to: FR-003, AC-003-03
+ *
+ * @param {string} testContent - Combined test file content
+ * @param {string[]} acIds - Array of AC-NNN-NN identifiers to check
+ * @returns {{ covered: string[], uncovered: string[] }}
+ */
+function scanTestTraces(testContent, acIds) {
+    if (!acIds || !Array.isArray(acIds) || acIds.length === 0) {
+        return { covered: [], uncovered: [] };
+    }
+    if (!testContent || typeof testContent !== 'string') {
+        return { covered: [], uncovered: [...acIds] };
+    }
+    const covered = [];
+    const uncovered = [];
+    for (const acId of acIds) {
+        if (testContent.includes(acId)) {
+            covered.push(acId);
+        } else {
+            uncovered.push(acId);
+        }
+    }
+    return { covered, uncovered };
+}
+
+/**
+ * Count assertions per test block in test content.
+ * Recognizes assert.*, expect(), .should patterns.
+ * Traces to: FR-003, AC-003-05
+ *
+ * @param {string} testContent - Test file content
+ * @returns {Array<{ testName: string, line: number, count: number }>}
+ */
+function countAssertions(testContent) {
+    if (!testContent || typeof testContent !== 'string') return [];
+    const results = [];
+    const lines = testContent.split('\n');
+    const assertionPattern = /(?:^|\s)(?:assert\s*\.\s*\w+|assert\s*\(|expect\s*\()|\.should\s*\./;
+    const commentPattern = /^\s*(\/\/|\/\*|\*)/;
+    // Find it() / test() blocks and count assertions within
+    const testBlockPattern = /\b(?:it|test)\s*\(\s*(['"`])(.*?)\1/;
+    let inTestBlock = false;
+    let braceDepth = 0;
+    let currentTest = null;
+    let currentLine = 0;
+    let currentCount = 0;
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const testMatch = line.match(testBlockPattern);
+
+        if (testMatch && !inTestBlock) {
+            inTestBlock = true;
+            currentTest = testMatch[2];
+            currentLine = i + 1;
+            currentCount = 0;
+            braceDepth = 0;
+            // Count opening braces on this line
+            for (const ch of line) {
+                if (ch === '{') braceDepth++;
+                if (ch === '}') braceDepth--;
+            }
+            // Check for assertions on the same line
+            if (!commentPattern.test(line) && assertionPattern.test(line)) {
+                currentCount++;
+            }
+            continue;
+        }
+
+        if (inTestBlock) {
+            for (const ch of line) {
+                if (ch === '{') braceDepth++;
+                if (ch === '}') braceDepth--;
+            }
+            // Count assertions (skip comments)
+            if (!commentPattern.test(line) && assertionPattern.test(line)) {
+                currentCount++;
+            }
+            if (braceDepth <= 0) {
+                results.push({ testName: currentTest, line: currentLine, count: currentCount });
+                inTestBlock = false;
+                currentTest = null;
+            }
+        }
+    }
+
+    // Handle unclosed test block
+    if (inTestBlock && currentTest) {
+        results.push({ testName: currentTest, line: currentLine, count: currentCount });
+    }
+
+    return results;
+}
+
+/**
+ * Detect error handling paths in source content.
+ * Finds try/catch, throw, .catch, reject patterns.
+ * Traces to: FR-003, AC-003-06
+ *
+ * @param {string} sourceContent - Source file content
+ * @returns {Array<{ line: number, pattern: string }>}
+ */
+function detectErrorPaths(sourceContent) {
+    if (!sourceContent || typeof sourceContent !== 'string') return [];
+    const results = [];
+    const lines = sourceContent.split('\n');
+    const patterns = [
+        { regex: /\btry\s*\{/, name: 'try/catch' },
+        { regex: /\bthrow\s+/, name: 'throw' },
+        { regex: /\.catch\s*\(/, name: '.catch' },
+        { regex: /\breject\s*\(/, name: 'reject' }
+    ];
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        for (const pat of patterns) {
+            if (pat.regex.test(line)) {
+                results.push({ line: i + 1, pattern: pat.name });
+                break; // one detection per line
+            }
+        }
+    }
+    return results;
+}
+
+/**
+ * Detect external input patterns in source content.
+ * Recognizes req.body/params/query, process.argv, JSON.parse, process.env, fs.readFileSync.
+ * Traces to: FR-005, AC-005-02
+ *
+ * @param {string} sourceContent - Source file content
+ * @returns {Array<{ line: number, pattern: string, type: string }>}
+ */
+function detectExternalInputs(sourceContent) {
+    if (!sourceContent || typeof sourceContent !== 'string') return [];
+    const results = [];
+    const lines = sourceContent.split('\n');
+    const patterns = [
+        { regex: /\breq\.body\b/, pattern: 'req.body', type: 'http' },
+        { regex: /\breq\.params\b/, pattern: 'req.params', type: 'http' },
+        { regex: /\breq\.query\b/, pattern: 'req.query', type: 'http' },
+        { regex: /\bprocess\.argv\b/, pattern: 'process.argv', type: 'cli' },
+        { regex: /\bJSON\.parse\b/, pattern: 'JSON.parse', type: 'parse' },
+        { regex: /\bprocess\.env\b/, pattern: 'process.env', type: 'env' },
+        { regex: /\bfs\.readFileSync\b/, pattern: 'fs.readFileSync', type: 'filesystem' }
+    ];
+    const commentPattern = /^\s*(\/\/|\/\*|\*)/;
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (commentPattern.test(line)) continue;
+        for (const pat of patterns) {
+            if (pat.regex.test(line)) {
+                results.push({ line: i + 1, pattern: pat.pattern, type: pat.type });
+            }
+        }
+    }
+    return results;
+}
+
+/**
+ * Check whether validation exists within a radius of an input line.
+ * Looks for typeof, schema.validate, assert, null/undefined checks, etc.
+ * Traces to: FR-005, AC-005-03
+ *
+ * @param {string} content - Full file content
+ * @param {number} inputLine - 1-based line number of the external input
+ * @param {number} [radius=15] - Number of lines to search in each direction
+ * @returns {boolean} true if validation found within radius
+ */
+function checkValidationProximity(content, inputLine, radius) {
+    if (!content || typeof content !== 'string' || !inputLine) return false;
+    if (radius === undefined || radius === null) radius = 15;
+    const lines = content.split('\n');
+    const start = Math.max(0, inputLine - 1 - radius);
+    const end = Math.min(lines.length, inputLine - 1 + radius + 1);
+    const validationPatterns = [
+        /\btypeof\s+\w+\s*===?\s*/,
+        /\bschema\s*\.\s*validate\b/,
+        /\bassert\s*\(/,
+        /\bvalidat[ei]\b/i,
+        /\bif\s*\(\s*!?\s*\w+\s*[!=]==?\s*(null|undefined)\b/,
+        /\bif\s*\(\s*!?\w+\s*\)/,
+        /\bif\s*\(\s*typeof\b/,
+        /\bNumber\s*\.\s*isNaN\b/,
+        /\bArray\s*\.\s*isArray\b/,
+        /\binstanceof\b/
+    ];
+    for (let i = start; i < end; i++) {
+        if (i === inputLine - 1) continue; // skip the input line itself
+        const line = lines[i];
+        for (const pat of validationPatterns) {
+            if (pat.test(line)) return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Parse content for deferral language patterns.
+ * Matches: TODO later, FIXME next, will handle later, add later, implement later, future work.
+ * Traces to: FR-002, AC-002-02
+ *
+ * @param {string} content - File content to scan
+ * @returns {Array<{ line: number, text: string, pattern: string }>}
+ */
+function parseDeferralPatterns(content) {
+    if (!content || typeof content !== 'string') return [];
+    const results = [];
+    const lines = content.split('\n');
+    const patterns = [
+        { regex: /\bTODO\s+later\b/i, name: 'TODO later' },
+        { regex: /\bFIXME\s+next\b/i, name: 'FIXME next' },
+        { regex: /\bwill\s+handle\s+later\b/i, name: 'will handle later' },
+        { regex: /\badd\s+later\b/i, name: 'add later' },
+        { regex: /\bimplement\s+later\b/i, name: 'implement later' },
+        { regex: /\bfuture\s+work\b/i, name: 'future work' },
+        { regex: /\bTODO\s*:\s*.*\blater\b/i, name: 'TODO later' },
+        { regex: /\bFIXME\s*:\s*.*\bnext\s+(iteration|sprint|release|version)\b/i, name: 'FIXME next' },
+        { regex: /\bdefer(?:red)?\s+to\s+(?:next|later|future)\b/i, name: 'deferred to later' }
+    ];
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        for (const pat of patterns) {
+            if (pat.regex.test(line)) {
+                results.push({ line: i + 1, text: line.trim(), pattern: pat.name });
+                break; // one match per line
+            }
+        }
+    }
+    return results;
+}
+
 module.exports = {
     isAntigravity,
     getFrameworkDir,
@@ -5131,6 +5394,14 @@ module.exports = {
     DEFAULT_CONFIG,
     // ATDD config (REQ-GH-216)
     readAtddConfig,
+    // Quality enforcement utilities (REQ-GH-261)
+    extractACsFromSpec,
+    scanTestTraces,
+    countAssertions,
+    detectErrorPaths,
+    detectExternalInputs,
+    checkValidationProximity,
+    parseDeferralPatterns,
     // Contract violation helpers (REQ-0141)
     writeContractViolation,
     readContractViolations,

@@ -1,7 +1,7 @@
 # Project Constitution - iSDLC Framework
 
 **Created**: 2026-02-07
-**Version**: 1.6.0
+**Version**: 1.7.0
 **Project Type**: Developer tooling / CLI framework / Agent orchestration system
 
 ---
@@ -33,10 +33,13 @@ These 10 articles are mandatory for all projects. They represent industry best p
 4. Implementation MUST NOT assume requirements beyond what is specified
 5. User-confirmed task plans are binding specifications. Phase agents MAY refine tasks into sub-tasks but MUST NOT alter, remove, or expand the scope of parent tasks without user approval.
 
+6. Every modified file MUST trace to at least one AC via tasks.md. Untraced modifications are blocked at gate.
+
 **Validation**:
 - Agent 01 ensures specifications are complete
 - Agent 05 implements only specified features
 - Agent 07 validates code matches specifications
+- spec-trace-validator hook enforces requirement 6 at phase gate
 
 ---
 
@@ -68,10 +71,14 @@ These 10 articles are mandatory for all projects. They represent industry best p
 
 **Enforcement Note (BUG-0054-GH-52)**: The coverage thresholds above are aspirational targets. Practical enforcement uses intensity-based tiered thresholds configured in `iteration-requirements.json`. Light workflows enforce lower thresholds (60% unit, 50% integration), standard workflows enforce the baseline thresholds (80% unit, 70% integration), and epic workflows enforce higher thresholds (95% unit, 85% integration). When no intensity is configured (e.g., fix workflows), the standard tier is used as default.
 
+**Quality Requirements** (GH-261):
+5. Each AC MUST have at least one test with a trace annotation. Tests MUST contain at least one assertion per test block. Error paths (try/catch) MUST have corresponding negative tests.
+
 **Validation**:
 - GATE-04: Test strategy approved
 - GATE-05: Unit test coverage >=80%, total tests >= 7,400 baseline
 - Agent 05 follows TDD: Red -> Green -> Refactor
+- test-quality-validator hook enforces quality requirement 5 at phase gate
 
 ---
 
@@ -99,10 +106,14 @@ These 10 articles are mandatory for all projects. They represent industry best p
 - Exemptions: `.env.example`, test fixtures with dummy values, documentation examples
 - Override: Add `<!-- secret-scan-exempt: reason -->` to exempt a specific line
 
+**Depth Requirements** (GH-261):
+11. Functions processing external input MUST have input validation. Constitutional validation MUST reference specific code locations, not generic compliance claims.
+
 **Validation**:
 - GATE-02: Security architecture approved
 - GATE-05: No secrets in code (framework secret scan), dependency scans clean
 - GATE-08: SAST/DAST testing complete
+- security-depth-validator hook enforces depth requirement 11 at phase gate
 
 ---
 
@@ -116,10 +127,13 @@ These 10 articles are mandatory for all projects. They represent industry best p
 3. "We'll figure it out later" is FORBIDDEN
 4. All decisions MUST be traceable and justified
 
+5. Deferral language (TODO later, FIXME next iteration) in production code is blocked at write time. Deferred work MUST be documented in ADR or marked out-of-scope.
+
 **Validation**:
 - Agent 01 identifies and resolves ambiguities before GATE-01
 - All `[NEEDS CLARIFICATION]` markers MUST be resolved before implementation
 - Orchestrator fails gates if unresolved ambiguities exist
+- deferral-detector hook enforces requirement 5 at write time (PreToolUse)
 
 ---
 
@@ -150,9 +164,12 @@ These 10 articles are mandatory for all projects. They represent industry best p
 3. Self-merges prohibited on shared branches
 4. Review comments MUST be addressed before merge
 
+5. Review output MUST reference specific files and findings. Generic approval without file references is blocked.
+
 **Validation**:
 - GATE-07: Code review completed
 - Agent 07 performs automated review checks
+- review-depth-validator hook enforces requirement 5 at phase gate
 
 ---
 
@@ -402,6 +419,7 @@ The constitution is enforced through a 4-layer pipeline (see `docs/ARCHITECTURE.
 | 1.5.0 | 2026-04-04 | Article I req 5: User-confirmed task plans are binding specifications. Phase agents may refine into sub-tasks but must not alter parent task scope without user approval. | REQ-GH-223: Tasks as user contract |
 | 1.5.0 | 2026-04-03 | Article XI rewritten: "Integration Testing Integrity" → "Test Quality Beyond Coverage". Removed unenforceable requirements (mutation testing, fuzz testing, adversarial testing, property-based testing) that required specific tooling dependencies. Replaced with framework-enforceable principles (error path coverage, mock-in-integration scan, test name quality). Article III: Added secret scan enforcement block with patterns, exemptions, and override mechanism. | Constitution must be enforceable by the framework without requiring project-specific tool dependencies |
 | 1.6.0 | 2026-04-09 | Preamble: Updated counts (71 agents, 280 skills). Article II: Updated baseline from 1,600 to 7,400+ tests across 597 files. Updated module coverage: lib 69 prod modules (~900 tests), hooks 30+14 (~4,664 tests), core 137 modules (~1,578 tests), providers 13 modules (~249 tests). Noted ~420 known failing tests (stale expectations). | Full re-discovery revealed 4.6x test count growth since 2026-03-27 |
+| 1.7.0 | 2026-04-24 | Article I req 6: Untraced file modifications blocked at gate. Article II quality req 5: AC test coverage, assertion count, error path negative tests. Article III depth req 11: Input validation enforcement, specific code location references. Article IV req 5: Deferral language blocked at write time. Article VI req 5: Review depth enforcement, file references required. | REQ-GH-261: Constitutional quality enforcement hooks |
 
 ---
 
