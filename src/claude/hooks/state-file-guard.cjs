@@ -50,7 +50,7 @@ const STATE_JSON_CMD_PATTERN = /\.isdlc[/\\](?:projects[/\\][^/\\\s"']+[/\\])?st
  * @type {RegExp[]}
  */
 const WRITE_PATTERNS = [
-    /(?<!=)(?<!-)>{1,2}\s*/,  // redirect: > or >> (exclude => and ->)
+    /(?<!=)(?<!-)(?<!\d)>{1,2}\s*(?!\/dev\/null)/,  // redirect: > or >> (exclude =>, ->, fd redirects like 2>, and >/dev/null)
     /\btee\b/,        // tee command
     /\bwriteFileSync\b/,   // Node.js fs.writeFileSync (bare, outside node -e)
     /\bwriteFile\b/,       // Node.js fs.writeFile (bare, outside node -e)
