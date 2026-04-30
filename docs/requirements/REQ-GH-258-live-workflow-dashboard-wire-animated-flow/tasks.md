@@ -4,15 +4,15 @@
 
 | Phase | Total | Done | Remaining |
 |-------|-------|------|-----------|
-| 05-test-strategy | 1 | 0 | 1 |
+| 05-test-strategy | 1 | 1 | 0 |
 | 06-implementation | 7 | 0 | 7 |
 | 16-quality-loop | 1 | 0 | 1 |
 | 08-code-review | 1 | 0 | 1 |
 | **Total** | **10** | **0** | **10** |
 
-## Phase 05: Test Strategy -- PENDING
+## Phase 05: Test Strategy -- COMPLETE
 
-- [ ] T001 Design test strategy for expanded server API and dashboard HTML | traces: FR-006, FR-010, NFR-003
+- [X] T001 Design test strategy for expanded server API and dashboard HTML | traces: FR-006, FR-010, NFR-003
 
 ## Phase 06: Implementation -- PENDING
 

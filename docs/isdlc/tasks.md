@@ -4,34 +4,34 @@
 
 | Phase | Total | Done | Remaining |
 |-------|-------|------|-----------|
-| 05-test-strategy | 1 | 0 | 1 |
-| 06-implementation | 7 | 0 | 7 |
+| 05-test-strategy | 1 | 1 | 0 |
+| 06-implementation | 7 | 7 | 0 |
 | 16-quality-loop | 1 | 0 | 1 |
 | 08-code-review | 1 | 0 | 1 |
-| **Total** | **10** | **0** | **10** |
+| **Total** | **10** | **8** | **2** |
 
-## Phase 05: Test Strategy -- PENDING
+## Phase 05: Test Strategy -- COMPLETE
 
-- [ ] T001 Design test strategy for expanded server API and dashboard HTML | traces: FR-006, FR-010, NFR-003
+- [X] T001 Design test strategy for expanded server API and dashboard HTML | traces: FR-006, FR-010, NFR-003
 
-## Phase 06: Implementation -- PENDING
+## Phase 06: Implementation -- COMPLETE
 
-- [ ] T002 Add getAgentSkills() to server — read skills manifest + external-skills-manifest.json, return combined built-in and external skill lists in /api/state response | traces: FR-004, FR-006
+- [X] T002 Add getAgentSkills() to server — read skills manifest + external-skills-manifest.json, return combined built-in and external skill lists in /api/state response | traces: FR-004, FR-006
   files: src/dashboard/server.js (MODIFY)
-- [ ] T003 Add scanHookLog() to server — tail last 50 lines of .isdlc/hook-activity.log, filter by current phase, return hook events in /api/state response | traces: FR-005, FR-006
+- [X] T003 Add scanHookLog() to server — tail last 50 lines of .isdlc/hook-activity.log, filter by current phase, return hook events in /api/state response | traces: FR-005, FR-006
   files: src/dashboard/server.js (MODIFY)
-- [ ] T004 Add readActiveMeta() to server — resolve active analysis slug from analysis-index.json, read that slug's meta.json, return as active_meta in /api/state response | traces: FR-002, FR-006
+- [X] T004 Add readActiveMeta() to server — resolve active analysis slug from analysis-index.json, read that slug's meta.json, return as active_meta in /api/state response | traces: FR-002, FR-006
   files: src/dashboard/server.js (MODIFY)
-- [ ] T005 Add scanPersonas() to server — glob persona-*.md files at startup, regex-extract role_type from frontmatter, cache results, serve persona list in /api/state response | traces: FR-010, FR-006
+- [X] T005 Add scanPersonas() to server — glob persona-*.md files at startup, regex-extract role_type from frontmatter, cache results, serve persona list in /api/state response | traces: FR-010, FR-006
   files: src/dashboard/server.js (MODIFY)
-- [ ] T006 Update server HTML path resolution — serve .isdlc/dashboard.html as primary, fall back to src/dashboard/index.html if missing | traces: FR-008
+- [X] T006 Update server HTML path resolution — serve .isdlc/dashboard.html as primary, fall back to src/dashboard/index.html if missing | traces: FR-008
   files: src/dashboard/server.js (MODIFY)
   blocked_by: [T002, T003, T004, T005]
-- [ ] T007 Create dashboard HTML — two-panel layout (Analysis left, Build right) with personas (core/contributing/promoted nodes), confirmation progress bar, phase dots, phase DAG, active agent badge, task progress bar, skills section (built-in grey + external purple), hooks bar (color-coded dots with tooltips), adaptive poll interval (2s/10s), all CSS/animations from docs/index.html dark theme, no Play/Next controls | traces: FR-001, FR-002, FR-003, FR-004, FR-005, FR-007, NFR-001, NFR-002, NFR-003
+- [X] T007 Create dashboard HTML — two-panel layout (Analysis left, Build right) with personas (core/contributing/promoted nodes), confirmation progress bar, phase dots, phase DAG, active agent badge, task progress bar, skills section (built-in grey + external purple), hooks bar (color-coded dots with tooltips), adaptive poll interval (2s/10s), all CSS/animations from docs/index.html dark theme, no Play/Next controls | traces: FR-001, FR-002, FR-003, FR-004, FR-005, FR-007, NFR-001, NFR-002, NFR-003
   files: src/dashboard/dashboard.html (CREATE)
   blocked_by: [T006]
-- [ ] T008 Add dashboard.html copy step to init-project.sh installer script — copies src/dashboard/dashboard.html to .isdlc/dashboard.html during framework installation | traces: FR-008
-  files: init-project.sh (MODIFY)
+- [X] T008 Add dashboard.html copy step to install.sh installer script — copies src/dashboard/dashboard.html to .isdlc/dashboard.html during framework installation | traces: FR-008
+  files: install.sh (MODIFY)
   blocked_by: [T007]
 
 ## Phase 16: Quality Loop -- PENDING
