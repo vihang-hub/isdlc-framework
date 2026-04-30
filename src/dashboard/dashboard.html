@@ -728,13 +728,17 @@
   // Hooks bar
   // -------------------------------------------------------------------
   function updateHooksBar(data) {
+    var bar = document.getElementById('hooks-bar');
     var dotsEl = document.getElementById('hooks-dots');
     var events = data.hook_events || [];
 
-    if (events.length === 0) {
-      dotsEl.innerHTML = '<span style="font-size:10px;color:var(--text-dim);">No events</span>';
+    // Hide hooks bar entirely when idle (no active workflow or analysis)
+    var isIdle = !data.active_workflow && !data.active_analysis;
+    if (isIdle || events.length === 0) {
+      bar.style.display = 'none';
       return;
     }
+    bar.style.display = '';
 
     var html = '';
     // Show last 30 events as dots

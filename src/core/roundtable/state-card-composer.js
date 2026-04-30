@@ -130,9 +130,16 @@ function renderCard(template, context) {
     }
   }
 
-  // Rendering mode
-  const renderingMode = resolveRenderingMode(template, context);
-  lines.push(`Rendering: ${renderingMode}`);
+  // Rendering mode. States with an explicit rendering mandate carry their own
+  // stricter format block below; avoid emitting a contradictory generic mode.
+  const hasRenderingMandate =
+    template.rendering_mandate &&
+    typeof template.rendering_mandate === 'object' &&
+    !Array.isArray(template.rendering_mandate);
+  if (!hasRenderingMandate) {
+    const renderingMode = resolveRenderingMode(template, context);
+    lines.push(`Rendering: ${renderingMode}`);
+  }
 
   // Presenter (for confirmation states)
   if (template.presenter) {
@@ -172,13 +179,21 @@ function renderCard(template, context) {
           lines.push(`  Post-table sections: ${fmt.post_table_sections.join(', ')}`);
         }
         if (fmt.content_guidance && typeof fmt.content_guidance === 'object') {
-          // Surface guidance keys + structure hints; full prose lives in the
-          // template file and would blow the budget if inlined verbatim.
+          // Surface the actionable cell-content contract, not just the table
+          // shape. Keep examples abbreviated so the state card stays compact.
           for (const [colKey, guide] of Object.entries(fmt.content_guidance)) {
             if (!guide || typeof guide !== 'object') continue;
             const struct = guide.structure ? ` (structure: ${guide.structure})` : '';
-            const fmtLabel = guide.format ? ` (format: ${guide.format})` : '';
-            lines.push(`  Guidance ${colKey}${struct}${fmtLabel}`);
+            lines.push(`  Guidance ${colKey}${struct}`);
+            if (guide.narrative) {
+              lines.push(`    Narrative: ${guide.narrative}`);
+            }
+            if (guide.details) {
+              lines.push(`    Details: ${guide.details}`);
+            }
+            if (guide.format) {
+              lines.push(`    Format: ${guide.format}`);
+            }
             if (guide.example) {
               const firstLine = String(guide.example).split('\n')[0];
               if (firstLine && firstLine.length < 80) {

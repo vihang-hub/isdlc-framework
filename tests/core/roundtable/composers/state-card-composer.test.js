@@ -28,9 +28,17 @@ const STATE_CARDS_DIR = resolve(
   __dirname,
   '../../../../src/isdlc/config/roundtable/state-cards'
 );
+const TEMPLATES_DIR = resolve(
+  __dirname,
+  '../../../../src/isdlc/config/templates'
+);
 
 function loadCard(filename) {
   return JSON.parse(readFileSync(resolve(STATE_CARDS_DIR, filename), 'utf8'));
+}
+
+function loadTemplate(filename) {
+  return JSON.parse(readFileSync(resolve(TEMPLATES_DIR, filename), 'utf8'));
 }
 
 // ---------------------------------------------------------------------------
@@ -158,6 +166,41 @@ describe('REQ-GH-253 state-card-composer', () => {
         'if Template line present, mandate content must accompany it'
       );
     }
+  });
+
+  // SC-10b: PRESENTING_TASKS card includes the traceability cell-content rules
+  // from traceability.template.json, not just column names and structure hints.
+  it('SC-10b: PRESENTING_TASKS card inlines traceability content guidance', () => {
+    const templateSource = loadTemplate('traceability.template.json');
+    const guidance = templateSource.format.content_guidance;
+
+    const card = composeStateCard('PRESENTING_TASKS', {});
+
+    assert.ok(
+      card.includes(guidance.requirement_column.narrative),
+      'card must include requirement-column narrative guidance'
+    );
+    assert.ok(
+      card.includes(guidance.requirement_column.details),
+      'card must include requirement-column details guidance'
+    );
+    assert.ok(
+      card.includes(guidance.design_column.narrative),
+      'card must include design-column narrative guidance'
+    );
+    assert.ok(
+      card.includes(guidance.design_column.details),
+      'card must include design-column details guidance'
+    );
+    assert.ok(
+      card.includes(guidance.tasks_column.format),
+      'card must include tasks-column format guidance'
+    );
+    assert.doesNotMatch(
+      card,
+      /^Rendering:\s*bulleted$/m,
+      'rendering-mandated states must not emit a contradictory generic bulleted mode'
+    );
   });
 
   // SC-11: PRESENTING_REQUIREMENTS card includes content_coverage list
