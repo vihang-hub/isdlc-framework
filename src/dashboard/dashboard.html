@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iSDLC Live Dashboard</title>
+<style>
+  /* REQ-GH-258: Two-panel live workflow dashboard
+   * Dark theme matching docs/index.html (bg: #0a0e1a, monospace, blue/green/red status)
+   * NFR-002: Zero external dependencies -- all CSS inline */
+
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface-alt: #1e293b;
+    --border: #1f2937;
+    --border-light: #334155;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --blue: #3b82f6;
+    --blue-light: #93c5fd;
+    --blue-glow: rgba(59,130,246,0.3);
+    --green: #10b981;
+    --green-dark: #065f46;
+    --green-light: #d1fae5;
+    --red: #ef4444;
+    --red-dark: #991b1b;
+    --amber: #f59e0b;
+    --purple: #7c3aed;
+    --purple-light: #a78bfa;
+    --grey: #374151;
+    --grey-light: #6b7280;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header */
+  .header {
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .header h1 { font-size: 14px; font-weight: 600; color: var(--blue-light); }
+  .header .status-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+  .badge-active { background: rgba(59,130,246,0.2); color: var(--blue-light); border: 1px solid rgba(59,130,246,0.3); }
+  .badge-idle { background: var(--grey); color: var(--text-muted); border: 1px solid var(--border-light); }
+
+  /* Two-panel layout */
+  .panels {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+  .panel {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .panel-left { border-right: 1px solid var(--border); }
+  .panel-right { }
+
+  .panel-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .panel-title-text { }
+  .panel-slug {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0;
+    text-transform: none;
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Section cards */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .section-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  /* Persona nodes */
+  .persona-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .persona-node {
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    border: 1px solid var(--border-light);
+    background: var(--surface-alt);
+    color: var(--text-muted);
+  }
+  .persona-core {
+    border-color: var(--blue);
+    color: var(--blue-light);
+    border-style: solid;
+  }
+  .persona-contributing {
+    border-color: rgba(59,130,246,0.4);
+    color: rgba(147,197,253,0.7);
+    border-style: dashed;
+  }
+  .persona-active {
+    animation: pulse 2s ease-in-out infinite;
+    box-shadow: 0 0 8px var(--blue-glow);
+  }
+
+  /* Confirmation stages */
+  .confirm-bar {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+  }
+  .confirm-stage {
+    flex: 1;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: all 0.3s;
+  }
+  .confirm-pending { background: var(--grey); color: var(--text-dim); }
+  .confirm-current { background: rgba(59,130,246,0.3); color: var(--blue-light); border: 1px solid var(--blue); animation: pulse 2s ease-in-out infinite; }
+  .confirm-accepted { background: var(--green-dark); color: var(--green-light); }
+
+  /* Phase dots (analysis) */
+  .phase-dots {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    margin-top: 6px;
+  }
+  .phase-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--grey);
+    border: 1px solid var(--grey-light);
+  }
+  .phase-dot.done { background: var(--green-dark); border-color: var(--green); }
+  .phase-dot.active { background: rgba(59,130,246,0.5); border-color: var(--blue); animation: pulse 2s ease-in-out infinite; }
+  .phase-dot-label { font-size: 10px; color: var(--text-dim); margin-left: 4px; }
+
+  /* Build phase DAG */
+  .phase-dag {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+  .phase-dag-node {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-light);
+    font-size: 12px;
+    width: 100%;
+    position: relative;
+  }
+  .phase-dag-connector {
+    width: 2px;
+    height: 8px;
+    background: var(--border-light);
+    margin-left: 18px;
+  }
+  .dag-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dag-pending .dag-status-dot { background: var(--grey); border: 1px solid var(--grey-light); }
+  .dag-running .dag-status-dot { background: var(--blue); border: 1px solid var(--blue-light); animation: pulse 2s ease-in-out infinite; }
+  .dag-running { border-color: var(--blue); background: rgba(59,130,246,0.05); }
+  .dag-completed .dag-status-dot { background: var(--green-dark); border: 1px solid var(--green); }
+  .dag-completed { border-color: var(--green-dark); opacity: 0.7; }
+  .dag-failed .dag-status-dot { background: var(--red-dark); border: 1px solid var(--red); }
+  .dag-failed { border-color: var(--red-dark); }
+  .dag-skipped { opacity: 0.4; }
+
+  /* Agent badge */
+  .agent-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    background: rgba(59,130,246,0.15);
+    color: var(--blue-light);
+    border: 1px solid rgba(59,130,246,0.3);
+  }
+  .agent-badge.active { animation: pulse 2s ease-in-out infinite; }
+  .agent-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--blue);
+  }
+
+  /* Task progress */
+  .task-progress-bar {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--grey);
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .task-progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--green);
+    transition: width 0.5s ease;
+  }
+  .task-progress-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* Skills nodes */
+  .skills-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .skill-node {
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    background: var(--surface-alt);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  .skill-external {
+    border-color: var(--purple);
+    color: var(--purple-light);
+  }
+
+  /* Hooks bar */
+  .hooks-bar {
+    flex-shrink: 0;
+    border-top: 1px solid var(--border);
+    padding: 8px 20px;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+  }
+  .hooks-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    flex-shrink: 0;
+    margin-right: 4px;
+  }
+  .hook-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    cursor: default;
+    position: relative;
+  }
+  .hook-allow { background: var(--green); }
+  .hook-block { background: var(--red); box-shadow: 0 0 8px rgba(239,68,68,0.5); }
+  .hook-warn { background: var(--amber); }
+  .hook-skip { background: var(--grey-light); opacity: 0.5; }
+
+  /* Tooltip */
+  .hook-dot[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface-alt);
+    color: var(--text);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    white-space: nowrap;
+    border: 1px solid var(--border-light);
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  /* Footer */
+  .footer {
+    flex-shrink: 0;
+    padding: 6px 20px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-dim);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer-left { display: flex; align-items: center; gap: 6px; }
+  .poll-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+  .poll-connected { background: var(--green); }
+  .poll-error { background: var(--red); }
+
+  /* Animations */
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 40px 16px;
+    color: var(--text-dim);
+  }
+  .empty-state h3 { font-size: 14px; color: var(--text-muted); margin-bottom: 4px; }
+  .empty-state p { font-size: 11px; }
+
+  /* Inline info rows */
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    padding: 2px 0;
+  }
+  .info-label { color: var(--text-dim); }
+  .info-value { color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1 id="hdr-title">iSDLC Live Dashboard</h1>
+  <span class="status-badge badge-idle" id="hdr-badge">Idle</span>
+</div>
+
+<div class="panels">
+  <!-- ANALYSE panel (left 50%) -->
+  <div class="panel panel-left" id="panel-analyse">
+    <div class="panel-title">
+      <span class="panel-title-text">Analyse</span>
+      <span class="panel-slug" id="analyse-slug">--</span>
+    </div>
+    <div id="analyse-content">
+      <div class="empty-state">
+        <h3>No Active Analysis</h3>
+        <p>Start an analysis workflow to see roundtable activity.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUILD panel (right 50%) -->
+  <div class="panel panel-right" id="panel-build">
+    <div class="panel-title">
+      <span class="panel-title-text">Build</span>
+      <span class="panel-slug" id="build-slug">--</span>
+    </div>
+    <div id="build-content">
+      <div class="empty-state">
+        <h3>No Active Build</h3>
+        <p>Start a build workflow to see phase execution.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hooks bar (bottom, spans both panels) -->
+<div class="hooks-bar" id="hooks-bar">
+  <span class="hooks-label">Hooks</span>
+  <span id="hooks-dots" style="display:flex;gap:4px;align-items:center;">
+    <span style="font-size:10px;color:var(--text-dim);">No events</span>
+  </span>
+</div>
+
+<div class="footer">
+  <div class="footer-left">
+    <span class="poll-dot poll-connected" id="poll-dot"></span>
+    <span id="poll-status">Connected</span>
+  </div>
+  <div id="footer-info">--</div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // NFR-001: Adaptive poll intervals
+  var POLL_ACTIVE = 2000;
+  var POLL_IDLE = 10000;
+  var lastData = null;
+
+  // -------------------------------------------------------------------
+  // Utility: HTML escape (Article III: Security by Design)
+  // -------------------------------------------------------------------
+  function escapeHtml(str) {
+    if (str == null) return '';
+    var div = document.createElement('div');
+    div.textContent = String(str);
+    return div.innerHTML;
+  }
+
+  // -------------------------------------------------------------------
+  // Polling
+  // -------------------------------------------------------------------
+  function poll() {
+    fetch('/api/state')
+      .then(function(res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(function(data) {
+        lastData = data;
+        updateUI(data);
+        setPollStatus(true);
+      })
+      .catch(function() {
+        setPollStatus(false);
+      })
+      .finally(function() {
+        var isActive = lastData && (lastData.active_workflow || lastData.active_analysis);
+        var interval = isActive ? POLL_ACTIVE : POLL_IDLE;
+        setTimeout(poll, interval);
+      });
+  }
+
+  function setPollStatus(connected) {
+    var dot = document.getElementById('poll-dot');
+    var text = document.getElementById('poll-status');
+    if (connected) {
+      dot.className = 'poll-dot poll-connected';
+      text.textContent = 'Connected';
+    } else {
+      dot.className = 'poll-dot poll-error';
+      text.textContent = 'Reconnecting...';
+    }
+  }
+
+  // -------------------------------------------------------------------
+  // Main UI update
+  // -------------------------------------------------------------------
+  function updateUI(data) {
+    updateHeader(data);
+    updateAnalysePanel(data);
+    updateBuildPanel(data);
+    updateHooksBar(data);
+    updateFooter(data);
+  }
+
+  // -------------------------------------------------------------------
+  // Header
+  // -------------------------------------------------------------------
+  function updateHeader(data) {
+    var badge = document.getElementById('hdr-badge');
+    var title = document.getElementById('hdr-title');
+    var wf = data.active_workflow;
+    var aa = data.active_analysis;
+
+    if (wf || aa) {
+      badge.className = 'status-badge badge-active';
+      badge.textContent = wf ? 'Building' : 'Analysing';
+    } else {
+      badge.className = 'status-badge badge-idle';
+      badge.textContent = 'Idle';
+    }
+
+    // Show project name from workflow slug
+    var projectName = 'iSDLC Live Dashboard';
+    if (wf && wf.slug) {
+      projectName = 'iSDLC | ' + escapeHtml(wf.slug);
+    } else if (wf && wf.artifact_folder) {
+      projectName = 'iSDLC | ' + escapeHtml(wf.artifact_folder);
+    }
+    title.textContent = projectName;
+  }
+
+  // -------------------------------------------------------------------
+  // ANALYSE panel
+  // -------------------------------------------------------------------
+  var ANALYSIS_PHASES = ['00-quick-scan', '01-requirements', '02-impact-analysis', '03-architecture', '04-design'];
+  var FEATURE_STAGES = ['Requirements', 'Architecture', 'Design', 'Tasks'];
+  var BUG_STAGES = ['BugSummary', 'RootCause', 'FixStrategy', 'Tasks'];
+
+  function updateAnalysePanel(data) {
+    var container = document.getElementById('analyse-content');
+    var slugEl = document.getElementById('analyse-slug');
+    var aa = data.active_analysis;
+    var meta = data.active_meta;
+    var personas = data.personas || [];
+
+    if (!aa && !meta) {
+      slugEl.textContent = '--';
+      container.innerHTML = '<div class="empty-state"><h3>No Active Analysis</h3><p>Start an analysis workflow to see roundtable activity.</p></div>';
+      return;
+    }
+
+    var slug = (aa && aa.slug) || (meta && meta.slug) || '--';
+    slugEl.textContent = slug;
+
+    var html = '';
+
+    // Persona nodes
+    if (personas.length > 0) {
+      html += '<div class="section"><div class="section-label">Personas</div><div class="persona-grid">';
+      for (var i = 0; i < personas.length; i++) {
+        var p = personas[i];
+        var cls = 'persona-node';
+        if (p.role_type === 'contributing') {
+          cls += ' persona-contributing';
+        } else {
+          cls += ' persona-core';
+        }
+        html += '<span class="' + cls + '">' + escapeHtml(p.name) + '</span>';
+      }
+      html += '</div></div>';
+    }
+
+    // Confirmation stages
+    if (meta && meta.acceptance && meta.acceptance.domains) {
+      var domains = meta.acceptance.domains;
+      var isBug = aa && aa.item_type === 'BUG';
+      var stageLabels = isBug ? BUG_STAGES : FEATURE_STAGES;
+      var confirmStages = ['requirements', 'architecture', 'design', 'tasks'];
+
+      html += '<div class="section"><div class="section-label">Confirmation</div><div class="confirm-bar">';
+      for (var s = 0; s < stageLabels.length; s++) {
+        var domainKey = confirmStages[s];
+        var accepted = domains.indexOf(domainKey) !== -1;
+        // Current = first non-accepted domain
+        var isCurrent = !accepted;
+        var prevAccepted = true;
+        for (var c = 0; c < s; c++) {
+          if (domains.indexOf(confirmStages[c]) === -1) { prevAccepted = false; break; }
+        }
+        isCurrent = isCurrent && prevAccepted;
+
+        var stgCls = 'confirm-stage';
+        if (accepted) stgCls += ' confirm-accepted';
+        else if (isCurrent) stgCls += ' confirm-current';
+        else stgCls += ' confirm-pending';
+
+        html += '<div class="' + stgCls + '">' + escapeHtml(stageLabels[s]) + '</div>';
+      }
+      html += '</div></div>';
+    }
+
+    // Phase dots
+    if (aa) {
+      var completed = Array.isArray(aa.phases_completed) ? aa.phases_completed : [];
+      html += '<div class="section"><div class="section-label">Analysis Phases</div><div class="phase-dots">';
+      for (var d = 0; d < ANALYSIS_PHASES.length; d++) {
+        var phase = ANALYSIS_PHASES[d];
+        var done = completed.indexOf(phase) !== -1;
+        var isNextActive = !done && ANALYSIS_PHASES.indexOf(phase) === completed.length;
+        var dotCls = 'phase-dot';
+        if (done) dotCls += ' done';
+        else if (isNextActive) dotCls += ' active';
+        html += '<span class="' + dotCls + '" title="' + escapeHtml(phase) + '"></span>';
+      }
+      html += '<span class="phase-dot-label">' + completed.length + '/' + ANALYSIS_PHASES.length + '</span>';
+      html += '</div></div>';
+    }
+
+    // Analysis info
+    if (aa) {
+      html += '<div class="section"><div class="section-label">Details</div>';
+      html += '<div class="info-row"><span class="info-label">Status</span><span class="info-value">' + escapeHtml(aa.analysis_status || 'raw') + '</span></div>';
+      html += '<div class="info-row"><span class="info-label">Type</span><span class="info-value">' + escapeHtml(aa.item_type || '--') + '</span></div>';
+      html += '<div class="info-row"><span class="info-label">Source</span><span class="info-value">' + escapeHtml(aa.source_id || '--') + '</span></div>';
+      html += '</div>';
+    }
+
+    container.innerHTML = html;
+  }
+
+  // -------------------------------------------------------------------
+  // BUILD panel
+  // -------------------------------------------------------------------
+  function updateBuildPanel(data) {
+    var container = document.getElementById('build-content');
+    var slugEl = document.getElementById('build-slug');
+    var wf = data.active_workflow;
+    var phases = data.phases || {};
+    var skills = data.agent_skills || { built_in: [], external: [] };
+
+    if (!wf) {
+      slugEl.textContent = '--';
+      container.innerHTML = '<div class="empty-state"><h3>No Active Build</h3><p>Start a build workflow to see phase execution.</p></div>';
+      return;
+    }
+
+    var slug = wf.slug || wf.artifact_folder || '--';
+    slugEl.textContent = slug;
+
+    var html = '';
+
+    // Active agent badge
+    var subAgentLog = wf.sub_agent_log || [];
+    var lastAgent = subAgentLog.length > 0 ? subAgentLog[subAgentLog.length - 1] : null;
+    if (lastAgent) {
+      var agentName = lastAgent.agent || 'unknown';
+      var isRunning = lastAgent.status === 'running';
+      html += '<div class="section"><div class="section-label">Active Agent</div>';
+      html += '<span class="agent-badge' + (isRunning ? ' active' : '') + '"><span class="agent-dot"></span>' + escapeHtml(agentName) + '</span>';
+      html += '</div>';
+    }
+
+    // Phase DAG
+    var wfPhases = wf.phases || [];
+    if (wfPhases.length > 0) {
+      html += '<div class="section"><div class="section-label">Phase DAG</div><div class="phase-dag">';
+      for (var i = 0; i < wfPhases.length; i++) {
+        var phaseKey = wfPhases[i];
+        var phaseData = phases[phaseKey] || {};
+        var status = phaseData.status || 'pending';
+        // Normalize status
+        var dagClass = 'phase-dag-node dag-pending';
+        if (status === 'completed' || status === 'complete') dagClass = 'phase-dag-node dag-completed';
+        else if (status === 'in_progress' || status === 'running') dagClass = 'phase-dag-node dag-running';
+        else if (status === 'failed') dagClass = 'phase-dag-node dag-failed';
+        else if (status === 'skipped') dagClass = 'phase-dag-node dag-skipped';
+
+        html += '<div class="' + dagClass + '"><span class="dag-status-dot"></span><span>' + escapeHtml(phaseKey) + '</span></div>';
+        if (i < wfPhases.length - 1) {
+          html += '<div class="phase-dag-connector"></div>';
+        }
+      }
+      html += '</div></div>';
+    }
+
+    // Task progress (from current phase iteration tracking)
+    var currentPhase = wf.current_phase;
+    if (currentPhase && phases[currentPhase]) {
+      var cp = phases[currentPhase];
+      var iter = cp.iteration_tracking;
+      if (iter && iter.current != null && iter.max != null && iter.max > 0) {
+        var pct = Math.min(100, Math.round((iter.current / iter.max) * 100));
+        html += '<div class="section"><div class="section-label">Iteration Progress</div>';
+        html += '<div class="task-progress-bar"><div class="task-progress-fill" style="width:' + pct + '%"></div></div>';
+        html += '<div class="task-progress-label">' + iter.current + ' / ' + iter.max + ' iterations</div>';
+        html += '</div>';
+      }
+    }
+
+    // Skills section
+    if (skills.built_in.length > 0 || skills.external.length > 0) {
+      html += '<div class="section"><div class="section-label">Skills</div><div class="skills-grid">';
+      for (var bi = 0; bi < skills.built_in.length; bi++) {
+        html += '<span class="skill-node">' + escapeHtml(skills.built_in[bi].skill_id || skills.built_in[bi].name || '?') + '</span>';
+      }
+      for (var ex = 0; ex < skills.external.length; ex++) {
+        html += '<span class="skill-node skill-external">' + escapeHtml(skills.external[ex].name || '?') + '</span>';
+      }
+      html += '</div></div>';
+    }
+
+    // Build info
+    html += '<div class="section"><div class="section-label">Details</div>';
+    html += '<div class="info-row"><span class="info-label">Type</span><span class="info-value">' + escapeHtml(wf.type || '--') + '</span></div>';
+    html += '<div class="info-row"><span class="info-label">Phase</span><span class="info-value">' + escapeHtml(wf.current_phase || '--') + '</span></div>';
+    var completedCount = 0;
+    for (var pc = 0; pc < wfPhases.length; pc++) {
+      var ps = (phases[wfPhases[pc]] || {}).status || '';
+      if (ps === 'completed' || ps === 'complete') completedCount++;
+    }
+    html += '<div class="info-row"><span class="info-label">Progress</span><span class="info-value">' + completedCount + '/' + wfPhases.length + ' phases</span></div>';
+    html += '</div>';
+
+    container.innerHTML = html;
+  }
+
+  // -------------------------------------------------------------------
+  // Hooks bar
+  // -------------------------------------------------------------------
+  function updateHooksBar(data) {
+    var dotsEl = document.getElementById('hooks-dots');
+    var events = data.hook_events || [];
+
+    if (events.length === 0) {
+      dotsEl.innerHTML = '<span style="font-size:10px;color:var(--text-dim);">No events</span>';
+      return;
+    }
+
+    var html = '';
+    // Show last 30 events as dots
+    var start = Math.max(0, events.length - 30);
+    for (var i = start; i < events.length; i++) {
+      var evt = events[i];
+      var evtType = (evt.event || '').toLowerCase();
+      var dotClass = 'hook-dot hook-skip';
+      if (evtType === 'allow') dotClass = 'hook-dot hook-allow';
+      else if (evtType === 'block') dotClass = 'hook-dot hook-block';
+      else if (evtType === 'warn') dotClass = 'hook-dot hook-warn';
+
+      var tooltip = escapeHtml((evt.hook || '?') + ': ' + (evt.reason || ''));
+      html += '<span class="' + dotClass + '" title="' + tooltip + '"></span>';
+    }
+    dotsEl.innerHTML = html;
+  }
+
+  // -------------------------------------------------------------------
+  // Footer
+  // -------------------------------------------------------------------
+  function updateFooter(data) {
+    var info = document.getElementById('footer-info');
+    if (data.timestamp) {
+      var d = new Date(data.timestamp);
+      info.textContent = 'Last: ' + d.toLocaleTimeString() + ' | ' + window.location.origin;
+    }
+  }
+
+  // -------------------------------------------------------------------
+  // Init
+  // -------------------------------------------------------------------
+  poll();
+})();
+</script>
+
+</body>
+</html>

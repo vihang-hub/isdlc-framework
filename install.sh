@@ -873,6 +873,14 @@ if [ -f "$FRAMEWORK_DIR/isdlc/templates/constitution.md" ]; then
     echo -e "${GREEN}  ✓ Copied constitution${NC}"
 fi
 
+# REQ-GH-258 T008: Copy dashboard HTML to .isdlc/ for live workflow dashboard
+# The dashboard server serves .isdlc/dashboard.html as primary, falling back to
+# src/dashboard/index.html if missing. Fail-open: skip if source doesn't exist.
+if [ -f "$SCRIPT_DIR/src/dashboard/dashboard.html" ]; then
+    cp "$SCRIPT_DIR/src/dashboard/dashboard.html" ".isdlc/dashboard.html"
+    echo -e "${GREEN}  ✓ Copied live dashboard HTML${NC}"
+fi
+
 # Generate providers.yaml from template
 # NOTE: Disabled — framework is Claude Code-specific. No providers.yaml needed.
 # PROVIDERS_TARGET=".isdlc/providers.yaml"
