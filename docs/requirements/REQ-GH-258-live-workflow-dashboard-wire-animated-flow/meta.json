@@ -1,0 +1,15 @@
+{
+  "source": "github",
+  "source_id": "GH-258",
+  "slug": "REQ-GH-258-live-workflow-dashboard-wire-animated-flow",
+  "item_type": "REQ",
+  "created_at": "2026-04-30T00:10:00.000Z",
+  "analysis_status": "analyzed",
+  "phases_completed": ["01-requirements", "02-impact-analysis", "03-architecture", "04-design"],
+  "codebase_hash": "6f70f238",
+  "acceptance": {
+    "accepted_at": "2026-04-30T01:00:00.000Z",
+    "domains": ["requirements", "architecture", "design", "tasks"],
+    "amendment_cycles": 1
+  }
+}

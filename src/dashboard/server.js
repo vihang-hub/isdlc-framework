@@ -111,17 +111,18 @@ export async function startDashboardServer(options) {
     const analysisIndex = scanAnalysisIndex();
     const analysisItems = Array.isArray(analysisIndex.items) ? analysisIndex.items : [];
 
-    // active_analysis: most recently active partial or raw item
+    // active_analysis: item with last_activity_at within 2 minutes (roundtable running now)
+    const ACTIVE_THRESHOLD_MS = 2 * 60 * 1000;
+    const now = Date.now();
     let activeAnalysis = null;
-    const partialItems = analysisItems.filter(i => i.analysis_status === 'partial');
-    if (partialItems.length > 0) {
-      // Pick the one with most recent last_activity_at
-      activeAnalysis = partialItems.reduce((a, b) => (a.last_activity_at >= b.last_activity_at ? a : b));
-    } else {
-      // Fallback to most recent raw item
-      const rawItems = analysisItems.filter(i => i.analysis_status === 'raw');
-      if (rawItems.length > 0) {
-        activeAnalysis = rawItems.reduce((a, b) => (a.last_activity_at >= b.last_activity_at ? a : b));
+    for (const item of analysisItems) {
+      if (item.last_activity_at) {
+        const age = now - new Date(item.last_activity_at).getTime();
+        if (age < ACTIVE_THRESHOLD_MS && item.analysis_status !== 'analyzed') {
+          if (!activeAnalysis || item.last_activity_at > activeAnalysis.last_activity_at) {
+            activeAnalysis = item;
+          }
+        }
       }
     }
 

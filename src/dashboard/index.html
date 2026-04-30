@@ -39,7 +39,9 @@
 
   /* Main layout */
   .main { display: flex; height: calc(100vh - 57px); }
-  .dag-container { flex: 1; overflow: auto; padding: 24px; }
+  .main-left { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+  .dag-container { flex-shrink: 0; padding: 24px; }
+  .analysis-panel { border-top: 1px solid var(--border); padding: 16px 24px; }
   .detail-panel { width: 320px; border-left: 1px solid var(--border); padding: 16px; overflow-y: auto; }
   .detail-panel h2 { font-size: 14px; margin-bottom: 12px; color: var(--text-muted); }
   .detail-row { margin-bottom: 8px; font-size: 13px; }
@@ -79,27 +81,31 @@
   .no-workflow { text-align: center; padding: 80px 24px; color: var(--text-muted); }
   .no-workflow h2 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
 
-  /* Analysis view (BUG-GH-277) */
-  .analysis-view { padding: 24px; }
-  .analysis-view h2 { font-size: 16px; margin-bottom: 16px; }
-  .analysis-toggle { display: flex; gap: 12px; margin-bottom: 20px; }
-  .analysis-toggle label { cursor: pointer; font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+  /* Analysis panel (BUG-GH-277) */
+  .analysis-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .analysis-header h3 { font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .analysis-toggle { display: flex; gap: 10px; }
+  .analysis-toggle label { cursor: pointer; font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 3px; }
   .analysis-toggle input:checked + span { color: var(--text); font-weight: 600; }
-  .analysis-item { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 12px 16px; margin-bottom: 10px; }
-  .analysis-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-  .analysis-item-slug { font-size: 14px; font-weight: 600; }
-  .analysis-item-source { font-size: 12px; color: var(--text-muted); }
-  .analysis-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+  .analysis-items { display: flex; flex-wrap: wrap; gap: 8px; }
+  .analysis-item { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; width: 320px; min-width: 0; overflow: hidden; }
+  .analysis-item.is-active { border-color: var(--running-stroke); }
+  .analysis-item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; gap: 8px; }
+  .analysis-item-slug { font-size: 13px; font-weight: 600; word-break: break-all; }
+  .analysis-item-source { font-size: 11px; color: var(--text-muted); }
+  .analysis-badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 500; }
   .analysis-badge-bug { background: #7c2d12; }
   .analysis-badge-feature { background: #1e40af; }
   .analysis-badge-upgrade { background: #7c3aed; }
-  .analysis-status-raw { color: var(--text-muted); }
-  .analysis-status-partial { color: #f59e0b; }
-  .analysis-status-analyzed { color: var(--completed-stroke); }
-  .phase-dots { display: flex; gap: 4px; margin-top: 6px; }
-  .phase-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--pending); border: 1px solid var(--pending-stroke); }
+  .analysis-status-raw { color: var(--text-muted); font-size: 11px; }
+  .analysis-status-partial { color: #f59e0b; font-size: 11px; }
+  .analysis-status-analyzed { color: var(--completed-stroke); font-size: 11px; }
+  .analysis-active-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--running-stroke); margin-right: 4px; animation: pulse 2s ease-in-out infinite; }
+  .phase-dots { display: flex; gap: 3px; margin-top: 4px; align-items: center; }
+  .phase-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pending); border: 1px solid var(--pending-stroke); }
   .phase-dot.completed { background: var(--completed); border-color: var(--completed-stroke); }
-  .phase-dot-label { font-size: 10px; color: var(--text-muted); margin-left: 8px; line-height: 10px; }
+  .phase-dot.active-phase { background: var(--running); border-color: var(--running-stroke); animation: pulse 2s ease-in-out infinite; }
+  .phase-dot-label { font-size: 10px; color: var(--text-muted); margin-left: 6px; }
 </style>
 </head>
 <body>
@@ -112,14 +118,17 @@
 </div>
 
 <div class="main">
-  <div class="dag-container" id="dag-container">
-    <svg id="dag-svg" width="100%" height="100%">
-      <defs>
-        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-          <polygon points="0 0, 10 3.5, 0 7" fill="#475569" />
-        </marker>
-      </defs>
-    </svg>
+  <div class="main-left">
+    <div class="dag-container" id="dag-container">
+      <svg id="dag-svg" width="100%" height="100%">
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#475569" />
+          </marker>
+        </defs>
+      </svg>
+    </div>
+    <div class="analysis-panel" id="analysis-panel"></div>
   </div>
   <div class="detail-panel" id="detail-panel">
     <h2>Phase Details</h2>
@@ -277,6 +286,7 @@
   function updateUI(data) {
     updateHeader(data);
     renderDAG(data);
+    renderAnalysisPanel(data);
     updateFooter(data);
     if (selectedPhase) {
       updateDetailPanel(data, selectedPhase);
@@ -290,22 +300,17 @@
     const meta = document.getElementById('header-meta');
     const wf = data.active_workflow;
 
+    title.textContent = 'iSDLC Workflow Dashboard';
     if (wf) {
       const type = wf.type || 'workflow';
       const slug = wf.slug || wf.artifact_folder || '';
-      title.textContent = `${slug}`;
       const badgeClass = type === 'fix' ? 'badge-fix' : type === 'upgrade' ? 'badge-upgrade' : 'badge-feature';
       const phaseInfo = data._historical ? `Status: ${wf.status || 'completed'}` : `Phase: ${wf.current_phase || '--'}`;
-      meta.innerHTML = `<span class="badge ${badgeClass}">${type}</span> ${phaseInfo}`;
+      meta.innerHTML = `Build: ${escapeHtml(slug)} <span class="badge ${badgeClass}">${escapeHtml(type)}</span> ${escapeHtml(phaseInfo)}`;
     } else if (data.active_analysis) {
-      // BUG-GH-277: Show analysis info in header
-      const aa = data.active_analysis;
-      title.textContent = aa.slug || 'Analysis in Progress';
-      const badgeClass = aa.item_type === 'BUG' ? 'badge-fix' : aa.item_type === 'UPGRADE' ? 'badge-upgrade' : 'badge-feature';
-      meta.innerHTML = '<span class="badge ' + badgeClass + '">' + escapeHtml(aa.item_type || 'analysis') + '</span> Status: ' + escapeHtml(aa.analysis_status || 'raw');
+      meta.innerHTML = 'Roundtable active: ' + escapeHtml(data.active_analysis.slug);
     } else {
-      title.textContent = 'iSDLC Workflow Dashboard';
-      meta.textContent = 'No active workflow';
+      meta.textContent = 'Idle';
     }
   }
 
@@ -322,61 +327,80 @@
   const ANALYSIS_PHASE_NAMES = ['00-quick-scan', '01-requirements', '02-impact-analysis', '03-architecture', '04-design'];
   let analysisFilter = 'active'; // 'active' or 'all'
 
-  function renderAnalysisView(data) {
-    const container = document.getElementById('dag-container');
+  function renderAnalysisPanel(data) {
+    const panel = document.getElementById('analysis-panel');
     const items = data.analysis_items || [];
+    const activeSlug = data.active_analysis ? data.active_analysis.slug : null;
+
     if (items.length === 0) {
-      container.innerHTML = '<div class="no-workflow"><h2>No Active Workflow</h2><p>Start a workflow to see the execution DAG.</p></div>';
+      panel.innerHTML = '';
       return;
     }
 
-    const filtered = analysisFilter === 'active' ? items.filter(i => i.analysis_status === 'partial' || i.analysis_status === 'raw') : items;
+    // Filter: "active" = item with active roundtable right now; "all" = everything
+    let filtered;
+    if (analysisFilter === 'active') {
+      filtered = activeSlug ? items.filter(i => i.slug === activeSlug) : [];
+    } else {
+      filtered = items;
+    }
 
-    let html = '<div class="analysis-view">';
-    html += '<h2>Analysis Items</h2>';
-
-    // Radio toggle
+    let html = '<div class="analysis-header">';
+    html += '<h3>Analysis</h3>';
     html += '<div class="analysis-toggle">';
     html += '<label><input type="radio" name="analysis-filter" value="active"' + (analysisFilter === 'active' ? ' checked' : '') + '> <span>Active</span></label>';
     html += '<label><input type="radio" name="analysis-filter" value="all"' + (analysisFilter === 'all' ? ' checked' : '') + '> <span>All</span></label>';
     html += '</div>';
-
-    if (filtered.length === 0) {
-      html += '<p style="color: var(--text-muted);">No items match the current filter.</p>';
-    }
-
-    for (const item of filtered) {
-      const typeBadgeClass = item.item_type === 'BUG' ? 'analysis-badge-bug' : item.item_type === 'UPGRADE' ? 'analysis-badge-upgrade' : 'analysis-badge-feature';
-      const statusClass = 'analysis-status-' + (item.analysis_status || 'raw');
-      html += '<div class="analysis-item">';
-      html += '<div class="analysis-item-header">';
-      html += '<div>';
-      html += '<span class="analysis-item-slug">' + escapeHtml(item.slug) + '</span>';
-      html += ' <span class="analysis-badge ' + typeBadgeClass + '">' + escapeHtml(item.item_type || 'UNKNOWN') + '</span>';
-      html += '</div>';
-      html += '<span class="analysis-item-source">' + escapeHtml(item.source_id || '') + '</span>';
-      html += '</div>';
-      html += '<div><span class="' + statusClass + '">' + escapeHtml(item.analysis_status || 'raw') + '</span></div>';
-
-      // Phase dots
-      html += '<div class="phase-dots">';
-      for (const phase of ANALYSIS_PHASE_NAMES) {
-        const done = Array.isArray(item.phases_completed) && item.phases_completed.includes(phase);
-        html += '<div class="phase-dot' + (done ? ' completed' : '') + '" title="' + escapeHtml(phase) + '"></div>';
-      }
-      html += '<span class="phase-dot-label">' + (Array.isArray(item.phases_completed) ? item.phases_completed.length : 0) + '/' + ANALYSIS_PHASE_NAMES.length + ' phases</span>';
-      html += '</div>';
-      html += '</div>';
-    }
     html += '</div>';
-    container.innerHTML = html;
+
+    if (analysisFilter === 'active' && !activeSlug) {
+      html += '<p style="color: var(--text-muted); font-size: 12px;">No roundtable active right now.</p>';
+    } else if (filtered.length === 0) {
+      html += '<p style="color: var(--text-muted); font-size: 12px;">No items match the current filter.</p>';
+    } else {
+      html += '<div class="analysis-items">';
+      for (const item of filtered) {
+        const isActive = item.slug === activeSlug;
+        const typeBadgeClass = item.item_type === 'BUG' ? 'analysis-badge-bug' : item.item_type === 'UPGRADE' ? 'analysis-badge-upgrade' : 'analysis-badge-feature';
+        const statusText = isActive ? 'active' : (item.analysis_status || 'raw');
+        const statusClass = isActive ? 'analysis-status-partial' : ('analysis-status-' + (['raw','partial','analyzed'].includes(item.analysis_status) ? item.analysis_status : 'raw'));
+
+        html += '<div class="analysis-item' + (isActive ? ' is-active' : '') + '">';
+        html += '<div class="analysis-item-header">';
+        html += '<div>';
+        if (isActive) html += '<span class="analysis-active-dot"></span>';
+        html += '<span class="analysis-item-slug" title="' + escapeHtml(item.slug) + '">' + escapeHtml(item.slug) + '</span>';
+        html += ' <span class="analysis-badge ' + typeBadgeClass + '">' + escapeHtml(item.item_type || '?') + '</span>';
+        html += '</div>';
+        html += '<span class="analysis-item-source">' + escapeHtml(item.source_id || '') + '</span>';
+        html += '</div>';
+        html += '<div><span class="' + statusClass + '">' + escapeHtml(statusText) + '</span></div>';
+
+        // Phase dots
+        html += '<div class="phase-dots">';
+        const completed = Array.isArray(item.phases_completed) ? item.phases_completed : [];
+        for (const phase of ANALYSIS_PHASE_NAMES) {
+          const done = completed.includes(phase);
+          // Next incomplete phase is "active" if roundtable is running
+          const isNextPhase = isActive && !done && !completed.includes(phase);
+          const firstIncomplete = isActive && !done && ANALYSIS_PHASE_NAMES.findIndex(p => !completed.includes(p)) === ANALYSIS_PHASE_NAMES.indexOf(phase);
+          html += '<div class="phase-dot' + (done ? ' completed' : '') + (firstIncomplete ? ' active-phase' : '') + '" title="' + escapeHtml(phase) + '"></div>';
+        }
+        html += '<span class="phase-dot-label">' + completed.length + '/' + ANALYSIS_PHASE_NAMES.length + '</span>';
+        html += '</div>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+
+    panel.innerHTML = html;
 
     // Bind radio toggle events
-    const radios = container.querySelectorAll('input[name="analysis-filter"]');
+    const radios = panel.querySelectorAll('input[name="analysis-filter"]');
     for (const r of radios) {
       r.addEventListener('change', function() {
         analysisFilter = this.value;
-        if (lastData) renderAnalysisView(lastData);
+        if (lastData) renderAnalysisPanel(lastData);
       });
     }
   }
@@ -391,8 +415,8 @@
     const svg = document.getElementById('dag-svg');
     const wf = data.active_workflow;
     if (!wf || !wf.phases) {
-      // BUG-GH-277: Show analysis view instead of empty state
-      renderAnalysisView(data);
+      svg.innerHTML = '';
+      document.getElementById('dag-container').innerHTML = '<div class="no-workflow"><h2>No Active Build</h2><p>Start a build workflow to see the execution DAG.</p></div>';
       return;
     }
 
