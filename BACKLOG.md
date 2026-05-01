@@ -11,7 +11,9 @@
   - Composers now inline rendering_mandate, content_coverage, template_ref body, accepted_payloads, and skill bodies per delivery_type. Rolling-state has accepted_payloads accumulator with applyAcceptedPayload writer + defensive init. Bridge propagates payloads via context. Article X preserved on every new file read. 199 tests pass. Provider parity automatic.
   - **Completed:** 2026-04-26
 - [A] #263 Centralised Vector DB: carve out embedding server into separate repo [github: GH-263] -> [requirements](docs/requirements/REQ-GH-263-centralised-vector-db-carve-out-embedding-server/)
-- [A] #278 Populate skill_usage_log during agent execution — track which skills agents actually invoke [github: GH-278] -> [requirements](docs/requirements/REQ-GH-278-populate-skill-usage-log-track-invoked-skills/)
+- [x] #278 Populate skill_usage_log during agent execution — track which skills agents actually invoke [github: GH-278] -> [requirements](docs/requirements/REQ-GH-278-populate-skill-usage-log-track-invoked-skills/) **Completed**
+  - PostToolUse[Skill] hook + output inference fallback. Analysis index on add, roundtable heartbeat, dashboard auto-launch. Three skill states (confirmed/likely/loaded). 19 new tests.
+  - **Completed:** 2026-05-01
 - [x] #258 Live workflow dashboard: wire animated flow to state.json for real-time visualization [github: GH-258] -> [requirements](docs/requirements/REQ-GH-258-live-workflow-dashboard-wire-animated-flow/) **Completed**
   - Two-panel dashboard (Analysis + Build), server API expanded with personas/hooks/skills/active-meta, 776-line dashboard.html, adaptive polling, 48 tests. Dep: #278 for fired-vs-available skills.
   - **Completed:** 2026-04-30
