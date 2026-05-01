@@ -285,6 +285,25 @@
     border-color: var(--purple);
     color: var(--purple-light);
   }
+  /* REQ-GH-278 FR-006: Three skill usage states */
+  .skill-confirmed {
+    border-color: var(--green);
+    color: var(--green-light);
+    background: var(--green-dark);
+    border-style: solid;
+  }
+  .skill-inferred {
+    border-color: var(--green);
+    color: var(--green-light);
+    background: rgba(16,185,129,0.1);
+    border-style: dashed;
+  }
+  .skill-loaded {
+    border-color: var(--border);
+    color: var(--text-dim);
+    background: var(--surface-alt);
+    border-style: solid;
+  }
 
   /* Hooks bar */
   .hooks-bar {
@@ -629,6 +648,23 @@
   }
 
   // -------------------------------------------------------------------
+  // Skill usage state helper (REQ-GH-278 FR-006)
+  // -------------------------------------------------------------------
+  function getSkillUsageState(skillId, usageLog) {
+    var hasToolCall = false;
+    var hasInferred = false;
+    for (var i = 0; i < usageLog.length; i++) {
+      if (usageLog[i].skill_name === skillId) {
+        if (usageLog[i].source === 'tool_call') hasToolCall = true;
+        if (usageLog[i].source === 'inferred') hasInferred = true;
+      }
+    }
+    if (hasToolCall) return { cls: 'skill-confirmed', tooltip: 'Confirmed' };
+    if (hasInferred) return { cls: 'skill-inferred', tooltip: 'Likely used' };
+    return { cls: 'skill-loaded', tooltip: 'Loaded' };
+  }
+
+  // -------------------------------------------------------------------
   // BUILD panel
   // -------------------------------------------------------------------
   function updateBuildPanel(data) {
@@ -697,14 +733,21 @@
       }
     }
 
-    // Skills section
+    // Skills section (REQ-GH-278 FR-006: three visual states)
+    var usageLog = data.skill_usage_log || [];
     if (skills.built_in.length > 0 || skills.external.length > 0) {
       html += '<div class="section"><div class="section-label">Skills</div><div class="skills-grid">';
       for (var bi = 0; bi < skills.built_in.length; bi++) {
-        html += '<span class="skill-node">' + escapeHtml(skills.built_in[bi].skill_id || skills.built_in[bi].name || '?') + '</span>';
+        var skillId = skills.built_in[bi].skill_id || skills.built_in[bi].name || '?';
+        var usageState = getSkillUsageState(skillId, usageLog);
+        var skillCls = 'skill-node ' + usageState.cls;
+        html += '<span class="' + skillCls + '" title="' + escapeHtml(usageState.tooltip) + '">' + escapeHtml(skillId) + '</span>';
       }
       for (var ex = 0; ex < skills.external.length; ex++) {
-        html += '<span class="skill-node skill-external">' + escapeHtml(skills.external[ex].name || '?') + '</span>';
+        var extName = skills.external[ex].name || '?';
+        var extState = getSkillUsageState(extName, usageLog);
+        var extCls = 'skill-node skill-external ' + extState.cls;
+        html += '<span class="' + extCls + '" title="' + escapeHtml(extState.tooltip) + '">' + escapeHtml(extName) + '</span>';
       }
       html += '</div></div>';
     }

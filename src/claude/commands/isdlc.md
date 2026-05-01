@@ -539,7 +539,8 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
 9. Create `docs/requirements/{slug}/meta.json` with v2 schema:
    `{ "source": "{source}", "source_id": "{source_id}", "slug": "{slug}", "created_at": "{ISO-8601}", "analysis_status": "raw", "phases_completed": [], "codebase_hash": "{git rev-parse --short HEAD}" }`
 10. Append to BACKLOG.md Open section using `appendToBacklog()` with `[ ]` marker
-11. Confirm: "Added '{description}' to the backlog. You can analyze it now or come back later."
+11. **Update analysis index** (REQ-GH-278 FR-004): Call `updateAnalysisIndex()` from `src/core/backlog/item-state.js` so the new item appears in the dashboard immediately. Fail-open: if the call fails, continue without error.
+12. Confirm: "Added '{description}' to the backlog. You can analyze it now or come back later."
 
 > **Constraints**: No state.json writes (NFR-002). No workflow creation. No branch creation. No orchestrator delegation (ADR-0012). Performance target: under 5 seconds (NFR-004).
 
@@ -624,6 +625,8 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
       - If hashes differ: warn "Codebase has changed since analysis ({N} commits). Re-run analysis?"
         Options: [R] Re-analyze | [C] Cancel
         If re-analyze: clear phases_completed, topics_covered, steps_completed, set analysis_status to "raw", continue
+
+5.5. **Dashboard auto-launch** (REQ-GH-278 FR-007, NFR-003): Probe and optionally start the dashboard server so analysis progress is visible in real time. Run: `node -e 'const http=require("http");http.get("http://127.0.0.1:3456/api/state",r=>{process.exit(0)}).on("error",()=>{const{spawn}=require("child_process");const c=spawn("node",[require("path").join(process.env.CLAUDE_PROJECT_DIR||".","src","dashboard","server.js")],{detached:true,stdio:"ignore"});c.unref();process.exit(0)})'`. This is non-blocking and fail-open: if the probe or spawn fails, analysis continues unaffected.
 
 6. **SIZING PRE-CHECK** (GH-57): If lightFlag === true AND meta.sizing_decision is NOT already set:
    - Read `light_skip_phases` from `workflows.json -> workflows.feature.sizing.light_skip_phases` (fallback: `["03-architecture", "04-design"]`)
@@ -908,16 +911,19 @@ User: "An e-commerce platform for selling handmade crafts with payment processin
      - The state machine tracks these transitions but the existing roundtable-analyst.md confirmation protocol still drives the actual presentation. The state machine ensures the composition layer stays in sync.
 
    PROTOCOL (from roundtable-analyst.md):
+     **Roundtable heartbeat** (REQ-GH-278 FR-005): At each user exchange resume point (steps 2, 3, 4 below), call `updateAnalysisIndex()` from `src/core/backlog/item-state.js` to refresh `last_activity_at` for the current slug. This keeps the dashboard showing the analysis as "active" during the roundtable conversation. Fail-open: if the call fails, continue without error.
      1. Follow Section 2.1 Opening:
         - Open as Maya from draft content
         - Ask a single opening question
         - STOP and wait for user reply (natural conversation turn -- no Task resume)
         - (If state machine initialized: use the entry composedCard as supplementary context for this turn)
      2. On user's first reply, follow Section 2.1 "On resume":
+        - Heartbeat: call `updateAnalysisIndex()` to refresh `last_activity_at`
         - Run codebase scan (Alex's deferred task)
         - Compose response with Maya continuing + Alex contributing scan evidence
         - (If state machine initialized: call processAfterTurn after producing output, then composeForTurn before next turn)
      3. For each subsequent exchange, follow Sections 2.2-2.5:
+        - Heartbeat: call `updateAnalysisIndex()` to refresh `last_activity_at`
         - Conversation flow rules, persona contribution batching, natural steering
         - Topic coverage tracking (Section 3)
         - Depth adaptation (Section 4)
@@ -1259,6 +1265,7 @@ If user declines: abort build. If user confirms: proceed to step 5.
 
 5. Parse flags from command arguments:
    - --supervised, --debate, --no-debate, --no-fan-out, --trivial
+5.5. **Dashboard auto-launch** (REQ-GH-278 FR-007, NFR-003): Probe and optionally start the dashboard server so build progress is visible in real time. Run: `node -e 'const http=require("http");http.get("http://127.0.0.1:3456/api/state",r=>{process.exit(0)}).on("error",()=>{const{spawn}=require("child_process");const c=spawn("node",[require("path").join(process.env.CLAUDE_PROJECT_DIR||".","src","dashboard","server.js")],{detached:true,stdio:"ignore"});c.unref();process.exit(0)})'`. This is non-blocking and fail-open: if the probe or spawn fails, the build continues unaffected.
 6. Determine branch prefix from artifact folder:
    - If artifact folder name starts with `BUG-`: branch prefix = `bugfix/`
    - Otherwise: branch prefix = `feature/` (fail-safe default, Article X)
@@ -1744,6 +1751,7 @@ Read `agent_modifiers` for this phase from `.isdlc/state.json` → `active_workf
 - If `{built_in_skills_block}` is non-empty: include it in the delegation prompt after WORKFLOW MODIFIERS (or after DISCOVERY CONTEXT if present from SessionStart cache).
 - If `{external_skills_blocks}` is non-empty: include it after `{built_in_skills_block}`, separated by a blank line.
 - If both are empty: include nothing — no skill-related content in the prompt.
+- **Skill usage signal** (REQ-GH-278 FR-002): If any skill content was included above, append this instruction at the end of the skill block: "When you apply guidance from a skill listed above, call Skill('skill-name') to signal usage."
 
 #### STEP 1: INIT — Launch orchestrator for workflow initialization
 
@@ -2533,6 +2541,7 @@ state update, check if adaptive workflow sizing should run.
    4. Call `TaskList` to retrieve all tasks
    5. For each task whose subject matches `/^(~~)?T\d+/` (per-task entries): call `TaskUpdate` with `status: "deleted"`
    6. Phase-level entries (subjects matching `/^(~~)?\[/`) are NOT deleted
+   7. **Skill usage inference** (REQ-GH-278 FR-003): After agent returns, infer skill usage from agent output. Run: `node -e 'const fs=require("fs"),p=require("path"),root=process.env.CLAUDE_PROJECT_DIR||".";try{const sm=JSON.parse(fs.readFileSync(p.join(root,".claude","hooks","config","skills-manifest.json"),"utf8"));const st=JSON.parse(fs.readFileSync(p.join(root,".isdlc","state.json"),"utf8"));const aw=st.active_workflow||{};const agent=((aw.sub_agent_log||[]).slice(-1)[0]||{}).agent||"unknown";const phase=aw.current_phase||st.current_phase||"unknown";const owned=(sm.ownership||{})[agent];if(!owned||!owned.skills)process.exit(0);const skillIds=owned.skills;const existing=(st.skill_usage_log||[]).filter(e=>e.source==="tool_call"&&e.phase===phase).map(e=>e.skill_name);const inferred=skillIds.filter(id=>id.length>4&&!existing.includes(id));if(inferred.length===0)process.exit(0);if(!Array.isArray(st.skill_usage_log))st.skill_usage_log=[];const ts=new Date().toISOString();for(const id of inferred){st.skill_usage_log.push({skill_name:id,agent,phase,timestamp:ts,source:"inferred"})}fs.writeFileSync(p.join(root,".isdlc","state.json"),JSON.stringify(st,null,2))}catch(e){}'`. This is fail-open: errors are silently ignored.
    Continue to next phase.
 - `"blocked_by_hook"` → Identify the block type from the message and dispatch:
   1. Contains `"BLAST RADIUS COVERAGE INCOMPLETE"` → Follow **3f-blast-radius** below (unchanged)

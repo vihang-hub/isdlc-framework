@@ -4,15 +4,15 @@
 
 | Phase | Total | Done | Remaining |
 |-------|-------|------|-----------|
-| 05-test-strategy | 1 | 0 | 1 |
+| 05-test-strategy | 1 | 1 | 0 |
 | 06-implementation | 9 | 0 | 9 |
 | 16-quality-loop | 1 | 0 | 1 |
 | 08-code-review | 1 | 0 | 1 |
-| **Total** | **12** | **0** | **12** |
+| **Total** | **12** | **1** | **11** |
 
-## Phase 05: Test Strategy -- PENDING
+## Phase 05: Test Strategy -- COMPLETE
 
-- [ ] T001 Design test strategy for post-skill-dispatcher, inference logic, analysis index updates, auto-launch, and dashboard skill states | traces: FR-001 through FR-007, NFR-001 through NFR-003
+- [X] T001 Design test strategy for post-skill-dispatcher, inference logic, analysis index updates, auto-launch, and dashboard skill states | traces: FR-001 through FR-007, NFR-001 through NFR-003
 
 ## Phase 06: Implementation -- PENDING
 
