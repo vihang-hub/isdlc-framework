@@ -386,6 +386,16 @@
             "timeout": 10000
           }
         ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node $CLAUDE_PROJECT_DIR/.claude/hooks/dispatchers/post-skill-dispatcher.cjs",
+            "timeout": 5000
+          }
+        ]
       }
     ],
     "Stop": [

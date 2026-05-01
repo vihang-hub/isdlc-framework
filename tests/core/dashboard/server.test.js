@@ -1031,3 +1031,97 @@ describe('GET /api/state -- integration (REQ-GH-258)', () => {
     assert.ok(Array.isArray(data.personas));
   });
 });
+
+// ===========================================================================
+// REQ-GH-278: skill_usage_log in /api/state response
+// ===========================================================================
+
+describe('GET /api/state -- skill_usage_log (REQ-GH-278)', () => {
+
+  it('DS-SKL-01: /api/state response includes skill_usage_log array', async () => {
+    const stateJsonPath = setupTempState({
+      ...makeStateWithWorkflow(),
+      skill_usage_log: [
+        { skill_name: 'unit-testing', agent: 'software-developer', phase: '06-implementation', timestamp: '2026-04-29T10:00:00Z', source: 'tool_call' }
+      ]
+    });
+    serverInstance = await startDashboardServer({ stateJsonPath, port: 0 });
+    const res = await fetch(`${serverInstance.url}/api/state`);
+    const data = await res.json();
+
+    assert.ok('skill_usage_log' in data);
+    assert.ok(Array.isArray(data.skill_usage_log));
+    assert.strictEqual(data.skill_usage_log.length, 1);
+  });
+
+  it('DS-SKL-02: skill_usage_log entries have skill_name, source, agent, phase, timestamp fields', async () => {
+    const stateJsonPath = setupTempState({
+      ...makeStateWithWorkflow(),
+      skill_usage_log: [
+        { skill_name: 'unit-testing', agent: 'software-developer', phase: '06-implementation', timestamp: '2026-04-29T10:00:00Z', source: 'tool_call' }
+      ]
+    });
+    serverInstance = await startDashboardServer({ stateJsonPath, port: 0 });
+    const res = await fetch(`${serverInstance.url}/api/state`);
+    const data = await res.json();
+
+    const entry = data.skill_usage_log[0];
+    assert.ok('skill_name' in entry);
+    assert.ok('source' in entry);
+    assert.ok('agent' in entry);
+    assert.ok('phase' in entry);
+    assert.ok('timestamp' in entry);
+    assert.strictEqual(entry.skill_name, 'unit-testing');
+    assert.strictEqual(entry.source, 'tool_call');
+  });
+
+  it('DS-SKL-03: /api/state returns empty skill_usage_log when no skills have been invoked', async () => {
+    const stateJsonPath = setupTempState(makeStateWithWorkflow());
+    serverInstance = await startDashboardServer({ stateJsonPath, port: 0 });
+    const res = await fetch(`${serverInstance.url}/api/state`);
+    const data = await res.json();
+
+    assert.ok('skill_usage_log' in data);
+    assert.ok(Array.isArray(data.skill_usage_log));
+    assert.strictEqual(data.skill_usage_log.length, 0);
+  });
+
+  it('DS-SKL-04: skill_usage_log correctly returns entries with source:"tool_call"', async () => {
+    const stateJsonPath = setupTempState({
+      ...makeStateWithWorkflow(),
+      skill_usage_log: [
+        { skill_name: 'unit-testing', agent: 'software-developer', phase: '06-implementation', timestamp: '2026-04-29T10:00:00Z', source: 'tool_call' },
+        { skill_name: 'code-refactoring', agent: 'software-developer', phase: '06-implementation', timestamp: '2026-04-29T10:05:00Z', source: 'tool_call' }
+      ]
+    });
+    serverInstance = await startDashboardServer({ stateJsonPath, port: 0 });
+    const res = await fetch(`${serverInstance.url}/api/state`);
+    const data = await res.json();
+
+    const toolCallEntries = data.skill_usage_log.filter(e => e.source === 'tool_call');
+    assert.strictEqual(toolCallEntries.length, 2);
+    assert.strictEqual(toolCallEntries[0].skill_name, 'unit-testing');
+    assert.strictEqual(toolCallEntries[1].skill_name, 'code-refactoring');
+  });
+
+  it('DS-SKL-05: skill_usage_log correctly returns entries with source:"inferred"', async () => {
+    const stateJsonPath = setupTempState({
+      ...makeStateWithWorkflow(),
+      skill_usage_log: [
+        { skill_name: 'unit-testing', agent: 'software-developer', phase: '06-implementation', timestamp: '2026-04-29T10:00:00Z', source: 'tool_call' },
+        { skill_name: 'error-handling', agent: 'software-developer', phase: '06-implementation', timestamp: '2026-04-29T10:01:00Z', source: 'inferred' }
+      ]
+    });
+    serverInstance = await startDashboardServer({ stateJsonPath, port: 0 });
+    const res = await fetch(`${serverInstance.url}/api/state`);
+    const data = await res.json();
+
+    assert.strictEqual(data.skill_usage_log.length, 2);
+    const inferredEntries = data.skill_usage_log.filter(e => e.source === 'inferred');
+    assert.strictEqual(inferredEntries.length, 1);
+    assert.strictEqual(inferredEntries[0].skill_name, 'error-handling');
+    const toolCallEntries = data.skill_usage_log.filter(e => e.source === 'tool_call');
+    assert.strictEqual(toolCallEntries.length, 1);
+    assert.strictEqual(toolCallEntries[0].skill_name, 'unit-testing');
+  });
+});

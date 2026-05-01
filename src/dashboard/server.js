@@ -350,7 +350,9 @@ export async function startDashboardServer(options) {
       active_meta: readActiveMeta(),
       hook_events: scanHookLog(currentPhase),
       agent_skills: getAgentSkills(activeAgent),
-      personas: scanPersonas()
+      personas: scanPersonas(),
+      // REQ-GH-278 FR-006: Skill usage log for dashboard visualization
+      skill_usage_log: state?.skill_usage_log || []
     };
   }
 
